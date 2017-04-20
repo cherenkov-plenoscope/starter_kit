@@ -16,3 +16,6 @@
 [submodule "gamma_limits_sensitivity"]
 	path = gamma_limits_sensitivity
 	url = https://github.com/mahnen/gamma_limits_sensitivity.git
+[submodule "corsika_install"]
+	path = corsika_install
+	url = https://github.com/TheBigLebowSky/corsika_install.git
