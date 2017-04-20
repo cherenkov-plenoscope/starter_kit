@@ -8,12 +8,12 @@ general requirements and recommendations:
 - Python environment: [Anaconda Python 3](https://www.continuum.io/DOWNLOADS)
 
 ## Download
-```
+```bash
 git clone --recursive git@github.com:TheBigLebowSky/starter_kit
 ```
 
 ## Install
-```
+```bash
 cd starter_kit/
 ```
 
