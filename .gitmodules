@@ -1,21 +1,3 @@
 [submodule "custom_corsika"]
-        path = custom_corsika
-        url = git@github.com:TheBigLebowSky/custom_corsika.git
-[submodule "corsika_wrapper"]
-        path = corsika_wrapper
-        url = git@github.com:fact-project/corsika_wrapper.git
-[submodule "mctracer"]
-	path = mctracer
-	url = git@github.com:TheBigLebowSky/mctracer.git
-[submodule "plenopy"]
-	path = plenopy
-	url = url = git@github.com:TheBigLebowSky/plenopy.git
-[submodule "instrument_response_function"]
-	path = instrument_response_function
-        url = git@github.com:TheBigLebowSky/instrument_response_function.git
-[submodule "instrument_sensitivity_function"]
-        path = instrument_sensitivity_function
-        url = git@github.com:TheBigLebowSky/instrument_sensitivity_function.git
-[submodule "robo_mount"]
-        path = robo_mount
-        url = git@github.com:TheBigLebowSky/robo_mount.git
+	path = custom_corsika
+	url = https://github.com/TheBigLebowSky/custom_corsika.git
