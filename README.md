@@ -9,7 +9,7 @@ general requirements and recommendations:
 
 ## Download
 ```bash
-git clone --recursive https://github.com/TheBigLebowSky/starter_kit.git
+git clone --recursive git@github.com:TheBigLebowSky/starter_kit.git
 ```
 
 ## Install
