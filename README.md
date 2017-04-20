@@ -17,6 +17,13 @@ git clone --recursive git@github.com:TheBigLebowSky/starter_kit.git
 cd starter_kit/
 ```
 
+* enter corsika download credentials into `install.py`
+* `python install.py`
+
+## Run tests
+
+`python run_tests.py`
+
 
 ## Updating
 
