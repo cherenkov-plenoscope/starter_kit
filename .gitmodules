@@ -4,3 +4,18 @@
 [submodule "corsika_wrapper"]
 	path = corsika_wrapper
 	url = https://github.com/fact-project/corsika_wrapper.git
+[submodule "mctracer"]
+	path = mctracer
+	url = https://github.com/TheBigLebowSky/mctracer.git
+[submodule "plenopy"]
+	path = plenopy
+	url = https://github.com/TheBigLebowSky/plenopy.git
+[submodule "instrument_response_function"]
+	path = instrument_response_function
+	url = https://github.com/TheBigLebowSky/instrument_response_function.git
+[submodule "instrument_sensitivity_function"]
+	path = instrument_sensitivity_function
+	url = https://github.com/TheBigLebowSky/instrument_sensitivity_function.git
+[submodule "gamma_limits_sensitivity"]
+	path = gamma_limits_sensitivity
+	url = https://github.com/mahnen/gamma_limits_sensitivity.git
