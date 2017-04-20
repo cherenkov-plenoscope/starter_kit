@@ -1,6 +1,3 @@
-[submodule "custom_corsika"]
-	path = custom_corsika
-	url = https://github.com/TheBigLebowSky/custom_corsika.git
 [submodule "corsika_wrapper"]
 	path = corsika_wrapper
 	url = https://github.com/fact-project/corsika_wrapper.git
