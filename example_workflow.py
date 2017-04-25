@@ -1,6 +1,7 @@
 import os
 import pkg_resources
 from subprocess import call
+import acp_instrument_response_function as acp_irf
 
 os.makedirs('./run', exist_ok=True)
 
@@ -14,28 +15,29 @@ if not os.path.isdir('./run/light_field_calibration'):
         '--number_mega_photons', '10',
         '--output', './run/light_field_calibration'])
 
-
 particles = {
     'gamma': {
         'out_dir': './run/gamma_irf', 
         'corsika_steering_card_path': pkg_resources.resource_filename(
             'acp_instrument_response_function', 
-            'resources/71m_acp/gamma_steering_card.txt' )
+            'resources/71m_acp/gamma_steering_card.txt' ),
+        'result_file': 'gamma_aeff.dat',
     },
     'electron': {
         'out_dir': './run/electron_irf', 
         'corsika_steering_card_path': pkg_resources.resource_filename(
             'acp_instrument_response_function', 
-            'resources/71m_acp/electron_steering_card.txt' )
+            'resources/71m_acp/electron_steering_card.txt' ),
+        'result_file': 'electron_positron_aeff.dat',
     },
     'proton': {
         'out_dir': './run/electron_irf', 
         'corsika_steering_card_path': pkg_resources.resource_filename(
             'acp_instrument_response_function', 
-            'resources/71m_acp/proton_steering_card.txt' )
+            'resources/71m_acp/proton_steering_card.txt' ),
+        'result_file': 'proton_aeff.dat',
     },
 }
-
 
 for particle in particles:
     if not os.path.isdir(particles[particle]['out_dir']):
@@ -52,31 +54,15 @@ for particle in particles:
 
 os.makedirs('./run/irf_results', exist_ok=True)
 
-import acp_instrument_response_function as acp_irf
-
-if not os.path.isfile('./run/irf_results/gamma_aeff.dat'):
-    acp_irf.gamma_limits_bridge.export_effective_area(
-        input_path='./run/gamma_irf',
-        detector_responses_key='raw_lixel_sum',
-        detector_response_threshold=100,
-        output_path='./run/irf_results/gamma_aeff.dat',
-        bins=5)
-
-if not os.path.isfile('./run/irf_results/electron_positron_aeff.dat'):
-    acp_irf.gamma_limits_bridge.export_effective_area(
-        input_path='./run/electron_irf',
-        detector_responses_key='raw_lixel_sum',
-        detector_response_threshold=100,
-        output_path='./run/irf_results/electron_positron_aeff.dat',
-        bins=5)
-
-if not os.path.isfile('./run/irf_results/proton_aeff.dat'):
-    acp_irf.gamma_limits_bridge.export_effective_area(
-        input_path='./run/proton_irf',
-        detector_responses_key='raw_lixel_sum',
-        detector_response_threshold=100,
-        output_path='./run/irf_results/proton_aeff.dat',
-        bins=5)
+for p in particles:
+    result_path = join('./run/irf_results', particles[p]['result_file']
+    if not os.path.isfile(result_path):
+        acp_irf.gamma_limits_bridge.export_effective_area(
+            input_path=particles[p]['out_dir'],
+            detector_responses_key='raw_lixel_sum',
+            detector_response_threshold=100,
+            output_path=result_path,
+            bins=5)
 
 if not os.path.isdir('./run/isf'):
     os.makedirs('./run/isf', exist_ok=True)
