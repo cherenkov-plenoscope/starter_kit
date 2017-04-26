@@ -39,12 +39,12 @@ particles = {
     },
 }
 
-for particle in particles:
-    if not os.path.isdir(particles[particle]['out_dir']):
+for p in particles:
+    if not os.path.isdir(particles[p]['out_dir']):
         call([
             'acp_instrument_response_function',
-            '--corsika_card', particles[particle]['corsika_steering_card_path'],
-            '--output_path', './run/'+particle+'_irf',
+            '--corsika_card', particles[p]['corsika_steering_card_path'],
+            '--output_path', './run/'+p+'_irf',
             '--number_of_runs', '8',
             '--acp_detector', './run/light_field_calibration',
             '--mct_acp_config', pkg_resources.resource_filename(
@@ -55,7 +55,7 @@ for particle in particles:
 os.makedirs('./run/irf_results', exist_ok=True)
 
 for p in particles:
-    result_path = join('./run/irf_results', particles[p]['result_file']
+    result_path = os.path.join('./run/irf_results', particles[p]['result_file'])
     if not os.path.isfile(result_path):
         acp_irf.gamma_limits_bridge.export_effective_area(
             input_path=particles[p]['out_dir'],
