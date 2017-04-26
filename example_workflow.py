@@ -56,6 +56,7 @@ os.makedirs('./run/irf_results', exist_ok=True)
 
 for p in particles:
     result_path = os.path.join('./run/irf_results', particles[p]['result_file'])
+    particles[p]['result_path'] = result_path
     if not os.path.isfile(result_path):
         acp_irf.gamma_limits_bridge.export_effective_area(
             input_path=particles[p]['out_dir'],
@@ -68,7 +69,9 @@ if not os.path.isdir('./run/isf'):
     os.makedirs('./run/isf', exist_ok=True)
     call([
         'acp_isez',
-        '--in', './run/irf_results',
+        '--gamma_area', particles['gamma']['result_path'],
+        '--electron_acceptance', particles['electron']['result_path'],
+        '--proton_acceptance', particles['proton']['result_path'],
         '--cutoff', '0.01',
         '--rel_flux', '0.05',
         '--fov', '6.5',
