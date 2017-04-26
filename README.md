@@ -1,6 +1,8 @@
 Atmospheric Cherenkov Plenoscope (ACP)
 --------------------------------------
 
+![img](resources/show.gif)
+
 The starter kit with all the packages needed to explore the ACP from scratch.
 
 general requirements and recommendations:
