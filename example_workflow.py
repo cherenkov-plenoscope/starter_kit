@@ -1,5 +1,5 @@
 import os
-from os import join
+from os.path import join
 import pkg_resources
 from subprocess import call
 import acp_instrument_response_function as acp_irf
@@ -19,7 +19,7 @@ if not os.path.isdir('./run/light_field_calibration'):
 particles = ['gamma', 'electron', 'proton']
 
 for p in particles:
-    if not os.path.isdir('./run/'+p+'_irf')):
+    if not os.path.isdir('./run/'+p+'_irf'):
         call([
             'acp_instrument_response_function',
             '--corsika_card', pkg_resources.resource_filename(
