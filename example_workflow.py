@@ -1,4 +1,5 @@
 import os
+from os import join
 import pkg_resources
 from subprocess import call
 import acp_instrument_response_function as acp_irf
@@ -15,35 +16,15 @@ if not os.path.isdir('./run/light_field_calibration'):
         '--number_mega_photons', '10',
         '--output', './run/light_field_calibration'])
 
-particles = {
-    'gamma': {
-        'out_dir': './run/gamma_irf', 
-        'corsika_steering_card_path': pkg_resources.resource_filename(
-            'acp_instrument_response_function', 
-            'resources/71m_acp/gamma_steering_card.txt' ),
-        'result_file': 'gamma_aeff.dat',
-    },
-    'electron': {
-        'out_dir': './run/electron_irf', 
-        'corsika_steering_card_path': pkg_resources.resource_filename(
-            'acp_instrument_response_function', 
-            'resources/71m_acp/electron_steering_card.txt' ),
-        'result_file': 'electron_positron_aeff.dat',
-    },
-    'proton': {
-        'out_dir': './run/electron_irf', 
-        'corsika_steering_card_path': pkg_resources.resource_filename(
-            'acp_instrument_response_function', 
-            'resources/71m_acp/proton_steering_card.txt' ),
-        'result_file': 'proton_aeff.dat',
-    },
-}
+particles = ['gamma', 'electron', 'proton']
 
 for p in particles:
-    if not os.path.isdir(particles[p]['out_dir']):
+    if not os.path.isdir('./run/'+p+'_irf')):
         call([
             'acp_instrument_response_function',
-            '--corsika_card', particles[p]['corsika_steering_card_path'],
+            '--corsika_card', pkg_resources.resource_filename(
+                'acp_instrument_response_function', 
+                'resources/71m_acp/'+p+'_steering_card.txt' ),
             '--output_path', './run/'+p+'_irf',
             '--number_of_runs', '8',
             '--acp_detector', './run/light_field_calibration',
@@ -55,11 +36,10 @@ for p in particles:
 os.makedirs('./run/irf_results', exist_ok=True)
 
 for p in particles:
-    result_path = os.path.join('./run/irf_results', particles[p]['result_file'])
-    particles[p]['result_path'] = result_path
+    result_path = join('./run/irf_results', p+'_irf.csv')
     if not os.path.isfile(result_path):
         acp_irf.gamma_limits_bridge.export_effective_area(
-            input_path=particles[p]['out_dir'],
+            input_path='./run/'+p+'_irf',
             detector_responses_key='raw_lixel_sum',
             detector_response_threshold=100,
             output_path=result_path,
@@ -69,9 +49,9 @@ if not os.path.isdir('./run/isf'):
     os.makedirs('./run/isf', exist_ok=True)
     call([
         'acp_isez',
-        '--gamma_area', particles['gamma']['result_path'],
-        '--electron_acceptance', particles['electron']['result_path'],
-        '--proton_acceptance', particles['proton']['result_path'],
+        '--gamma_area', join('./run/irf_results', 'gamma'+'_irf.csv'),
+        '--electron_acceptance', join('./run/irf_results', 'electron'+'_irf.csv'),
+        '--proton_acceptance', join('./run/irf_results', 'proton'+'_irf.csv'),
         '--cutoff', '0.01',
         '--rel_flux', '0.05',
         '--fov', '6.5',
