@@ -59,7 +59,7 @@ def main():
                     '--mct_acp_propagator', join('build','mctracer','mctPlenoscopePropagation'),
                 ]
                 if arguments['--scoop_hosts']:
-                    command.insert(1, '--hostfile')
+                    command.insert(1, '--scoop_hosts')
                     command.insert(2, arguments['--scoop_hosts'])
                 call(command)
 
