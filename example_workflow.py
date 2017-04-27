@@ -26,7 +26,7 @@ for p in particles:
                 'acp_instrument_response_function', 
                 'resources/71m_acp/'+p+'_steering_card.txt' ),
             '--output_path', './run/'+p+'_irf',
-            '--number_of_runs', '8',
+            '--number_of_runs', '4',
             '--acp_detector', './run/light_field_calibration',
             '--mct_acp_config', pkg_resources.resource_filename(
                 'acp_instrument_response_function', 
