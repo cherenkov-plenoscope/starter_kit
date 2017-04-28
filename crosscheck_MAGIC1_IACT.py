@@ -63,7 +63,7 @@ def main():
                     detector_response_threshold=100,
                     output_path=result_path,
                     bins=15,
-                    overlay_magic_one=True)
+                    overlay_magic_one=(p=='gamma'))
 
         # 3) Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
