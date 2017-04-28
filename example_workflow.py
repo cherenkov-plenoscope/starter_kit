@@ -10,7 +10,7 @@ The default number of particle observation runs and light field calibration
 photons is rather large (same as in our ACP introduction paper) and will take 
 some time (9h on our 96 core cluster).
 
-Usage: example_workflow [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_PHOTONS]
+Usage: example_workflow [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_PHOTONS] [--number_of_bins]
 
 Options:
     -s --scoop_hosts=SCOOP_HOSTS    Path to the scoop hosts text file.
@@ -19,6 +19,8 @@ Options:
     --lfc_Mp=MEGA_PHOTONS           How many mega photons to be used during the 
                                     light field calibration of the plenoscope. 
                                     [default: 1000]
+    --number_of_bins                The number of energy bins for the instrument
+                                    response function. [default: 30]
 """
 import docopt
 import os
@@ -80,7 +82,7 @@ def main():
                     detector_responses_key='raw_lixel_sum',
                     detector_response_threshold=100,
                     output_path=result_path,
-                    bins=5)
+                    bins=int(arguments['--number_of_bins']))
 
         # 3) Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
