@@ -43,7 +43,7 @@ def main():
                     'acp_instrument_response_function',
                     '--corsika_card', join('resources','iact','MAGIC_1',p+'_steering_card.txt'),
                     '--output_path', join(m1,'irf',p),
-                    '--number_of_runs', '192',
+                    '--number_of_runs', '96',
                     '--acp_detector', join(m1,'light_field_calibration'),
                     '--mct_acp_config', join('resources','iact','MAGIC_1','mct_propagation_config.xml'),
                     '--mct_acp_propagator', join('build','mctracer','mctPlenoscopePropagation'),
