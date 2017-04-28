@@ -1,0 +1,86 @@
+<propagation>
+    <!--  -->
+    <night_sky_background_ligth exposure_time="50e-9">
+        <function name="nsb_flux_vs_wavelength" comment="Night Sky Background Analysis for the Cherenkov Telescope Array using the Atmoscope instrument, Markus Gaug, arXiv preprint arXiv:1307.3053, based on Benn Ch.R., Ellison S.R., La Palma tech. note, 2007">
+            <linear_interpolation>
+                <xy x="2.40e-07" y="1.651e+18"/>
+                <xy x="2.70e-07" y="2.018e+18"/>
+                <xy x="3.00e-07" y="2.428e+18"/>
+                <xy x="3.30e-07" y="2.357e+18"/>
+                <xy x="3.40e-07" y="2.914e+18"/>
+                <xy x="3.94e-07" y="3.772e+18"/>
+                <xy x="3.95e-07" y="1.819e+19"/>
+                <xy x="3.96e-07" y="3.753e+18"/>
+                <xy x="4.33e-07" y="4.577e+18"/>
+                <xy x="4.35e-07" y="9.225e+18"/>
+                <xy x="4.37e-07" y="4.535e+18"/>
+                <xy x="4.62e-07" y="5.362e+18"/>
+                <xy x="4.85e-07" y="6.129e+18"/>
+                <xy x="5.25e-07" y="7.550e+18"/>
+                <xy x="5.55e-07" y="8.659e+18"/>
+                <xy x="5.58e-07" y="8.425e+19"/>
+                <xy x="5.61e-07" y="8.213e+18"/>
+                <xy x="5.85e-07" y="8.893e+18"/>
+                <xy x="5.91e-07" y="3.554e+19"/>
+                <xy x="5.95e-07" y="1.216e+19"/>
+                <xy x="6.00e-07" y="1.073e+19"/>
+                <xy x="6.05e-07" y="8.680e+18"/>
+                <xy x="6.27e-07" y="1.272e+19"/>
+                <xy x="6.30e-07" y="6.692e+19"/>
+                <xy x="6.32e-07" y="1.137e+19"/>
+                <xy x="6.38e-07" y="2.881e+19"/>
+                <xy x="6.40e-07" y="8.128e+18"/>
+                <xy x="6.45e-07" y="8.065e+18"/>
+                <xy x="6.47e-07" y="1.072e+19"/>
+                <xy x="6.60e-07" y="1.051e+19"/>
+                <xy x="6.70e-07" y="7.764e+18"/>
+                <xy x="6.78e-07" y="7.673e+18"/>
+                <xy x="6.85e-07" y="1.570e+19"/>
+                <xy x="7.01e-07" y="9.895e+18"/>
+            </linear_interpolation>
+        </function>
+    </night_sky_background_ligth>
+
+    <photo_electric_converter dark_rate="1e-3" probability_for_second_puls="0.0">
+        <function name="pde_vs_wavelength" comment="
+            CTA LST PMT
+            Hamamatsu
+            R11920-100-05
+            Collection efficiency assumed: 0.95
+            Novel Photo Multiplier Tubes for the Cherenkov Telescope Array Project
+            ICRC 2013, Takeshi Toyama
+            wavelength[m] pde[1]">
+            <linear_interpolation>
+                <!--xy x="200e-9"  y="0.0"/-->
+                <!--xy x="220e-9"  y="0.0149"/-->
+                <xy x="240e-9"  y="0.0673"/>
+                <xy x="260e-9"  y="0.1812"/>
+                <xy x="280e-9"  y="0.2758"/>
+                <xy x="300e-9"  y="0.3686"/>
+                <xy x="320e-9"  y="0.3866"/>
+                <xy x="340e-9"  y="0.3975"/>
+                <xy x="360e-9"  y="0.4017"/>
+                <xy x="380e-9"  y="0.4083"/>
+                <xy x="400e-9"  y="0.4010"/>
+                <xy x="420e-9"  y="0.3764"/>
+                <xy x="440e-9"  y="0.3576"/>
+                <xy x="460e-9"  y="0.3143"/>
+                <xy x="480e-9"  y="0.2782"/>
+                <xy x="500e-9"  y="0.2480"/>
+                <xy x="540e-9"  y="0.1257"/>
+                <xy x="580e-9"  y="0.0837"/>
+                <xy x="620e-9"  y="0.0396"/>
+                <xy x="660e-9"  y="0.0107"/>
+                <xy x="701e-9"  y="0.0001"/>
+                <!--xy x="750e-9"  y="0.0"/-->
+            </linear_interpolation>
+        </function>  
+    </photo_electric_converter>
+    <photon_stream
+        slice_duration="0.5e-9"
+    />
+    <settings
+        max_number_of_interactions_per_photon="10"
+        use_multithread_when_possible="false"
+    />
+</propagation>

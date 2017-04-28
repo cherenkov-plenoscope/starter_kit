@@ -39,7 +39,7 @@ def main():
         if not os.path.isdir(join('run','light_field_calibration')):
             call([
                 join('build','mctracer','mctPlenoscopeCalibration'),
-                '--scenery', join('resources', '71m_acp', 'scenery'),
+                '--scenery', join('resources','acp','71m','scenery'),
                 '--number_mega_photons', arguments['--lfc_Mp'],
                 '--output', join('run','light_field_calibration')
             ])
@@ -53,11 +53,11 @@ def main():
             if not os.path.isdir(join('run','irf',p)):
                 command = [
                     'acp_instrument_response_function',
-                    '--corsika_card', join('resources', '71m_acp', p+'_steering_card.txt'),
+                    '--corsika_card', join('resources','acp','71m',p+'_steering_card.txt'),
                     '--output_path', join('run','irf',p),
                     '--number_of_runs', arguments['--number_of_runs'],
                     '--acp_detector', join('run','light_field_calibration'),
-                    '--mct_acp_config', join('resources', 'mct_propagation_config.xml'),
+                    '--mct_acp_config', join('resources','acp','mct_propagation_config_no_night_sky_background.xml'),
                     '--mct_acp_propagator', join('build','mctracer','mctPlenoscopePropagation'),
                 ]
                 if arguments['--scoop_hosts']:

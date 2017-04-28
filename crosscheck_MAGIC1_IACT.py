@@ -27,7 +27,7 @@ def main():
         if not os.path.isdir(join(m1,'light_field_calibration')):
             call([
                 join('build','mctracer','mctPlenoscopeCalibration'),
-                '--scenery', join('resources', '17m_iact', 'scenery'),
+                '--scenery', join('resources','iact','MAGIC_1','scenery'),
                 '--number_mega_photons', '25',
                 '--output', join(m1,'light_field_calibration')
             ])
@@ -41,11 +41,11 @@ def main():
             if not os.path.isdir(join(m1,'irf',p)):
                 command = [
                     'acp_instrument_response_function',
-                    '--corsika_card', join('resources', '17m_iact', p+'_steering_card.txt'),
+                    '--corsika_card', join('resources','iact','MAGIC_1',p+'_steering_card.txt'),
                     '--output_path', join(m1,'irf',p),
                     '--number_of_runs', '192',
                     '--acp_detector', join(m1,'light_field_calibration'),
-                    '--mct_acp_config', join('resources','17m_iact','mct_propagation_config.xml'),
+                    '--mct_acp_config', join('resources','iact','MAGIC_1','mct_propagation_config.xml'),
                     '--mct_acp_propagator', join('build','mctracer','mctPlenoscopePropagation'),
                 ]
                 if arguments['--scoop_hosts']:
