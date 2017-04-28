@@ -1,6 +1,6 @@
 RUNNR    1
 EVTNR    1
-NSHOW    512
+NSHOW    256
 PRMPAR   3 # electron
 ESLOPE  -2.0
 ERANGE  8.6 1000
