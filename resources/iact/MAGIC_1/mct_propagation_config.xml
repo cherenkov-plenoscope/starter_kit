@@ -39,8 +39,8 @@
             </linear_interpolation>
         </function>    
     </photo_electric_converter>
-    <pulse_extractor
-        integration_time_window="25e-9"
+    <photon_stream
+        slice_duration="0.5e-9"
     />
     <settings
         max_number_of_interactions_per_photon="10"
