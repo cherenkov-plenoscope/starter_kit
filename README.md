@@ -1,4 +1,4 @@
-![img](resources/show.gif)
+![img](readme/show.gif)
 
 The starter kit with all the packages needed to explore the ACP from scratch.
 

@@ -25,7 +25,6 @@ Options:
 import docopt
 import os
 from os.path import join
-import pkg_resources
 from subprocess import call
 import acp_instrument_response_function as acp_irf
 
@@ -40,10 +39,8 @@ def main():
         if not os.path.isdir(join('run','light_field_calibration')):
             call([
                 join('build','mctracer','mctPlenoscopeCalibration'),
-                '--scenery', pkg_resources.resource_filename(
-                    'acp_instrument_response_function', 
-                    join('resources','71m_acp','scenery')),
-                '--number_mega_photons',  arguments['--lfc_Mp'],
+                '--scenery', join('resources', '71m_acp', 'scenery'),
+                '--number_mega_photons', arguments['--lfc_Mp'],
                 '--output', join('run','light_field_calibration')
             ])
 
@@ -56,17 +53,12 @@ def main():
             if not os.path.isdir(join('run','irf',p)):
                 command = [
                     'acp_instrument_response_function',
-                    '--corsika_card', pkg_resources.resource_filename(
-                        'acp_instrument_response_function', 
-                        join('resources','71m_acp',p+'_steering_card.txt')),
+                    '--corsika_card', join('resources', '71m_acp', p+'_steering_card.txt'),
                     '--output_path', join('run','irf',p),
                     '--number_of_runs', arguments['--number_of_runs'],
                     '--acp_detector', join('run','light_field_calibration'),
-                    '--mct_acp_config', pkg_resources.resource_filename(
-                        'acp_instrument_response_function', 
-                        join('resources','propagation_config.xml')),
-                    '--mct_acp_propagator', join(
-                        'build','mctracer','mctPlenoscopePropagation'),
+                    '--mct_acp_config', join('resources', 'mct_propagation_config.xml'),
+                    '--mct_acp_propagator', join('build','mctracer','mctPlenoscopePropagation'),
                 ]
                 if arguments['--scoop_hosts']:
                     command.insert(1, '--scoop_hosts')

@@ -1,0 +1,49 @@
+<propagation>
+    <!--  -->
+    <night_sky_background_ligth exposure_time="50e-9">
+        <function name="nsb_flux_vs_wavelength" comment="
+            Almost no flux. 
+            In Photons/(sr s m^2 m), last 'm' is for the wavelength wavelength[m] flux[1/(s m^2 sr m)">
+            <linear_interpolation>
+                <xy x="250.0e-9"  y="1.0"/>  
+                <xy x="700.0e-9" y="1.0"/>  
+            </linear_interpolation>
+        </function> 
+    </night_sky_background_ligth>
+
+    <photo_electric_converter dark_rate="1e-3" probability_for_second_puls="0.0">
+        <function name="pde_vs_wavelength" comment="
+            Performance of the Camera of the MAGIC II Telescope,
+            https://arxiv.org/abs/0906.5448v1,
+            Figure 3, MAGIC-I">
+            <linear_interpolation>
+                <xy x="249e-9"  y="0.16"/>
+                <xy x="275e-9"  y="0.19"/>
+                <xy x="300e-9"  y="0.20"/>
+                <xy x="325e-9"  y="0.23"/>
+                <xy x="350e-9"  y="0.275"/>
+                <xy x="375e-9"  y="0.30"/>
+                <xy x="400e-9"  y="0.30"/>
+                <xy x="425e-9"  y="0.29"/>
+                <xy x="450e-9"  y="0.28"/>
+                <xy x="475e-9"  y="0.27"/>
+                <xy x="500e-9"  y="0.24"/>
+                <xy x="525e-9"  y="0.18"/>
+                <xy x="550e-9"  y="0.16"/>
+                <xy x="575e-9"  y="0.10"/>
+                <xy x="600e-9"  y="0.06"/>
+                <xy x="625e-9"  y="0.03"/>
+                <xy x="650e-9"  y="0.02"/>
+                <xy x="675e-9"  y="0.01"/>
+                <xy x="701e-9"  y="0.00"/>
+            </linear_interpolation>
+        </function>    
+    </photo_electric_converter>
+    <pulse_extractor
+        integration_time_window="25e-9"
+    />
+    <settings
+        max_number_of_interactions_per_photon="10"
+        use_multithread_when_possible="false"
+    />
+</propagation>
