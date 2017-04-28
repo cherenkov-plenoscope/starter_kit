@@ -1,3 +1,4 @@
 build
 .cache
 run*
+crosscheck_MAGIC1_IACT*
