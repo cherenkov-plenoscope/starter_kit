@@ -4,7 +4,8 @@ from os.path import join
 from subprocess import call
 import plenopy as pl
 import corsika_wrapper as cw
-
+import numpy as np
+import matplotlib.pyplot as plt
 
 """
 A list of interesting gamma events to be found in the example run to be 
@@ -30,16 +31,32 @@ os.makedirs(exa, exist_ok=True)
 steering_card = cw.read_steering_card(
     join('resources','acp','71m','low_energy_example_gamma_corsika_steering_card.txt'))
 
-cw.corsika(    
-    steering_card=steering_card, 
-    output_path=join(exa,'gamma.evtio'), 
-    save_stdout=True)
 
-call([
-    join('build','mctracer','mctPlenoscopePropagation'),
-    '--lixel', join('resources','acp','71m','light_field_calibration'),
-    '--input', join(exa,'gamma.evtio'),
-    '--config', join('resources','acp','mct_propagation_config.xml'),
-    '--output', join(exa,'gamma.acp'),
-    '--random_seed', '0'
-])
+if not os.path.exists(join(exa,'gamma.evtio')):
+    cw.corsika(    
+        steering_card=steering_card, 
+        output_path=join(exa,'gamma.evtio'), 
+        save_stdout=True)
+
+if not os.path.exists(join(exa,'gamma.acp')):  
+    call([
+        join('build','mctracer','mctPlenoscopePropagation'),
+        '--lixel', join('resources','acp','71m','light_field_calibration'),
+        '--input', join(exa,'gamma.evtio'),
+        '--config', join('resources','acp','mct_propagation_config.xml'),
+        '--output', join(exa,'gamma.acp'),
+        '--random_seed', '0',
+        '--all_truth'
+    ])
+
+
+run = pl.Run(join(exa,'gamma.acp'))
+image_rays = pl.image.ImageRays(run.light_field_geometry)
+
+event = run[48]
+
+pl.plot.refocus.save_side_by_side(
+    event=event, 
+    object_distances=np.logspace(np.log(2.5e3), np.log(11.5e3), 5, base=2.73), 
+    output_path=join(exa,'event_17.png'), 
+    tims_slice_range=[37,39])
