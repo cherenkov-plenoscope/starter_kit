@@ -16,7 +16,8 @@ git clone --recursive git@github.com:TheBigLebowSky/starter_kit.git
 cd starter_kit/
 ```
 
-* enter corsika download credentials into `install.py`
+* you will need to provide the CORSIKA download credentials
+* you [must install libopencv-dev](https://github.com/TheBigLebowSky/mctracer) for the mctracer
 * `python install.py`
 
 ## Run tests
