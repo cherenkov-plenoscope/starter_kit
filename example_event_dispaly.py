@@ -25,6 +25,18 @@ Run 1, Event 90, E 2.12GeV, I 228p.e.,
 Run 1, Event 96, E 3.59GeV, I 1026p.e.,
 """
 
+
+def write_event_overview_text(event, path):
+    with open(path, 'w') as f:
+        f.write(event.__repr__()+'\n')
+        f.write(event.raw_sensor_response.__repr__()+'\n')
+        f.write(event.light_field.__repr__()+'\n')
+        f.write(event.sensor_plane2imaging_system.__repr__()+'\n')
+        f.write(event.simulation_truth.__repr__()+'\n')
+        f.write(event.simulation_truth.event.__repr__()+'\n')
+        f.write(event.simulation_truth.detector.__repr__()+'\n')
+
+
 exa = 'example_events'
 os.makedirs(exa, exist_ok=True)
 
@@ -53,10 +65,17 @@ if not os.path.exists(join(exa,'gamma.acp')):
 run = pl.Run(join(exa,'gamma.acp'))
 image_rays = pl.image.ImageRays(run.light_field_geometry)
 
-event = run[48]
+os.makedirs(join(exa, 'event49_refocus'), exist_ok=True)
+event49 = run[48]
 
 pl.plot.refocus.save_side_by_side(
-    event=event, 
+    event=event49, 
     object_distances=np.logspace(np.log(2.5e3), np.log(11.5e3), 5, base=2.73), 
-    output_path=join(exa,'event_17.png'), 
-    tims_slice_range=[37,39])
+    output_path=join(exa, 'event49_refocus', 'event49_refocus.png'), 
+    tims_slice_range=[37,39],
+    cx_limit=[+0.25, +1.75],
+    cy_limit=[-0.5, +1.0],)
+
+write_event_overview_text(
+    event49, 
+    join(exa, 'event49_refocus', 'event49_refocus.txt'))
