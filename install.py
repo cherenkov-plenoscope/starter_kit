@@ -43,6 +43,7 @@ def main():
         call(['pip','install', './gamma_limits_sensitivity/'])
         call(['pip','install', './instrument_response_function/'])
         call(['pip','install', './instrument_sensitivity_function/'])
+        call(['pip','install', './robo_mount/'])
 
     except docopt.DocoptExit as e:
         print(e)

@@ -19,3 +19,6 @@
 [submodule "corsika_install"]
 	path = corsika_install
 	url = git@github.com:TheBigLebowSky/corsika_install.git
+[submodule "robo_mount"]
+	path = robo_mount
+	url = git@github.com:TheBigLebowSky/robo_mount.git
