@@ -2,6 +2,21 @@ import reflector_study as rs
 
 
 acp_config = {
+    'pointing': {
+        'azimuth': -90.0,
+        'zenith_distance': 45.0,
+        },
+    'camera': {
+        'expected_imaging_system_focal_length': 106.05,
+        'expected_imaging_system_aperture_radius': 35.35,
+        'max_FoV_diameter_deg': 6.5,
+        'hex_pixel_FoV_flat2flat_deg': 0.083333,
+        'housing_overhead': 1.1,
+        'number_of_paxel_on_pixel_diagonal': 9,
+        'sensor_distance_to_principal_aperture_plane': 106.05,
+        'offset_position': [0,0,0],
+        'offset_rotation_tait_bryan': [0,0,0],
+        },
     'system': {
         'mctracer': {
             'hostname': '192.168.56.101',
