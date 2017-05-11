@@ -3,8 +3,8 @@ import reflector_study as rs
 
 acp_config = {
     'pointing': {
-        'azimuth': -90.0,
-        'zenith_distance': 45.0,
+        'azimuth': 20.0,
+        'zenith_distance': 30.0,
         },
     'camera': {
         'expected_imaging_system_focal_length': 106.05,
