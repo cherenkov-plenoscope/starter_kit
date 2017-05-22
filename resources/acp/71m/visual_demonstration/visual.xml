@@ -1,0 +1,21 @@
+<visual max_interaction_depth="42">
+    <!-- Image size of the interactive preview window (cols*scale x rows*scale). For fast preview, the initial image is only (cols x rows) and on demand a full resolution image (cols*scale x rows*scale) is created. -->
+    <preview 
+        cols="128" rows="72" 
+        scale="10"
+    />
+    <!-- Snaphot images are taken with a cineatic camera with depth of field. Several rays are emitted per pixel (rows x cols x rays_per_pixel). The more rays per pixel are emitted, the less noisy the image's depth of field will be, but the longer it takes to be calculated. For a strong depth of field, choose a small focal_length_over_aperture_diameter, e.g. 0.95, and a large sensor size e.g. 70mm. For a moderate human like depth of field, choose focal_length_over_aperture_diameter=2.8 and image_sensor_size_along_a_row=25mm. -->
+    <snapshot 
+        cols="1920" rows="1080" 
+        rays_per_pixel="15" 
+        focal_length_over_aperture_diameter="10.0" 
+        image_sensor_size_along_a_row="0.036"
+    />
+    <global_illumination 
+        on="true" 
+        incoming_direction="[0.7, 0.7, 1.0]"
+    />
+    <photon_trajectories radius="0.15"/>
+    <!-- A sky dome is the background to be seen in a scenery. A textured sky dome image helps the 3D expirience. Best choose a sky dome image taken with a circular fisheye optics. If the image_path is empty, the sky dome will be monochrome with the color defined here. If the sky dome is taken from a file, the color is used below the horizon. -->
+    <sky_dome image_path="../../../../mctracer/Main/Examples/Show/chile_night_sky.tif" color="[0, 0, 0]"/>
+</visual>

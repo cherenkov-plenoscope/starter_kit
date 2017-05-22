@@ -1,0 +1,96 @@
+<scenery author="Sebastian" comment="71m Plenoscope">
+    <function 
+        name="mirror_reflectivity_vs_wavelength" 
+        comment="
+        @inproceedings{pareschi2013status,
+          title={Status of the technologies for the production of the Cherenkov Telescope Array (CTA) mirrors},
+          author={Pareschi, G and Armstrong, T and Baba, H and Bahr, J and Bonardi, A and Bonnoli, G and Brun, P and Canestrari, R and Chadwick, P and Chikawa, M and others},
+          booktitle={SPIE Optical Engineering+ Applications},
+          pages={886103--886103},
+          year={2013},
+          organization={International Society for Optics and Photonics}
+        }
+        Figure 14, Al+SiO2 in state 'before'">
+        <linear_interpolation>
+            <!--xy x="200e-9"  y="0.5"/-->
+            <!--xy x="218e-9"  y="0.6"/-->
+            <!--xy x="225e-9"  y="0.66"/-->
+            <!--xy x="230e-9"  y="0.7"/-->
+            <xy x="241e-9"  y="0.76"/>
+            <xy x="251e-9"  y="0.8"/>
+            <xy x="259e-9"  y="0.82"/>
+            <xy x="267e-9"  y="0.84"/>
+            <xy x="283e-9"  y="0.86"/>
+            <xy x="309e-9"  y="0.88"/>
+            <xy x="372e-9"  y="0.9"/>
+            <xy x="450e-9"  y="0.91"/>
+            <xy x="602e-9"  y="0.9"/>
+            <xy x="701e-9"  y="0.885"/>
+        </linear_interpolation>
+    </function>    
+
+    <function 
+        name="lens_refraction_vs_wavelength" 
+        comment="Hereaus Quarzglas GmbH and Co. KG, Quarzstr. 8, 63450 Hanau, Suprasil Family 311/312/313">
+        <linear_interpolation>
+            <!--xy x="200e-9"  y="1.5505"/-->
+            <!--xy x="220e-9"  y="1.5285"/-->
+            <xy x="240e-9"  y="1.5133"/>
+            <xy x="280e-9"  y="1.4942"/>
+            <xy x="320e-9"  y="1.4827"/>
+            <xy x="360e-9"  y="1.4753"/>
+            <xy x="400e-9"  y="1.4701"/>
+            <xy x="486e-9"  y="1.4631"/>
+            <xy x="546e-9"  y="1.4601"/>
+            <xy x="633e-9"  y="1.4570"/>
+            <xy x="694e-9"  y="1.4554"/>
+            <xy x="753e-9"  y="1.4542"/>
+        </linear_interpolation>
+    </function>
+
+    <function name="zero">
+        <constant value="0.0" lower_limit="200e-9" upper_limit="1200e-9"/>
+    </function>
+
+    <color name="white" rgb="[235,235,235]"/>
+
+    <frame>
+        <set_telescope/>
+        <set_frame name="71m_ACP" pos="[+106.5,0,0]" rot="[0.0, 1.5707, 0.0]"/>
+        
+        <segmented_reflector>
+            <set_frame name="reflector" pos="[0,0,0]" rot="[0,0,0]"/>
+            <set_surface reflection_vs_wavelength="mirror_reflectivity_vs_wavelength"/>
+            <set_segmented_reflector 
+                focal_length="106.5" 
+                max_outer_aperture_radius="35.5" 
+                min_inner_aperture_radius="3.05" 
+                DaviesCotton_over_parabolic_mixing_factor="0.0" 
+                facet_inner_hex_radius="0.75" 
+                gap_between_facets="0.025"
+            />
+        </segmented_reflector>
+
+        <light_field_sensor_demonstration>
+            <set_frame name="light_field_sensor" pos="[0,0,106.5]" rot="[0,0,0]"/>
+            <set_light_field_sensor
+                expected_imaging_system_focal_length="106.5"
+                expected_imaging_system_aperture_radius="35.5"
+                max_FoV_diameter_deg="6.5"
+                hex_pixel_FoV_flat2flat_deg="0.083333" 
+                housing_overhead="1.1" 
+                number_of_paxel_on_pixel_diagonal="9" 
+                lens_refraction_vs_wavelength="lens_refraction_vs_wavelength"
+                bin_reflection_vs_wavelength="mirror_reflectivity_vs_wavelength"
+            />
+        </light_field_sensor_demonstration>
+    </frame>
+
+    <disc>
+        <set_frame name="ground" pos="[0,0,-0.08]" rot="[0,0,0]"/>     
+        <set_surface reflection_vs_wavelength="zero" color="white"/>  
+        <set_disc radius="1"/>
+        <set_sensitive id="0"/>
+    </disc>
+
+</scenery>
