@@ -1,0 +1,27 @@
+RUNNR    1
+EVTNR    1
+NSHOW    32
+PRMPAR   402 # Helium
+ESLOPE  0.0
+ERANGE  100 1000 
+THETAP  0.  0.
+PHIP    0.  360.
+SEED 1 0 0 # seeds will be overwritten
+SEED 2 0 0
+SEED 3 0 0
+SEED 4 0 0
+OBSLEV  5000.0e2
+FIXCHI  0.
+MAGNET 1e-99 1e-99
+ELMFLG  T   T
+MAXPRT  1
+PAROUT  F F
+TELESCOPE  0. 0. 0. 39.05e2 # instrument radius
+ATMOSPHERE 26 T # Chile, Paranal, ESO site 
+CWAVLG 250 700
+CSCAT 1 80e2 0.0
+CERQEF F T F # pde, atmo, mirror
+CERSIZ 1
+CERFIL F
+TSTART T
+EXIT
