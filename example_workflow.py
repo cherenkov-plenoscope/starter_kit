@@ -18,7 +18,7 @@ Options:
                                     particle [default: 3840]
     --lfc_Mp=MEGA_PHOTONS           How many mega photons to be used during the 
                                     light field calibration of the plenoscope. 
-                                    [default: 1000]
+                                    [default: 1337]
     --number_of_bins=NUM_BINS       The number of energy bins for the instrument
                                     response function. [default: 30]
 """
