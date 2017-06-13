@@ -4,7 +4,7 @@ NSHOW    32
 PRMPAR   402 # Helium
 ESLOPE  0.0
 ERANGE  100 1000 
-THETAP  0.  6.5
+THETAP  0.  3.75
 PHIP    0.  360.
 SEED 1 0 0 # seeds will be overwritten
 SEED 2 0 0
@@ -19,7 +19,7 @@ PAROUT  F F
 TELESCOPE  0. 0. 0. 39.05e2 # instrument radius
 ATMOSPHERE 26 T # Chile, Paranal, ESO site 
 CWAVLG 250 700
-CSCAT 1 150e2 0.0
+CSCAT 1 80e2 0.0
 CERQEF F T F # pde, atmo, mirror
 CERSIZ 1
 CERFIL F
