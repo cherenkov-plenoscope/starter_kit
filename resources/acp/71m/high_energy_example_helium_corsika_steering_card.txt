@@ -19,7 +19,7 @@ PAROUT  F F
 TELESCOPE  0. 0. 0. 39.05e2 # instrument radius
 ATMOSPHERE 26 T # Chile, Paranal, ESO site 
 CWAVLG 250 700
-CSCAT 1 500e2 0.0
+CSCAT 1 150e2 0.0
 CERQEF F T F # pde, atmo, mirror
 CERSIZ 1
 CERFIL F
