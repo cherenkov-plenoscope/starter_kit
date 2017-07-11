@@ -2,8 +2,9 @@
 """
 Run a crosscheck where the ACP simulation tools are used to reproduce the known 
 instrument response functions and sensitivities of the MAGIC 1 mono telescope.
+You can run this in parallel on a python scoop cluster, but you do not have to.
 
-Usage: example_workflow [-s=SCOOP_HOSTS]
+Usage: crosscheck_MAGIC1_IACT [-s=SCOOP_HOSTS]
 
 Options:
     -s --scoop_hosts=SCOOP_HOSTS    Path to the scoop hosts text file.
