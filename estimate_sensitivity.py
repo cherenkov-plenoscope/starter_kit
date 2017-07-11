@@ -9,9 +9,10 @@ The default number of particle observation runs and light field calibration
 photons is rather large (same as in our ACP introduction paper) and will take 
 some time (9h on our 96 core cluster).
 
-Usage: estimate_sensitivity [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_PHOTONS] [--number_of_bins=NUM_BINS]
+Usage: estimate_sensitivity [--out_dir=DIR] [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_PHOTONS] [--number_of_bins=NUM_BINS]
 
 Options:
+    -o --out_dir=DIR                Output directory [default: ./run]
     -s --scoop_hosts=SCOOP_HOSTS    Path to the scoop hosts text file.
     --number_of_runs=RUNS           How many runs to simulate for each 
                                     particle [default: 3840]
@@ -31,31 +32,32 @@ import acp_instrument_response_function as acp_irf
 def main():
     try:
         arguments = docopt.docopt(__doc__)
+        out_dir = arguments['--out_dir']
 
         # 1) Light field calibration of Plenoscope
         # ----------------------------------------
-        os.makedirs('run', exist_ok=True)
-        if not os.path.isdir(join('run','light_field_calibration')):
+        os.makedirs(out_dir, exist_ok=True)
+        if not os.path.isdir(join(out_dir,'light_field_calibration')):
             call([
                 join('build','mctracer','mctPlenoscopeCalibration'),
                 '--scenery', join('resources','acp','71m','scenery'),
                 '--number_mega_photons', arguments['--lfc_Mp'],
-                '--output', join('run','light_field_calibration')
+                '--output', join(out_dir,'light_field_calibration')
             ])
 
 
         # 2) Instrument response functions for typical cosmic particles
         # -------------------------------------------------------------
         particles = ['gamma', 'electron', 'proton']
-        os.makedirs(join('run','irf'), exist_ok=True)
+        os.makedirs(join(out_dir,'irf'), exist_ok=True)
         for p in particles:
-            if not os.path.isdir(join('run','irf',p)):
+            if not os.path.isdir(join(out_dir,'irf',p)):
                 command = [
                     'acp_instrument_response_function',
                     '--corsika_card', join('resources','acp','71m',p+'_steering_card.txt'),
-                    '--output_path', join('run','irf',p),
+                    '--output_path', join(out_dir,'irf',p),
                     '--number_of_runs', arguments['--number_of_runs'],
-                    '--acp_detector', join('run','light_field_calibration'),
+                    '--acp_detector', join(out_dir,'light_field_calibration'),
                     '--mct_acp_config', join('resources','acp','mct_propagation_config_no_night_sky_background.xml'),
                     '--mct_acp_propagator', join('build','mctracer','mctPlenoscopePropagation'),
                 ]
@@ -64,12 +66,12 @@ def main():
                     command.insert(2, arguments['--scoop_hosts'])
                 call(command)
 
-        os.makedirs(join('run','irf','results'), exist_ok=True)
+        os.makedirs(join(out_dir,'irf','results'), exist_ok=True)
         for p in particles:
-            result_path = join('run','irf','results',p+'.csv')
+            result_path = join(out_dir,'irf','results',p+'.csv')
             if not os.path.isfile(result_path):
                 acp_irf.gamma_limits_bridge.export_effective_area(
-                    input_path=join('run','irf',p),
+                    input_path=join(out_dir,'irf',p),
                     detector_responses_key='raw_lixel_sum',
                     detector_response_threshold=100,
                     output_path=result_path,
@@ -77,18 +79,18 @@ def main():
 
         # 3) Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
-        if not os.path.isdir(join('run','isf')):
-            os.makedirs(join('run','isf'), exist_ok=True)
+        if not os.path.isdir(join(out_dir,'isf')):
+            os.makedirs(join(out_dir,'isf'), exist_ok=True)
             call([
                 'acp_isez',
-                '--gamma_area', join('run','irf','results','gamma.csv'),
-                '--electron_acceptance', join('run','irf','results','electron.csv'),
-                '--proton_acceptance', join('run','irf','results','proton.csv'),
+                '--gamma_area', join(out_dir,'irf','results','gamma.csv'),
+                '--electron_acceptance', join(out_dir,'irf','results','electron.csv'),
+                '--proton_acceptance', join(out_dir,'irf','results','proton.csv'),
                 '--cutoff', '0.01',
                 '--rel_flux', '0.05',
                 '--fov', '6.5',
                 '--src', '3FGL J2254.0+1608',
-                '--out', join('run','isf')])
+                '--out', join(out_dir,'isf')])
 
     except docopt.DocoptExit as e:
         print(e)
