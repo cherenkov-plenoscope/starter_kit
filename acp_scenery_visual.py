@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import reflector_study as rs
 
 

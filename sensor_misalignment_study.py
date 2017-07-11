@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import docopt
 import os
 from os.path import join
