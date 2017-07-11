@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 """
-Run the example workflow to estimate the sensitivity of the 
-Atmospheric Cherenkov Plenoscope (ACP).
+Estimate the sensitivity of the Atmospheric Cherenkov Plenoscope (ACP).
 
 You can run the simulation in parallel using a python scoop cluster, but you do 
 not have to.
