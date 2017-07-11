@@ -1,7 +1,2 @@
 build
 .cache
-run*
-crosscheck_MAGIC1_IACT*
-example_events*
-sensor_misalignment_study
-visual
