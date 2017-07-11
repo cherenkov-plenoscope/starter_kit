@@ -10,9 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
 
-interesting_events = [
-    {'Event': 17}
-]
 """
 A list of interesting gamma events to be found in the example run to be 
 simulated.
@@ -32,19 +29,22 @@ Run 1, Event 96, E 3.59GeV, I 1026p.e.,
 """
 def write_image(event, path, image_rays, object_distance=22e3):
     pix_img_seq = event.light_field.pixel_sequence_refocus(
-        image_rays.pixel_ids_of_lixels_in_object_distance(object_distance))
+        image_rays.pixel_ids_of_lixels_in_object_distance(object_distance)
+    )
     t_m = pl.light_field.sequence.time_slice_with_max_intensity(pix_img_seq)
     ts = np.max([t_m-1, 0])
     te = np.min([t_m+1, pix_img_seq.shape[0]-1])
     pixel_image = pl.Image(
         pix_img_seq[ts:te].sum(axis=0),
         event.light_field.pixel_pos_cx,
-        event.light_field.pixel_pos_cy)
+        event.light_field.pixel_pos_cy
+    )
 
     fig_size = pl.tools.FigureSize(
         relative_width=10, 
         relative_hight=8, 
-        dpi=200)
+        dpi=200
+    )
 
     fig = plt.figure(figsize=(fig_size.width, fig_size.hight))
     gs = gridspec.GridSpec(1, 2, width_ratios=[1, 6])
@@ -53,7 +53,8 @@ def write_image(event, path, image_rays, object_distance=22e3):
 
     pl.image.plot.add_pixel_image_to_ax(
         pixel_image, 
-        ax=ax_image)
+        ax=ax_image
+    )
     pl.tools.add2ax_object_distance_ruler(
         ax=ax_ruler,
         object_distance=object_distance,
@@ -61,7 +62,8 @@ def write_image(event, path, image_rays, object_distance=22e3):
         object_distance_max=25e3,
         #label='',
         #print_value=False,
-        color='black')
+        color='black'
+    )
     plt.savefig(path, dpi=192)
 
 
@@ -83,19 +85,18 @@ def write_event_example(event_number, run, image_rays, output_dir):
         event = run[event_number - 1]
         run_number = event.simulation_truth.event.corsika_run_header.number
         id_text = 'Run'+str(run_number)+'Event'+str(event_number)
-
         object_distance = 22e3
-
         write_image(
             event=event,
             path=join(event_dir, 'image_'+id_text+'.png'),
             image_rays=image_rays,
-            object_distance=object_distance)
+            object_distance=object_distance
+        )
 
         write_event_overview_text(
             event, 
-            join(event_dir, 'info_'+id_text+'.txt'))
-
+            join(event_dir, 'info_'+id_text+'.txt')
+        )
 
 
 out_dir = join('examples', 'low_energy_event_demo')
@@ -114,7 +115,8 @@ if not os.path.exists(join(out_dir,'gamma.evtio')):
     cw.corsika(    
         steering_card=steering_card, 
         output_path=join(out_dir,'gamma.evtio'), 
-        save_stdout=True)
+        save_stdout=True
+    )
 
 if not os.path.exists(join(out_dir,'gamma.acp')):  
     call([
@@ -144,11 +146,13 @@ if not os.path.exists(join(out_dir,'event49_refocus')):
         output_path=join(out_dir, 'event49_refocus', 'event49_refocus.png'), 
         tims_slice_range=[39,41],
         cx_limit=[+0.25, +1.75],
-        cy_limit=[-0.5, +1.0],)
+        cy_limit=[-0.5, +1.0],
+    )
 
     write_event_overview_text(
         event49, 
-        join(out_dir, 'event49_refocus', 'info.txt'))
+        join(out_dir, 'event49_refocus', 'info.txt')
+    )
 
 # Threshold example
 # -----------------
@@ -159,4 +163,5 @@ for event_number in  interesting_events:
         event_number=event_number, 
         run=run, 
         image_rays=image_rays, 
-        output_dir=out_dir)
+        output_dir=out_dir
+    )
