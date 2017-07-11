@@ -28,33 +28,28 @@ Run 1, Event 90, E 2.12GeV, I 228p.e.,
 Run 1, Event 96, E 3.59GeV, I 1026p.e.,
 """
 def write_image(event, path, image_rays, object_distance=22e3):
-    pix_img_seq = event.light_field.pixel_sequence_refocus(
+    image_sequence = event.light_field.pixel_sequence_refocus(
         image_rays.pixel_ids_of_lixels_in_object_distance(object_distance)
     )
-    t_m = pl.light_field.sequence.time_slice_with_max_intensity(pix_img_seq)
-    ts = np.max([t_m-1, 0])
-    te = np.min([t_m+1, pix_img_seq.shape[0]-1])
+    raw_image = pl.light_field.sequence.integrate_around_arrival_peak(
+        sequence=image_sequence, 
+        integration_radius=1
+    )['integral']
     pixel_image = pl.Image(
-        pix_img_seq[ts:te].sum(axis=0),
-        event.light_field.pixel_pos_cx,
-        event.light_field.pixel_pos_cy
+       raw_image,
+       event.light_field.pixel_pos_cx,
+       event.light_field.pixel_pos_cy
     )
-
     fig_size = pl.tools.FigureSize(
         relative_width=10, 
         relative_hight=8, 
         dpi=200
     )
-
     fig = plt.figure(figsize=(fig_size.width, fig_size.hight))
     gs = gridspec.GridSpec(1, 2, width_ratios=[1, 6])
     ax_ruler = plt.subplot(gs[0])
     ax_image = plt.subplot(gs[1])
-
-    pl.image.plot.add_pixel_image_to_ax(
-        pixel_image, 
-        ax=ax_image
-    )
+    pl.image.plot.add_pixel_image_to_ax(pixel_image, ax=ax_image)
     pl.tools.add2ax_object_distance_ruler(
         ax=ax_ruler,
         object_distance=object_distance,
@@ -140,11 +135,16 @@ if not os.path.exists(join(out_dir,'event49_refocus')):
     os.makedirs(join(out_dir, 'event49_refocus'), exist_ok=True)
     event49 = run[48]
 
+    integral = pl.light_field.sequence.integrate_around_arrival_peak(
+        sequence=event49.light_field.sequence, 
+        integration_radius=1
+    )
+
     pl.plot.refocus.save_side_by_side(
         event=event49, 
         object_distances=np.logspace(np.log(2.5e3), np.log(11.5e3), 5, base=2.73), 
         output_path=join(out_dir, 'event49_refocus', 'event49_refocus.png'), 
-        tims_slice_range=[39,41],
+        tims_slice_range=[integral['start_slice'], integral['stop_slice']],
         cx_limit=[+0.25, +1.75],
         cy_limit=[-0.5, +1.0],
     )
