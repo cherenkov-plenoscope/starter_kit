@@ -10,47 +10,47 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
 
-working_dir = 'sensor_misalignment_study'
-os.makedirs(working_dir, exist_ok=True)
+out_dir = join('examples', 'sensor_misalignment_study')
+os.makedirs(out_dir, exist_ok=True)
 
 steering_card = cw.read_steering_card(
     join('resources','acp','71m','high_energy_example_helium_corsika_steering_card.txt'))
 
 
-if not os.path.exists(join(working_dir,'He.evtio')):
+if not os.path.exists(join(out_dir,'He.evtio')):
     cw.corsika(    
         steering_card=steering_card, 
-        output_path=join(working_dir,'He.evtio'), 
+        output_path=join(out_dir,'He.evtio'), 
         save_stdout=True)
 
 
-if not os.path.exists(join(working_dir,'target_He.acp')):  
+if not os.path.exists(join(out_dir,'target_He.acp')):  
     call([
         join('build','mctracer','mctPlenoscopePropagation'),
         '--lixel', join('resources','acp','71m','light_field_calibration'),
-        '--input', join(working_dir,'He.evtio'),
+        '--input', join(out_dir,'He.evtio'),
         '--config', join('resources','acp','mct_propagation_config.xml'),
-        '--output', join(working_dir,'target_He.acp'),
+        '--output', join(out_dir,'target_He.acp'),
         '--random_seed', '0',
         '--all_truth'
     ])
 
 
-if not os.path.exists(join(working_dir,'misaligned_He.acp')):  
+if not os.path.exists(join(out_dir,'misaligned_He.acp')):  
     call([
         join('build','mctracer','mctPlenoscopePropagation'),
         '--lixel', join('resources','acp','71m','light_field_calibration_off_target_example'),
-        '--input', join(working_dir,'He.evtio'),
+        '--input', join(out_dir,'He.evtio'),
         '--config', join('resources','acp','mct_propagation_config.xml'),
-        '--output', join(working_dir,'misaligned_He.acp'),
+        '--output', join(out_dir,'misaligned_He.acp'),
         '--random_seed', '0',
         '--all_truth'
     ])
 
 #1,4,6,18,21,22,23*,25
 runpaths = [
-    join(working_dir,'target_He.acp'),
-    join(working_dir,'misaligned_He.acp')
+    join(out_dir,'target_He.acp'),
+    join(out_dir,'misaligned_He.acp')
 ]
 
 lixel_efficiencies = [pl.Run(run_path).light_field_geometry.efficiency for run_path in runpaths]
