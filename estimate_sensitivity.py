@@ -9,7 +9,7 @@ The default number of particle observation runs and light field calibration
 photons is rather large (same as in our ACP introduction paper) and will take 
 some time (9h on our 96 core cluster).
 
-Usage: example_workflow [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_PHOTONS] [--number_of_bins=NUM_BINS]
+Usage: estimate_sensitivity [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_PHOTONS] [--number_of_bins=NUM_BINS]
 
 Options:
     -s --scoop_hosts=SCOOP_HOSTS    Path to the scoop hosts text file.
