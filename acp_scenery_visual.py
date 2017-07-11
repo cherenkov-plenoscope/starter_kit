@@ -129,5 +129,5 @@ acp_config = {
 geometry = rs.Geometry(acp_config)
 reflector = rs.factory.generate_reflector(geometry)
 
-with open('acp_71m_visual.xml', 'w') as f:                
+with open('visual/acp_71m_visual.xml', 'w') as f:                
     f.write(rs.mctracer_bridge.xml.visual_scenery(reflector))
