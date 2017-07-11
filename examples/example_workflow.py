@@ -14,7 +14,7 @@ Usage: example_workflow [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_
 
 Options:
     -s --scoop_hosts=SCOOP_HOSTS    Path to the scoop hosts text file.
-    --number_of_runs=RUNS           How many runs of to simulate for each 
+    --number_of_runs=RUNS           How many runs to simulate for each 
                                     particle [default: 3840]
     --lfc_Mp=MEGA_PHOTONS           How many mega photons to be used during the 
                                     light field calibration of the plenoscope. 
