@@ -92,68 +92,63 @@ def write_event_example(event_number, run, image_rays, output_dir):
             image_rays=image_rays,
             object_distance=object_distance)
 
-        """
-        pl.plot.refocus.save_side_by_side(
-            event=event, 
-            object_distances=np.logspace(np.log(10e3), np.log(20e3), 5, base=2.73), 
-            output_path=join(exa, 'event47_threshold', 'event46_refocus.png'), 
-            tims_slice_range=[ts,te],
-            cx_limit=[-0.5, +0.5],
-            cy_limit=[-0.5, +0.5],)
-        """
-
         write_event_overview_text(
             event, 
             join(event_dir, 'info_'+id_text+'.txt'))
 
 
 
-exa = 'example_events'
-os.makedirs(exa, exist_ok=True)
+out_dir = join('examples', 'low_energy_event_demo')
+os.makedirs(out_dir, exist_ok=True)
 
 steering_card = cw.read_steering_card(
-    join('resources','acp','71m','low_energy_example_gamma_corsika_steering_card.txt'))
+    join(
+        'resources',
+        'acp',
+        '71m',
+        'low_energy_example_gamma_corsika_steering_card.txt'
+    )
+)
 
-
-if not os.path.exists(join(exa,'gamma.evtio')):
+if not os.path.exists(join(out_dir,'gamma.evtio')):
     cw.corsika(    
         steering_card=steering_card, 
-        output_path=join(exa,'gamma.evtio'), 
+        output_path=join(out_dir,'gamma.evtio'), 
         save_stdout=True)
 
-if not os.path.exists(join(exa,'gamma.acp')):  
+if not os.path.exists(join(out_dir,'gamma.acp')):  
     call([
         join('build','mctracer','mctPlenoscopePropagation'),
         '--lixel', join('resources','acp','71m','light_field_calibration'),
-        '--input', join(exa,'gamma.evtio'),
+        '--input', join(out_dir,'gamma.evtio'),
         '--config', join('resources','acp','mct_propagation_config.xml'),
-        '--output', join(exa,'gamma.acp'),
+        '--output', join(out_dir,'gamma.acp'),
         '--random_seed', '0',
         '--all_truth'
     ])
 
 
-run = pl.Run(join(exa,'gamma.acp'))
+run = pl.Run(join(out_dir,'gamma.acp'))
 image_rays = pl.image.ImageRays(run.light_field_geometry)
 
 # Refocus example
 # ---------------
 
-if not os.path.exists(join(exa,'event49_refocus')): 
-    os.makedirs(join(exa, 'event49_refocus'), exist_ok=True)
+if not os.path.exists(join(out_dir,'event49_refocus')): 
+    os.makedirs(join(out_dir, 'event49_refocus'), exist_ok=True)
     event49 = run[48]
 
     pl.plot.refocus.save_side_by_side(
         event=event49, 
         object_distances=np.logspace(np.log(2.5e3), np.log(11.5e3), 5, base=2.73), 
-        output_path=join(exa, 'event49_refocus', 'event49_refocus.png'), 
-        tims_slice_range=[37,39],
+        output_path=join(out_dir, 'event49_refocus', 'event49_refocus.png'), 
+        tims_slice_range=[39,41],
         cx_limit=[+0.25, +1.75],
         cy_limit=[-0.5, +1.0],)
 
     write_event_overview_text(
         event49, 
-        join(exa, 'event49_refocus', 'info.txt'))
+        join(out_dir, 'event49_refocus', 'info.txt'))
 
 # Threshold example
 # -----------------
@@ -164,4 +159,4 @@ for event_number in  interesting_events:
         event_number=event_number, 
         run=run, 
         image_rays=image_rays, 
-        output_dir=exa)
+        output_dir=out_dir)
