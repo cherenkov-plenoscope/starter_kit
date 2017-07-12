@@ -1,5 +1,7 @@
 ![img](readme/show.gif)
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 The starter kit with all the packages needed to explore the ACP from scratch.
 
 general requirements and recommendations:
