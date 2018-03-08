@@ -27,7 +27,7 @@ def main():
         call(['mkdir', 'build'])
         call([
             'acp_corsika_install',
-            '-p', './build/corsika',
+            '--install_path', './build/corsika',
             '--username', arguments['--username'],
             '--password', arguments['--password']])
         call(['pip', 'install', './corsika_wrapper/'])
