@@ -42,7 +42,7 @@ def main():
         call(['touch', './../../mctracer/CMakeLists.txt'])
         call(['make', '-j', '12'])
         os.chdir('./../..')
-        call(['pip', ' install', './plenopy/'])
+        call(['pip', 'install', './plenopy/'])
         call(['pip', 'install', './gamma_limits_sensitivity/'])
         call(['pip', 'install', './instrument_response_function/'])
         call(['pip', 'install', './instrument_sensitivity_function/'])
