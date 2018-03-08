@@ -9,11 +9,11 @@ Taken from:
     year={2013}
 }
 
-Figure 4. The CTA icrc2013 proceeding claims the data (black solid line) of 
-Figure 4 to be from 'Benn Ch.R., Ellison S.R., La Palma tech. note, 2007' 
-but actual I did not find ths data in the specified technical note 115. 
+Figure 4. The CTA icrc2013 proceeding claims the data (black solid line) of
+Figure 4 to be from 'Benn Ch.R., Ellison S.R., La Palma tech. note, 2007'
+but actual I did not find ths data in the specified technical note 115.
 There is sth. similar but not down to this low wavelengths.
-""" 
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
