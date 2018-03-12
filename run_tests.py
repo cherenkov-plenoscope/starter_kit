@@ -2,7 +2,7 @@
 import os
 from subprocess import call
 
-call(['py.test', './acp_corsika_install'])
+call(['py.test', './corsika_install'])
 call(['py.test', './corsika_wrapper'])
 
 os.chdir('./mctracer/Tests')
