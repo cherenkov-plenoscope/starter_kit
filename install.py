@@ -16,6 +16,7 @@ Options:
 """
 import docopt
 import os
+from os.path import join
 from subprocess import call
 
 
@@ -23,13 +24,13 @@ def main():
     try:
         arguments = docopt.docopt(__doc__)
 
-        call(['pip', 'install', './corsika_install/'])
         call(['mkdir', 'build'])
         call([
-            'acp_corsika_install',
-            '--install_path', './build/corsika',
+            join('.', 'corsika_install', 'install.py'),
+            '--install_path', join('.', 'build', 'corsika'),
             '--username', arguments['--username'],
-            '--password', arguments['--password']])
+            '--password', arguments['--password'],
+            '--resource_path', join('.', 'corsika_install', 'resources')])
         call(['pip', 'install', './corsika_wrapper/'])
         call([
             'corsika',
