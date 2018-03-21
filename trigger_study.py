@@ -36,39 +36,40 @@ def trigger_study(
     acp_response_path,
     output_path
 ):
-    trigger_settings = [
-        {'min_ph_lix': 2, 'min_pax_in_pix': 5, 'time_slices':5},
-        {'min_ph_lix': 2, 'min_pax_in_pix': 6, 'time_slices':5},
-        {'min_ph_lix': 2, 'min_pax_in_pix': 7, 'time_slices':5},
-        {'min_ph_lix': 3, 'min_pax_in_pix': 5, 'time_slices':5},
-        {'min_ph_lix': 3, 'min_pax_in_pix': 6, 'time_slices':5},
-        {'min_ph_lix': 3, 'min_pax_in_pix': 7, 'time_slices':5},
-    ]
-
     run = pl.Run(acp_response_path)
+    object_distances = [5e3, 10e3, 25e3, 20e3, 25e3]
+    integration_slices = 5
+    min_photons_in_lixel = 2
 
-    pixel_neighborhood = pl.trigger.neighborhood(
-        x=run.light_field_geometry.pixel_pos_cx,
-        y=run.light_field_geometry.pixel_pos_cy,
-        epsilon=np.deg2rad(0.1))
+    prep = pl.trigger.prepare_trigger_3(
+        light_field_geometry=run.light_field_geometry,
+        object_distances=object_distances)
 
     event_infos = []
     for event in run:
         info = pl.trigger_study.export_trigger_information(event)
-        info['light_field_trigger'] = []
         info['num_air_shower_pulses'] = int(
             event.simulation_truth.detector.number_air_shower_pulses())
-        for trigger_setting in trigger_settings:
-            ts = trigger_setting.copy()
-            trigger_sequence = pl.trigger.trigger_on_light_field_sequence(
-                light_field=event.light_field,
-                pixel_neighborhood=pixel_neighborhood,
-                min_photons_in_lixel=ts['min_ph_lix'],
-                min_paxels_above_threshold_in_pixel=ts['min_pax_in_pix'],
-                trigger_integration_time_window_in_slices=ts['time_slices'])
-            ts['triggers_in_sequence'] = int(np.sum(trigger_sequence))
-            info['light_field_trigger'].append(ts)
+        for event in run:
+            tw = pl.trigger.trigger_windows(
+                light_field_sequence=event.light_field.sequence,
+                trigger_integration_time_window_in_slices=integration_slices)
+            max_ph_in_pix_vs_tw = []
+            for light_field in tw:
+                max_ph_in_pix = pl.trigger.trigger_3(
+                    light_field=light_field,
+                    refocus_cx=prep['refocus_cx'],
+                    refocus_cy=prep['refocus_cy'],
+                    pixel_edges=prep['pixel_edges'],
+                    min_photons_in_lixel=min_photons_in_lixel)[0]
+                max_ph_in_pix_vs_tw.append(max_ph_in_pix)
+            max_ph_in_pix_vs_tw = np.array(max_ph_in_pix_vs_tw)
 
+            info['light_field_trigger'] = {
+                'min_photons_in_lixel': min_photons_in_lixel,
+                'object_distances': object_distances,
+                'integration_slices': integration_slices,
+                'max_photons_in_pixel': max_ph_in_pix_vs_tw.max(axis=0)}
         event_infos.append(info)
     pl.trigger_study.write_dict_to_file(event_infos, output_path)
 
