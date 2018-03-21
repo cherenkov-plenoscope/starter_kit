@@ -7,7 +7,7 @@ Options:
                                             Path to the corsika steering card template.
     -o --output_path=PATH               [default: examples/trigger_study]
                                             Path to write the output directroy.
-    -n --number_of_runs=NUMBER_RUNS     [default: 96]
+    -n --number_of_runs=NUMBER_RUNS     [default: 4]
                                             Number of simulation runs to be
                                             executed. The total number of events
                                             is NUMBER_RUNS times NSHOW of the
@@ -37,7 +37,7 @@ def trigger_study(
     output_path
 ):
     run = pl.Run(acp_response_path)
-    object_distances = [5e3, 10e3, 25e3, 20e3, 25e3]
+    object_distances = [7.5e3, 15e3, 22.5e3]
     integration_slices = 5
     min_photons_in_lixel = 2
 
@@ -64,12 +64,12 @@ def trigger_study(
                     min_photons_in_lixel=min_photons_in_lixel)[0]
                 max_ph_in_pix_vs_tw.append(max_ph_in_pix)
             max_ph_in_pix_vs_tw = np.array(max_ph_in_pix_vs_tw)
-
+            max_photons_in_pixel = max_ph_in_pix_vs_tw.max(axis=0).tolist()
             info['light_field_trigger'] = {
                 'min_photons_in_lixel': min_photons_in_lixel,
                 'object_distances': object_distances,
                 'integration_slices': integration_slices,
-                'max_photons_in_pixel': max_ph_in_pix_vs_tw.max(axis=0)}
+                'max_photons_in_pixel': max_photons_in_pixel}
         event_infos.append(info)
     pl.trigger_study.write_dict_to_file(event_infos, output_path)
 
