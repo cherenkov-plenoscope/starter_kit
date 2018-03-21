@@ -59,14 +59,15 @@ def trigger_study(
         info['num_air_shower_pulses'] = int(
             event.simulation_truth.detector.number_air_shower_pulses())
         for trigger_setting in trigger_settings:
+            ts = trigger_setting.copy()
             trigger_sequence = pl.trigger.trigger_on_light_field_sequence(
                 light_field=event.light_field,
                 pixel_neighborhood=pixel_neighborhood,
-                min_photons_in_lixel=trigger_setting['min_ph_lix'],
-                min_paxels_above_threshold_in_pixel=trigger_setting['min_pax_in_pix'],
-                trigger_integration_time_window_in_slices=trigger_setting['time_slices'])
-            trigger_setting['triggers_in_sequence'] = int(np.sum(trigger_sequence))
-            info['light_field_trigger'].append(trigger_setting)
+                min_photons_in_lixel=ts['min_ph_lix'],
+                min_paxels_above_threshold_in_pixel=ts['min_pax_in_pix'],
+                trigger_integration_time_window_in_slices=ts['time_slices'])
+            ts['triggers_in_sequence'] = int(np.sum(trigger_sequence))
+            info['light_field_trigger'].append(ts)
 
         event_infos.append(info)
     pl.trigger_study.write_dict_to_file(event_infos, output_path)
