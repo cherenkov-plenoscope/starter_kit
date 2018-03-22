@@ -48,29 +48,36 @@ def trigger_study(
     event_infos = []
     for event in run:
         info = pl.trigger_study.export_trigger_information(event)
+
         info['num_air_shower_pulses'] = int(
             event.simulation_truth.detector.number_air_shower_pulses())
-        for event in run:
-            tw = pl.trigger.trigger_windows(
-                light_field_sequence=event.light_field.sequence,
-                trigger_integration_time_window_in_slices=integration_slices)
-            max_ph_in_pix_vs_tw = []
-            for light_field in tw:
-                max_ph_in_pix = pl.trigger.trigger_3(
-                    light_field=light_field,
-                    refocus_cx=prep['refocus_cx'],
-                    refocus_cy=prep['refocus_cy'],
-                    pixel_edges=prep['pixel_edges'],
-                    min_photons_in_lixel=min_photons_in_lixel)[0]
-                max_ph_in_pix_vs_tw.append(max_ph_in_pix)
-            max_ph_in_pix_vs_tw = np.array(max_ph_in_pix_vs_tw)
-            max_photons_in_pixel = max_ph_in_pix_vs_tw.max(axis=0).tolist()
-            info['light_field_trigger'] = {
-                'min_photons_in_lixel': min_photons_in_lixel,
-                'object_distances': object_distances,
-                'integration_slices': integration_slices,
-                'max_photons_in_pixel': max_photons_in_pixel}
+
+        tw = pl.trigger.trigger_windows(
+            light_field_sequence=event.light_field.sequence,
+            trigger_integration_time_window_in_slices=integration_slices)
+
+        max_ph_in_pix_vs_tw = []
+        for light_field in tw:
+            max_ph_in_pix = pl.trigger.trigger_3(
+                light_field=light_field,
+                refocus_cx=prep['refocus_cx'],
+                refocus_cy=prep['refocus_cy'],
+                pixel_edges=prep['pixel_edges'],
+                min_photons_in_lixel=min_photons_in_lixel)[0]
+
+            max_ph_in_pix_vs_tw.append(max_ph_in_pix)
+
+        max_ph_in_pix_vs_tw = np.array(max_ph_in_pix_vs_tw)
+        max_photons_in_pixel = max_ph_in_pix_vs_tw.max(axis=0).tolist()
+
+        info['light_field_trigger'] = {
+            'min_photons_in_lixel': min_photons_in_lixel,
+            'object_distances': object_distances,
+            'integration_slices': integration_slices,
+            'max_photons_in_pixel': max_photons_in_pixel}
+
         event_infos.append(info)
+
     pl.trigger_study.write_dict_to_file(event_infos, output_path)
 
 
