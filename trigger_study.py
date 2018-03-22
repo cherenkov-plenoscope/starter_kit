@@ -31,7 +31,7 @@ import plenopy as pl
 import tempfile
 import numpy as np
 
-
+"""
 def trigger_study(
     acp_response_path,
     output_path
@@ -76,6 +76,35 @@ def trigger_study(
             'integration_slices': integration_slices,
             'max_photons_in_pixel': max_photons_in_pixel}
 
+        event_infos.append(info)
+
+    pl.trigger_study.write_dict_to_file(event_infos, output_path)
+"""
+
+def trigger_study(
+    acp_response_path,
+    output_path
+):
+    run = pl.Run(acp_response_path)
+    integration_slices = 5
+
+    pixel_and_neighborhood = pl.trigger.prepare_sum_trigger(
+        run.light_field_geometry)
+
+    event_infos = []
+    for event in run:
+        info = pl.trigger_study.export_trigger_information(event)
+        info['num_air_shower_pulses'] = int(
+            event.simulation_truth.detector.number_air_shower_pulses())
+
+        maxpe = pl.trigger.sum_trigger(
+            event.light_field,
+            pixel_and_neighborhood,
+            integration_slices)
+
+        info['sum_trigger'] = {
+            'integration_slices': integration_slices,
+            'max_photons_in_patch': maxpe}
         event_infos.append(info)
 
     pl.trigger_study.write_dict_to_file(event_infos, output_path)
