@@ -1,6 +1,6 @@
 <scenery author="Sebastian" comment="71m Plenoscope">
-    <function 
-        name="mirror_reflectivity_vs_wavelength" 
+    <function
+        name="mirror_reflectivity_vs_wavelength"
         comment="
         @inproceedings{pareschi2013status,
           title={Status of the technologies for the production of the Cherenkov Telescope Array (CTA) mirrors},
@@ -27,10 +27,10 @@
             <xy x="602e-9"  y="0.9"/>
             <xy x="701e-9"  y="0.885"/>
         </linear_interpolation>
-    </function>    
+    </function>
 
-    <function 
-        name="lens_refraction_vs_wavelength" 
+    <function
+        name="lens_refraction_vs_wavelength"
         comment="Hereaus Quarzglas GmbH and Co. KG, Quarzstr. 8, 63450 Hanau, Suprasil Family 311/312/313">
         <linear_interpolation>
             <!--xy x="200e-9"  y="1.5505"/-->
@@ -51,16 +51,16 @@
     <frame>
         <set_telescope/>
         <set_frame name="71m_ACP" pos="[0,0,0]" rot="[0.0, 0.0, 0.0]"/>
-        
+
         <segmented_reflector>
             <set_frame name="reflector" pos="[0,0,0]" rot="[0,0,0]"/>
             <set_surface reflection_vs_wavelength="mirror_reflectivity_vs_wavelength"/>
-            <set_segmented_reflector 
-                focal_length="106.5" 
-                max_outer_aperture_radius="35.5" 
-                min_inner_aperture_radius="3.05" 
-                DaviesCotton_over_parabolic_mixing_factor="0.0" 
-                facet_inner_hex_radius="0.75" 
+            <set_segmented_reflector
+                focal_length="106.5"
+                max_outer_aperture_radius="35.5"
+                min_inner_aperture_radius="3.05"
+                DaviesCotton_over_parabolic_mixing_factor="0.0"
+                facet_inner_hex_radius="0.75"
                 gap_between_facets="0.025"
             />
         </segmented_reflector>
@@ -72,9 +72,9 @@
                 expected_imaging_system_focal_length="106.5"
                 expected_imaging_system_aperture_radius="35.5"
                 max_FoV_diameter_deg="6.5"
-                hex_pixel_FoV_flat2flat_deg="0.083333" 
-                housing_overhead="1.1" 
-                number_of_paxel_on_pixel_diagonal="9" 
+                hex_pixel_FoV_flat2flat_deg="0.083333"
+                housing_overhead="1.1"
+                number_of_paxel_on_pixel_diagonal="9"
                 lens_refraction_vs_wavelength="lens_refraction_vs_wavelength"
                 bin_reflection_vs_wavelength="mirror_reflectivity_vs_wavelength"
             />
