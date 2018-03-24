@@ -7,7 +7,7 @@ Options:
                                             Path to the corsika steering card template.
     -o --output_path=PATH               [default: examples/trigger_study]
                                             Path to write the output directroy.
-    -n --number_of_runs=NUMBER_RUNS     [default: 4]
+    -n --number_of_runs=NUMBER_RUNS     [default: 6]
                                             Number of simulation runs to be
                                             executed. The total number of events
                                             is NUMBER_RUNS times NSHOW of the
@@ -31,65 +31,18 @@ import plenopy as pl
 import tempfile
 import numpy as np
 
-"""
-def trigger_study(
-    acp_response_path,
-    output_path
-):
-    run = pl.Run(acp_response_path)
-    object_distances = [7.5e3, 15e3, 22.5e3]
-    integration_slices = 5
-    min_photons_in_lixel = 2
-
-    prep = pl.trigger.prepare_trigger_3(
-        light_field_geometry=run.light_field_geometry,
-        object_distances=object_distances)
-
-    event_infos = []
-    for event in run:
-        info = pl.trigger_study.export_trigger_information(event)
-
-        info['num_air_shower_pulses'] = int(
-            event.simulation_truth.detector.number_air_shower_pulses())
-
-        tw = pl.trigger.trigger_windows(
-            light_field_sequence=event.light_field.sequence,
-            trigger_integration_time_window_in_slices=integration_slices)
-
-        max_ph_in_pix_vs_tw = []
-        for light_field in tw:
-            max_ph_in_pix = pl.trigger.trigger_3(
-                light_field=light_field,
-                refocus_cx=prep['refocus_cx'],
-                refocus_cy=prep['refocus_cy'],
-                pixel_edges=prep['pixel_edges'],
-                min_photons_in_lixel=min_photons_in_lixel)[0]
-
-            max_ph_in_pix_vs_tw.append(max_ph_in_pix)
-
-        max_ph_in_pix_vs_tw = np.array(max_ph_in_pix_vs_tw)
-        max_photons_in_pixel = max_ph_in_pix_vs_tw.max(axis=0).tolist()
-
-        info['light_field_trigger'] = {
-            'min_photons_in_lixel': min_photons_in_lixel,
-            'object_distances': object_distances,
-            'integration_slices': integration_slices,
-            'max_photons_in_pixel': max_photons_in_pixel}
-
-        event_infos.append(info)
-
-    pl.trigger_study.write_dict_to_file(event_infos, output_path)
-"""
 
 def trigger_study(
     acp_response_path,
     output_path
 ):
     run = pl.Run(acp_response_path)
-    integration_slices = 5
+    integration_time_in_slices = 5
+    patch_threshold = 63
 
-    pixel_and_neighborhood = pl.trigger.prepare_sum_trigger(
-        run.light_field_geometry)
+    trigger_preparation = pl.trigger.prepare_refocus_sum_trigger(
+        run.light_field_geometry,
+        object_distances=[10e3, 15e3, 20e3])
 
     event_infos = []
     for event in run:
@@ -97,14 +50,12 @@ def trigger_study(
         info['num_air_shower_pulses'] = int(
             event.simulation_truth.detector.number_air_shower_pulses())
 
-        maxpe = pl.trigger.sum_trigger(
-            event.light_field,
-            pixel_and_neighborhood,
-            integration_slices)
+        info['refocus_sum_trigger'] = pl.trigger.apply_refocus_sum_trigger(
+            light_field=event.light_field,
+            trigger_preparation=trigger_preparation,
+            patch_threshold=patch_threshold,
+            integration_time_in_slices=integration_time_in_slices)
 
-        info['sum_trigger'] = {
-            'integration_slices': integration_slices,
-            'max_photons_in_patch': maxpe}
         event_infos.append(info)
 
     pl.trigger_study.write_dict_to_file(event_infos, output_path)
@@ -129,8 +80,12 @@ def run_acp_simulation(cfg):
             cfg=cfg,
             photon_origins=True)
 
-        keep_stdout(acp_response_path+'.stdout', 'mctPlenoscopePropagation.stdout', cfg)
-        keep_stdout(acp_response_path+'.stderr', 'mctPlenoscopePropagation.stderr', cfg)
+        keep_stdout(
+            acp_response_path+'.stdout',
+            'mctPlenoscopePropagation.stdout', cfg)
+        keep_stdout(
+            acp_response_path+'.stderr',
+            'mctPlenoscopePropagation.stderr', cfg)
 
         trigger_study(
             acp_response_path=acp_response_path,
