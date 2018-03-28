@@ -12,7 +12,7 @@ Options:
                                             executed. The total number of events
                                             is NUMBER_RUNS times NSHOW of the
                                             corsika steering template card.
-    -a --acp_detector=PATH              [default: resources/acp/71m/light_field_calibration]
+    -a --acp_detector=PATH              [default: run/light_field_calibration]
                                             Path to the light-field-calibration.
     -p --mct_acp_config=PATH            [default: resources/acp/mct_propagation_config.xml]
                                             Path to the mctracer ACP propagation configuration.
@@ -38,7 +38,7 @@ def trigger_study(
 ):
     run = pl.Run(acp_response_path)
     integration_time_in_slices = 5
-    patch_threshold = 63
+    min_number_neighbors = 3
 
     trigger_preparation = pl.trigger.prepare_refocus_sum_trigger(
         run.light_field_geometry,
@@ -49,15 +49,12 @@ def trigger_study(
         info = pl.trigger_study.export_trigger_information(event)
         info['num_air_shower_pulses'] = int(
             event.simulation_truth.detector.number_air_shower_pulses())
-
         info['refocus_sum_trigger'] = pl.trigger.apply_refocus_sum_trigger(
             light_field=event.light_field,
             trigger_preparation=trigger_preparation,
-            patch_threshold=patch_threshold,
+            min_number_neighbors=min_number_neighbors,
             integration_time_in_slices=integration_time_in_slices)
-
         event_infos.append(info)
-
     pl.trigger_study.write_dict_to_file(event_infos, output_path)
 
 
