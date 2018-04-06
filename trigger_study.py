@@ -55,7 +55,9 @@ def trigger_study(
             min_number_neighbors=min_number_neighbors,
             integration_time_in_slices=integration_time_in_slices)
         event_infos.append(info)
-    pl.trigger_study.write_dict_to_file(event_infos, output_path)
+    pl.trigger_study.write_dict_to_file(
+        pl.trigger_study.un_numpyify(event_infos),
+        output_path)
 
 
 def run_acp_simulation(cfg):
