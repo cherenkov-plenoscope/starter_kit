@@ -34,7 +34,10 @@ import numpy as np
 
 def trigger_study(
     acp_response_path,
-    output_path
+    output_path,
+    past_trigger_path,
+    run_number,
+    pathch_treshold=67,
 ):
     run = pl.Run(acp_response_path)
     integration_time_in_slices = 5
@@ -55,6 +58,20 @@ def trigger_study(
             min_number_neighbors=min_number_neighbors,
             integration_time_in_slices=integration_time_in_slices)
         event_infos.append(info)
+
+        max_patch_threshold = np.max(
+            [p['patch_threshold'] for p in info['refocus_sum_trigger']])
+
+        if max_patch_threshold >= pathch_treshold:
+            event_filename = '{run:d}{event:06d}'.format(
+                run=run_number,
+                event=event.number)
+            event_path = os.path.join(past_trigger_path, event_filename)
+            shutil.copytree(event._path, event_path)
+            pl.trigger_study.write_dict_to_file(
+                pl.trigger_study.un_numpyify(info['refocus_sum_trigger']),
+                os.path.join(event_path, 'refocus_sum_trigger.jsonl'))
+
     pl.trigger_study.write_dict_to_file(
         pl.trigger_study.un_numpyify(event_infos),
         output_path)
@@ -90,7 +107,9 @@ def run_acp_simulation(cfg):
             acp_response_path=acp_response_path,
             output_path=os.path.join(
                 cfg['path']['main']['intermediate_results_of_runs']['dir'],
-                'run_'+str(cfg['current_run']['number'])+'.json.gz'))
+                'run_'+str(cfg['current_run']['number'])+'.json.gz'),
+            past_trigger_path=cfg['path']['main']['past_trigger']['dir'],
+            run_number=cfg['current_run']['number'])
     return {
         'corsika_return_code': cor_rc,
         'mctracer_return_code': mct_rc}
@@ -125,6 +144,19 @@ if __name__ == '__main__':
 
         cfg['corsika_steering_card_template'] = cw.read_steering_card(
             cfg['path']['main']['input']['corsika_steering_card_template'])
+
+        cfg['path']['main']['past_trigger'] = {}
+        cfg['path']['main']['past_trigger']['dir'] = os.path.join(
+            cfg['path']['main']['dir'], 'past_trigger')
+        os.makedirs(
+            os.path.join(cfg['path']['main']['past_trigger']['dir'],
+                'input'))
+        shutil.copytree(
+            cfg['path']['main']['input']['acp_detector'],
+            os.path.join(
+                cfg['path']['main']['past_trigger']['dir'],
+                'input', 'plenoscope')
+            )
 
         # SIMULATION
         simulation_instructions = irf.simulation.make_instructions(cfg)
