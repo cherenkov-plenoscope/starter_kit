@@ -31,7 +31,7 @@ def main():
             '--username', arguments['--username'],
             '--password', arguments['--password'],
             '--resource_path', join('.', 'corsika_install', 'resources')])
-        call(['pip', 'install', './corsika_wrapper/'])
+        call(['pip', 'install', '-e', './corsika_wrapper/'])
         call([
             'corsika',
             '--corsika_path',
@@ -43,11 +43,11 @@ def main():
         call(['touch', './../../mctracer/CMakeLists.txt'])
         call(['make', '-j', '12'])
         os.chdir('./../..')
-        call(['pip', 'install', './plenopy/'])
-        call(['pip', 'install', './gamma_limits_sensitivity/'])
-        call(['pip', 'install', './instrument_response_function/'])
-        call(['pip', 'install', './instrument_sensitivity_function/'])
-        call(['pip', 'install', './robo_mount/'])
+        call(['pip', 'install', '-e', './plenopy/'])
+        call(['pip', 'install', '-e', './gamma_limits_sensitivity/'])
+        call(['pip', 'install', '-e', './instrument_response_function/'])
+        call(['pip', 'install', '-e', './instrument_sensitivity_function/'])
+        call(['pip', 'install', '-e', './robo_mount/'])
 
     except docopt.DocoptExit as e:
         print(e)
