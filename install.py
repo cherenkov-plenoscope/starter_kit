@@ -34,7 +34,7 @@ def main():
         call(['pip', 'install', './corsika_wrapper/'])
         call([
             'corsika',
-            '-c',
+            '--corsika_path',
             'build/corsika/corsika-75600/run/corsika75600Linux_QGSII_urqmd'])
         call(['mkdir', './build/mctracer'])
         os.chdir('./build/mctracer')
