@@ -53,7 +53,7 @@ def trigger_study(
         info['num_air_shower_pulses'] = int(
             event.simulation_truth.detector.number_air_shower_pulses())
         info['refocus_sum_trigger'] = pl.trigger.apply_refocus_sum_trigger(
-            light_field=event.light_field,
+            event=event,
             trigger_preparation=trigger_preparation,
             min_number_neighbors=min_number_neighbors,
             integration_time_in_slices=integration_time_in_slices)
