@@ -46,9 +46,9 @@ def test_light_field_geometry_with_plenopy(tmp):
 
 def test_plot_light_field_geometry_with_plenopy(tmp):
     lfg = pl.LightFieldGeometry(join(tmp, 'light_field_geometry'))
-    plotter = pl.plot.light_field_geometry_2.PlotLightFieldGeometry(
-        lfg, join(tmp, 'light_field_geometry', 'plot'))
-    plotter.save()
+    pl.plot.light_field_geometry.save_all(
+        lfg,
+        join(tmp, 'light_field_geometry', 'plot'))
 
     expected_images = [
         'c_mean_vs_c_std.png',
