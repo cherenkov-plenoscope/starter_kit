@@ -16,7 +16,8 @@ thresholds = []
 energies = []
 max_scatter_radii = []
 for e in events:
-    exposure_times.append(e['refocus_sum_trigger'][0]['exposure_time_in_slices'])
+    exposure_times.append(
+        e['refocus_sum_trigger'][0]['exposure_time_in_slices'])
     energies.append(e['simulation_truth']['energy'])
     num_air_shower_photons.append(e['num_air_shower_pulses'])
     max_scatter_radii.append(e['simulation_truth']['scatter_radius'])
@@ -37,8 +38,6 @@ trigger_mask = ((thresholds >= 67).sum(axis=1)) >= 1
 # 2 out of 3, thresh 65, 0Hz accidental, 68.4
 # 3 out of 3, thresh 60, 0Hz accidental, 70.4
 
-
-
 bins = np.zeros(22)
 bins[1] = 1
 for b in range(bins.shape[0]):
@@ -58,8 +57,6 @@ label_handles = []
 median_pe = 61
 std = np.sqrt(median_pe)
 
-
-
 wt = np.histogram(
     num_air_shower_photons,
     weights=trigger_mask.astype(np.int),
@@ -75,7 +72,7 @@ label_handles.append(
     ax2.step(
         bins[:-1],
         wt/wwot,
-        #label='refocused to '+str(np.round(obj/1e3, 1))+'km',
+        # label='refocused to '+str(np.round(obj/1e3, 1))+'km',
         color=colors[o]
     )[0]
 )
@@ -88,8 +85,9 @@ EXPOSURE_TIME = 40e-9
 accidental_rate = 1/(EXPOSURE_TIME/w[0])
 accidental_rate_uncertainty = accidental_rate*(np.sqrt(wwot[0])/wwot[0])
 
-print('Accidental rate: '+str(np.round(accidental_rate, 0))+' +- '+str(np.round(accidental_rate_uncertainty,0 ))+'s^-1')
-
+print(
+    'Accidental rate: ' + str(np.round(accidental_rate, 0)) +
+    ' +- ' + str(np.round(accidental_rate_uncertainty, 0)) + 's^-1')
 
 for i, b in enumerate(bins):
     if i > 0 and i < len(bins) - 1:
@@ -108,10 +106,9 @@ ax1.set_ylabel('# events/1')
 ax2.semilogx()
 ax2.set_xlabel('# detected air-shower-photons/1')
 ax2.set_ylabel('probability to trigger/1')
-#ax2.legend(handles=label_handles)
+# ax2.legend(handles=label_handles)
 
 plt.show()
-
 
 max_scatter_area = np.pi*max_scatter_radii**2
 
@@ -119,7 +116,6 @@ energy_bin_edges = np.logspace(
     np.log10(0.25),
     np.log10(25),
     50)
-
 
 num_thrown = np.histogram(
     energies,
@@ -145,14 +141,28 @@ area_detected_100pe = np.histogram(
     weights=max_scatter_area*(num_air_shower_photons >= 100),
     bins=energy_bin_edges)[0]
 
+effective_area_trigger = area_detected_trigger/area_thrown*(
+    area_thrown/num_thrown)
+effective_area_analysis = area_detected_analysis/area_thrown*(
+    area_thrown/num_thrown)
+effective_area_100pe = area_detected_100pe/area_thrown*(
+    area_thrown/num_thrown)
 
-effective_area_trigger = area_detected_trigger/area_thrown*(area_thrown/num_thrown)
-effective_area_analysis = area_detected_analysis/area_thrown*(area_thrown/num_thrown)
-effective_area_100pe = area_detected_100pe/area_thrown*(area_thrown/num_thrown)
-
-l0, = plt.step(energy_bin_edges[:-1], effective_area_trigger, 'k', label='trigger')
-l1, = plt.step(energy_bin_edges[:-1], effective_area_analysis, 'r', label='trigger && >= 100pe')
-l2, = plt.step(energy_bin_edges[:-1], effective_area_100pe, 'b', label='>= 100pe')
+l0, = plt.step(
+    energy_bin_edges[:-1],
+    effective_area_trigger,
+    'k',
+    label='trigger')
+l1, = plt.step(
+    energy_bin_edges[:-1],
+    effective_area_analysis,
+    'r',
+    label='trigger && >= 100pe')
+l2, = plt.step(
+    energy_bin_edges[:-1],
+    effective_area_100pe,
+    'b',
+    label='>= 100pe')
 plt.legend(handles=[l0, l1, l2])
 plt.semilogx()
 plt.semilogy()
