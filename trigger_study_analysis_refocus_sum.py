@@ -101,11 +101,11 @@ for i, b in enumerate(bins):
             color=colors[o])
 
 ax1.step(bins[:-1], wwot, 'k')
-#ax1.semilogx()
+ax1.semilogx()
 ax1.semilogy()
 ax1.set_ylabel('# events/1')
 
-#ax2.semilogx()
+ax2.semilogx()
 ax2.set_xlabel('# detected air-shower-photons/1')
 ax2.set_ylabel('probability to trigger/1')
 #ax2.legend(handles=label_handles)
