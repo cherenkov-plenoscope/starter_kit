@@ -25,7 +25,6 @@ import os
 import copy
 import shutil
 import acp_instrument_response_function as irf
-from acp_instrument_response_function.simulation import keep_stdout
 import corsika_wrapper as cw
 import plenopy as pl
 import tempfile
@@ -87,8 +86,10 @@ def run_acp_simulation(cfg):
             output_path=corsika_run_path,
             save_stdout=True)
 
-        keep_stdout(corsika_run_path+'.stdout', 'corsika.stdout', cfg)
-        keep_stdout(corsika_run_path+'.stderr', 'corsika.stderr', cfg)
+        irf.simulation.keep_stdout(
+            corsika_run_path+'.stdout', 'corsika.stdout', cfg)
+        irf.simulation.keep_stdout(
+            corsika_run_path+'.stderr', 'corsika.stderr', cfg)
 
         mct_rc = irf.simulation.acp_response(
             corsika_run_path=corsika_run_path,
@@ -96,10 +97,10 @@ def run_acp_simulation(cfg):
             cfg=cfg,
             photon_origins=True)
 
-        keep_stdout(
+        irf.simulation.keep_stdout(
             acp_response_path+'.stdout',
             'mctPlenoscopePropagation.stdout', cfg)
-        keep_stdout(
+        irf.simulation.keep_stdout(
             acp_response_path+'.stderr',
             'mctPlenoscopePropagation.stderr', cfg)
 
@@ -121,6 +122,8 @@ if __name__ == '__main__':
 
         # Set up configuration and directory environment
         cfg = {}
+        cfg['number_of_runs'] = int(arguments['--number_of_runs'])
+        cfg['mct_acp_propagator'] = arguments['--mct_acp_propagator']
         cfg['path'] = irf.working_dir.directory_structure(
             arguments['--output_path'])
 
@@ -139,9 +142,6 @@ if __name__ == '__main__':
             arguments['--mct_acp_config'],
             cfg['path']['main']['input']['mct_acp_config'])
 
-        cfg['number_of_runs'] = int(arguments['--number_of_runs'])
-        cfg['mct_acp_propagator'] = arguments['--mct_acp_propagator']
-
         cfg['corsika_steering_card_template'] = cw.read_steering_card(
             cfg['path']['main']['input']['corsika_steering_card_template'])
 
@@ -155,8 +155,7 @@ if __name__ == '__main__':
             cfg['path']['main']['input']['acp_detector'],
             os.path.join(
                 cfg['path']['main']['past_trigger']['dir'],
-                'input', 'plenoscope')
-            )
+                'input', 'plenoscope'))
 
         # SIMULATION
         simulation_instructions = irf.simulation.make_instructions(cfg)
