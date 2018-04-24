@@ -2,9 +2,13 @@ import glob
 import json
 import gzip
 import os
+import acp_instrument_response_function as acpirf
+import corsika_wrapper as cw
+
+os.makedirs('results', exist_ok=True)
 
 events = []
-for p in glob.glob('*.gz'):
+for p in glob.glob(os.path.join('intermediate_results_of_runs', '*.gz')):
     with gzip.open(p, 'rt') as fin:
         d = json.loads(fin.read())
         for item in d:
@@ -45,17 +49,8 @@ for b in range(bins.shape[0]):
         bins[b] = np.sqrt(2)*bins[b-1]
 
 fig = plt.figure()
-
 ax1 = fig.add_axes([0.1, 0.75, 0.8, 0.2], xticklabels=[])
 ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.6], ylim=(-0.05, 1.05))
-
-colors = ['C0', 'C1', 'C2']
-o = 0
-label_handles = []
-# for o, obj in enumerate(e['light_field_trigger']['object_distances']):
-
-median_pe = 61
-std = np.sqrt(median_pe)
 
 wt = np.histogram(
     num_air_shower_photons,
@@ -68,26 +63,15 @@ wwot = np.histogram(
 
 relative_uncertainties = np.sqrt(wwot)/wwot
 
-label_handles.append(
-    ax2.step(
-        bins[:-1],
-        wt/wwot,
-        # label='refocused to '+str(np.round(obj/1e3, 1))+'km',
-        color=colors[o]
-    )[0]
-)
+ax2.step(bins[:-1], wt/wwot, color='C0')
 
 w = wt/wwot
 w_low = w - w*relative_uncertainties
 w_upp = w + w*relative_uncertainties
 
-EXPOSURE_TIME = 40e-9
+EXPOSURE_TIME = 50e-9
 accidental_rate = 1/(EXPOSURE_TIME/w[0])
 accidental_rate_uncertainty = accidental_rate*(np.sqrt(wwot[0])/wwot[0])
-
-print(
-    'Accidental rate: ' + str(np.round(accidental_rate, 0)) +
-    ' +- ' + str(np.round(accidental_rate_uncertainty, 0)) + 's^-1')
 
 for i, b in enumerate(bins):
     if i > 0 and i < len(bins) - 1:
@@ -96,29 +80,35 @@ for i, b in enumerate(bins):
             w_low[i],
             w_upp[i],
             alpha=0.2,
-            color=colors[o])
+            color='C0')
 
+ax1.set_title(
+    'Accidental rate: ' + str(np.round(accidental_rate, 0)) +
+    ' +- ' + str(np.round(accidental_rate_uncertainty, 0)) + ' s**(-1)')
 ax1.step(bins[:-1], wwot, 'k')
 ax1.semilogx()
 ax1.semilogy()
 ax1.set_ylabel('# events/1')
-
 ax2.semilogx()
 ax2.set_xlabel('# detected air-shower-photons/1')
 ax2.set_ylabel('probability to trigger/1')
-# ax2.legend(handles=label_handles)
-
-plt.show()
+plt.savefig(os.path.join('results', 'trigger.png'))
 
 max_scatter_area = np.pi*max_scatter_radii**2
+num_energy_bins = int(np.sqrt(energies.shape[0])/6)
 
 energy_bin_edges = np.logspace(
-    np.log10(0.25),
-    np.log10(25),
+    np.log10(np.min(energies)),
+    np.log10(np.max(energies)),
     50)
 
 num_thrown = np.histogram(
     energies,
+    bins=energy_bin_edges)[0]
+
+num_detected = np.histogram(
+    energies,
+    weights=trigger_mask.astype(np.int),
     bins=energy_bin_edges)[0]
 
 area_thrown = np.histogram(
@@ -148,6 +138,7 @@ effective_area_analysis = area_detected_analysis/area_thrown*(
 effective_area_100pe = area_detected_100pe/area_thrown*(
     area_thrown/num_thrown)
 
+plt.figure()
 l0, = plt.step(
     energy_bin_edges[:-1],
     effective_area_trigger,
@@ -166,6 +157,46 @@ l2, = plt.step(
 plt.legend(handles=[l0, l1, l2])
 plt.semilogx()
 plt.semilogy()
-plt.ylabel('effective area/m^2')
-plt.xlabel('energy gamma-ray/GeV')
-plt.show()
+plt.ylabel('effective area/m**2')
+plt.xlabel('energy/GeV')
+plt.savefig(os.path.join('results', 'effective_area.png'))
+
+steerin_card_path = os.path.join('input', 'corsika_steering_card_template.txt')
+card = cw.read_steering_card(steerin_card_path)
+max_scatter_zenith_distance = (
+    acpirf.gamma_limits_bridge.max_scatter_zenith_distance_in(card))
+
+scatter_solid_angle = acpirf.gamma_limits_bridge.scatter_solid_angle(
+    max_scatter_zenith_distance)
+
+log10_E_TeV = np.log10(energy_bin_edges[0: -1]*1e-3)
+
+acceptence_cm2 = effective_area_trigger*1e2*1e2
+
+prmpar = int(card['PRMPAR'][0].split()[0])
+
+out = '# Atmospheric-Cherenkov-Plenoscope\n'
+out += '# Sebastian A. Mueller, '
+out +='Max Ludwig Ahnen, Dominik Neise, Adrian Biland 2018\n'
+out += '#\n'
+out += acpirf.header.particle_information(card)
+out += '#\n'
+if scatter_solid_angle > 0.0:
+    out += '# log10(Primary Particle Energy) [log10(TeV)], '
+    out += 'Effective Acceptance [sr*cm^2], '
+    acceptence_cm2 *= scatter_solid_angle
+else:
+    out += '# log10(Primary Particle Energy) [log10(TeV)], '
+    out += 'Effective Area [cm^2], '
+out += 'number thrown [#], number detected [#]\n'
+
+for i in range(len(log10_E_TeV)):
+    if num_thrown[i] > 0:
+        out += '{e:f}, {a:f}, {nt:d}, {nd:d}\n'.format(
+            e=log10_E_TeV[i],
+            a=acceptence_cm2[i],
+            nt=num_thrown[i],
+            nd=num_detected[i])
+
+with open(os.path.join('results', 'irf.csv'), 'wt') as fout:
+    fout.write(out)
