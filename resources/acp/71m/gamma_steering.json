@@ -1,0 +1,14 @@
+{
+    "random_seed": 0,
+    "number_events_in_run": 64,
+    "observation_level_altitude_asl": 5000.0,
+    "atmosphere_model": "chile-paranal-eso",
+    "primary_particle": "gamma",
+    "source_geometry": "point",
+    "max_scatter_radius_vs_energy": [
+        [0.25, 150],
+        [2.5, 150],
+        [4.0, 180],
+        [100, 400],
+        [1000, 570]]
+}

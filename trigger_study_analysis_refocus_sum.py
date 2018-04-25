@@ -2,8 +2,10 @@ import glob
 import json
 import gzip
 import os
-import acp_instrument_response_function as acpirf
-import corsika_wrapper as cw
+import numpy as np
+import matplotlib.pyplot as plt
+from os.path import join
+import acp_instrument_response_function.utils as irfutils
 
 os.makedirs('results', exist_ok=True)
 
@@ -161,25 +163,38 @@ plt.ylabel('effective area/m**2')
 plt.xlabel('energy/GeV')
 plt.savefig(os.path.join('results', 'effective_area.png'))
 
-steerin_card_path = os.path.join('input', 'corsika_steering_card_template.txt')
-card = cw.read_steering_card(steerin_card_path)
-max_scatter_zenith_distance = (
-    acpirf.gamma_limits_bridge.max_scatter_zenith_distance_in(card))
 
-scatter_solid_angle = acpirf.gamma_limits_bridge.scatter_solid_angle(
-    max_scatter_zenith_distance)
+steering_card = irfutils.read_json(join('input', 'steering.json'))
+acp_geometry = irfutils.read_acp_design_geometry(join(
+    'input',
+    'acp_detector',
+    'input',
+    'scenery',
+    'scenery.xml'))
+
+max_zenith_scatter = np.deg2rad(irfutils.max_zenith_scatter_angle_deg(
+    steering_card['source_geometry'],
+    acp_geometry['max_FoV_diameter_deg']))
+
+scatter_solid_angle = irfutils.scatter_solid_angle(max_zenith_scatter)
 
 log10_E_TeV = np.log10(energy_bin_edges[0: -1]*1e-3)
 
 acceptence_cm2 = effective_area_trigger*1e2*1e2
 
-prmpar = int(card['PRMPAR'][0].split()[0])
-
-out = '# Atmospheric-Cherenkov-Plenoscope\n'
-out += '# Sebastian A. Mueller, '
-out +='Max Ludwig Ahnen, Dominik Neise, Adrian Biland 2018\n'
+out =  '# Atmospheric-Cherenkov-Plenoscope\n'
+out += '# --------------------------------\n'
 out += '#\n'
-out += acpirf.header.particle_information(card)
+out += '# Sebastian A. Mueller\n'
+out += '# Max Ludwig Ahnen\n'
+out += '# Dominik Neise\n'
+out += '# Adrian Biland\n'
+out += '#\n'
+out += '# steering card\n'
+out += '# -------------\n'
+card_json = json.dumps(steering_card, indent=2).split('\n')
+for line in card_json:
+    out += '# ' + line + '\n'
 out += '#\n'
 if scatter_solid_angle > 0.0:
     out += '# log10(Primary Particle Energy) [log10(TeV)], '
