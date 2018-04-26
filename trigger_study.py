@@ -10,12 +10,6 @@ Options:
                                             energy.
     -o --output_path=PATH               [default: examples/trigger_gamma]
                                             Path to write the output directroy.
-    -n --number_runs=NUMBER             [default: 6]
-                                            Number of simulation runs to be
-                                            executed. The total number of events
-                                            is number_runs times
-                                            number_events_in_run which is
-                                            defined in the steering card.
     -a --acp_detector=PATH              [default: run/light_field_geometry]
                                             Path to the light-field-geometry of
                                             the ACP.
@@ -23,12 +17,6 @@ Options:
                                             Path to the mctracer ACP propagation configuration.
     -m --mct_acp_propagator=PATH        [default: build/mctracer/mctPlenoscopePropagation]
                                             Path to the mctracer ACP propagation executable.
-    -t --trigger_threshold=NUMBER       [default: 67]
-                                            The trigger-threshold of the light-
-                                            field-trigger. When the threshold
-                                            is exceeded, the according event
-                                            will be kept in the 'past_trigger'
-                                            directory.
 """
 import docopt
 import scoop
@@ -130,10 +118,8 @@ if __name__ == '__main__':
         steering_card_path = arguments['--steering_card']
         output_path = arguments['--output_path']
         acp_detector_path = arguments['--acp_detector']
-        number_runs = int(arguments['--number_runs'])
         mct_acp_config_path = arguments['--mct_acp_config']
         mct_acp_propagator_path = arguments['--mct_acp_propagator']
-        trigger_threshold = float(arguments['--trigger_threshold'])
 
         op = output_path
         imr = 'intermediate_results_of_runs'
@@ -175,9 +161,9 @@ if __name__ == '__main__':
         # Prepare simulation
         max_scatter_radius_in_bin, energy_bin_edges = (
             irfutils.energy_bins_and_max_scatter_radius(
-                max_scatter_radius_vs_energy=steering_card[
-                    'max_scatter_radius_vs_energy'],
-                number_runs=number_runs))
+                energy=steering_card['energy'],
+                max_scatter_radius=steering_card['max_scatter_radius'],
+                number_runs=steering_card['number_runs']))
 
         irfutils.export_max_scatter_radius_vs_energy(
             energy_bin_edges=energy_bin_edges,
@@ -185,14 +171,14 @@ if __name__ == '__main__':
             directory=join(op, 'input'))
 
         jobs = []
-        for run in range(number_runs):
+        for run in range(steering_card['number_runs']):
             job = {}
             job['run_number'] = run+1
             job['corsika_steering_card'] = irfutils.make_corsika_steering_card(
                 random_seed=steering_card['random_seed'],
                 run_number=job['run_number'],
                 number_events_in_run=steering_card['number_events_in_run'],
-                primary_particle=primary_particle_to_corsika(
+                primary_particle=irfutils.primary_particle_to_corsika(
                     steering_card['primary_particle']),
                 E_start=energy_bin_edges[run],
                 E_stop=energy_bin_edges[run + 1],
@@ -222,7 +208,7 @@ if __name__ == '__main__':
                 op, 'stdout', '{:d}_corsika.stdout'.format(run+1))
             job['corsika_stderr_path'] = join(
                 op, 'stdout', '{:d}_corsika.stderr'.format(run+1))
-            job['trigger_threshold'] = trigger_threshold
+            job['trigger_threshold'] = steering_card['trigger_threshold']
             jobs.append(job)
 
         # Run simulation
