@@ -33,18 +33,12 @@ Options:
 import docopt
 import scoop
 import numpy as np
-import json
-from collections import OrderedDict
-import xml.etree.ElementTree
 import os
 from os.path import join
-import copy
 import shutil as sh
-import matplotlib.pyplot as plt
 import tempfile
 import corsika_wrapper as cw
 import plenopy as pl
-import subprocess
 import acp_instrument_response_function.utils as irfutils
 
 
