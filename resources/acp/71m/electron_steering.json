@@ -4,8 +4,8 @@
     "number_events_in_run": 4,
     "observation_level_altitude_asl": 5000.0,
     "atmosphere_model": "chile-paranal-eso",
-    "primary_particle": "gamma",
-    "source_geometry": "point",
+    "primary_particle": "electron",
+    "source_geometry": "diffuse",
     "energy": [0.25, 2.5, 4.0, 100, 1000],
     "max_scatter_radius": [150, 150, 180, 400, 570],
     "trigger_threshold": 67.0
