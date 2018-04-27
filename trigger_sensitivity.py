@@ -85,7 +85,7 @@ if __name__ == '__main__':
             fov_in_deg=6.5,
             source='3FGL J2254.0+1608',
             out_path=join(od, 'isf'))
-        isf.save_result(path=join(od, 'isf'), dictionary=results)
+        isf.save_results(path=join(od, 'isf'), dictionary=results)
 
     except docopt.DocoptExit as e:
         print(e)
