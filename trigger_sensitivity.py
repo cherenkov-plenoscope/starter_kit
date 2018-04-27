@@ -56,14 +56,8 @@ if __name__ == '__main__':
                         'resources', 'acp', 'mct_propagation_config.xml'),
                     mct_acp_propagator_path=join(
                         'build', 'mctracer', 'mctPlenoscopePropagation'))
-                print(len(jobs))
 
-        # High energies shall go first
-        sorted(
-            jobs,
-            key=irf.trigger_simulation.job_energy_sort_key,
-            reverse=True)
-
+        random.shuffle(jobs)
         rc = list(scoop.futures.map(irf.trigger_simulation.run_job, jobs))
 
         for p in particles:
