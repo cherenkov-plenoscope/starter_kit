@@ -13,11 +13,15 @@ Options:
                             [default: 1337]
 """
 import docopt
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import scoop
 import os
 from os.path import join
 from subprocess import call
 import acp_instrument_response_function as irf
+import acp_instrument_sensitivity_function as isf
 import random
 
 
@@ -54,7 +58,12 @@ if __name__ == '__main__':
                         'build', 'mctracer', 'mctPlenoscopePropagation'))
                 print(len(jobs))
 
-        random.shuffle(jobs)
+        # High energies shall go first
+        sorted(
+            jobs,
+            key=irf.trigger_simulation.job_energy_sort_key,
+            reverse=True)
+
         rc = list(scoop.futures.map(irf.trigger_simulation.run_job, jobs))
 
         for p in particles:
@@ -64,19 +73,18 @@ if __name__ == '__main__':
         # 3) Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
         os.makedirs(join(od, 'isf'), exist_ok=True)
-        call([
-            'acp_isez',
-            '--gamma_area', join(
+        isf.analysis(
+            gamma_collection_area_path=join(
                 od, 'irf', 'gamma', 'results', 'irf.csv'),
-            '--electron_acceptance', join(
+            electron_collection_acceptance_path=join(
                 od, 'irf', 'electron', 'results', 'irf.csv'),
-            '--proton_acceptance', join(
+            proton_collection_acceptance_path=join(
                 od, 'irf', 'proton', 'results', 'irf.csv'),
-            '--cutoff', '0.01',
-            '--rel_flux', '0.05',
-            '--fov', '6.5',
-            '--src', '3FGL J2254.0+1608',
-            '--out', join(od, 'isf')])
+            rigidity_cutoff_in_tev=0.01,
+            relative_flux_below_cutoff=0.05,
+            fov_in_deg=6.5,
+            source='3FGL J2254.0+1608',
+            out_path=join(od, 'isf'))
 
     except docopt.DocoptExit as e:
         print(e)
