@@ -1,12 +1,12 @@
 {
     "random_seed": 0,
-    "number_runs": 4,
-    "number_events_in_run": 4,
+    "number_runs": 192,
+    "number_events_in_run": 48,
     "observation_level_altitude_asl": 5000.0,
     "atmosphere_model": "chile-paranal-eso",
     "primary_particle": "gamma",
     "source_geometry": "point",
-    "energy": [0.25, 2.5, 4.0, 100, 1000],
-    "max_scatter_radius": [150, 150, 180, 400, 570],
+    "energy":             [0.23, 0.8, 3.0, 35,   81,   432,  1000],
+    "max_scatter_radius": [150,  150, 460, 1100, 1235, 1410, 1660],
     "trigger_threshold": 67.0
 }
