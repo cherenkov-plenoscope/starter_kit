@@ -149,7 +149,6 @@ import shutil
 
 def test_read_run_with_plenopy(tmp):
     assert os.path.exists(join(tmp, 'calibration_gamma.acp'))
-    shutil.copytree(tmp, '/home/sebastian/Desktop/this_test_thing')
     run = pl.Run(join(tmp, 'calibration_gamma.acp'))
     assert len(run) > 1
     np.random.seed(0)
