@@ -7,6 +7,5 @@
     "primary_particle": "proton",
     "source_geometry": "diffuse",
     "energy":             [5.0, 25, 250, 1000],
-    "max_scatter_radius": [200, 350, 700, 1250],
-    "trigger_threshold": 67.0
+    "max_scatter_radius": [200, 350, 700, 1250]
 }

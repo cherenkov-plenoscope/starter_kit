@@ -7,6 +7,5 @@
     "primary_particle": "electron",
     "source_geometry": "diffuse",
     "energy":             [0.23, 1.0,  10,  100,  1000],
-    "max_scatter_radius": [150,  150,  500, 1100, 2600],
-    "trigger_threshold": 67.0
+    "max_scatter_radius": [150,  150,  500, 1100, 2600]
 }

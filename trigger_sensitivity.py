@@ -24,9 +24,21 @@ import acp_instrument_response_function as irf
 import acp_instrument_sensitivity_function as isf
 import random
 
+"""
+Trigger settings
+----------------
+
+integration_time_in_slices, patch-threshold for zero accidental-rate
+5 (2.5ns), 67
+10 (5.0ns), 101
+"""
+
 
 if __name__ == '__main__':
     try:
+        patch_threshold = 101
+        integration_time_in_slices = 10
+
         arguments = docopt.docopt(__doc__)
         od = arguments['--out_dir']
 
@@ -55,14 +67,19 @@ if __name__ == '__main__':
                     mct_acp_config_path=join(
                         'resources', 'acp', 'mct_propagation_config.xml'),
                     mct_acp_propagator_path=join(
-                        'build', 'mctracer', 'mctPlenoscopePropagation'))
+                        'build', 'mctracer', 'mctPlenoscopePropagation'),
+                    trigger_patch_threshold=patch_threshold,
+                    trigger_integration_time_in_slices=(
+                        integration_time_in_slices))
 
         random.shuffle(jobs)
         rc = list(scoop.futures.map(irf.trigger_simulation.run_job, jobs))
 
         for p in particles:
             if os.path.isdir(join(od, 'irf', p)):
-                irf.trigger_study_analysis.run_analysis(join(od, 'irf', p))
+                irf.trigger_study_analysis.run_analysis(
+                    path=join(od, 'irf', p),
+                    patch_threshold=patch_threshold)
 
         # 3) Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
