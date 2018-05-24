@@ -15,7 +15,7 @@ trigger_patches = [
 fsize = pl.plot.FigureSize(
     relative_width=1,
     relative_hight=1,
-    pixel_rows=1000,
+    pixel_rows=1280,
     dpi=200)
 
 for trigger_patch in range(len(trigger_patches)):
@@ -44,7 +44,7 @@ for trigger_patch in range(len(trigger_patches)):
         ax.set_xlim(trigger_patches[trigger_patch]['xlim'])
         ax.set_ylim(trigger_patches[trigger_patch]['ylim'])
         plt.savefig(
-            'trigger_patch_{id:d}_mask_obj_{obj:d}.png'.format(
+            'trigger_patch_{id:d}_mask_obj_{obj:d}.jpg'.format(
                 id=trigger_patch_id,
                 obj=object_distance_id),
             dpi=fsize.dpi)
