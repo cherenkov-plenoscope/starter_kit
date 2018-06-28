@@ -76,7 +76,9 @@ if __name__ == '__main__':
         rc = list(scoop.futures.map(irf.trigger_simulation.run_job, jobs))
 
         for p in particles:
-            if os.path.isdir(join(od, 'irf', p)):
+            if (os.path.isdir(join(od, 'irf', p)) and
+                not os.path.isdir(join(od, 'irf', p, 'results'))
+            ):
                 irf.trigger_study_analysis.run_analysis(
                     path=join(od, 'irf', p),
                     patch_threshold=patch_threshold)
@@ -94,9 +96,8 @@ if __name__ == '__main__':
             rigidity_cutoff_in_tev=0.01,
             relative_flux_below_cutoff=0.05,
             fov_in_deg=6.5,
-            source='3FGL J2254.0+1608',
-            out_path=join(od, 'isf'))
-        isf.save_results(path=join(od, 'isf'), dictionary=results)
+            source_name='3FGL J2254.0+1608',
+            out_dir=join(od, 'isf'))
 
     except docopt.DocoptExit as e:
         print(e)
