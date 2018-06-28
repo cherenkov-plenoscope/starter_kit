@@ -2,104 +2,102 @@
 """
 Estimate the sensitivity of the Atmospheric Cherenkov Plenoscope (ACP).
 
-You can run the simulation in parallel using a python scoop cluster, but you do
-not have to.
-
-The default number of particle observation runs and light field calibration
-photons is rather large (same as in our ACP introduction paper) and will take
-some time (9h on our 96 core cluster).
-
-Usage: estimate_sensitivity [--out_dir=DIR] [-s=SCOOP_HOSTS] [--number_of_runs=RUNS] [--lfc_Mp=MEGA_PHOTONS] [--number_of_bins=NUM_BINS]
+Usage: trigger_sensitivity [--out_dir=DIR] [-s=PATH] [--lfc_Mp=NUMBER]
 
 Options:
-    -o --out_dir=DIR                Output directory [default: ./run]
-    -s --scoop_hosts=SCOOP_HOSTS    Path to the scoop hosts text file.
-    --number_of_runs=RUNS           How many runs to simulate for each
-                                    particle [default: 3840]
-    --lfc_Mp=MEGA_PHOTONS           How many mega photons to be used during the
-                                    light field calibration of the plenoscope.
-                                    [default: 1337]
-    --number_of_bins=NUM_BINS       The number of energy bins for the
-                                    instrument response function.
-                                    [default: 30]
+    -h --help               Prints this help message.
+    -o --out_dir=DIR        Output directory [default: ./run]
+    -s --scoop_hosts=PATH   Path to the scoop hosts text file.
+    --lfc_Mp=NUMBER         How many mega photons to be used during the
+                            light field calibration of the plenoscope.
+                            [default: 1337]
 """
 import docopt
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import scoop
 import os
 from os.path import join
 from subprocess import call
-import acp_instrument_response_function as acp_irf
+import acp_instrument_response_function as irf
+import acp_instrument_sensitivity_function as isf
+import random
+
+"""
+Trigger settings
+----------------
+
+integration_time_in_slices, patch-threshold for zero accidental-rate
+5 (2.5ns), 67
+10 (5.0ns), 101
+"""
 
 
-def main():
+if __name__ == '__main__':
     try:
-        arguments = docopt.docopt(__doc__)
-        out_dir = arguments['--out_dir']
+        patch_threshold = 101
+        integration_time_in_slices = 10
 
-        # 1) Light field calibration of Plenoscope
+        arguments = docopt.docopt(__doc__)
+        od = arguments['--out_dir']
+
+        # 1) Light-field-calibration of Plenoscope
         # ----------------------------------------
-        os.makedirs(out_dir, exist_ok=True)
-        if not os.path.isdir(join(out_dir, 'light_field_calibration')):
+        os.makedirs(od, exist_ok=True)
+        if not os.path.isdir(join(od, 'light_field_calibration')):
             call([
                 join('build', 'mctracer', 'mctPlenoscopeCalibration'),
                 '--scenery', join('resources', 'acp', '71m', 'scenery'),
                 '--number_mega_photons', arguments['--lfc_Mp'],
-                '--output', join(out_dir, 'light_field_calibration')
-            ])
+                '--output', join(od, 'light_field_calibration')])
 
-        # 2) Instrument response functions for typical cosmic particles
+        # 2) Instrument-response-functions for typical cosmic particles
         # -------------------------------------------------------------
         particles = ['gamma', 'electron', 'proton']
-        os.makedirs(join(out_dir, 'irf'), exist_ok=True)
+        jobs = []
+        os.makedirs(join(od, 'irf'), exist_ok=True)
         for p in particles:
-            if not os.path.isdir(join(out_dir, 'irf', p)):
-                command = [
-                    'acp_instrument_response_function',
-                    '--corsika_card', join(
-                        'resources', 'acp', '71m', p+'_steering_card.txt'),
-                    '--output_path', join(out_dir, 'irf', p),
-                    '--number_of_runs', arguments['--number_of_runs'],
-                    '--acp_detector', join(out_dir, 'light_field_calibration'),
-                    '--mct_acp_config', join(
-                        'resources', 'acp',
-                        'mct_propagation_config_no_night_sky_background.xml'),
-                    '--mct_acp_propagator', join(
+            if not os.path.isdir(join(od, 'irf', p)):
+                jobs += irf.trigger_simulation.make_output_directory_and_jobs(
+                    steering_card_path=join(
+                        'resources', 'acp', '71m', p+'_steering.json'),
+                    output_path=join(od, 'irf', p),
+                    acp_detector_path=join(od, 'light_field_calibration'),
+                    mct_acp_config_path=join(
+                        'resources', 'acp', 'mct_propagation_config.xml'),
+                    mct_acp_propagator_path=join(
                         'build', 'mctracer', 'mctPlenoscopePropagation'),
-                ]
-                if arguments['--scoop_hosts']:
-                    command.insert(1, '--scoop_hosts')
-                    command.insert(2, arguments['--scoop_hosts'])
-                call(command)
+                    trigger_patch_threshold=patch_threshold,
+                    trigger_integration_time_in_slices=(
+                        integration_time_in_slices))
 
-        os.makedirs(join(out_dir, 'irf', 'results'), exist_ok=True)
+        random.shuffle(jobs)
+        rc = list(scoop.futures.map(irf.trigger_simulation.run_job, jobs))
+
         for p in particles:
-            result_path = join(out_dir, 'irf', 'results', p+'.csv')
-            if not os.path.isfile(result_path):
-                acp_irf.gamma_limits_bridge.export_effective_area(
-                    input_path=join(out_dir, 'irf', p),
-                    detector_responses_key='raw_lixel_sum',
-                    detector_response_threshold=100,
-                    output_path=result_path,
-                    bins=int(arguments['--number_of_bins']))
+            if (os.path.isdir(join(od, 'irf', p)) and
+                not os.path.isdir(join(od, 'irf', p, 'results'))
+            ):
+                irf.trigger_study_analysis.run_analysis(
+                    path=join(od, 'irf', p),
+                    patch_threshold=patch_threshold)
 
         # 3) Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
-        if not os.path.isdir(join(out_dir, 'isf')):
-            os.makedirs(join(out_dir, 'isf'), exist_ok=True)
-            call([
-                'acp_isez',
-                '--gamma_area', join(out_dir, 'irf', 'results', 'gamma.csv'),
-                '--electron_acceptance', join(
-                    out_dir, 'irf', 'results', 'electron.csv'),
-                '--proton_acceptance', join(
-                    out_dir, 'irf', 'results', 'proton.csv'),
-                '--cutoff', '0.01',
-                '--rel_flux', '0.05',
-                '--fov', '6.5',
-                '--src', '3FGL J2254.0+1608',
-                '--out', join(out_dir, 'isf')])
+        os.makedirs(join(od, 'isf'), exist_ok=True)
+        results = isf.analysis(
+            gamma_collection_area_path=join(
+                od, 'irf', 'gamma', 'results', 'irf.csv'),
+            electron_collection_acceptance_path=join(
+                od, 'irf', 'electron', 'results', 'irf.csv'),
+            proton_collection_acceptance_path=join(
+                od, 'irf', 'proton', 'results', 'irf.csv'),
+            rigidity_cutoff_in_tev=0.01,
+            relative_flux_below_cutoff=0.05,
+            fov_in_deg=6.5,
+            source_name='3FGL J2254.0+1608',
+            out_dir=join(od, 'isf'))
 
     except docopt.DocoptExit as e:
         print(e)
-
-if __name__ == '__main__':
-    main()
