@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-The starter kit with all the packages needed to explore the ACP.
+The starter-kit of the Atmospheric-Cherenkov-Plenoscope.
 
 Recommendations:
 - Operating System: Linux (we develope on [Ubuntu](https://www.ubuntu.com/download/desktop) LTS)
