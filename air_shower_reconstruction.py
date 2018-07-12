@@ -26,7 +26,7 @@ for event in run:
     roi = pl.classify.center_for_region_of_interest(event)
     ph = pl.classify.RawPhotons.from_event(event)
 
-    ph_cherenkov = pl.classify.classify_cherenkov_photons_in_roi_in_image(
+    ph_cherenkov = pl.classify.cherenkov_photons_in_roi_in_image(
         roi=roi,
         photons=ph)
 
