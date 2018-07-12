@@ -23,14 +23,14 @@ sum_ppv = 0
 number_events = 0
 
 for event in run:
-    roi = pl.photon_classification.center_for_region_of_interest(event)
-    ph = pl.photon_classification.RawPhotons.from_event(event)
+    roi = pl.classify.center_for_region_of_interest(event)
+    ph = pl.classify.RawPhotons.from_event(event)
 
-    ph_cherenkov = pl.photon_classification.classify_cherenkov_photons_in_roi_in_image(
+    ph_cherenkov = pl.classify.classify_cherenkov_photons_in_roi_in_image(
         roi=roi,
         photons=ph)
 
-    b = pl.photon_classification.benchmark(
+    b = pl.classify.benchmark(
         pulse_origins=event.simulation_truth.detector.pulse_origins,
         photon_ids_cherenkov=ph_cherenkov.photon_ids)
 
