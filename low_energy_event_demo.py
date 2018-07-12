@@ -116,7 +116,7 @@ if not os.path.exists(join(out_dir, 'gamma.evtio')):
 if not os.path.exists(join(out_dir, 'gamma.acp')):
     call([
         join('build', 'mctracer', 'mctPlenoscopePropagation'),
-        '--lixel', join('resources', 'acp', '71m', 'light_field_calibration'),
+        '--lixel', join('run', 'light_field_calibration'),
         '--input', join(out_dir, 'gamma.evtio'),
         '--config', join('resources', 'acp', 'mct_propagation_config.xml'),
         '--output', join(out_dir, 'gamma.acp'),
