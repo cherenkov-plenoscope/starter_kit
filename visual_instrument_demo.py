@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import reflector_study as rs
+import os
 
 
 acp_config = {
@@ -15,8 +16,8 @@ acp_config = {
         'housing_overhead': 1.1,
         'number_of_paxel_on_pixel_diagonal': 9,
         'sensor_distance_to_principal_aperture_plane': 106.05,
-        'offset_position': [0,0,0],
-        'offset_rotation_tait_bryan': [0,0,0],
+        'offset_position': [0, 0, 0],
+        'offset_rotation_tait_bryan': [0, 0, 0],
         },
     'system': {
         'mctracer': {
@@ -24,15 +25,19 @@ acp_config = {
             'username': 'spiros',
             'key_path': 'C:\\Users\\Spiros Daglas\\Desktop\\ssh\\spiros',
             'run_path_linux': '/home/spiros/Desktop/run',
-            'ray_tracer_propagation_path_linux': '/home/spiros/Desktop/build/mctPropagate'
+            'ray_tracer_propagation_path_linux':
+                '/home/spiros/Desktop/build/mctPropagate'
             },
         'sap2000': {
-            'path': 'C:\Program Files\Computers and Structures\SAP2000 19\sap2000.exe',
-            'working_directory': 'C:\\Users\\Spiros Daglas\\Desktop\\SAP2000_working_directory\\example_1'
+            'path':
+                'C:\Program Files\Computers and Structures\SAP2000 19\sap2000.exe',
+            'working_directory':
+                'C:\\Users\\Spiros Daglas\\Desktop\\SAP2000_working_directory\\example_1'
             }
         },
     'structure_spatial_position': {
-        'translational_vector_xyz': [0.0, 0.0, 0.0], #not used anymore. created from the tait bryan angle Ry
+        'translational_vector_xyz': [0.0, 0.0, 0.0],
+        # not used anymore. created from the tait bryan angle Ry
         'rotational_vector_Rx_Ry_Rz': [0.0, 0.0, 0.0]
         },
     'reflector': {
@@ -40,7 +45,8 @@ acp_config = {
             'max_outer_radius': 35.35,
             'min_inner_radius': 2.5,
             'number_of_layers': 2,
-            'x_over_z_ratio': 1.66, #for truss function always keep it between 1.36 and 2.26
+            'x_over_z_ratio': 1.66,
+            # for truss function always keep it between 1.36 and 2.26
             'security_distance_from_ground': 2.6
             },
         'optics': {
@@ -49,7 +55,7 @@ acp_config = {
             },
         'facet': {
             'gap_in_between': 0.025,
-            'inner_hex_radius': 0.75, #CTA LST facet size
+            'inner_hex_radius': 0.75,  # CTA LST facet size
             'surface_weight': 20.0,
             'actuator_weight': 0.0
             },
@@ -67,7 +73,7 @@ acp_config = {
             'buckling_length_factor': 0.9
             }
         },
-    'tension_ring':{
+    'tension_ring': {
         'width': 1.1,
         'support_position': 10,
         'material': {
@@ -84,10 +90,12 @@ acp_config = {
             'buckling_length_factor': 0.9
             }
         },
-    'cables':{
+    'cables': {
         'material': {
-            'e_modul': 95e6, #according to Bridon Endurance Dyform 18 PI
-            'specific_weight': 89.9, #according to Bridon Endurance Dyform 18 PI
+            'e_modul': 95e6,
+            # according to Bridon Endurance Dyform 18 PI
+            'specific_weight': 89.9,
+            # according to Bridon Endurance Dyform 18 PI
             'yielding_point': 1671000.0,
             'ultimate_point': 1671000.0,
             'security_factor': 1.05
@@ -101,14 +109,24 @@ acp_config = {
             'wind': 1.00
             },
         'wind': {
-            'direction': 0.0, #OK
-            'speed': 55, #m/s.OK
-            'terrain_factor': 1, ##Terrain 1.OK
-            'orography_factor': 1, ##No increase of the wind due to mountains etc.OK
-            'K1': 1, ##Turbulence factor. No accurate information available.OK
-            'CsCd': 1.2, ## usually 1. But our structure very prone to dynamic efects, so Cd very conservative 1.2.OK
-            'wind_density': 1.25, #wind density.OK
-            'cpei': 1.5 #according to EC1-4 Z.7.3(freistehende Dächer) und Z. 7.2 Tab.7.4a (big?, although a preciser definition is impossible), OK
+            'direction': 0.0,
+            # OK
+            'speed': 55,
+            # m/s.OK
+            'terrain_factor': 1,
+            # Terrain 1.OK
+            'orography_factor': 1,
+            # No increase of the wind due to mountains etc.OK
+            'K1': 1,
+            # Turbulence factor. No accurate information available.OK
+            'CsCd': 1.2,
+            # usually 1. But our structure very prone to dynamic efects,
+            # so Cd very conservative 1.2.OK
+            'wind_density': 1.25,
+            # wind density.OK
+            'cpei': 1.5
+            # according to EC1-4 Z.7.3(freistehende Dächer) und Z. 7.2 Tab.7.4a
+            # (big?, although a preciser definition is impossible), OK
             },
         'seismic': {
             'acceleration': 3.6
@@ -130,5 +148,5 @@ acp_config = {
 geometry = rs.Geometry(acp_config)
 reflector = rs.factory.generate_reflector(geometry)
 
-with open('visual/acp_71m_visual.xml', 'w') as f:                
+with open(os.path.join('examples', 'visual', 'acp_71m_visual.xml'), 'w') as f:
     f.write(rs.mctracer_bridge.xml.visual_scenery(reflector))
