@@ -26,12 +26,18 @@ for event in run:
     core_y = event.simulation_truth.event.corsika_event_header.core_position_y_meter()
     energy = event.simulation_truth.event.corsika_event_header.total_energy_GeV
 
+    if energy < 15:
+        continue
+
     roi = pl.classify.center_for_region_of_interest(event)
     photons = pl.classify.RawPhotons.from_event(event)
 
     cherenkov_photons = pl.classify.cherenkov_photons_in_roi_in_image(
         roi=roi,
         photons=photons)
+
+    if cherenkov_photons.photon_ids.shape[0] < 1000:
+        continue
 
     b = pl.classify.benchmark(
         pulse_origins=event.simulation_truth.detector.pulse_origins,
@@ -84,11 +90,70 @@ for event in run:
         (c_pap_time[1] - core_cy)**2)
 
     print(
-        '{o:.2f}deg, {f:.2}deg, {p:.2f}deg, {e:.2f}GeV'.format(
+        '{o:.2f}deg, {f:.2f}deg, {p:.2f}deg, {e:.2f}GeV'.format(
             o=np.rad2deg(trigger_offset),
             f=np.rad2deg(flash_offset),
             p=np.rad2deg(pap_time_offset),
             e=energy))
+
+
+    number_macro_paxel = 7
+    r = light_field_geometry.expected_aperture_radius_of_imaging_system/3
+    pax_x = [0.0]
+    pax_y = [0.0]
+    pax_r = r * np.ones(number_macro_paxel)
+    pax_photons = []
+    for i, phi in enumerate(
+        np.linspace(0, 2*np.pi, number_macro_paxel - 1, endpoint=False)):
+        pax_x.append(2*r*np.cos(phi))
+        pax_y.append(2*r*np.sin(phi))
+    for i in range(number_macro_paxel):
+        d_off = np.hypot(
+            cherenkov_photons.x - pax_x[i],
+            cherenkov_photons.y - pax_y[i])
+        mask = d_off <= r
+        pax_photons.append(cherenkov_photons.cut(mask))
+
+    roi_r = np.deg2rad(0.5)
+    pixel_fov = 0.5*np.deg2rad(.0667)
+
+    fig, axes = plt.subplots(number_macro_paxel + 1)
+    for i in range(number_macro_paxel):
+        axes[i].hist2d(
+            np.rad2deg(pax_photons[i].cx_cy_in_object_distance(7.5e3)[0]),
+            np.rad2deg(pax_photons[i].cx_cy_in_object_distance(7.5e3)[1]),
+            bins=(
+                np.rad2deg(np.linspace(
+                    c_pap_time[0] - roi_r,
+                    c_pap_time[0] + roi_r,
+                    int(2*roi_r/pixel_fov))),
+                np.rad2deg(np.linspace(
+                    c_pap_time[1] - roi_r,
+                    c_pap_time[1] + roi_r,
+                    int(2*roi_r/pixel_fov)))
+            ),
+        )
+        axes[i].set_aspect('equal')
+    i = i + 1
+    axes[i].hist2d(
+        np.rad2deg(cherenkov_photons.cx_cy_in_object_distance(17.5e3)[0]),
+        np.rad2deg(cherenkov_photons.cx_cy_in_object_distance(17.5e3)[1]),
+        bins=(
+            np.rad2deg(np.linspace(
+                c_pap_time[0] - roi_r,
+                c_pap_time[0] + roi_r,
+                int(2*roi_r/pixel_fov))),
+            np.rad2deg(np.linspace(
+                c_pap_time[1] - roi_r,
+                c_pap_time[1] + roi_r,
+                int(2*roi_r/pixel_fov)))
+        ),
+    )
+    axes[i].set_aspect('equal')
+
+    plt.show()
+
+
     """
     fig = plt.figure()
     ax = fig.gca(projection='3d')
