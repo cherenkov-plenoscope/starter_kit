@@ -2,8 +2,8 @@
 """
 Install the Atmospheric Cherenkov Plenoscope (ACP) starter kit.
 
-We apologize for this, but you need to have the credentials to the KIT CORSIKA
-air-shower simulation software.
+You need to have the credentials to the KIT-CORSIKA
+air-shower-simulation-software.
 
 Go visit https://www.ikp.kit.edu/corsika/ and kindly ask for the username and
 password combination.
@@ -23,31 +23,48 @@ from subprocess import call
 def main():
     try:
         arguments = docopt.docopt(__doc__)
+        os.makedirs('build', exist_ok=True)
 
-        call(['mkdir', 'build'])
+        # KIT-CORSIKA
+        # -----------
         call([
             join('.', 'corsika_install', 'install.py'),
             '--install_path', join('.', 'build', 'corsika'),
             '--username', arguments['--username'],
             '--password', arguments['--password'],
             '--resource_path', join('.', 'corsika_install', 'resources')])
-        call(['pip', 'install', '-e', './corsika_wrapper/'])
+        call(['pip', 'install', '-e', join('.', 'corsika_wrapper')])
         call([
             'corsika',
             '--corsika_path',
-            'build/corsika/corsika-75600/run/corsika75600Linux_QGSII_urqmd'])
-        call(['mkdir', './build/mctracer'])
-        os.chdir('./build/mctracer')
-        call(['cmake', '../../mctracer'])
-        call(['make', '-j', '12'])
-        call(['touch', './../../mctracer/CMakeLists.txt'])
-        call(['make', '-j', '12'])
-        os.chdir('./../..')
-        call(['pip', 'install', '-e', './plenopy/'])
-        call(['pip', 'install', '-e', './gamma_limits_sensitivity/'])
-        call(['pip', 'install', '-e', './instrument_response_function/'])
-        call(['pip', 'install', '-e', './instrument_sensitivity_function/'])
-        call(['pip', 'install', '-e', './robo_mount/'])
+            join(
+                'build',
+                'corsika',
+                'corsika-75600',
+                'run',
+                'corsika75600Linux_QGSII_urqmd')])
+
+        # Photon-propagator mctracer
+        # --------------------------
+        mct_build_dir = join('.', 'build', 'mctracer')
+        os.makedirs(mct_build_dir, exist_ok=True)
+        call(['cmake', '../../mctracer'], cwd=mct_build_dir)
+        call(['make', '-j', '12'], cwd=mct_build_dir)
+        call(['touch', './../../mctracer/CMakeLists.txt'], cwd=mct_build_dir)
+        call(['make', '-j', '12'], cwd=mct_build_dir)
+
+        # Tools
+        # -----
+        call(['pip', 'install', '-e', join(
+            '.', 'plenopy')])
+        call(['pip', 'install', '-e', join(
+            '.', 'gamma_limits_sensitivity')])
+        call(['pip', 'install', '-e', join(
+            '.', 'instrument_response_function')])
+        call(['pip', 'install', '-e', join(
+            '.', 'instrument_sensitivity_function')])
+        call(['pip', 'install', '-e', join(
+            '.', 'robo_mount')])
 
     except docopt.DocoptExit as e:
         print(e)
