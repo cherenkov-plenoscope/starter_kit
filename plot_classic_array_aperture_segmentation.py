@@ -73,7 +73,7 @@ ax.spines['top'].set_visible(False)
 circ = plt.Circle((0, 0), radius=R, color='k', fill=False)
 ax.add_patch(circ)
 vor = scipy.spatial.Voronoi(
-    1.05*np.c_[
+    np.c_[
         light_field_geometry.paxel_pos_x,
         light_field_geometry.paxel_pos_y],
     furthest_site=False)
