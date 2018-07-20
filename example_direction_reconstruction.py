@@ -6,7 +6,7 @@ import json
 
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
+#plt.rc('font', family='serif')
 
 out_dir = os.path.join('examples', 'incident_direction')
 os.makedirs(out_dir, exist_ok=True)
@@ -26,7 +26,10 @@ def integration_width_for_one_sigma(hist, bin_edges):
     one_sigma = 0.68
     integral = np.cumsum(hist/np.sum(hist))
     bin_centers = (bin_edges[0:-1] + bin_edges[1:])/2
-    x = np.linspace(np.min(bin_centers), np.max(bin_centers), 100*bin_centers.shape[0])
+    x = np.linspace(
+        np.min(bin_centers),
+        np.max(bin_centers),
+        100*bin_centers.shape[0])
     f = np.interp(x=x, fp=integral, xp=bin_centers)
     return x[np.argmin(np.abs(f - one_sigma))]
 
@@ -35,15 +38,23 @@ cah_path = os.path.join(out_dir, 'incident_direction.msg')
 if not os.path.exists(cah_path):
     for event in run:
         r = {}
-        primary_momentum = event.simulation_truth.event.corsika_event_header.momentum()
+        primary_momentum = (
+            event.simulation_truth.event.corsika_event_header.momentum())
         primary_direction = primary_momentum/np.linalg.norm(primary_momentum)
 
-        r['particle_id'] = event.simulation_truth.event.corsika_event_header.primary_particle_id
+        r['particle_id'] = (
+            event.simulation_truth.event.corsika_event_header.
+            primary_particle_id)
         r['core_cx'] = - primary_direction[0]
         r['core_cy'] = - primary_direction[1]
-        r['core_x'] = event.simulation_truth.event.corsika_event_header.core_position_x_meter()
-        r['core_y'] = event.simulation_truth.event.corsika_event_header.core_position_y_meter()
-        r['energy'] = event.simulation_truth.event.corsika_event_header.total_energy_GeV
+        r['core_x'] = (
+            event.simulation_truth.event.corsika_event_header.
+            core_position_x_meter())
+        r['core_y'] = (
+            event.simulation_truth.event.corsika_event_header.
+            core_position_y_meter())
+        r['energy'] = (
+            event.simulation_truth.event.corsika_event_header.total_energy_GeV)
 
         number_events += 1
         print(number_events, r['energy'])
@@ -62,13 +73,13 @@ if not os.path.exists(cah_path):
         r['trigger_patch_cx'] = roi['cx_center_roi']
         r['trigger_patch_cy'] = roi['cy_center_roi']
 
-        # Incident-direction reconstructed using mean of photons in image-space
-        # ---------------------------------------------------------------------
+        # Incident-direction using mean of photons in image-space
+        # -------------------------------------------------------
         r['image_mean_cx'] = np.mean(cherenkov_photons.cx)
         r['image_mean_cy'] = np.mean(cherenkov_photons.cy)
 
-        # Incident-direction reconstructed using median of photons in image-space
-        # -----------------------------------------------------------------------
+        # Incident-direction using median of photons in image-space
+        # ---------------------------------------------------------
         r['image_median_cx'] = np.median(cherenkov_photons.cx)
         r['image_median_cy'] = np.median(cherenkov_photons.cy)
 
@@ -127,10 +138,12 @@ for method in methods:
 
     ax.axvline(incident_direction_resolution_one_sigma, color='k')
     plt.savefig(
-        os.path.join(out_dir, 'incident_directions_at_750MeV_to_1500MeV_'+method+'.png'))
+        os.path.join(
+            out_dir,
+            'incident_directions_at_750MeV_to_1500MeV_'+method+'.png'))
 
     # Resolution Figure
-    #------------------
+    # -----------------
     resolution_path = os.path.join(
         'run', 'isf', 'assumed_angular_resolution.json')
     with open(resolution_path, 'rt') as fin:
@@ -194,4 +207,3 @@ for method in methods:
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     fig.savefig(
         os.path.join(out_dir, 'assumed_angular_resolution.png'))
-
