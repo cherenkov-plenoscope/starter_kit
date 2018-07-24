@@ -102,33 +102,3 @@ ax.set_xlabel('$x$/m')
 ax.set_ylabel('$y$/m')
 plt.savefig(os.path.join(out_dir, 'aperture_segmentation_voronoi_spacing.png'))
 plt.close('all')
-
-
-fig = plt.figure(figsize=(6, 6), dpi=320)
-ax = fig.add_axes((0.1, 0.1, 0.9, 0.9))
-ax.spines['right'].set_visible(False)
-ax.spines['top'].set_visible(False)
-circ = plt.Circle((0, 0), radius=R, color='k', fill=False)
-ax.add_patch(circ)
-number_macro_paxel = 7
-r = R/3
-pax_x = [0.0]
-pax_y = [0.0]
-pax_r = r * np.ones(number_macro_paxel)
-for i, phi in enumerate(
-    np.linspace(0, 2*np.pi, number_macro_paxel - 1, endpoint=False)):
-    pax_x.append(2*r*np.cos(phi))
-    pax_y.append(2*r*np.sin(phi))
-for i in range(number_macro_paxel):
-    circ = plt.Circle(
-        (pax_x[i], pax_y[i]),
-        radius=pax_r[i],
-        color='k',
-        fill=False)
-    ax.add_patch(circ)
-ax.set_xlim(-R*1.03, R*1.03)
-ax.set_ylim(-R*1.03, R*1.03)
-ax.set_xlabel('$x$/m')
-ax.set_ylabel('$y$/m')
-plt.savefig(os.path.join(out_dir, 'aperture_segmentation_seve_telescopes.png'))
-plt.close('all')
