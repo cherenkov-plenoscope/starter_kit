@@ -6,6 +6,13 @@ import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
+# interesting events:
+# event in run | run number | event number | particle type
+# 006163_000719_000016_01
+# 006678_000792_000037_01
+# 006912_000826_000015_01
+
+
 light_field_geometry = pl.LightFieldGeometry(
     os.path.join('run', 'light_field_calibration'))
 
