@@ -124,18 +124,21 @@ for method in methods:
     # 1 GeV regime
     energy_mask = ((rs.energy > 0.75) & (rs.energy <= 1.5))
     fig = plt.figure(figsize=(6, 6), dpi=320)
-    ax = fig.add_axes((0.1, 0.1, 0.9, 0.9))
+    ax = fig.add_axes((0.09, 0.09, 0.9, 0.9))
     h = ax.hist(
         np.rad2deg(rs[method + '_offset'][energy_mask]),
         bins=np.linspace(0, 2, 20),
         fc='gray',
         ec='none')
-    ax.set_xlabel('residual incident-direction/deg')
-    ax.set_ylabel('number events/1')
+    ax.set_xlabel('Residual incident-direction / deg')
+    ax.set_ylabel('Number of events / 1')
 
     incident_direction_resolution_one_sigma = integration_width_for_one_sigma(
         h[0], h[1])
 
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.axvline(incident_direction_resolution_one_sigma, color='k')
     plt.savefig(
         os.path.join(
@@ -177,7 +180,7 @@ for method in methods:
 
     one_sigma_resolutions = []
     one_sigma_resolution_errors = []
-    energy_bin_edges = 0.75*(np.cumprod(1.4*np.ones(6))/1.4)
+    energy_bin_edges = np.array([0.75, 1.5]) #  0.75*(np.cumprod(1.4*np.ones(3))/1.4)
     for energy_bin in range(len(energy_bin_edges) - 1):
         energy_mask = (
             (rs.energy > energy_bin_edges[energy_bin]) &
@@ -196,14 +199,15 @@ for method in methods:
         x=energy_bin_centers,
         y=one_sigma_resolutions,
         yerr=one_sigma_resolution_errors,
-        fmt='kx:',
-        label='Plenoscope, light-front')
+        xerr=np.gradient(energy_bin_edges)[0]/2,
+        fmt='kx',
+        label='Portal, plenoscope, light-front')
     ax.loglog()
     ax.legend(loc='best', fontsize=10)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.set_xlabel('Energy / GeV')
-    ax.set_ylabel('Resolution / deg')
+    ax.set_ylabel('Angular resolution / deg')
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     fig.savefig(
         os.path.join(out_dir, 'assumed_angular_resolution.png'))
