@@ -1,15 +1,135 @@
 #! /usr/bin/env python
-import docopt
 import os
 from os.path import join
-from subprocess import call
+import subprocess as sp
+import shutil
+import hashlib
 import plenopy as pl
-import corsika_wrapper as cw
+# import corsika_wrapper as cw
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
+import xml
+import json
+import glob
 
 
+def triple2mct(x, y, z):
+    return '[{x:f}, {y:f}, {z:f}]'.format(x=x, y=y, z=z)
+
+
+def write_misaligned_plenoscope_scenery(
+    x_in_units_of_f,
+    y_in_units_of_f,
+    z_in_units_of_f,
+    rot_x,
+    rot_y,
+    rot_z,
+    path,
+    template_scenery_path=join(
+        'resources', 'acp', '71m', 'scenery', 'scenery.xml')
+):
+    tree = xml.etree.ElementTree.parse(template_scenery_path)
+    scenery = tree.getroot()
+    frame = scenery.find('frame')
+    light_field_sensor = frame.find('light_field_sensor')
+    expected_imaging_system_focal_length = float(light_field_sensor.find(
+        'set_light_field_sensor').attrib[
+            'expected_imaging_system_focal_length'])
+    light_field_sensor.find('set_frame').attrib['pos'] = triple2mct(
+        expected_imaging_system_focal_length * x_in_units_of_f,
+        expected_imaging_system_focal_length * y_in_units_of_f,
+        expected_imaging_system_focal_length * z_in_units_of_f)
+    light_field_sensor.find('set_frame').attrib['rot'] = triple2mct(
+        rot_x,
+        rot_y,
+        rot_z)
+    tree.write(path)
+
+    m = hashlib.sha256()
+    m.update('{:.6f}'.format(x_in_units_of_f).encode())
+    m.update('{:.6f}'.format(y_in_units_of_f).encode())
+    m.update('{:.6f}'.format(z_in_units_of_f).encode())
+    m.update('{:.6f}'.format(rot_x).encode())
+    m.update('{:.6f}'.format(rot_y).encode())
+    m.update('{:.6f}'.format(rot_z).encode())
+    return m.hexdigest()
+
+
+def read_misalignment_from_scenery(path):
+    tree = xml.etree.ElementTree.parse(path)
+    scenery = tree.getroot()
+    frame = scenery.find('frame')
+    light_field_sensor = frame.find('light_field_sensor')
+    pos_string = light_field_sensor.find('set_frame').attrib['pos']
+    rot_string = light_field_sensor.find('set_frame').attrib['rot']
+    pos = json.loads(pos_string)
+    rot = json.loads(rot_string)
+    return pos, rot
+
+
+d2r = np.deg2rad
+
+out_dir = join('examples', 'compensating_misalignments')
+os.makedirs(out_dir, exist_ok=True)
+
+# Estimating light-field-geometries for various misalignments
+# -----------------------------------------------------------
+number_mega_photons = 100
+
+light_field_geometries_dir = join(out_dir, 'light_field_geometries')
+
+y_rotations = d2r(np.linspace(0.0, 5.0, 7))
+z_translations = np.linspace(0.97, 1.03, 7)
+
+i = 0
+for y_rot in y_rotations:
+    for z_trans in z_translations:
+        scenery_dir = join(
+            light_field_geometries_dir,
+            '{:03d}_portal_plenoscope'.format(i))
+        os.makedirs(scenery_dir, exist_ok=True)
+
+        misalignment_hash = write_misaligned_plenoscope_scenery(
+            x_in_units_of_f=0,
+            y_in_units_of_f=0,
+            z_in_units_of_f=z_trans,
+            rot_x=0,
+            rot_y=y_rot,
+            rot_z=0,
+            path=join(scenery_dir, 'scenery.xml'))
+
+        light_field_geometry_path = join(
+            light_field_geometries_dir,
+            '{i:03d}_light_field_geometry_{ha:s}'.format(
+                i=i,
+                ha=misalignment_hash))
+
+        if not os.path.exists(light_field_geometry_path):
+            sp.call([
+                join('.', 'build', 'mctracer', 'mctPlenoscopeCalibration'),
+                '-s', scenery_dir,
+                '-n', '{:d}'.format(number_mega_photons),
+                '-o', light_field_geometry_path ])
+
+        shutil.rmtree(scenery_dir)
+        i += 1
+
+
+# Analyse and visualize different misalignments
+# ---------------------------------------------
+lfgs = []
+poss = []
+rots = []
+for lfg_path in glob.glob(join(light_field_geometries_dir, '*')):
+    lfg = pl.LightFieldGeometry(lfg_path)
+    lfgs.append(lfg)
+    pos, rot = read_misalignment_from_scenery(
+        join(lfg_path, 'input', 'scenery', 'scenery.xml'))
+    poss.append(pos)
+    rots.append(rot)
+
+
+"""
 out_dir = join('examples', 'sensor_misalignment_demo')
 os.makedirs(out_dir, exist_ok=True)
 
@@ -121,3 +241,4 @@ plt.title('Difference')
 pl.image.plot.add_pixel_image_to_ax(diff, ax)
 
 plt.show()
+"""
