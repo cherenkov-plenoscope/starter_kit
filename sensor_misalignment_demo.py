@@ -8,7 +8,7 @@ import plenopy as pl
 # import corsika_wrapper as cw
 import numpy as np
 import matplotlib.pyplot as plt
-import xml
+import xml.etree.ElementTree as xmlElementTree
 import json
 import glob
 
@@ -24,7 +24,7 @@ def write_misaligned_plenoscope_scenery(
     template_scenery_path=join(
         'resources', 'acp', '71m', 'scenery', 'scenery.xml')
 ):
-    tree = xml.etree.ElementTree.parse(template_scenery_path)
+    tree = xmlElementTree.parse(template_scenery_path)
     scenery = tree.getroot()
     frame = scenery.find('frame')
     light_field_sensor = frame.find('light_field_sensor')
@@ -52,7 +52,7 @@ def write_misaligned_plenoscope_scenery(
 
 
 def read_misalignment_from_scenery(path):
-    tree = xml.etree.ElementTree.parse(path)
+    tree = xmlElementTree.parse(path)
     scenery = tree.getroot()
     frame = scenery.find('frame')
     light_field_sensor = frame.find('light_field_sensor')
