@@ -3,7 +3,6 @@ import os
 from os.path import join
 import subprocess as sp
 import shutil
-import hashlib
 import plenopy as pl
 # import corsika_wrapper as cw
 import numpy as np
@@ -45,15 +44,6 @@ def write_misaligned_plenoscope_scenery(
         rot_z)
     tree.write(path)
 
-    m = hashlib.sha256()
-    m.update('{:.6f}'.format(x_in_units_of_f).encode())
-    m.update('{:.6f}'.format(y_in_units_of_f).encode())
-    m.update('{:.6f}'.format(z_in_units_of_f).encode())
-    m.update('{:.6f}'.format(rot_x).encode())
-    m.update('{:.6f}'.format(rot_y).encode())
-    m.update('{:.6f}'.format(rot_z).encode())
-    return m.hexdigest()
-
 
 def read_misalignment_from_scenery(path):
     tree = xmlElementTree.parse(path)
@@ -89,7 +79,7 @@ for y_rot in y_rotations:
             '{:03d}_portal_plenoscope'.format(i))
         os.makedirs(scenery_dir, exist_ok=True)
 
-        misalignment_hash = write_misaligned_plenoscope_scenery(
+        write_misaligned_plenoscope_scenery(
             x_in_units_of_f=0,
             y_in_units_of_f=0,
             z_in_units_of_f=z_trans,
@@ -100,9 +90,7 @@ for y_rot in y_rotations:
 
         light_field_geometry_path = join(
             light_field_geometries_dir,
-            '{i:03d}_light_field_geometry_{ha:s}'.format(
-                i=i,
-                ha=misalignment_hash))
+            '{:03d}_light_field_geometry'.format(i))
 
         if not os.path.exists(light_field_geometry_path):
             sp.call([
