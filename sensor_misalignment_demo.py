@@ -13,6 +13,10 @@ import json
 import glob
 
 
+def triple2mct(x, y, z):
+    return '[{x:f}, {y:f}, {z:f}]'.format(x=x, y=y, z=z)
+
+
 def write_misaligned_plenoscope_scenery(
     x_in_units_of_f,
     y_in_units_of_f,
@@ -77,8 +81,6 @@ light_field_geometries_dir = join(out_dir, 'light_field_geometries')
 y_rotations = d2r(np.linspace(0.0, 5.0, 7))
 z_translations = np.linspace(0.97, 1.03, 7)
 
-
-"""
 i = 0
 for y_rot in y_rotations:
     for z_trans in z_translations:
@@ -111,7 +113,6 @@ for y_rot in y_rotations:
 
         shutil.rmtree(scenery_dir)
         i += 1
-"""
 
 # Analyse and visualize different misalignments
 # ---------------------------------------------
@@ -166,11 +167,12 @@ for key in h:
     h[key] = np.array(h[key])
 
 
-
+"""
 # trans z
 for l in range(len(lfgs)):
     homtra = lfgs[l].sensor_plane2imaging_system.sensor_plane2imaging_system
     if np.abs(homtra[0:3, 0:3] - np.eye(3)) < 0.1:
+"""
 
 
 
