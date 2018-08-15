@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import xml.etree.ElementTree as xmlElementTree
 import json
 import glob
+import wrapp_mct_photon_propagation as mctw
 
 
 def triple2mct(x, y, z):
@@ -104,6 +105,7 @@ for y_rot in y_rotations:
 
 # Analyse and visualize different misalignments
 # ---------------------------------------------
+
 lfgs = []
 poss = []
 rots = []
@@ -115,7 +117,7 @@ for lfg_path in glob.glob(join(light_field_geometries_dir, '*')):
     poss.append(pos)
     rots.append(rot)
 
-
+"""
 
 direction_std_bin_edges = np.deg2rad(np.linspace(0, 0.2, 100 + 1))
 direction_std_bin_centers = (
@@ -155,56 +157,101 @@ for l in range(len(lfgs)):
             lfgs[l].y_std[v],
             bins=support_std_bin_edges)[0])
 
-
+"""
 # Propagate photons to show Point-spread-function
 # -----------------------------------------------
-
 psf_dir = join(out_dir, 'psf')
 os.makedirs(psf_dir, exist_ok=True)
+
+N = 11
+c_azimuth = np.linspace(0, 3*np.pi, N, endpoint=False)
+c_radius = np.linspace(0, np.deg2rad(3.0), N)
+
+cxs = c_radius*np.cos(c_azimuth)
+cys = c_radius*np.sin(c_azimuth)
 
 config_path = join(
     'resources',
     'acp',
     'mct_propagation_config_no_night_sky_background.xml')
 
-input_path = join(psf_dir, 'light.xml')
-with open(input_path, 'wt') as fout:
-    fout.write(
-        """<lightsource>
-    <point_source
-        opening_angle_in_deg="2.5"
-        number_of_photons="1e6"
-        rot_in_deg="[0.0, 180.0, 0.0]"
-        pos="[0.0, 0.0, 1e3]"
-    />
-</lightsource>
-""")
+mct_propagate_raw_photons_path = join(
+    '.', 'build', 'mctracer', 'mctPlenoscopeRawPhotonPropagation')
 
 
+raw_responses = []
 for l in range(len(lfgs)):
-
+    if l > 0:
+        break
     light_field_geometry_path = join(
         light_field_geometries_dir,
         '{:03d}_light_field_geometry'.format(l))
+    lfg = pl.LightFieldGeometry(light_field_geometry_path)
 
-    output_path = join(
-        psf_dir,
-        '{l:03d}_psf'.format(l=l))
+    sum_light_field = np.zeros(lfg.number_lixel, dtype=np.uint32)
+    for p in range(N):
+        output_path = join(
+            psf_dir,
+            '{l:03d}_{p:03d}psf'.format(l=l, p=p))
 
-    mct_propagate_call = [
-        join('.', 'build', 'mctracer', 'mctPlenoscopeRawPhotonPropagation'),
-        '-l', light_field_geometry_path,
-        '-c', config_path,
-        '-i', input_path,
-        '-o', output_path,
-        '-r', '0',]
+        mctw.point_source_in_plenoscope(
+            cx=cxs[p],
+            cy=cys[p],
+            object_distance=10e3,
+            illumination_radius_on_ground=50,
+            number_of_photons=1e5,
+            light_field_geometry_path=light_field_geometry_path,
+            output_path=output_path,
+            mct_propagate_raw_photons_path=mct_propagate_raw_photons_path,
+            config_path=config_path,
+            random_seed=0)
 
-    o_path = output_path + '.stdout.txt'
-    e_path = output_path + '.stderr.txt'
-    with open(o_path, 'wt') as fo, open(e_path, 'wt') as fe:
-        sp.call(mct_propagate_call, stdout=fo, stderr=fe)
+        tmp_run = pl.Run(output_path)
+        tmp_event = tmp_run[0]
+        tmp_light_field = tmp_event.light_field_sequence_raw().sum(axis=0)
+        sum_light_field += tmp_light_field
+    raw_responses.append({
+        'light_field': sum_light_field,
+        'light_field_geometry': lfg})
 
 
+lf = raw_responses[0]['light_field']
+lfg = raw_responses[0]['light_field_geometry']
+
+imrays = pl.image.ImageRays(lfg)
+cx, cy = imrays.cx_cy_in_object_distance(-5.5e3)
+valid = np.invert(np.isnan(cx)) & np.invert(np.isnan(cy))
+
+plt.figure()
+plt.hist2d(
+    np.rad2deg(cx[valid]),
+    np.rad2deg(cy[valid]),
+    weights=lf[valid],
+    bins=151,
+    cmap='inferno')
+plt.xlim([-4,4])
+plt.ylim([-4,4])
+
+lx = lfg.lixel_positions_x
+ly = lfg.lixel_positions_y
+px = lx.reshape((lfg.number_pixel, lfg.number_paxel)).mean(axis=1)
+py = ly.reshape((lfg.number_pixel, lfg.number_paxel)).mean(axis=1)
+focal_length = lfg.sensor_plane2imaging_system.expected_imaging_system_focal_length
+cpx = - np.arctan(px/focal_length)
+cpy = - np.arctan(py/focal_length)
+image = lf.reshape((lfg.number_pixel, lfg.number_paxel)).sum(axis=1)
+
+plt.figure()
+plt.hist2d(
+    np.rad2deg(cpx), np.rad2deg(cpy),
+    weights=image,
+    bins=151,
+    cmap='inferno')
+plt.xlim([-4,4])
+plt.ylim([-4,4])
+plt.show()
+
+"""
 N = 4
 styles = ['k-', 'k--', 'k:', 'k-.']
 fig = plt.figure(figsize=(6, 6), dpi=320)
@@ -230,7 +277,7 @@ for i, l in enumerate([0, 2, 4, 6]):
 ax.semilogy()
 ax.legend(loc='best', fontsize=10)
 fig.savefig(join(out_dir, 'fig.jpg'))
-
+"""
 
 
 
