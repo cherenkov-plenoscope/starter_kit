@@ -117,8 +117,12 @@ for lfg_path in glob.glob(join(light_field_geometries_dir, '*')):
 
 
 
-direction_std_bin_edges = np.deg2rad(np.linspace(0, 0.2, 100))
-support_std_bin_edges = np.linspace(0, 10, 100)
+direction_std_bin_edges = np.deg2rad(np.linspace(0, 0.2, 100 + 1))
+direction_std_bin_centers = (
+    direction_std_bin_edges[0:-1] + direction_std_bin_edges[1:])/2
+support_std_bin_edges = np.linspace(0, 10, 100 + 1)
+support_std_bin_centers = (
+    support_std_bin_edges[0:-1] + support_std_bin_edges[1:])/2
 
 h = {}
 h['cx_std'] = []
@@ -151,8 +155,84 @@ for l in range(len(lfgs)):
             lfgs[l].y_std[v],
             bins=support_std_bin_edges)[0])
 
-for key in h:
-    h[key] = np.array(h[key])
+
+# Propagate photons to show Point-spread-function
+# -----------------------------------------------
+
+psf_dir = join(out_dir, 'psf')
+os.makedirs(psf_dir, exist_ok=True)
+
+config_path = join(
+    'resources',
+    'acp',
+    'mct_propagation_config_no_night_sky_background.xml')
+
+input_path = join(psf_dir, 'light.xml')
+with open(input_path, 'wt') as fout:
+    fout.write(
+        """<lightsource>
+    <point_source
+        opening_angle_in_deg="2.5"
+        number_of_photons="1e6"
+        rot_in_deg="[0.0, 180.0, 0.0]"
+        pos="[0.0, 0.0, 1e3]"
+    />
+</lightsource>
+""")
+
+
+for l in range(len(lfgs)):
+
+    light_field_geometry_path = join(
+        light_field_geometries_dir,
+        '{:03d}_light_field_geometry'.format(l))
+
+    output_path = join(
+        psf_dir,
+        '{l:03d}_psf'.format(l=l))
+
+    mct_propagate_call = [
+        join('.', 'build', 'mctracer', 'mctPlenoscopeRawPhotonPropagation'),
+        '-l', light_field_geometry_path,
+        '-c', config_path,
+        '-i', input_path,
+        '-o', output_path,
+        '-r', '0',]
+
+    o_path = output_path + '.stdout.txt'
+    e_path = output_path + '.stderr.txt'
+    with open(o_path, 'wt') as fo, open(e_path, 'wt') as fe:
+        sp.call(mct_propagate_call, stdout=fo, stderr=fe)
+
+
+N = 4
+styles = ['k-', 'k--', 'k:', 'k-.']
+fig = plt.figure(figsize=(6, 6), dpi=320)
+ax = fig.add_axes((0.1, 0.1, 0.89, 0.89))
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+ax.set_xlabel(r'$\sigma_{c_x}$ / deg')
+ax.set_ylabel(r'Intensity / 1')
+for i, l in enumerate([0, 2, 4, 6]):
+    ax.plot(
+        np.rad2deg(direction_std_bin_centers),
+        h['cx_std'][l],
+        styles[i],
+        alpha=(i + 1)/N,
+        label='{:0.1f}, {:0.1f}'.format(
+            lfgs[l].sensor_plane2imaging_system.sensor_plane2imaging_system[2,3],
+            lfgs[l].sensor_plane2imaging_system.sensor_plane2imaging_system[2,2]))
+    ax.grid(
+        color='k',
+        linestyle='-',
+        linewidth=0.66,
+        alpha=0.1)
+ax.semilogy()
+ax.legend(loc='best', fontsize=10)
+fig.savefig(join(out_dir, 'fig.jpg'))
+
+
+
 
 
 """
