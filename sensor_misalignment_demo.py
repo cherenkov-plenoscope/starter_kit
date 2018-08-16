@@ -219,7 +219,7 @@ lf = raw_responses[0]['light_field']
 lfg = raw_responses[0]['light_field_geometry']
 
 imrays = pl.image.ImageRays(lfg)
-cx, cy = imrays.cx_cy_in_object_distance(-5.5e3)
+cx, cy = imrays.cx_cy_in_object_distance(10e3)
 valid = np.invert(np.isnan(cx)) & np.invert(np.isnan(cy))
 
 plt.figure()
