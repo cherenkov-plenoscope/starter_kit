@@ -7,67 +7,41 @@ import tempfile
 
 
 def point_source_in_plenoscope(
-    cx,
-    cy,
-    object_distance,
-    illumination_radius_on_ground,
-    number_of_photons,
+    input_path,
     light_field_geometry_path,
     output_path,
     mct_propagate_raw_photons_path,
     config_path,
     random_seed=0,
 ):
-    theta_open = np.arctan(illumination_radius_on_ground/object_distance)
+    if os.path.exists(output_path):
+        shutil.rmtree(output_path)
 
-    pos_x = object_distance * np.tan(cx)
-    pos_y = object_distance * np.tan(cy)
-    pos_z = object_distance
+    mct_propagate_call = [
+        mct_propagate_raw_photons_path,
+        '-l', light_field_geometry_path,
+        '-c', config_path,
+        '-i', input_path,
+        '-o', output_path,
+        '--all_truth',
+        '-r', str(random_seed),]
 
-    rot_y = np.pi - np.hypot(cx, cy)
-    rot_z = - np.arctan2(cy, cx)
-
-    with tempfile.TemporaryDirectory() as tmp:
-
-        input_path = join(tmp, 'light.xml')
-        ls =  '<lightsource>\n'
-        ls += '  <point_source\n'
-        ls += '    opening_angle_in_deg="{:0.6f}"\n'.format(
-            np.rad2deg(theta_open))
-        ls += '    number_of_photons="{:0.6f}"\n'.format(number_of_photons)
-        ls += '    rot_in_deg="[0.0, {ry:f}, {rz:f}]"\n'.format(
-            ry=np.rad2deg(rot_y), rz=np.rad2deg(rot_z))
-        ls += '    pos="[{x:f}, {y:f}, {z:f}]"\n'.format(
-            x=pos_x, y=pos_y, z=pos_z)
-        ls += '  />\n'
-        ls += '</lightsource>\n'
-        with open(input_path, 'wt') as fout:
-            fout.write(ls)
-
-        mct_propagate_call = [
-            mct_propagate_raw_photons_path,
-            '-l', light_field_geometry_path,
-            '-c', config_path,
-            '-i', input_path,
-            '-o', output_path,
-            '-r', str(random_seed),]
-
-        o_path = output_path + '.stdout.txt'
-        e_path = output_path + '.stderr.txt'
-        with open(o_path, 'wt') as fo, open(e_path, 'wt') as fe:
-            rc = sp.call(mct_propagate_call, stdout=fo, stderr=fe)
-        return rc
+    o_path = output_path + '.stdout.txt'
+    e_path = output_path + '.stderr.txt'
+    with open(o_path, 'wt') as fo, open(e_path, 'wt') as fe:
+        rc = sp.call(mct_propagate_call, stdout=fo, stderr=fe)
+    return rc
 
 
 
-def write_ascii_table_of_photons(path, ids, supports, directions, wavelengths):
-    number_photons = ids.shape[0]
+def write_ascii_table_of_photons(path, supports, directions, wavelengths):
+    number_photons = supports.shape[0]
     photons = np.zeros(shape=(number_photons, 8))
-    photons[:, 0] = ids
+    photons[:, 0] = np.arange(number_photons)
     photons[:, 1:4] = supports
     photons[:, 4:7] = directions
     photons[:, 7] = wavelengths
-    np.savetxt(path, photons, delimiter=',', newline='\n')
+    np.savetxt(path, photons, delimiter=' ', newline='\n')
 
 """
 [0] id,
@@ -84,37 +58,6 @@ def sample_2D_points_within_radius(radius, size):
     return x, y
 
 
-def point_source_illuminating_xy_disc(
-    number_photons,
-    x,
-    y,
-    z,
-    disc_x,
-    disc_y,
-    disc_z,
-    disc_radius,
-):
-    ids = np.arange(number_photons)
-    supports = np.ones(shape=(number_photons, 3))
-    supports[:, 0] *= x
-    supports[:, 1] *= y
-    supports[:, 2] *= z
-    intersections_on_disc = np.zeros(shape=(number_photons, 3))
-    ix, iy = sample_2D_points_within_radius(
-        radius=disc_radius,
-        size=number_photons)
-    intersections_on_disc[:, 0] = ix + disc_x
-    intersections_on_disc[:, 1] = iy + disc_y
-    intersections_on_disc[:, 2] = disc_z
-    directions = intersections_on_disc - supports
-    no = np.linalg.norm(directions, axis=1)
-    directions[:, 0] /= no
-    directions[:, 1] /= no
-    directions[:, 2] /= no
-    wavelengths = 433e-9 * np.ones(number_photons)
-    return ids, supports, directions, wavelengths
-
-
 def line_source_illuminating_xy_disc(
     number_photons,
     line_start_x,
@@ -128,7 +71,6 @@ def line_source_illuminating_xy_disc(
     disc_z,
     disc_radius,
 ):
-    ids = np.arange(number_photons)
     supports = np.ones(shape=(number_photons, 3))
 
     line_start = np.array([line_start_x, line_start_y, line_start_z])
@@ -156,8 +98,7 @@ def line_source_illuminating_xy_disc(
     directions[:, 0] /= no
     directions[:, 1] /= no
     directions[:, 2] /= no
-    wavelengths = 433e-9 * np.ones(number_photons)
-    return ids, supports, directions, wavelengths
+    return supports, directions
 
 
 def vertex_wire_source_illuminating_xy_disc(
@@ -177,7 +118,7 @@ def vertex_wire_source_illuminating_xy_disc(
             vertices[edges[e, 0]] - vertices[edges[e, 1]])
     total_length = np.sum(edge_lengths)
 
-    number_photons_on_edge = np.zeros(edges.shape[0])
+    number_photons_on_edge = np.zeros(edges.shape[0], dtype=np.int64)
     for e in range(edges.shape[0]):
         number_photons_on_edge[e] = int(
             np.round(
@@ -185,9 +126,8 @@ def vertex_wire_source_illuminating_xy_disc(
 
     sups = []
     dirs = []
-    wvls = []
     for e in range(edges.shape[0]):
-        ids_ed, supp_ed, dirs_ed, wvl_ed = line_source_illuminating_xy_disc(
+        supp_ed, dirs_ed = line_source_illuminating_xy_disc(
             number_photons=number_photons_on_edge[e],
             line_start_x=vertices[edges[e, 0]][0],
             line_start_y=vertices[edges[e, 0]][1],
@@ -201,10 +141,5 @@ def vertex_wire_source_illuminating_xy_disc(
             disc_radius=disc_radius)
         sups.append(supp_ed)
         dirs.append(dirs_ed)
-        wvls.append(wvl_ed)
 
-    return (
-        np.arange(np.sum(number_photons_on_edge)),
-        np.vstack(sups),
-        np.vstack(dirs),
-        np.vstack(wvls))
+    return np.vstack(sups), np.vstack(dirs)

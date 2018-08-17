@@ -158,6 +158,81 @@ for l in range(len(lfgs)):
             bins=support_std_bin_edges)[0])
 
 """
+
+# phantom source
+# --------------
+number_photons = 1e5
+
+# disk on ground to be illuminated
+disc_x = 0.0
+disc_y = 0.0
+disc_z = 0.0
+disc_radius = 40.0
+
+# triangle at object-distance 5km
+# -------------------------------
+obj_triangle = 5e3
+
+viewing_radius = np.deg2rad(3)
+triangle_radius = obj_triangle*np.tan(viewing_radius)
+tr = triangle_radius
+
+triangle_vertices = np.array([
+    [tr*np.cos(2*np.pi*0.25), tr*np.sin(2*np.pi*0.25), obj_triangle],
+    [tr*np.cos(2*np.pi*0.5833), tr*np.sin(2*np.pi*0.5833), obj_triangle],
+    [tr*np.cos(2*np.pi*0.9166), tr*np.sin(2*np.pi*0.9166), obj_triangle],])
+
+triangle_edges = np.array([
+    [0, 1],
+    [1, 2],
+    [2, 0],])
+
+ids, sups, dirs, wvls = mctw.vertex_wire_source_illuminating_xy_disc(
+    number_photons=number_photons,
+    vertices=triangle_vertices,
+    edges=triangle_edges,
+    disc_x=disc_x,
+    disc_y=disc_y,
+    disc_z=disc_z,
+    disc_radius=disc_radius)
+
+mctw.write_ascii_table_of_photons(
+    triangle_path, ids=ids, supports=sups, directions=dirs, wavelengths=wvls)
+
+# spiral at object-distance 10km
+# ------------------------------
+obj_spiral = 10e3
+N = 11
+spiral_azimuth = np.linspace(0, 3*np.pi, N, endpoint=False)
+spiral_viewing_radius = np.linspace(0, np.deg2rad(3.0), N)
+
+spiral_ids = []
+spiral_sups = []
+spiral_dirs = []
+spiral_wvls = []
+for n in range(N):
+    ids, sups, dirs, wvls = mctw.point_source_illuminating_xy_disc(
+        number_photons=int(number_photons/N),
+        x=np.cos(spiral_azimuth[n])*obj_spiral*np.tan(spiral_viewing_radius[n]),
+        y=np.sin(spiral_azimuth[n])*obj_spiral*np.tan(spiral_viewing_radius[n]),
+        z=obj_spiral,
+        disc_x=disc_x,
+        disc_y=disc_y,
+        disc_z=disc_z,
+        disc_radius=disc_radius)
+ids = np.vstack(spiral_ids)
+sups = np.vstack(spiral_sups)
+dirs = np.vstack(spiral_dirs)
+wcls = np.vstack(spiral_wvls)
+
+mctw.write_ascii_table_of_photons(
+    spiral_path, ids=ids, supports=sups, directions=dirs, wavelengths=wvls)
+
+# sunny circle at object-distance 15km
+# ------------------------------------
+obj_sun = 15e3
+
+
 # Propagate photons to show Point-spread-function
 # -----------------------------------------------
 psf_dir = join(out_dir, 'psf')
@@ -194,17 +269,18 @@ for l in range(len(lfgs)):
             psf_dir,
             '{l:03d}_{p:03d}psf'.format(l=l, p=p))
 
-        mctw.point_source_in_plenoscope(
-            cx=cxs[p],
-            cy=cys[p],
-            object_distance=10e3,
-            illumination_radius_on_ground=50,
-            number_of_photons=1e5,
-            light_field_geometry_path=light_field_geometry_path,
-            output_path=output_path,
-            mct_propagate_raw_photons_path=mct_propagate_raw_photons_path,
-            config_path=config_path,
-            random_seed=0)
+        if not os.path.exists(output_path):
+            mctw.point_source_in_plenoscope(
+                cx=cxs[p],
+                cy=cys[p],
+                object_distance=10e3,
+                illumination_radius_on_ground=50,
+                number_of_photons=1e5,
+                light_field_geometry_path=light_field_geometry_path,
+                output_path=output_path,
+                mct_propagate_raw_photons_path=mct_propagate_raw_photons_path,
+                config_path=config_path,
+                random_seed=0)
 
         tmp_run = pl.Run(output_path)
         tmp_event = tmp_run[0]
@@ -221,13 +297,14 @@ lfg = raw_responses[0]['light_field_geometry']
 imrays = pl.image.ImageRays(lfg)
 cx, cy = imrays.cx_cy_in_object_distance(10e3)
 valid = np.invert(np.isnan(cx)) & np.invert(np.isnan(cy))
+pixel_bin_edges = np.linspace(-3.25, 3.35, int(np.round(6.5/0.0626)))
 
 plt.figure()
 plt.hist2d(
     np.rad2deg(cx[valid]),
     np.rad2deg(cy[valid]),
     weights=lf[valid],
-    bins=151,
+    bins=[pixel_bin_edges, pixel_bin_edges],
     cmap='inferno')
 plt.xlim([-4,4])
 plt.ylim([-4,4])
@@ -245,7 +322,7 @@ plt.figure()
 plt.hist2d(
     np.rad2deg(cpx), np.rad2deg(cpy),
     weights=image,
-    bins=151,
+    bins=[pixel_bin_edges, pixel_bin_edges],
     cmap='inferno')
 plt.xlim([-4,4])
 plt.ylim([-4,4])
