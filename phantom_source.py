@@ -1,6 +1,12 @@
 import numpy as np
 import wrapp_mct_photon_propagation as mctw
+import os
 
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
+out_dir = os.path.join('examples', 'phantom')
+os.makedirs(out_dir, exist_ok=True)
 
 def length_of_wire(vertices, edges):
     length = 0
@@ -193,4 +199,142 @@ sups = np.vstack([tri_sups, spi_sups, sun_sups])
 dirs = np.vstack([tri_dirs, spi_dirs, sun_dirs])
 wvls = 433e-9*np.ones(sups.shape[0])
 mctw.write_ascii_table_of_photons(
-    'phantom.csv', supports=sups, directions=dirs, wavelengths=wvls)
+    os.path.join(out_dir, 'phantom_photons.csv'),
+    supports=sups,
+    directions=dirs,
+    wavelengths=wvls)
+
+
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+
+def add_edges_to_ax3d(
+    vertices,
+    edges,
+    ax3d,
+    color='b',
+):
+    for e in edges:
+        ax3d.plot(
+            xs=[
+                vertices[e[0], 0],
+                vertices[e[1], 0]
+            ],
+            ys=[
+                vertices[e[0], 1],
+                vertices[e[1], 1]
+            ],
+            zs=[
+                vertices[e[0], 2],
+                vertices[e[1], 2]
+            ],
+            color=color
+        )
+
+def add_edges_to_ax_xy_projection(
+    vertices,
+    edges,
+    ax,
+    color='b',
+):
+    for e in edges:
+        ax.plot(
+            [
+                vertices[e[0], 0],
+                vertices[e[1], 0]
+            ],
+            [
+                vertices[e[0], 1],
+                vertices[e[1], 1]
+            ],
+            color=color
+        )
+
+def save_view(
+    path,
+    figsize=(12, 16),
+    dpi=200,
+    elev=5,
+    azim=-45,
+    zlabel=True
+):
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+    ax3d = fig.add_subplot(111, projection='3d')
+    xy_radius = 0.4
+    max_object_distance = 10
+    add_edges_to_ax3d(triangle_vertices*1e-3, triangle_edges, ax3d, 'k')
+    add_edges_to_ax3d(spiral_vertices*1e-3, spiral_edges, ax3d, 'k')
+    add_edges_to_ax3d(sun_vertices*1e-3, sun_edges, ax3d, 'k')
+    for x in [-1, 1]:
+        for y in [-1, 1]:
+            for z in [0, max_object_distance]:
+                ax3d.plot(xs=[x*xy_radius],ys=[y*xy_radius],zs=[z])
+    ax3d.set_xlabel(r'$x$/km')
+    ax3d.set_ylabel(r'$y$/km')
+    ax3d.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+    ax3d.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+    ax3d.w_zaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+    if zlabel:
+        ax3d.set_zlabel(r'object-distance $g$/km')
+    else:
+        ax3d.set_zticks([])
+    ax3d.view_init(elev=elev, azim=azim)
+    fig.savefig(path)
+
+save_view(
+    figsize=(6, 10),
+    dpi=300,
+    elev=10,
+    azim=-45,
+    path=os.path.join(out_dir, "phantom.png"))
+save_view(
+    figsize=(6, 10),
+    dpi=300,
+    elev=10,
+    azim=-55,
+    path=os.path.join(out_dir, "phantom1.png"))
+save_view(
+    figsize=(6, 10),
+    dpi=300,
+    elev=10,
+    azim=-65,
+    path=os.path.join(out_dir, "phantom2.png"))
+save_view(
+    figsize=(6, 10),
+    dpi=300,
+    elev=10,
+    azim=-75,
+    path=os.path.join(out_dir, "phantom3.png"))
+
+def save_projection(
+    vertices,
+    edges,
+    path):
+    fig = plt.figure(figsize=(2, 1.75), dpi=400)
+    ax = fig.add_axes((0.3, 0.3, 0.7, 0.7))
+    add_edges_to_ax_xy_projection(vertices, edges, ax, 'k')
+    ax.set_aspect('equal')
+    ax.set_xlabel(r'$x$/m')
+    ax.set_ylabel(r'$y$/m')
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    fig.savefig(path)
+
+save_projection(
+    triangle_vertices,
+    triangle_edges,
+    os.path.join(out_dir, 'phantom_triangle.png'))
+save_projection(
+    sun_vertices,
+    sun_edges,
+    os.path.join(out_dir, 'phantom_sun.png'))
+save_projection(
+    spiral_vertices,
+    spiral_edges,
+    os.path.join(out_dir, 'phantom_spiral.png'))
+
+
+plt.close('all')
