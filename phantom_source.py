@@ -1,12 +1,15 @@
 import numpy as np
 import wrapp_mct_photon_propagation as mctw
 import os
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
 out_dir = os.path.join('examples', 'phantom')
 os.makedirs(out_dir, exist_ok=True)
+
 
 def length_of_wire(vertices, edges):
     length = 0
@@ -48,12 +51,12 @@ triangle_vertices = np.array([
     [
         tri_x + tr*np.cos(2*np.pi*0.9166),
         tri_y + tr*np.sin(2*np.pi*0.9166),
-        obj_tri],])
+        obj_tri]])
 
 triangle_edges = np.array([
     [0, 1],
     [1, 2],
-    [2, 0],])
+    [2, 0]])
 tri_len = length_of_wire(triangle_vertices, triangle_edges)
 
 # spiral at object-distance 10km
@@ -167,7 +170,6 @@ number_photons_spi = int((spi_len/total_length)*number_photons)*(dist/obj_spi)
 number_photons_sun = int((sun_len/total_length)*number_photons)*(dist/obj_sun)
 
 
-
 tri_sups, tri_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     number_photons=number_photons_tri,
     vertices=triangle_vertices,
@@ -205,11 +207,6 @@ mctw.write_ascii_table_of_photons(
     wavelengths=wvls)
 
 
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
-
 def add_edges_to_ax3d(
     vertices,
     edges,
@@ -233,6 +230,7 @@ def add_edges_to_ax3d(
             color=color
         )
 
+
 def add_edges_to_ax_xy_projection(
     vertices,
     edges,
@@ -252,6 +250,7 @@ def add_edges_to_ax_xy_projection(
             color=color
         )
 
+
 def save_view(
     path,
     figsize=(12, 16),
@@ -270,7 +269,7 @@ def save_view(
     for x in [-1, 1]:
         for y in [-1, 1]:
             for z in [0, max_object_distance]:
-                ax3d.plot(xs=[x*xy_radius],ys=[y*xy_radius],zs=[z])
+                ax3d.plot(xs=[x*xy_radius], ys=[y*xy_radius], zs=[z])
     ax3d.set_xlabel(r'$x$/km')
     ax3d.set_ylabel(r'$y$/km')
     ax3d.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
@@ -308,10 +307,12 @@ save_view(
     azim=-75,
     path=os.path.join(out_dir, "phantom3.png"))
 
+
 def save_projection(
     vertices,
     edges,
-    path):
+    path
+):
     fig = plt.figure(figsize=(2, 1.75), dpi=400)
     ax = fig.add_axes((0.3, 0.3, 0.7, 0.7))
     add_edges_to_ax_xy_projection(vertices, edges, ax, 'k')
