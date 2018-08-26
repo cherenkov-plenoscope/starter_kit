@@ -11,6 +11,7 @@ import json
 import glob
 import wrapp_mct_photon_propagation as mctw
 import tempfile
+import functools
 
 
 def triple2mct(x, y, z):
@@ -23,6 +24,7 @@ def read_light_field_sensor_specifications(path):
     frame = scenery.find('frame')
     lfs = frame.find('light_field_sensor')
     slfs = lfs.find('set_light_field_sensor')
+    sf =  lfs.find('set_frame')
     return {
         'expected_imaging_system_focal_length': float(
             slfs.attrib['expected_imaging_system_focal_length']),
@@ -36,6 +38,8 @@ def read_light_field_sensor_specifications(path):
             slfs.attrib['housing_overhead']),
         'number_of_paxel_on_pixel_diagonal': float(
             slfs.attrib['number_of_paxel_on_pixel_diagonal']),
+        'pos': json.loads(sf.attrib['pos']),
+        'rot': json.loads(sf.attrib['rot']),
     }
 
 
@@ -161,7 +165,7 @@ delta_rot_perp = delta_trans/sensor_plane_radius
 y_rotations = np.linspace(
     0,
     10 * delta_rot_perp,
-    4)
+    4)[1:]
 
 for y_rot in y_rotations:
     out_path = join(perp_rot_dir, '{:.0f}mdeg'.format(np.rad2deg(y_rot)*1e3))
@@ -177,13 +181,56 @@ for y_rot in y_rotations:
 
 
 # All bad misalignment
-out_path = join(out_dir, 'composition_all_bad')
-if not os.path.exists(out_path):
+composition_all_bad_path = join(out_dir, 'composition_all_bad')
+if not os.path.exists(composition_all_bad_path):
     esitmate_light_field_geometry(
-        pos_x=0,
-        pos_y=0,
-        pos_z=target_sensor_plane_distance,
+        pos_x=0.3,
+        pos_y=0.5,
+        pos_z=target_sensor_plane_distance + 1.0,
         rot_x=0,
-        rot_y=0,
-        rot_z=0,
-        path=out_path)
+        rot_y=np.deg2rad(5),
+        rot_z=np.deg2rad(15),
+        path=composition_all_bad_path)
+
+# READ IN all light_field_geometries
+# ----------------------------------
+
+light_field_geometries = {
+    'rotation_perpendicular': [],
+    'translation_parallel': [],
+    'composition_all_bad': pl.LightFieldGeometry(composition_all_bad_path)
+}
+
+for lfg_path in glob.glob(join(perp_rot_dir, '*')):
+    light_field_geometries['rotation_perpendicular'].append(
+        pl.LightFieldGeometry(lfg_path))
+
+def rot_y_of_sensor_plane(light_field_geometry):
+    lfg = light_field_geometry
+    comp_x = lfg.sensor_plane2imaging_system.sensor_plane2imaging_system[
+        0:3, 0][0]
+    comp_z = lfg.sensor_plane2imaging_system.sensor_plane2imaging_system[
+        0:3, 0][2]
+    return np.arctan2(comp_z, comp_x)
+
+def compare_rot_y(lfg1, lfg2):
+    return rot_y_of_sensor_plane(lfg1) - rot_y_of_sensor_plane(lfg2)
+
+light_field_geometries['rotation_perpendicular'].sort(
+    key=functools.cmp_to_key(compare_rot_y))
+
+for lfg_path in glob.glob(join(para_tra_dir, '*')):
+    light_field_geometries['translation_parallel'].append(
+        pl.LightFieldGeometry(lfg_path))
+
+def compare_pos_z(lfg1, lfg2):
+    return (
+        lfg1.sensor_plane2imaging_system.sensor_plane_distance -
+        lfg2.sensor_plane2imaging_system.sensor_plane_distance)
+
+light_field_geometries['translation_parallel'].sort(
+    key=functools.cmp_to_key(compare_pos_z))
+
+
+# Interpret
+# ---------
