@@ -6,10 +6,10 @@ import shutil
 import tempfile
 
 
-def point_source_in_plenoscope(
+def propagate_photons(
     input_path,
-    light_field_geometry_path,
     output_path,
+    light_field_geometry_path,
     mct_propagate_raw_photons_path,
     config_path,
     random_seed=0,
@@ -32,6 +32,20 @@ def point_source_in_plenoscope(
         rc = sp.call(mct_propagate_call, stdout=fo, stderr=fe)
     return rc
 
+
+def supports_equal_dist_to_xy_plane(supports, directions, distance):
+    alpha = - supports[:, 2]/directions[:, 2]
+    down_dirs = np.zeros(directions.shape)
+    for i in range(down_dirs.shape[0]):
+        down_dirs[i, :] = alpha[i]*directions[i, :]
+    supports_xy = supports + down_dirs
+
+    up_dirs = np.zeros(directions.shape)
+    for i in range(up_dirs.shape[0]):
+        up_dirs[i, :] = distance*directions[i, :]
+    supports_up = supports_xy - up_dirs
+
+    return supports_up
 
 
 def write_ascii_table_of_photons(path, supports, directions, wavelengths):

@@ -200,9 +200,12 @@ sun_sups, sun_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
 sups = np.vstack([tri_sups, spi_sups, sun_sups])
 dirs = np.vstack([tri_dirs, spi_dirs, sun_dirs])
 wvls = 433e-9*np.ones(sups.shape[0])
+
+ref_sups = mctw.supports_equal_dist_to_xy_plane(sups, dirs, 1e3)
+
 mctw.write_ascii_table_of_photons(
     os.path.join(out_dir, 'phantom_photons.csv'),
-    supports=sups,
+    supports=ref_sups,
     directions=dirs,
     wavelengths=wvls)
 
