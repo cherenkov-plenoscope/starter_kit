@@ -77,7 +77,7 @@ def esitmate_light_field_geometry(
     rot_z,
     path,
 ):
-    with tempfile.TemporaryDirectory() as tmp_dir:
+    with tempfile.TemporaryDirectory(prefix='acp_') as tmp_dir:
         write_misaligned_plenoscope_scenery(
             pos_x=pos_x,
             pos_y=pos_y,
@@ -96,6 +96,9 @@ def esitmate_light_field_geometry(
 
 out_dir = join('examples', 'compensating_misalignments')
 os.makedirs(out_dir, exist_ok=True)
+
+lfgs_dir = join(out_dir, 'light_field_geometries')
+os.makedirs(lfgs_dir, exist_ok=True)
 
 template_scenery_path = join(
     'resources',
@@ -132,7 +135,7 @@ d_plus = 1/(1/focal_length - 1/g_plus)
 delta_d_minus = d_minus - target_sensor_plane_distance
 delta_d_plus = d_plus - target_sensor_plane_distance
 
-para_tra_dir = join(out_dir, 'translation_parallel')
+para_tra_dir = join(lfgs_dir, 'translation_parallel')
 os.makedirs(para_tra_dir, exist_ok=True)
 z_positions = np.linspace(
     target_sensor_plane_distance + 10 * delta_d_plus,
@@ -153,7 +156,7 @@ for z_pos in z_positions:
 
 # rotation perpendicular
 # tollerance: 0.76deg -> 10 fold -> 7.6deg
-perp_rot_dir = join(out_dir, 'rotation_perpendicular')
+perp_rot_dir = join(lfgs_dir, 'rotation_perpendicular')
 os.makedirs(perp_rot_dir, exist_ok=True)
 
 fov = np.deg2rad(light_field_sensor_specs['max_FoV_diameter_deg'])
@@ -181,7 +184,7 @@ for y_rot in y_rotations:
 
 
 # All bad misalignment
-composition_all_bad_path = join(out_dir, 'composition_all_bad')
+composition_all_bad_path = join(lfgs_dir, 'composition_all_bad')
 if not os.path.exists(composition_all_bad_path):
     esitmate_light_field_geometry(
         pos_x=0.3,
@@ -192,18 +195,32 @@ if not os.path.exists(composition_all_bad_path):
         rot_z=np.deg2rad(15),
         path=composition_all_bad_path)
 
+
+# The target-alignment
+# -------------------------
+original_target_alignment_path = join('run', 'light_field_calibration')
+target_alignment_path = join(lfgs_dir, 'target_alignment')
+if not os.path.exists(target_alignment_path):
+    shutil.copytree(original_target_alignment_path, target_alignment_path)
+
+
 # READ IN all light_field_geometries
 # ----------------------------------
-
 light_field_geometries = {
+    'target_alignment':{
+        'path': target_alignment_path,
+        'lfg': pl.LightFieldGeometry(target_alignment_path)},
     'rotation_perpendicular': [],
     'translation_parallel': [],
-    'composition_all_bad': pl.LightFieldGeometry(composition_all_bad_path)
+    'composition_all_bad': {
+        'path': composition_all_bad_path,
+        'lfg': pl.LightFieldGeometry(composition_all_bad_path)}
 }
 
 for lfg_path in glob.glob(join(perp_rot_dir, '*')):
-    light_field_geometries['rotation_perpendicular'].append(
-        pl.LightFieldGeometry(lfg_path))
+    light_field_geometries['rotation_perpendicular'].append({
+        'path': lfg_path,
+        'lfg': pl.LightFieldGeometry(lfg_path)})
 
 def rot_y_of_sensor_plane(light_field_geometry):
     lfg = light_field_geometry
@@ -214,23 +231,60 @@ def rot_y_of_sensor_plane(light_field_geometry):
     return np.arctan2(comp_z, comp_x)
 
 def compare_rot_y(lfg1, lfg2):
-    return rot_y_of_sensor_plane(lfg1) - rot_y_of_sensor_plane(lfg2)
+    return (
+        rot_y_of_sensor_plane(lfg1['lfg']) -
+        rot_y_of_sensor_plane(lfg2['lfg']))
 
 light_field_geometries['rotation_perpendicular'].sort(
     key=functools.cmp_to_key(compare_rot_y))
 
 for lfg_path in glob.glob(join(para_tra_dir, '*')):
-    light_field_geometries['translation_parallel'].append(
-        pl.LightFieldGeometry(lfg_path))
+    light_field_geometries['translation_parallel'].append({
+        'path': lfg_path,
+        'lfg': pl.LightFieldGeometry(lfg_path)})
 
 def compare_pos_z(lfg1, lfg2):
     return (
-        lfg1.sensor_plane2imaging_system.sensor_plane_distance -
-        lfg2.sensor_plane2imaging_system.sensor_plane_distance)
+        lfg1['lfg'].sensor_plane2imaging_system.sensor_plane_distance -
+        lfg2['lfg'].sensor_plane2imaging_system.sensor_plane_distance)
 
 light_field_geometries['translation_parallel'].sort(
     key=functools.cmp_to_key(compare_pos_z))
 
 
-# Interpret
-# ---------
+# Make responses
+# --------------
+phantom_path = join('examples', 'phantom', 'phantom_photons.csv')
+mct_propagator_path = join(
+    'build',
+    'mctracer',
+    'mctPlenoscopeRawPhotonPropagation')
+propagation_config_path = join(
+    'resources',
+    'acp',
+    'mct_propagation_config_no_night_sky_background.xml')
+
+response_dir = join(out_dir, 'responses')
+os.makedirs(response_dir, exist_ok=True)
+
+all_scenarios = []
+for s in light_field_geometries['rotation_perpendicular']:
+    all_scenarios.append(s)
+for s in light_field_geometries['translation_parallel']:
+    all_scenarios.append(s)
+all_scenarios.append(light_field_geometries['target_alignment'])
+all_scenarios.append(light_field_geometries['composition_all_bad'])
+
+for scenario in all_scenarios:
+    scenario['response_path'] = join(
+        response_dir,
+        os.path.relpath(scenario['path'], lfgs_dir))
+    if not os.path.exists(scenario['response_path']):
+        os.makedirs(os.path.dirname(scenario['response_path']), exist_ok=True)
+        mctw.propagate_photons(
+            input_path=phantom_path,
+            output_path=scenario['response_path'],
+            light_field_geometry_path=scenario['path'],
+            mct_propagate_raw_photons_path=mct_propagator_path,
+            config_path=propagation_config_path,
+            random_seed=0,)
