@@ -288,3 +288,189 @@ for scenario in all_scenarios:
             mct_propagate_raw_photons_path=mct_propagator_path,
             config_path=propagation_config_path,
             random_seed=0,)
+
+
+# Read responses and make images
+# ------------------------------
+for scenario in all_scenarios:
+    run = pl.Run(scenario['response_path'])
+    scenario['response'] = run[0]
+
+refocus_object_distances = np.array([4.2e3, 7.1e3, 11.9e3])
+
+
+def reconstruct_classic_image(event):
+    light_field_intensity_sequence = (
+        event.light_field_sequence_for_isochor_image())
+    light_field_intensity = np.sum(light_field_intensity_sequence, axis=0)
+    light_field_intensity_pix_pax = np.reshape(
+        light_field_intensity , (
+            event.light_field_geometry.number_pixel,
+            event.light_field_geometry.number_paxel))
+    image_intensity = np.sum(light_field_intensity_pix_pax, axis=1)
+    return pl.image.Image(
+        intensity=image_intensity,
+        positions_x=event.light_field_geometry.pixel_pos_cx,
+        positions_y=event.light_field_geometry.pixel_pos_cy)
+
+
+def write_image(img, path):
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+    ax = fig.add_axes(ax_span)
+    pl.plot.image.add2ax(
+        ax=ax,
+        I=img.intensity,
+        px=np.rad2deg(img.pixel_pos_x),
+        py=np.rad2deg(img.pixel_pos_y),
+        colormap=colormap,
+        colorbar=False)
+    ax.set_aspect('equal')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_xlim(-fovr, fovr)
+    ax.set_ylim(-fovr, fovr)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    fig.savefig(path)
+
+
+for scenario in all_scenarios:
+    event = scenario['response']
+
+    classic_image = reconstruct_classic_image(event)
+
+    refocused_images = pl.plot.refocus.refocus_images(
+        light_field_geometry=event.light_field_geometry,
+        photon_lixel_ids=event.photon_arrival_times_and_lixel_ids()[1],
+        object_distances=refocus_object_distances)
+
+    scenario['phantom'] = {
+        'classic_image': classic_image,
+        'refocused_images': refocused_images,
+        'refocus_object_distances': refocus_object_distances.copy()
+    }
+
+# plotting
+# --------
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
+plot_dir = join(out_dir, 'plot')
+os.makedirs(plot_dir, exist_ok=True)
+
+fovr = 3.25
+figsize = (5, 5)
+dpi = 200
+ax_span = (0.1, 0.1, 0.9, 0.9)
+colormap = 'inferno'
+xlabel = r'$c_x$/deg'
+ylabel = r'$c_y$/deg'
+plt.close('all')
+
+
+# Target-alignment detailed
+# -------------------------
+plot_dir_target_alignment = join(plot_dir, 'target_alignment')
+if not os.path.exists(plot_dir_target_alignment):
+    os.makedirs(plot_dir_target_alignment, exist_ok=True)
+
+    ta = light_field_geometries['target_alignment']
+    event = ta['response']
+
+    detailed_refocus_object_distances = np.logspace(
+        np.log10(2e3),
+        np.log10(25e3),
+        5*3*2)
+
+    detailed_refocused_images = pl.plot.refocus.refocus_images(
+        light_field_geometry=event.light_field_geometry,
+        photon_lixel_ids=event.photon_arrival_times_and_lixel_ids()[1],
+        object_distances=detailed_refocus_object_distances)
+
+    vmax = 0
+    for img in detailed_refocused_images:
+        imax = np.max(img.intensity)
+        if imax > vmax:
+            vmax = imax
+
+
+    for i, obj in enumerate(detailed_refocus_object_distances):
+        img = detailed_refocused_images[i]
+        fig = plt.figure(figsize=(4,4), dpi=dpi)
+        ax = fig.add_axes((0, 0, 1, 1))
+        pl.plot.image.add2ax(
+            ax=ax,
+            I=img.intensity,
+            px=np.rad2deg(img.pixel_pos_x),
+            py=np.rad2deg(img.pixel_pos_y),
+            colormap=colormap,
+            colorbar=False,
+            vmin=0,
+            vmax=vmax)
+        ax.set_aspect('equal')
+        ax.set_xlim(-fovr, fovr)
+        ax.set_ylim(-fovr, fovr)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.text(
+            x=-fovr*0.99,
+            y=-fovr*0.99,
+            s='${:.1f}\,$km'.format(obj/1e3),
+            fontdict={
+                'family': 'serif',
+                'color':  'black',
+                'weight': 'normal',
+                'size': 24,})
+        fig.savefig(
+            join(plot_dir_target_alignment, '{:01d}.jpg'.format(i)))
+        plt.close('all')
+
+
+# rotation perpendicular
+for r, rot in enumerate(light_field_geometries['rotation_perpendicular']):
+    rot_angle = rot_y_of_sensor_plane(rot['lfg'])
+    rot_angle_str = '{:d}mdeg'.format(int(np.rad2deg(rot_angle)*1e3))
+
+    write_image(
+        img=rot['phantom']['classic_image'],
+        path=join(
+            plot_dir,
+            'rotation_perpendicular_{:s}_classic_image.jpg'.format(
+                rot_angle_str
+                )))
+
+    for i, obj in enumerate(refocus_object_distances):
+        write_image(
+            img=rot['phantom']['refocused_images'][i],
+            path=join(
+                plot_dir,
+                'rotation_perpendicular_{rot_angle_str:s}_refocused_{obj:d}m.jpg'.format(
+                    rot_angle_str=rot_angle_str,
+                    obj=int(obj))))
+    plt.close('all')
+
+
+# translation paralle
+for t, tra in enumerate(light_field_geometries['translation_parallel']):
+    sensor_plane_z = tra['lfg'].sensor_plane2imaging_system.sensor_plane_distance
+    sensor_plane_z_str = '{:d}mm'.format(int(sensor_plane_z*1e3))
+
+    write_image(
+        img=tra['phantom']['classic_image'],
+        path=join(
+            plot_dir,
+            'translation_parallel_{:s}_classic_image.jpg'.format(
+                sensor_plane_z_str
+                )))
+
+    for i, obj in enumerate(refocus_object_distances):
+        write_image(
+            img=tra['phantom']['refocused_images'][i],
+            path=join(
+                plot_dir,
+                'translation_parallel_{sensor_plane_z_str:s}_refocused_{obj:d}m.jpg'.format(
+                    sensor_plane_z_str=sensor_plane_z_str,
+                    obj=int(obj))))
+    plt.close('all')
