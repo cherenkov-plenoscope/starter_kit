@@ -21,7 +21,7 @@ def length_of_wire(vertices, edges):
 
 # phantom source
 # --------------
-number_photons = int(2.5e5)
+number_photons = int(1e6)
 
 # disk on ground to be illuminated
 disc_x = 0.0
@@ -61,7 +61,7 @@ tri_len = length_of_wire(triangle_vertices, triangle_edges)
 
 # spiral at object-distance 10km
 # ------------------------------
-obj_spi = 5e3
+obj_spi = 4.2e3
 spi_x = np.tan(np.deg2rad(-1))*obj_spi
 spi_y = np.tan(np.deg2rad(-1.3))*obj_spi
 
@@ -105,7 +105,7 @@ spi_len = length_of_wire(spiral_vertices, spiral_edges)
 
 # sunny circle at object-distance 15km
 # ------------------------------------
-obj_sun = 7.5e3
+obj_sun = 7.1e3
 sun_x = np.tan(np.deg2rad(1.7))*obj_sun
 sun_y = np.tan(np.deg2rad(0))*obj_sun
 sun_radius = np.tan(np.deg2rad(1))*obj_sun
@@ -161,14 +161,145 @@ sun_vertices = np.array(sun_vertices)
 sun_edges = np.array(sun_edges)
 sun_len = length_of_wire(sun_vertices, sun_edges)
 
-total_length = tri_len + spi_len + sun_len
+# Smiley
+# -----
+obj_smi = 11.9e3
+smiley_x = np.tan(np.deg2rad(-1.))*obj_smi
+smiley_y = np.tan(np.deg2rad(+1.3))*obj_smi
+smiley_radius = np.tan(np.deg2rad(.6))*obj_smi
 
-dist = obj_tri + obj_sun + obj_spi
+number_edges_smiley = 50
 
-number_photons_tri = int((tri_len/total_length)*number_photons)*(dist/obj_tri)
-number_photons_spi = int((spi_len/total_length)*number_photons)*(dist/obj_spi)
-number_photons_sun = int((sun_len/total_length)*number_photons)*(dist/obj_sun)
+smiley_vertices = []
+smiley_edges = []
 
+azimuths = np.linspace(
+    0,
+    2*np.pi,
+    number_edges_smiley)
+# face
+for n in range(number_edges_smiley - 1):
+    start_vertex = [
+        smiley_x + smiley_radius*np.cos(azimuths[n]),
+        smiley_y + smiley_radius*np.sin(azimuths[n]),
+        obj_smi]
+    end_vertex = [
+        smiley_x + smiley_radius*np.cos(azimuths[n + 1]),
+        smiley_y + smiley_radius*np.sin(azimuths[n + 1]),
+        obj_smi]
+    smiley_vertices.append(start_vertex)
+    smiley_vertices.append(end_vertex)
+    smiley_edges.append([
+        len(smiley_vertices) - 2,
+        len(smiley_vertices) - 1])
+# mouth
+for n in range((number_edges_smiley - 1)//2):
+    start_vertex = [
+        smiley_x + .7*smiley_radius*np.cos(np.pi+azimuths[n]),
+        smiley_y + .7*smiley_radius*np.sin(np.pi+azimuths[n]),
+        obj_smi]
+    end_vertex = [
+        smiley_x + .7*smiley_radius*np.cos(np.pi+azimuths[n + 1]),
+        smiley_y + .7*smiley_radius*np.sin(np.pi+azimuths[n + 1]),
+        obj_smi]
+    smiley_vertices.append(start_vertex)
+    smiley_vertices.append(end_vertex)
+    smiley_edges.append([
+        len(smiley_vertices) - 2,
+        len(smiley_vertices) - 1])
+
+# eyes
+smiley_vertices.append([
+    smiley_x + smiley_radius*0.25,
+    smiley_y + 0,
+    obj_smi])
+smiley_vertices.append([
+    smiley_x + smiley_radius*0.25,
+    smiley_y + smiley_radius*0.5,
+    obj_smi])
+smiley_edges.append([
+        len(smiley_vertices) - 2,
+        len(smiley_vertices) - 1])
+
+smiley_vertices.append([
+    smiley_x - smiley_radius*0.25,
+    smiley_y + 0,
+    obj_smi])
+smiley_vertices.append([
+    smiley_x - smiley_radius*0.25,
+    smiley_y + smiley_radius*0.5,
+    obj_smi])
+smiley_edges.append([
+        len(smiley_vertices) - 2,
+        len(smiley_vertices) - 1])
+
+smiley_vertices = np.array(smiley_vertices)
+smiley_edges = np.array(smiley_edges)
+smi_len = length_of_wire(smiley_vertices, smiley_edges)
+
+# cross
+# -----
+obj_cro = 20e3
+cross_x = np.tan(np.deg2rad(+1.))*obj_cro
+cross_y = np.tan(np.deg2rad(-1.3))*obj_cro
+cross_radius = np.tan(np.deg2rad(.35))*obj_cro
+
+cross_vertices = []
+cross_edges = []
+
+cross_vertices.append([
+    cross_x + cross_radius,
+    cross_y + cross_radius,
+    obj_cro])
+cross_vertices.append([
+    cross_x - cross_radius,
+    cross_y - cross_radius,
+    obj_cro])
+cross_edges.append([
+        len(cross_vertices) - 2,
+        len(cross_vertices) - 1])
+
+cross_vertices.append([
+    cross_x - cross_radius,
+    cross_y + cross_radius,
+    obj_cro])
+cross_vertices.append([
+    cross_x - cross_radius*.1,
+    cross_y + cross_radius*.1,
+    obj_cro])
+cross_edges.append([
+        len(cross_vertices) - 2,
+        len(cross_vertices) - 1])
+
+cross_vertices.append([
+    cross_x + cross_radius,
+    cross_y - cross_radius,
+    obj_cro])
+cross_vertices.append([
+    cross_x + cross_radius*.1,
+    cross_y - cross_radius*.1,
+    obj_cro])
+cross_edges.append([
+        len(cross_vertices) - 2,
+        len(cross_vertices) - 1])
+
+
+cross_vertices = np.array(cross_vertices)
+cross_edges = np.array(cross_edges)
+cro_len = length_of_wire(cross_vertices, cross_edges)
+
+# Create photons
+# --------------
+
+total_length = tri_len + spi_len + sun_len + smi_len + cro_len
+
+dist = obj_tri + obj_spi + obj_sun + obj_smi + obj_cro
+
+number_photons_tri = int((tri_len/total_length)*number_photons)*(dist/obj_tri**1.3)
+number_photons_spi = int((spi_len/total_length)*number_photons)*(dist/obj_spi**1.3)
+number_photons_sun = int((sun_len/total_length)*number_photons)*(dist/obj_sun**1.3)
+number_photons_smi = int((smi_len/total_length)*number_photons)*(dist/obj_smi**1.3)
+number_photons_cro = int((cro_len/total_length)*number_photons)*(dist/obj_cro**1.3)
 
 tri_sups, tri_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     number_photons=number_photons_tri,
@@ -197,8 +328,26 @@ sun_sups, sun_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     disc_z=disc_z,
     disc_radius=disc_radius)
 
-sups = np.vstack([tri_sups, spi_sups, sun_sups])
-dirs = np.vstack([tri_dirs, spi_dirs, sun_dirs])
+smi_sups, smi_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
+    number_photons=number_photons_smi,
+    vertices=smiley_vertices,
+    edges=smiley_edges,
+    disc_x=disc_x,
+    disc_y=disc_y,
+    disc_z=disc_z,
+    disc_radius=disc_radius)
+
+cro_sups, cro_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
+    number_photons=number_photons_cro,
+    vertices=cross_vertices,
+    edges=cross_edges,
+    disc_x=disc_x,
+    disc_y=disc_y,
+    disc_z=disc_z,
+    disc_radius=disc_radius)
+
+sups = np.vstack([tri_sups, spi_sups, sun_sups, smi_sups, cro_sups])
+dirs = np.vstack([tri_dirs, spi_dirs, sun_dirs, smi_dirs, cro_dirs])
 wvls = 433e-9*np.ones(sups.shape[0])
 
 ref_sups = mctw.supports_equal_dist_to_xy_plane(sups, dirs, 1e3)
@@ -265,10 +414,12 @@ def save_view(
     fig = plt.figure(figsize=figsize, dpi=dpi)
     ax3d = fig.add_subplot(111, projection='3d')
     xy_radius = 0.4
-    max_object_distance = 10
+    max_object_distance = 25
     add_edges_to_ax3d(triangle_vertices*1e-3, triangle_edges, ax3d, 'k')
     add_edges_to_ax3d(spiral_vertices*1e-3, spiral_edges, ax3d, 'k')
     add_edges_to_ax3d(sun_vertices*1e-3, sun_edges, ax3d, 'k')
+    add_edges_to_ax3d(smiley_vertices*1e-3, smiley_edges, ax3d, 'k')
+    add_edges_to_ax3d(cross_vertices*1e-3, cross_edges, ax3d, 'k')
     for x in [-1, 1]:
         for y in [-1, 1]:
             for z in [0, max_object_distance]:
@@ -339,6 +490,13 @@ save_projection(
     spiral_vertices,
     spiral_edges,
     os.path.join(out_dir, 'phantom_spiral.png'))
-
+save_projection(
+    smiley_vertices,
+    smiley_edges,
+    os.path.join(out_dir, 'phantom_smiley.png'))
+save_projection(
+    cross_vertices,
+    cross_edges,
+    os.path.join(out_dir, 'phantom_cross.png'))
 
 plt.close('all')
