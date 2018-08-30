@@ -125,7 +125,7 @@
                 <xy x="3.89E-07" y="0.002"/>
                 <xy x="3.92E-07" y="0.000"/>
 
-                <xy x="7.00E-07" y="0.000"/>
+                <xy x="7.01E-07" y="0.000"/>
             </linear_interpolation>
         </function>
     </photo_electric_converter>

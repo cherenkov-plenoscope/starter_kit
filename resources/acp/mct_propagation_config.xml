@@ -36,7 +36,7 @@
                 <xy x="6.70e-07" y="7.764e+18"/>
                 <xy x="6.78e-07" y="7.673e+18"/>
                 <xy x="6.85e-07" y="1.570e+19"/>
-                <xy x="7.01e-07" y="9.895e+18"/>
+                <xy x="7.00e-07" y="9.895e+18"/>
             </linear_interpolation>
         </function>
     </night_sky_background_ligth>
