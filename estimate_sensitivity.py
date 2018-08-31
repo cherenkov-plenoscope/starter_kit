@@ -29,14 +29,13 @@ Trigger settings
 ----------------
 
 integration_time_in_slices, patch-threshold for zero accidental-rate
-5 (2.5ns), 67
-10 (5.0ns), 101
+10 (5.0ns), 106
 """
 
 
 if __name__ == '__main__':
     try:
-        patch_threshold = 101
+        patch_threshold = 106
         integration_time_in_slices = 10
 
         arguments = docopt.docopt(__doc__)
