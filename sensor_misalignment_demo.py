@@ -183,16 +183,53 @@ for y_rot in y_rotations:
             path=out_path)
 
 
+# Export summary txt
+# ------------------
+su = {
+    'expected_imaging_system_focal_length': focal_length,
+    'expected_imaging_system_aperture_radius': diameter,
+    'target_object_distance': target_object_distance,
+    'target_sensor_plane_distance': target_sensor_plane_distance,
+    'pixel_fov_deg': np.rad2deg(pixel_fov),
+    'fov_deg': np.rad2deg(fov),
+    'projected_pixel': projected_pixel,
+    'g_minus': g_minus,
+    'g_plus': g_plus,
+    'd_minus': d_minus,
+    'd_plus': d_plus,
+    'delta_d_minus': delta_d_minus,
+    'delta_d_plus': delta_d_plus,
+    'z_positions': z_positions.tolist(),
+    'z_positions_relative_to_target': (
+        z_positions - target_sensor_plane_distance).tolist(),
+    'sensor_plane_radius': sensor_plane_radius,
+    'delta_trans_para': delta_trans,
+    'delta_trans_perp': projected_pixel/2,
+    'delta_rot_para_deg': np.rad2deg((projected_pixel/2)/(sensor_plane_radius)),
+    'delta_rot_perp_deg': np.rad2deg(delta_rot_perp),
+    'y_rotations_deg': np.rad2deg(y_rotations).tolist(),
+    'all_bad_pos_y': 0.8,
+    'all_bad_pos_z': target_sensor_plane_distance + 1.2,
+    'all_bad_rot_y_deg': 8,
+    'all_bad_rot_z_deg': 17,
+}
+
+su['all_bad_pos_z_relative_to_target'] = (
+    su['all_bad_pos_z'] - target_sensor_plane_distance)
+
+with open(join(out_dir, 'summary.json'), 'wt') as fout:
+    fout.write(json.dumps(su, indent=4))
+
 # All bad misalignment
 composition_all_bad_path = join(lfgs_dir, 'composition_all_bad')
 if not os.path.exists(composition_all_bad_path):
     esitmate_light_field_geometry(
-        pos_x=0.3,
-        pos_y=0.5,
-        pos_z=target_sensor_plane_distance + 1.0,
+        pos_x=0,
+        pos_y=su['all_bad_pos_y'],
+        pos_z=su['all_bad_pos_z'],
         rot_x=0,
-        rot_y=np.deg2rad(5),
-        rot_z=np.deg2rad(15),
+        rot_y=np.deg2rad(su['all_bad_rot_y_deg']),
+        rot_z=np.deg2rad(su['all_bad_rot_z_deg']),
         path=composition_all_bad_path)
 
 
@@ -427,8 +464,24 @@ if not os.path.exists(plot_dir_target_alignment):
             join(plot_dir_target_alignment, '{:01d}.jpg'.format(i)))
         plt.close('all')
 
+    write_image(
+        img=ta['phantom']['classic_image'],
+        path=join(
+            plot_dir_target_alignment,
+            'classic_image.jpg'))
+
+    for i, obj in enumerate(ta['phantom']['refocus_object_distances']):
+        write_image(
+            img=ta['phantom']['refocused_images'][i],
+            path=join(
+                plot_dir_target_alignment,
+                'refocused_{obj:d}m.jpg'.format(
+                    obj=int(obj))))
+    plt.close('all')
+
 
 # rotation perpendicular
+# -------------------------
 for r, rot in enumerate(light_field_geometries['rotation_perpendicular']):
     rot_angle = rot_y_of_sensor_plane(rot['lfg'])
     rot_angle_str = '{:d}mdeg'.format(int(np.rad2deg(rot_angle)*1e3))
@@ -453,6 +506,7 @@ for r, rot in enumerate(light_field_geometries['rotation_perpendicular']):
 
 
 # translation paralle
+# -------------------------
 for t, tra in enumerate(light_field_geometries['translation_parallel']):
     sensor_plane_z = tra['lfg'].sensor_plane2imaging_system.sensor_plane_distance
     sensor_plane_z_str = '{:d}mm'.format(int(sensor_plane_z*1e3))
@@ -472,5 +526,28 @@ for t, tra in enumerate(light_field_geometries['translation_parallel']):
                 plot_dir,
                 'translation_parallel_{sensor_plane_z_str:s}_refocused_{obj:d}m.jpg'.format(
                     sensor_plane_z_str=sensor_plane_z_str,
+                    obj=int(obj))))
+    plt.close('all')
+
+# composition
+# -----------
+plot_dir_compo_alignment = join(plot_dir, 'composition_all_bad')
+
+if not os.path.exists(plot_dir_compo_alignment):
+    os.makedirs(plot_dir_compo_alignment, exist_ok=True)
+    co = light_field_geometries['composition_all_bad']
+
+    write_image(
+        img=co['phantom']['classic_image'],
+        path=join(
+            plot_dir_compo_alignment,
+            'classic_image.jpg'))
+
+    for i, obj in enumerate(co['phantom']['refocus_object_distances']):
+        write_image(
+            img=co['phantom']['refocused_images'][i],
+            path=join(
+                plot_dir_compo_alignment,
+                'refocused_{obj:d}m.jpg'.format(
                     obj=int(obj))))
     plt.close('all')
