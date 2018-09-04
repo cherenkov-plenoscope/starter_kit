@@ -202,6 +202,7 @@ su = {
     'z_positions': z_positions.tolist(),
     'z_positions_relative_to_target': (
         z_positions - target_sensor_plane_distance).tolist(),
+    'object_distances': (1/(1/focal_length - (1/z_positions))).tolist(),
     'sensor_plane_radius': sensor_plane_radius,
     'delta_trans_para': delta_trans,
     'delta_trans_perp': projected_pixel/2,
