@@ -22,3 +22,6 @@
 [submodule "robo_mount"]
 	path = robo_mount
 	url = git@github.com:TheBigLebowSky/robo_mount.git
+[submodule "photon_spectra"]
+	path = photon_spectra
+	url = https://github.com/TheBigLebowSky/photon_spectra
