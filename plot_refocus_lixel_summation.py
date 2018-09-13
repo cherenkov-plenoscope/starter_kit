@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 light_field_geometry = pl.LightFieldGeometry('./run/light_field_calibration/')
 
-object_distances = [10e3, 18e3, 32e3, 999e3]
+object_distances = [7.5e3, 11e3, 15e3, 21e3, 29e3, 999e3]
 pixel_id = light_field_geometry.number_pixel//2
 
 
@@ -13,7 +13,7 @@ def make_summation_mask_for_pixel(
     light_field_geometry,
 ):
     number_nearest_neighbor_pixels = 1
-    c_epsilon = 2*np.deg2rad(0.07)
+    c_epsilon = 2*np.deg2rad(0.11)
     image_rays = pl.image.ImageRays(light_field_geometry)
     cx, cy = image_rays.cx_cy_in_object_distance(object_distance)
     cxy = np.vstack((cx, cy)).T
@@ -67,44 +67,25 @@ def add_rays_to_ax(ax, object_distance, color='k', linewidth=1):
             color=c,
             linewidth=linewidth)
 
-num_panels = len(object_distances)
-
-panel_h = 1
-panel_w = 1
-
-tele_h = panel_h
-tele_w = 0.5
-
-space_h = 0.1
-space_w = 0.1
-top_margin = 0.0
-bottom_margin = 0.2
-l_margin = 0.2
-r_margin = 0.1
-
-fig_h = top_margin + num_panels*(panel_h + space_h) + bottom_margin
-fig_w = l_margin + panel_w + space_w + tele_w + r_margin
-
-fsize = pl.plot.FigureSize(
-    relative_width=fig_w,
-    relative_hight=fig_h,
-    pixel_rows=640*fig_h,
-    dpi=200)
-
-fig = plt.figure(figsize=(fsize.width, fsize.hight), dpi=fsize.dpi)
-
+w = 8
+h = 4
+dpi = 128
 for obj, object_distance in enumerate(object_distances):
+    if obj == 0:
+        fig = plt.figure(figsize=(w, h*1.1), dpi=dpi)
+    else:
+        fig = plt.figure(figsize=(w, h), dpi=dpi)
 
     mask = make_summation_mask_for_pixel(
         pixel_id=pixel_id,
         object_distance=object_distance,
         light_field_geometry=light_field_geometry)
 
-    ax = fig.add_axes((
-            l_margin/fig_w,
-            (obj*(panel_h+space_h) + bottom_margin)/fig_h,
-            panel_w/fig_w,
-            panel_h/fig_h))
+    if obj == 0:
+        ax = fig.add_axes([0, .1, .66, .9])
+    else:
+        ax = fig.add_axes([0, 0, .66, 1])
+    # [x0, y0, width, height]
 
     pl.plot.light_field_geometry.colored_lixels(
         lss=light_field_geometry,
@@ -121,11 +102,11 @@ for obj, object_distance in enumerate(object_distances):
     ax.set_xlim([-.35, .35])
     ax.set_ylim([-.35, .35])
 
-    ax2 = fig.add_axes((
-            (l_margin + panel_w + space_w)/fig_w,
-            (obj*(panel_h+space_h) + bottom_margin)/fig_h,
-            tele_w/fig_w,
-            tele_h/fig_h))
+
+    if obj == 0:
+        ax2 = fig.add_axes([0.66, 0.1, .33, .9])
+    else:
+        ax2 = fig.add_axes([0.66, 0., .33, 1])
 
     ax2.set_aspect('equal')
     ax2.set_axis_off()
@@ -142,6 +123,5 @@ for obj, object_distance in enumerate(object_distances):
     if obj+1 == len(object_distances):
         ax2.text(x=0.1, y=3.7, s='infinity', fontsize=12)
 
-
-plt.savefig('pixel_patch_{obj:d}.jpg'.format(obj=obj), dpi=fsize.dpi)
-plt.close('all')
+    plt.savefig('refocus_lixel_summation_{obj:d}.png'.format(obj=obj), dpi=dpi)
+    plt.close('all')
