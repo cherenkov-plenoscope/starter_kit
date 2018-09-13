@@ -6,6 +6,7 @@ light_field_geometry = pl.LightFieldGeometry('./run/light_field_calibration/')
 object_distances = [10e3, 18e3, 32e3, 999e3]
 pixel_id = light_field_geometry.number_pixel//2
 
+
 def make_summation_mask_for_pixel(
     pixel_id,
     object_distance,
@@ -13,7 +14,7 @@ def make_summation_mask_for_pixel(
 ):
     number_nearest_neighbor_pixels = 1
     c_epsilon = 2*np.deg2rad(0.07)
-    image_rays =  pl.image.ImageRays(light_field_geometry)
+    image_rays = pl.image.ImageRays(light_field_geometry)
     cx, cy = image_rays.cx_cy_in_object_distance(object_distance)
     cxy = np.vstack((cx, cy)).T
     distances, pixel_indicies = image_rays.pixel_pos_tree.query(
@@ -38,6 +39,7 @@ def make_summation_mask_for_pixel(
     mask = z
     return mask
 
+
 def add_aperture_plane_to_ax(ax, color='k'):
     c = color
     ax.plot([-1, 1], [0, 0], color=c)
@@ -59,7 +61,9 @@ def add_rays_to_ax(ax, object_distance, color='k', linewidth=1):
     y_ends = 2*object_distance*np.ones(N)*100
 
     for i in range(N):
-        ax.plot([x_starts[i], x_ends[i]], [y_starts[i], y_ends[i]],
+        ax.plot(
+            [x_starts[i], x_ends[i]],
+            [y_starts[i], y_ends[i]],
             color=c,
             linewidth=linewidth)
 
@@ -96,17 +100,11 @@ for obj, object_distance in enumerate(object_distances):
         object_distance=object_distance,
         light_field_geometry=light_field_geometry)
 
-    ax = fig.add_axes(
-        (l_margin/fig_w, (obj*(panel_h+space_h) + bottom_margin)/fig_h,
-        panel_w/fig_w, panel_h/fig_h)
-    )
-    """
-        (
-            (l_anchor+space_w+ruler_w)/fig_w, # pos rel w
-            b_anchor/fig_h, # pos rel h
-            panel_w/fig_w, # rel w
-            panel_h/fig_h)) # rel h
-    """
+    ax = fig.add_axes((
+            l_margin/fig_w,
+            (obj*(panel_h+space_h) + bottom_margin)/fig_h,
+            panel_w/fig_w,
+            panel_h/fig_h))
 
     pl.plot.light_field_geometry.colored_lixels(
         lss=light_field_geometry,
@@ -115,30 +113,32 @@ for obj, object_distance in enumerate(object_distances):
         cmap='binary',
         edgecolors='k')
 
-    #x = np.linspace(0,1,100)
-    #ax.plot(x, x**2,)
-
     if obj == 0:
         ax.set_xlabel('photo-sensor-plane-x/m')
         ax.set_ylabel('photo-sensor-plane-y/m')
     else:
         ax.get_xaxis().set_visible(False)
-    ax.set_xlim([-.35,.35])
-    ax.set_ylim([-.35,.35])
+    ax.set_xlim([-.35, .35])
+    ax.set_ylim([-.35, .35])
 
+    ax2 = fig.add_axes((
+            (l_margin + panel_w + space_w)/fig_w,
+            (obj*(panel_h+space_h) + bottom_margin)/fig_h,
+            tele_w/fig_w,
+            tele_h/fig_h))
 
-    ax2 = fig.add_axes(
-        ((l_margin + panel_w + space_w)/fig_w, (obj*(panel_h+space_h) + bottom_margin)/fig_h,
-        tele_w/fig_w, tele_h/fig_h)
-    )
     ax2.set_aspect('equal')
     ax2.set_axis_off()
     add_aperture_plane_to_ax(ax=ax2)
-    ax2.set_xlim([-1,1])
-    ax2.set_ylim([-0.05,3.95])
+    ax2.set_xlim([-1, 1])
+    ax2.set_ylim([-0.05, 3.95])
     t = object_distance/1e3/20
     add_rays_to_ax(ax=ax2, object_distance=t, linewidth=.5)
-    ax2.text(x=0.1, y=2*t, s='{:0.0f}km'.format(object_distance/1e3), fontsize=12)
+    ax2.text(
+        x=0.1,
+        y=2*t,
+        s='{:0.0f}km'.format(object_distance/1e3),
+        fontsize=12)
     if obj+1 == len(object_distances):
         ax2.text(x=0.1, y=3.7, s='infinity', fontsize=12)
 
