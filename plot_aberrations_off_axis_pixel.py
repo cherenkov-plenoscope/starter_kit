@@ -40,17 +40,17 @@ for cxy in cxys:
 
 
 figure_radius = 0.35
-w = 6
-h = 6
+w = 5
+h = 5
 dpi = 128
-"""
+
 for i, pixel_id in enumerate(pixel_ids):
     fig = plt.figure(figsize=(w, h), dpi=dpi)
     lixel_ids = masks[i]
     x_center = np.mean(light_field_geometry.lixel_positions_x[lixel_ids])
     y_center = np.mean(light_field_geometry.lixel_positions_y[lixel_ids])
 
-    ax = fig.add_axes([0.12, 0.12, 0.85, 0.85])
+    ax = fig.add_axes([0.13, 0.13, 0.87, 0.87])
         # [x0, y0, width, height]
 
     mask = np.zeros(light_field_geometry.number_lixel, dtype=np.bool)
@@ -75,7 +75,7 @@ for i, pixel_id in enumerate(pixel_ids):
             direction=int(1000*np.rad2deg(c_radii[i]))),
         dpi=dpi)
     plt.close('all')
-"""
+
 # all spreads overview
 # --------------------
 
@@ -95,7 +95,7 @@ pl.plot.light_field_geometry.colored_lixels(
     I=mask,
     ax=ax,
     cmap='binary',
-    edgecolors='lightgrey',
+    edgecolors='grey',
     linewidths=(0.02,))
 
 ax.spines['right'].set_visible(False)
@@ -103,7 +103,43 @@ ax.spines['top'].set_visible(False)
 ax.set_xlabel('photo-sensor-plane-x/m')
 ax.set_ylabel('photo-sensor-plane-y/m')
 
+for i, mask in enumerate(masks):
+    lixel_ids = mask
+    x_center = np.mean(light_field_geometry.lixel_positions_x[lixel_ids])
+    y_center = np.mean(light_field_geometry.lixel_positions_y[lixel_ids])
+    Ax = x_center - figure_radius
+    Ay = y_center - figure_radius
+    Bx = x_center + figure_radius
+    By = y_center - figure_radius
+
+    Cx = x_center + figure_radius
+    Cy = y_center + figure_radius
+    Dx = x_center - figure_radius
+    Dy = y_center + figure_radius
+
+    ax.plot([Ax, Bx],[Ay, By], 'k', linewidth=0.5)
+    ax.plot([Bx, Cx],[By, Cy], 'k', linewidth=0.5)
+    ax.plot([Cx, Dx],[Cy, Dy], 'k', linewidth=0.5)
+    ax.plot([Dx, Ax],[Dy, Ay], 'k', linewidth=0.5)
+
 plt.savefig(
     'aberration_overview.jpg',
     dpi=dpi)
 plt.close('all')
+
+
+with open('aberration_overview.txt', 'wt') as fout:
+    for i in range(len(c_radii)):
+        lixel_ids = masks[i]
+        x_center = np.mean(light_field_geometry.lixel_positions_x[lixel_ids])
+        y_center = np.mean(light_field_geometry.lixel_positions_y[lixel_ids])
+        fout.write(
+            "{:d} & {:.2f} & {:.2f} & {:.1f} & {:.2f} & {:.2f}\\\\\n".format(
+                pixel_ids[i],
+                np.rad2deg(cxys[i, 0]),
+                np.rad2deg(cxys[i, 1]),
+                np.rad2deg(c_radii[i]),
+                x_center,
+                y_center
+            )
+        )
