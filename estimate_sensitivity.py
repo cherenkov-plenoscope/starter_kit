@@ -27,7 +27,7 @@ import random
 
 if __name__ == '__main__':
     try:
-        patch_threshold = 106
+        patch_threshold = 103
         # for zero accidental-rate within the events simulated here.
         # for 5.0ns integration-time, i.e. 10 integration_time_in_slices
         integration_time_in_slices = 10
