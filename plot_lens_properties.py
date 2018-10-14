@@ -10,39 +10,29 @@ dpi = 320
 ax_size = (0.11, 0.13, 0.86, 0.80)
 
 
-
-wavelength = np.linspace(200e-9, 700e-9, 500)
-suprasil_incl_Fresnel = np.interp(
-    x=wavelength,
-    xp=si.heraeus_silica_glass_suprasil_311_312_313_transmission[:, 0],
-    fp=si.heraeus_silica_glass_suprasil_311_312_313_transmission[:, 1],)
-suprasil_only_Fresnel = np.interp(
-    x=wavelength,
-    xp=si.fresnell_reflection_losses[:, 0],
-    fp=si.fresnell_reflection_losses[:, 1],)
-suprasil_true_transmission_1m = (
-    1 - (suprasil_only_Fresnel - suprasil_incl_Fresnel))**100
-attenuation_coefficient = np.zeros(wavelength.shape[0])
-
-for i in range(wavelength.shape[0]):
-    attenuation_coefficient[i] = np.log(1/suprasil_true_transmission_1m[i])
-
-
-
 fig = plt.figure(figsize=figsize, dpi=dpi)
 ax = fig.add_axes(ax_size)
 
+wavelength_100to800 = np.linspace(100e-9, 800e-9, 500)
+suprasil_incl_Fresnel_100to800 = np.interp(
+    x=wavelength_100to800,
+    xp=si.heraeus_silica_glass_suprasil_311_312_313_transmission[:, 0],
+    fp=si.heraeus_silica_glass_suprasil_311_312_313_transmission[:, 1],)
+suprasil_only_Fresnel_100to800 = np.interp(
+    x=wavelength_100to800,
+    xp=si.fresnell_reflection_losses[:, 0],
+    fp=si.fresnell_reflection_losses[:, 1],)
 ax.plot(
-    si.heraeus_silica_glass_suprasil_311_312_313_transmission[:, 0]*1e9,
-    si.heraeus_silica_glass_suprasil_311_312_313_transmission[:, 1],
-    'k:',
-    label='including Fresnel-reflection')
+    wavelength_100to800*1e9,
+    ((1 - suprasil_only_Fresnel_100to800) + suprasil_incl_Fresnel_100to800),
+    'k',
+    label='Suprasil silica-glass')
 ax.plot(
     si.fresnell_reflection_losses[:, 0]*1e9,
     si.fresnell_reflection_losses[:, 1],
-    'k-',
-    label='only Fresnel-reflection')
-ax.set_ylim([0.0, 1])
+    'k:',
+    label='Fresnel-reflection')
+ax.set_ylim([0.0, 1.02])
 ax.set_xlim([100, 800])
 #ax.semilogx()
 ax.legend(loc='best', fontsize=10)
