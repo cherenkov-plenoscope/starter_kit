@@ -73,11 +73,10 @@ for particle in ['gamma', 'electron', 'proton']:
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     fig.savefig(
         os.path.join(
-        out_dir,
-        'trigger_probability_true_number_cherenkov_photons_{:s}.png'.format(
-            particle)))
-
-    plt.close('all')
+            out_dir, (
+                'trigger_probability_true_number_cherenkov_photons_' +
+                '{:s}.png'
+            ).format(particle)))
 
     num_cer_detected = e['num_true_cherenkov_photons'][e['trigger_mask']]
     energies_detected = e['energies'][e['trigger_mask']]
@@ -113,8 +112,7 @@ for particle in ['gamma', 'electron', 'proton']:
 
     h_exp[np.isnan(h_exp)] = 0.0
 
-
-    fig = plt.figure(figsize=(6,4.5), dpi=dpi)
+    fig = plt.figure(figsize=(6, 4.5), dpi=dpi)
     ax = fig.add_axes((0.1, 0.1, 0.85, 0.90))
     ax.imshow(
         h_exp,
@@ -132,5 +130,5 @@ for particle in ['gamma', 'electron', 'proton']:
     ax.set_xlabel('true energy / GeV')
     fig.savefig(
         os.path.join(
-        out_dir,
-        'hist_{:s}.png'.format(particle)))
+            out_dir,
+            'hist_{:s}.png'.format(particle)))
