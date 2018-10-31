@@ -11,6 +11,7 @@ figsize2 = (8, 4)
 dpi = 240
 ax_size2 = (0.08, 0.12, 0.9, 0.85)
 
+
 for particle in ['gamma', 'electron', 'proton']:
     events_path = os.path.join(
         'run',
@@ -44,8 +45,15 @@ for particle in ['gamma', 'electron', 'proton']:
         e['num_true_cherenkov_photons'],
         bin_edges)[0]
 
-    ratio = num_triggered/num_thrown
-    ratio_delta = np.sqrt(num_triggered)/num_thrown
+    ratio = np.zeros(num_thrown.shape[0])
+    ratio_delta = np.zeros(num_thrown.shape[0])
+    for j in range(num_thrown.shape[0]):
+        if num_thrown[j] == 0:
+            ratio[j] = 0
+            ratio_delta[j] = 0
+        else:
+            ratio[j] = num_triggered[j]/num_thrown[j]
+            ratio_delta[j] = np.sqrt(num_triggered[j])/num_thrown[j]
     ratio_l = ratio - ratio_delta
     ratio_h = ratio + ratio_delta
 
@@ -81,15 +89,21 @@ for particle in ['gamma', 'electron', 'proton']:
     num_cer_detected = e['num_true_cherenkov_photons'][e['trigger_mask']]
     energies_detected = e['energies'][e['trigger_mask']]
 
+    cer_start_10power = 1
+    cer_stop_10power = 4
+    num_cer_bins = 24
     bin_edges_cer = np.logspace(
-        1,
-        4,
-        33)
+        cer_start_10power,
+        cer_stop_10power,
+        num_cer_bins)
 
+    energy_start_10power = -1
+    energy_stop_10power = 3
+    num_energy_bins = 33
     bin_edges_energie = np.logspace(
-        -1,
-        3,
-        33)
+        energy_start_10power,
+        energy_stop_10power,
+        num_energy_bins)
 
     h = np.histogram2d(
         x=num_cer_detected,
@@ -108,27 +122,46 @@ for particle in ['gamma', 'electron', 'proton']:
 
     h_exp = h.copy()
     for i in range(exposure.shape[0]):
-        h_exp[:, i] /= exposure[i]
+        if exposure[i] == 0.0:
+            h_exp[:, i] = 0.0
+        else:
+            h_exp[:, i] /= exposure[i]
 
-    h_exp[np.isnan(h_exp)] = 0.0
-
-    fig = plt.figure(figsize=(6, 4.5), dpi=dpi)
-    ax = fig.add_axes((0.1, 0.1, 0.85, 0.90))
-    ax.imshow(
+    fig = plt.figure(figsize=(7, 6), dpi=dpi)
+    ax = fig.add_axes((0.1, 0.32, 0.75, 0.66))
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.set_ylabel('number true Cherenkov-photons / 1')
+    im = ax.pcolor(
+        bin_edges_energie,
+        bin_edges_cer,
         h_exp,
-        origin='lower',
-        extent=[
-            -1,
-            3,
-            1,
-            4],
         cmap='binary',
         norm=colors.PowerNorm(gamma=1./2.))
-    ax.xaxis.set_major_formatter(fake_log)
-    ax.yaxis.set_major_formatter(fake_log)
-    ax.set_ylabel(r'number true Cherenkov-photons / 1')
-    ax.set_xlabel('true energy / GeV')
+    cax = fig.add_axes((0.9, 0.32, 0.03, 0.66))
+    cbar = fig.colorbar(im, cax=cax)
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    ax.set_xlim([10**energy_start_10power, 10**energy_stop_10power])
+    ax.set_ylim([10**cer_start_10power, 10**cer_stop_10power])
+    ax.loglog()
+
+    # exposure
+    # --------
+    ax2 = fig.add_axes((0.1, 0.08, 0.75, 0.15))
+    ax2.spines['right'].set_visible(False)
+    ax2.spines['top'].set_visible(False)
+    for i in range(exposure.shape[0]):
+        ax2.plot(
+            [bin_edges_energie[i], bin_edges_energie[i + 1]],
+            [exposure[i], exposure[i]],
+            'k')
+    ax2.loglog()
+    ax2.set_xlim([10**energy_start_10power, 10**energy_stop_10power])
+    ax2.set_ylim([1, 500])
+    ax2.set_ylabel('number events / 1')
+    ax2.set_xlabel('true energy {:s} / GeV'.format(particle))
+    ax2.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     fig.savefig(
         os.path.join(
             out_dir,
-            'hist_{:s}.png'.format(particle)))
+            'cherenkov_photons_vs_energy_{:s}.png'.format(particle)))
