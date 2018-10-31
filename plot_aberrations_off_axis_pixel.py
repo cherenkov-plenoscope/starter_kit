@@ -1,7 +1,11 @@
+import os
 import plenopy as pl
 import lixel_summation_tools as lst
 import matplotlib.pyplot as plt
 import scipy
+
+out_dir = os.path.join('.', 'examples', 'aberrations_off_axis_pixel')
+os.makedirs(out_dir, exist_ok=True)
 
 light_field_geometry = pl.LightFieldGeometry('./run/light_field_calibration/')
 
@@ -22,8 +26,7 @@ for cxy in cxys:
 
 
 lixel_cx_cy_tree = scipy.spatial.cKDTree(
-    np.array([  light_field_geometry.cx_mean,
-                light_field_geometry.cy_mean]).T)
+    np.array([light_field_geometry.cx_mean, light_field_geometry.cy_mean]).T)
 
 
 pixel_radius = np.deg2rad(0.06667)*0.6
@@ -35,9 +38,6 @@ for cxy in cxys:
         if lixel_distance <= pixel_radius:
             mask.append(proto_mask[1][j])
     masks.append(np.array(mask))
-
-
-
 
 figure_radius = 0.35
 w = 5
@@ -51,7 +51,7 @@ for i, pixel_id in enumerate(pixel_ids):
     y_center = np.mean(light_field_geometry.lixel_positions_y[lixel_ids])
 
     ax = fig.add_axes([0.13, 0.13, 0.87, 0.87])
-        # [x0, y0, width, height]
+    # [x0, y0, width, height]
 
     mask = np.zeros(light_field_geometry.number_lixel, dtype=np.bool)
     mask[lixel_ids] = True
@@ -70,9 +70,11 @@ for i, pixel_id in enumerate(pixel_ids):
     ax.set_ylim([y_center - figure_radius, y_center + figure_radius])
 
     plt.savefig(
-        'aberration_pixel_{pixel:0d}_{direction:0d}mdeg.png'.format(
-            pixel=pixel_id,
-            direction=int(1000*np.rad2deg(c_radii[i]))),
+        os.path.join(
+            out_dir,
+            'aberration_pixel_{pixel:0d}_{direction:0d}mdeg.png'.format(
+                pixel=pixel_id,
+                direction=int(1000*np.rad2deg(c_radii[i])))),
         dpi=dpi)
     plt.close('all')
 
@@ -117,18 +119,18 @@ for i, mask in enumerate(masks):
     Dx = x_center - figure_radius
     Dy = y_center + figure_radius
 
-    ax.plot([Ax, Bx],[Ay, By], 'k', linewidth=0.5)
-    ax.plot([Bx, Cx],[By, Cy], 'k', linewidth=0.5)
-    ax.plot([Cx, Dx],[Cy, Dy], 'k', linewidth=0.5)
-    ax.plot([Dx, Ax],[Dy, Ay], 'k', linewidth=0.5)
+    ax.plot([Ax, Bx], [Ay, By], 'k', linewidth=0.5)
+    ax.plot([Bx, Cx], [By, Cy], 'k', linewidth=0.5)
+    ax.plot([Cx, Dx], [Cy, Dy], 'k', linewidth=0.5)
+    ax.plot([Dx, Ax], [Dy, Ay], 'k', linewidth=0.5)
 
 plt.savefig(
-    'aberration_overview.jpg',
+    os.path.join(out_dir, 'aberration_overview.jpg'),
     dpi=dpi)
 plt.close('all')
 
 
-with open('aberration_overview.txt', 'wt') as fout:
+with open(os.path.join(out_dir, 'aberration_overview.txt'), 'wt') as fout:
     for i in range(len(c_radii)):
         lixel_ids = masks[i]
         x_center = np.mean(light_field_geometry.lixel_positions_x[lixel_ids])
