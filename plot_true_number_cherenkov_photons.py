@@ -7,7 +7,7 @@ import matplotlib.colors as colors
 out_dir = os.path.join('examples', 'true_number_cherenkov_photons')
 os.makedirs(out_dir, exist_ok=True)
 
-figsize2 = (8, 4)
+figsize2 = (7, 3.6)
 dpi = 240
 ax_size2 = (0.08, 0.12, 0.9, 0.85)
 
@@ -74,8 +74,8 @@ for particle in ['gamma', 'electron', 'proton']:
             linewidth=0)
     ax.semilogx()
     ax.set_ylim([-.01, 1.01])
-    ax.set_xlabel(r'number true Cherenkov-photons / 1')
-    ax.set_ylabel('trigger-probability {:s} / 1'.format(particle))
+    ax.set_xlabel('true Cherenkov-photons / 1')
+    ax.set_ylabel('{:s} triggered/thrown / 1'.format(particle))
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
@@ -131,7 +131,7 @@ for particle in ['gamma', 'electron', 'proton']:
     ax = fig.add_axes((0.1, 0.32, 0.75, 0.66))
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
-    ax.set_ylabel('number true Cherenkov-photons / 1')
+    ax.set_ylabel('true Cherenkov-photons / 1')
     im = ax.pcolor(
         bin_edges_energie,
         bin_edges_cer,
@@ -158,10 +158,12 @@ for particle in ['gamma', 'electron', 'proton']:
     ax2.loglog()
     ax2.set_xlim([10**energy_start_10power, 10**energy_stop_10power])
     ax2.set_ylim([1, 500])
-    ax2.set_ylabel('number events / 1')
+    ax2.set_ylabel('events / 1')
     ax2.set_xlabel('true energy {:s} / GeV'.format(particle))
     ax2.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     fig.savefig(
         os.path.join(
             out_dir,
             'cherenkov_photons_vs_energy_{:s}.png'.format(particle)))
+
+    plt.close('all')
