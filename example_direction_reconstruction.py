@@ -5,7 +5,25 @@ import pandas as pd
 import json
 
 
-plt.rc('text', usetex=True)
+figure_configs = [
+    {
+        'dpi': 320,
+        'rows': 1920,
+        'cols': 1920,
+        'path': '',
+        'axes_margins': (0.12, 0.1, 0.83, 0.9)
+    },
+    {
+        'dpi': 300,
+        'rows': 1080,
+        'cols': 1920,
+        'path': '_beamer',
+        'axes_margins': (0.12, 0.12, 0.85, 0.85)
+    },
+]
+
+
+#plt.rc('text', usetex=True)
 #plt.rc('font', family='serif')
 
 out_dir = os.path.join('examples', 'incident_direction')
@@ -102,6 +120,34 @@ if not os.path.exists(cah_path):
         r['light_front_cy'] = c_pap_time[1]
         results.append(r)
 
+        if r['energy'] < 2:
+            figure_dir = os.path.join(
+                out_dir,
+                '{:06d}_pap_3D'.format(event.number))
+            os.makedirs(figure_dir, exist_ok=True)
+
+            pl.plot.principal_aperture_arrival.save_principal_aperture_arrival_stack(
+                light_field_geometry=light_field_geometry,
+                photon_lixel_ids=cherenkov_photons.lixel_ids,
+                photon_arrival_times=cherenkov_photons.t_pap,
+                out_dir=figure_dir,
+                elev=15,
+                steps=90,
+                alpha=0.3,
+                size=35.,
+                figure_size=pl.plot.FigureSize(
+                    relative_width=16,
+                    relative_hight=9,
+                    pixel_rows=1080,
+                    dpi=300))
+
+            with open(os.path.join(figure_dir, 'info.md'), 'wt') as fout:
+                fout.write('Energy: {:f} GeV\n'.format(r['energy']))
+                fout.write('cx: {:f} deg\n'.format(np.rad2deg(r['core_cx'])))
+                fout.write('cy: {:f} deg\n'.format(np.rad2deg(r['core_cy'])))
+                fout.write('x: {:f} m\n'.format(r['core_x']))
+                fout.write('x: {:f} m\n'.format(r['core_y']))
+
     rs = pd.DataFrame(results)
     rs.to_msgpack(cah_path)
 
@@ -123,27 +169,34 @@ e_bin_edges = np.logspace(np.log10(0.5), np.log10(5), 6)
 for method in methods:
     # 1 GeV regime
     energy_mask = ((rs.energy > 0.75) & (rs.energy <= 1.5))
-    fig = plt.figure(figsize=(6, 6), dpi=320)
-    ax = fig.add_axes((0.09, 0.09, 0.9, 0.9))
-    h = ax.hist(
-        np.rad2deg(rs[method + '_offset'][energy_mask]),
-        bins=np.linspace(0, 2, 20),
-        fc='gray',
-        ec='none')
-    ax.set_xlabel('Residual incident-direction / deg')
-    ax.set_ylabel('Number of events / 1')
 
-    incident_direction_resolution_one_sigma = integration_width_for_one_sigma(
-        h[0], h[1])
+    for conf in figure_configs:
+        fig = plt.figure(
+            figsize=(
+                conf['cols']/conf['dpi'],
+                conf['rows']/conf['dpi']),
+            dpi=conf['dpi'])
+        ax = fig.add_axes(conf['axes_margins'])
+        h = ax.hist(
+            np.rad2deg(rs[method + '_offset'][energy_mask]),
+            bins=np.linspace(0, 2, 20),
+            fc='gray',
+            ec='none')
+        ax.set_xlim(0, 2)
+        ax.set_xlabel('Residual incident-direction / deg')
+        ax.set_ylabel('Number of events / 1')
 
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    ax.axvline(incident_direction_resolution_one_sigma, color='k')
-    plt.savefig(
-        os.path.join(
-            out_dir,
-            'incident_directions_at_750MeV_to_1500MeV_'+method+'.png'))
+        incident_direction_resolution_one_sigma = integration_width_for_one_sigma(
+            h[0], h[1])
+
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        ax.axvline(incident_direction_resolution_one_sigma, color='k')
+        plt.savefig(
+            os.path.join(
+                out_dir,
+                'incident_directions_at_750MeV_to_1500MeV_'+method+conf['path']+'.png'))
 
     # Resolution Figure
     # -----------------
@@ -152,62 +205,70 @@ for method in methods:
     with open(resolution_path, 'rt') as fin:
         out = json.loads(fin.read())
 
-    fig = plt.figure(figsize=(6, 6), dpi=320)
-    ax = fig.add_axes((0.1, 0.1, 0.9, 0.9))
-    ax.plot(
-        out['Fermi_LAT']['energy_GeV'],
-        out['Fermi_LAT']['resolution_deg'],
-        'k-.',
-        label='Fermi-LAT')
-    ax.plot(
-        out['Aharonian_et_al_5at5']['energy_GeV'],
-        out['Aharonian_et_al_5at5']['resolution_deg'],
-        linestyle='-',
-        color='k',
-        label='Aharonian et al., 5@5')
-    ax.plot(
-        out['Hofman_limits']['energy_GeV'],
-        out['Hofman_limits']['resolution_deg'],
-        'ko--',
-        markerfacecolor='k',
-        label='Hofmann, limits')
-    ax.plot(
-        out['Hofman_limits_with_earth_magnetic_field']['energy_GeV'],
-        out['Hofman_limits_with_earth_magnetic_field']['resolution_deg'],
-        'ko:',
-        markerfacecolor='white',
-        label='Hofmann, limits, with earth-magnetic-field')
 
-    one_sigma_resolutions = []
-    one_sigma_resolution_errors = []
-    energy_bin_edges = np.array([0.75, 1.5]) #  0.75*(np.cumprod(1.4*np.ones(3))/1.4)
-    for energy_bin in range(len(energy_bin_edges) - 1):
-        energy_mask = (
-            (rs.energy > energy_bin_edges[energy_bin]) &
-            (rs.energy <= energy_bin_edges[energy_bin + 1]))
-        reiduals = np.rad2deg(rs['light_front_offset'][energy_mask])
-        direction_bin_edges = np.linspace(0, 2, 20)
-        hist = np.histogram(reiduals, bins=direction_bin_edges)[0]
-        one_sigma_resolution = integration_width_for_one_sigma(
-            hist, direction_bin_edges)
-        num = np.sum(energy_mask)
-        one_sigma_resolutions.append(one_sigma_resolution)
-        one_sigma_resolution_errors.append(
-            one_sigma_resolution * np.sqrt(num)/num)
-    energy_bin_centers = (energy_bin_edges[0:-1] + energy_bin_edges[1:])/2
-    ax.errorbar(
-        x=energy_bin_centers,
-        y=one_sigma_resolutions,
-        yerr=one_sigma_resolution_errors,
-        xerr=np.gradient(energy_bin_edges)[0]/2,
-        fmt='kx',
-        label='Portal, plenoscope, light-front')
-    ax.loglog()
-    ax.legend(loc='best', fontsize=10)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.set_xlabel('Energy / GeV')
-    ax.set_ylabel('Angular resolution / deg')
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    fig.savefig(
-        os.path.join(out_dir, 'assumed_angular_resolution.png'))
+    for conf in figure_configs:
+        fig = plt.figure(
+            figsize=(
+                conf['cols']/conf['dpi'],
+                conf['rows']/conf['dpi']),
+            dpi=conf['dpi'])
+        ax = fig.add_axes(conf['axes_margins'])
+        ax.plot(
+            out['Fermi_LAT']['energy_GeV'],
+            out['Fermi_LAT']['resolution_deg'],
+            'k-.',
+            label='Fermi-LAT')
+        ax.plot(
+            out['Aharonian_et_al_5at5']['energy_GeV'],
+            out['Aharonian_et_al_5at5']['resolution_deg'],
+            linestyle='-',
+            color='k',
+            label='Aharonian et al., 5@5')
+        ax.plot(
+            out['Hofman_limits']['energy_GeV'],
+            out['Hofman_limits']['resolution_deg'],
+            'ko--',
+            markerfacecolor='k',
+            label='Hofmann, limits')
+        ax.plot(
+            out['Hofman_limits_with_earth_magnetic_field']['energy_GeV'],
+            out['Hofman_limits_with_earth_magnetic_field']['resolution_deg'],
+            'ko:',
+            markerfacecolor='white',
+            label='Hofmann, limits, with earth-magnetic-field')
+
+        one_sigma_resolutions = []
+        one_sigma_resolution_errors = []
+        energy_bin_edges = np.array([0.75, 1.5]) #  0.75*(np.cumprod(1.4*np.ones(3))/1.4)
+        for energy_bin in range(len(energy_bin_edges) - 1):
+            energy_mask = (
+                (rs.energy > energy_bin_edges[energy_bin]) &
+                (rs.energy <= energy_bin_edges[energy_bin + 1]))
+            reiduals = np.rad2deg(rs['light_front_offset'][energy_mask])
+            direction_bin_edges = np.linspace(0, 2, 20)
+            hist = np.histogram(reiduals, bins=direction_bin_edges)[0]
+            one_sigma_resolution = integration_width_for_one_sigma(
+                hist, direction_bin_edges)
+            num = np.sum(energy_mask)
+            one_sigma_resolutions.append(one_sigma_resolution)
+            one_sigma_resolution_errors.append(
+                one_sigma_resolution * np.sqrt(num)/num)
+        energy_bin_centers = (energy_bin_edges[0:-1] + energy_bin_edges[1:])/2
+        ax.errorbar(
+            x=energy_bin_centers,
+            y=one_sigma_resolutions,
+            yerr=one_sigma_resolution_errors,
+            xerr=np.gradient(energy_bin_edges)[0]/2,
+            fmt='kx',
+            label='Portal, plenoscope, light-front')
+        ax.loglog()
+        ax.legend(loc='best', fontsize=10)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.set_xlabel('Energy / GeV')
+        ax.set_ylabel('Angular resolution / deg')
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        fig.savefig(
+            os.path.join(
+                out_dir,
+                'assumed_angular_resolution'+conf['path']+'.png'))
