@@ -78,19 +78,43 @@ if __name__ == '__main__':
 
         # 3) Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
-        os.makedirs(join(od, 'isf'), exist_ok=True)
-        results = isf.analysis(
-            gamma_collection_area_path=join(
-                od, 'irf', 'gamma', 'results', 'irf.csv'),
-            electron_collection_acceptance_path=join(
-                od, 'irf', 'electron', 'results', 'irf.csv'),
-            proton_collection_acceptance_path=join(
-                od, 'irf', 'proton', 'results', 'irf.csv'),
-            rigidity_cutoff_in_tev=0.01,
-            relative_flux_below_cutoff=0.05,
-            fov_in_deg=6.5,
-            source_name='3FGL J2254.0+1608',
-            out_dir=join(od, 'isf'))
+        if not os.path.isdir(join(od, 'isf')):
+            os.makedirs(join(od, 'isf'), exist_ok=True)
+            results = isf.analysis(
+                gamma_collection_area_path=join(
+                    od, 'irf', 'gamma', 'results', 'irf.csv'),
+                electron_collection_acceptance_path=join(
+                    od, 'irf', 'electron', 'results', 'irf.csv'),
+                proton_collection_acceptance_path=join(
+                    od, 'irf', 'proton', 'results', 'irf.csv'),
+                rigidity_cutoff_in_tev=0.01,
+                relative_flux_below_cutoff=0.05,
+                fov_in_deg=6.5,
+                source_name='3FGL J2254.0+1608',
+                out_dir=join(od, 'isf'))
+
+        if not os.path.isdir(join(od, 'isf_beamer')):
+            os.makedirs(join(od, 'isf_beamer'), exist_ok=True)
+            results_2 = isf.analysis(
+                gamma_collection_area_path=join(
+                    od, 'irf', 'gamma', 'results', 'irf.csv'),
+                electron_collection_acceptance_path=join(
+                    od, 'irf', 'electron', 'results', 'irf.csv'),
+                proton_collection_acceptance_path=join(
+                    od, 'irf', 'proton', 'results', 'irf.csv'),
+                rigidity_cutoff_in_tev=0.01,
+                relative_flux_below_cutoff=0.05,
+                fov_in_deg=6.5,
+                source_name='3FGL J2254.0+1608',
+                out_dir=join(od, 'isf_beamer'),
+                dpi=300,
+                pixel_rows=1080,
+                pixel_columns=1920,
+                lmar=0.12,
+                bmar=0.12,
+                tmar=0.02,
+                rmar=0.02,)
+
 
     except docopt.DocoptExit as e:
         print(e)
