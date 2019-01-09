@@ -47,21 +47,44 @@ rows = 1080
 cols = 1920
 dpi = 300
 
-fig = plt.figure(figsize=(cols/dpi, rows/dpi), dpi=dpi)
-ax = fig.add_axes([.13, .15, .84, .81])
-ax.plot(
-	time_to_detection,
-	flux_1GeV_to_100GeV,
-	'ok',
-	alpha=0.15)
-ax.axvline(3600*50, color='k', alpha=0.5)
-ax.loglog()
-ax.set_xlabel('time-to-detection / s')
-ax.set_ylabel('Fermi-LAT 3FGL Flux1000 / cm$^{-2}$ s$^{-1}$')
-ax.spines['right'].set_visible(False)
-ax.spines['top'].set_visible(False)
-ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-fig.savefig(
-    os.path.join(
-        out_dir,
-        'time_to_detection_vs_fermilat_3fgl_flux1000.png'))
+cfgs = [
+	{
+		'path': 'beamer',
+		'rows': 1080,
+		'cols': 1920,
+		'dpi': 300,
+		'ax': [.13, .15, .84, .81]
+	},
+	{
+		'path': 'print',
+		'rows': 1920,
+		'cols': 1920,
+		'dpi': 300,
+		'ax': [.12, .10, .86, .86]
+	},
+]
+
+for cfg in cfgs:
+	fig = plt.figure(
+		figsize=(
+			cfg['cols']/cfg['dpi'],
+			cfg['rows']/cfg['dpi']),
+		dpi=cfg['dpi'])
+	ax = fig.add_axes(cfg['ax'])
+	ax.plot(
+		time_to_detection,
+		flux_1GeV_to_100GeV,
+		'ok',
+		alpha=0.15)
+	ax.axvline(3600*50, color='k', alpha=0.5)
+	ax.loglog()
+	ax.set_xlabel('time-to-detection / s')
+	ax.set_ylabel('Fermi-LAT 3FGL Flux1000 / cm$^{-2}$ s$^{-1}$')
+	ax.spines['right'].set_visible(False)
+	ax.spines['top'].set_visible(False)
+	ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+	fig.savefig(
+	    os.path.join(
+	        out_dir,
+	        'time_to_detection_vs_fermilat_3fgl_flux1000_{:s}.png'.format(
+	        	cfg['path'])))
