@@ -44,7 +44,7 @@ acp_config = {
         'main': {
             'max_outer_radius': 35.35,
             'min_inner_radius': 2.5,
-            'number_of_layers': 2,
+            'number_of_layers': 3,
             'x_over_z_ratio': 1.66,
             # for truss function always keep it between 1.36 and 2.26
             'security_distance_from_ground': 2.6
