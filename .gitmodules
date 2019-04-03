@@ -3,7 +3,7 @@
 	url = git@github.com:fact-project/corsika_wrapper.git
 [submodule "mctracer"]
 	path = merlict_development_kit
-	url = git@github.com:cherenkov-plenoscope/mctracer.git
+	url = git@github.com:cherenkov-plenoscope/merlict_development_kit.git
 [submodule "plenopy"]
 	path = plenopy
 	url = git@github.com:cherenkov-plenoscope/plenopy.git
