@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-Install the Atmospheric Cherenkov Plenoscope (ACP) starter kit.
+Install the Cherenkov-plenoscope's starter-kit.
 
 You need to have the credentials to the KIT-CORSIKA
 air-shower-simulation-software.
@@ -44,14 +44,14 @@ def main():
                 'run',
                 'corsika75600Linux_QGSII_urqmd')])
 
-        # Photon-propagator mctracer
-        # --------------------------
-        mct_build_dir = join('.', 'build', 'mctracer')
-        os.makedirs(mct_build_dir, exist_ok=True)
-        call(['cmake', '../../mctracer'], cwd=mct_build_dir)
-        call(['make', '-j', '12'], cwd=mct_build_dir)
-        call(['touch', './../../mctracer/CMakeLists.txt'], cwd=mct_build_dir)
-        call(['make', '-j', '12'], cwd=mct_build_dir)
+        # Photon-propagator merlict
+        # -------------------------
+        merlict_build_dir = join('.', 'build', 'merlict')
+        os.makedirs(merlict_build_dir, exist_ok=True)
+        call(['cmake', '../../merlict_development_kit'], cwd=merlict_build_dir)
+        call(['make', '-j', '12'], cwd=merlict_build_dir)
+        call(['touch', './../../merlict_development_kit/CMakeLists.txt'], cwd=merlict_build_dir)
+        call(['make', '-j', '12'], cwd=merlict_build_dir)
 
         # Tools
         # -----
