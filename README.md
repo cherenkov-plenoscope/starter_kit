@@ -10,7 +10,7 @@ Recommendations:
 
 ## Download
 ```bash
-git clone --recursive git@github.com:TheBigLebowSky/starter_kit.git
+git clone --recursive git@github.com:cherenkov-plenoscope/starter_kit.git
 ```
 
 ## Install
@@ -20,7 +20,7 @@ You need:
 * Credentials for the download of KIT-CORSIKA.
 * Fortran77-compiler from the gcc.
 * The gcc build-essentials
-* [libopencv-dev](https://github.com/TheBigLebowSky/mctracer) for the mctracer.
+* [libopencv-dev](https://github.com/cherenkov-plenoscope/merlict_development_kit) for merlict's viewer.
 
 ```bash
 cd starter_kit/
