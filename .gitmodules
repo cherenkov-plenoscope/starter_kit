@@ -21,7 +21,7 @@
 	url = git@github.com:cherenkov-plenoscope/corsika_install.git
 [submodule "robo_mount"]
 	path = cable_robo_mount
-	url = git@github.com:cherenkov-plenoscope/robo_mount.git
+	url = git@github.com:cherenkov-plenoscope/cable_robo_mount.git
 [submodule "photon_spectra"]
 	path = photon_spectra
 	url = https://github.com/cherenkov-plenoscope/photon_spectra
