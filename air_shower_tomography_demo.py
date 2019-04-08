@@ -22,27 +22,27 @@ steering_card = cw.read_steering_card(
     )
 )
 
-if not os.path.exists(join(out_dir,'gamma.evtio')):
-    cw.corsika(    
-        steering_card=steering_card, 
-        output_path=join(out_dir,'gamma.evtio'), 
+if not os.path.exists(join(out_dir, 'gamma.evtio')):
+    cw.corsika(
+        steering_card=steering_card,
+        output_path=join(out_dir, 'gamma.evtio'),
         save_stdout=True
     )
 
-if not os.path.exists(join(out_dir,'gamma.acp')):  
+if not os.path.exists(join(out_dir, 'gamma.acp')):
     call([
-        join('build','merlict','merlict-plenoscope-propagation'),
-        '--lixel', join('resources','acp','71m','light_field_calibration'),
-        '--input', join(out_dir,'gamma.evtio'),
-        '--config', join('resources','acp','mct_propagation_config.xml'),
-        '--output', join(out_dir,'gamma.acp'),
+        join('build', 'merlict', 'merlict-plenoscope-propagation'),
+        '--lixel', join('resources', 'acp', '71m', 'light_field_calibration'),
+        '--input', join(out_dir, 'gamma.evtio'),
+        '--config', join('resources', 'acp', 'mct_propagation_config.xml'),
+        '--output', join(out_dir, 'gamma.acp'),
         '--random_seed', '0',
         '--all_truth'
     ])
 
 print('load event')
-run = pl.Run(join(out_dir,'gamma.acp'))
-#event = run[1]
+run = pl.Run(join(out_dir, 'gamma.acp'))
+# event = run[1]
 
 x_bin_edges = np.linspace(-.6e3, .6e3, 192+1)
 y_bin_edges = np.linspace(-.6e3, .6e3, 192+1)
@@ -62,19 +62,19 @@ voxel_number_of_baselines_3D = pl.tomography.baselines_in_voxels(
 print('save baselines_in_voxels image slices')
 
 xz_plane_slice_voxel_number_of_baselines_3D = voxel_number_of_baselines_3D[
-    :,96-1:96+2,:
+    :, 96-1:96+2, :
 ].sum(axis=1)/3
 
 """
 fig = plt.figure()
-im = plt.imshow( 
-    np.rot90(xz_plane_slice_voxel_number_of_baselines_3D, k=-1), 
+im = plt.imshow(
+    np.rot90(xz_plane_slice_voxel_number_of_baselines_3D, k=-1),
     extent=[
-        x_bin_edges[0], 
-        x_bin_edges[-1], 
-        z_bin_edges[0]/1e3, 
+        x_bin_edges[0],
+        x_bin_edges[-1],
+        z_bin_edges[0]/1e3,
         z_bin_edges[-1]/1e3
-    ], 
+    ],
     aspect=1e3/1,#(x_bin_edges[-1]-x_bin_edges[0]) / (z_bin_edges[-1]-z_bin_edges[0]),
     cmap='viridis',
     origin="lower",
@@ -82,9 +82,9 @@ im = plt.imshow(
     norm=colors.PowerNorm(gamma=1./2.)
 )
 fig.colorbar(
-    im, 
-    orientation="vertical", 
-    pad=0.2, 
+    im,
+    orientation="vertical",
+    pad=0.2,
     label='number of stereo baselines in 3D volume cell'
 )
 plt.xlabel('x/m, y=0')
@@ -113,12 +113,12 @@ colbar_h = .05*s
 colbar_w = img_w
 
 fig_w = (
-    l_margin + 
+    l_margin +
     img_w +
     r_margin
 )
 fig_h = (
-    t_margin + 
+    t_margin +
     img_h +
     space_h +
     colbar_h +
@@ -131,9 +131,9 @@ l_img_anchor = l_margin
 b_img_anchor = fig_h - t_margin - img_h
 ax_img = fig.add_axes(
     (
-        l_img_anchor/fig_w, 
-        b_img_anchor/fig_h, 
-        img_w/fig_w, 
+        l_img_anchor/fig_w,
+        b_img_anchor/fig_h,
+        img_w/fig_w,
         img_h/fig_h
     )
 )
@@ -141,28 +141,28 @@ l_col_anchor = l_img_anchor
 b_col_anchor = fig_h - t_margin - img_h - space_h - colbar_h
 ax_colbar = fig.add_axes(
     (
-        l_col_anchor/fig_w, 
-        b_col_anchor/fig_h, 
-        colbar_w/fig_w, 
+        l_col_anchor/fig_w,
+        b_col_anchor/fig_h,
+        colbar_w/fig_w,
         colbar_h/fig_h
     )
 )
 
-#R = run.light_field_geometry.expected_aperture_radius_of_imaging_system
-#ax_img.plot([-R,+R],[10e-3, 10e-3], 'r')
-#ax_img.plot([-R,-R],[-R/1e3, R/1e3], 'r')
-#ax_img.plot([+R,+R],[-R/1e3, R/1e3], 'r')
+# R = run.light_field_geometry.expected_aperture_radius_of_imaging_system
+# ax_img.plot([-R,+R],[10e-3, 10e-3], 'r')
+# ax_img.plot([-R,-R],[-R/1e3, R/1e3], 'r')
+# ax_img.plot([+R,+R],[-R/1e3, R/1e3], 'r')
 
 ax_img.set_xlabel('x/m')
 ax_img.set_ylabel('object distance above aperture/km')
-im = ax_img.imshow( 
-    np.rot90(xz_plane_slice_voxel_number_of_baselines_3D, k=-1), 
+im = ax_img.imshow(
+    np.rot90(xz_plane_slice_voxel_number_of_baselines_3D, k=-1),
     extent=[
-        x_bin_edges[0], 
-        x_bin_edges[-1], 
-        z_bin_edges[0]/1e3, 
+        x_bin_edges[0],
+        x_bin_edges[-1],
+        z_bin_edges[0]/1e3,
         z_bin_edges[-1]/1e3
-    ], 
+    ],
     aspect=1e3/xz_ratio,
     cmap='viridis',
     origin="lower",
@@ -171,8 +171,8 @@ im = ax_img.imshow(
 )
 
 cbar = plt.colorbar(
-    im, 
-    orientation="horizontal", 
+    im,
+    orientation="horizontal",
     label='number of stereo baselines in 3D volume cell',
     cax=ax_colbar
 )

@@ -52,7 +52,7 @@ for event in run:
     sum_ppv += ppv
     number_events += 1
 
-    #print(
+    # print(
     #    'tpr:', sum_tpr/number_events,
     #    'ppv:', sum_ppv/number_events)
 
@@ -62,7 +62,7 @@ for event in run:
             b['number_true_positives'] -
             b['number_false_positives'] -
             b['number_false_negatives']
-        ) != 0:
+    ) != 0:
         break
 
     trigger_offset = np.sqrt(
@@ -96,7 +96,6 @@ for event in run:
             p=np.rad2deg(pap_time_offset),
             e=energy))
 
-
     number_macro_paxel = 7
     r = light_field_geometry.expected_aperture_radius_of_imaging_system/3
     pax_x = [0.0]
@@ -104,7 +103,8 @@ for event in run:
     pax_r = r * np.ones(number_macro_paxel)
     pax_photons = []
     for i, phi in enumerate(
-        np.linspace(0, 2*np.pi, number_macro_paxel - 1, endpoint=False)):
+        np.linspace(0, 2*np.pi, number_macro_paxel - 1, endpoint=False)
+    ):
         pax_x.append(2*r*np.cos(phi))
         pax_y.append(2*r*np.sin(phi))
     for i in range(number_macro_paxel):
@@ -152,7 +152,6 @@ for event in run:
     axes[i].set_aspect('equal')
 
     plt.show()
-
 
     """
     fig = plt.figure()

@@ -69,7 +69,8 @@ if __name__ == '__main__':
         rc = list(scoop.futures.map(irf.trigger_simulation.run_job, jobs))
 
         for p in particles:
-            if (os.path.isdir(join(od, 'irf', p)) and
+            if (
+                os.path.isdir(join(od, 'irf', p)) and
                 not os.path.isdir(join(od, 'irf', p, 'results'))
             ):
                 irf.trigger_study_analysis.run_analysis(
@@ -114,7 +115,6 @@ if __name__ == '__main__':
                 bmar=0.12,
                 tmar=0.02,
                 rmar=0.02,)
-
 
     except docopt.DocoptExit as e:
         print(e)
