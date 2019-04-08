@@ -148,5 +148,9 @@ acp_config = {
 geometry = rs.Geometry(acp_config)
 reflector = rs.factory.generate_reflector(geometry)
 
-with open(os.path.join('examples', 'visual', 'acp_71m_visual.xml'), 'w') as f:
-    f.write(rs.mctracer_bridge.xml.visual_scenery(reflector))
+out = rs.mctracer_bridge.merlict_json.visual_scenery(reflector)
+
+os.makedirs(os.path.join('examples', 'visual') , exist_ok=True)
+rs.mctracer_bridge.merlict_json.write_json(
+    out,
+    os.path.join('examples', 'visual', 'acp_71m_visual.json'))
