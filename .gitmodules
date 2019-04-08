@@ -1,7 +1,7 @@
 [submodule "corsika_wrapper"]
 	path = corsika_wrapper
 	url = git@github.com:fact-project/corsika_wrapper.git
-[submodule "mctracer"]
+[submodule "merlict_development_kit"]
 	path = merlict_development_kit
 	url = git@github.com:cherenkov-plenoscope/merlict_development_kit.git
 [submodule "plenopy"]
