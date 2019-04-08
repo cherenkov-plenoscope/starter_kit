@@ -89,7 +89,7 @@ def esitmate_light_field_geometry(
             template_scenery_path=template_scenery_path)
 
         sp.call([
-            join('.', 'build', 'mctracer', 'mctPlenoscopeCalibration'),
+            join('.', 'build', 'merlict', 'merlict-plenoscope-calibration'),
             '-s', tmp_dir,
             '-n', '{:d}'.format(number_mega_photons),
             '-o', path])
@@ -295,8 +295,8 @@ light_field_geometries['translation_parallel'].sort(
 phantom_path = join('examples', 'phantom', 'phantom_photons.csv')
 mct_propagator_path = join(
     'build',
-    'mctracer',
-    'mctPlenoscopeRawPhotonPropagation')
+    'merlict',
+    'merlict-plenoscope-raw-photon-propagation')
 propagation_config_path = join(
     'resources',
     'acp',

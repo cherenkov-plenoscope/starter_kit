@@ -10,9 +10,9 @@ import corsika_wrapper as cw
 
 @pytest.fixture(scope='session')
 def tmp(tmpdir_factory):
-    fn = tmpdir_factory.mktemp('mctracer_plenopy')
+    fn = tmpdir_factory.mktemp('merlict_plenopy')
     call([
-        join('build', 'mctracer', 'mctPlenoscopeCalibration'),
+        join('build', 'merlict', 'merlict-plenoscope-calibration'),
         '--scenery', join('resources', 'iact', 'MAGIC_1', 'scenery'),
         '--number_mega_photons', '5',
         '--output', join(fn, 'light_field_geometry')
@@ -132,7 +132,7 @@ def test_corsika_simulation(tmp):
 def test_propagation_with_mctracer(tmp):
     assert os.path.exists(join(tmp, 'calibration_gamma.evtio'))
     rc = call([
-        join('build', 'mctracer', 'mctPlenoscopePropagation'),
+        join('build', 'merlict', 'merlict-plenoscope-propagation'),
         '--lixel', join(tmp, 'light_field_geometry'),
         '--config', join(
             'resources', 'acp',

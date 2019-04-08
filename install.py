@@ -50,7 +50,8 @@ def main():
         os.makedirs(merlict_build_dir, exist_ok=True)
         call(['cmake', '../../merlict_development_kit'], cwd=merlict_build_dir)
         call(['make', '-j', '12'], cwd=merlict_build_dir)
-        call(['touch', './../../merlict_development_kit/CMakeLists.txt'], cwd=merlict_build_dir)
+        call(['touch', './../../merlict_development_kit/CMakeLists.txt'],
+            cwd=merlict_build_dir)
         call(['make', '-j', '12'], cwd=merlict_build_dir)
 
         # Tools
@@ -64,7 +65,7 @@ def main():
         call(['pip', 'install', '-e', join(
             '.', 'instrument_sensitivity_function')])
         call(['pip', 'install', '-e', join(
-            '.', 'robo_mount')])
+            '.', 'cable_robo_mount')])
 
     except docopt.DocoptExit as e:
         print(e)

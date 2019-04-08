@@ -28,7 +28,7 @@ def main():
         os.makedirs(out_dir, exist_ok=True)
         if not os.path.isdir(join(out_dir, 'light_field_calibration')):
             call([
-                join('build', 'mctracer', 'mctPlenoscopeCalibration'),
+                join('build', 'merlict', 'merlict-plenoscope-calibration'),
                 '--scenery', join('resources', 'iact', 'MAGIC_1', 'scenery'),
                 '--number_mega_photons', '25',
                 '--output', join(out_dir, 'light_field_calibration')
@@ -52,7 +52,7 @@ def main():
                         'resources', 'iact',
                         'MAGIC_1', 'mct_propagation_config.xml'),
                     '--mct_acp_propagator', join(
-                        'build', 'mctracer', 'mctPlenoscopePropagation'),
+                        'build', 'merlict', 'merlict-plenoscope-propagation'),
                 ]
                 if arguments['--scoop_hosts']:
                     command.insert(1, '--scoop_hosts')

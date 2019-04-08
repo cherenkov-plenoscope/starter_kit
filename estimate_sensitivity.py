@@ -40,7 +40,7 @@ if __name__ == '__main__':
         os.makedirs(od, exist_ok=True)
         if not os.path.isdir(join(od, 'light_field_calibration')):
             call([
-                join('build', 'mctracer', 'mctPlenoscopeCalibration'),
+                join('build', 'merlict', 'merlict-plenoscope-calibration'),
                 '--scenery', join('resources', 'acp', '71m', 'scenery'),
                 '--number_mega_photons', arguments['--lfc_Mp'],
                 '--output', join(od, 'light_field_calibration')])
@@ -60,7 +60,7 @@ if __name__ == '__main__':
                     mct_acp_config_path=join(
                         'resources', 'acp', 'mct_propagation_config.xml'),
                     mct_acp_propagator_path=join(
-                        'build', 'mctracer', 'mctPlenoscopePropagation'),
+                        'build', 'merlict', 'merlict-plenoscope-propagation'),
                     trigger_patch_threshold=patch_threshold,
                     trigger_integration_time_in_slices=(
                         integration_time_in_slices))

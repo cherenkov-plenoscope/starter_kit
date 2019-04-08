@@ -149,11 +149,11 @@ for idx, incident_direction in enumerate(incident_directions):
             directions=directions,
             wavelengths=wavelengths)
         sp.call([
-            "./build/mctracer/mctPropagate",
+            "./build/merlict/merlict-propagate",
             "-s", "examples/small_camera_lens_psf/optical-table_for_lens.xml",
             "-i", photons_path,
             "-o", photons_result_path,
-            "-c", "mctracer/Main/Examples/Propagation/settings.xml"])
+            "-c", "merlict/merlict_tests/apps/examples/settings.xml"])
         photons_result_path += "1_0"
         result = np.genfromtxt(photons_result_path)
         r = {}
