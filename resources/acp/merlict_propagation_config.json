@@ -37,7 +37,7 @@
             [7.00e-07, 9.895e+18]
         ],
         "exposure_time": 50e-9,
-        "comment": "Almost no flux. The night sky brightness is deactivated here. In Photons/(sr s m^2 m), last 'm' is for the wavelength wavelength[m] flux[1/(s m^2 sr m)"
+        "comment": "Night Sky Background Analysis for the Cherenkov Telescope Array using the Atmoscope instrument, Markus Gaug, arXiv preprint arXiv:1307.3053, based on Benn Ch.R., Ellison S.R., La Palma tech. note, 2007; wavelength[m] flux[1/(s m^2 sr m)]"
     },
     "photo_electric_converter": {
         "quantum_efficiency_vs_wavelength": [

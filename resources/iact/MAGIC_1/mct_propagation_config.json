@@ -1,0 +1,38 @@
+{
+    "night_sky_background_ligth": {
+        "flux_vs_wavelength": [
+            [250.0e-9, 1.0],
+            [700.0e-9, 1.0]],
+        "exposure_time": 50e-9,
+        "comment": "Almost no flux. wavelength[m] flux[1/(s m^2 sr m)]"
+    },
+    "photo_electric_converter": {
+        "quantum_efficiency_vs_wavelength": [
+            [249e-9, 0.16],
+            [275e-9, 0.19],
+            [300e-9, 0.20],
+            [325e-9, 0.23],
+            [350e-9, 0.275],
+            [375e-9, 0.30],
+            [400e-9, 0.30],
+            [425e-9, 0.29],
+            [450e-9, 0.28],
+            [475e-9, 0.27],
+            [500e-9, 0.24],
+            [525e-9, 0.18],
+            [550e-9, 0.16],
+            [575e-9, 0.10],
+            [600e-9, 0.06],
+            [625e-9, 0.03],
+            [650e-9, 0.02],
+            [675e-9, 0.01],
+            [701e-9, 0.00]],
+        "dark_rate": 1e-3,
+        "probability_for_second_puls": 0.0,
+        "comment": "Performance of the Camera of the MAGIC II Telescope, https://arxiv.org/abs/0906.5448v1, Figure 3, MAGIC-I"
+    },
+    "photon_stream": {
+        "time_slice_duration": 0.5e-9,
+        "single_photon_arrival_time_resolution": 0.416e-9
+    }
+}
