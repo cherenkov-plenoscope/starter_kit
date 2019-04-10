@@ -1,0 +1,40 @@
+{
+    "night_sky_background_ligth": {
+        "flux_vs_wavelength": [
+                [250.0e-9, 1.0],
+                [700.0e-9, 1.0]
+        ],
+        "exposure_time": 50e-9,
+        "comment": "Almost no flux. The night sky brightness is deactivated here. In Photons/(sr s m^2 m), last 'm' is for the wavelength wavelength[m] flux[1/(s m^2 sr m)"
+    },
+    "photo_electric_converter": {
+        "quantum_efficiency_vs_wavelength": [
+                [240e-9, 0.0673],
+                [260e-9, 0.1812],
+                [280e-9, 0.2758],
+                [300e-9, 0.3686],
+                [320e-9, 0.3866],
+                [340e-9, 0.3975],
+                [360e-9, 0.4017],
+                [380e-9, 0.4083],
+                [400e-9, 0.4010],
+                [420e-9, 0.3764],
+                [440e-9, 0.3576],
+                [460e-9, 0.3143],
+                [480e-9, 0.2782],
+                [500e-9, 0.2480],
+                [540e-9, 0.1257],
+                [580e-9, 0.0837],
+                [620e-9, 0.0396],
+                [660e-9, 0.0107],
+                [701e-9, 0.0001]
+        ],
+        "dark_rate": 1e-3,
+        "probability_for_second_puls": 0.0,
+        "comment": "CTA LST PMT Hamamatsu R11920-100-05 Collection efficiency assumed: 0.95; Novel Photo Multiplier Tubes for the Cherenkov Telescope Array Project; ICRC 2013, Takeshi Toyama"
+    },
+    "photon_stream": {
+        "time_slice_duration": 0.5e-9,
+        "single_photon_arrival_time_resolution": 0.416e-9
+    }
+}

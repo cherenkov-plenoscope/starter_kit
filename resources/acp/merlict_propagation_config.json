@@ -1,0 +1,72 @@
+{
+    "night_sky_background_ligth": {
+        "flux_vs_wavelength": [
+            [2.40e-07, 1.651e+18],
+            [2.70e-07, 2.018e+18],
+            [3.00e-07, 2.428e+18],
+            [3.30e-07, 2.357e+18],
+            [3.40e-07, 2.914e+18],
+            [3.94e-07, 3.772e+18],
+            [3.95e-07, 1.819e+19],
+            [3.96e-07, 3.753e+18],
+            [4.33e-07, 4.577e+18],
+            [4.35e-07, 9.225e+18],
+            [4.37e-07, 4.535e+18],
+            [4.62e-07, 5.362e+18],
+            [4.85e-07, 6.129e+18],
+            [5.25e-07, 7.550e+18],
+            [5.55e-07, 8.659e+18],
+            [5.58e-07, 8.425e+19],
+            [5.61e-07, 8.213e+18],
+            [5.85e-07, 8.893e+18],
+            [5.91e-07, 3.554e+19],
+            [5.95e-07, 1.216e+19],
+            [6.00e-07, 1.073e+19],
+            [6.05e-07, 8.680e+18],
+            [6.27e-07, 1.272e+19],
+            [6.30e-07, 6.692e+19],
+            [6.32e-07, 1.137e+19],
+            [6.38e-07, 2.881e+19],
+            [6.40e-07, 8.128e+18],
+            [6.45e-07, 8.065e+18],
+            [6.47e-07, 1.072e+19],
+            [6.60e-07, 1.051e+19],
+            [6.70e-07, 7.764e+18],
+            [6.78e-07, 7.673e+18],
+            [6.85e-07, 1.570e+19],
+            [7.00e-07, 9.895e+18]
+        ],
+        "exposure_time": 50e-9,
+        "comment": "Almost no flux. The night sky brightness is deactivated here. In Photons/(sr s m^2 m), last 'm' is for the wavelength wavelength[m] flux[1/(s m^2 sr m)"
+    },
+    "photo_electric_converter": {
+        "quantum_efficiency_vs_wavelength": [
+            [240e-9, 0.0673],
+            [260e-9, 0.1812],
+            [280e-9, 0.2758],
+            [300e-9, 0.3686],
+            [320e-9, 0.3866],
+            [340e-9, 0.3975],
+            [360e-9, 0.4017],
+            [380e-9, 0.4083],
+            [400e-9, 0.4010],
+            [420e-9, 0.3764],
+            [440e-9, 0.3576],
+            [460e-9, 0.3143],
+            [480e-9, 0.2782],
+            [500e-9, 0.2480],
+            [540e-9, 0.1257],
+            [580e-9, 0.0837],
+            [620e-9, 0.0396],
+            [660e-9, 0.0107],
+            [701e-9, 0.0001]
+        ],
+        "dark_rate": 1e-3,
+        "probability_for_second_puls": 0.0,
+        "comment": "CTA LST PMT Hamamatsu R11920-100-05 Collection efficiency assumed: 0.95; Novel Photo Multiplier Tubes for the Cherenkov Telescope Array Project; ICRC 2013, Takeshi Toyama"
+    },
+    "photon_stream": {
+        "time_slice_duration": 0.5e-9,
+        "single_photon_arrival_time_resolution": 0.416e-9
+    }
+}
