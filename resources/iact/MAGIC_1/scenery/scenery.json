@@ -1,0 +1,73 @@
+{
+  "functions": [
+    { "name": "mirror_reflectivity_vs_wavelength",
+      "argument_versus_value": [
+            [241e-9, 0.76],
+            [251e-9, 0.8],
+            [259e-9, 0.82],
+            [267e-9, 0.84],
+            [283e-9, 0.86],
+            [309e-9, 0.88],
+            [372e-9, 0.9],
+            [450e-9, 0.91],
+            [602e-9, 0.9],
+            [701e-9, 0.885]],
+      "comment": "@inproceedings{pareschi2013status, title={Status of the technologies for the production of the Cherenkov Telescope Array (CTA) mirrors}, author={Pareschi, G and Armstrong, T and Baba, H and Bahr, J and Bonardi, A and Bonnoli, G and Brun, P and Canestrari, R and Chadwick, P and Chikawa, M and others}, booktitle={SPIE Optical Engineering+ Applications}, pages={886103--886103}, year={2013}, organization={International Society for Optics and Photonics}} Figure 14, Al+SiO2 in state 'before'"
+    },
+    { "name": "lens_refraction_vs_wavelength",
+      "argument_versus_value": [
+            [240e-9, 1.5133],
+            [280e-9, 1.4942],
+            [320e-9, 1.4827],
+            [360e-9, 1.4753],
+            [400e-9, 1.4701],
+            [486e-9, 1.4631],
+            [546e-9, 1.4601],
+            [633e-9, 1.4570],
+            [694e-9, 1.4554],
+            [753e-9, 1.4542]],
+      "comment": "Hereaus Quarzglas GmbH and Co. KG, Quarzstr. 8, 63450 Hanau, Suprasil Family 311/312/313"
+    }
+  ],
+  "colors": [],
+  "children": [
+    {
+      "type": "Frame",
+      "name": "17m_MAGIC",
+      "pos": [0, 0, 0],
+      "rot": [0, 0, 0],
+      "children": [
+        {
+          "type": "SegmentedReflector",
+          "name": "reflector",
+          "pos": [0, 0, 0],
+          "rot": [0, 0, 0],
+          "focal_length": 17.0,
+          "max_outer_aperture_radius": 8.5,
+          "min_inner_aperture_radius": 0.2,
+          "DaviesCotton_over_parabolic_mixing_factor": 0.0,
+          "facet_inner_hex_radius": 0.3,
+          "gap_between_facets": 0.02,
+          "surface": {
+            "outer_reflection": "mirror_reflectivity_vs_wavelength"},
+          "children": []
+        },
+        {
+          "type": "LightFieldSensor",
+          "name": "light_field_sensor",
+          "pos": [0, 0, 17.0],
+          "rot": [0, 0, 0],
+          "expected_imaging_system_focal_length": 17.0,
+          "expected_imaging_system_aperture_radius": 8.5,
+          "max_FoV_diameter_deg": 3.5,
+          "hex_pixel_FoV_flat2flat_deg": 0.1,
+          "num_paxel_on_pixel_diagonal": 5,
+          "housing_overhead": 1.2,
+          "lens_refraction_vs_wavelength": "lens_refraction_vs_wavelength",
+          "bin_reflection_vs_wavelength": "mirror_reflectivity_vs_wavelength",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
