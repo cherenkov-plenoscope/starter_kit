@@ -85,7 +85,7 @@ def esitmate_light_field_geometry(
             rot_x=rot_x,
             rot_y=rot_y,
             rot_z=rot_z,
-            path=join(tmp_dir, 'scenery.xml'),
+            path=join(tmp_dir, 'scenery.json'),
             template_scenery_path=template_scenery_path)
 
         sp.call([
@@ -105,7 +105,7 @@ template_scenery_path = join(
     'acp',
     '71m',
     'scenery',
-    'scenery.xml')
+    'scenery.json')
 
 # Estimating light-field-geometries for various misalignments
 # -----------------------------------------------------------
@@ -300,7 +300,7 @@ mct_propagator_path = join(
 propagation_config_path = join(
     'resources',
     'acp',
-    'mct_propagation_config_no_night_sky_background.xml')
+    'merlict_propagation_config_no_night_sky_background.json')
 
 response_dir = join(out_dir, 'responses')
 os.makedirs(response_dir, exist_ok=True)

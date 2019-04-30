@@ -3,6 +3,7 @@ import os
 import wrapp_mct_photon_propagation as mctw
 import subprocess as sp
 import tempfile
+import json
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import plenopy as pl
@@ -22,38 +23,44 @@ curvature_radius = 0.18919
 
 MIRROR_WALLS = True
 
-s = ''
-s += '<scenery author="Sebastian" comment="small_camera_lens_psf">\n'
-s += '<function name="zero">\n'
-s += '  <constant value="0.0" lower_limit="200e-9" upper_limit="1200e-9"/>\n'
-s += '</function>\n'
+scenery = {}
+scenery["functions"] = [
+    {
+        "name": "mirror_reflection",
+        "argument_versus_value": [
+            [200e-9, 0.95],
+            [1200e-9, 0.95]]
+    },
+    {
+        "name": "glas_refraction",
+        "argument_versus_value": [
+            [200e-9, 1.46832],
+            [1200e-9, 1.46832]]
+    },
+]
+scenery["colors"] = [
+    {"name": "red", "rgb": [255, 0, 0]},
+    {"name": "brown", "rgb": [128, 150, 0]},
+    {"name": "green", "rgb": [0, 200, 0]},
+    {"name": "lens_white", "rgb": [255, 255, 255]}
+]
+scenery["children"] = []
 
-s += '<function name="leaf_reflection">\n'
-s += '  <constant value="0.5" lower_limit="200e-9" upper_limit="1200e-9"/>\n'
-s += '</function>\n'
-
-s += '<function name="mirror_reflection">\n'
-s += '  <constant value="0.95" lower_limit="200e-9" upper_limit="1200e-9"/>\n'
-s += '</function>\n'
-
-s += '<function name="glas_refraction">\n'
-s += '  <constant value="1.46832" lower_limit="200e-9" upper_limit="1200e-9"/>\n'
-s += '</function>\n'
-
-s += '<color name="red" rgb="[255,0,0]"/>\n'
-s += '<color name="brown" rgb="[128,150,0]"/>\n'
-s += '<color name="green" rgb="[0,200,0]"/>\n'
-
-s += '<bi_convex_lens_hexagonal>\n'
-s += '  <set_frame name="lens" pos="[0, 0, {focal_length:f}]" rot="[0, 0, {rotz:f}]"/>\n'.format(
-    focal_length=focal_length,
-    rotz=np.pi/2)
-s += '  <set_medium refraction_vs_wavelength="glas_refraction"/>\n'
-s += '  <set_surface reflection_vs_wavelength="zero" color="red"/>\n'
-s += '  <set_bi_convex_lens_hexagonal curvature_radius="{curvature_radius:f}" outer_radius="{outer_radius:f}"/>\n'.format(
-    curvature_radius=curvature_radius,
-    outer_radius=outer_radius)
-s += '</bi_convex_lens_hexagonal>\n'
+scenery["children"].append(
+    {
+        "type": "BiConvexLensHex",
+        "name": "lens",
+        "pos": [0, 0, focal_length],
+        "rot": [0, 0, np.pi/2],
+        "curvature_radius": curvature_radius,
+        "outer_radius": outer_radius,
+        "surface": {
+            "inner_color": "lens_white",
+            "outer_color": "lens_white",
+            "inner_refraction": "glas_refraction",
+        },
+        "children": [],
+    })
 
 stop_centers = np.zeros(shape=(6, 2))
 for i, phi in enumerate(np.linspace(0, 2*np.pi, 6, endpoint=False)):
@@ -62,17 +69,18 @@ for i, phi in enumerate(np.linspace(0, 2*np.pi, 6, endpoint=False)):
         np.cos(phi + np.pi/2)])
 
 for idx, pos in enumerate(stop_centers):
-    s += '<hex_plane>\n'
-    s += '  <set_frame name="stop_{idx:d}" pos="[{x:f}, {y:f}, {focal_length:f}]" rot="[0, 0, {rotz:f}]"/>\n'.format(
-        focal_length=focal_length,
-        x=pos[0],
-        y=pos[1],
-        idx=idx,
-        rotz=np.pi/2)
-    s += '  <set_hex_plane outer_hex_radius="{outer_radius:f}"/>\n'.format(
-        outer_radius=outer_radius)
-    s += '  <set_surface reflection_vs_wavelength="zero" color="brown"/>\n'
-    s += '</hex_plane>\n'
+    scenery["children"].append(
+        {
+            "type": "HexPlane",
+            "name": "stop_{:d}".format(idx),
+            "pos": [pos[0], pos[1], focal_length],
+            "rot": [0, 0, np.pi/2],
+            "outer_radius": outer_radius,
+            "surface": {
+                "inner_color": "brown",
+                "outer_color": "brown"},
+            "children": [],
+        })
 
 if MIRROR_WALLS:
     wall_centers = np.zeros(shape=(6, 2))
@@ -80,29 +88,40 @@ if MIRROR_WALLS:
         wall_centers[i, :] = inner_radius*np.array([
             np.sin(phi + np.pi/2),
             np.cos(phi + np.pi/2)])
-        s += '<plane>\n'
-        s += '  <set_frame name="wall_{idx:d}" pos="[{x:f}, {y:f}, {z:f}]" rot="[1.5707, 0, {rotz:f}]"/>\n'.format(
-            z=0.025,
-            x=wall_centers[i, 0],
-            y=wall_centers[i, 1],
-            idx=i,
-            rotz=phi + np.pi/2)
-        s += '  <set_surface reflection_vs_wavelength="mirror_reflection" color="green"/>\n'
-        s += '  <set_plane x_width="{x_width:f}" y_width="{y_width:f}"/>\n'.format(
-            x_width=outer_radius,
-            y_width=0.05)
-        s += '</plane>\n'
+        scenery["children"].append(
+            {
+                "type": "Plane",
+                "name": "wall_{:d}".format(i),
+                "pos": [wall_centers[i, 0], wall_centers[i, 1], 0.025],
+                "rot": [1.5707, 0, phi + np.pi/2],
+                "x_width": outer_radius,
+                "y_width": 0.05,
+                "surface": {
+                    "inner_color": "green",
+                    "outer_color": "green",
+                    "outer_reflection": "mirror_reflection",
+                    "inner_reflection": "mirror_reflection",
+                },
+                "children": [],
+            }
+        )
 
-s += '<disc>\n'
-s += '  <set_frame name="sensor" pos="[0, 0, 0]" rot="[0, 0, 0]"/>\n'
-s += '  <set_surface reflection_vs_wavelength="zero" color="red"/>\n'
-s += '  <set_disc radius="{:f}"/>\n'.format(outer_radius*1.5)
-s += '  <set_sensitive id="0"/>\n'
-s += '</disc>\n'
-s += '</scenery>\n'
+scenery["children"].append(
+    {
+        "type": "Disc",
+        "name": "sensor",
+        "pos": [0, 0, 0],
+        "rot": [0, 0, 0],
+        "radius": outer_radius*1.5,
+        "sensor_id": 0,
+        "children": [],
+        "surface": {
+            "inner_color": "red",
+            "outer_color": "red"},
+    })
 
-with open(os.path.join(out_dir, 'optical-table_for_lens.xml'), 'wt') as fout:
-    fout.write(s)
+with open(os.path.join(out_dir, 'optical-table_for_lens.json'), 'wt') as fout:
+    fout.write(json.dumps(scenery, indent=4))
 
 sensor_responses = []
 focal_ratio_imaging_reflector = 1.5
@@ -149,11 +168,23 @@ for idx, incident_direction in enumerate(incident_directions):
             directions=directions,
             wavelengths=wavelengths)
         sp.call([
-            "./build/merlict/merlict-propagate",
-            "-s", "examples/small_camera_lens_psf/optical-table_for_lens.xml",
+            os.path.join(
+                ".",
+                "build",
+                "merlict",
+                "merlict-propagate"),
+            "-s", os.path.join(
+                "examples",
+                "small_camera_lens_psf",
+                "optical-table_for_lens.json"),
             "-i", photons_path,
             "-o", photons_result_path,
-            "-c", "merlict/merlict_tests/apps/examples/settings.xml"])
+            "-c", os.path.join(
+                "merlict_development_kit",
+                "merlict_tests",
+                "apps",
+                "examples",
+                "settings.json")])
         photons_result_path += "1_0"
         result = np.genfromtxt(photons_result_path)
         r = {}
@@ -182,18 +213,29 @@ for sensor_response in sensor_responses:
     if np.max(psf) > max_intensity:
         max_intensity = np.max(psf)
 
+lfg_path = os.path.join('run', 'light_field_calibration')
+if os.path.exists(lfg_path):
+    lfg = pl.LightFieldGeometry()
+    lixel_r = np.hypot(lfg.lixel_positions_x, lfg.lixel_positions_y)
+    pixel_r = (
+        lfg.sensor_plane2imaging_system.expected_imaging_system_focal_length *
+        np.tan(lfg.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2))
+    mask = lixel_r < pixel_r
+    lixel_x = lfg.lixel_positions_x[mask]
+    lixel_y = lfg.lixel_positions_y[mask]
+    lixel_outer_radius = lfg.lixel_outer_radius
 
-lfg = pl.LightFieldGeometry(os.path.join('run', 'light_field_calibration'))
-lixel_r = np.hypot(lfg.lixel_positions_x, lfg.lixel_positions_y)
-pixel_r = (lfg.sensor_plane2imaging_system.expected_imaging_system_focal_length*
-    np.tan(lfg.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2))
-mask = lixel_r < pixel_r
-lixel_x = lfg.lixel_positions_x[mask]
-lixel_y = lfg.lixel_positions_y[mask]
-lixel_outer_radius = lfg.lixel_outer_radius
 
-
-def add_hexagon(ax, x=0, y=0, outer_radius=1, theta=0, color='k', linewidth=1, alpha=1):
+def add_hexagon(
+    ax,
+    x=0,
+    y=0,
+    outer_radius=1,
+    theta=0,
+    color='k',
+    linewidth=1,
+    alpha=1
+):
     hexagon = np.zeros(shape=(6, 2))
     for i, phi in enumerate(np.linspace(0, 2*np.pi, 6, endpoint=False)):
         hexagon[i, 0] = x + outer_radius*np.cos(phi + theta)
@@ -236,16 +278,17 @@ for sensor_response in sensor_responses:
         color='g',
         linewidth=1.5,
         alpha=0.5)
-    for j in range(lfg.number_lixel//lfg.number_pixel):
-        add_hexagon(
-            ax=ax,
-            x=1e3*lixel_x[j],
-            y=1e3*lixel_y[j],
-            outer_radius=1e3*lixel_outer_radius,
-            theta=np.pi/6,
-            color='r',
-            linewidth=1,
-            alpha=0.3)
+    if os.path.exists(lfg_path):
+        for j in range(lfg.number_lixel//lfg.number_pixel):
+            add_hexagon(
+                ax=ax,
+                x=1e3*lixel_x[j],
+                y=1e3*lixel_y[j],
+                outer_radius=1e3*lixel_outer_radius,
+                theta=np.pi/6,
+                color='r',
+                linewidth=1,
+                alpha=0.3)
     fig.savefig(
         os.path.join(
             out_dir,

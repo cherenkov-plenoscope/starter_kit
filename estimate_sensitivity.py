@@ -58,7 +58,7 @@ if __name__ == '__main__':
                     output_path=join(od, 'irf', p),
                     acp_detector_path=join(od, 'light_field_calibration'),
                     mct_acp_config_path=join(
-                        'resources', 'acp', 'mct_propagation_config.xml'),
+                        'resources', 'acp', 'merlict_propagation_config.json'),
                     mct_acp_propagator_path=join(
                         'build', 'merlict', 'merlict-plenoscope-propagation'),
                     trigger_patch_threshold=patch_threshold,

@@ -34,7 +34,7 @@ if not os.path.exists(join(out_dir, 'gamma.acp')):
         join('build', 'merlict', 'merlict-plenoscope-propagation'),
         '--lixel', join('resources', 'acp', '71m', 'light_field_calibration'),
         '--input', join(out_dir, 'gamma.evtio'),
-        '--config', join('resources', 'acp', 'mct_propagation_config.xml'),
+        '--config', join('resources', 'acp', 'merlict_propagation_config.json'),
         '--output', join(out_dir, 'gamma.acp'),
         '--random_seed', '0',
         '--all_truth'

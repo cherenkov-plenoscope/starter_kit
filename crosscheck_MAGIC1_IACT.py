@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 """
-Run a crosscheck where the ACP simulation tools are used to reproduce the known
-instrument response functions and sensitivities of the MAGIC 1 mono telescope.
-You can run this in parallel on a python scoop cluster, but you do not have to.
+Run a crosscheck to reproduce the instrument-response-functions of the MAGIC-1
+mono-telescope. You can run this in parallel on a python scoop cluster,
+but you do not have to.
 
 Usage: crosscheck_MAGIC1_IACT [-o=DIR] [-s=SCOOP_HOSTS]
 
@@ -21,7 +21,7 @@ import acp_instrument_response_function as acp_irf
 def main():
     try:
         arguments = docopt.docopt(__doc__)
-        out_dir = 'crosscheck_MAGIC1_IACT'
+        out_dir = join('examples', 'crosscheck_MAGIC1_IACT')
 
         # 1) calibration of the 'MAGIC 1 like' telescope
         # ----------------------------------------------
@@ -30,7 +30,7 @@ def main():
             call([
                 join('build', 'merlict', 'merlict-plenoscope-calibration'),
                 '--scenery', join('resources', 'iact', 'MAGIC_1', 'scenery'),
-                '--number_mega_photons', '25',
+                '--num_mega_photons', '25',
                 '--output', join(out_dir, 'light_field_calibration')
             ])
 
@@ -46,11 +46,11 @@ def main():
                         'resources', 'iact', 'MAGIC_1',
                         p+'_steering_card.txt'),
                     '--output_path', join(out_dir, 'irf', p),
-                    '--number_of_runs', '96',
+                    '--number_of_runs', '4',
                     '--acp_detector', join(out_dir, 'light_field_calibration'),
                     '--mct_acp_config', join(
                         'resources', 'iact',
-                        'MAGIC_1', 'mct_propagation_config.xml'),
+                        'MAGIC_1', 'merlict_propagation_config.json'),
                     '--mct_acp_propagator', join(
                         'build', 'merlict', 'merlict-plenoscope-propagation'),
                 ]

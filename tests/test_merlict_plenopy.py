@@ -136,7 +136,7 @@ def test_propagation_with_mctracer(tmp):
         '--lixel', join(tmp, 'light_field_geometry'),
         '--config', join(
             'resources', 'acp',
-            'mct_propagation_config_no_night_sky_background.xml'),
+            'merlict_propagation_config_no_night_sky_background.json'),
         '--input', join(tmp, 'calibration_gamma.evtio'),
         '--output', join(tmp, 'calibration_gamma.acp'),
         '--all_truth',
