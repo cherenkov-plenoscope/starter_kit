@@ -2,7 +2,8 @@ import os
 from subprocess import call
 import pytest
 
-def test_all_mctracer_Cpp_test_cases(capsys):
+
+def test_merlict(capsys):
     cwd = os.getcwd()
     os.chdir(os.path.join('merlict_development_kit'))
     with capsys.disabled():
