@@ -37,12 +37,12 @@ def main():
         call([
             'corsika',
             '--corsika_path',
-            join(
+            os.path.abspath(join(
                 'build',
                 'corsika',
                 'corsika-75600',
                 'run',
-                'corsika75600Linux_QGSII_urqmd')])
+                'corsika75600Linux_QGSII_urqmd'))])
 
         # Photon-propagator merlict
         # -------------------------
