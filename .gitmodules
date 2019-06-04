@@ -25,3 +25,6 @@
 [submodule "photon_spectra"]
 	path = photon_spectra
 	url = https://github.com/cherenkov-plenoscope/photon_spectra
+[submodule "sun_grid_engine_map"]
+	path = sun_grid_engine_map
+	url = https://github.com/cherenkov-plenoscope/sun_grid_engine_map
