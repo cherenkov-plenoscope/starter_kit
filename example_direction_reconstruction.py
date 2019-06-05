@@ -3,6 +3,7 @@ import plenopy as pl
 import os
 import pandas as pd
 import json
+import matplotlib.pyplot as plt
 
 
 figure_configs = [
@@ -85,6 +86,10 @@ if not os.path.exists(cah_path):
         cherenkov_photons = pl.classify.cherenkov_photons_in_roi_in_image(
             roi=roi,
             photons=photons)
+        if len(cherenkov_photons.photon_ids) < 10:
+            print("Only {:d} Cherenkov-photons classified".format(
+                len(cherenkov_photons.photon_ids)))
+            continue
 
         # Incident-direction reconstructed using only the trigger-patch
         # -------------------------------------------------------------
@@ -120,7 +125,7 @@ if not os.path.exists(cah_path):
         r['light_front_cy'] = c_pap_time[1]
         results.append(r)
 
-        if r['energy'] < 2:
+        if r['energy'] < 1.5:
             figure_dir = os.path.join(
                 out_dir,
                 '{:06d}_pap_3D'.format(event.number))
