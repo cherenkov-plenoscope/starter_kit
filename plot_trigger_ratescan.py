@@ -1,6 +1,6 @@
 import os
 import json
-import numpy
+import numpy as np
 import pkg_resources
 import acp_instrument_sensitivity_function as isf
 import matplotlib.pyplot as plt
