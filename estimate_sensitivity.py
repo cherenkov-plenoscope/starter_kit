@@ -68,8 +68,10 @@ if __name__ == '__main__':
         for p in particles:
             if not os.path.isdir(join(od, 'irf', p)):
                 jobs += irf.trigger_simulation.make_output_directory_and_jobs(
-                    steering_card_path=abspath(join(
+                    particle_steering_card_path=abspath(join(
                         'resources', 'acp', '71m', p+'_steering.json')),
+                    location_steering_card_path=abspath(join(
+                        'resources', 'acp', '71m', 'chile_paranal.json')),
                     output_path=join(od, 'irf', p),
                     acp_detector_path=join(od, 'light_field_calibration'),
                     mct_acp_config_path=abspath(join(
