@@ -28,11 +28,11 @@ for particle_type in particle_types:
         E_stop=10.,
         out_dir=os.path.join(reduce_dir, particle_type),
         merlict_path=merlict_path,
-        num_runs=100,
-        num_events_in_run=100)
+        num_runs=1000,
+        num_events_in_run=1280)
 
 random.shuffle(jobs)
-rc = sge.map(irf.trigger_simulation.run_job, jobs)
+rc = sge.map(md.map_and_reduce.run_job, jobs)
 
 for particle_type in particle_types:
     md.map_and_reduce.reduce_output(
