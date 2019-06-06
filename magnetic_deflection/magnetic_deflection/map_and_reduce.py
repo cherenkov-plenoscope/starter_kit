@@ -82,12 +82,12 @@ def make_jobs(
             number_events_in_run=num_events_in_run,
             primary_particle=irf.utils.primary_particle_to_corsika(
                 particle_type),
-            E_start=0.25,
-            E_stop=10.,
+            E_start=E_start,
+            E_stop=E_stop,
             max_zenith_scatter_angle_deg=max_zenith_scatter_angle_deg,
             max_scatter_radius=0.,
             observation_level_altitude_asl=observation_level_altitude_asl,
-            instrument_radius=250.,
+            instrument_radius=1000.,
             atmosphere_model=irf.utils.atmosphere_model_to_corsika(
                 atmosphere_model),
             earth_magnetic_field_x_muT=earth_magnetic_field_x_muT,
