@@ -19,7 +19,7 @@ def run(
         summary_out_path = os.path.join(tmp, 'event_summary.float32')
 
         cor_rc = cw.corsika(
-            steering_card=job['corsika_steering_card'],
+            steering_card=corsika_steering_card,
             output_path=corsika_out_path,
             save_stdout=True)
 
@@ -98,6 +98,6 @@ def make_jobs(
 
 def reduce_output(in_dir, out_path):
     with open(out_path, "wb") as fout:
-        for path in glob.glob(os.path.join(out_dir, "*.float32")):
+        for path in glob.glob(os.path.join(in_dir, "*.float32")):
             with open(path, "rb") as fin:
                 fout.write(fin.read())
