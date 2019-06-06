@@ -5,9 +5,9 @@ import sun_grid_engine_map as sge
 import acp_instrument_response_function as irf
 
 particles = [
-    {'type': 'gamma', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 512},
-    {'type': 'electron', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 512},
-    {'type': 'proton', 'E_start': 5., 'E_stop': 25, 'num_runs': 128},
+    {'type': 'gamma', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 5120},
+    {'type': 'electron', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 5120},
+    {'type': 'proton', 'E_start': 5., 'E_stop': 25, 'num_runs': 1280},
 ]
 
 location_steerong_card = irf.utils.read_json(
@@ -33,7 +33,7 @@ for particle in particles:
         out_dir=os.path.join(reduce_dir, particle['type']),
         merlict_path=merlict_path,
         num_runs=particle['num_runs'],
-        num_events_in_run=1280)
+        num_events_in_run=128)
 
 random.shuffle(jobs)
 rc = sge.map(md.map_and_reduce.run_job, jobs)
