@@ -82,8 +82,8 @@ if __name__ == '__main__':
                     mct_acp_propagator_path=abspath(join(
                         'build', 'merlict', 'merlict-plenoscope-propagation')),
                     trigger_patch_threshold=trigger['patch_threshold'],
-                    trigger_integration_time_in_slices=(
-                        trigger['integration_time_in_slices']))
+                    trigger_integration_time_in_slices=trigger[
+                        'integration_time_in_slices'])
 
         random.shuffle(jobs)
         rc = sge.map(irf.trigger_simulation.run_job, jobs)
