@@ -22,14 +22,17 @@ from subprocess import call
 import acp_instrument_response_function as irf
 import random
 import plenopy as pl
+import json
 
 
 if __name__ == '__main__':
     try:
-        patch_threshold = 103
+        trigger_steering_path = join(
+            'resources', 'acp', '71m', 'trigger_steering.json')
+        with open(trigger_steering_path, 'rt') as fin:
+            trigger = json.loads(fin.read())
         # for zero accidental-rate within the events simulated here.
         # for 5.0ns integration-time, i.e. 10 integration_time_in_slices
-        integration_time_in_slices = 10
 
         arguments = docopt.docopt(__doc__)
         od = os.path.abspath(arguments['--out_dir'])
@@ -55,9 +58,9 @@ if __name__ == '__main__':
                     'resources', 'acp', 'merlict_propagation_config.json')),
                 mct_acp_propagator_path=abspath(join(
                     'build', 'merlict', 'merlict-plenoscope-propagation')),
-                trigger_patch_threshold=patch_threshold,
+                trigger_patch_threshold=trigger['patch_threshold'],
                 trigger_integration_time_in_slices=(
-                    integration_time_in_slices))
+                    trigger['integration_time_in_slices']))
 
         random.shuffle(jobs)
         rc = sge.map(irf.trigger_simulation.run_job, jobs)
