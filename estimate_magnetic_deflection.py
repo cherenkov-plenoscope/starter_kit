@@ -5,9 +5,9 @@ import sun_grid_engine_map as sge
 import acp_instrument_response_function as irf
 
 particles = [
-    {'type': 'gamma', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 5120},
-    {'type': 'electron', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 5120},
-    {'type': 'proton', 'E_start': 5., 'E_stop': 25, 'num_runs': 1280},
+    {'type': 'gamma', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 1512, 'max_zenith_scatter_angle_deg': 10},
+    {'type': 'electron', 'E_start': 0.25, 'E_stop': 25, 'num_runs': 1512, 'max_zenith_scatter_angle_deg': 45},
+    {'type': 'proton', 'E_start': 5., 'E_stop': 25, 'num_runs': 628, 'max_zenith_scatter_angle_deg': 20},
 ]
 
 location_steerong_card = irf.utils.read_json(
@@ -20,7 +20,7 @@ jobs = []
 for particle in particles:
     jobs += md.map_and_reduce.make_jobs(
         particle_type=particle['type'],
-        max_zenith_scatter_angle_deg=15.,
+        max_zenith_scatter_angle_deg=particle['max_zenith_scatter_angle_deg'],
         observation_level_altitude_asl=
             location_steerong_card['observation_level_altitude_asl'],
         earth_magnetic_field_x_muT=
