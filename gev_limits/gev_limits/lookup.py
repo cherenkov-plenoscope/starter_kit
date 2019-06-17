@@ -4,6 +4,7 @@ import os
 import json
 from . import job_structure
 from . import thrown_structure
+from . import light_field
 
 
 KEYS = [
@@ -94,6 +95,16 @@ class LookUpAppender():
 
 class LookUpTable():
     def __init__(self, path):
+        self._job = read_job(os.path.join(path, JOB_PATH))
+        instrument = self._job['instrument']
+        self.plenoscope = light_field.init_Plenoscope(
+            aperture_radius=instrument['aperture_radius'],
+            num_paxel_on_diagonal=instrument['num_paxel_on_diagonal'],
+            field_of_view_radius_deg=instrument['field_of_view_radius_deg'],
+            num_pixel_on_diagonal=instrument['num_pixel_on_diagonal'],
+            time_radius=instrument['time_radius'],
+            num_time_slices=instrument['num_time_slices'])
+
         for i in range(len(KEYS)):
             name = KEYS[i][0]
             with open(os.path.join(path, name), 'rb') as fi:
@@ -140,6 +151,11 @@ class LookUpTable():
         num_photons = flat.shape[0]//5
         return flat.reshape((num_photons, 5))
 
+    def _light_field_sequence(self, index):
+        raw_lfs = self._raw_light_field_sequence(index)
+        return light_field.light_field_sequence_to_photons(
+            light_field_sequence=raw_lfs,
+            plenoscope=self.plenoscope)
 
 def concatenate(lut_paths, out_path):
     os.makedirs(out_path, exist_ok=True)
@@ -184,8 +200,8 @@ def assert_valid_jobs(job_path):
             assert key in job_structure.INSTRUMENT_KEYS
         for key in job['particle']:
             assert key in job_structure.PARTICLE_KEYS
-        for key in job['particle']:
-            assert key in job_structure.PARTICLE_KEYS
+        for key in job['site']:
+            assert key in job_structure.SITE_KEYS
 
     j0 = jobs[0]
     for jN in jobs:
@@ -204,3 +220,11 @@ def assert_valid_jobs(job_path):
         sN = jN['site']
         for key in job_structure.SITE_KEYS:
             assert s0[key] == sN[key]
+
+def read_job(path):
+    with open(path, 'rt') as fin:
+        job = json.loads(fin.readline())
+    return {
+        'instrument': job['instrument'],
+        'particle': job['particle'],
+        'site': job['site']}
