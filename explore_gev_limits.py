@@ -12,7 +12,7 @@ assert os.path.exists(MERLICT_PATH)
 out_dir = os.path.join('./__gev_limits_gamma')
 out_dir = os.path.abspath(out_dir)
 map_and_reduce_dir = os.path.join(out_dir, 'map_and_reduce')
-os.makedirs(map_and_reduce_dir)
+os.makedirs(map_and_reduce_dir, exist_ok=True)
 
 portal_instrument = {
     'aperture_radius': 35.5,
@@ -50,14 +50,15 @@ jobs = gli.map_and_reduce.make_jobs(
     site=gamsberg_site,
     trigger_threshold=50)
 
-for job in jobs:
-    gli.map_and_reduce.run_job(job)
+sge.map(gli.map_and_reduce.run_job, jobs)
 
 all_runs_path = os.path.join(out_dir, 'run.lut')
-gli.lookup.concatenate([
-    jobs[0]['out_path'],
-    jobs[1]['out_path']
-    ], all_runs_path)
+
+lut_paths = []
+for job in jobs:
+    lut_paths.append(job['out_path'])
+
+gli.lookup.concatenate(lut_paths, all_runs_path)
 
 lut = gli.lookup.LookUpTable(all_runs_path)
 
