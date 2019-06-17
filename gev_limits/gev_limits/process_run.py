@@ -176,14 +176,12 @@ def extract_light_field_sequence(
     instrument,
 ):
     cpb = cherenkov_photon_bunches
-    relative_arrival_times = cpb.arrival_time_since_first_interaction
-    relative_arrival_times -= np.median(relative_arrival_times)
     photons = light_field.PhotonObservables(
         x=cpb.x,
         y=cpb.y,
         cx=cpb.cx,
         cy=cpb.cy,
-        relative_arrival_times=relative_arrival_times)
+        relative_arrival_times=cpb.arrival_time_since_first_interaction)
 
     num_photons_emitted = cpb.x.shape[0]
     probs = np.random.uniform(size=num_photons_emitted)
@@ -207,6 +205,15 @@ def extract_light_field_sequence(
     photons = light_field.cut_PhotonObservables(
         photons=photons,
         mask=detected)
+
+    relative_arrival_times = photons.relative_arrival_times
+    relative_arrival_times -= np.median(relative_arrival_times)
+    photons = light_field.PhotonObservables(
+        x=photons.x,
+        y=photons.y,
+        cx=photons.cx,
+        cy=photons.cy,
+        relative_arrival_times=relative_arrival_times)
 
     return light_field.photons_to_light_field_sequence(
         photons=photons,
