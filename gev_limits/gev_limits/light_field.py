@@ -119,3 +119,17 @@ def light_field_sequence_to_photons(light_field_sequence, plenoscope):
         cx=lfg.cx[lfs[:, 0]],
         cy=lfg.cy[lfs[:, 1]],
         relative_arrival_times=lfg.t[lfs[:, 4]])
+
+
+def extract_basic_features(
+    photons,
+    plenoscope
+):
+    feat = {}
+    feat['mean_cx'] = np.mean(photons.cx)
+    feat['mean_cy'] = np.mean(photons.cy)
+    x_bins = np.histogram(photons.x, bins=plenoscope.x_bin_edges)[0]
+    feat['slope_x'] = np.polyfit(plenoscope.x, x_bins, 1)[0]
+    y_bins = np.histogram(photons.y, bins=plenoscope.y_bin_edges)[0]
+    feat['slope_y'] = np.polyfit(plenoscope.y, y_bins, 1)[0]
+    return feat
