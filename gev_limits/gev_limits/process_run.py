@@ -188,10 +188,16 @@ def extract_light_field_sequence(
     num_photons_emitted = cpb.x.shape[0]
     probs = np.random.uniform(size=num_photons_emitted)
     passed_atmosphere = cpb.probability_to_reach_observation_level > probs
-
     photons = light_field.cut_PhotonObservables(
         photons=photons,
         mask=passed_atmosphere)
+
+    field_of_view_radius = np.deg2rad(instrument['field_of_view_radius_deg'])
+    photons_c = np.hypot(photons.cx, photons.cy)
+    in_field_of_view = photons_c < field_of_view_radius
+    photons = light_field.cut_PhotonObservables(
+        photons=photons,
+        mask=in_field_of_view)
 
     num_photons_ground = len(photons.x)
     dices = np.random.uniform(size=num_photons_ground)
