@@ -7,6 +7,7 @@ from . import thrown_structure
 from . import light_field
 import matplotlib.pyplot as plt
 from sklearn.cluster import MeanShift
+from scipy import spatial
 
 
 KEYS = [
@@ -163,6 +164,34 @@ class LookUpTable():
             light_field_sequence=raw_lfs,
             plenoscope=self.plenoscope)
 
+    def light_field_sequence(self, index):
+        raw_indexed_lfs = self._raw_light_field_sequence(index)
+        lfg = self.plenoscope
+        lfs = raw_indexed_lfs
+        return np.array([
+            lfg.x[lfs[:, 2]],
+            lfg.y[lfs[:, 3]],
+            lfg.cx[lfs[:, 0]],
+            lfg.cy[lfs[:, 1]],
+            lfg.t[lfs[:, 4]]
+        ]).T
+
+
+    def light_field_sequence_normalized_point_cloud(
+        self,
+        index,
+        weights=np.array([1,1,1])
+    ):
+        lfs = self.light_field_sequence(index)
+        return np.array([
+            weights[0]*lfs[:, 2]/self.plenoscope.cx_bin_edges[-1],
+            weights[0]*lfs[:, 3]/self.plenoscope.cy_bin_edges[-1],
+            weights[1]*lfs[:, 0]/self.plenoscope.x_bin_edges[-1],
+            weights[1]*lfs[:, 1]/self.plenoscope.y_bin_edges[-1],
+            weights[2]*lfs[:, 4]/5e-9,
+        ])
+
+
 def concatenate(lut_paths, out_path):
     os.makedirs(out_path, exist_ok=True)
     for lut_path in lut_paths:
@@ -261,6 +290,9 @@ def self_similarity(
     sim_img_tolerance=0.75,
     sim_ape_tolerance=0.4,
     sim_lf_tolerance=0.45,
+    sim_pc_tolerance=0.02,
+    distance_upper_bound_pc=0.05,
+    pc_weights=np.array([1,1,1]),
     max_source_zenith_deg=2.,
     min_num_similar_events=10,
 ):
@@ -273,6 +305,10 @@ def self_similarity(
             continue
 
         lfs0 = lut._raw_light_field_sequence(i)
+        lfs0_normed = lut.light_field_sequence_normalized_point_cloud(
+            i,
+            weights=pc_weights)
+        lfs0_tree = spatial.KDTree(data=lfs0_normed.T)
 
         sim_particle_cxs = []
         sim_particle_cys = []
@@ -310,18 +346,39 @@ def self_similarity(
             sim_img = light_field.similarity_image(lfs0, lfs1, lut.plenoscope)
             if sim_img < sim_img_tolerance:
                 continue
+            """
+            sim_lf = light_field.similarity_light_field(lfs0, lfs1, lut.plenoscope)
+            if sim_lf < sim_lf_tolerance:
+                continue
+            """
+
+            lfs1_normed = lut.light_field_sequence_normalized_point_cloud(
+                j,
+                weights=pc_weights)
+            distances = lfs0_tree.query(
+                lfs1_normed.T,
+                k=lfs0_normed.shape[1],
+                distance_upper_bound=distance_upper_bound_pc)[0]
+            num_neighbors_each_photon = np.sum(distances != np.inf, axis=1)
+            num_neighbors = np.sum(num_neighbors_each_photon)
+            sim_pc = num_neighbors/(lfs1_normed.shape[1]*lfs1_normed.shape[1])
+            sim_pc = sim_pc**(1/5)
+
+            if sim_pc < sim_pc_tolerance:
+                continue
 
             print(
                 i,
                 j,
                 '{:.2f}deg'.format(rij_deg),
                 '{:.2f}img'.format(sim_img),
-                '{:.2f}ap'.format(sim_ape))
-
+                '{:.2f}ap'.format(sim_ape),
+                '{:.2f}pc'.format(sim_pc),
+                )
 
             sim_particle_cxs.append(lut.particle_cx[j])
             sim_particle_cys.append(lut.particle_cy[j])
-            sim_weights.append(sim_img)
+            sim_weights.append(sim_pc)
 
         sim_weights = np.array(sim_weights)
         num_matches = len(sim_particle_cxs)
@@ -343,6 +400,7 @@ def self_similarity(
                 residuals,
                 bins=np.linspace(0, 2, 20))
             r_sigma = integration_width_for_one_sigma(rhist, rbinedges)
+            """
             # Mean shift
             bandwidth = np.deg2rad(.5)
             clustering = MeanShift(bandwidth=bandwidth, cluster_all=False)
@@ -356,15 +414,26 @@ def self_similarity(
                 cluster_counts.append(np.sum(clustering.labels_ == key))
             largest_cluster = cluster_keys[np.argmax(cluster_counts)]
             best_pos = clustering.cluster_centers_[largest_cluster]
-
+            """
             print(
                 i,
-                '{:.2f}+-{:.2f} deg, {:d} ({:d})num,    {:.2f} deg68'.format(
+                '{:.2f}+-{:.2f} deg, {:d}    {:.2f} deg68'.format(
                     r_deg,
                     c_std_deg,
                     num_matches,
-                    num_in_cluster,
                     r_sigma))
+            plt.figure()
+            plt.plot(
+                np.rad2deg(
+                    np.hypot(
+                        sim_particle_cxs - lut.particle_cx[i],
+                        sim_particle_cys - lut.particle_cy[i]
+                    )
+                ),
+                sim_weights,
+                'kx')
+            plt.show()
+            """
             plt.figure()
             plt.plot(
                 np.rad2deg(sim_particle_cxs),
@@ -383,5 +452,6 @@ def self_similarity(
                 np.rad2deg(best_pos[1]),
                 'gx')
             plt.show()
+            """
         else:
             print(i, 'no match')

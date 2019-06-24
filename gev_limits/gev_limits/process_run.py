@@ -25,8 +25,8 @@ def make_steering_card(
     'PRMPAR  {prmpar:d}\n' \
     'ESLOPE -1.0\n' \
     'ERANGE {E_start:.3e} {E_stop:.3e}\n' \
-    'THETAP 0.  {max_theta_deg:.3f}\n' \
-    'PHIP 0.  360.\n' \
+    'THETAP {min_theta_deg:.3f} {max_theta_deg:.3f}\n' \
+    'PHIP {min_phi_deg:.3f} {max_phi_deg:.3f}\n' \
     'SEED {seed1:d} 0 0\n' \
     'SEED {seed2:d} 0 0\n' \
     'SEED {seed3:d} 0 0\n' \
@@ -40,7 +40,7 @@ def make_steering_card(
     'TELESCOPE 0. 0. 0. {aperture_radius:.3f}\n' \
     'ATMOSPHERE {atmosphere:d} T\n' \
     'CWAVLG 250 700\n' \
-    'CSCAT 1 1.500e+04 0.0\n' \
+    'CSCAT 1 {XSCAT_cm:.3f} {YSCAT_cm:.3f}\n' \
     'CERQEF F T F\n' \
     'CERSIZ 1\n' \
     'CERFIL F\n' \
@@ -57,6 +57,11 @@ def make_steering_card(
         E_start=particle["E_start"],
         E_stop=particle["E_stop"],
         max_theta_deg=particle["max_theta_deg"],
+        min_theta_deg=particle["min_theta_deg"],
+        max_phi_deg=particle["max_phi_deg"],
+        min_phi_deg=particle["min_phi_deg"],
+        XSCAT_cm=particle["XSCAT_m"]*1e2,
+        YSCAT_cm=particle["YSCAT_m"]*1e2,
         Bx=site["earth_magnetic_field_x_muT"],
         Bz=site["earth_magnetic_field_z_muT"],
         atmosphere=site["atmosphere"],

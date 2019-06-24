@@ -1,6 +1,8 @@
 from collections import namedtuple
 import numpy as np
 from scipy import signal
+from scipy import spatial
+import matplotlib.pyplot as plt
 
 
 PhotonObservables = namedtuple(
@@ -134,6 +136,12 @@ def euclidean_similarity(v0, v1):
     return 1. - diff/max_diff
 
 
+def euclidean_similarity_intensity_independent(v0, v1):
+    v00 = v0/np.linalg.norm(v0)
+    v11 = v1/np.linalg.norm(v1)
+    return euclidean_similarity(v00, v11)
+
+
 def slice_into_image_sequence(lfs, plenoscope, paxel_radius=1):
     image_sequences = []
     p = plenoscope
@@ -152,7 +160,14 @@ def diluted_images(
     lfs,
     plenoscope,
     paxel_dilution_radius=1,
-    pixel_dilution_mask=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+    pixel_dilution_mask=(1./273.)*np.array(
+    [
+        [ 0,  4,  7,  4,  0],
+        [ 4, 16, 26, 16,  4],
+        [ 7, 26, 41, 26,  7],
+        [ 4, 16, 26, 16,  4],
+        [ 0,  4,  7,  4,  0]
+    ])
 ):
     images = slice_into_image_sequence(
         lfs=lfs,
@@ -169,22 +184,25 @@ def diluted_images(
     return imgs
 
 
-def similarity(lfs0, lfs1, plenoscope):
+def similarity_light_field(lfs0, lfs1, plenoscope):
     imgs0 = diluted_images(lfs0, plenoscope)
     imgs1 = diluted_images(lfs1, plenoscope)
-
-    total_light = 0
-    total_similar_light = 0
+    sims = []
+    weights = []
     for i in range(len(imgs0)):
-        light0 = np.sum(imgs0[i])
-        light1 = np.sum(imgs1[i])
-        if light0 > 0 and light1 > 0:
-            theta_i = angle_in_between(imgs0[i].flatten(), imgs1[i].flatten())
-            sim = 1. - theta_i/(0.5*np.pi)
-            sim *= light0
-            total_similar_light += sim
-            total_light += light0
-    return total_similar_light/total_light
+        img0 = imgs0[i]
+        img1 = imgs1[i]
+        num_ph_0 = np.sum(img0)
+        num_ph_1 = np.sum(img1)
+        if num_ph_0 > 0 and num_ph_1 > 0:
+            sim_i = euclidean_similarity_intensity_independent(
+                img0.flatten(),
+                img1.flatten())
+            sims.append(sim_i)
+        else:
+            sims.append(0.)
+        weights.append(num_ph_0 + num_ph_1)
+    return np.average(sims, weights=weights)
 
 
 def similarity_image(
@@ -210,7 +228,9 @@ def similarity_image(
         bins=np.arange(plenoscope.num_pixel_on_diagonal+1))[0]
     img0 = signal.convolve2d(img0, pixel_dilution_mask)
     img1 = signal.convolve2d(img1, pixel_dilution_mask)
-    sim = euclidean_similarity(img0.flatten(), img1.flatten())
+    sim = euclidean_similarity_intensity_independent(
+        img0.flatten(),
+        img1.flatten())
     """
     print("sim", sim)
     f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
@@ -241,7 +261,9 @@ def similarity_aperture(
         bins=np.arange(plenoscope.num_paxel_on_diagonal+1))[0]
     ap0 = signal.convolve2d(ap0, paxel_dilution_mask)
     ap1 = signal.convolve2d(ap1, paxel_dilution_mask)
-    sim = euclidean_similarity(ap0.flatten(), ap1.flatten())
+    sim = euclidean_similarity_intensity_independent(
+        ap0.flatten(),
+        ap1.flatten())
     """
     print("sim", sim)
     f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
