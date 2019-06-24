@@ -1,5 +1,6 @@
 from collections import namedtuple
 import numpy as np
+from scipy import signal
 
 
 PhotonObservables = namedtuple(
@@ -121,15 +122,131 @@ def light_field_sequence_to_photons(light_field_sequence, plenoscope):
         relative_arrival_times=lfg.t[lfs[:, 4]])
 
 
-def extract_basic_features(
-    photons,
-    plenoscope
+def angle_in_between(v0, v1):
+    return np.arccos(
+        np.dot(v0, v1)/(np.linalg.norm(v0)*np.linalg.norm(v1)))
+
+
+def euclidean_similarity(v0, v1):
+    v_diff = v0 - v1
+    diff = np.linalg.norm(v_diff)
+    max_diff = np.sqrt(np.linalg.norm(v0)**2 + np.linalg.norm(v1)**2)
+    return 1. - diff/max_diff
+
+
+def slice_into_image_sequence(lfs, plenoscope, paxel_radius=1):
+    image_sequences = []
+    p = plenoscope
+    pr = paxel_radius
+    for i, x in enumerate(p.x):
+        for j, y in enumerate(p.y):
+            mask = (
+                (lfs[:, 2]>i-pr)*(lfs[:, 2]<i+pr)*
+                (lfs[:, 3]>j-pr)*(lfs[:, 3]<j+pr))
+            image_sequences.append(
+                np.array([lfs[mask, 0], lfs[mask, 1], lfs[mask, 4]]).T)
+    return image_sequences
+
+
+def diluted_images(
+    lfs,
+    plenoscope,
+    paxel_dilution_radius=1,
+    pixel_dilution_mask=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
 ):
-    feat = {}
-    feat['mean_cx'] = np.mean(photons.cx)
-    feat['mean_cy'] = np.mean(photons.cy)
-    x_bins = np.histogram(photons.x, bins=plenoscope.x_bin_edges)[0]
-    feat['slope_x'] = np.polyfit(plenoscope.x, x_bins, 1)[0]
-    y_bins = np.histogram(photons.y, bins=plenoscope.y_bin_edges)[0]
-    feat['slope_y'] = np.polyfit(plenoscope.y, y_bins, 1)[0]
-    return feat
+    images = slice_into_image_sequence(
+        lfs=lfs,
+        plenoscope=plenoscope,
+        paxel_radius=paxel_dilution_radius)
+    imgs = []
+    for image in images:
+        img = np.histogram2d(
+            image[:, 0],
+            image[:, 1],
+            bins=np.arange(plenoscope.num_pixel_on_diagonal+1))[0]
+        img = signal.convolve2d(img, pixel_dilution_mask)
+        imgs.append(img)
+    return imgs
+
+
+def similarity(lfs0, lfs1, plenoscope):
+    imgs0 = diluted_images(lfs0, plenoscope)
+    imgs1 = diluted_images(lfs1, plenoscope)
+
+    total_light = 0
+    total_similar_light = 0
+    for i in range(len(imgs0)):
+        light0 = np.sum(imgs0[i])
+        light1 = np.sum(imgs1[i])
+        if light0 > 0 and light1 > 0:
+            theta_i = angle_in_between(imgs0[i].flatten(), imgs1[i].flatten())
+            sim = 1. - theta_i/(0.5*np.pi)
+            sim *= light0
+            total_similar_light += sim
+            total_light += light0
+    return total_similar_light/total_light
+
+
+def similarity_image(
+    lfs0,
+    lfs1,
+    plenoscope,
+    pixel_dilution_mask=(1./273.)*np.array(
+        [
+            [ 0,  4,  7,  4,  0],
+            [ 4, 16, 26, 16,  4],
+            [ 7, 26, 41, 26,  7],
+            [ 4, 16, 26, 16,  4],
+            [ 0,  4,  7,  4,  0]
+        ])
+):
+    img0 = np.histogram2d(
+        lfs0[:, 0],
+        lfs0[:, 1],
+        bins=np.arange(plenoscope.num_pixel_on_diagonal+1))[0]
+    img1 = np.histogram2d(
+        lfs1[:, 0],
+        lfs1[:, 1],
+        bins=np.arange(plenoscope.num_pixel_on_diagonal+1))[0]
+    img0 = signal.convolve2d(img0, pixel_dilution_mask)
+    img1 = signal.convolve2d(img1, pixel_dilution_mask)
+    sim = euclidean_similarity(img0.flatten(), img1.flatten())
+    """
+    print("sim", sim)
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    ax1.pcolor(img0)
+    ax2.pcolor(img1)
+    plt.show()
+    """
+    return sim
+
+
+
+def similarity_aperture(
+    lfs0,
+    lfs1,
+    plenoscope,
+    paxel_dilution_mask=(1./16.)*np.array([
+        [1, 2, 1],
+        [2, 4, 2],
+        [1, 2, 1]])
+):
+    ap0 = np.histogram2d(
+        lfs0[:, 2],
+        lfs0[:, 3],
+        bins=np.arange(plenoscope.num_paxel_on_diagonal+1))[0]
+    ap1 = np.histogram2d(
+        lfs1[:, 2],
+        lfs1[:, 3],
+        bins=np.arange(plenoscope.num_paxel_on_diagonal+1))[0]
+    ap0 = signal.convolve2d(ap0, paxel_dilution_mask)
+    ap1 = signal.convolve2d(ap1, paxel_dilution_mask)
+    sim = euclidean_similarity(ap0.flatten(), ap1.flatten())
+    """
+    print("sim", sim)
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    ax1.pcolor(ap0)
+    ax2.pcolor(ap1)
+    plt.show()
+    """
+    return sim
