@@ -5,6 +5,8 @@ import json
 from . import job_structure
 from . import thrown_structure
 from . import light_field
+import matplotlib.pyplot as plt
+from sklearn.cluster import MeanShift
 
 
 KEYS = [
@@ -23,10 +25,14 @@ KEYS = [
 
     # air-shower-features
     ('num_photons', np.float32),
+    ('image_cx_median', np.float32),
+    ('image_cy_median', np.float32),
 ]
 
 SORTED_KEYS = [
     ('num_photons', np.float32),
+    ('image_cx_median', np.float32),
+    ('image_cy_median', np.float32),
 ]
 
 LFS_PATH = 'light_field_sequences'
@@ -228,3 +234,154 @@ def read_job(path):
         'instrument': job['instrument'],
         'particle': job['particle'],
         'site': job['site']}
+
+
+def residual_particle_direction(lut, i0, i1):
+    return np.hypot(
+        np.abs(lut.particle_cx[i0] - lut.particle_cx[i1]),
+        np.abs(lut.particle_cy[i0] - lut.particle_cy[i1]))
+
+
+def integration_width_for_one_sigma(hist, bin_edges):
+    one_sigma = 0.68
+    integral = np.cumsum(hist/np.sum(hist))
+    bin_centers = (bin_edges[0:-1] + bin_edges[1:])/2
+    x = np.linspace(
+        np.min(bin_centers),
+        np.max(bin_centers),
+        100*bin_centers.shape[0])
+    f = np.interp(x=x, fp=integral, xp=bin_centers)
+    return x[np.argmin(np.abs(f - one_sigma))]
+
+
+def self_similarity(
+    lut,
+    num_photons_rel_tolerance=0.25,
+    cxy_tolerance = 3,
+    sim_img_tolerance=0.75,
+    sim_ape_tolerance=0.4,
+    sim_lf_tolerance=0.45,
+    max_source_zenith_deg=2.,
+    min_num_similar_events=10,
+):
+    residuals = []
+    for i in range(lut.num_events):
+        if (
+            np.hypot(lut.particle_cx[i], lut.particle_cy[i]) >
+            np.deg2rad(max_source_zenith_deg)
+        ):
+            continue
+
+        lfs0 = lut._raw_light_field_sequence(i)
+
+        sim_particle_cxs = []
+        sim_particle_cys = []
+        sim_weights = []
+        for j in range(lut.num_events):
+            if i == j:
+                continue
+            if (
+                np.abs(lut.num_photons[i] - lut.num_photons[j]) >
+                num_photons_rel_tolerance*lut.num_photons[i]
+            ):
+                continue
+
+            delta_image_cx_median = (
+                lut.image_cx_median[i] - lut.image_cx_median[j])
+            delta_image_cy_median = (
+                lut.image_cy_median[i] - lut.image_cy_median[j])
+            delta_image_c_median = np.hypot(
+                delta_image_cx_median,
+                delta_image_cy_median)
+            if delta_image_c_median > cxy_tolerance:
+                continue
+
+            rij_deg = np.rad2deg(np.hypot(
+                np.abs(lut.particle_cx[i] - lut.particle_cx[j]),
+                np.abs(lut.particle_cy[i] - lut.particle_cy[j])))
+
+            lfs1 = lut._raw_light_field_sequence(j)
+
+
+            sim_ape = light_field.similarity_aperture(lfs0, lfs1, lut.plenoscope)
+            if sim_ape < sim_ape_tolerance:
+                continue
+
+            sim_img = light_field.similarity_image(lfs0, lfs1, lut.plenoscope)
+            if sim_img < sim_img_tolerance:
+                continue
+
+            print(
+                i,
+                j,
+                '{:.2f}deg'.format(rij_deg),
+                '{:.2f}img'.format(sim_img),
+                '{:.2f}ap'.format(sim_ape))
+
+
+            sim_particle_cxs.append(lut.particle_cx[j])
+            sim_particle_cys.append(lut.particle_cy[j])
+            sim_weights.append(sim_img)
+
+        sim_weights = np.array(sim_weights)
+        num_matches = len(sim_particle_cxs)
+        if num_matches > min_num_similar_events:
+            cx_reconstructed_mean = np.average(
+                sim_particle_cxs, weights=sim_weights)
+            cy_reconstructed_mean = np.average(
+                sim_particle_cys, weights=sim_weights)
+            c_std = np.hypot(
+                np.std(sim_particle_cxs), np.std(sim_particle_cys))
+            c_std_deg = np.rad2deg(c_std)
+
+            r = np.hypot(
+                np.abs(lut.particle_cx[i] - cx_reconstructed_mean),
+                np.abs(lut.particle_cy[i] - cy_reconstructed_mean))
+            r_deg = np.rad2deg(r)
+            residuals.append(r_deg)
+            rhist, rbinedges = np.histogram(
+                residuals,
+                bins=np.linspace(0, 2, 20))
+            r_sigma = integration_width_for_one_sigma(rhist, rbinedges)
+            # Mean shift
+            bandwidth = np.deg2rad(.5)
+            clustering = MeanShift(bandwidth=bandwidth, cluster_all=False)
+            clustering.fit(np.array([sim_particle_cxs ,sim_particle_cys]).T)
+            num_in_cluster = np.sum(clustering.labels_ >= 0)
+
+            cluster_mask = clustering.labels_ > -1
+            cluster_keys = np.sort(list(set(clustering.labels_[cluster_mask])))
+            cluster_counts = []
+            for key in cluster_keys:
+                cluster_counts.append(np.sum(clustering.labels_ == key))
+            largest_cluster = cluster_keys[np.argmax(cluster_counts)]
+            best_pos = clustering.cluster_centers_[largest_cluster]
+
+            print(
+                i,
+                '{:.2f}+-{:.2f} deg, {:d} ({:d})num,    {:.2f} deg68'.format(
+                    r_deg,
+                    c_std_deg,
+                    num_matches,
+                    num_in_cluster,
+                    r_sigma))
+            plt.figure()
+            plt.plot(
+                np.rad2deg(sim_particle_cxs),
+                np.rad2deg(sim_particle_cys),
+                'kx')
+            plt.plot(
+                np.rad2deg(cx_reconstructed_mean),
+                np.rad2deg(cy_reconstructed_mean),
+                'ro')
+            plt.plot(
+                np.rad2deg(lut.particle_cx[i]),
+                np.rad2deg(lut.particle_cy[i]),
+                'bo')
+            plt.plot(
+                np.rad2deg(best_pos[0]),
+                np.rad2deg(best_pos[1]),
+                'gx')
+            plt.show()
+        else:
+            print(i, 'no match')
