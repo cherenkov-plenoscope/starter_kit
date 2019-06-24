@@ -17,6 +17,11 @@ PARTICLE_KEYS = [
     'E_start',
     'E_stop',
     'max_theta_deg',
+    'min_theta_deg',
+    'min_phi_deg',
+    'max_phi_deg',
+    'XSCAT_m',
+    'YSCAT_m',
 ]
 
 SITE_KEYS = [
@@ -47,6 +52,11 @@ example_job = {
         'E_start': 0.8,
         'E_stop': 1.6,
         'max_theta_deg': 2.,
+        'min_theta_deg': 0.,
+        'min_phi_deg': 0.,
+        'max_phi_deg': 360.,
+        'XSCAT_m': 150,
+        'YSCAT_m': 0,
     },
 
     'site': {
