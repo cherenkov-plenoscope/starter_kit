@@ -140,6 +140,9 @@ def process_run(
             features['trigger'] = int(1)
 
         if features['trigger']:
+            features = extract_and_append_indexing_features(
+                features=features,
+                light_field_sequence=light_field_sequence)
             lua.append_event(
                 light_field_sequence_uint8=light_field_sequence,
                 features=features)
@@ -168,6 +171,13 @@ def extract_simulation_truth(event):
     truth['particle_height_first_interaction'] = float(
         np.abs(event.header.raw[7 - 1]*1e-2))
     return truth
+
+
+def extract_and_append_indexing_features(features, light_field_sequence):
+    lfs = light_field_sequence
+    features['image_cx_median'] = float(np.median(lfs[:, 0]))
+    features['image_cy_median'] = float(np.median(lfs[:, 1]))
+    return features
 
 
 def extract_light_field_sequence(
