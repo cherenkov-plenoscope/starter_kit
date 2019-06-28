@@ -5,6 +5,7 @@ import json
 from . import job_structure
 from . import thrown_structure
 from . import light_field
+from . import features
 import matplotlib.pyplot as plt
 from sklearn.cluster import MeanShift
 from scipy import spatial
@@ -158,39 +159,17 @@ class LookUpTable():
         num_photons = flat.shape[0]//5
         return flat.reshape((num_photons, 5))
 
-    def _light_field_sequence(self, index):
-        raw_lfs = self._raw_light_field_sequence(index)
-        return light_field.light_field_sequence_to_photons(
-            light_field_sequence=raw_lfs,
-            plenoscope=self.plenoscope)
-
     def light_field_sequence(self, index):
         raw_indexed_lfs = self._raw_light_field_sequence(index)
         lfg = self.plenoscope
         lfs = raw_indexed_lfs
         return np.array([
-            lfg.x[lfs[:, 2]],
-            lfg.y[lfs[:, 3]],
             lfg.cx[lfs[:, 0]],
             lfg.cy[lfs[:, 1]],
+            lfg.x[lfs[:, 2]],
+            lfg.y[lfs[:, 3]],
             lfg.t[lfs[:, 4]]
         ]).T
-
-
-    def light_field_sequence_normalized_point_cloud(
-        self,
-        index,
-        weights=np.array([1,1,1])
-    ):
-        lfs = self.light_field_sequence(index)
-        return np.array([
-            weights[0]*lfs[:, 2]/self.plenoscope.cx_bin_edges[-1],
-            weights[0]*lfs[:, 3]/self.plenoscope.cy_bin_edges[-1],
-            weights[1]*lfs[:, 0]/self.plenoscope.x_bin_edges[-1],
-            weights[1]*lfs[:, 1]/self.plenoscope.y_bin_edges[-1],
-            weights[2]*lfs[:, 4]/5e-9,
-        ])
-
 
 def concatenate(lut_paths, out_path):
     os.makedirs(out_path, exist_ok=True)
@@ -283,112 +262,294 @@ def integration_width_for_one_sigma(hist, bin_edges):
     return x[np.argmin(np.abs(f - one_sigma))]
 
 
-def self_similarity(
+def self_similarity_simple(
     lut,
-    num_photons_rel_tolerance=0.25,
-    cxy_tolerance = 3,
-    sim_img_tolerance=0.75,
-    sim_ape_tolerance=0.4,
-    sim_lf_tolerance=0.45,
-    sim_pc_tolerance=0.02,
-    distance_upper_bound_pc=0.05,
-    pc_weights=np.array([1,1,1]),
     max_source_zenith_deg=2.,
+    i_start=1,
+    i_end=10000,
+    num_photons_rel_tolerance=0.25,
+    cxy_tolerance=3,
+    refocus_stack_tolerance=0.5,
     min_num_similar_events=10,
 ):
+    NUM_REFS = 12
+    NUM_PIXEL_ROI = 12
+    OBJECT_DISTANCES = np.geomspace(5e3, 100e3, NUM_REFS)
+
     residuals = []
-    for i in range(lut.num_events):
+    for i in np.arange(i_start ,i_end):
+
         if (
             np.hypot(lut.particle_cx[i], lut.particle_cy[i]) >
             np.deg2rad(max_source_zenith_deg)
         ):
             continue
 
-        lfs0 = lut._raw_light_field_sequence(i)
-        lfs0_normed = lut.light_field_sequence_normalized_point_cloud(
-            i,
-            weights=pc_weights)
-        lfs0_tree = spatial.KDTree(data=lfs0_normed.T)
+        lfs_i = lut._raw_light_field_sequence(i)
 
-        sim_particle_cxs = []
-        sim_particle_cys = []
-        sim_weights = []
-        for j in range(lut.num_events):
-            if i == j:
-                continue
-            if (
-                np.abs(lut.num_photons[i] - lut.num_photons[j]) >
-                num_photons_rel_tolerance*lut.num_photons[i]
-            ):
+        ROI_CX = int(np.round(np.mean(lfs_i[:, 0])))
+        ROI_CY = int(np.round(np.mean(lfs_i[:, 1])))
+
+        cx_bin_edges_idx = np.arange(
+            ROI_CX - NUM_PIXEL_ROI,
+            ROI_CX + NUM_PIXEL_ROI + 1)
+        cx_bin_edges = lut.plenoscope.cx_bin_edges[cx_bin_edges_idx]
+        cy_bin_edges_idx = np.arange(
+            ROI_CY - NUM_PIXEL_ROI,
+            ROI_CY + NUM_PIXEL_ROI + 1)
+        cy_bin_edges = lut.plenoscope.cy_bin_edges[cy_bin_edges_idx]
+
+        image_photons_i = light_field.get_image_photons(
+            lfs=lfs_i,
+            plenoscope=lut.plenoscope)
+
+        refocus_stack_i = light_field.get_refocus_stack(
+            image_photons=image_photons_i,
+            object_distances=OBJECT_DISTANCES,
+            cx_bin_edges=cx_bin_edges,
+            cy_bin_edges=cy_bin_edges)
+
+        max_dense_obj_idx_i = np.argmax(
+            np.max(
+                np.max(
+                    refocus_stack_i,
+                    axis=1),
+                axis=1))
+
+        hillas_i = []
+        for obj in OBJECT_DISTANCES:
+            cxs, cys = light_field.get_refocused_cx_cy(
+                image_photons=image_photons_i,
+                object_distance=obj)
+            eli_i = features.hillas_ellipse(cxs=cxs, cys=cys)
+            hillas_i.append(eli_i)
+
+        # light-front
+        # -----------
+        lf_xs, lf_ys, lf_zs = light_field.get_light_front(
+            lfs=lfs_i,
+            plenoscope=lut.plenoscope)
+        light_front_normal_i = features.light_front_surface_normal(
+            xs=lf_xs,
+            ys=lf_ys,
+            zs=lf_zs)
+
+        refocus_stack_i = light_field.smear_out_refocus_stack(refocus_stack_i)
+
+        refocus_stack_i_norm = np.linalg.norm(refocus_stack_i)
+
+        # mask matches
+        #--------------
+        mask = np.ones(lut.num_events, dtype=np.bool)
+        mask[i] = False
+
+        # mask direction
+        #----------------
+        delta_image_cx_median = (
+            lut.image_cx_median[i] - lut.image_cx_median)
+        delta_image_cy_median = (
+            lut.image_cy_median[i] - lut.image_cy_median)
+        delta_image_c_median = np.hypot(
+            delta_image_cx_median,
+            delta_image_cy_median)
+        image_mask = delta_image_c_median < cxy_tolerance
+
+        # mask num photons
+        #------------------
+        num_photons_i = lut.num_photons[i]
+        size_mask = (np.abs(num_photons_i - lut.num_photons) >
+                num_photons_rel_tolerance*num_photons_i)
+
+        mask = mask*image_mask*size_mask
+
+        truths = []
+        for j in np.arange(lut.num_events)[mask]:
+            lfs_j = lut._raw_light_field_sequence(j)
+
+            image_photons_j = light_field.get_image_photons(
+                lfs=lfs_j,
+                plenoscope=lut.plenoscope)
+
+            refocus_stack_j = light_field.get_refocus_stack(
+                image_photons=image_photons_j,
+                object_distances=OBJECT_DISTANCES,
+                cx_bin_edges=cx_bin_edges,
+                cy_bin_edges=cy_bin_edges)
+
+            refocus_stack_j = light_field.smear_out_refocus_stack(
+                refocus_stack_j)
+
+            hillas_j = []
+            for obj in OBJECT_DISTANCES:
+                cxs, cys = light_field.get_refocused_cx_cy(
+                    image_photons=image_photons_j,
+                    object_distance=obj)
+                eli_j = features.hillas_ellipse(cxs=cxs, cys=cys)
+                hillas_j.append(eli_j)
+
+            diff = np.linalg.norm(
+                refocus_stack_i.flatten() -
+                refocus_stack_j.flatten())
+
+            diff = diff/refocus_stack_i_norm
+
+            if diff > refocus_stack_tolerance:
                 continue
 
-            delta_image_cx_median = (
-                lut.image_cx_median[i] - lut.image_cx_median[j])
-            delta_image_cy_median = (
-                lut.image_cy_median[i] - lut.image_cy_median[j])
-            delta_image_c_median = np.hypot(
-                delta_image_cx_median,
-                delta_image_cy_median)
-            if delta_image_c_median > cxy_tolerance:
-                continue
-
-            rij_deg = np.rad2deg(np.hypot(
+            r = np.hypot(
                 np.abs(lut.particle_cx[i] - lut.particle_cx[j]),
-                np.abs(lut.particle_cy[i] - lut.particle_cy[j])))
+                np.abs(lut.particle_cy[i] - lut.particle_cy[j]))
+            r_deg = np.rad2deg(r)
 
-            lfs1 = lut._raw_light_field_sequence(j)
+            obj_i = max_dense_obj_idx_i
 
+            ellipse_ratio_i = hillas_i[obj_i].std_major/hillas_i[obj_i].std_minor
+            ellipse_ratio_j = hillas_j[obj_i].std_major/hillas_j[obj_i].std_minor
 
-            sim_ape = light_field.similarity_aperture(lfs0, lfs1, lut.plenoscope)
-            if sim_ape < sim_ape_tolerance:
+            if np.abs(ellipse_ratio_i - ellipse_ratio_j) > .5:
                 continue
 
-            sim_img = light_field.similarity_image(lfs0, lfs1, lut.plenoscope)
-            if sim_img < sim_img_tolerance:
-                continue
-            """
-            sim_lf = light_field.similarity_light_field(lfs0, lfs1, lut.plenoscope)
-            if sim_lf < sim_lf_tolerance:
-                continue
-            """
+            theta_i = np.arctan2(
+                    hillas_i[obj_i].cy_major,
+                    hillas_i[obj_i].cx_major)
+            theta_j = np.arctan2(
+                    hillas_j[obj_i].cy_major,
+                    hillas_j[obj_i].cx_major)
 
-            lfs1_normed = lut.light_field_sequence_normalized_point_cloud(
-                j,
-                weights=pc_weights)
-            distances = lfs0_tree.query(
-                lfs1_normed.T,
-                k=lfs0_normed.shape[1],
-                distance_upper_bound=distance_upper_bound_pc)[0]
-            num_neighbors_each_photon = np.sum(distances != np.inf, axis=1)
-            num_neighbors = np.sum(num_neighbors_each_photon)
-            sim_pc = num_neighbors/(lfs1_normed.shape[1]*lfs1_normed.shape[1])
-            sim_pc = sim_pc**(1/5)
+            theta_mod_i = np.mod(theta_i, np.pi)
+            theta_mod_j = np.mod(theta_j, np.pi)
+            delta_theta_ij = np.abs(theta_mod_i - theta_mod_j)
+            if delta_theta_ij > np.deg2rad(30):
+                continue
 
-            if sim_pc < sim_pc_tolerance:
+            # light-front
+            # -----------
+            lf_xs, lf_ys, lf_zs = light_field.get_light_front(
+                lfs=lfs_j,
+                plenoscope=lut.plenoscope)
+            light_front_normal_j = features.light_front_surface_normal(
+                xs=lf_xs,
+                ys=lf_ys,
+                zs=lf_zs)
+
+            delta_light_front_ij = features.angle_between(
+                light_front_normal_i,
+                light_front_normal_j)
+
+            if delta_light_front_ij > np.deg2rad(0.1):
                 continue
 
             print(
                 i,
                 j,
-                '{:.2f}deg'.format(rij_deg),
-                '{:.2f}img'.format(sim_img),
-                '{:.2f}ap'.format(sim_ape),
-                '{:.2f}pc'.format(sim_pc),
+                '{:.2f}diff'.format(diff),
+                '{:.2f}deg'.format(r_deg),
+                '{:.2f}eli'.format(ellipse_ratio_i),
+                'eli {:.2f}deg'.format(np.rad2deg(delta_theta_ij)),
+                'lf {:.2f}deg'.format(np.rad2deg(delta_light_front_ij))
                 )
 
-            sim_particle_cxs.append(lut.particle_cx[j])
-            sim_particle_cys.append(lut.particle_cy[j])
-            sim_weights.append(sim_pc)
+            # match
+            truths.append([
+                lut.particle_cx[j],
+                lut.particle_cy[j],
+                lut.particle_x[j],
+                lut.particle_y[j],
+                lut.particle_height_first_interaction[j],
+                lut.particle_energy[j],
+                diff
+            ])
+            """
+            vmax_i = np.max(refocus_stack_i)
+            vmax_j = np.max(refocus_stack_j)
+            fig = plt.figure(
+            figsize=(8*2, 8*NUM_REFS), dpi=50)
+            SUB_FIG_HEIGHT = 1/NUM_REFS
+            for obj, object_distance in enumerate(OBJECT_DISTANCES):
+                axi = fig.add_axes([
+                    0,
+                    SUB_FIG_HEIGHT*obj,
+                    .5*.98,
+                    SUB_FIG_HEIGHT*.98])
+                axi.set_axis_off()
+                axi.pcolor(
+                    refocus_stack_i[obj, :, :],
+                    vmax=vmax_i,
+                    cmap='inferno')
+                if obj == 0:
+                    axi.text(NUM_PIXEL_ROI, NUM_PIXEL_ROI,"{:.1f}".format(diff))
 
-        sim_weights = np.array(sim_weights)
-        num_matches = len(sim_particle_cxs)
-        if num_matches > min_num_similar_events:
-            cx_reconstructed_mean = np.average(
-                sim_particle_cxs, weights=sim_weights)
-            cy_reconstructed_mean = np.average(
-                sim_particle_cys, weights=sim_weights)
+                axj = fig.add_axes([
+                    .5,
+                    SUB_FIG_HEIGHT*obj,
+                    .5*.98,
+                    SUB_FIG_HEIGHT*.98])
+                axj.set_axis_off()
+                axj.pcolor(
+                    refocus_stack_j[obj, :, :],
+                    vmax=vmax_j,
+                    cmap='inferno')
+            plt.savefig('refocus_stack_{:d}_{:d}.png'.format(i, j))
+            plt.close('all')
+            """
+
+        truths = np.array(truths)
+
+        if truths.shape[0] >= min_num_similar_events:
+            fig = plt.figure(
+            figsize=(8, 8), dpi=50)
+            ax = fig.add_axes([.1,.1,.9,.9])
+            ax.plot(
+                np.rad2deg(lut.particle_cx[i]),
+                np.rad2deg(lut.particle_cy[i]),
+                'xr')
+            ax.plot(
+                np.rad2deg(truths[:, 0]),
+                np.rad2deg(truths[:, 1]),
+                'xk')
+            plt.savefig('residuals_{:d}.png'.format(i))
+            plt.close('all')
+
+            fig = plt.figure(
+            figsize=(8, 8), dpi=50)
+            ax = fig.add_axes([.1,.1,.9,.9])
+            ax.plot(
+                lut.particle_x[i],
+                lut.particle_y[i],
+                'xr')
+            ax.plot(
+                truths[:, 2],
+                truths[:, 3],
+                'xk')
+            plt.savefig('residuals_core_{:d}.png'.format(i))
+            plt.close('all')
+
+            fig = plt.figure(
+            figsize=(8, 8), dpi=50)
+            ax = fig.add_axes([.1,.1,.9,.9])
+            ax.hist(
+                truths[:, 4],
+                bins=np.linspace(5e3, 40e3, 10))
+            ax.axvline(lut.particle_height_first_interaction[i], color='r')
+            ax.axvline(np.median(truths[:, 4]),  color='k')
+            plt.savefig('residuals_first_interaction_{:d}.png'.format(i))
+            plt.close('all')
+
+            fig = plt.figure(
+            figsize=(8, 8), dpi=50)
+            ax = fig.add_axes([.1,.1,.9,.9])
+            ax.hist(
+                truths[:, 5],
+                bins=np.linspace(0.8, 1.6, 10))
+            ax.axvline(lut.particle_energy[i],  color='r')
+            ax.axvline(np.median(truths[:, 5]),  color='k')
+            plt.savefig('residuals_energy_{:d}.png'.format(i))
+            plt.close('all')
+
+            cx_reconstructed_mean = np.mean(truths[:, 0])
+            cy_reconstructed_mean = np.mean(truths[:, 1])
             c_std = np.hypot(
-                np.std(sim_particle_cxs), np.std(sim_particle_cys))
+                np.std(truths[:, 0]), np.std(truths[:, 1]))
             c_std_deg = np.rad2deg(c_std)
 
             r = np.hypot(
@@ -396,62 +557,23 @@ def self_similarity(
                 np.abs(lut.particle_cy[i] - cy_reconstructed_mean))
             r_deg = np.rad2deg(r)
             residuals.append(r_deg)
+
             rhist, rbinedges = np.histogram(
                 residuals,
                 bins=np.linspace(0, 2, 20))
-            r_sigma = integration_width_for_one_sigma(rhist, rbinedges)
-            """
-            # Mean shift
-            bandwidth = np.deg2rad(.5)
-            clustering = MeanShift(bandwidth=bandwidth, cluster_all=False)
-            clustering.fit(np.array([sim_particle_cxs ,sim_particle_cys]).T)
-            num_in_cluster = np.sum(clustering.labels_ >= 0)
 
-            cluster_mask = clustering.labels_ > -1
-            cluster_keys = np.sort(list(set(clustering.labels_[cluster_mask])))
-            cluster_counts = []
-            for key in cluster_keys:
-                cluster_counts.append(np.sum(clustering.labels_ == key))
-            largest_cluster = cluster_keys[np.argmax(cluster_counts)]
-            best_pos = clustering.cluster_centers_[largest_cluster]
-            """
+            r_sigma = integration_width_for_one_sigma(rhist, rbinedges)
+
             print(
                 i,
                 '{:.2f}+-{:.2f} deg, {:d}    {:.2f} deg68'.format(
                     r_deg,
                     c_std_deg,
-                    num_matches,
+                    np.sum(mask),
                     r_sigma))
-            plt.figure()
-            plt.plot(
-                np.rad2deg(
-                    np.hypot(
-                        sim_particle_cxs - lut.particle_cx[i],
-                        sim_particle_cys - lut.particle_cy[i]
-                    )
-                ),
-                sim_weights,
-                'kx')
-            plt.show()
-            """
-            plt.figure()
-            plt.plot(
-                np.rad2deg(sim_particle_cxs),
-                np.rad2deg(sim_particle_cys),
-                'kx')
-            plt.plot(
-                np.rad2deg(cx_reconstructed_mean),
-                np.rad2deg(cy_reconstructed_mean),
-                'ro')
-            plt.plot(
-                np.rad2deg(lut.particle_cx[i]),
-                np.rad2deg(lut.particle_cy[i]),
-                'bo')
-            plt.plot(
-                np.rad2deg(best_pos[0]),
-                np.rad2deg(best_pos[1]),
-                'gx')
-            plt.show()
-            """
+            print(rhist)
         else:
             print(i, 'no match')
+
+
+

@@ -4,6 +4,7 @@ from scipy import signal
 from scipy import spatial
 import matplotlib.pyplot as plt
 
+SPEED_OF_LIGHT = 3e8
 
 PhotonObservables = namedtuple(
     'PhotonObservables',
@@ -124,11 +125,6 @@ def light_field_sequence_to_photons(light_field_sequence, plenoscope):
         relative_arrival_times=lfg.t[lfs[:, 4]])
 
 
-def angle_in_between(v0, v1):
-    return np.arccos(
-        np.dot(v0, v1)/(np.linalg.norm(v0)*np.linalg.norm(v1)))
-
-
 def euclidean_similarity(v0, v1):
     v_diff = v0 - v1
     diff = np.linalg.norm(v_diff)
@@ -140,69 +136,6 @@ def euclidean_similarity_intensity_independent(v0, v1):
     v00 = v0/np.linalg.norm(v0)
     v11 = v1/np.linalg.norm(v1)
     return euclidean_similarity(v00, v11)
-
-
-def slice_into_image_sequence(lfs, plenoscope, paxel_radius=1):
-    image_sequences = []
-    p = plenoscope
-    pr = paxel_radius
-    for i, x in enumerate(p.x):
-        for j, y in enumerate(p.y):
-            mask = (
-                (lfs[:, 2]>i-pr)*(lfs[:, 2]<i+pr)*
-                (lfs[:, 3]>j-pr)*(lfs[:, 3]<j+pr))
-            image_sequences.append(
-                np.array([lfs[mask, 0], lfs[mask, 1], lfs[mask, 4]]).T)
-    return image_sequences
-
-
-def diluted_images(
-    lfs,
-    plenoscope,
-    paxel_dilution_radius=1,
-    pixel_dilution_mask=(1./273.)*np.array(
-    [
-        [ 0,  4,  7,  4,  0],
-        [ 4, 16, 26, 16,  4],
-        [ 7, 26, 41, 26,  7],
-        [ 4, 16, 26, 16,  4],
-        [ 0,  4,  7,  4,  0]
-    ])
-):
-    images = slice_into_image_sequence(
-        lfs=lfs,
-        plenoscope=plenoscope,
-        paxel_radius=paxel_dilution_radius)
-    imgs = []
-    for image in images:
-        img = np.histogram2d(
-            image[:, 0],
-            image[:, 1],
-            bins=np.arange(plenoscope.num_pixel_on_diagonal+1))[0]
-        img = signal.convolve2d(img, pixel_dilution_mask)
-        imgs.append(img)
-    return imgs
-
-
-def similarity_light_field(lfs0, lfs1, plenoscope):
-    imgs0 = diluted_images(lfs0, plenoscope)
-    imgs1 = diluted_images(lfs1, plenoscope)
-    sims = []
-    weights = []
-    for i in range(len(imgs0)):
-        img0 = imgs0[i]
-        img1 = imgs1[i]
-        num_ph_0 = np.sum(img0)
-        num_ph_1 = np.sum(img1)
-        if num_ph_0 > 0 and num_ph_1 > 0:
-            sim_i = euclidean_similarity_intensity_independent(
-                img0.flatten(),
-                img1.flatten())
-            sims.append(sim_i)
-        else:
-            sims.append(0.)
-        weights.append(num_ph_0 + num_ph_1)
-    return np.average(sims, weights=weights)
 
 
 def similarity_image(
@@ -241,34 +174,103 @@ def similarity_image(
     return sim
 
 
+ImagePhotons = namedtuple(
+    'ImagePhotons',
+    ['x', 'y', 'dx', 'dy', 'dz'])
 
-def similarity_aperture(
-    lfs0,
-    lfs1,
-    plenoscope,
-    paxel_dilution_mask=(1./16.)*np.array([
+
+def get_image_photons(lfs, plenoscope, FOCAL_LENGTH=1.):
+    cxs = -plenoscope.cx[lfs[:, 0]]
+    cys = -plenoscope.cy[lfs[:, 1]]
+    xs = plenoscope.x[lfs[:, 2]]
+    ys = plenoscope.y[lfs[:, 3]]
+
+    focal_x = -np.tan(cxs)*FOCAL_LENGTH
+    focal_y = -np.tan(cys)*FOCAL_LENGTH
+    num_rays = cxs.shape[0]
+    aperture_pos = np.array([xs, ys, np.zeros(num_rays)]).T
+    focal_pos = np.array([focal_x, focal_y, FOCAL_LENGTH*np.ones(num_rays)]).T
+    img_ray_dir = focal_pos - aperture_pos
+    img_ray_dir_lengths = np.sqrt(np.sum(img_ray_dir**2, axis=1))
+    img_ray_dir = img_ray_dir/img_ray_dir_lengths[:, np.newaxis]
+
+    return ImagePhotons(
+        x=xs,
+        y=ys,
+        dx=img_ray_dir[:, 0],
+        dy=img_ray_dir[:, 1],
+        dz=img_ray_dir[:, 2])
+
+
+def get_refocused_cx_cy(image_photons, object_distance, FOCAL_LENGTH=1.):
+    sensor_distance = 1/(1/FOCAL_LENGTH - 1/object_distance)
+    alpha = sensor_distance/image_photons.dz
+    sens_x = image_photons.x + image_photons.dx*alpha
+    sens_y = image_photons.y + image_photons.dy*alpha
+    sens_cxs = -np.arctan(sens_x/FOCAL_LENGTH)
+    sens_cys = -np.arctan(sens_y/FOCAL_LENGTH)
+    return sens_cxs, sens_cys
+
+
+def get_image_from_image_photons(
+    image_photons,
+    object_distance,
+    cx_bin_edges,
+    cy_bin_edges,
+):
+    sens_cxs, sens_cys = get_refocused_cx_cy(
+        image_photons=image_photons,
+        object_distance=object_distance)
+    return np.histogram2d(
+        -sens_cxs,
+        -sens_cys,
+        bins=(cx_bin_edges, cy_bin_edges))[0]
+
+
+def get_refocus_stack(
+    image_photons,
+    object_distances,
+    cx_bin_edges,
+    cy_bin_edges
+):
+    imgs = []
+    for object_distance in object_distances:
+        img = get_image_from_image_photons(
+            image_photons=image_photons,
+            object_distance=object_distance,
+            cx_bin_edges=cx_bin_edges,
+            cy_bin_edges=cy_bin_edges)
+        imgs.append(img)
+    return np.array(imgs)
+
+
+GAUSS_2D_3X3 = (1./16.)*np.array([
         [1, 2, 1],
         [2, 4, 2],
         [1, 2, 1]])
+
+def smear_out_refocus_stack(
+    refocus_stack,
+    kernel=GAUSS_2D_3X3
 ):
-    ap0 = np.histogram2d(
-        lfs0[:, 2],
-        lfs0[:, 3],
-        bins=np.arange(plenoscope.num_paxel_on_diagonal+1))[0]
-    ap1 = np.histogram2d(
-        lfs1[:, 2],
-        lfs1[:, 3],
-        bins=np.arange(plenoscope.num_paxel_on_diagonal+1))[0]
-    ap0 = signal.convolve2d(ap0, paxel_dilution_mask)
-    ap1 = signal.convolve2d(ap1, paxel_dilution_mask)
-    sim = euclidean_similarity_intensity_independent(
-        ap0.flatten(),
-        ap1.flatten())
-    """
-    print("sim", sim)
-    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-    ax1.pcolor(ap0)
-    ax2.pcolor(ap1)
-    plt.show()
-    """
-    return sim
+    cimgs = []
+    for i in range(refocus_stack.shape[0]):
+        img = refocus_stack[i, :, :]
+        cimg = signal.convolve2d(img, kernel)
+        cimgs.append(cimg)
+    return np.array(cimgs)
+
+
+def get_light_front(lfs, plenoscope):
+    xs = plenoscope.x[lfs[:, 2]]
+    ys = plenoscope.y[lfs[:, 3]]
+    ts = plenoscope.t[lfs[:, 4]]
+    zs = SPEED_OF_LIGHT*ts
+    return xs, ys, zs
+
+
+def add_to_tpap_to_get_timg(cx, cy, x, y):
+    # cz = np.sqrt(1. - cx**2 - cy**2)
+    delta_path_length = cx*x + cy*y
+    delta_path_time = delta_path_length/SPEED_OF_LIGHT
+    return -1.*delta_path_time
