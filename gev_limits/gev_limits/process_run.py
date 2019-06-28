@@ -23,7 +23,7 @@ def make_steering_card(
     'EVTNR 1\n' \
     'NSHOW {num_events:d}\n' \
     'PRMPAR  {prmpar:d}\n' \
-    'ESLOPE -1.0\n' \
+    'ESLOPE {E_slope:.3e}\n' \
     'ERANGE {E_start:.3e} {E_stop:.3e}\n' \
     'THETAP {min_theta_deg:.3f} {max_theta_deg:.3f}\n' \
     'PHIP {min_phi_deg:.3f} {max_phi_deg:.3f}\n' \
@@ -56,6 +56,7 @@ def make_steering_card(
         prmpar=particle["prmpar"],
         E_start=particle["E_start"],
         E_stop=particle["E_stop"],
+        E_slope=particle["E_slope"],
         max_theta_deg=particle["max_theta_deg"],
         min_theta_deg=particle["min_theta_deg"],
         max_phi_deg=particle["max_phi_deg"],
@@ -98,6 +99,8 @@ def process_run(
         steering_card=cw.read_steering_card(corsika_card_path),
         output_path=evtio_run_path,
         save_stdout=True)
+
+    assert os.stat(evtio_run_path).st_size < 3.7e9 , "Can not trust eventio-files larger 3.7GByte."
 
     sio_run_path = os.path.join(tmp_dir, 'run.sio')
     sp.call([

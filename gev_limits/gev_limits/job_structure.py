@@ -16,6 +16,7 @@ PARTICLE_KEYS = [
     'prmpar',
     'E_start',
     'E_stop',
+    'E_slope',
     'max_theta_deg',
     'min_theta_deg',
     'min_phi_deg',
@@ -50,7 +51,8 @@ example_job = {
     'particle': {
         'prmpar': 1,
         'E_start': 0.8,
-        'E_stop': 1.6,
+        'E_stop': 20,
+        'E_slope': -1.,
         'max_theta_deg': 2.,
         'min_theta_deg': 0.,
         'min_phi_deg': 0.,
