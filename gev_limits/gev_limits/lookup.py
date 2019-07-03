@@ -577,3 +577,100 @@ def self_similarity_simple(
 
 
 
+def plot_refocus_stack(
+    lut,
+    max_source_zenith_deg=2.,
+):
+    NUM_REFS = 12
+    NUM_PIXEL_ROI = 12
+    OBJECT_DISTANCES = np.geomspace(2.5e3, 55e3, NUM_REFS)
+
+    residuals = []
+    for i in np.arange(lut.num_events):
+
+        if (
+            np.hypot(lut.particle_cx[i], lut.particle_cy[i]) >
+            np.deg2rad(max_source_zenith_deg)
+        ):
+            continue
+
+        lfs_i = lut._raw_light_field_sequence(i)
+
+        ROI_CX = int(np.round(np.mean(lfs_i[:, 0])))
+        ROI_CY = int(np.round(np.mean(lfs_i[:, 1])))
+
+        cx_bin_edges_idx = np.arange(
+            ROI_CX - NUM_PIXEL_ROI,
+            ROI_CX + NUM_PIXEL_ROI + 1)
+        if (
+            np.min(cx_bin_edges_idx) < 0 or
+            np.max(cx_bin_edges_idx) > lut.plenoscope.num_pixel_on_diagonal):
+            continue
+        cx_bin_edges = lut.plenoscope.cx_bin_edges[cx_bin_edges_idx]
+        cy_bin_edges_idx = np.arange(
+            ROI_CY - NUM_PIXEL_ROI,
+            ROI_CY + NUM_PIXEL_ROI + 1)
+        if (
+            np.min(cy_bin_edges_idx) < 0 or
+            np.max(cy_bin_edges_idx) > lut.plenoscope.num_pixel_on_diagonal):
+            continue
+        cy_bin_edges = lut.plenoscope.cy_bin_edges[cy_bin_edges_idx]
+
+        image_photons_i = light_field.get_image_photons(
+            lfs=lfs_i,
+            plenoscope=lut.plenoscope)
+
+        refocus_stack_i = light_field.get_refocus_stack(
+            image_photons=image_photons_i,
+            object_distances=OBJECT_DISTANCES,
+            cx_bin_edges=cx_bin_edges,
+            cy_bin_edges=cy_bin_edges)
+
+        max_dense_obj_idx_i = np.argmax(
+            np.max(
+                np.max(
+                    refocus_stack_i,
+                    axis=1),
+                axis=1))
+
+        hillas_i = []
+        for obj in OBJECT_DISTANCES:
+            cxs, cys = light_field.get_refocused_cx_cy(
+                image_photons=image_photons_i,
+                object_distance=obj)
+            eli_i = features.hillas_ellipse(cxs=cxs, cys=cys)
+            hillas_i.append(eli_i)
+
+        # light-front
+        # -----------
+        lf_xs, lf_ys, lf_zs = light_field.get_light_front(
+            lfs=lfs_i,
+            plenoscope=lut.plenoscope)
+        light_front_normal_i = features.light_front_surface_normal(
+            xs=lf_xs,
+            ys=lf_ys,
+            zs=lf_zs)
+
+        refocus_stack_i = light_field.smear_out_refocus_stack(refocus_stack_i)
+
+        print(OBJECT_DISTANCES)
+        vmax_i = np.max(refocus_stack_i)
+        fig = plt.figure(
+        figsize=(8, 8*NUM_REFS), dpi=50)
+        SUB_FIG_HEIGHT = 1/NUM_REFS
+        for obj, object_distance in enumerate(OBJECT_DISTANCES):
+            axi = fig.add_axes([
+                0,
+                SUB_FIG_HEIGHT*obj,
+                1*.98,
+                SUB_FIG_HEIGHT*.98])
+            axi.set_axis_off()
+            axi.pcolor(
+                refocus_stack_i[obj, :, :],
+                vmax=vmax_i,
+                cmap='inferno')
+            #axi.plot(0.5, 0.5, "xw")
+            axi.text(0.1, 0.1, "{:.1f}km".format(1e-3*object_distance), color="white")
+        plt.savefig('refocus_stack_{:d}.png'.format(i))
+        plt.close('all')
+
