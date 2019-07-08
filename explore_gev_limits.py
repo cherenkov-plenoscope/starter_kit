@@ -5,28 +5,29 @@ import gev_limits as gli
 import sun_grid_engine_map as sge
 import shutil
 import pandas as pd
+from multiprocessing import pool
 
 out_dir = os.path.abspath('.')
 
 gamma_particle = {
     'prmpar': 1,
     'max_zenith_angle_deg': 4.25,
-    "energy":             [0.23, 0.8, 3.0, 35,   81,   432,  1000],
-    "max_scatter_radius": [150,  150, 460, 1100, 1235, 1410, 1660]
+    "energy":             [0.23, 0.8, 3.0, 35,   81,   432,],#  1000],
+    "max_scatter_radius": [150,  150, 460, 1100, 1235, 1410,]# 1660]
 }
 
 electron_particle = {
     'prmpar': 3,
     'max_zenith_angle_deg': 6.5,
-    "energy":             [0.23, 1.0,  10,  100,  1000],
-    "max_scatter_radius": [150,  150,  500, 1100, 2600]
+    "energy":             [0.23, 1.0,  10,  100,],#  1000],
+    "max_scatter_radius": [150,  150,  500, 1100,],# 2600]
 }
 
 proton_particle = {
     'prmpar': 14,
     'max_zenith_angle_deg': 6.5,
-    "energy":             [5.0, 25, 250, 1000],
-    "max_scatter_radius": [200, 350, 700, 1250]
+    "energy":             [5.0, 25, 250,],# 1000],
+    "max_scatter_radius": [200, 350, 700,],# 1250]
 }
 
 portal_instrument = {
@@ -36,11 +37,13 @@ portal_instrument = {
     'num_pixel_on_diagonal': int(np.round(6.5/0.0667)),
     'time_radius': 25e-9,
     'num_time_slices': 100,
-    'mirror_reflectivity': 0.8,
-    'photo_detection_efficiency': 0.25,
+    'relative_arrival_times_std': 1e-9,
+    'mirror_reflectivity': 0.85,
+    'photo_detection_efficiency': 0.3,
 }
 
-TRIGGER_THRESHOLD = 50
+TRIGGER_THRESHOLD = 90
+NSB_RATE_PIXEL = 25e6*(5e-9)*427*(1/7)
 
 gamsberg_site = {
     'atmosphere': 10,
@@ -56,8 +59,8 @@ paranal_site = {
     'earth_magnetic_field_z_muT': -11.366,
 }
 
-NUM_RUNS = 2
-NUM_EVENTS_IN_RUN = 2560
+NUM_RUNS = 4
+NUM_EVENTS_IN_RUN = 20
 
 MERLICT_PATH = os.path.abspath('./build/merlict/merlict-eventio-converter')
 assert os.path.exists(MERLICT_PATH)
@@ -93,15 +96,18 @@ for site in sites:
             map_and_reduce_dir=map_and_reduce_dir,
             random_seed=1,
             num_runs=NUM_RUNS,
-            num_events_in_run=NUM_EVENTS_IN_RUN,
+            max_num_events_in_run=NUM_EVENTS_IN_RUN,
             eventio_converter_path=MERLICT_PATH,
             instrument=portal_instrument,
             particle=particles[particle],
             site=__site,
+            nsb_rate_pixel=NSB_RATE_PIXEL,
             trigger_threshold=TRIGGER_THRESHOLD)
 
-        for job in jobs:
-            gli.map_and_reduce.run_job(job)
+        #for job in jobs:
+        #    gli.map_and_reduce.run_job(job)
+        tpool = pool.ThreadPool(4)
+        results = tpool.map(gli.map_and_reduce.run_job, jobs)
         #sge.map(gli.map_and_reduce.run_job, jobs)
 
         lut_paths = []
