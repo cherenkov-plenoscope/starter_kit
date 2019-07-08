@@ -41,7 +41,7 @@ example_particle = {
 example_job = {
     'random_seed': 1,
     'trigger_threshold': 103,
-    'nsb_rate_pixel': 9.1,
+    'nsb_rate_pixel': 7.65,
 
     'instrument': {
         'aperture_radius': 35.5,
@@ -51,8 +51,8 @@ example_job = {
         'time_radius': 25e-9,
         'num_time_slices': 100,
         'relative_arrival_times_std': 1e-9,
-        'mirror_reflectivity': 0.8,
-        'photo_detection_efficiency': 0.25,
+        'mirror_reflectivity': 0.9,
+        'photo_detection_efficiency': 0.30,
     },
 
     'particle': {

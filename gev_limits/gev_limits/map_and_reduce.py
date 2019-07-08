@@ -9,14 +9,15 @@ import acp_instrument_response_function as acpirf
 
 def make_jobs(
     map_and_reduce_dir,
-    random_seed=1,
-    max_num_events_in_run=100,
-    num_runs=100,
+    random_seed,
+    max_num_events_in_run,
+    num_runs,
+    instrument,
+    particle,
+    site,
+    trigger_threshold,
+    nsb_rate_pixel,
     eventio_converter_path='./build/merlict/merlict-eventio-converter',
-    instrument=job_structure.example_job['instrument'],
-    particle=job_structure.example_job['particle'],
-    site=job_structure.example_job['site'],
-    trigger_threshold=job_structure.example_job['trigger_threshold'],
 ):
     (
         max_scatter_radii,
@@ -53,6 +54,7 @@ def make_jobs(
             job = {}
             job['random_seed'] = int(random_seed + job_idx)
             job['trigger_threshold'] = float(trigger_threshold)
+            job['nsb_rate_pixel'] = float(nsb_rate_pixel)
             job['site'] = site
             job['particle'] = run_particle
             job['instrument'] = instrument
@@ -76,7 +78,8 @@ def run_job(job):
             instrument=job['instrument'],
             particle=job['particle'],
             site=job['site'],
-            trigger_threshold=job['trigger_threshold'])
+            trigger_threshold=job['trigger_threshold'],
+            nsb_rate_pixel=job['nsb_rate_pixel'])
         shutil.copytree(
             src=os.path.join(tmp, 'run_{:06d}.lut'.format(job['random_seed'])),
             dst=job['out_path'])

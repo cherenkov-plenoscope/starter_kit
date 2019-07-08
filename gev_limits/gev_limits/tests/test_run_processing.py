@@ -22,7 +22,8 @@ def test_runs():
             instrument=gli.job_structure.example_job['instrument'],
             particle=gli.job_structure.example_job['particle'],
             site=gli.job_structure.example_job['site'],
-            trigger_threshold=gli.job_structure.example_job['trigger_threshold'])
+            trigger_threshold=gli.job_structure.example_job['trigger_threshold'],
+            nsb_rate_pixel=gli.job_structure.example_job['nsb_rate_pixel'],)
 
         run2_path = os.path.join(tmp, 'run2')
         gli.process_run.process_run(
@@ -33,7 +34,8 @@ def test_runs():
             instrument=gli.job_structure.example_job['instrument'],
             particle=gli.job_structure.example_job['particle'],
             site=gli.job_structure.example_job['site'],
-            trigger_threshold=gli.job_structure.example_job['trigger_threshold'])
+            trigger_threshold=gli.job_structure.example_job['trigger_threshold'],
+            nsb_rate_pixel=gli.job_structure.example_job['nsb_rate_pixel'],)
 
         all_runs_path = os.path.join(tmp, 'all_runs')
         gli.lookup.concatenate([

@@ -24,6 +24,7 @@ def test_map_and_reduce():
             particle=gli.job_structure.example_particle,
             site=gli.job_structure.example_job['site'],
             trigger_threshold=gli.job_structure.example_job['trigger_threshold'],
+            nsb_rate_pixel=gli.job_structure.example_job['nsb_rate_pixel'],
         )
         pprint.pprint(jobs)
         assert len(jobs) >= 3

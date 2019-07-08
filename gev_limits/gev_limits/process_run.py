@@ -70,14 +70,14 @@ def make_steering_card(
 
 def process_run(
     tmp_dir,
-    random_seed=1,
-    num_events=100,
+    random_seed,
+    num_events,
+    instrument,
+    particle,
+    site,
+    trigger_threshold,
+    nsb_rate_pixel,
     eventio_converter_path='./build/merlict/merlict-eventio-converter',
-    instrument=job_structure.example_job['instrument'],
-    particle=job_structure.example_job['particle'],
-    site=job_structure.example_job['site'],
-    trigger_threshold=job_structure.example_job['trigger_threshold'],
-    nsb_rate_pixel=job_structure.example_job['nsb_rate_pixel'],
 ):
     np.random.seed(random_seed)
     os.makedirs(tmp_dir, exist_ok=True)
