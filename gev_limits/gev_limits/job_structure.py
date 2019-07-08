@@ -8,6 +8,7 @@ INSTRUMENT_KEYS = [
     'num_pixel_on_diagonal',
     'time_radius',
     'num_time_slices',
+    'relative_arrival_times_std',
     'mirror_reflectivity',
     'photo_detection_efficiency',
 ]
@@ -17,12 +18,8 @@ PARTICLE_KEYS = [
     'E_start',
     'E_stop',
     'E_slope',
-    'max_theta_deg',
-    'min_theta_deg',
-    'min_phi_deg',
-    'max_phi_deg',
-    'XSCAT_m',
-    'YSCAT_m',
+    'max_zenith_angle_deg',
+    'max_scatter_radius',
 ]
 
 SITE_KEYS = [
@@ -33,9 +30,18 @@ SITE_KEYS = [
 ]
 
 
+example_particle = {
+    'prmpar': 1,
+    'max_zenith_angle_deg': 2.,
+    "energy":             [0.23, 0.8, 3.0, 35],
+    "max_scatter_radius": [150,  150, 460, 1100]
+}
+
+
 example_job = {
     'random_seed': 1,
-    'trigger_threshold': 50,
+    'trigger_threshold': 103,
+    'nsb_rate_pixel': 9.1,
 
     'instrument': {
         'aperture_radius': 35.5,
@@ -44,6 +50,7 @@ example_job = {
         'num_pixel_on_diagonal': int(np.round(6.5/0.0667)),
         'time_radius': 25e-9,
         'num_time_slices': 100,
+        'relative_arrival_times_std': 1e-9,
         'mirror_reflectivity': 0.8,
         'photo_detection_efficiency': 0.25,
     },
@@ -53,12 +60,8 @@ example_job = {
         'E_start': 0.8,
         'E_stop': 20,
         'E_slope': -1.,
-        'max_theta_deg': 2.,
-        'min_theta_deg': 0.,
-        'min_phi_deg': 0.,
-        'max_phi_deg': 360.,
-        'XSCAT_m': 150,
-        'YSCAT_m': 0,
+        'max_zenith_angle_deg': 2.,
+        'max_scatter_radius': 150,
     },
 
     'site': {

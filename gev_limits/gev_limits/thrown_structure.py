@@ -12,6 +12,8 @@ THROWN_KEYS = [
     'particle_height_first_interaction',
     'num_photons',
     'trigger',
+    'max_scatter_radius',
+    'trigger_response',
 ]
 
 

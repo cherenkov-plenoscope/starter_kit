@@ -10,41 +10,23 @@ out_dir = os.path.abspath('.')
 
 gamma_particle = {
     'prmpar': 1,
-    'E_start': 0.8,
-    'E_stop': 2.4,
-    'E_slope': 0.0,
-    'max_theta_deg': 4.25,
-    'min_theta_deg': 0.,
-    'min_phi_deg': 0.,
-    'max_phi_deg': 360.,
-    'XSCAT_m': 300,
-    'YSCAT_m': 0,
+    'max_zenith_angle_deg': 4.25,
+    "energy":             [0.23, 0.8, 3.0, 35,   81,   432,  1000],
+    "max_scatter_radius": [150,  150, 460, 1100, 1235, 1410, 1660]
 }
 
 electron_particle = {
     'prmpar': 3,
-    'E_start': 0.8,
-    'E_stop': 100,
-    'E_slope': -1.0,
-    'max_theta_deg': 4.25,
-    'min_theta_deg': 0.,
-    'min_phi_deg': 0.,
-    'max_phi_deg': 360.,
-    'XSCAT_m': 1100,
-    'YSCAT_m': 0,
+    'max_zenith_angle_deg': 6.5,
+    "energy":             [0.23, 1.0,  10,  100,  1000],
+    "max_scatter_radius": [150,  150,  500, 1100, 2600]
 }
 
 proton_particle = {
     'prmpar': 14,
-    'E_start': 5,
-    'E_stop': 100,
-    'E_slope': -1.0,
-    'max_theta_deg': 6.5,
-    'min_theta_deg': 0.,
-    'min_phi_deg': 0.,
-    'max_phi_deg': 360.,
-    'XSCAT_m': 600,
-    'YSCAT_m': 0,
+    'max_zenith_angle_deg': 6.5,
+    "energy":             [5.0, 25, 250, 1000],
+    "max_scatter_radius": [200, 350, 700, 1250]
 }
 
 portal_instrument = {
@@ -184,8 +166,10 @@ def plot_features(light_field_sequence, plenoscope, event_features, i, path):
     plt.savefig(os.path.join(path, '{:06d}_aperture.png'.format(i)))
     plt.close('all')
 
+
 def argmax2d(X):
     return np.unravel_index(X.argmax(), X.shape)
+
 
 def make_aperture_histogram(lfs, plenoscope):
     return np.histogram2d(
@@ -193,10 +177,12 @@ def make_aperture_histogram(lfs, plenoscope):
         lut.plenoscope.y[lfs[:, 3]],
         bins=[plenoscope.x_bin_edges, plenoscope.y_bin_edges])[0]
 
+
 def make_aperture_x_histogram(lfs, plenoscope):
     return np.histogram(
         lut.plenoscope.x[lfs[:, 2]],
         bins=plenoscope.x_bin_edges)[0]
+
 
 def make_aperture_y_histogram(lfs, plenoscope):
     return np.histogram(

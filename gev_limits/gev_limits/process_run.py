@@ -3,6 +3,7 @@ import os
 import tempfile
 import json
 import subprocess as sp
+import scipy
 import simpleio as sio
 import corsika_wrapper as cw
 from . import light_field
@@ -25,8 +26,8 @@ def make_steering_card(
     'PRMPAR  {prmpar:d}\n' \
     'ESLOPE {E_slope:.3e}\n' \
     'ERANGE {E_start:.3e} {E_stop:.3e}\n' \
-    'THETAP {min_theta_deg:.3f} {max_theta_deg:.3f}\n' \
-    'PHIP {min_phi_deg:.3f} {max_phi_deg:.3f}\n' \
+    'THETAP 0. {max_zenith_angle_deg:.3f}\n' \
+    'PHIP 0. 360.\n' \
     'SEED {seed1:d} 0 0\n' \
     'SEED {seed2:d} 0 0\n' \
     'SEED {seed3:d} 0 0\n' \
@@ -40,7 +41,7 @@ def make_steering_card(
     'TELESCOPE 0. 0. 0. {aperture_radius:.3f}\n' \
     'ATMOSPHERE {atmosphere:d} T\n' \
     'CWAVLG 250 700\n' \
-    'CSCAT 1 {XSCAT_cm:.3f} {YSCAT_cm:.3f}\n' \
+    'CSCAT 1 {XSCAT_cm:.3f} 0.\n' \
     'CERQEF F T F\n' \
     'CERSIZ 1\n' \
     'CERFIL F\n' \
@@ -57,12 +58,8 @@ def make_steering_card(
         E_start=particle["E_start"],
         E_stop=particle["E_stop"],
         E_slope=particle["E_slope"],
-        max_theta_deg=particle["max_theta_deg"],
-        min_theta_deg=particle["min_theta_deg"],
-        max_phi_deg=particle["max_phi_deg"],
-        min_phi_deg=particle["min_phi_deg"],
-        XSCAT_cm=particle["XSCAT_m"]*1e2,
-        YSCAT_cm=particle["YSCAT_m"]*1e2,
+        max_zenith_angle_deg=particle["max_zenith_angle_deg"],
+        XSCAT_cm=particle["max_scatter_radius"]*1e2,
         Bx=site["earth_magnetic_field_x_muT"],
         Bz=site["earth_magnetic_field_z_muT"],
         atmosphere=site["atmosphere"],
@@ -80,6 +77,7 @@ def process_run(
     particle=job_structure.example_job['particle'],
     site=job_structure.example_job['site'],
     trigger_threshold=job_structure.example_job['trigger_threshold'],
+    nsb_rate_pixel=job_structure.example_job['nsb_rate_pixel'],
 ):
     np.random.seed(random_seed)
     os.makedirs(tmp_dir, exist_ok=True)
@@ -138,14 +136,47 @@ def process_run(
         light_field_sequence = extract_light_field_sequence(
             event.cherenkov_photon_bunches,
             plenoscope,
-            instrument)
+            instrument,
+            relative_arrival_times_std=instrument['relative_arrival_times_std'])
 
-        # simple trigger
-        # --------------
+        features['max_scatter_radius'] = float(
+            1e-2*corsika_run.header.raw[248 - 1])
+        assert corsika_run.header.raw[249 - 1] == 0.
+
         features['trigger'] = int(0)
         features['num_photons'] = int(light_field_sequence.shape[0])
-        if features['num_photons'] > trigger_threshold:
+
+        # image trigger
+        # -------------
+        image_photons = light_field.get_image_photons(
+            lfs=light_field_sequence,
+            plenoscope=plenoscope)
+        image = light_field.get_image_from_image_photons(
+            image_photons=image_photons,
+            object_distance=12.5e3,
+            cx_bin_edges=plenoscope.cx_bin_edges,
+            cy_bin_edges=plenoscope.cy_bin_edges)
+        nsb = np.reshape(
+            np.random.normal(
+                loc=nsb_rate_pixel,
+                scale=np.sqrt(nsb_rate_pixel),
+                size=image.size
+            ),
+            newshape=image.shape
+        )
+        image += nsb
+        trigger_kernel = 7/9*np.array([[1,1,1],[1,1,1],[1,1,1]])  # only 7 pixel
+        trigger_image = scipy.signal.convolve2d(
+            image,
+            trigger_kernel,
+            mode='same')
+
+        features['trigger_response'] = np.max(trigger_image)
+
+        if features['trigger_response'] > trigger_threshold:
             features['trigger'] = int(1)
+
+
 
         if features['trigger']:
             features = extract_and_append_indexing_features(
@@ -192,6 +223,7 @@ def extract_light_field_sequence(
     cherenkov_photon_bunches,
     plenoscope,
     instrument,
+    relative_arrival_times_std=1e-9,
 ):
     cpb = cherenkov_photon_bunches
     photons = light_field.PhotonObservables(
@@ -225,6 +257,9 @@ def extract_light_field_sequence(
         mask=detected)
 
     relative_arrival_times = photons.relative_arrival_times
+    relative_arrival_times += np.random.normal(
+        loc=0.,
+        scale=relative_arrival_times_std)
     relative_arrival_times -= np.median(relative_arrival_times)
     photons = light_field.PhotonObservables(
         x=photons.x,

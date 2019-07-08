@@ -227,7 +227,7 @@ def assert_valid_jobs(job_path):
 
         p0 = j0['particle']
         pN = jN['particle']
-        for key in job_structure.PARTICLE_KEYS:
+        for key in ['prmpar', 'max_zenith_angle_deg']:
             assert p0[key] == pN[key]
 
         s0 = j0['site']
