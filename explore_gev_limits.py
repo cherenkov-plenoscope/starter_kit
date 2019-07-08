@@ -247,6 +247,9 @@ for site in sites:
             lfs = lut._raw_light_field_sequence(event_idx)
 
             event_features['num_photons'] = lfs.shape[0]
+            if event_features['num_photons'] < 10:
+                print("--->", event_idx)
+                continue
 
             c_radial = np.hypot(
                 lut.plenoscope.cx[lfs[:, 0]],
