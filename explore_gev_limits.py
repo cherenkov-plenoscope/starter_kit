@@ -427,6 +427,12 @@ def norm_hillas_smallest_ellipse_object_distance(obj):
 def norm_hillas_smallest_ellipse_solid_angle(sa):
     return np.log10(sa) + 7
 
+def norm_num_photons(nu):
+    return np.log10(nu)
+
+def norm_intensity_slope_on_aperture(slope_x, slope_y):
+    slope = np.hypot(slope_x, slope_y)
+    return np.log10(slope)
 
 def add_hist(ax, bin_edges, bincounts, linestyle, color, alpha):
     assert bin_edges.shape[0] == bincounts.shape[0] + 1
@@ -449,6 +455,23 @@ for site in sites:
     gammas = pd.read_msgpack(os.path.join(site_dir, 'gamma.lut.features.msg'))
     electrons = pd.read_msgpack(os.path.join(site_dir, 'electron.lut.features.msg'))
     protons = pd.read_msgpack(os.path.join(site_dir, 'proton.lut.features.msg'))
+
+    gammas_thrown = pd.read_msgpack(os.path.join(site_dir, 'gamma.lut.thrown.msg'))
+    electrons_thrown = pd.read_msgpack(os.path.join(site_dir, 'electron.lut.thrown.msg'))
+    protons_thrown = pd.read_msgpack(os.path.join(site_dir, 'proton.lut.thrown.msg'))
+
+    gammas = pd.merge(
+        gammas,
+        gammas_thrown[['run', 'event', 'particle_energy']],
+        on=['run', 'event'])
+    electrons = pd.merge(
+        electrons,
+        electrons_thrown[['run', 'event', 'particle_energy']],
+        on=['run', 'event'])
+    protons = pd.merge(
+        protons,
+        protons_thrown[['run', 'event', 'particle_energy']],
+        on=['run', 'event'])
 
     num_bins = int(np.sqrt(gammas.shape[0]))
 
@@ -570,6 +593,49 @@ for site in sites:
 
 
     #-------------------------------------------------
+    ais_bin_edges = np.geomspace(
+        1e-3,
+        1e2,
+        num_bins)
+
+    ais_gamma = np.histogram(
+        np.hypot(
+            gammas.aperture_intensity_slope_x,
+            gammas.aperture_intensity_slope_y),
+        bins=ais_bin_edges)[0]
+    ais_proton = np.histogram(
+        np.hypot(
+            protons.aperture_intensity_slope_x,
+            protons.aperture_intensity_slope_y),
+        bins=ais_bin_edges)[0]
+
+    fig = plt.figure(figsize=(8, 4), dpi=100)
+    ax = fig.add_axes([.1,.15,.85,.8])
+    add_hist(
+        ax=ax,
+        bin_edges=ais_bin_edges,
+        bincounts=ais_gamma,
+        linestyle='k-',
+        color='blue',
+        alpha=0.5)
+    add_hist(
+        ax=ax,
+        bin_edges=ais_bin_edges,
+        bincounts=ais_proton,
+        linestyle='k-',
+        color='red',
+        alpha=0.5)
+    ax.text(0.05, 0.95, 'gamma', color='blue', transform=ax.transAxes)
+    ax.text(0.05, 0.9, 'proton', color='red', transform=ax.transAxes)
+    ax.loglog()
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    ax.set_xlabel(r'intensity slope on aperture / p.e. m$^{-1}$')
+    ax.set_ylabel(r'number events/1')
+    plt.savefig('{:s}_{:s}.png'.format(site, 'intensity_slope_on_aperture'))
+    plt.close('all')
+
+
+    #-------------------------------------------------
     sb_bin_edges = np.geomspace(
         1e4,
         1e9,
@@ -651,7 +717,11 @@ for site in sites:
             gammas.hillas_smallest_ellipse_object_distance),
         norm_hillas_smallest_ellipse_solid_angle(
             gammas.hillas_smallest_ellipse_solid_angle),
-        gammas.aperture_intensity_peakness
+        gammas.aperture_intensity_peakness,
+        norm_intensity_slope_on_aperture(
+            slope_x=gammas.aperture_intensity_slope_x,
+            slope_y=gammas.aperture_intensity_slope_y),
+        norm_num_photons(gammas.num_photons),
     ]).T
     y_gamma = np.ones(gammas.shape[0])
 
@@ -660,7 +730,11 @@ for site in sites:
             protons.hillas_smallest_ellipse_object_distance),
         norm_hillas_smallest_ellipse_solid_angle(
             protons.hillas_smallest_ellipse_solid_angle),
-        protons.aperture_intensity_peakness
+        protons.aperture_intensity_peakness,
+        norm_intensity_slope_on_aperture(
+            slope_x=protons.aperture_intensity_slope_x,
+            slope_y=protons.aperture_intensity_slope_y),
+        norm_num_photons(protons.num_photons),
     ]).T
     y_proton = 0*np.ones(protons.shape[0])
 
@@ -702,4 +776,65 @@ for site in sites:
     ax.set_ylabel('true positive rate / 1\ngamma-ray acceptance')
     ax.semilogx()
     plt.savefig('{:s}_{:s}.png'.format(site, 'roc'))
+    plt.close('all')
+
+
+    # energy
+    #------------------------------------------------------------
+    energy_X_gamma = np.array([
+        norm_hillas_smallest_ellipse_object_distance(
+            gammas.hillas_smallest_ellipse_object_distance),
+        norm_hillas_smallest_ellipse_solid_angle(
+            gammas.hillas_smallest_ellipse_solid_angle),
+        gammas.aperture_intensity_peakness,
+        norm_intensity_slope_on_aperture(
+            slope_x=gammas.aperture_intensity_slope_x,
+            slope_y=gammas.aperture_intensity_slope_y),
+        norm_num_photons(gammas.num_photons),
+    ]).T
+    energy_y_gamma = np.log10(gammas.particle_energy)
+
+    energy_x_train, energy_x_test, energy_y_train, energy_y_test = sklearn.model_selection.train_test_split(
+        energy_X_gamma,
+        energy_y_gamma,
+        test_size=0.25,
+        random_state=13)
+
+    energy_scaler = sklearn.preprocessing.StandardScaler()
+    energy_scaler.fit(energy_x_train)
+    energy_x_train = energy_scaler.transform(energy_x_train)
+    energy_x_test = energy_scaler.transform(energy_x_test)
+
+    energy_clf = sklearn.neural_network.MLPRegressor(
+        solver='lbfgs',
+        alpha=1e-3,
+        hidden_layer_sizes=(5, 5, 5),
+        random_state=1,
+        verbose=True,
+        max_iter=1000)
+
+    energy_clf.fit(energy_x_train, energy_y_train)
+
+    energy_pred_test = energy_clf.predict(energy_x_test)
+    energy_predicted = 10**energy_pred_test
+    energy_true = 10**energy_y_test
+
+    energy_bin_edges = np.geomspace(
+        1e-1,
+        1e2,
+        num_bins/3)
+
+    confusion_matrix = np.histogram2d(
+        energy_true,  #10*np.ones(energy_true.shape[0])
+        energy_predicted,
+        (energy_bin_edges, energy_bin_edges))[0]
+
+    fig = plt.figure(figsize=(4, 4), dpi=100)
+    ax = fig.add_axes([.2,.2,.72,.72])
+    ax.pcolormesh(energy_bin_edges, energy_bin_edges, confusion_matrix.T, cmap='Greys')
+    ax.set_xlabel('true energy / GeV')
+    ax.set_ylabel('predicted energy / GeV')
+    ax.loglog()
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    plt.savefig('{:s}_{:s}.png'.format(site, 'energy_confusion'))
     plt.close('all')
