@@ -236,9 +236,6 @@ for site in sites:
 
         features_site_particle = []
         for event_idx in range(lut.num_events):
-            if event_idx > 5000:
-                break
-
             event_features = {}
 
             event_features['run'] = lut.run[event_idx]
@@ -401,7 +398,7 @@ for site in sites:
                 '{:06d}_refocus_stack.png'.format(event_idx)))
             plt.close('all')
             """
-            print(event_idx)
+            print(event_idx, 'of', lut.num_events)
             """
             plot_features(
                 event_features=event_features,
@@ -712,18 +709,22 @@ for site in sites:
     plt.close('all')
     #-------------------------------------------------
 
+    E_cut = gammas.particle_energy <= 1000
+
     X_gamma = np.array([
         norm_hillas_smallest_ellipse_object_distance(
-            gammas.hillas_smallest_ellipse_object_distance),
+            gammas.hillas_smallest_ellipse_object_distance[E_cut]),
         norm_hillas_smallest_ellipse_solid_angle(
-            gammas.hillas_smallest_ellipse_solid_angle),
-        gammas.aperture_intensity_peakness,
+            gammas.hillas_smallest_ellipse_solid_angle[E_cut]),
+        gammas.aperture_intensity_peakness[E_cut],
         norm_intensity_slope_on_aperture(
-            slope_x=gammas.aperture_intensity_slope_x,
-            slope_y=gammas.aperture_intensity_slope_y),
-        norm_num_photons(gammas.num_photons),
+            slope_x=gammas.aperture_intensity_slope_x[E_cut],
+            slope_y=gammas.aperture_intensity_slope_y[E_cut]),
+        norm_num_photons(gammas.num_photons[E_cut]),
     ]).T
-    y_gamma = np.ones(gammas.shape[0])
+    y_gamma = np.vstack([
+        np.ones(gammas.shape[0])[E_cut],
+        gammas.particle_energy[E_cut]]).T
 
     X_proton = np.array([
         norm_hillas_smallest_ellipse_object_distance(
@@ -736,7 +737,9 @@ for site in sites:
             slope_y=protons.aperture_intensity_slope_y),
         norm_num_photons(protons.num_photons),
     ]).T
-    y_proton = 0*np.ones(protons.shape[0])
+    y_proton = np.vstack([
+        0*np.ones(protons.shape[0]),
+        protons.particle_energy]).T
 
     x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(
         np.concatenate([X_gamma, X_proton]),
@@ -757,14 +760,14 @@ for site in sites:
         verbose=True,
         max_iter=1000)
 
-    clf.fit(x_train, y_train)
+    clf.fit(x_train, y_train[:, 0])
 
     fpr, tpr, thresholds = sklearn.metrics.roc_curve(
-        y_true=np.logical_not(y_test),
+        y_true=np.logical_not(y_test[:, 0]),
         y_score=clf.predict(x_test))
 
     auc = sklearn.metrics.roc_auc_score(
-        y_true=y_test,
+        y_true=y_test[:, 0],
         y_score=clf.predict(x_test))
 
     fig = plt.figure(figsize=(4, 4), dpi=100)
@@ -822,7 +825,7 @@ for site in sites:
     energy_bin_edges = np.geomspace(
         1e-1,
         1e2,
-        num_bins/3)
+        (num_bins+1)/3)
 
     confusion_matrix = np.histogram2d(
         energy_true,  #10*np.ones(energy_true.shape[0])
@@ -831,10 +834,67 @@ for site in sites:
 
     fig = plt.figure(figsize=(4, 4), dpi=100)
     ax = fig.add_axes([.2,.2,.72,.72])
-    ax.pcolormesh(energy_bin_edges, energy_bin_edges, confusion_matrix.T, cmap='Greys')
+    ax.pcolormesh(
+        energy_bin_edges,
+        energy_bin_edges,
+        confusion_matrix.T,
+        cmap='Greys')
     ax.set_xlabel('true energy / GeV')
     ax.set_ylabel('predicted energy / GeV')
     ax.loglog()
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     plt.savefig('{:s}_{:s}.png'.format(site, 'energy_confusion'))
+    plt.close('all')
+
+    # differential rates
+    # ------------------
+    dr_energy_bin_edges = np.geomspace(0.1, 1000, 5)
+    gamma_cut = 0.95
+
+    acceptances = []
+    acceptances_error = []
+    for particle in [1., 0.]:
+        num_in = []
+        num_out = []
+        for i in range(dr_energy_bin_edges.shape[0] - 1):
+            mask = (
+                (y_test[:, 0] == particle)*
+                (y_test[:, 1] >= dr_energy_bin_edges[i])*
+                (y_test[:, 1] < dr_energy_bin_edges[i + 1]))
+            num_in.append(x_test[mask].shape[0])
+            if num_in[-1] > 0:
+                gammaness = clf.predict(x_test[mask])
+                num_out.append(np.sum(gammaness >= gamma_cut))
+            else:
+                num_out.append(0)
+        num_in = np.array(num_in)
+        print(num_in)
+        num_out = np.array(num_out)
+        acceptances.append(num_out/num_in)
+        acceptances_error.append(np.sqrt(num_out)/num_out)
+
+    fig = plt.figure(figsize=(4, 4), dpi=100)
+    ax = fig.add_axes([.2,.2,.72,.72])
+    ax.set_title('gamma-cut: {:.3f}'.format(gamma_cut))
+    add_hist(
+        ax=ax,
+        bin_edges=dr_energy_bin_edges,
+        bincounts=acceptances[0],
+        linestyle='-k',
+        color='b',
+        alpha=.5)
+    add_hist(
+        ax=ax,
+        bin_edges=dr_energy_bin_edges,
+        bincounts=acceptances[1],
+        linestyle='-k',
+        color='r',
+        alpha=.5)
+    ax.set_xlabel('true energy / GeV')
+    ax.set_ylabel('acceptance / 1')
+    ax.text(0.75, 0.95, 'gamma', color='blue', transform=ax.transAxes)
+    ax.text(0.75, 0.9, 'proton', color='red', transform=ax.transAxes)
+    ax.loglog()
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    plt.savefig('{:s}_{:s}.png'.format(site, 'acceptance'))
     plt.close('all')
