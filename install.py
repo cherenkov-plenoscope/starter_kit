@@ -71,6 +71,8 @@ def main():
             '.', 'instrument_sensitivity_function')])
         call(['pip', 'install', '-e', join(
             '.', 'cable_robo_mount')])
+        call(['pip', 'install', '-e', join(
+            '.', 'plenoscope_map_reduce')])
 
     except docopt.DocoptExit as e:
         print(e)
