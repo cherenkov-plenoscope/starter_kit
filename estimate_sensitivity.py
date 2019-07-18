@@ -23,7 +23,7 @@ from os import path as op
 import shutil
 import subprocess
 import acp_instrument_response_function as irf
-#import acp_instrument_sensitivity_function as isf
+import acp_instrument_sensitivity_function as isf
 import random
 import plenopy as pl
 import json
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         # ------------------------------------------------
         # Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
-        """
+
         if not op.isdir(join(out_dir, 'isf')):
             os.makedirs(join(out_dir, 'isf'), exist_ok=True)
             results = isf.analysis(
@@ -184,7 +184,6 @@ if __name__ == '__main__':
                 bmar=0.12,
                 tmar=0.02,
                 rmar=0.02,)
-        """
 
     except docopt.DocoptExit as e:
         print(e)
