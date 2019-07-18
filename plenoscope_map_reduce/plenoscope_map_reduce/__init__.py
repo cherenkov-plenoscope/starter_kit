@@ -1,1 +1,90 @@
 import os
+import glob
+
+
+def split_list_into_list_of_lists(events, num_events_in_job):
+    """
+    Splits a list into a list of sublists.
+    When the individual event to be processed is too little workload to justify
+    startup-overhead on worker-nodes, these events can be packed into jobs with
+    num_events_in_job number of events in each.
+    """
+    num_events = len(events)
+    jobs = []
+    event_counter = 0
+    while event_counter < num_events:
+        job_event_counter = 0
+        job = []
+        while (
+            event_counter < num_events and
+            job_event_counter < num_events_in_job
+        ):
+            job.append(events[event_counter])
+            job_event_counter += 1
+            event_counter += 1
+        jobs.append(job)
+    return jobs
+
+
+def make_jobs_cherenkov_classification(
+    run_path,
+    light_field_geometry_path,
+    num_events_in_job=100,
+    override=False,
+):
+    light_field_geometry_path = os.path.abspath(light_field_geometry_path)
+    run_path = os.path.abspath(run_path)
+    paths_in_run = glob.glob(os.path.join(run_path, '*'))
+
+    # Events have digit filenames.
+    event_numbers = []
+    for path_in_run in paths_in_run:
+        filename = os.path.split(path_in_run)[-1]
+        if str.isdigit(filename):
+            event_numbers.append(int(filename))
+
+    # Be lazy. Only process when override==True or output does not exist yet.
+    event_numbers_to_process = []
+    for event_number in event_numbers:
+        if override:
+            event_numbers_to_process.append(event_number)
+        else:
+            event_path = os.path.join(run_path, "{:d}".format(event_number))
+            dense_photon_ids_path = os.path.join(
+                event_path,
+                'dense_photon_ids.uint32.gz')
+            if not os.path.exists(dense_photon_ids_path):
+                event_numbers_to_process.append(event_number)
+
+    # Make chunks for efficiency.
+    chunks = split_list_into_list_of_lists(
+        events=event_numbers_to_process,
+        num_events_in_job=num_events_in_job)
+
+    jobs = []
+    for chunk in chunks:
+        job = {
+            "light_field_geometry_path": light_field_geometry_path,
+            "run_path": run_path,
+            "event_numbers": chunk}
+        jobs.append(job)
+    return jobs
+
+
+def run_job_cherenkov_classification(job):
+    light_field_geometry = pl.LightFieldGeometry(
+        job['light_field_geometry_path'])
+    run = pl.Run(
+        job['run_path'],
+        light_field_geometry=light_field_geometry)
+    for event_number in job['event_numbers']:
+        event = run[event_number]
+        roi = pl.classify.center_for_region_of_interest(event)
+        photons = pl.classify.RawPhotons.from_event(event)
+        cherenkov_photons, s = pl.classify.cherenkov_photons_in_roi_in_image(
+            roi=roi,
+            photons=photons)
+        pl.classify.write_dense_photon_ids_to_event(
+            event_path=os.path.abspath(event._path),
+            photon_ids=cherenkov_photons.photon_ids,
+            settings=s)
