@@ -2,12 +2,11 @@
 """
 Estimate the sensitivity of the Atmospheric Cherenkov Plenoscope (ACP).
 
-Usage: trigger_sensitivity [--out_dir=DIR] [-s=PATH] [--lfc_Mp=NUMBER]
+Usage: trigger_sensitivity [--out_dir=DIR] [--lfc_Mp=NUMBER]
 
 Options:
     -h --help               Prints this help message.
     -o --out_dir=DIR        Output directory [default: ./run]
-    -s --scoop_hosts=PATH   Path to the scoop hosts text file.
     --lfc_Mp=NUMBER         How many mega photons to be used during the
                             light field calibration of the plenoscope.
                             [default: 1337]
