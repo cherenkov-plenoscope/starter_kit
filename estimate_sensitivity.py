@@ -17,12 +17,13 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import sun_grid_engine_map as sge
+import plenoscope_map_reduce as plmr
 import os
 from os import path as op
 import shutil
 import subprocess
 import acp_instrument_response_function as irf
-import acp_instrument_sensitivity_function as isf
+#import acp_instrument_sensitivity_function as isf
 import random
 import plenopy as pl
 import json
@@ -52,7 +53,7 @@ if __name__ == '__main__':
         if not op.isdir(op.join(out_dir, 'light_field_calibration')):
             lfc_tmp_dir = op.join(out_dir, 'light_field_calibration.tmp')
             os.makedirs(lfc_tmp_dir)
-            lfc_jobs = pl.light_field_geometry.map_reduce.make_jobs(
+            lfc_jobs = plmr.make_jobs_light_field_geometry(
                 merlict_map_path=absjoin(
                     'build',
                     'merlict',
@@ -68,7 +69,7 @@ if __name__ == '__main__':
                 random_seed=0)
 
             rc = sge.map(
-                function=pl.light_field_geometry.map_reduce.worker_node,
+                function=plmr.run_job_light_field_geometry,
                 jobs=lfc_jobs)
             subprocess.call([absjoin(
                     'build',
@@ -132,14 +133,14 @@ if __name__ == '__main__':
         cla_jobs = []
         for p in particles:
             run_path = op.join(out_dir, 'irf', p, 'past_trigger')
-            p_jobs = pl.classify.make_jobs_cherenkov_classification(
+            p_jobs = plmr.make_jobs_cherenkov_classification(
                 run_path=run_path,
                 num_events_in_job=100,
                 override=False)
             cla_jobs += p_jobs
         random.shuffle(cla_jobs)
         rc = sge.map(
-            function=pl.classify.run_job_cherenkov_classification,
+            function=plmr.run_job_cherenkov_classification,
             jobs=cla_jobs)
 
 

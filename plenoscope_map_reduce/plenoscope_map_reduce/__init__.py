@@ -1,5 +1,7 @@
 import os
 import glob
+import subprocess
+import numpy as np
 
 
 def split_list_into_list_of_lists(events, num_events_in_job):
@@ -88,3 +90,33 @@ def run_job_cherenkov_classification(job):
             event_path=os.path.abspath(event._path),
             photon_ids=cherenkov_photons.photon_ids,
             settings=s)
+
+
+def make_jobs_light_field_geometry(
+    merlict_map_path,
+    scenery_path,
+    num_photons_per_block,
+    out_dir,
+    num_blocks,
+    random_seed=0
+):
+    jobs = []
+    for seed in np.arange(random_seed, num_blocks):
+        jobs.append({
+            "merlict_map_path": merlict_map_path,
+            "scenery_path": scenery_path,
+            "random_seed": seed,
+            "out_dir": out_dir,
+            "num_photons_per_block": num_photons_per_block})
+    return jobs
+
+
+def run_job_light_field_geometry(job):
+    seed_str = '{:d}'.format(job['random_seed'])
+    call = [
+        job['merlict_map_path'],
+        '-s', job['scenery_path'],
+        '-n', '{:d}'.format(job['num_photons_per_block']),
+        '-o', os.path.join(job['out_dir'], seed_str),
+        '-r', seed_str]
+    return subprocess.call(call)
