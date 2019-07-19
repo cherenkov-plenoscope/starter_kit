@@ -26,14 +26,22 @@ import acp_instrument_sensitivity_function as isf
 import random
 import plenopy as pl
 import json
+import multiprocessing
 
 
 def absjoin(*args):
     return op.abspath(op.join(*args))
 
+USE_CLUSTER = True
 
 if __name__ == '__main__':
     try:
+        if USE_CLUSTER:
+            pool = sge
+        else:
+            pool = multiprocessing.Pool(8)
+
+        print("-------start---------")
         trigger_steering_path = absjoin(
             'resources',
             'acp',
@@ -48,6 +56,7 @@ if __name__ == '__main__':
         # ----------------------------------------
         # Light-field-calibration of Plenoscope
         # ----------------------------------------
+        print("-------light-field-geometry---------")
         os.makedirs(out_dir, exist_ok=True)
         if not op.isdir(op.join(out_dir, 'light_field_calibration')):
             lfc_tmp_dir = op.join(out_dir, 'light_field_calibration.tmp')
@@ -67,9 +76,9 @@ if __name__ == '__main__':
                 num_blocks=int(arguments['--lfc_Mp']),
                 random_seed=0)
 
-            rc = sge.map(
-                function=plmr.run_job_light_field_geometry,
-                jobs=lfc_jobs)
+            rc = pool.map(
+                plmr.run_job_light_field_geometry,
+                lfc_jobs)
             subprocess.call([absjoin(
                     'build',
                     'merlict',
@@ -81,6 +90,7 @@ if __name__ == '__main__':
         # --------------------------------------------------
         # Instrument-response to typical cosmic particles
         # --------------------------------------------------
+        print("-------instrument-response---------")
         particles = ['gamma', 'electron', 'proton']
         jobs = []
         os.makedirs(op.join(out_dir, 'irf'), exist_ok=True)
@@ -116,66 +126,60 @@ if __name__ == '__main__':
                     trigger_integration_time_in_slices=trigger[
                         'integration_time_in_slices'])
         random.shuffle(jobs)
-        rc = sge.map(function=irf.trigger_simulation.run_job, jobs=jobs)
+        rc = pool.map(
+            irf.trigger_simulation.run_job,
+            jobs)
+
+        print("-------trigger-study---------")
         for p in particles:
             if (
                 op.isdir(op.join(out_dir, 'irf', p)) and
                 not op.isdir(op.join(out_dir, 'irf', p, 'results'))
             ):
                 irf.trigger_study_analysis.run_analysis(
-                    path=join(out_dir, 'irf', p),
+                    path=op.join(out_dir, 'irf', p),
                     patch_threshold=trigger['patch_threshold'])
 
         # -------------------------------
         # Classifying Cherenkov-photons
         # -------------------------------
+        print("-------classifying Cherenkov---------")
         cla_jobs = []
         for p in particles:
             run_path = op.join(out_dir, 'irf', p, 'past_trigger')
             p_jobs = plmr.make_jobs_cherenkov_classification(
+                light_field_geometry_path=absjoin(
+                    out_dir,
+                    'light_field_calibration'),
                 run_path=run_path,
                 num_events_in_job=100,
                 override=False)
             cla_jobs += p_jobs
+            print(p_jobs)
         random.shuffle(cla_jobs)
-        rc = sge.map(
-            function=plmr.run_job_cherenkov_classification,
-            jobs=cla_jobs)
+        rc = pool.map(
+            plmr.run_job_cherenkov_classification,
+            cla_jobs)
 
 
         # ------------------------------------------------
         # Sensitivity and time-to-detections of the ACP
         # ------------------------------------------------
-
-        if not op.isdir(join(out_dir, 'isf')):
-            os.makedirs(join(out_dir, 'isf'), exist_ok=True)
-            results = isf.analysis(
-                gamma_collection_area_path=join(
-                    out_dir, 'irf', 'gamma', 'results', 'irf.csv'),
-                electron_collection_acceptance_path=join(
-                    out_dir, 'irf', 'electron', 'results', 'irf.csv'),
-                proton_collection_acceptance_path=join(
-                    out_dir, 'irf', 'proton', 'results', 'irf.csv'),
-                rigidity_cutoff_in_tev=0.01,
-                relative_flux_below_cutoff=0.05,
-                fov_in_deg=6.5,
-                source_name='3FGL J2254.0+1608',
-                out_dir=join(out_dir, 'isf'))
-
-        if not op.isdir(join(out_dir, 'isf_beamer')):
-            os.makedirs(join(out_dir, 'isf_beamer'), exist_ok=True)
+        print("-------calculate Sensitivity---------")
+        if not op.isdir(op.join(out_dir, 'isf_beamer')):
+            os.makedirs(op.join(out_dir, 'isf_beamer'), exist_ok=True)
             results_2 = isf.analysis(
-                gamma_collection_area_path=join(
+                gamma_collection_area_path=op.join(
                     out_dir, 'irf', 'gamma', 'results', 'irf.csv'),
-                electron_collection_acceptance_path=join(
+                electron_collection_acceptance_path=op.join(
                     out_dir, 'irf', 'electron', 'results', 'irf.csv'),
-                proton_collection_acceptance_path=join(
+                proton_collection_acceptance_path=op.join(
                     out_dir, 'irf', 'proton', 'results', 'irf.csv'),
                 rigidity_cutoff_in_tev=0.01,
                 relative_flux_below_cutoff=0.05,
                 fov_in_deg=6.5,
                 source_name='3FGL J2254.0+1608',
-                out_dir=join(out_dir, 'isf_beamer'),
+                out_dir=op.join(out_dir, 'isf_beamer'),
                 dpi=300,
                 pixel_rows=1080,
                 pixel_columns=1920,

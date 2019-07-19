@@ -2,6 +2,7 @@ import os
 import glob
 import subprocess
 import numpy as np
+import plenopy as pl
 
 
 def split_list_into_list_of_lists(events, num_events_in_job):
@@ -76,11 +77,9 @@ def make_jobs_cherenkov_classification(
 def run_job_cherenkov_classification(job):
     light_field_geometry = pl.LightFieldGeometry(
         job['light_field_geometry_path'])
-    run = pl.Run(
-        job['run_path'],
-        light_field_geometry=light_field_geometry)
     for event_number in job['event_numbers']:
-        event = run[event_number]
+        event_path = os.path.join(job['run_path'], str(event_number))
+        event = pl.Event(event_path, light_field_geometry)
         roi = pl.classify.center_for_region_of_interest(event)
         photons = pl.classify.RawPhotons.from_event(event)
         cherenkov_photons, s = pl.classify.cherenkov_photons_in_roi_in_image(
