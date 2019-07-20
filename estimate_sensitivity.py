@@ -96,17 +96,25 @@ if __name__ == '__main__':
         os.makedirs(op.join(out_dir, 'irf'), exist_ok=True)
         for p in particles:
             if not op.isdir(op.join(out_dir, 'irf', p)):
+                if p in ['electron', 'proton']:
+                     location_steering_card_path = absjoin(
+                        'resources',
+                        'acp',
+                        '71m',
+                        'chile_paranal_magnet_off.json')
+                else:
+                     location_steering_card_path = absjoin(
+                        'resources',
+                        'acp',
+                        '71m',
+                        'chile_paranal.json')
                 jobs += irf.trigger_simulation.make_output_directory_and_jobs(
                     particle_steering_card_path=absjoin(
                         'resources',
                         'acp',
                         '71m',
                         p+'_steering.json'),
-                    location_steering_card_path=absjoin(
-                        'resources',
-                        'acp',
-                        '71m',
-                        'chile_paranal.json'),
+                    location_steering_card_path=location_steering_card_path,
                     output_path=op.join(
                         out_dir,
                         'irf',
