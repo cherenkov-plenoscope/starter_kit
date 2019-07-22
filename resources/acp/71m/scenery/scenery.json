@@ -51,7 +51,7 @@
         [6.72e-07, 3.118e-01],
         [6.81e-07, 2.781e-01],
         [6.91e-07, 1.611e-01],
-        [7.00e-07, 1.214e-01]],
+        [7.01e-07, 1.214e-01]],
     "comment": "@proceeding{doi: 10.1117/12.2025476, author = { G.  Pareschi,T.  Armstrong,H.  Baba,J.  Bähr,A.  Bonardi,G.  Bonnoli,P.  Brun,R.  Canestrari,P.  Chadwick,M.  Chikawa,P.-H.  Carton,V.  de Souza,J.  Dipold,M.  Doro,D.  Durand,M.  Dyrda,A.  Förster,M.  Garczarczyk,E.  Giro,J.-F.  Glicenstein,Y.  Hanabata,M.  Hayashida,M.  Hrabovski,C.  Jeanney,M.  Kagaya,H.  Katagiri,L.  Lessio,D.  Mandat,M.  Mariotti,C.  Medina,J.  Michalowski,P.  Micolon,D.  Nakajima,J.  Niemiec,A.  Nozato,M.  Palatka,M.  Pech,B.  Peyaud,G.  Pühlhofer,M.  Rataj,G.  Rodeghiero,G.  Rojas,J.  Rousselle,R.  Sakonaka,P.  Schovanek,K.  Seweryn,C.  Schultz,S.  Shu,F.  Stinzing,M.  Stodulski,M.  Teshima,P.  Travniczek,C.  van Eldik,V.  Vassiliev,Ł  Wiśniewski,A.  Wörnlein,T.  Yoshida}, title = {Status of the technologies for the production of the Cherenkov Telescope Array (CTA) mirrors}, journal = {Proc.SPIE}, volume = {8861}, number = {}, pages = {8861 - 8861 - 19}, year = {2013}, doi = {10.1117/12.2025476}, URL = {https://doi.org/10.1117/12.2025476}, } and https://arxiv.org/abs/1310.1713, MST dielectric mirror"},
     { "name": "lens_refraction_vs_wavelength",
       "argument_versus_value": [
