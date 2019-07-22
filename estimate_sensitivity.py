@@ -163,7 +163,6 @@ if __name__ == '__main__':
                 num_events_in_job=100,
                 override=False)
             cla_jobs += p_jobs
-            print(p_jobs)
         random.shuffle(cla_jobs)
         rc = pool.map(
             plmr.run_job_cherenkov_classification,
