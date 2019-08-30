@@ -119,3 +119,37 @@ def run_job_light_field_geometry(job):
         '-o', os.path.join(job['out_dir'], seed_str),
         '-r', seed_str]
     return subprocess.call(call)
+
+
+def make_jobs_feature_extraction(
+    past_trigger_path,
+    light_field_geometry_path,
+    num_events_in_job=100
+):
+    event_ids = pl.tools.acp_format.all_folders_with_digit_names_in_path(
+        past_trigger_path)
+    event_paths = []
+    for event_id in event_ids:
+        event_path = os.path.abspath(
+            os.path.join(past_trigger_path, "{:d}".format(event_id)))
+        event_paths.append(event_path)
+
+    lol = split_list_into_list_of_lists(
+        events=event_paths,
+        num_events_in_job=num_events_in_job)
+
+    jobs = []
+    for i, l in enumerate(lol):
+        job = {}
+        job["event_paths"] = l
+        job["light_field_geometry_path"] = os.path.abspath(
+            light_field_geometry_path)
+        jobs.append(job)
+    return jobs
+
+
+def run_job_feature_extraction(job):
+    features = pl.features.extract_features_from_events(
+        event_paths=job["event_paths"],
+        light_field_geometry_path=job["light_field_geometry_path"])
+    return features

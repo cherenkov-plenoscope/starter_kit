@@ -168,6 +168,30 @@ if __name__ == '__main__':
             plmr.run_job_cherenkov_classification,
             cla_jobs)
 
+        # ---------------------
+        # Extracting features
+        # ---------------------
+        print("-------extracting features---------")
+        for p in particles:
+            out_path = op.join(out_dir, 'irf', p, 'features.jsonl')
+            if not op.exists(out_path):
+                feature_jobs = plmr.make_jobs_feature_extraction(
+                    past_trigger_path=op.join(
+                        out_dir, 'irf', p, 'past_trigger'),
+                    light_field_geometry_path=absjoin(
+                        out_dir, 'light_field_calibration'),
+                    num_events_in_job=10)
+
+                print(feature_jobs)
+
+                feature_job_results = pool.map(
+                    plmr.run_job_feature_extraction,
+                    feature_jobs)
+
+                with open(out_path, "wt") as fout:
+                    for job_result in feature_job_results:
+                        for event in job_result:
+                            fout.write(json.dumps(event) + "\n")
 
         # ------------------------------------------------
         # Sensitivity and time-to-detections of the ACP
