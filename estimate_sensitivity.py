@@ -148,6 +148,15 @@ if __name__ == '__main__':
                     path=op.join(out_dir, 'irf', p),
                     patch_threshold=trigger['patch_threshold'])
 
+        print("-------export-thrown-events--------")
+        for p in particles:
+            thrown_path = op.join(out_dir, 'irf', p, 'thrown.jsonl')
+            if not os.path.exists(thrown_path):
+                irf.intermediate.reduce(
+                    intermediate_runs_dir=op.join(
+                        out_dir, 'irf', p, 'intermediate_results_of_runs'),
+                    out_path=thrown_path)
+
         # -------------------------------
         # Classifying Cherenkov-photons
         # -------------------------------
