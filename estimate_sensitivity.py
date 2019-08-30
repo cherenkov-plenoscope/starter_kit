@@ -180,9 +180,7 @@ if __name__ == '__main__':
                         out_dir, 'irf', p, 'past_trigger'),
                     light_field_geometry_path=absjoin(
                         out_dir, 'light_field_calibration'),
-                    num_events_in_job=10)
-
-                print(feature_jobs)
+                    num_events_in_job=250)
 
                 feature_job_results = pool.map(
                     plmr.run_job_feature_extraction,
