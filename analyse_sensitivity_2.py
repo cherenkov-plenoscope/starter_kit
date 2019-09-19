@@ -4,6 +4,7 @@ import os
 from os import path as op
 import sklearn
 from sklearn import neural_network
+from sklearn import gaussian_process
 import json
 import acp_instrument_response_function as irf
 import acp_instrument_sensitivity_function as isf
@@ -297,7 +298,6 @@ def estimate_instrument_response(
             effective_area[i] = \
                 area_detected[i]/area_thrown[i]*\
                     (area_thrown[i]/num_thrown[i])
-            print(effective_area[i])
         if num_thrown[i] > 0 and solid_angle_thrown[i] > 0.:
             effective_solid_angle[i] = \
                 solid_angle_detected[i]/solid_angle_thrown[i]*\
@@ -605,6 +605,128 @@ for particle in particles:
     #ax.legend(loc='best', fontsize=10)
     fig.savefig(path+'_ratio.png')
 
+print("ANGULAR RESOLUTION")
+print("==================")
+
+def one_sigma_68_containment(residual_angles):
+    sorted_angles = np.sort(residual_angles)
+    return sorted_angles[int(sorted_angles.shape[0]*0.67)]
+
+source_geometries = {"onaxis": 2.5, "diffuse": 90.}
+onaxis_angle = np.deg2rad(3.)
+psf_test_sample_fraction = 0.25
+
+gamma_psf = pd.merge(
+    left=pd.DataFrame(events_thrown),
+    right=pd.DataFrame(events_features),
+    on=event_id_keys).to_records(index=False)
+gamma_psf = gamma_psf[gamma_psf.particle == particles["gamma"]]
+gamma_psf = gamma_psf[gamma_psf.zenith_theta <= onaxis_angle]
+
+(
+    gamma_psf_train,
+    gamma_psf_test
+) = sklearn.model_selection.train_test_split(
+    gamma_psf,
+    test_size=psf_test_sample_fraction,
+    random_state=13)
+
+def az_zd_to_cx_cy(azimuth_phi, zenith_theta):
+    cx = -np.sin(zenith_theta) * np.cos(azimuth_phi)
+    cy = -np.sin(zenith_theta) * np.sin(azimuth_phi)
+    return np.array([cx, cy]).T
+
+def pfs_features(events):
+    return np.array([
+        np.log10(events.num_photons),
+        np.log10(events.image_smallest_ellipse_object_distance),
+        events.image_infinity_cx_mean,
+        events.image_infinity_cy_mean,
+        events.image_infinity_cx_std,
+        events.image_infinity_cy_std,
+        events.light_front_cx - events.image_infinity_cx_mean,
+        events.light_front_cy - events.image_infinity_cy_mean,
+        events.image_half_depth_shift_cx,
+        events.image_half_depth_shift_cy,
+    ]).T
+
+def great_circle_angle(cx1, cy1, cx2, cy2):
+    cz1 = np.sqrt(1. - cx1**2 - cy1**2)
+    cz2 = np.sqrt(1. - cx2**2 - cy2**2)
+    return np.arccos(cx1*cx2 + cy1*cy2 + cz1*cz2)
+
+x_psf_train_unscaled = pfs_features(gamma_psf_train)
+y_psf_train_unscaled = az_zd_to_cx_cy(
+    azimuth_phi=gamma_psf_train.azimuth_phi,
+    zenith_theta=gamma_psf_train.zenith_theta)
+
+x_psf_test_unscaled = pfs_features(gamma_psf_test)
+y_psf_test_unscaled = az_zd_to_cx_cy(
+    azimuth_phi=gamma_psf_test.azimuth_phi,
+    zenith_theta=gamma_psf_test.zenith_theta)
+
+# scaling
+x_psf_scaler = sklearn.preprocessing.StandardScaler()
+x_psf_scaler.fit(x_psf_train_unscaled)
+x_psf_train = x_psf_scaler.transform(x_psf_train_unscaled)
+x_psf_test = x_psf_scaler.transform(x_psf_test_unscaled)
+
+y_psf_scaler = sklearn.preprocessing.StandardScaler()
+y_psf_scaler.fit(y_psf_train_unscaled)
+y_psf_train = y_psf_scaler.transform(y_psf_train_unscaled)
+y_psf_test = y_psf_scaler.transform(y_psf_test_unscaled)
+
+psf_clf = sklearn.neural_network.MLPRegressor(
+    solver='lbfgs',
+    alpha=1e-2,
+    hidden_layer_sizes=(13, 7),
+    random_state=42,
+    verbose=True,
+    max_iter=3000)
+psf_clf.fit(x_psf_train, y_psf_train)
+
+model_psf_path = os.path.join(out_dir, "psf_model")
+with open(model_psf_path+".pkl", "wb") as fout:
+    fout.write(pickle.dumps(psf_clf))
+
+cxcy_reconstructed = y_psf_scaler.inverse_transform(psf_clf.predict(x_psf_test))
+psf_residuals = great_circle_angle(
+    cx1=cxcy_reconstructed[:, 0],
+    cy1=cxcy_reconstructed[:, 1],
+    cx2=y_psf_scaler.inverse_transform(y_psf_test)[:, 0],
+    cy2=y_psf_scaler.inverse_transform(y_psf_test)[:, 1])
+
+cxcy_reconstructed_1 = np.array([
+    gamma_psf_test.image_infinity_cx_mean,
+    gamma_psf_test.image_infinity_cy_mean,]).T
+psf_residuals_1 = great_circle_angle(
+    cx1=cxcy_reconstructed_1[:, 0],
+    cy1=cxcy_reconstructed_1[:, 1],
+    cx2=y_psf_scaler.inverse_transform(y_psf_test)[:, 0],
+    cy2=y_psf_scaler.inverse_transform(y_psf_test)[:, 1])
+
+psf_num_energy_bins = 8
+psf_energy_bin_edges = np.geomspace(0.25, 20, psf_num_energy_bins + 1)
+for psf_bin in range(psf_num_energy_bins):
+    E_start = psf_energy_bin_edges[psf_bin]
+    E_stop = psf_energy_bin_edges[psf_bin + 1]
+    E_mask = np.logical_and(
+        gamma_psf_test.energy >= E_start,
+        gamma_psf_test.energy < E_stop)
+    psf_residuals_E = psf_residuals[E_mask]
+    psf_residuals_1_E = psf_residuals_1[E_mask]
+
+    s68 = one_sigma_68_containment(psf_residuals_E)
+    s68_1 = one_sigma_68_containment(psf_residuals_1_E)
+
+    print("E: {:.1f}, clf: {:.1f}deg, m1: {:.1f}deg, {:d}".format(
+        E_start,
+        np.rad2deg(s68),
+        np.rad2deg(s68_1),
+        np.sum(E_mask)))
+
+
+
 
 print("GAMMA-HADRON-SEPARATION")
 print("=======================")
@@ -784,8 +906,6 @@ def make_detection_mask(
         on=event_id_keys,
         how='left')["detected"] == True
     return detection_mask.astype(np.int).values
-
-source_geometries = {"onaxis": 2.5, "diffuse": 90.}
 
 number_energy_bins = 30
 energy_start = 2.5e-1
