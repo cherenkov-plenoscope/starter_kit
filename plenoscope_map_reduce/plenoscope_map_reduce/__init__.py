@@ -123,6 +123,7 @@ def run_job_light_field_geometry(job):
 
 def make_jobs_feature_extraction(
     past_trigger_path,
+    true_particle_id,
     light_field_geometry_path,
     num_events_in_job=100
 ):
@@ -142,6 +143,7 @@ def make_jobs_feature_extraction(
     for i, l in enumerate(lol):
         job = {}
         job["event_paths"] = l
+        job["true_particle_id"] = int(true_particle_id)
         job["light_field_geometry_path"] = os.path.abspath(
             light_field_geometry_path)
         jobs.append(job)
@@ -149,7 +151,48 @@ def make_jobs_feature_extraction(
 
 
 def run_job_feature_extraction(job):
-    features = pl.features.extract_features_from_events(
-        event_paths=job["event_paths"],
-        light_field_geometry_path=job["light_field_geometry_path"])
+    event_paths=job["event_paths"]
+    light_field_geometry_path=job["light_field_geometry_path"],
+    true_particle_id=job["true_particle_id"]
+
+    lfg = pl.LightFieldGeometry(light_field_geometry_path)
+
+    lfg_addon = {}
+    lfg_addon["paxel_radius"] = \
+        lfg.sensor_plane2imaging_system.\
+            expected_imaging_system_max_aperture_radius/\
+        lfg.sensor_plane2imaging_system.number_of_paxel_on_pixel_diagonal
+    lfg_addon["nearest_neighbor_paxel_enclosure_radius"] = \
+        3*lfg_addon["paxel_radius"]
+    lfg_addon["paxel_neighborhood"] = estimate_nearest_neighbors(
+        x=lfg.paxel_pos_x,
+        y=lfg.paxel_pos_y,
+        epsilon=lfg_addon["nearest_neighbor_paxel_enclosure_radius"])
+    lfg_addon["fov_radius"] = \
+        .5*lfg.sensor_plane2imaging_system.max_FoV_diameter
+    lfg_addon["fov_radius_leakage"] = 0.9*lfg_addon["fov_radius"]
+    lfg_addon["num_pixel_on_diagonal"] = \
+        np.floor(2*np.sqrt(lfg.number_pixel/np.pi))
+
+    features = []
+    for event_path in event_paths:
+        event = pl.Event(event_path, light_field_geometry=lfg)
+
+        run_id = event.simulation_truth.event.corsika_run_header.number
+        event_id = np.mod(event.number, 1000000)
+
+        try:
+            cp = event.cherenkov_photons
+            if cp is None:
+                raise RuntimeError("No Cherenkov-photons classified yet.")
+            f = pl.features.extract_features(
+                cherenkov_photons=cp,
+                light_field_geometry=lfg,
+                light_field_geometry_addon=lfg_addon)
+            f["true_particle_id"] = int(true_particle_id)
+            f["run_id"] = int(run_id)
+            f["event_id"] = int(event_id)
+            features.append(f)
+        except Exception as e:
+            print("Run {:d}, Event: {:d} :".format(run_id, event_id), e)
     return features

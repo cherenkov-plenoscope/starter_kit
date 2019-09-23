@@ -1,9 +1,6 @@
 {
-    "random_seed": 0,
-    "number_runs": 512,
-    "number_events_in_run": 100,
     "primary_particle": "proton",
-    "source_geometry": "diffuse",
+    "max_scatter_angle_deg": 6.5,
     "energy":             [5.0, 25, 250, 1000],
     "max_scatter_radius": [200, 350, 700, 1250]
 }

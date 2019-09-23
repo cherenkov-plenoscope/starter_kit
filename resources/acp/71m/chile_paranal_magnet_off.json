@@ -1,6 +1,6 @@
 {
     "observation_level_altitude_asl": 5000.0,
-    "atmosphere_model": "chile-paranal-eso",
+    "atmosphere": "chile-paranal-eso",
     "earth_magnetic_field_x_muT": 1e-9,
     "earth_magnetic_field_z_muT": 1e-9
 }

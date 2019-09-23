@@ -22,7 +22,6 @@ from os import path as op
 import shutil
 import subprocess
 import acp_instrument_response_function as irf
-import acp_instrument_sensitivity_function as isf
 import random
 import plenopy as pl
 import json
@@ -54,15 +53,13 @@ if __name__ == '__main__':
         arguments = docopt.docopt(__doc__)
         out_dir = op.abspath(arguments['--out_dir'])
 
-        # ----------------------------------------
-        # Light-field-calibration of Plenoscope
-        # ----------------------------------------
         print("-------light-field-geometry---------")
         os.makedirs(out_dir, exist_ok=True)
-        if not op.isdir(op.join(out_dir, 'light_field_calibration')):
-            lfc_tmp_dir = op.join(out_dir, 'light_field_calibration.tmp')
-            os.makedirs(lfc_tmp_dir)
-            lfc_jobs = plmr.make_jobs_light_field_geometry(
+        lfg_path = absjoin(out_dir, 'light_field_geometry')
+        if not op.path.exist(lfg_path):
+            lfg_tmp_dir = lfg_path+".tmp"
+            os.makedirs(lfg_tmp_dir)
+            lfg_jobs = plmr.make_jobs_light_field_geometry(
                 merlict_map_path=absjoin(
                     'build',
                     'merlict',
@@ -72,25 +69,21 @@ if __name__ == '__main__':
                     'acp',
                     '71m',
                     'scenery'),
-                out_dir=lfc_tmp_dir,
+                out_dir=lfg_tmp_dir,
                 num_photons_per_block=1000*1000,
                 num_blocks=int(arguments['--lfc_Mp']),
                 random_seed=0)
 
-            rc = pool.map(
-                plmr.run_job_light_field_geometry,
-                lfc_jobs)
-            subprocess.call([absjoin(
+            rc = pool.map(plmr.run_job_light_field_geometry, lfg_jobs)
+            subprocess.call([
+                absjoin(
                     'build',
                     'merlict',
                     'merlict-plenoscope-calibration-reduce'),
-                '--input', lfc_tmp_dir,
-                '--output', op.join(out_dir, 'light_field_calibration')])
-            shutil.rmtree(lfc_tmp_dir)
+                '--input', lfg_tmp_dir,
+                '--output', lfg_path])
+            shutil.rmtree(lfg_tmp_dir)
 
-        # --------------------------------------------------
-        # Instrument-response to typical cosmic particles
-        # --------------------------------------------------
         print("-------instrument-response---------")
         particles = ['gamma', 'electron', 'proton']
         jobs = []
@@ -98,134 +91,94 @@ if __name__ == '__main__':
         for p in particles:
             if not op.isdir(op.join(out_dir, 'irf', p)):
                 if p in ['electron', 'proton']:
-                    location_steering_card_path = absjoin(
+                    location_config_path = absjoin(
                         'resources',
                         'acp',
                         '71m',
                         'chile_paranal_magnet_off.json')
                 else:
-                    location_steering_card_path = absjoin(
+                    location_config_path = absjoin(
                         'resources',
                         'acp',
                         '71m',
                         'chile_paranal.json')
-                jobs += irf.trigger_simulation.make_output_directory_and_jobs(
-                    particle_steering_card_path=absjoin(
+                jobs += irf.make_output_directory_and_jobs(
+                    output_dir=absjoin(out_dir, 'irf', p),
+                    num_energy_bins=1000,
+                    num_events_in_energy_bin=500,
+                    max_num_events_in_run=128,
+                    particle_config_path=absjoin(
                         'resources',
                         'acp',
                         '71m',
                         p+'_steering.json'),
-                    location_steering_card_path=location_steering_card_path,
-                    output_path=op.join(
-                        out_dir,
-                        'irf',
-                        p),
-                    acp_detector_path=op.join(
-                        out_dir,
-                        'light_field_calibration'),
-                    mct_acp_config_path=absjoin(
-                        'resources',
-                        'acp',
-                        'merlict_propagation_config.json'),
-                    mct_acp_propagator_path=absjoin(
+                    location_config_path=location_config_path,
+                    light_field_geometry_path=lfg_path,
+                    merlict_plenoscope_propagator_path=absjoin(
                         'build',
                         'merlict',
                         'merlict-plenoscope-propagation'),
+                    merlict_plenoscope_propagator_config_path=absjoin(
+                        'resources',
+                        'acp',
+                        'merlict_propagation_config.json'),
+                    corsika_path=absjoin(
+                        "build",
+                        "corsika",
+                        "corsika-75600",
+                        "run",
+                        "corsika75600Linux_QGSII_urqmd"),
                     trigger_patch_threshold=trigger['patch_threshold'],
                     trigger_integration_time_in_slices=trigger[
                         'integration_time_in_slices'])
         random.shuffle(jobs)
-        rc = pool.map(
-            irf.trigger_simulation.run_job,
-            jobs)
+        rc = pool.map(irf.run_job, jobs)
 
-        print("-------trigger-study---------")
+        print("-------reducing thrown/triggered---------")
         for p in particles:
-            if (
-                op.isdir(op.join(out_dir, 'irf', p)) and
-                not op.isdir(op.join(out_dir, 'irf', p, 'results'))
-            ):
-                irf.trigger_study_analysis.run_analysis(
-                    path=op.join(out_dir, 'irf', p),
-                    patch_threshold=trigger['patch_threshold'])
+            p_dir = op.join(out_dir, 'irf', p)
+            if not op.exists(op.join(p_dir, "thrown.jsonl")):
+                irf.concatenate_files(
+                    wildcard_path=op.join(p_dir, "__thrown", "*.jsonl"),
+                    out_path=op.join(p_dir, "thrown.jsonl"))
+            if not op.exists(op.join(p_dir, "triggered.jsonl")):
+                irf.concatenate_files(
+                    wildcard_path=op.join(p_dir, "__triggered", "*.jsonl"),
+                    out_path=op.join(p_dir, "triggered.jsonl"))
 
-        print("-------export-thrown-events--------")
-        for p in particles:
-            thrown_path = op.join(out_dir, 'irf', p, 'thrown.jsonl')
-            if not os.path.exists(thrown_path):
-                irf.intermediate.reduce(
-                    intermediate_runs_dir=op.join(
-                        out_dir, 'irf', p, 'intermediate_results_of_runs'),
-                    out_path=thrown_path)
-
-        # -------------------------------
-        # Classifying Cherenkov-photons
-        # -------------------------------
         print("-------classifying Cherenkov---------")
         cla_jobs = []
         for p in particles:
             run_path = op.join(out_dir, 'irf', p, 'past_trigger')
             p_jobs = plmr.make_jobs_cherenkov_classification(
-                light_field_geometry_path=absjoin(
-                    out_dir,
-                    'light_field_calibration'),
+                light_field_geometry_path=lfg_path,
                 run_path=run_path,
                 num_events_in_job=100,
                 override=False)
             cla_jobs += p_jobs
         random.shuffle(cla_jobs)
-        rc = pool.map(
-            plmr.run_job_cherenkov_classification,
-            cla_jobs)
+        rc = pool.map(plmr.run_job_cherenkov_classification, cla_jobs)
 
-        # ---------------------
-        # Extracting features
-        # ---------------------
         print("-------extracting features---------")
         for p in particles:
-            out_path = op.join(out_dir, 'irf', p, 'features.jsonl')
-            if not op.exists(out_path):
+            past_trigger_path = op.join(out_dir, 'irf', p, 'past_trigger')
+            feature_path = op.join(out_dir, 'irf', p, 'features.jsonl')
+            particle_id = irf.__particle_str_to_corsika_id(p)
+            if not op.exists(feature_path):
                 feature_jobs = plmr.make_jobs_feature_extraction(
-                    past_trigger_path=op.join(
-                        out_dir, 'irf', p, 'past_trigger'),
-                    light_field_geometry_path=absjoin(
-                        out_dir, 'light_field_calibration'),
+                    past_trigger_path=past_trigger_path,
+                    true_particle_id=particle_id,
+                    light_field_geometry_path=lfg_path,
                     num_events_in_job=250)
 
                 feature_job_results = pool.map(
                     plmr.run_job_feature_extraction,
                     feature_jobs)
 
-                with open(out_path, "wt") as fout:
+                with open(feature_path, "wt") as fout:
                     for job_result in feature_job_results:
                         for event in job_result:
                             fout.write(json.dumps(event) + "\n")
-
-        # ------------------------------------------------
-        # Sensitivity and time-to-detections of the ACP
-        # ------------------------------------------------
-        print("-------calculate Sensitivity---------")
-        if not op.isdir(op.join(out_dir, 'isf_beamer')):
-            os.makedirs(op.join(out_dir, 'isf_beamer'), exist_ok=True)
-            results_2 = isf.analysis(
-                gamma_collection_area_path=op.join(
-                    out_dir, 'irf', 'gamma', 'results', 'irf.csv'),
-                electron_collection_acceptance_path=op.join(
-                    out_dir, 'irf', 'electron', 'results', 'irf.csv'),
-                proton_collection_acceptance_path=op.join(
-                    out_dir, 'irf', 'proton', 'results', 'irf.csv'),
-                rigidity_cutoff_in_tev=0.01,
-                relative_flux_below_cutoff=0.05,
-                fov_in_deg=6.5,
-                source_name='3FGL J2254.0+1608',
-                out_dir=op.join(out_dir, 'isf_beamer'),
-                dpi=300,
-                pixel_rows=1080,
-                pixel_columns=1920,
-                lmar=0.12,
-                bmar=0.12,
-                tmar=0.02,
-                rmar=0.02,)
 
     except docopt.DocoptExit as e:
         print(e)
