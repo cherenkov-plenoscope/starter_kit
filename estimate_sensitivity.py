@@ -40,7 +40,7 @@ if __name__ == '__main__':
         if USE_CLUSTER:
             pool = sge
         else:
-            pool = multiprocessing.Pool(8)
+            pool = multiprocessing.Pool(4)
 
         print("-------start---------")
         trigger_steering_path = absjoin(
