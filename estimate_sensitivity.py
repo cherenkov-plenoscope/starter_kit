@@ -32,6 +32,7 @@ import multiprocessing
 def absjoin(*args):
     return op.abspath(op.join(*args))
 
+
 USE_CLUSTER = True
 
 if __name__ == '__main__':
@@ -97,13 +98,13 @@ if __name__ == '__main__':
         for p in particles:
             if not op.isdir(op.join(out_dir, 'irf', p)):
                 if p in ['electron', 'proton']:
-                     location_steering_card_path = absjoin(
+                    location_steering_card_path = absjoin(
                         'resources',
                         'acp',
                         '71m',
                         'chile_paranal_magnet_off.json')
                 else:
-                     location_steering_card_path = absjoin(
+                    location_steering_card_path = absjoin(
                         'resources',
                         'acp',
                         '71m',
