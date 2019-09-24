@@ -52,7 +52,7 @@ def make_jobs_cherenkov_classification(
         if override:
             event_numbers_to_process.append(event_number)
         else:
-            event_path = os.path.join(run_path, "{:d}".format(event_number))
+            event_path = os.path.join(run_path, "{:012d}".format(event_number))
             dense_photon_ids_path = os.path.join(
                 event_path,
                 'dense_photon_ids.uint32.gz')
@@ -78,7 +78,7 @@ def run_job_cherenkov_classification(job):
     light_field_geometry = pl.LightFieldGeometry(
         job['light_field_geometry_path'])
     for event_number in job['event_numbers']:
-        event_path = os.path.join(job['run_path'], str(event_number))
+        event_path = os.path.join(job['run_path'], "{:012d}".format(event_number))
         event = pl.Event(event_path, light_field_geometry)
         roi = pl.classify.center_for_region_of_interest(event)
         photons = pl.classify.RawPhotons.from_event(event)
@@ -132,7 +132,7 @@ def make_jobs_feature_extraction(
     event_paths = []
     for event_id in event_ids:
         event_path = os.path.abspath(
-            os.path.join(past_trigger_path, "{:d}".format(event_id)))
+            os.path.join(past_trigger_path, "{:012d}".format(event_id)))
         event_paths.append(event_path)
 
     lol = split_list_into_list_of_lists(
@@ -152,7 +152,7 @@ def make_jobs_feature_extraction(
 
 def run_job_feature_extraction(job):
     event_paths=job["event_paths"]
-    light_field_geometry_path=job["light_field_geometry_path"],
+    light_field_geometry_path=job["light_field_geometry_path"]
     true_particle_id=job["true_particle_id"]
 
     lfg = pl.LightFieldGeometry(light_field_geometry_path)
@@ -164,7 +164,7 @@ def run_job_feature_extraction(job):
         lfg.sensor_plane2imaging_system.number_of_paxel_on_pixel_diagonal
     lfg_addon["nearest_neighbor_paxel_enclosure_radius"] = \
         3*lfg_addon["paxel_radius"]
-    lfg_addon["paxel_neighborhood"] = estimate_nearest_neighbors(
+    lfg_addon["paxel_neighborhood"] = pl.features.estimate_nearest_neighbors(
         x=lfg.paxel_pos_x,
         y=lfg.paxel_pos_y,
         epsilon=lfg_addon["nearest_neighbor_paxel_enclosure_radius"])

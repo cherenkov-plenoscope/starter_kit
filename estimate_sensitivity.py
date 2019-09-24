@@ -56,7 +56,7 @@ if __name__ == '__main__':
         print("-------light-field-geometry---------")
         os.makedirs(out_dir, exist_ok=True)
         lfg_path = absjoin(out_dir, 'light_field_geometry')
-        if not op.path.exist(lfg_path):
+        if not op.exists(lfg_path):
             lfg_tmp_dir = lfg_path+".tmp"
             os.makedirs(lfg_tmp_dir)
             lfg_jobs = plmr.make_jobs_light_field_geometry(
@@ -104,9 +104,8 @@ if __name__ == '__main__':
                         'chile_paranal.json')
                 jobs += irf.make_output_directory_and_jobs(
                     output_dir=absjoin(out_dir, 'irf', p),
-                    num_energy_bins=1000,
-                    num_events_in_energy_bin=500,
-                    max_num_events_in_run=128,
+                    num_energy_bins=10,
+                    num_events_in_energy_bin=10,
                     particle_config_path=absjoin(
                         'resources',
                         'acp',
