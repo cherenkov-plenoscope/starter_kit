@@ -104,8 +104,8 @@ if __name__ == '__main__':
                         'chile_paranal.json')
                 jobs += irf.make_output_directory_and_jobs(
                     output_dir=absjoin(out_dir, 'irf', p),
-                    num_energy_bins=10,
-                    num_events_in_energy_bin=25,
+                    num_energy_bins=3,
+                    num_events_in_energy_bin=20,
                     particle_config_path=absjoin(
                         'resources',
                         'acp',
@@ -129,73 +129,90 @@ if __name__ == '__main__':
                         "corsika75600Linux_QGSII_urqmd"),
                     trigger_patch_threshold=trigger['patch_threshold'],
                     trigger_integration_time_in_slices=trigger[
-                        'integration_time_in_slices'])
+                        'integration_time_in_slices'],
+                    particle_truth_table_dirname='__particle_truth_table',
+                    trigger_truth_table_dirname='__trigger_truth_table',
+                    past_trigger_table_dirname='__past_trigger_table')
         random.shuffle(jobs)
         rc = pool.map(irf.run_job, jobs)
 
         print("-------reducing thrown/triggered---------")
+        table_names = [
+            "particle_truth_table",
+            "trigger_truth_table",
+            "past_trigger_table"]
         for p in particles:
             p_dir = op.join(out_dir, 'irf', p)
-            if not op.exists(op.join(p_dir, "thrown.jsonl")):
-                irf.concatenate_files(
-                    wildcard_path=op.join(p_dir, "__thrown", "*.jsonl"),
-                    out_path=op.join(p_dir, "thrown.jsonl"))
-            if not op.exists(op.join(p_dir, "triggered.jsonl")):
-                irf.concatenate_files(
-                    wildcard_path=op.join(p_dir, "__triggered", "*.jsonl"),
-                    out_path=op.join(p_dir, "triggered.jsonl"))
+            for table_name in table_names:
+                map_dir = op.join(p_dir, "__"+table_name)
+                out_path = op.join(p_dir, table_name+".jsonl")
+                if not op.exists(out_path):
+                    print(p, table_name)
+                    irf.concatenate_files(
+                        wildcard_path=op.join(map_dir, "*.jsonl"),
+                        out_path=out_path)
+                    shutil.rmtree(map_dir)
 
         print("-------classifying Cherenkov---------")
         cla_jobs = []
+        cla_table_name = "cherenkov_classification_table"
         for p in particles:
-            run_path = op.join(out_dir, 'irf', p, 'past_trigger')
-            score_dir = op.join(out_dir, 'irf', p, '__cherenkov')
-            os.makedirs(score_dir, exist_ok=True)
-            p_jobs = plmr.make_jobs_cherenkov_classification(
-                light_field_geometry_path=lfg_path,
-                run_path=run_path,
-                score_dir=score_dir,
-                num_events_in_job=100,
-                override=False)
-            cla_jobs += p_jobs
+            past_trigger_dir = op.join(out_dir, 'irf', p, 'past_trigger')
+            map_dir = op.join(out_dir, 'irf', p, '__'+cla_table_name)
+            out_path = op.join(out_dir, 'irf', p, cla_table_name+'.jsonl')
+            if not op.exists(out_path):
+                os.makedirs(map_dir, exist_ok=True)
+                cla_jobs += plmr.make_jobs_cherenkov_classification(
+                    light_field_geometry_path=lfg_path,
+                    past_trigger_dir=past_trigger_dir,
+                    score_dir=map_dir,
+                    num_events_in_job=100,
+                    override=False)
         random.shuffle(cla_jobs)
         rc = pool.map(plmr.run_job_cherenkov_classification, cla_jobs)
 
         print("-------reducing Cherenkov---------")
         for p in particles:
-            score_dir = op.join(out_dir, 'irf', p, '__cherenkov')
-            score_path = op.join(out_dir, 'irf', p, 'cherenkov.jsonl')
-            if not op.exists(score_path):
+            map_dir = op.join(out_dir, 'irf', p, '__'+cla_table_name)
+            out_path = op.join(out_dir, 'irf', p, cla_table_name+'.jsonl')
+            if not op.exists(out_path):
+                print(p)
                 irf.concatenate_files(
-                    wildcard_path=op.join(score_dir, "*.jsonl"),
-                    out_path=score_path)
+                    wildcard_path=op.join(map_dir, "*.jsonl"),
+                    out_path=out_path)
+                shutil.rmtree(map_dir)
 
         print("-------extracting features---------")
         feature_jobs = []
+        feature_table_name = "feature_table"
         for p in particles:
-            past_trigger_path = op.join(out_dir, 'irf', p, 'past_trigger')
-            feature_path = op.join(out_dir, 'irf', p, 'features.jsonl')
-            feature_map_dir = op.join(out_dir, 'irf', p, '__features')
+            p_dir = op.join(out_dir, 'irf', p)
+            past_trigger_dir = op.join(p_dir, 'past_trigger')
+            map_dir = op.join(p_dir, '__'+feature_table_name)
+            out_path = op.join(p_dir, feature_table_name+'.jsonl')
             true_particle_id = irf.__particle_str_to_corsika_id(p)
-            os.makedirs(feature_map_dir, exist_ok=True)
-            if not op.exists(feature_path):
+            if not op.exists(out_path):
+                os.makedirs(map_dir, exist_ok=True)
                 feature_jobs += plmr.make_jobs_feature_extraction(
-                    past_trigger_path=past_trigger_path,
+                    past_trigger_dir=past_trigger_dir,
                     true_particle_id=true_particle_id,
                     light_field_geometry_path=lfg_path,
-                    feature_map_dir=feature_map_dir,
+                    feature_map_dir=map_dir,
                     num_events_in_job=250)
-
+        random.shuffle(feature_jobs)
         rc = pool.map(plmr.run_job_feature_extraction, feature_jobs)
 
         print("-------reducing features---------")
         for p in particles:
-            feature_map_dir = op.join(out_dir, 'irf', p, '__features')
-            feature_path = op.join(out_dir, 'irf', p, 'features.jsonl')
-            if not op.exists(feature_path):
+            p_dir = op.join(out_dir, 'irf', p)
+            map_dir = op.join(p_dir, '__'+feature_table_name)
+            out_path = op.join(p_dir, feature_table_name+'.jsonl')
+            if not op.exists(out_path):
+                print(p)
                 irf.concatenate_files(
-                    wildcard_path=op.join(feature_map_dir, "*.jsonl"),
-                    out_path=feature_path)
+                    wildcard_path=op.join(map_dir, "*.jsonl"),
+                    out_path=out_path)
+                shutil.rmtree(map_dir)
 
     except docopt.DocoptExit as e:
         print(e)

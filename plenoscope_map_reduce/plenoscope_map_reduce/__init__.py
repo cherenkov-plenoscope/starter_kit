@@ -32,13 +32,13 @@ def split_list_into_list_of_lists(events, num_events_in_job):
 
 def make_jobs_cherenkov_classification(
     light_field_geometry_path,
-    run_path,
+    past_trigger_dir,
     score_dir,
     num_events_in_job=100,
     override=False,
 ):
     light_field_geometry_path = os.path.abspath(light_field_geometry_path)
-    paths_in_run = glob.glob(os.path.join(run_path, '*'))
+    paths_in_run = glob.glob(os.path.join(past_trigger_dir, '*'))
 
     # Events have digit filenames.
     event_numbers = []
@@ -53,7 +53,9 @@ def make_jobs_cherenkov_classification(
         if override:
             event_numbers_to_process.append(event_number)
         else:
-            event_path = os.path.join(run_path, "{:012d}".format(event_number))
+            event_path = os.path.join(
+                past_trigger_dir,
+                "{:012d}".format(event_number))
             dense_photon_ids_path = os.path.join(
                 event_path,
                 'dense_photon_ids.uint32.gz')
@@ -69,7 +71,7 @@ def make_jobs_cherenkov_classification(
     for i, chunk in enumerate(chunks):
         job = {
             "light_field_geometry_path": light_field_geometry_path,
-            "run_path": run_path,
+            "past_trigger_dir": past_trigger_dir,
             "event_numbers": chunk,
             "score_path": os.path.join(score_dir, "{:06d}.jsonl".format(i))}
         jobs.append(job)
@@ -81,7 +83,9 @@ def run_job_cherenkov_classification(job):
         job['light_field_geometry_path'])
     scores = []
     for event_number in job['event_numbers']:
-        event_path = os.path.join(job['run_path'], "{:012d}".format(event_number))
+        event_path = os.path.join(
+            job['past_trigger_dir'],
+            "{:012d}".format(event_number))
         event = pl.Event(event_path, light_field_geometry)
         roi = pl.classify.center_for_region_of_interest(event)
         photons = pl.classify.RawPhotons.from_event(event)
@@ -106,7 +110,6 @@ def run_job_cherenkov_classification(job):
     with open(job["score_path"], "wt") as fout:
         for score in scores:
             fout.write(json.dumps(score)+"\n")
-
 
 
 def make_jobs_light_field_geometry(
@@ -140,18 +143,18 @@ def run_job_light_field_geometry(job):
 
 
 def make_jobs_feature_extraction(
-    past_trigger_path,
+    past_trigger_dir,
     true_particle_id,
     light_field_geometry_path,
     feature_map_dir,
     num_events_in_job=100
 ):
     event_ids = pl.tools.acp_format.all_folders_with_digit_names_in_path(
-        past_trigger_path)
+        past_trigger_dir)
     event_paths = []
     for event_id in event_ids:
         event_path = os.path.abspath(
-            os.path.join(past_trigger_path, "{:012d}".format(event_id)))
+            os.path.join(past_trigger_dir, "{:012d}".format(event_id)))
         event_paths.append(event_path)
 
     lol = split_list_into_list_of_lists(
