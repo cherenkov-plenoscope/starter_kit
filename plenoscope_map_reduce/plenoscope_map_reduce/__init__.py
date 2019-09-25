@@ -3,6 +3,7 @@ import glob
 import subprocess
 import numpy as np
 import plenopy as pl
+import json
 
 
 def split_list_into_list_of_lists(events, num_events_in_job):
@@ -30,13 +31,13 @@ def split_list_into_list_of_lists(events, num_events_in_job):
 
 
 def make_jobs_cherenkov_classification(
-    run_path,
     light_field_geometry_path,
+    run_path,
+    score_dir,
     num_events_in_job=100,
     override=False,
 ):
     light_field_geometry_path = os.path.abspath(light_field_geometry_path)
-    run_path = os.path.abspath(run_path)
     paths_in_run = glob.glob(os.path.join(run_path, '*'))
 
     # Events have digit filenames.
@@ -65,11 +66,12 @@ def make_jobs_cherenkov_classification(
         num_events_in_job=num_events_in_job)
 
     jobs = []
-    for chunk in chunks:
+    for i, chunk in enumerate(chunks):
         job = {
             "light_field_geometry_path": light_field_geometry_path,
             "run_path": run_path,
-            "event_numbers": chunk}
+            "event_numbers": chunk,
+            "score_path": os.path.join(score_dir, "{:06d}.jsonl".format(i))}
         jobs.append(job)
     return jobs
 
@@ -77,6 +79,7 @@ def make_jobs_cherenkov_classification(
 def run_job_cherenkov_classification(job):
     light_field_geometry = pl.LightFieldGeometry(
         job['light_field_geometry_path'])
+    scores = []
     for event_number in job['event_numbers']:
         event_path = os.path.join(job['run_path'], "{:012d}".format(event_number))
         event = pl.Event(event_path, light_field_geometry)
@@ -89,6 +92,21 @@ def run_job_cherenkov_classification(job):
             event_path=os.path.abspath(event._path),
             photon_ids=cherenkov_photons.photon_ids,
             settings=s)
+        score = pl.classify.benchmark(
+            pulse_origins=event.simulation_truth.detector.pulse_origins,
+            photon_ids_cherenkov=cherenkov_photons.photon_ids)
+        score["true_particle_id"] = event.simulation_truth.event. \
+            corsika_event_header.primary_particle_id
+        score["run_id"] = event.simulation_truth.event. \
+            corsika_run_header.number
+        score["event_id"] = event.simulation_truth. \
+            event.corsika_event_header.number
+        scores.append(score)
+
+    with open(job["score_path"], "wt") as fout:
+        for score in scores:
+            fout.write(json.dumps(score)+"\n")
+
 
 
 def make_jobs_light_field_geometry(
@@ -125,6 +143,7 @@ def make_jobs_feature_extraction(
     past_trigger_path,
     true_particle_id,
     light_field_geometry_path,
+    feature_map_dir,
     num_events_in_job=100
 ):
     event_ids = pl.tools.acp_format.all_folders_with_digit_names_in_path(
@@ -144,8 +163,10 @@ def make_jobs_feature_extraction(
         job = {}
         job["event_paths"] = l
         job["true_particle_id"] = int(true_particle_id)
-        job["light_field_geometry_path"] = os.path.abspath(
-            light_field_geometry_path)
+        job["light_field_geometry_path"] = light_field_geometry_path
+        job["feature_path"] = os.path.join(
+            feature_map_dir,
+            "{:06d}.jsonl".format(i))
         jobs.append(job)
     return jobs
 
@@ -195,4 +216,9 @@ def run_job_feature_extraction(job):
             features.append(f)
         except Exception as e:
             print("Run {:d}, Event: {:d} :".format(run_id, event_id), e)
-    return features
+
+    with open(job["feature_path"], "wt") as fout:
+        for event_features in features:
+            fout.write(json.dumps(event_features) + "\n")
+
+    return 0

@@ -32,7 +32,7 @@ def absjoin(*args):
     return op.abspath(op.join(*args))
 
 
-USE_CLUSTER = True
+USE_CLUSTER = False
 
 if __name__ == '__main__':
     try:
@@ -105,12 +105,12 @@ if __name__ == '__main__':
                 jobs += irf.make_output_directory_and_jobs(
                     output_dir=absjoin(out_dir, 'irf', p),
                     num_energy_bins=10,
-                    num_events_in_energy_bin=10,
+                    num_events_in_energy_bin=25,
                     particle_config_path=absjoin(
                         'resources',
                         'acp',
                         '71m',
-                        p+'_steering.json'),
+                        '.low_energy_'+p+'_steering.json'),
                     location_config_path=location_config_path,
                     light_field_geometry_path=lfg_path,
                     merlict_plenoscope_propagator_path=absjoin(
@@ -149,35 +149,53 @@ if __name__ == '__main__':
         cla_jobs = []
         for p in particles:
             run_path = op.join(out_dir, 'irf', p, 'past_trigger')
+            score_dir = op.join(out_dir, 'irf', p, '__cherenkov')
+            os.makedirs(score_dir, exist_ok=True)
             p_jobs = plmr.make_jobs_cherenkov_classification(
                 light_field_geometry_path=lfg_path,
                 run_path=run_path,
+                score_dir=score_dir,
                 num_events_in_job=100,
                 override=False)
             cla_jobs += p_jobs
         random.shuffle(cla_jobs)
         rc = pool.map(plmr.run_job_cherenkov_classification, cla_jobs)
 
+        print("-------reducing Cherenkov---------")
+        for p in particles:
+            score_dir = op.join(out_dir, 'irf', p, '__cherenkov')
+            score_path = op.join(out_dir, 'irf', p, 'cherenkov.jsonl')
+            if not op.exists(score_path):
+                irf.concatenate_files(
+                    wildcard_path=op.join(score_dir, "*.jsonl"),
+                    out_path=score_path)
+
         print("-------extracting features---------")
+        feature_jobs = []
         for p in particles:
             past_trigger_path = op.join(out_dir, 'irf', p, 'past_trigger')
             feature_path = op.join(out_dir, 'irf', p, 'features.jsonl')
-            particle_id = irf.__particle_str_to_corsika_id(p)
+            feature_map_dir = op.join(out_dir, 'irf', p, '__features')
+            true_particle_id = irf.__particle_str_to_corsika_id(p)
+            os.makedirs(feature_map_dir, exist_ok=True)
             if not op.exists(feature_path):
-                feature_jobs = plmr.make_jobs_feature_extraction(
+                feature_jobs += plmr.make_jobs_feature_extraction(
                     past_trigger_path=past_trigger_path,
-                    true_particle_id=particle_id,
+                    true_particle_id=true_particle_id,
                     light_field_geometry_path=lfg_path,
+                    feature_map_dir=feature_map_dir,
                     num_events_in_job=250)
 
-                feature_job_results = pool.map(
-                    plmr.run_job_feature_extraction,
-                    feature_jobs)
+        rc = pool.map(plmr.run_job_feature_extraction, feature_jobs)
 
-                with open(feature_path, "wt") as fout:
-                    for job_result in feature_job_results:
-                        for event in job_result:
-                            fout.write(json.dumps(event) + "\n")
+        print("-------reducing features---------")
+        for p in particles:
+            feature_map_dir = op.join(out_dir, 'irf', p, '__features')
+            feature_path = op.join(out_dir, 'irf', p, 'features.jsonl')
+            if not op.exists(feature_path):
+                irf.concatenate_files(
+                    wildcard_path=op.join(feature_map_dir, "*.jsonl"),
+                    out_path=feature_path)
 
     except docopt.DocoptExit as e:
         print(e)
