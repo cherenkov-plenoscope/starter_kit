@@ -42,14 +42,6 @@ if __name__ == '__main__':
             pool = multiprocessing.Pool(4)
 
         print("-------start---------")
-        trigger_steering_path = absjoin(
-            'resources',
-            'acp',
-            '71m',
-            'trigger_steering.json')
-        with open(trigger_steering_path, 'rt') as fin:
-            trigger = json.loads(fin.read())
-
         arguments = docopt.docopt(__doc__)
         out_dir = op.abspath(arguments['--out_dir'])
 
@@ -85,6 +77,14 @@ if __name__ == '__main__':
             shutil.rmtree(lfg_tmp_dir)
 
         print("-------instrument-response---------")
+        trigger_steering_path = absjoin(
+            'resources',
+            'acp',
+            '71m',
+            'trigger_steering.json')
+        with open(trigger_steering_path, 'rt') as fin:
+            trigger = json.loads(fin.read())
+
         particles = ['gamma', 'electron', 'proton']
         jobs = []
         os.makedirs(op.join(out_dir, 'irf'), exist_ok=True)
