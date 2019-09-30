@@ -362,7 +362,7 @@ def save_effective_area_figure(
     plt.close('all')
 
 
-work_dir = 'wow'
+work_dir = 'run2019-08-31_0051_results'
 out_dir = os.path.join('analysis_results')
 os.makedirs(out_dir, exist_ok=True)
 
@@ -612,7 +612,7 @@ def one_sigma_68_containment(residual_angles):
     sorted_angles = np.sort(residual_angles)
     return sorted_angles[int(sorted_angles.shape[0]*0.67)]
 
-source_geometries = {"onaxis": 2.5, "diffuse": 90.}
+source_geometries = {"onaxis": 2.5, "diffuse": 180.}
 onaxis_angle = np.deg2rad(3.)
 psf_test_sample_fraction = 0.25
 
@@ -1043,6 +1043,8 @@ for sg in source_geometries:
         with open(irf_path+".json", "wt") as fout:
             fout.write(json.dumps(
                 {
+                    "solid_angle_thrown": float(
+                        cone_solid_angle(max_scatter_angle)),
                     "energy_bin_edges": irf[sg][p]["past_trigger"][
                         "energy_bin_edges"].tolist(),
                     "area_past_trigger": irf[sg][p]["past_trigger"][
