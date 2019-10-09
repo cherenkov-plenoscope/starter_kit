@@ -6,7 +6,7 @@ setuptools.setup(
     description='read merlict simpleio format.',
     url='https://github.com/cherenkov-plenoscope',
     author='Sebastian Achim Mueller',
-    author_email='sebmuell@phys.ethz.ch',
+    author_email='sebastian-achim.mueller@mpi-hd.mpg.de',
     license='GPL v3',
     packages=[
         'simpleio',
