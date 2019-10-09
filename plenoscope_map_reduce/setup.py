@@ -1,6 +1,6 @@
-from distutils.core import setup
+import setuptools
 
-setup(
+setuptools.setup(
     name='plenoscope_map_reduce',
     version='0.0.0',
     description='Collection of map and reduce tools for parralel computing.',
