@@ -7,6 +7,9 @@
 [submodule "plenopy"]
 	path = plenopy
 	url = git@github.com:cherenkov-plenoscope/plenopy.git
+[submodule "ray_voxel_overlap"]
+	path = ray_voxel_overlap
+	url = git@github.com:cherenkov-plenoscope/ray_voxel_overlap.git
 [submodule "instrument_response_function"]
 	path = instrument_response_function
 	url = git@github.com:cherenkov-plenoscope/instrument_response_function.git
