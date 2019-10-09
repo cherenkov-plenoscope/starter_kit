@@ -11,5 +11,4 @@ setuptools.setup(
     packages=[
         'plenoscope_map_reduce',
     ],
-    zip_safe=False,
 )
