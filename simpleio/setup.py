@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='simpleio',
-    version='0.0.0',
+    version='0.0.1',
     description='read merlict simpleio format.',
     url='https://github.com/cherenkov-plenoscope',
     author='Sebastian Achim Mueller',
