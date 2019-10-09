@@ -1,6 +1,6 @@
-from distutils.core import setup
+import setuptools
 
-setup(
+setuptools.setup(
     name='simpleio',
     version='0.0.0',
     description='read merlict simpleio format.',
