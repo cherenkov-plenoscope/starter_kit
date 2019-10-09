@@ -11,5 +11,4 @@ setuptools.setup(
     packages=[
         'simpleio',
     ],
-    zip_safe=False,
 )
