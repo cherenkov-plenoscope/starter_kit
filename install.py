@@ -55,7 +55,8 @@ def main():
             '-DCMAKE_CXX_COMPILER=g++'],
             cwd=merlict_build_dir)
         call(['make', '-j', '12'], cwd=merlict_build_dir)
-        call(['touch', './../../merlict_development_kit/CMakeLists.txt'],
+        call(['touch', join(
+            '.', '..', '..', 'merlict_development_kit', 'CMakeLists.txt')],
             cwd=merlict_build_dir)
         call(['make', '-j', '12'], cwd=merlict_build_dir)
 
