@@ -39,6 +39,7 @@ example_aperture_binning_config = {
     "num_bins_radius": 16,
 }
 
+
 def make_aperture_binning(aperture_binning_config):
     t = aperture_binning_config.copy()
     t["num_bins_diameter"] = 2*t["num_bins_radius"]
@@ -56,7 +57,7 @@ def make_aperture_binning(aperture_binning_config):
         dtype=np.int64)
     for b in range(t["num_bins"]):
         t["addressing_1D_to_2D"][b, 0] = b//t["num_bins_diameter"]
-        t["addressing_1D_to_2D"][b, 1] = b%t["num_bins_diameter"]
+        t["addressing_1D_to_2D"][b, 1] = b % t["num_bins_diameter"]
 
     t["bin_centers"] = []
     for b in range(t["num_bins"]):
@@ -88,15 +89,17 @@ YX_BIN_OVER_HALF = (XY_BIN_OVER)//2
 
 
 def compress_x_y(x, y, aperture_binning_config):
+    bin_edge_width = aperture_binning_config["bin_edge_width"]
+    num_bins_radius = aperture_binning_config["num_bins_radius"]
     ab = aperture_binning_config
-    x_bin_idx = (x//ab["bin_edge_width"]).astype(np.int) + ab["num_bins_radius"]
-    y_bin_idx = (y//ab["bin_edge_width"]).astype(np.int) + ab["num_bins_radius"]
+    x_bin_idx = (x//bin_edge_width).astype(np.int) + num_bins_radius
+    y_bin_idx = (y//bin_edge_width).astype(np.int) + num_bins_radius
 
-    x_rest = x - (x_bin_idx - ab["num_bins_radius"])*ab["bin_edge_width"]
-    y_rest = y - (y_bin_idx - ab["num_bins_radius"])*ab["bin_edge_width"]
+    x_rest = x - (x_bin_idx - num_bins_radius)*bin_edge_width
+    y_rest = y - (y_bin_idx - num_bins_radius)*bin_edge_width
 
-    x_rest_bin = np.floor(x_rest/ab["bin_edge_width"]*(XY_BIN_OVER)).astype(np.int64)
-    y_rest_bin = np.floor(y_rest/ab["bin_edge_width"]*(XY_BIN_OVER)).astype(np.int64)
+    x_rest_bin = np.floor(x_rest/bin_edge_width*(XY_BIN_OVER)).astype(np.int64)
+    y_rest_bin = np.floor(y_rest/bin_edge_width*(XY_BIN_OVER)).astype(np.int64)
     return x_bin_idx, y_bin_idx, x_rest_bin, y_rest_bin
 
 
@@ -333,11 +336,13 @@ def __init_lookup(
     alt_binning_path = os.path.join(lookup_path, "altitude_binning.json")
     with open(alt_binning_path, "wt") as f:
         f.write(
-            json.dumps({
+            json.dumps(
+                {
                     "altitude_bin_edges": altitude_bin_edges.tolist(),
                     "max_num_showers_in_altitude_bin": int(
-                        max_num_showers_in_altitude_bin)},
-                    indent=4))
+                        max_num_showers_in_altitude_bin)
+                },
+                indent=4))
 
 
 def __add_energy_to_lookup(
@@ -470,8 +475,12 @@ def __add_energy_to_lookup(
                 ):
                     continue
 
-                assert shower_maximum_altitude < altitude_bin_edges[upper_altitude_bin_edge]
-                assert shower_maximum_altitude > altitude_bin_edges[upper_altitude_bin_edge - 1]
+                assert (
+                    shower_maximum_altitude <
+                    altitude_bin_edges[upper_altitude_bin_edge])
+                assert (
+                    shower_maximum_altitude >
+                    altitude_bin_edges[upper_altitude_bin_edge - 1])
 
                 altitude_bin = upper_altitude_bin_edge - 1
 

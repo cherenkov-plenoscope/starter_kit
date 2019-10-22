@@ -17,7 +17,6 @@ def test_make_aperture_binning():
         assert apbi["addressing_2D_to_1D"][ix, iy] == b
 
 
-
 def test_assign_aperture_binning_1():
     x_y = np.array(
         [[0, 0]],)
@@ -39,8 +38,7 @@ def test_assign_aperture_binning_1():
 
 
 def test_assign_aperture_binning_2():
-    x_y = np.array(
-        [[50, -80],])
+    x_y = np.array([[50, -80]])
     aperture_binning_config = {
         "bin_edge_width": 32,
         "num_bins_radius": 4}
@@ -59,8 +57,7 @@ def test_assign_aperture_binning_2():
 
 
 def test_assign_aperture_binning_out_of_range():
-    x_y = np.array(
-        [[-1200, 400],])
+    x_y = np.array([[-1200, 400]])
     aperture_binning_config = {
         "bin_edge_width": 32,
         "num_bins_radius": 4}
@@ -73,9 +70,8 @@ def test_assign_aperture_binning_out_of_range():
 
 
 def test_compression_directions_valid():
-    fov_r=np.deg2rad(4)
-    cx_cy = np.deg2rad(np.array(
-        [[-0.5, 1.0],]))
+    fov_r = np.deg2rad(4)
+    cx_cy = np.deg2rad(np.array([[-0.5, 1.0]]))
     cx_bin, cy_bin = elut.compress_cx_cy(
         cx=cx_cy[:, 0],
         cy=cx_cy[:, 1],
@@ -92,8 +88,7 @@ def test_compression_directions_valid():
 
 
 def test_compression_directions_out_of_range():
-    cx_cy = np.deg2rad(np.array(
-        [[-4.5, 5.0],]))
+    cx_cy = np.deg2rad(np.array([[-4.5, 5.0]]))
     cx_bin, cy_bin = elut.compress_cx_cy(
         cx=cx_cy[:, 0],
         cy=cx_cy[:, 1],
@@ -146,20 +141,21 @@ def test_overlap_circle():
 
 
 def test_write_read_photons():
+    d2r = np.deg2rad
     aperture_binning_config = {
         "bin_edge_width": 64,
         "num_bins_radius": 16}
     abc = elut.make_aperture_binning(aperture_binning_config)
-    field_of_view_radius = np.deg2rad(4.)
+    field_of_view_radius = d2r(4.)
 
     NUM_PHOTONS = 1000*100
-    C_SCALE = np.deg2rad(1.0)
+    C_SCALE = d2r(1.0)
     np.random.seed(0)
     x_y_cx_cy = np.array([
         np.random.normal(loc=50., scale=100, size=NUM_PHOTONS),
         np.random.normal(loc=-125., scale=150, size=NUM_PHOTONS),
-        np.random.normal(loc=np.deg2rad(-.25), scale=C_SCALE*2, size=NUM_PHOTONS),
-        np.random.normal(loc=np.deg2rad(0.5), scale=C_SCALE, size=NUM_PHOTONS)]).T
+        np.random.normal(loc=d2r(-.25), scale=C_SCALE*2, size=NUM_PHOTONS),
+        np.random.normal(loc=d2r(0.5), scale=C_SCALE, size=NUM_PHOTONS)]).T
     print("cx_mean", np.rad2deg(np.mean(x_y_cx_cy[:, 2])), "deg")
     print("cy_mean", np.rad2deg(np.mean(x_y_cx_cy[:, 3])), "deg")
 
@@ -194,8 +190,7 @@ def test_write_read_photons():
 
     print("back cx_mean", np.rad2deg(np.mean(back_x_y_cx_cy[:, 2])), "deg")
     print("back cy_mean", np.rad2deg(np.mean(back_x_y_cx_cy[:, 3])), "deg")
-    assert np.abs(np.mean(back_x_y_cx_cy[:, 2]) - np.deg2rad(-.25)) < np.deg2rad(0.1)
-    assert np.abs(np.mean(back_x_y_cx_cy[:, 3]) - np.deg2rad(0.5)) < np.deg2rad(0.1)
-
-    assert np.abs(np.std(back_x_y_cx_cy[:, 2]) - C_SCALE*2) < np.deg2rad(0.3)
-    assert np.abs(np.std(back_x_y_cx_cy[:, 3]) - C_SCALE) < np.deg2rad(0.3)
+    assert np.abs(np.mean(back_x_y_cx_cy[:, 2]) - d2r(-.25)) < d2r(0.1)
+    assert np.abs(np.mean(back_x_y_cx_cy[:, 3]) - d2r(0.5)) < d2r(0.1)
+    assert np.abs(np.std(back_x_y_cx_cy[:, 2]) - C_SCALE*2) < d2r(0.3)
+    assert np.abs(np.std(back_x_y_cx_cy[:, 3]) - C_SCALE) < d2r(0.3)
