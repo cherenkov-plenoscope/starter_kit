@@ -200,10 +200,11 @@ def compress_photons(
 
     return compressed_photons, valid_photons
 
+APERTURE_BIN_FILENAME = "{:06d}.x_y_cx_cy"
 
 def append_compressed_photons(path, compressed_photons):
     for xy_bin in range(len(compressed_photons)):
-        xy_bin_path = os.path.join(path, "{:06d}.x_y_cx_cy".format(xy_bin))
+        xy_bin_path = os.path.join(path, APERTURE_BIN_FILENAME.format(xy_bin))
         with open(xy_bin_path, "ab") as fout:
             fout.write(compressed_photons[xy_bin].flatten(order="C").tobytes())
 
@@ -215,10 +216,11 @@ def _estimate_xy_bins_overlapping_with_circle(
     circle_radius,
 ):
     abc = aperture_binning_config
-    bin_radius = abc["bin_edge_width"]
+    bin_half_edge_width = abc["bin_edge_width"]*.5
+    bin_corner_radius = np.sqrt(2.)*bin_half_edge_width
     return abc["bin_centers_tree"].query_ball_point(
         x=np.array([circle_x, circle_y]),
-        r=np.array([circle_radius + bin_radius]),
+        r=np.array([circle_radius + bin_corner_radius]),
         p=2,
         eps=0.)
 
@@ -242,7 +244,7 @@ def read_photons(
     for bin_to_load in bins_to_load:
         xy_bin_path = os.path.join(
             path,
-            "{:06d}.x_y_cx_cy".format(bin_to_load))
+            APERTURE_BIN_FILENAME.format(bin_to_load))
         x_bin_idx = abc["addressing_1D_to_2D"][bin_to_load, 0]
         y_bin_idx = abc["addressing_1D_to_2D"][bin_to_load, 1]
         with open(xy_bin_path, "rb") as fin:
@@ -253,7 +255,7 @@ def read_photons(
             x_bin_idx=np.ones(num_photons_in_block, dtype=np.int)*x_bin_idx,
             y_bin_idx=np.ones(num_photons_in_block, dtype=np.int)*y_bin_idx,
             x_rest_bin=compressed_photons.x,
-            y_rest_bin=compressed_photons.x,
+            y_rest_bin=compressed_photons.y,
             aperture_binning_config=abc)
         cxs, cys = decompress_cx_cy(
             cx_bin=compressed_photons.cx,
@@ -299,6 +301,115 @@ def __print_photons_cx_cy(
     __print_image(image, v_max)
 
 
+class Reader:
+    def __init__(self, path):
+        self.lookup_path = path
+        with open(os.path.join(self.lookup_path, "lookup.json"), "rt") as f:
+            config = json.loads(f.read())
+        self.aperture_binning = make_aperture_binning(config["aperture"])
+        self.altitude_bin_edges = np.array(config["altitude_bin_edges"])
+        self.max_num_photons_in_bin = config["max_num_photons_in_bin"]
+        self.field_of_view_radius = config["field_of_view"]["radius"]
+        self.energy_bin_centers = config["energy_bin_centers"]
+        self.__config = config
+
+        self.__energy_altitude_paths = []
+        for e in range(len(self.energy_bin_centers)):
+            altitude_paths = []
+            for a in range(len(self.altitude_bin_edges) - 1):
+                p = os.path.join(
+                    self.lookup_path,
+                    "{:06d}_energy".format(e),
+                    "{:06d}_altitude".format(a))
+                altitude_paths.append(p)
+            self.__energy_altitude_paths.append(altitude_paths)
+
+        self.num_showers = []
+        self.num_photons = []
+        for e in range(len(self.energy_bin_centers)):
+            p = os.path.join(
+                self.lookup_path,
+                "{:06d}_energy".format(e),
+                "fill.json")
+            if os.path.exists(p):
+                with open(p, "rt") as fin:
+                    energy_bin_fill = json.loads(fin.read())
+                self.num_showers.append(energy_bin_fill["num_shower"])
+                self.num_photons.append(energy_bin_fill["num_photons"])
+            else:
+                self.num_showers.append([])
+                self.num_photons.append([])
+
+    def read_light_field(
+        self,
+        energy_bin,
+        altitude_bin,
+        core_x,
+        core_y,
+        instrument_radius
+    ):
+        return read_photons(
+            path=self.__energy_altitude_paths[energy_bin][altitude_bin],
+            aperture_binning_config=self.aperture_binning,
+            circle_x=core_x,
+            circle_y=core_y,
+            circle_radius=instrument_radius,
+            field_of_view_radius=self.field_of_view_radius)
+
+
+class Instrument:
+    def __init__(self, path, light_field_geometry):
+        self.reader = Reader(path)
+        self.light_field_geometry = light_field_geometry
+        self.instrument_radius = self.light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_max_aperture_radius
+        aperture_area = self.light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_max_aperture_radius**2*np.pi
+        paxel_area = aperture_area/self.light_field_geometry.number_paxel
+        self.paxel_radius = np.sqrt(paxel_area/np.pi)
+        self.pixel_radius = self.light_field_geometry.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2
+
+    def response(self, energy_bin, altitude_bin, core_x, core_y):
+        light_field = self.reader.read_light_field(
+            energy_bin=energy_bin,
+            altitude_bin=altitude_bin,
+            core_x=core_x,
+            core_y=core_y,
+            instrument_radius=self.instrument_radius)
+        num_shower = self.reader.num_showers[energy_bin][altitude_bin]
+
+        x_y_in_plenoscope_frame = np.c_[
+                light_field[:, 0] - core_x,
+                light_field[:, 1] - core_y]
+        paxel_dist, paxel_idx = self.light_field_geometry.paxel_pos_tree.query(
+            x_y_in_plenoscope_frame,
+            k=1)
+        paxel_valid = paxel_dist <= self.paxel_radius
+        pixel_dist, pixel_idx = self.light_field_geometry.pixel_pos_tree.query(
+            light_field[:, 2:4],
+            k=1)
+        pixel_valid = pixel_dist <= self.pixel_radius
+        valid = np.logical_and(paxel_valid, pixel_valid)
+
+        valid_paxel_idx = paxel_idx[valid]
+        valid_pixel_idx = pixel_idx[valid]
+
+        valid_lixel_idx = (
+            valid_pixel_idx*self.light_field_geometry.number_paxel +
+            valid_paxel_idx)
+
+        respo = np.zeros(self.light_field_geometry.number_lixel)
+        for lix in valid_lixel_idx:
+            respo[lix] += 1
+        respo = respo * self.light_field_geometry.efficiency
+        respo = respo / num_shower
+        return respo
+
+
+def __to_photon_lixel_ids(response):
+    return np.concatenate(
+        [i*np.ones(int(np.round(c*1000))) for i, c in enumerate(response)]
+    ).astype(np.uint64)
+
+
 def __init_lookup(
     lookup_path,
     particle_config_path=op.join(
@@ -309,45 +420,39 @@ def __init_lookup(
         "bin_edge_width": 64,
         "num_bins_radius": 12},
     field_of_view_radius=np.deg2rad(10),
-    altitude_bin_edges=np.linspace(5, 25, 21),
-    max_num_showers_in_altitude_bin=64,
+    altitude_bin_edges=np.linspace(5e3, 25e3, 21),
+    energy_bin_centers=np.geomspace(0.25, 250, 16),
+    max_num_photons_in_bin=1000*1000,
 ):
     os.makedirs(lookup_path)
-
     shutil.copy(
         particle_config_path,
         os.path.join(lookup_path, "particle_config.json"))
-
     shutil.copy(
         location_config_path,
         os.path.join(lookup_path, "location_config.json"))
+    config = {}
+    config["aperture"] = aperture_binning_config
+    config["field_of_view"] = {"radius": field_of_view_radius}
+    config["altitude_bin_edges"] = altitude_bin_edges.tolist()
+    config["energy_bin_centers"] = energy_bin_centers.tolist()
+    config["max_num_photons_in_bin"] = int(max_num_photons_in_bin)
+    with open(os.path.join(lookup_path, "lookup.json"), "wt") as f:
+        f.write(json.dumps(config, indent=4))
 
-    aperture_binning_path = os.path.join(lookup_path, "aperture_binning.json")
-    with open(aperture_binning_path, "wt") as f:
-        f.write(json.dumps(aperture_binning_config, indent=4))
 
-    fov_binning_path = os.path.join(lookup_path, "field_of_view_binning.json")
-    with open(fov_binning_path, "wt") as f:
-        f.write(
-            json.dumps({
-                    "field_of_view_radius": float(field_of_view_radius)},
-                    indent=4))
-
-    alt_binning_path = os.path.join(lookup_path, "altitude_binning.json")
-    with open(alt_binning_path, "wt") as f:
-        f.write(
-            json.dumps(
-                {
-                    "altitude_bin_edges": altitude_bin_edges.tolist(),
-                    "max_num_showers_in_altitude_bin": int(
-                        max_num_showers_in_altitude_bin)
-                },
-                indent=4))
+def __num_photons_in_bin(path, aperture_binning_config):
+    total_size_in_byte = 0
+    for idx in range(aperture_binning_config["num_bins"]):
+        bin_path = os.path.join(path, APERTURE_BIN_FILENAME.format(idx))
+        total_size_in_byte += os.stat(bin_path).st_size
+    num_photons = total_size_in_byte/PHOTON_SIZE_IN_BYTE
+    return num_photons
 
 
 def __add_energy_to_lookup(
     lookup_path,
-    energy=10,
+    energy_bin_center=0,
     num_showers_in_run=128,
     merlict_eventio_converter_path=op.join(
         'build',
@@ -360,24 +465,17 @@ def __add_energy_to_lookup(
         "run",
         "corsika75600Linux_QGSII_urqmd"),
 ):
-    abc = irf.__read_json(
-        os.path.join(lookup_path, "aperture_binning.json"))
-    abc = make_aperture_binning(abc)
-
-    alt = irf.__read_json(
-        os.path.join(lookup_path, "altitude_binning.json"))
-    altitude_bin_edges = np.array(alt["altitude_bin_edges"])
-    num_showers_in_altitude_bin = alt["max_num_showers_in_altitude_bin"]
-
+    config = irf.__read_json(os.path.join(lookup_path, "lookup.json"))
+    abc = make_aperture_binning(config["aperture"])
+    altitude_bin_edges = np.array(config["altitude_bin_edges"])
+    max_num_photons_in_bin = config["max_num_photons_in_bin"]
     cherenkov_collection_radius = float(np.max(abc["xy_bin_edges"]))
+    fov_r = config["field_of_view"]["radius"]
 
-    fov_r = irf.__read_json(
-        os.path.join(lookup_path, "field_of_view_binning.json"))
-    fov_r = fov_r["field_of_view_radius"]
-
-    energy_mev = int(np.round(energy*1e3))
-    energy = float(energy_mev)*1e-3
-    energy_path = os.path.join(lookup_path, "{:09d}MeV".format(energy_mev))
+    energy = config["energy_bin_centers"][energy_bin_center]
+    energy_path = os.path.join(
+        lookup_path,
+        "{:06d}_energy".format(energy_bin_center))
     os.makedirs(energy_path)
 
     location_config = irf.__read_json(
@@ -410,26 +508,24 @@ def __add_energy_to_lookup(
         location_config["atmosphere"])
 
     num_altitude_bins = altitude_bin_edges.shape[0] - 1
-    actual_num_showers_in_altitude_bins = np.zeros(
-        num_altitude_bins,
-        dtype=np.int64)
+    num_photons_in_altitude_bins = np.zeros(num_altitude_bins, dtype=np.int64)
+    num_showers_in_altitude_bins = np.zeros(num_altitude_bins, dtype=np.int64)
 
     altitude_paths = {}
     for idx, altitude in enumerate(altitude_bin_edges[: -1]):
         altitude_bin_path = op.join(
             energy_path,
-            "{:06d}m_asl".format(int(np.round(altitude))))
+            "{:06d}_altitude".format(idx))
         altitude_paths[idx] = altitude_bin_path
         os.makedirs(altitude_bin_path)
 
     run_id = 1
     while np.sum(
-        actual_num_showers_in_altitude_bins < num_showers_in_altitude_bin
-    ) > 2/3*num_altitude_bins:
-        print(actual_num_showers_in_altitude_bins)
+        num_photons_in_altitude_bins < max_num_photons_in_bin
+    ) > 0.5*num_altitude_bins:
+        print(num_showers_in_altitude_bins)
         run = cct.copy()
         run["run_id"] = run_id
-        run_str = "{:06d}".format(run_id)
 
         with tempfile.TemporaryDirectory(prefix='plenoscope_lookup_') as tmp:
             corsika_card_path = op.join(tmp, 'corsika_card.txt')
@@ -485,22 +581,10 @@ def __add_energy_to_lookup(
                 altitude_bin = upper_altitude_bin_edge - 1
 
                 if (
-                    actual_num_showers_in_altitude_bins[altitude_bin] >=
-                    num_showers_in_altitude_bin
+                    num_photons_in_altitude_bins[altitude_bin] >=
+                    max_num_photons_in_bin
                 ):
                     continue
-
-                """
-                event_path = op.join(
-                    altitude_paths[altitude_bin],
-                    "{:06d}_{:06d}.event".format(run_id, event.header.number))
-
-                shutil.copy(
-                    op.join(event.path, "air_shower_photon_bunches.bin"),
-                    event_path)
-                """
-
-                # append compressed photons
 
                 comp_x_y_cx_cy, valid_photons = compress_photons(
                     x=event.cherenkov_photon_bunches.x,
@@ -513,6 +597,16 @@ def __add_energy_to_lookup(
                     path=altitude_paths[altitude_bin],
                     compressed_photons=comp_x_y_cx_cy)
 
-                actual_num_showers_in_altitude_bins[altitude_bin] += 1
+                num_showers_in_altitude_bins[altitude_bin] += 1
+                num_photons_in_altitude_bins[altitude_bin] = __num_photons_in_bin(
+                    path=altitude_paths[altitude_bin],
+                    aperture_binning_config=abc)
 
+                fill_path = os.path.join(energy_path, "fill.json")
+                with open(fill_path, "wt") as fout:
+                    fout.write(json.dumps({
+                        "num_shower": num_showers_in_altitude_bins.tolist(),
+                        "num_photons": num_photons_in_altitude_bins.tolist(),
+                    },
+                    indent=4))
         run_id += 1
