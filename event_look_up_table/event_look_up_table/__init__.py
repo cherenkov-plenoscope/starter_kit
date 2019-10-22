@@ -94,6 +94,21 @@ def make_aperture_binning(aperture_binning_config):
     return t
 
 
+PHOTON_DTYPE = [
+    ('x', np.uint8),
+    ('y', np.uint8),
+    ('cx', np.uint16),
+    ('cy', np.uint16)]
+PHOTON_SIZE_IN_BYTE = int(
+    np.sum([np.iinfo(t[1]).bits//8 for t in PHOTON_DTYPE]))
+C_BIN_MAX = np.iinfo(PHOTON_DTYPE[2][1]).max
+C_BIN_MAX_HALF = (C_BIN_MAX+1)//2
+
+XY_BIN_MAX = np.iinfo(PHOTON_DTYPE[0][1]).max
+XY_BIN_OVER = XY_BIN_MAX + 1
+YX_BIN_OVER_HALF = (XY_BIN_OVER)//2
+
+
 def compress_x_y(x, y, aperture_binning_config):
     ab = aperture_binning_config
     x_bin_idx = (x//ab["bin_edge_width"]).astype(np.int) + ab["num_bins_radius"]
@@ -102,41 +117,30 @@ def compress_x_y(x, y, aperture_binning_config):
     x_rest = x - (x_bin_idx - ab["num_bins_radius"])*ab["bin_edge_width"]
     y_rest = y - (y_bin_idx - ab["num_bins_radius"])*ab["bin_edge_width"]
 
-    x_rest_8bit = np.floor(x_rest/ab["bin_edge_width"]*(256)).astype(np.int64)
-    y_rest_8bit = np.floor(y_rest/ab["bin_edge_width"]*(256)).astype(np.int64)
-    return x_bin_idx, y_bin_idx, x_rest_8bit, y_rest_8bit
+    x_rest_bin = np.floor(x_rest/ab["bin_edge_width"]*(XY_BIN_OVER)).astype(np.int64)
+    y_rest_bin = np.floor(y_rest/ab["bin_edge_width"]*(XY_BIN_OVER)).astype(np.int64)
+    return x_bin_idx, y_bin_idx, x_rest_bin, y_rest_bin
 
 
 def decompress_x_y(
     x_bin_idx,
     y_bin_idx,
-    x_rest_8bit,
-    y_rest_8bit,
+    x_rest_bin,
+    y_rest_bin,
     aperture_binning_config
 ):
     ab = aperture_binning_config
     x_bin = (x_bin_idx - ab["num_bins_radius"])*ab["bin_edge_width"]
     y_bin = (y_bin_idx - ab["num_bins_radius"])*ab["bin_edge_width"]
-    x_fine = x_rest_8bit/256*ab["bin_edge_width"]
-    y_fine = y_rest_8bit/256*ab["bin_edge_width"]
+    x_fine = x_rest_bin/XY_BIN_OVER*ab["bin_edge_width"]
+    y_fine = y_rest_bin/XY_BIN_OVER*ab["bin_edge_width"]
     return x_bin + x_fine, y_bin + y_fine
-
-
-PHOTON_DTYPE = [
-    ('x', np.uint8),
-    ('y', np.uint8),
-    ('cx', np.uint16),
-    ('cy', np.uint16)]
-PHOTON_SIZE_IN_BYTE = int(
-    np.sum([np.iinfo(t[1]).bits//8 for t in PHOTON_DTYPE]))
-CX_BIN_MAX = np.iinfo(PHOTON_DTYPE[2][1]).max
-CX_BIN_MAX_HALF = (CX_BIN_MAX+1)//2
 
 
 def compress_cx_cy(cx, cy, field_of_view_radius):
     field_of_view_diameter = 2.*field_of_view_radius
-    c_bin_width = field_of_view_diameter/CX_BIN_MAX
-    field_of_view_radius_in_bins = c_bin_width*CX_BIN_MAX_HALF
+    c_bin_width = field_of_view_diameter/C_BIN_MAX
+    field_of_view_radius_in_bins = c_bin_width*C_BIN_MAX_HALF
     cx_bin = (cx + field_of_view_radius_in_bins)//c_bin_width
     cy_bin = (cy + field_of_view_radius_in_bins)//c_bin_width
     return cx_bin.astype(np.int64), cy_bin.astype(np.int64)
@@ -144,8 +148,8 @@ def compress_cx_cy(cx, cy, field_of_view_radius):
 
 def decompress_cx_cy(cx_bin, cy_bin, field_of_view_radius):
     field_of_view_diameter = 2.*field_of_view_radius
-    c_bin_width = field_of_view_diameter/CX_BIN_MAX
-    field_of_view_radius_in_bins = c_bin_width*CX_BIN_MAX_HALF
+    c_bin_width = field_of_view_diameter/C_BIN_MAX
+    field_of_view_radius_in_bins = c_bin_width*C_BIN_MAX_HALF
     cx = (cx_bin*c_bin_width) - field_of_view_radius_in_bins
     cy = (cy_bin*c_bin_width) - field_of_view_radius_in_bins
     return cx, cy
@@ -185,16 +189,16 @@ def compress_photons(
             continue
         if ybins[ph] < 0 or ybins[ph] >= abc["num_bins_diameter"]:
             continue
-        if cxbins[ph] < 0 or cxbins[ph] > (CX_BIN_MAX-1):
+        if cxbins[ph] < 0 or cxbins[ph] > (C_BIN_MAX-1):
             continue
-        if cybins[ph] < 0 or cybins[ph] > (CX_BIN_MAX-1):
+        if cybins[ph] < 0 or cybins[ph] > (C_BIN_MAX-1):
             continue
         valid_photons[ph] = True
 
         assert xrests[ph] >= 0
-        assert xrests[ph] < 256
+        assert xrests[ph] < XY_BIN_OVER
         assert yrests[ph] >= 0
-        assert yrests[ph] < 256
+        assert yrests[ph] < XY_BIN_OVER
 
         xy_bin = abc["addressing_2D_to_1D"][xbins[ph], ybins[ph]]
         compressed_photons[xy_bin]["xrests"].append(xrests[ph])
@@ -218,7 +222,7 @@ def compress_photons(
 
 def append_compressed_photons(path, compressed_photons):
     for xy_bin in range(len(compressed_photons)):
-        xy_bin_path = os.path.join(path, "{:06d}.x8_y8_cx16_cy16".format(xy_bin))
+        xy_bin_path = os.path.join(path, "{:06d}.x_y_cx_cy".format(xy_bin))
         with open(xy_bin_path, "ab") as fout:
             fout.write(compressed_photons[xy_bin].flatten(order="C").tobytes())
 
@@ -257,7 +261,7 @@ def read_photons(
     for bin_to_load in bins_to_load:
         xy_bin_path = os.path.join(
             path,
-            "{:06d}.x8_y8_cx16_cy16".format(bin_to_load))
+            "{:06d}.x_y_cx_cy".format(bin_to_load))
         x_bin_idx = abc["addressing_1D_to_2D"][bin_to_load, 0]
         y_bin_idx = abc["addressing_1D_to_2D"][bin_to_load, 1]
         with open(xy_bin_path, "rb") as fin:
@@ -267,8 +271,8 @@ def read_photons(
         xs, ys = decompress_x_y(
             x_bin_idx=np.ones(num_photons_in_block, dtype=np.int)*x_bin_idx,
             y_bin_idx=np.ones(num_photons_in_block, dtype=np.int)*y_bin_idx,
-            x_rest_8bit=compressed_photons.x,
-            y_rest_8bit=compressed_photons.x,
+            x_rest_bin=compressed_photons.x,
+            y_rest_bin=compressed_photons.x,
             aperture_binning_config=abc)
         cxs, cys = decompress_cx_cy(
             cx_bin=compressed_photons.cx,
