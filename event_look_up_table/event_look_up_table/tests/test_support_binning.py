@@ -84,8 +84,8 @@ def test_compression_directions_valid():
     assert cy_bin == int((1.0)/(8./(2**16 - 1)) + (2**15))
 
     cx_back, cy_back = elut.decompress_cx_cy(
-        cx_16bit=cx_bin,
-        cy_16bit=cy_bin,
+        cx_bin=cx_bin,
+        cy_bin=cy_bin,
         field_of_view_radius=fov_r)
     assert np.abs(cx_back - cx_cy[:, 0]) < np.deg2rad(0.001)
     assert np.abs(cy_back - cx_cy[:, 1]) < np.deg2rad(0.001)

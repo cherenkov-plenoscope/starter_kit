@@ -122,33 +122,33 @@ def decompress_x_y(
     return x_bin + x_fine, y_bin + y_fine
 
 
-BIT16 = 2**16
-BIT15 = 2**15
-
-def compress_cx_cy(cx, cy, field_of_view_radius):
-    field_of_view_diameter = 2.*field_of_view_radius
-    c_bin_width = field_of_view_diameter/BIT16
-    field_of_view_radius_16bit = c_bin_width*BIT15
-    cx_16bit = (cx + field_of_view_radius_16bit)//c_bin_width
-    cy_16bit = (cy + field_of_view_radius_16bit)//c_bin_width
-    return cx_16bit.astype(np.int64), cy_16bit.astype(np.int64)
-
-
-def decompress_cx_cy(cx_16bit, cy_16bit, field_of_view_radius):
-    field_of_view_diameter = 2.*field_of_view_radius
-    c_bin_width = field_of_view_diameter/BIT16
-    field_of_view_radius_16bit = c_bin_width*BIT15
-    cx = (cx_16bit*c_bin_width) - field_of_view_radius_16bit
-    cy = (cy_16bit*c_bin_width) - field_of_view_radius_16bit
-    return cx, cy
-
-
 PHOTON_DTYPE = [
     ('x', np.uint8),
     ('y', np.uint8),
     ('cx', np.uint16),
     ('cy', np.uint16)]
-PHOTON_SIZE_IN_BYTE = 6
+PHOTON_SIZE_IN_BYTE = int(
+    np.sum([np.iinfo(t[1]).bits//8 for t in PHOTON_DTYPE]))
+CX_BIN_MAX = np.iinfo(PHOTON_DTYPE[2][1]).max
+CX_BIN_MAX_HALF = (CX_BIN_MAX+1)//2
+
+
+def compress_cx_cy(cx, cy, field_of_view_radius):
+    field_of_view_diameter = 2.*field_of_view_radius
+    c_bin_width = field_of_view_diameter/CX_BIN_MAX
+    field_of_view_radius_in_bins = c_bin_width*CX_BIN_MAX_HALF
+    cx_bin = (cx + field_of_view_radius_in_bins)//c_bin_width
+    cy_bin = (cy + field_of_view_radius_in_bins)//c_bin_width
+    return cx_bin.astype(np.int64), cy_bin.astype(np.int64)
+
+
+def decompress_cx_cy(cx_bin, cy_bin, field_of_view_radius):
+    field_of_view_diameter = 2.*field_of_view_radius
+    c_bin_width = field_of_view_diameter/CX_BIN_MAX
+    field_of_view_radius_in_bins = c_bin_width*CX_BIN_MAX_HALF
+    cx = (cx_bin*c_bin_width) - field_of_view_radius_in_bins
+    cy = (cy_bin*c_bin_width) - field_of_view_radius_in_bins
+    return cx, cy
 
 
 def compress_photons(
@@ -185,9 +185,9 @@ def compress_photons(
             continue
         if ybins[ph] < 0 or ybins[ph] >= abc["num_bins_diameter"]:
             continue
-        if cxbins[ph] < 0 or cxbins[ph] > (BIT16-1):
+        if cxbins[ph] < 0 or cxbins[ph] > (CX_BIN_MAX-1):
             continue
-        if cybins[ph] < 0 or cybins[ph] > (BIT16-1):
+        if cybins[ph] < 0 or cybins[ph] > (CX_BIN_MAX-1):
             continue
         valid_photons[ph] = True
 
@@ -271,8 +271,8 @@ def read_photons(
             y_rest_8bit=compressed_photons.x,
             aperture_binning_config=abc)
         cxs, cys = decompress_cx_cy(
-            cx_16bit=compressed_photons.cx,
-            cy_16bit=compressed_photons.cy,
+            cx_bin=compressed_photons.cx,
+            cy_bin=compressed_photons.cy,
             field_of_view_radius=fov_r)
         photon_blocks.append(np.array([xs, ys, cxs, cys]))
     photons = np.concatenate(photon_blocks, axis=1).T
