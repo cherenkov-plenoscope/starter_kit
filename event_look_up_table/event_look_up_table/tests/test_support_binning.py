@@ -80,16 +80,15 @@ def test_compression_directions_valid():
         cx=cx_cy[:, 0],
         cy=cx_cy[:, 1],
         field_of_view_radius=fov_r)
-    assert cx_bin == 112
-    assert cy_bin == 159
+    assert cx_bin == int((-.5)/(8./(2**16 - 1)) + (2**15))
+    assert cy_bin == int((1.0)/(8./(2**16 - 1)) + (2**15))
 
     cx_back, cy_back = elut.decompress_cx_cy(
-        cx_8bit=cx_bin,
-        cy_8bit=cy_bin,
+        cx_16bit=cx_bin,
+        cy_16bit=cy_bin,
         field_of_view_radius=fov_r)
-
-    assert np.abs(cx_back - cx_cy[:, 0]) < np.deg2rad(0.04)
-    assert np.abs(cy_back - cx_cy[:, 1]) < np.deg2rad(0.04)
+    assert np.abs(cx_back - cx_cy[:, 0]) < np.deg2rad(0.001)
+    assert np.abs(cy_back - cx_cy[:, 1]) < np.deg2rad(0.001)
 
 
 def test_compression_directions_out_of_range():
@@ -100,7 +99,7 @@ def test_compression_directions_out_of_range():
         cy=cx_cy[:, 1],
         field_of_view_radius=np.deg2rad(4))
     assert cx_bin < 0
-    assert cy_bin > 255
+    assert cy_bin > (2**16)
 
 
 def test_overlap_circle():
