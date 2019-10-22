@@ -15,28 +15,6 @@ import array
 import json
 
 
-def __hexagonal_grid(outer_radius, spacing):
-    grid = []
-    unit_x = np.array([1, 0])
-    unit_y = np.array([0, 1])
-
-    unit_hex_b = unit_y*spacing;
-    unit_hex_a = (unit_y*.5+unit_x*np.sqrt(3.)/2.)*spacing;
-
-    sample_radius = 2.*np.floor(outer_radius/spacing)
-    a = -sample_radius
-    while a <= sample_radius:
-        b = -sample_radius
-        while b <= sample_radius:
-            cell_a_b = unit_hex_a*a + unit_hex_b*b
-            cell_a_b_norm = np.linalg.norm(cell_a_b)
-            if cell_a_b_norm <= outer_radius:
-                grid.append(cell_a_b)
-            b += 1
-        a += 1
-    return np.array(grid)
-
-
 def __merlict_simpleio(
     merlict_eventio_converter_path,
     evtio_run_path,
