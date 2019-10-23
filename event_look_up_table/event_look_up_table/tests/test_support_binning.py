@@ -151,19 +151,19 @@ def test_write_read_photons():
     NUM_PHOTONS = 1000*100
     C_SCALE = d2r(1.0)
     np.random.seed(0)
-    x_y_cx_cy = np.array([
+    lf = np.array([
         np.random.normal(loc=50., scale=100, size=NUM_PHOTONS),
         np.random.normal(loc=-125., scale=150, size=NUM_PHOTONS),
         np.random.normal(loc=d2r(-.25), scale=C_SCALE*2, size=NUM_PHOTONS),
         np.random.normal(loc=d2r(0.5), scale=C_SCALE, size=NUM_PHOTONS)]).T
-    print("cx_mean", np.rad2deg(np.mean(x_y_cx_cy[:, 2])), "deg")
-    print("cy_mean", np.rad2deg(np.mean(x_y_cx_cy[:, 3])), "deg")
+    print("cx_mean", np.rad2deg(np.mean(lf[:, 2])), "deg")
+    print("cy_mean", np.rad2deg(np.mean(lf[:, 3])), "deg")
 
-    comp_x_y_cx_cy, valid_photons = elut.compress_photons(
-        x=x_y_cx_cy[:, 0],
-        y=x_y_cx_cy[:, 1],
-        cx=x_y_cx_cy[:, 2],
-        cy=x_y_cx_cy[:, 3],
+    comp_lf, valid_photons = elut.compress_photons(
+        x=lf[:, 0],
+        y=lf[:, 1],
+        cx=lf[:, 2],
+        cy=lf[:, 3],
         aperture_binning_config=abc,
         field_of_view_radius=field_of_view_radius)
 
@@ -172,9 +172,9 @@ def test_write_read_photons():
     with tempfile.TemporaryDirectory() as tmp:
         elut.append_compressed_photons(
             path=tmp,
-            compressed_photons=comp_x_y_cx_cy)
+            compressed_photons=comp_lf)
 
-        back_x_y_cx_cy = elut.read_photons(
+        back_lf = elut.read_photons(
             path=tmp,
             aperture_binning_config=abc,
             circle_x=0.,
@@ -182,15 +182,15 @@ def test_write_read_photons():
             circle_radius=10e3,
             field_of_view_radius=field_of_view_radius)
 
-    assert back_x_y_cx_cy.shape[0] == num_photons_written
-    assert np.abs(np.mean(back_x_y_cx_cy[:, 0]) - 50.) < 10.
-    assert np.abs(np.std(back_x_y_cx_cy[:, 0]) - 100.) < 10.
-    assert np.abs(np.mean(back_x_y_cx_cy[:, 1]) - (-125.)) < 10.
-    assert np.abs(np.std(back_x_y_cx_cy[:, 1]) - 150.) < 10.
+    assert back_lf.shape[0] == num_photons_written
+    assert np.abs(np.mean(back_lf.x) - 50.) < 10.
+    assert np.abs(np.std(back_lf.x) - 100.) < 10.
+    assert np.abs(np.mean(back_lf.y) - (-125.)) < 10.
+    assert np.abs(np.std(back_lf.y) - 150.) < 10.
 
-    print("back cx_mean", np.rad2deg(np.mean(back_x_y_cx_cy[:, 2])), "deg")
-    print("back cy_mean", np.rad2deg(np.mean(back_x_y_cx_cy[:, 3])), "deg")
-    assert np.abs(np.mean(back_x_y_cx_cy[:, 2]) - d2r(-.25)) < d2r(0.1)
-    assert np.abs(np.mean(back_x_y_cx_cy[:, 3]) - d2r(0.5)) < d2r(0.1)
-    assert np.abs(np.std(back_x_y_cx_cy[:, 2]) - C_SCALE*2) < d2r(0.3)
-    assert np.abs(np.std(back_x_y_cx_cy[:, 3]) - C_SCALE) < d2r(0.3)
+    print("back cx_mean", np.rad2deg(np.mean(back_lf.cx)), "deg")
+    print("back cy_mean", np.rad2deg(np.mean(back_lf.cy)), "deg")
+    assert np.abs(np.mean(back_lf.cx) - d2r(-.25)) < d2r(0.1)
+    assert np.abs(np.mean(back_lf.cy) - d2r(0.5)) < d2r(0.1)
+    assert np.abs(np.std(back_lf.cx) - C_SCALE*2) < d2r(0.3)
+    assert np.abs(np.std(back_lf.cy) - C_SCALE) < d2r(0.3)

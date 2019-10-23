@@ -13,6 +13,7 @@ import subprocess
 import glob
 import array
 import json
+import cable_robo_mount as crm
 
 
 def __merlict_simpleio(
@@ -72,7 +73,11 @@ def make_aperture_binning(aperture_binning_config):
     t["bin_centers_tree"] = scipy.spatial.cKDTree(t["bin_centers"])
     return t
 
-
+LIGHT_FIELD_DTYPE = [
+    ('x', np.float32),
+    ('y', np.float32),
+    ('cx', np.float32),
+    ('cy', np.float32)]
 PHOTON_DTYPE = [
     ('x', np.uint8),
     ('y', np.uint8),
@@ -268,7 +273,12 @@ def read_photons(
     off_x2 = (photons[:, 0] - circle_x)**2
     off_y2 = (photons[:, 1] - circle_y)**2
     valid = off_x2 + off_y2 < circle_radius**2
-    return photons[valid, :]
+    lf = np.recarray(np.sum(valid), dtype=LIGHT_FIELD_DTYPE)
+    lf.x = photons[valid, 0]
+    lf.y = photons[valid, 1]
+    lf.cx = photons[valid, 2]
+    lf.cy = photons[valid, 3]
+    return lf
 
 
 def __print_image(image, v_max=None):
@@ -374,24 +384,44 @@ class Instrument:
         self.pixel_radius = self.light_field_geometry. \
             sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2
 
-    def response(self, energy_bin, altitude_bin, core_x, core_y):
-        light_field = self.reader.read_light_field(
+    def response(
+        self,
+        energy_bin,
+        altitude_bin,
+        source_cx,
+        source_cy,
+        core_x,
+        core_y
+    ):
+        projected_instrument_radius = (
+            self.instrument_radius*
+            _collection_sphere_scaling(
+                source_cx_in_instrument_frame=source_cx,
+                source_cy_in_instrument_frame=source_cy,))
+
+        light_field_in_shower_frame = self.reader.read_light_field(
             energy_bin=energy_bin,
             altitude_bin=altitude_bin,
             core_x=core_x,
             core_y=core_y,
-            instrument_radius=self.instrument_radius)
+            instrument_radius=projected_instrument_radius)
+
+        light_field = _transform_light_field_to_instrument_frame(
+            light_field_in_shower_frame=light_field_in_shower_frame,
+            source_cx_in_instrument_frame=source_cx,
+            source_cy_in_instrument_frame=source_cy,
+            shower_core_x_in_instrument_frame=core_x,
+            shower_core_y_in_instrument_frame=core_y)
+
+
         num_shower = self.reader.num_showers[energy_bin][altitude_bin]
 
-        x_y_in_plenoscope_frame = np.c_[
-                light_field[:, 0] - core_x,
-                light_field[:, 1] - core_y]
         paxel_dist, paxel_idx = self.light_field_geometry.paxel_pos_tree.query(
-            x_y_in_plenoscope_frame,
+            np.c_[light_field.x, light_field.y],
             k=1)
         paxel_valid = paxel_dist <= self.paxel_radius
         pixel_dist, pixel_idx = self.light_field_geometry.pixel_pos_tree.query(
-            light_field[:, 2:4],
+            np.c_[light_field.cx, light_field.cy],
             k=1)
         pixel_valid = pixel_dist <= self.pixel_radius
         valid = np.logical_and(paxel_valid, pixel_valid)
@@ -415,6 +445,63 @@ def __to_photon_lixel_ids(response):
     return np.concatenate(
         [i*np.ones(int(np.round(c*1000))) for i, c in enumerate(response)]
     ).astype(np.uint64)
+
+
+def _collection_sphere_scaling(
+    source_cx_in_instrument_frame,
+    source_cy_in_instrument_frame
+):
+    approx_rotation_angle = np.hypot(
+        source_cx_in_instrument_frame,
+        source_cy_in_instrument_frame)
+    return 1.0/np.cos(approx_rotation_angle)
+
+
+def _transform_light_field_to_instrument_frame(
+    light_field_in_shower_frame,
+    source_cx_in_instrument_frame,
+    source_cy_in_instrument_frame,
+    shower_core_x_in_instrument_frame,
+    shower_core_y_in_instrument_frame
+):
+    lf_SF = light_field_in_shower_frame
+    num_photons = lf_SF.x.shape[0]
+
+    # represent with 3D vecors
+    # ------------------------
+    support_SF = np.array([lf_SF.x, lf_SF.y, np.zeros(num_photons)])
+    __dir_z = np.sqrt(1. - lf_SF.cx**2.0 - lf_SF.cy**2.0)
+    direction_SF = np.array([lf_SF.cx, lf_SF.cy, __dir_z])
+
+    # rotate
+    # ------
+    # The directional cosines x is the rotation-angles for axis Y,
+    # and vice-versa.
+    T_shower2instrument = crm.HomTra()
+    T_shower2instrument.set_translation(pos=np.array([0., 0., 0.]))
+    T_shower2instrument.set_rotation_tait_bryan_angles(
+        Rx=-source_cy_in_instrument_frame,
+        Ry=-source_cx_in_instrument_frame,
+        Rz=0.)
+    support_IF = T_shower2instrument.transformed_position(support_SF)
+    direction_IF = T_shower2instrument.transformed_orientation(direction_SF)
+
+    # represent support on obs.-level. z=0
+    # ------------------------------------
+    #  0 = sz + alpha*dz
+    #  alpha*dz = -sz
+    #  alpha = -sz/dz
+    alpha = -support_IF[2, :]/direction_IF[2, :]
+    support_zZero_IF = support_IF + alpha*direction_IF
+
+    # translate
+    # ---------
+    lf_IF = np.recarray(shape=num_photons, dtype=LIGHT_FIELD_DTYPE)
+    lf_IF.x = support_zZero_IF[0, :] + shower_core_x_in_instrument_frame
+    lf_IF.y = support_zZero_IF[1, :] + shower_core_y_in_instrument_frame
+    lf_IF.cx = direction_IF[0, :]
+    lf_IF.cy = direction_IF[1, :]
+    return lf_IF
 
 
 def __init_lookup(
