@@ -200,7 +200,9 @@ def compress_photons(
 
     return compressed_photons, valid_photons
 
+
 APERTURE_BIN_FILENAME = "{:06d}.x_y_cx_cy"
+
 
 def append_compressed_photons(path, compressed_photons):
     for xy_bin in range(len(compressed_photons)):
@@ -361,11 +363,16 @@ class Instrument:
     def __init__(self, path, light_field_geometry):
         self.reader = Reader(path)
         self.light_field_geometry = light_field_geometry
-        self.instrument_radius = self.light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_max_aperture_radius
-        aperture_area = self.light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_max_aperture_radius**2*np.pi
+        self.instrument_radius = self.light_field_geometry. \
+            sensor_plane2imaging_system. \
+            expected_imaging_system_max_aperture_radius
+        aperture_area = self.light_field_geometry. \
+            sensor_plane2imaging_system. \
+            expected_imaging_system_max_aperture_radius**2*np.pi
         paxel_area = aperture_area/self.light_field_geometry.number_paxel
         self.paxel_radius = np.sqrt(paxel_area/np.pi)
-        self.pixel_radius = self.light_field_geometry.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2
+        self.pixel_radius = self.light_field_geometry. \
+            sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2
 
     def response(self, energy_bin, altitude_bin, core_x, core_y):
         light_field = self.reader.read_light_field(
@@ -598,15 +605,16 @@ def __add_energy_to_lookup(
                     compressed_photons=comp_x_y_cx_cy)
 
                 num_showers_in_altitude_bins[altitude_bin] += 1
-                num_photons_in_altitude_bins[altitude_bin] = __num_photons_in_bin(
-                    path=altitude_paths[altitude_bin],
-                    aperture_binning_config=abc)
+                num_photons_in_altitude_bins[altitude_bin] = \
+                    __num_photons_in_bin(
+                        path=altitude_paths[altitude_bin],
+                        aperture_binning_config=abc)
 
                 fill_path = os.path.join(energy_path, "fill.json")
                 with open(fill_path, "wt") as fout:
                     fout.write(json.dumps({
                         "num_shower": num_showers_in_altitude_bins.tolist(),
                         "num_photons": num_photons_in_altitude_bins.tolist(),
-                    },
-                    indent=4))
+                        },
+                        indent=4))
         run_id += 1
