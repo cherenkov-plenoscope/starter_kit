@@ -16,7 +16,7 @@ import json
 import cable_robo_mount as crm
 
 
-def __merlict_simpleio(
+def _merlict_simpleio(
     merlict_eventio_converter_path,
     evtio_run_path,
     output_path
@@ -31,7 +31,7 @@ def __merlict_simpleio(
     return mct_rc
 
 
-def __estimate_shower_maximum_altitude(photon_emission_altitudes):
+def _estimate_shower_maximum_altitude(photon_emission_altitudes):
     return np.median(photon_emission_altitudes)
 
 
@@ -281,7 +281,7 @@ def read_photons(
     return lf
 
 
-def __print_image(image, v_max=None):
+def _print_image(image, v_max=None):
     num_cols = image.shape[0]
     num_rows = image.shape[1]
     if v_max is None:
@@ -299,7 +299,7 @@ def __print_image(image, v_max=None):
     print(s)
 
 
-def __print_photons_cx_cy(
+def _print_photons_cx_cy(
     photons_x_y_cx_cy,
     c_bin_edges=np.deg2rad(np.linspace(-4, 4, 97)),
     v_max=None
@@ -310,7 +310,7 @@ def __print_photons_cx_cy(
         bins=c_bin_edges)[0]
     if v_max is None:
         v_max = np.max(image)
-    __print_image(image, v_max)
+    _print_image(image, v_max)
 
 
 class Reader:
@@ -441,7 +441,7 @@ class Instrument:
         return respo
 
 
-def __to_photon_lixel_ids(response):
+def _to_photon_lixel_ids(response):
     return np.concatenate(
         [i*np.ones(int(np.round(c*1000))) for i, c in enumerate(response)]
     ).astype(np.uint64)
@@ -470,8 +470,8 @@ def _transform_light_field_to_instrument_frame(
     # represent with 3D vecors
     # ------------------------
     support_SF = np.array([lf_SF.x, lf_SF.y, np.zeros(num_photons)])
-    __dir_z = np.sqrt(1. - lf_SF.cx**2.0 - lf_SF.cy**2.0)
-    direction_SF = np.array([lf_SF.cx, lf_SF.cy, __dir_z])
+    _dir_z = np.sqrt(1. - lf_SF.cx**2.0 - lf_SF.cy**2.0)
+    direction_SF = np.array([lf_SF.cx, lf_SF.cy, _dir_z])
 
     # rotate
     # ------
@@ -504,7 +504,7 @@ def _transform_light_field_to_instrument_frame(
     return lf_IF
 
 
-def __init_lookup(
+def init_lookup(
     lookup_path,
     particle_config_path=op.join(
         "resources", "acp", "71m", "gamma_steering.json"),
@@ -535,7 +535,7 @@ def __init_lookup(
         f.write(json.dumps(config, indent=4))
 
 
-def __num_photons_in_bin(path, aperture_binning_config):
+def _num_photons_in_bin(path, aperture_binning_config):
     total_size_in_byte = 0
     for idx in range(aperture_binning_config["num_bins"]):
         bin_path = os.path.join(path, APERTURE_BIN_FILENAME.format(idx))
@@ -544,7 +544,7 @@ def __num_photons_in_bin(path, aperture_binning_config):
     return num_photons
 
 
-def __add_energy_to_lookup(
+def _add_energy_to_lookup(
     lookup_path,
     energy_bin_center=0,
     num_showers_in_run=128,
@@ -636,7 +636,7 @@ def __add_energy_to_lookup(
                 save_stdout=True,
                 corsika_path=corsika_path)
 
-            mct_rc = __merlict_simpleio(
+            mct_rc = _merlict_simpleio(
                 merlict_eventio_converter_path=merlict_eventio_converter_path,
                 evtio_run_path=corsika_run_path,
                 output_path=simple_run_path)
@@ -648,7 +648,7 @@ def __add_energy_to_lookup(
                 num_bunches = event.cherenkov_photon_bunches.x.shape[0]
                 if num_bunches == 0:
                     continue
-                shower_maximum_altitude = __estimate_shower_maximum_altitude(
+                shower_maximum_altitude = _estimate_shower_maximum_altitude(
                     event.cherenkov_photon_bunches.emission_height)
 
                 upper_altitude_bin_edge = int(np.digitize(
@@ -693,7 +693,7 @@ def __add_energy_to_lookup(
 
                 num_showers_in_altitude_bins[altitude_bin] += 1
                 num_photons_in_altitude_bins[altitude_bin] = \
-                    __num_photons_in_bin(
+                    _num_photons_in_bin(
                         path=altitude_paths[altitude_bin],
                         aperture_binning_config=abc)
 
