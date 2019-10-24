@@ -847,8 +847,8 @@ def _add_energy_to_lookup_job(
             break
 
         if run_id >= run_id_stop:
-            print("Ran out of run-ids, i.e. ran out of random-seeds.")
-            break
+            raise RuntimeError(
+                "Ran out of run-ids, i.e. ran out of random-seeds.")
 
         run = cct.copy()
         run["run_id"] = run_id
