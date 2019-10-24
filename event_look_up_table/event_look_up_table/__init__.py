@@ -16,6 +16,22 @@ import json
 import cable_robo_mount as crm
 
 
+MERLICT_EVENTIO_CONVERTER_PATH = op.join(
+    'build',
+    'merlict',
+    'merlict-eventio-converter')
+
+CORSIKA_PATH = op.join(
+    "build",
+    "corsika",
+    "corsika-75600",
+    "run",
+    "corsika75600Linux_QGSII_urqmd")
+
+ALTITUDE_BIN_FILENAME = "{:06d}_altitude"
+ENERGY_BIN_FILENAME = "{:06d}_energy"
+APERTURE_BIN_FILENAME = "{:06d}.x_y_cx_cy"
+
 def _merlict_simpleio(
     merlict_eventio_converter_path,
     evtio_run_path,
@@ -55,7 +71,7 @@ def make_aperture_binning(aperture_binning_config):
         order="C")
     t["addressing_1D_to_2D"] = np.zeros(
         shape=(t["num_bins"], 2),
-        dtype=np.int64)
+        dtype= np.int64)
     for b in range(t["num_bins"]):
         t["addressing_1D_to_2D"][b, 0] = b//t["num_bins_diameter"]
         t["addressing_1D_to_2D"][b, 1] = b % t["num_bins_diameter"]
@@ -206,9 +222,6 @@ def compress_photons(
     return compressed_photons, valid_photons
 
 
-APERTURE_BIN_FILENAME = "{:06d}.x_y_cx_cy"
-
-
 def append_compressed_photons(path, compressed_photons):
     for xy_bin in range(len(compressed_photons)):
         xy_bin_path = os.path.join(path, APERTURE_BIN_FILENAME.format(xy_bin))
@@ -316,11 +329,10 @@ def _print_photons_cx_cy(
 class Reader:
     def __init__(self, path):
         self.lookup_path = path
-        with open(os.path.join(self.lookup_path, "lookup.json"), "rt") as f:
+        with open(os.path.join(self.lookup_path, "binning.json"), "rt") as f:
             config = json.loads(f.read())
         self.aperture_binning = make_aperture_binning(config["aperture"])
         self.altitude_bin_edges = np.array(config["altitude_bin_edges"])
-        self.max_num_photons_in_bin = config["max_num_photons_in_bin"]
         self.field_of_view_radius = config["field_of_view"]["radius"]
         self.energy_bin_centers = config["energy_bin_centers"]
         self.__config = config
@@ -331,8 +343,8 @@ class Reader:
             for a in range(len(self.altitude_bin_edges) - 1):
                 p = os.path.join(
                     self.lookup_path,
-                    "{:06d}_energy".format(e),
-                    "{:06d}_altitude".format(a))
+                    ENERGY_BIN_FILENAME.format(e),
+                    ALTITUDE_BIN_FILENAME.format(a))
                 altitude_paths.append(p)
             self.__energy_altitude_paths.append(altitude_paths)
 
@@ -341,7 +353,7 @@ class Reader:
         for e in range(len(self.energy_bin_centers)):
             p = os.path.join(
                 self.lookup_path,
-                "{:06d}_energy".format(e),
+                ENERGY_BIN_FILENAME.format(e),
                 "fill.json")
             if os.path.exists(p):
                 with open(p, "rt") as fin:
@@ -504,7 +516,7 @@ def _transform_light_field_to_instrument_frame(
     return lf_IF
 
 
-def init_lookup(
+def init(
     lookup_path,
     particle_config_path=op.join(
         "resources", "acp", "71m", "gamma_steering.json"),
@@ -515,7 +527,7 @@ def init_lookup(
         "num_bins_radius": 12},
     field_of_view_radius=np.deg2rad(10),
     altitude_bin_edges=np.linspace(5e3, 25e3, 21),
-    energy_bin_centers=np.geomspace(0.25, 250, 16),
+    energy_bin_centers=np.geomspace(0.25, 25, 8),
     max_num_photons_in_bin=1000*1000,
 ):
     os.makedirs(lookup_path)
@@ -530,9 +542,194 @@ def init_lookup(
     config["field_of_view"] = {"radius": field_of_view_radius}
     config["altitude_bin_edges"] = altitude_bin_edges.tolist()
     config["energy_bin_centers"] = energy_bin_centers.tolist()
-    config["max_num_photons_in_bin"] = int(max_num_photons_in_bin)
-    with open(os.path.join(lookup_path, "lookup.json"), "wt") as f:
+    with open(os.path.join(lookup_path, "binning_config.json"), "wt") as f:
         f.write(json.dumps(config, indent=4))
+    with open(os.path.join(lookup_path, "filling_config.json"), "wt") as f:
+        f.write(json.dumps({
+            "max_num_photons_in_bin": int(max_num_photons_in_bin)}, indent=4))
+
+
+def make_jobs(
+    lookup_path,
+    num_jobs=4,
+    merlict_eventio_converter_path=MERLICT_EVENTIO_CONVERTER_PATH,
+    corsika_path=CORSIKA_PATH,
+    fraction_of_valid_altitude_bins=0.5,
+    random_seed=1,
+    random_seed_range_per_job=1000,
+    energy_per_iteration=512,
+):
+    binning_config = irf.__read_json(
+        os.path.join(lookup_path, "binning_config.json"))
+    location_config = irf.__read_json(
+        os.path.join(lookup_path, "location_config.json"))
+    particle_config = irf.__read_json(
+        os.path.join(lookup_path, "particle_config.json"))
+    filling_config = irf.__read_json(
+        os.path.join(lookup_path, "filling_config.json"))
+
+    bc = binning_config
+    num_energy_bins = len(bc["energy_bin_centers"])
+    num_altitude_bins = len(bc["altitude_bin_edges"]) - 1
+    num_jobs_in_energy_bin = int(np.ceil(num_jobs/num_energy_bins))
+    max_num_photons_in_bin_job = np.ceil(
+        filling_config["max_num_photons_in_bin"]/
+        num_jobs_in_energy_bin)
+
+    jobs = []
+    for energy_bin_idx, energy in enumerate(bc["energy_bin_centers"]):
+        random_seed_in_energy_bin = random_seed + energy_bin_idx
+        for job_idx in range(num_jobs_in_energy_bin):
+            job_seed = (
+                random_seed_in_energy_bin
+                + job_idx*random_seed_range_per_job)
+            job = {}
+            job["lookup_path"] = lookup_path
+            job["energy_dirname"] = ENERGY_BIN_FILENAME.format(energy_bin_idx)+".jobs"
+            job["job_dirname"] = "{:06d}".format(job_idx)
+            job["location_config"] = location_config
+            job["particle_config"] = particle_config
+            job["binning_config"] = binning_config
+            job["energy"] = energy
+            job["energy_per_iteration"] = energy_per_iteration
+            job["max_num_photons_in_bin"] = max_num_photons_in_bin_job
+            job["min_num_altitude_bins_with_enough_num_photons"] = int(np.ceil(
+                fraction_of_valid_altitude_bins*num_altitude_bins))
+            job["merlict_eventio_converter_path"] = \
+                merlict_eventio_converter_path
+            job["corsika_path"] = corsika_path
+            job["run_id_start"] = job_seed
+            job["run_id_stop"] = job_seed + random_seed_range_per_job
+            jobs.append(job)
+    return jobs
+
+
+def run_job(job):
+    with tempfile.TemporaryDirectory(prefix='lookup_job_') as tmp:
+        tmp_output_path = op.join(tmp, job["job_dirname"])
+
+        _add_energy_to_lookup_job(
+            output_path=tmp_output_path,
+            location_config=job["location_config"],
+            particle_config=job["particle_config"],
+            binning_config=job["binning_config"],
+            energy=job["energy"],
+            energy_per_iteration=job["energy_per_iteration"],
+            max_num_photons_in_bin=job["max_num_photons_in_bin"],
+            min_num_altitude_bins_with_enough_num_photons=job[
+                "min_num_altitude_bins_with_enough_num_photons"],
+            merlict_eventio_converter_path=job[
+                "merlict_eventio_converter_path"],
+            corsika_path=job["corsika_path"],
+            run_id_start=job["run_id_start"],
+            run_id_stop=job["run_id_stop"])
+
+        tmp_tar_path = op.join(tmp, job["job_dirname"]+".tar")
+        subprocess.call([
+            "tar",
+            "-cf",
+            tmp_tar_path,
+            "-C",
+            tmp_output_path,
+            "."])
+
+        output_dir = op.join(
+            job["lookup_path"],
+            job["energy_dirname"])
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = op.join(output_dir, job["job_dirname"]+".tar")
+        shutil.copy(tmp_tar_path, output_path+".part")
+        shutil.move(output_path+".part", output_path)
+    return 0
+
+
+def reduce_jobs(lookup_path):
+    binning_config = irf.__read_json(
+        os.path.join(lookup_path, "binning_config.json"))
+    num_energy_bins = len(binning_config["energy_bin_centers"])
+    for energy_bin_idx in range(num_energy_bins):
+        _reduce_energy_bin(
+            lookup_path=lookup_path,
+            energy_bin_idx=energy_bin_idx)
+
+
+def _append_apperture_bin(
+    input_altitude_bin_path,
+    output_altitude_bin_path,
+    num_aperture_bins,
+):
+    for aperture_bin in range(num_aperture_bins):
+        aperture_bin_filename = APERTURE_BIN_FILENAME.format(aperture_bin)
+        in_path = op.join(input_altitude_bin_path, aperture_bin_filename)
+        out_path = op.join(output_altitude_bin_path, aperture_bin_filename)
+        if op.exists(in_path):
+            with open(in_path, "rb") as fi, open(out_path, "ab") as fo:
+                fo.write(fi.read())
+
+
+def _reduce_energy_bin(lookup_path, energy_bin_idx):
+    binning_config = irf.__read_json(
+        os.path.join(lookup_path, "binning_config.json"))
+    num_altitude_bins = len(binning_config["altitude_bin_edges"]) - 1
+    num_aperture_bins = make_aperture_binning(binning_config["aperture"])[
+        "num_bins"]
+
+    energy_str = ENERGY_BIN_FILENAME.format(energy_bin_idx)
+    energy_path = op.join(lookup_path, energy_str)
+    energy_jobs_path = energy_path+".jobs"
+    assert op.exists(energy_jobs_path)
+    job_paths = glob.glob(op.join(energy_jobs_path, "*.tar"))
+
+    with tempfile.TemporaryDirectory(prefix='lookup_reduce_') as tmp:
+        tmp_energy_path = op.join(tmp, energy_str)
+        os.makedirs(tmp_energy_path)
+        for altitude_bin in range(num_altitude_bins):
+            altitude_bin_dirname = ALTITUDE_BIN_FILENAME.format(altitude_bin)
+            output_altitude_bin_path = op.join(
+                tmp_energy_path,
+                altitude_bin_dirname)
+            os.makedirs(output_altitude_bin_path)
+
+        num_showers_in_altitude_bins = np.zeros(
+            num_altitude_bins,
+            dtype=np.int64)
+        num_photons_in_altitude_bins = np.zeros(
+            num_altitude_bins,
+            dtype=np.int64)
+
+        for job_path in job_paths:
+            tmp_job_path = op.join(tmp, "job")
+            os.makedirs(tmp_job_path)
+            subprocess.call([
+                "tar",
+                "-xf",
+                job_path,
+                "--directory",
+                tmp_job_path])
+            job_fill = irf.__read_json(op.join(tmp_job_path, "fill.json"))
+            num_showers_in_altitude_bins += np.array(job_fill["num_showers"])
+            num_photons_in_altitude_bins += np.array(job_fill["num_photons"])
+
+            for altitude_bin in range(num_altitude_bins):
+                altitude_bin_dirname = ALTITUDE_BIN_FILENAME.format(altitude_bin)
+                _append_apperture_bin(
+                    input_altitude_bin_path=op.join(
+                        tmp_job_path,
+                        altitude_bin_dirname),
+                    output_altitude_bin_path=op.join(
+                        tmp_energy_path,
+                        altitude_bin_dirname),
+                    num_aperture_bins=num_aperture_bins)
+            shutil.rmtree(tmp_job_path)
+
+        with open(op.join(tmp_energy_path, "fill.json"), "wt") as fout:
+            fout.write(json.dumps({
+                "num_showers": num_showers_in_altitude_bins.tolist(),
+                "num_photons": num_photons_in_altitude_bins.tolist()},
+                indent=4))
+
+    shutil.move(tmp_energy_path, energy_path)
+    # shutil.rmtree(energy_jobs_path)
 
 
 def _num_photons_in_bin(path, aperture_binning_config):
@@ -547,39 +744,65 @@ def _num_photons_in_bin(path, aperture_binning_config):
 def _add_energy_to_lookup(
     lookup_path,
     energy_bin_center=0,
-    num_showers_in_run=128,
-    merlict_eventio_converter_path=op.join(
-        'build',
-        'merlict',
-        'merlict-eventio-converter'),
-    corsika_path=op.join(
-        "build",
-        "corsika",
-        "corsika-75600",
-        "run",
-        "corsika75600Linux_QGSII_urqmd"),
+    energy_per_iteration=512.,
+    merlict_eventio_converter_path=MERLICT_EVENTIO_CONVERTER_PATH,
+    corsika_path=CORSIKA_PATH,
+    random_seed=1,
 ):
-    config = irf.__read_json(os.path.join(lookup_path, "lookup.json"))
-    abc = make_aperture_binning(config["aperture"])
-    altitude_bin_edges = np.array(config["altitude_bin_edges"])
-    max_num_photons_in_bin = config["max_num_photons_in_bin"]
-    cherenkov_collection_radius = float(np.max(abc["xy_bin_edges"]))
-    fov_r = config["field_of_view"]["radius"]
-
-    energy = config["energy_bin_centers"][energy_bin_center]
+    binning_config = irf.__read_json(
+        os.path.join(lookup_path, "binning_config.json"))
+    energy = binning_config["energy_bin_centers"][energy_bin_center]
     energy_path = os.path.join(
         lookup_path,
-        "{:06d}_energy".format(energy_bin_center))
-    os.makedirs(energy_path)
-
+        ENERGY_BIN_FILENAME.format(energy_bin_center))
     location_config = irf.__read_json(
         os.path.join(lookup_path, "location_config.json"))
     particle_config = irf.__read_json(
         os.path.join(lookup_path, "particle_config.json"))
+    filling_config = irf.__read_json(
+        os.path.join(lookup_path, "filling_config.json"))
 
-    corsika_card_template = {}
-    cct = corsika_card_template
+    _add_energy_to_lookup_job(
+        output_path=energy_path,
+        location_config=location_config,
+        particle_config=particle_config,
+        binning_config=binning_config,
+        energy=energy,
+        energy_per_iteration=energy_per_iteration,
+        max_num_photons_in_bin=filling_config["max_num_photons_in_bin"],
+        min_num_altitude_bins_with_enough_num_photons=0.5*len(
+            binning_config["altitude_bin_edges"]),
+        merlict_eventio_converter_path=merlict_eventio_converter_path,
+        corsika_path=corsika_path,
+        run_id_start=random_seed,
+        run_id_stop=random_seed+1000)
 
+
+def _add_energy_to_lookup_job(
+    output_path,
+    location_config,
+    particle_config,
+    binning_config,
+    energy,
+    energy_per_iteration,
+    max_num_photons_in_bin,
+    min_num_altitude_bins_with_enough_num_photons,
+    merlict_eventio_converter_path,
+    corsika_path,
+    run_id_start=1,
+    run_id_stop=1001,
+):
+    abc = make_aperture_binning(binning_config["aperture"])
+    altitude_bin_edges = np.array(binning_config["altitude_bin_edges"])
+    cherenkov_collection_radius = float(np.max(abc["xy_bin_edges"]))
+    fov_r = binning_config["field_of_view"]["radius"]
+
+    num_showers_in_run = int(energy_per_iteration//energy)
+    num_showers_in_run = np.max([num_showers_in_run, 16])
+    num_showers_in_run = np.min([num_showers_in_run, 2048])
+
+    os.makedirs(output_path)
+    cct = {}
     cct["num_events"] = num_showers_in_run
     cct["particle_id"] = irf.__particle_str_to_corsika_id(
             particle_config['primary_particle'])
@@ -608,16 +831,26 @@ def _add_energy_to_lookup(
     altitude_paths = {}
     for idx, altitude in enumerate(altitude_bin_edges[: -1]):
         altitude_bin_path = op.join(
-            energy_path,
-            "{:06d}_altitude".format(idx))
+            output_path,
+            ALTITUDE_BIN_FILENAME.format(idx))
         altitude_paths[idx] = altitude_bin_path
         os.makedirs(altitude_bin_path)
 
-    run_id = 1
-    while np.sum(
-        num_photons_in_altitude_bins < max_num_photons_in_bin
-    ) > 0.5*num_altitude_bins:
-        print(num_showers_in_altitude_bins)
+    run_id = run_id_start
+    while True:
+        num_altitude_bins_with_enough_photons = np.sum(
+            num_photons_in_altitude_bins > max_num_photons_in_bin)
+        if (
+            num_altitude_bins_with_enough_photons >=
+            min_num_altitude_bins_with_enough_num_photons
+        ):
+            # The expected break out of the loop.
+            break
+
+        if run_id >= run_id_stop:
+            print("Ran out of run-ids, i.e. ran out of random-seeds.")
+            break
+
         run = cct.copy()
         run["run_id"] = run_id
 
@@ -655,10 +888,6 @@ def _add_energy_to_lookup(
                     [shower_maximum_altitude],
                     altitude_bin_edges)[0])
 
-                print(
-                    "upper_altitude_bin_edge",
-                    upper_altitude_bin_edge,
-                    shower_maximum_altitude)
                 if (
                     upper_altitude_bin_edge == 0 or
                     upper_altitude_bin_edge == altitude_bin_edges.shape[0]
@@ -697,11 +926,10 @@ def _add_energy_to_lookup(
                         path=altitude_paths[altitude_bin],
                         aperture_binning_config=abc)
 
-                fill_path = os.path.join(energy_path, "fill.json")
+                fill_path = os.path.join(output_path, "fill.json")
                 with open(fill_path, "wt") as fout:
                     fout.write(json.dumps({
-                        "num_shower": num_showers_in_altitude_bins.tolist(),
-                        "num_photons": num_photons_in_altitude_bins.tolist(),
-                        },
+                        "num_showers": num_showers_in_altitude_bins.tolist(),
+                        "num_photons": num_photons_in_altitude_bins.tolist()},
                         indent=4))
         run_id += 1
