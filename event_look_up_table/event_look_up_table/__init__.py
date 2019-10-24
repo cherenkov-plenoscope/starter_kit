@@ -897,8 +897,16 @@ def _add_energy_to_lookup_job(
                     shower_maximum_altitude <
                     altitude_bin_edges[upper_altitude_bin_edge])
                 assert (
-                    shower_maximum_altitude >
-                    altitude_bin_edges[upper_altitude_bin_edge - 1])
+                    shower_maximum_altitude >=
+                    altitude_bin_edges[upper_altitude_bin_edge - 1]
+                ), (
+                    "Expected shower_maximum_altitude {:f} >= {:f}, ".format(
+                        shower_maximum_altitude,
+                        altitude_bin_edges[upper_altitude_bin_edge - 1]) +
+                    ", altitude_bin_edges[upper_altitude_bin_edge - 1], " +
+                    "upper_altitude_bin_edge = {:d}".format(
+                        upper_altitude_bin_edge)
+                )
 
                 altitude_bin = upper_altitude_bin_edge - 1
 
