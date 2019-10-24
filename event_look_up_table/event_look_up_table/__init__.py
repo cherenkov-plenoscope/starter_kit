@@ -668,11 +668,9 @@ def _append_apperture_bin(
 
 
 def _reduce_energy_bin(lookup_path, energy_bin_idx):
-    binning_config = irf.__read_json(
-        os.path.join(lookup_path, "binning_config.json"))
-    num_altitude_bins = len(binning_config["altitude_bin_edges"]) - 1
-    num_aperture_bins = make_aperture_binning(binning_config["aperture"])[
-        "num_bins"]
+    bc = irf.__read_json(op.join(lookup_path, "binning_config.json"))
+    num_altitude_bins = len(bc["altitude_bin_edges"]) - 1
+    num_aperture_bins = make_aperture_binning(bc["aperture"])["num_bins"]
 
     energy_str = ENERGY_BIN_FILENAME.format(energy_bin_idx)
     energy_path = op.join(lookup_path, energy_str)
@@ -729,7 +727,7 @@ def _reduce_energy_bin(lookup_path, energy_bin_idx):
                 "num_photons": num_photons_in_altitude_bins.tolist()},
                 indent=4))
 
-    shutil.move(tmp_energy_path, energy_path)
+        shutil.move(tmp_energy_path, energy_path)
     # shutil.rmtree(energy_jobs_path)
 
 
