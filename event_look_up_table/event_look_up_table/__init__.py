@@ -31,6 +31,25 @@ CORSIKA_PATH = op.join(
 ALTITUDE_BIN_FILENAME = "{:06d}_altitude"
 ENERGY_BIN_FILENAME = "{:06d}_energy"
 APERTURE_BIN_FILENAME = "{:06d}.x_y_cx_cy"
+LIGHT_FIELD_DTYPE = [
+    ('x', np.float32),
+    ('y', np.float32),
+    ('cx', np.float32),
+    ('cy', np.float32)]
+PHOTON_DTYPE = [
+    ('x', np.uint8),
+    ('y', np.uint8),
+    ('cx', np.uint16),
+    ('cy', np.uint16)]
+PHOTON_SIZE_IN_BYTE = int(
+    np.sum([np.iinfo(t[1]).bits//8 for t in PHOTON_DTYPE]))
+C_BIN_MAX = np.iinfo(PHOTON_DTYPE[2][1]).max
+C_BIN_MAX_HALF = (C_BIN_MAX+1)//2
+
+XY_BIN_MAX = np.iinfo(PHOTON_DTYPE[0][1]).max
+XY_BIN_OVER = XY_BIN_MAX + 1
+YX_BIN_OVER_HALF = (XY_BIN_OVER)//2
+
 
 def _merlict_simpleio(
     merlict_eventio_converter_path,
@@ -71,7 +90,7 @@ def make_aperture_binning(aperture_binning_config):
         order="C")
     t["addressing_1D_to_2D"] = np.zeros(
         shape=(t["num_bins"], 2),
-        dtype= np.int64)
+        dtype=np.int64)
     for b in range(t["num_bins"]):
         t["addressing_1D_to_2D"][b, 0] = b//t["num_bins_diameter"]
         t["addressing_1D_to_2D"][b, 1] = b % t["num_bins_diameter"]
@@ -88,25 +107,6 @@ def make_aperture_binning(aperture_binning_config):
 
     t["bin_centers_tree"] = scipy.spatial.cKDTree(t["bin_centers"])
     return t
-
-LIGHT_FIELD_DTYPE = [
-    ('x', np.float32),
-    ('y', np.float32),
-    ('cx', np.float32),
-    ('cy', np.float32)]
-PHOTON_DTYPE = [
-    ('x', np.uint8),
-    ('y', np.uint8),
-    ('cx', np.uint16),
-    ('cy', np.uint16)]
-PHOTON_SIZE_IN_BYTE = int(
-    np.sum([np.iinfo(t[1]).bits//8 for t in PHOTON_DTYPE]))
-C_BIN_MAX = np.iinfo(PHOTON_DTYPE[2][1]).max
-C_BIN_MAX_HALF = (C_BIN_MAX+1)//2
-
-XY_BIN_MAX = np.iinfo(PHOTON_DTYPE[0][1]).max
-XY_BIN_OVER = XY_BIN_MAX + 1
-YX_BIN_OVER_HALF = (XY_BIN_OVER)//2
 
 
 def compress_x_y(x, y, aperture_binning_config):
@@ -406,7 +406,7 @@ class Instrument:
         core_y
     ):
         projected_instrument_radius = (
-            self.instrument_radius*
+            self.instrument_radius *
             _collection_sphere_scaling(
                 source_cx_in_instrument_frame=source_cx,
                 source_cy_in_instrument_frame=source_cy,))
@@ -424,7 +424,6 @@ class Instrument:
             source_cy_in_instrument_frame=source_cy,
             shower_core_x_in_instrument_frame=core_x,
             shower_core_y_in_instrument_frame=core_y)
-
 
         num_shower = self.reader.num_showers[energy_bin][altitude_bin]
 
@@ -573,7 +572,7 @@ def make_jobs(
     num_altitude_bins = len(bc["altitude_bin_edges"]) - 1
     num_jobs_in_energy_bin = int(np.ceil(num_jobs/num_energy_bins))
     max_num_photons_in_bin_job = np.ceil(
-        filling_config["max_num_photons_in_bin"]/
+        filling_config["max_num_photons_in_bin"] /
         num_jobs_in_energy_bin)
 
     jobs = []
@@ -585,7 +584,8 @@ def make_jobs(
                 + job_idx*random_seed_range_per_job)
             job = {}
             job["lookup_path"] = lookup_path
-            job["energy_dirname"] = ENERGY_BIN_FILENAME.format(energy_bin_idx)+".jobs"
+            job["energy_dirname"] = ENERGY_BIN_FILENAME.format(
+                energy_bin_idx)+".jobs"
             job["job_dirname"] = "{:06d}".format(job_idx)
             job["location_config"] = location_config
             job["particle_config"] = particle_config
@@ -711,7 +711,8 @@ def _reduce_energy_bin(lookup_path, energy_bin_idx):
             num_photons_in_altitude_bins += np.array(job_fill["num_photons"])
 
             for altitude_bin in range(num_altitude_bins):
-                altitude_bin_dirname = ALTITUDE_BIN_FILENAME.format(altitude_bin)
+                altitude_bin_dirname = ALTITUDE_BIN_FILENAME.format(
+                    altitude_bin)
                 _append_apperture_bin(
                     input_altitude_bin_path=op.join(
                         tmp_job_path,

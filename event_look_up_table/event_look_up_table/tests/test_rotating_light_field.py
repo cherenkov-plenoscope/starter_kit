@@ -6,6 +6,7 @@ import os
 d2r = np.deg2rad
 assert_close = np.testing.assert_almost_equal
 
+
 def test_rotation_unity():
     NUM_PH = 1
     light_field = np.recarray(NUM_PH, dtype=elut.LIGHT_FIELD_DTYPE)
