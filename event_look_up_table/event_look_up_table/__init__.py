@@ -329,7 +329,8 @@ def _print_photons_cx_cy(
 class Reader:
     def __init__(self, path):
         self.lookup_path = path
-        with open(os.path.join(self.lookup_path, "binning.json"), "rt") as f:
+        _config_path = op.join(self.lookup_path, "binning_config.json")
+        with open(_config_path, "rt") as f:
             config = json.loads(f.read())
         self.aperture_binning = make_aperture_binning(config["aperture"])
         self.altitude_bin_edges = np.array(config["altitude_bin_edges"])
@@ -696,7 +697,7 @@ def _reduce_energy_bin(lookup_path, energy_bin_idx):
             dtype=np.int64)
 
         for job_path in job_paths:
-            tmp_job_path = op.join(tmp, "job")
+            tmp_job_path = op.join(tmp, op.basename(job_path))
             os.makedirs(tmp_job_path)
             subprocess.call([
                 "tar",
@@ -727,7 +728,8 @@ def _reduce_energy_bin(lookup_path, energy_bin_idx):
                 "num_photons": num_photons_in_altitude_bins.tolist()},
                 indent=4))
 
-        shutil.move(tmp_energy_path, energy_path)
+        shutil.copytree(tmp_energy_path, energy_path+".part")
+        shutil.move(energy_path+".part", energy_path)
     # shutil.rmtree(energy_jobs_path)
 
 
