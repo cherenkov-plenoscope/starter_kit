@@ -359,7 +359,7 @@ class Reader:
             if os.path.exists(p):
                 with open(p, "rt") as fin:
                     energy_bin_fill = json.loads(fin.read())
-                self.num_showers.append(energy_bin_fill["num_shower"])
+                self.num_showers.append(energy_bin_fill["num_showers"])
                 self.num_photons.append(energy_bin_fill["num_photons"])
             else:
                 self.num_showers.append([])
