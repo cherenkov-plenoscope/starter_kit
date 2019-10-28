@@ -999,6 +999,10 @@ def _add_energy_to_lookup_job(
                 if underflow or overflow:
                     continue
 
+                if (num_photons_in_altitude_bins[altitude_bin] >=
+                        max_num_photons_in_bin):
+                    continue
+
                 comp_x_y_cx_cy, valid_photons = compress_photons(
                     x=event.cherenkov_photon_bunches.x,
                     y=event.cherenkov_photon_bunches.y,
