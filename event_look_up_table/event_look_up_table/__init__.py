@@ -726,6 +726,53 @@ def reduce_jobs(lookup_path):
             energy_bin_idx=energy_bin_idx)
 
 
+def _remove_incomplete_altitude_bins(lookup_path, energy_bin_idx):
+    filling_config = irf.__read_json(
+        os.path.join(lookup_path, "filling_config.json"))
+    max_num_photons_in_bin = filling_config["max_num_photons_in_bin"]
+
+    energy_bin_path = op.join(
+        lookup_path,
+        ENERGY_BIN_FILENAME.format(energy_bin_idx))
+    energy_bin_part_path = energy_bin_path + ".part"
+
+    shutil.copytree(energy_bin_path, energy_bin_part_path)
+
+    with open(op.join(energy_bin_part_path, "fill.json"), "rt") as f:
+        fill = json.loads(f.read())
+    num_photons = np.array(fill["num_photons"])
+    num_showers = np.array(fill["num_showers"])
+
+    # from bottom
+    altitude_bin = 0
+    while num_photons[altitude_bin] < max_num_photons_in_bin:
+        altitude_bin_path = op.join(
+            energy_bin_part_path,
+            ALTITUDE_BIN_FILENAME.format(altitude_bin))
+        shutil.rmtree(altitude_bin_path)
+        num_photons[altitude_bin] = 0
+        num_showers[altitude_bin] = 0
+        altitude_bin += 1
+
+    # from top
+    altitude_bin = num_photons.shape[0] - 1
+    while num_photons[altitude_bin] < max_num_photons_in_bin:
+        altitude_bin_path = op.join(
+            energy_bin_part_path,
+            ALTITUDE_BIN_FILENAME.format(altitude_bin))
+        shutil.rmtree(altitude_bin_path)
+        num_photons[altitude_bin] = 0
+        num_showers[altitude_bin] = 0
+        altitude_bin -= 1
+
+    with open(op.join(energy_bin_part_path, "fill.json"), "wt") as fout:
+        fout.write(json.dumps({
+            "num_showers": num_showers.tolist(),
+            "num_photons": num_photons.tolist()},
+            indent=4))
+    # shutil.move(energy_bin_part_path, energy_bin_path)
+
+
 def _append_apperture_bin(
     input_altitude_bin_path,
     output_altitude_bin_path,
@@ -802,7 +849,7 @@ def _reduce_energy_bin(lookup_path, energy_bin_idx):
 
         shutil.copytree(tmp_energy_path, energy_path+".part")
         shutil.move(energy_path+".part", energy_path)
-    # shutil.rmtree(energy_jobs_path)
+    shutil.rmtree(energy_jobs_path)
 
 
 def _num_photons_in_bin(path, aperture_binning_config):
