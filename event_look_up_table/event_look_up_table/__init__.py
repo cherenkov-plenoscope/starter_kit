@@ -335,8 +335,8 @@ class Reader:
         self.aperture_binning = make_aperture_binning(config["aperture"])
         self.altitude_bin_edges = np.array(config["altitude_bin_edges"])
         self.field_of_view_radius = config["field_of_view"]["radius"]
-        self.energy_bin_centers = config["energy_bin_centers"]
-        self.__config = config
+        self.energy_bin_centers = np.array(config["energy_bin_centers"])
+        self._config = config
 
         self.__energy_altitude_paths = []
         for e in range(len(self.energy_bin_centers)):
@@ -397,7 +397,7 @@ class Instrument:
         self.pixel_radius = self.light_field_geometry. \
             sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2
 
-    def response(
+    def _binned_response(
         self,
         energy_bin,
         altitude_bin,
@@ -451,6 +451,71 @@ class Instrument:
         respo = respo * self.light_field_geometry.efficiency
         respo = respo / num_shower
         return respo
+
+    def response(
+        self,
+        energy,
+        altitude,
+        source_cx,
+        source_cy,
+        core_x,
+        core_y
+    ):
+        energy_match = _find_bins_in_centers(
+            bin_centers=self.reader.energy_bin_centers,
+            value=energy)
+        assert not energy_match["underflow"]
+        assert not energy_match["overflow"]
+
+        altitude_match = _find_bins_in_centers(
+            bin_centers=self.reader.altitude_bin_edges,
+            value=altitude)
+        assert not altitude_match["underflow"]
+        assert not altitude_match["overflow"]
+
+        r_ene_low_alt_low = self._binned_response(
+            energy_bin=energy_match["lower_bin"],
+            altitude_bin=altitude_match["lower_bin"],
+            source_cx=source_cx,
+            source_cy=source_cy,
+            core_x=core_x,
+            core_y=core_y)
+
+        r_ene_low_alt_upp = self._binned_response(
+            energy_bin=energy_match["lower_bin"],
+            altitude_bin=altitude_match["upper_bin"],
+            source_cx=source_cx,
+            source_cy=source_cy,
+            core_x=core_x,
+            core_y=core_y)
+
+        r_ene_upp_alt_low = self._binned_response(
+            energy_bin=energy_match["upper_bin"],
+            altitude_bin=altitude_match["lower_bin"],
+            source_cx=source_cx,
+            source_cy=source_cy,
+            core_x=core_x,
+            core_y=core_y)
+
+        r_ene_upp_alt_upp = self._binned_response(
+            energy_bin=energy_match["upper_bin"],
+            altitude_bin=altitude_match["upper_bin"],
+            source_cx=source_cx,
+            source_cy=source_cy,
+            core_x=core_x,
+            core_y=core_y)
+
+        r_alt_low = .5*(
+            energy_match["lower_weight"]*r_ene_low_alt_low
+            + energy_match["upper_weight"]*r_ene_upp_alt_low)
+
+        r_alt_upp = .5*(
+            energy_match["lower_weight"]*r_ene_low_alt_upp
+            + energy_match["upper_weight"]*r_ene_upp_alt_upp)
+
+        return .5*(
+            altitude_match["lower_weight"]*r_alt_low
+            + altitude_match["upper_weight"]*r_alt_upp)
 
 
 def _to_photon_lixel_ids(response):
@@ -779,6 +844,41 @@ def _add_energy_to_lookup(
         run_id_stop=random_seed+1000)
 
 
+def _find_bin_in_edges(bin_edges, value):
+    upper_bin_edge = int(np.digitize([value], bin_edges)[0])
+    if upper_bin_edge == 0:
+        return True, 0, False
+    if upper_bin_edge == bin_edges.shape[0]:
+        return False, upper_bin_edge - 1, True
+    return False, upper_bin_edge - 1, False
+
+
+def _find_bins_in_centers(bin_centers, value):
+    underflow, lower_bin, overflow = _find_bin_in_edges(
+        bin_edges=bin_centers,
+        value=value)
+
+    upper_bin = lower_bin + 1
+    if underflow:
+        lower_weight = 0.
+    elif overflow:
+        lower_weight = 1.
+    else:
+        dist_to_lower = value - bin_centers[lower_bin]
+        dist_to_upper = bin_centers[upper_bin] - value
+        bin_range = bin_centers[upper_bin] - bin_centers[lower_bin]
+        lower_weight = 1 - dist_to_lower/bin_range
+
+    return {
+        "underflow": underflow,
+        "overflow": overflow,
+        "lower_bin": lower_bin,
+        "upper_bin": lower_bin + 1,
+        "lower_weight": lower_weight,
+        "upper_weight": 1. - lower_weight,
+    }
+
+
 def _add_energy_to_lookup_job(
     output_path,
     location_config,
@@ -885,37 +985,11 @@ def _add_energy_to_lookup_job(
                 shower_maximum_altitude = _estimate_shower_maximum_altitude(
                     event.cherenkov_photon_bunches.emission_height)
 
-                upper_altitude_bin_edge = int(np.digitize(
-                    [shower_maximum_altitude],
-                    altitude_bin_edges)[0])
+                underflow, altitude_bin, overflow = _find_bin_in_edges(
+                    bin_edges=altitude_bin_edges,
+                    value=shower_maximum_altitude)
 
-                if (
-                    upper_altitude_bin_edge == 0 or
-                    upper_altitude_bin_edge == altitude_bin_edges.shape[0]
-                ):
-                    continue
-
-                assert (
-                    shower_maximum_altitude <
-                    altitude_bin_edges[upper_altitude_bin_edge])
-                assert (
-                    shower_maximum_altitude >=
-                    altitude_bin_edges[upper_altitude_bin_edge - 1]
-                ), (
-                    "Expected shower_maximum_altitude {:f} >= {:f}, ".format(
-                        shower_maximum_altitude,
-                        altitude_bin_edges[upper_altitude_bin_edge - 1]) +
-                    ", altitude_bin_edges[upper_altitude_bin_edge - 1], " +
-                    "upper_altitude_bin_edge = {:d}".format(
-                        upper_altitude_bin_edge)
-                )
-
-                altitude_bin = upper_altitude_bin_edge - 1
-
-                if (
-                    num_photons_in_altitude_bins[altitude_bin] >=
-                    max_num_photons_in_bin
-                ):
+                if underflow or overflow:
                     continue
 
                 comp_x_y_cx_cy, valid_photons = compress_photons(
