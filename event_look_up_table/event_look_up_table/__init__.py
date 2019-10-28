@@ -325,8 +325,8 @@ def _print_photons_cx_cy(
     v_max=None
 ):
     image = np.histogram2d(
-        photons_x_y_cx_cy[:, 2],
-        photons_x_y_cx_cy[:, 3],
+        photons_x_y_cx_cy.cx,
+        photons_x_y_cx_cy.cy
         bins=c_bin_edges)[0]
     if v_max is None:
         v_max = np.max(image)
