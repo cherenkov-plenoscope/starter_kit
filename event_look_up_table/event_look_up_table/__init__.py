@@ -1,3 +1,4 @@
+import functools
 import numpy as np
 import os
 import gzip
@@ -245,6 +246,14 @@ def _estimate_xy_bins_overlapping_with_circle(
         eps=0.)
 
 
+@functools.lru_cache(maxsize=4096, typed=True)
+def _read_aperture_bin(path):
+    with open(path, "rb") as fin:
+        compressed_photons = np.rec.array(
+            np.frombuffer(fin.read(), dtype=PHOTON_DTYPE))
+    return compressed_photons
+
+
 def read_photons(
     path,
     aperture_binning_config,
@@ -267,9 +276,7 @@ def read_photons(
             APERTURE_BIN_FILENAME.format(bin_to_load))
         x_bin_idx = abc["addressing_1D_to_2D"][bin_to_load, 0]
         y_bin_idx = abc["addressing_1D_to_2D"][bin_to_load, 1]
-        with open(xy_bin_path, "rb") as fin:
-            compressed_photons = np.rec.array(
-                np.frombuffer(fin.read(), dtype=PHOTON_DTYPE))
+        compressed_photons = _read_aperture_bin(xy_bin_path)
         num_photons_in_block = compressed_photons.shape[0]
         xs, ys = decompress_x_y(
             x_bin_idx=np.ones(num_photons_in_block, dtype=np.int)*x_bin_idx,
