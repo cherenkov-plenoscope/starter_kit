@@ -98,6 +98,7 @@ def _make_sub_jobs_integrated(
 
 
 def _run_sub_job_integrated(sub_job):
+    job = sub_job
     azimuth_bin_dir = op.join(
         job["integrated_lookup_dir"],
         ENERGY_BIN_FILENAME.format(job["energy_bin"]),
