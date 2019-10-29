@@ -155,7 +155,7 @@ def _run_sub_job_integrated(sub_job):
         f.write(json.dumps({"photons_per_shower_scale": image_scale8}))
 
 
-def _meke_jobs_integrated(
+def _make_jobs_integrated(
     integrated_lookup_dir,
     unbinned_lookup_path,
     num_jobs
