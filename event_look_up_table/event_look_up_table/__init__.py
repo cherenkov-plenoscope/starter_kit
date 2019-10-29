@@ -1,5 +1,6 @@
 import functools
 import PIL
+import plenoscope_map_reduce as plmr
 import io
 import numpy as np
 import os
@@ -18,33 +19,11 @@ import array
 import json
 import cable_robo_mount as crm
 
-"""
-def _hexagonal_grid(outer_radius, spacing):
-    grid_xy = []
-    grid_ab = []
-    unit_x = np.array([1, 0])
-    unit_y = np.array([0, 1])
-    unit_hex_b = unit_x*spacing
-    unit_hex_a = (unit_x*.5+unit_y*np.sqrt(3.)/2.)*spacing
-    sample_radius = 2*int(np.floor(outer_radius/spacing))
-    a = -sample_radius
-    while a <= sample_radius:
-        b = -sample_radius
-        while b <= sample_radius:
-            cell_a_b = unit_hex_a*a + unit_hex_b*b
-            cell_a_b_norm = np.linalg.norm(cell_a_b)
-            if cell_a_b_norm <= outer_radius:
-                grid_xy.append(cell_a_b)
-                grid_ab.append([a, b])
-            b += 1
-        a += 1
-    return np.array(grid_xy), np.array(grid_ab)
-"""
 
 integrated_binning = {
     "aperture_bin_radius": 4.6,
     "radius_bin_centers": np.linspace(0., 256, 128),
-    "azimuth_bin_centers": np.linspace(0., 2*np.pi, 6),
+    "azimuth_bin_centers": np.linspace(0., 2*np.pi, 8),
     "c_parallel_bin_edges": np.linspace(
         np.deg2rad(-.5),
         np.deg2rad(2.5),
@@ -89,7 +68,7 @@ def _init_integrated(
             indent=4))
 
 
-def _make_jobs_integrated(
+def _make_sub_jobs_integrated(
     integrated_lookup_dir,
     unbinned_lookup_path,
 ):
@@ -118,7 +97,7 @@ def _make_jobs_integrated(
     return jobs
 
 
-def _run_job_integrated(job):
+def _run_sub_job_integrated(sub_job):
     azimuth_bin_dir = op.join(
         job["integrated_lookup_dir"],
         ENERGY_BIN_FILENAME.format(job["energy_bin"]),
@@ -174,6 +153,25 @@ def _run_job_integrated(job):
 
     with open(output_path+".json", "wt") as f:
         f.write(json.dumps({"photons_per_shower_scale": image_scale8}))
+
+
+def _meke_jobs_integrated(
+    integrated_lookup_dir,
+    unbinned_lookup_path,
+    num_jobs
+):
+    sub_jobs = _make_sub_jobs_integrated(
+        integrated_lookup_dir=integrated_lookup_dir,
+        unbinned_lookup_path=unbinned_lookup_path)
+    jobs = plmr.split_list_into_list_of_lists(
+        events=sub_jobs,
+        num_events_in_job=int(np.ceil(len(sub_jobs)/num_jobs)))
+    return jobs
+
+
+def _run_job_integrated(job):
+    for sub_job in job:
+        _run_sub_job_integrated(sub_job)
 
 
 MERLICT_EVENTIO_CONVERTER_PATH = op.join(
@@ -459,38 +457,6 @@ def read_photons(
     lf.cy = photons[valid, 3]
     return lf
 
-"""
-def _print_image(image, v_max=None):
-    num_cols = image.shape[0]
-    num_rows = image.shape[1]
-    if v_max is None:
-        v_max = np.max(image)
-    s = ""
-    for row in range(num_rows):
-        for col in range(num_cols):
-            intensity = (image[col, row]/v_max)*255
-            i_out = int(np.min([intensity, 255]))
-            r = i_out
-            g = i_out
-            b = i_out
-            s += "\033[48;2;{:d};{:d};{:d}m  \033[0m".format(r, g, b)
-        s += "\n"
-    print(s)
-
-
-def _print_photons_cx_cy(
-    photons_x_y_cx_cy,
-    c_bin_edges=np.deg2rad(np.linspace(-4, 4, 97)),
-    v_max=None
-):
-    image = np.histogram2d(
-        photons_x_y_cx_cy.cx,
-        photons_x_y_cx_cy.cy,
-        bins=c_bin_edges)[0]
-    if v_max is None:
-        v_max = np.max(image)
-    _print_image(image, v_max)
-"""
 
 class Reader:
     def __init__(self, path):
@@ -570,159 +536,6 @@ def _project_to_image(
     return hist
 
 
-"""
-class Instrument:
-    def __init__(self, path, light_field_geometry):
-        self.reader = Reader(path)
-        self.light_field_geometry = light_field_geometry
-        self.instrument_radius = self.light_field_geometry. \
-            sensor_plane2imaging_system. \
-            expected_imaging_system_max_aperture_radius
-        aperture_area = self.light_field_geometry. \
-            sensor_plane2imaging_system. \
-            expected_imaging_system_max_aperture_radius**2*np.pi
-        paxel_area = aperture_area/self.light_field_geometry.number_paxel
-        self.paxel_radius = np.sqrt(paxel_area/np.pi)
-        self.pixel_radius = self.light_field_geometry. \
-            sensor_plane2imaging_system.pixel_FoV_hex_flat2flat/2
-
-    def _binned_response(
-        self,
-        energy_bin,
-        altitude_bin,
-        source_cx,
-        source_cy,
-        core_x,
-        core_y
-    ):
-        projected_instrument_radius = (
-            self.instrument_radius *
-            _collection_sphere_scaling(
-                source_cx_in_instrument_frame=source_cx,
-                source_cy_in_instrument_frame=source_cy,))
-
-        light_field_in_shower_frame = self.reader.read_light_field(
-            energy_bin=energy_bin,
-            altitude_bin=altitude_bin,
-            core_x=core_x,
-            core_y=core_y,
-            instrument_radius=projected_instrument_radius)
-
-        light_field = _transform_light_field_to_instrument_frame(
-            light_field_in_shower_frame=light_field_in_shower_frame,
-            source_cx_in_instrument_frame=source_cx,
-            source_cy_in_instrument_frame=source_cy,
-            shower_core_x_in_instrument_frame=core_x,
-            shower_core_y_in_instrument_frame=core_y)
-
-        num_shower = self.reader.num_showers[energy_bin][altitude_bin]
-
-        paxel_dist, paxel_idx = self.light_field_geometry.paxel_pos_tree.query(
-            np.c_[light_field.x, light_field.y],
-            k=1)
-        paxel_valid = paxel_dist <= self.paxel_radius
-        pixel_dist, pixel_idx = self.light_field_geometry.pixel_pos_tree.query(
-            np.c_[light_field.cx, light_field.cy],
-            k=1)
-        pixel_valid = pixel_dist <= self.pixel_radius
-        valid = np.logical_and(paxel_valid, pixel_valid)
-
-        valid_paxel_idx = paxel_idx[valid]
-        valid_pixel_idx = pixel_idx[valid]
-
-        valid_lixel_idx = (
-            valid_pixel_idx*self.light_field_geometry.number_paxel +
-            valid_paxel_idx)
-
-        respo = np.zeros(self.light_field_geometry.number_lixel)
-        for lix in valid_lixel_idx:
-            respo[lix] += 1
-        respo = respo * self.light_field_geometry.efficiency
-        respo = respo / num_shower
-        return respo
-
-    def response(
-        self,
-        energy,
-        altitude,
-        source_cx,
-        source_cy,
-        core_x,
-        core_y
-    ):
-        energy_match = _find_bins_in_centers(
-            bin_centers=self.reader.energy_bin_centers,
-            value=energy)
-        assert not energy_match["underflow"]
-        assert not energy_match["overflow"]
-
-        altitude_match = _find_bins_in_centers(
-            bin_centers=self.reader.altitude_bin_edges,
-            value=altitude)
-        assert not altitude_match["underflow"]
-        assert not altitude_match["overflow"]
-
-        r_ene_low_alt_low = self._binned_response(
-            energy_bin=energy_match["lower_bin"],
-            altitude_bin=altitude_match["lower_bin"],
-            source_cx=source_cx,
-            source_cy=source_cy,
-            core_x=core_x,
-            core_y=core_y)
-
-        r_ene_low_alt_upp = self._binned_response(
-            energy_bin=energy_match["lower_bin"],
-            altitude_bin=altitude_match["upper_bin"],
-            source_cx=source_cx,
-            source_cy=source_cy,
-            core_x=core_x,
-            core_y=core_y)
-
-        r_ene_upp_alt_low = self._binned_response(
-            energy_bin=energy_match["upper_bin"],
-            altitude_bin=altitude_match["lower_bin"],
-            source_cx=source_cx,
-            source_cy=source_cy,
-            core_x=core_x,
-            core_y=core_y)
-
-        r_ene_upp_alt_upp = self._binned_response(
-            energy_bin=energy_match["upper_bin"],
-            altitude_bin=altitude_match["upper_bin"],
-            source_cx=source_cx,
-            source_cy=source_cy,
-            core_x=core_x,
-            core_y=core_y)
-
-        r_alt_low = .5*(
-            energy_match["lower_weight"]*r_ene_low_alt_low
-            + energy_match["upper_weight"]*r_ene_upp_alt_low)
-
-        r_alt_upp = .5*(
-            energy_match["lower_weight"]*r_ene_low_alt_upp
-            + energy_match["upper_weight"]*r_ene_upp_alt_upp)
-
-        return .5*(
-            altitude_match["lower_weight"]*r_alt_low
-            + altitude_match["upper_weight"]*r_alt_upp)
-
-
-def _to_photon_lixel_ids(response):
-    return np.concatenate(
-        [i*np.ones(int(np.round(c*1000))) for i, c in enumerate(response)]
-    ).astype(np.uint64)
-
-
-def _collection_sphere_scaling(
-    source_cx_in_instrument_frame,
-    source_cy_in_instrument_frame
-):
-    approx_rotation_angle = np.hypot(
-        source_cx_in_instrument_frame,
-        source_cy_in_instrument_frame)
-    return 1.0/np.cos(approx_rotation_angle)
-
-"""
 def _transform_light_field_to_instrument_frame(
     light_field_in_shower_frame,
     source_cx_in_instrument_frame,
