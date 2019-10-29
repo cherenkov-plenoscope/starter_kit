@@ -1,4 +1,6 @@
 import functools
+import PIL
+import io
 import numpy as np
 import os
 import gzip
@@ -15,6 +17,163 @@ import glob
 import array
 import json
 import cable_robo_mount as crm
+
+"""
+def _hexagonal_grid(outer_radius, spacing):
+    grid_xy = []
+    grid_ab = []
+    unit_x = np.array([1, 0])
+    unit_y = np.array([0, 1])
+    unit_hex_b = unit_x*spacing
+    unit_hex_a = (unit_x*.5+unit_y*np.sqrt(3.)/2.)*spacing
+    sample_radius = 2*int(np.floor(outer_radius/spacing))
+    a = -sample_radius
+    while a <= sample_radius:
+        b = -sample_radius
+        while b <= sample_radius:
+            cell_a_b = unit_hex_a*a + unit_hex_b*b
+            cell_a_b_norm = np.linalg.norm(cell_a_b)
+            if cell_a_b_norm <= outer_radius:
+                grid_xy.append(cell_a_b)
+                grid_ab.append([a, b])
+            b += 1
+        a += 1
+    return np.array(grid_xy), np.array(grid_ab)
+"""
+
+integrated_binning = {
+    "aperture_bin_radius": 4.6,
+    "radius_bin_centers": np.linspace(0., 256, 128),
+    "azimuth_bin_centers": np.linspace(0., 2*np.pi, 6),
+    "c_parallel_bin_edges": np.linspace(
+        np.deg2rad(-.5),
+        np.deg2rad(2.5),
+        3*64 + 1),
+    "c_perpendicular_bin_edges": np.linspace(
+        np.deg2rad(-.5),
+        np.deg2rad(+.5),
+        64 + 1),
+}
+
+AZIMUTH_BIN_FILENAME = "{:06d}_azimuth"
+RADIUS_BIN_FILENAME = "{:06d}_radius"
+
+
+def _init_integrated(
+    integrated_lookup_dir,
+    aperture_bin_radius=4.6,
+    radius_bin_centers=np.linspace(0., 256, 128),
+    azimuth_bin_centers=np.linspace(0., 2*np.pi, 6),
+    c_parallel_bin_edges=np.linspace(
+        np.deg2rad(-.5),
+        np.deg2rad(2.5),
+        3*64 + 1),
+    c_perpendicular_bin_edges=np.linspace(
+        np.deg2rad(-.5),
+        np.deg2rad(+.5),
+        64 + 1),
+):
+    os.makedirs(integrated_lookup_dir)
+    integrated_binning_path = op.join(
+        integrated_lookup_dir,
+        "integrated_binning_config.json")
+    with open(integrated_binning_path, "wt") as fout:
+        fout.write(json.dumps(
+            {
+                "aperture_bin_radius": float(aperture_bin_radius),
+                "radius_bin_centers": radius_bin_centers.tolist(),
+                "azimuth_bin_centers": azimuth_bin_centers.tolist(),
+                "c_parallel_bin_edges": c_parallel_bin_edges.tolist(),
+                "c_perpendicular_bin_edges": c_perpendicular_bin_edges.tolist()
+            },
+            indent=4))
+
+
+def _make_jobs_integrated(
+    integrated_lookup_dir,
+    unbinned_lookup_path,
+):
+    integrated_binning_path = op.join(
+        integrated_lookup_dir,
+        "integrated_binning_config.json")
+    with open(integrated_binning_path, "rt") as fin:
+        itb = json.loads(fin.read())
+
+    R = Reader(unbinned_lookup_path)
+    jobs = []
+    for energy_bin in range(len(R.energy_bin_centers)):
+        for altitude_bin in range(len(R.altitude_bin_edges) - 1):
+            if R.num_showers[energy_bin][altitude_bin] > 0:
+                for az_bin, az in enumerate(itb["azimuth_bin_centers"]):
+                    for r_bin, r in enumerate(itb["radius_bin_centers"]):
+                        job = {
+                            "unbinned_lookup_path": unbinned_lookup_path,
+                            "integrated_lookup_dir": integrated_lookup_dir,
+                            "energy_bin": energy_bin,
+                            "altitude_bin": altitude_bin,
+                            "radius_bin": r_bin,
+                            "azimuth_bin": az_bin,
+                            "int_binning": itb.copy()}
+                        jobs.append(job)
+    return jobs
+
+
+def _run_job_integrated(job):
+    azimuth_bin_dir = op.join(
+        job["integrated_lookup_dir"],
+        ENERGY_BIN_FILENAME.format(job["energy_bin"]),
+        ALTITUDE_BIN_FILENAME.format(job["altitude_bin"]),
+        AZIMUTH_BIN_FILENAME.format(job["azimuth_bin"]))
+    os.makedirs(azimuth_bin_dir, exist_ok=True)
+    output_path = op.join(
+        azimuth_bin_dir,
+        RADIUS_BIN_FILENAME.format(job["radius_bin"]))
+
+    azimuth = job["int_binning"]["azimuth_bin_centers"][
+        job["azimuth_bin"]]
+
+    radius = job["int_binning"]["radius_bin_centers"][
+        job["radius_bin"]]
+
+    x = np.cos(azimuth)*radius
+    y = np.sin(azimuth)*radius
+
+    R = Reader(job["unbinned_lookup_path"])
+    light_field = R.read_light_field(
+        energy_bin=job["energy_bin"],
+        altitude_bin=job["altitude_bin"],
+        core_x=x,
+        core_y=y,
+        instrument_radius=job["int_binning"]["aperture_bin_radius"])
+
+    integrated_image = _project_to_image(
+        light_field=light_field,
+        c_parallel_bin_edges=job["int_binning"]["c_parallel_bin_edges"],
+        c_perpendicular_bin_edges=job["int_binning"][
+            "c_perpendicular_bin_edges"],
+        x=x,
+        y=y)
+
+    num_showers = R.num_showers[job["energy_bin"]][job["altitude_bin"]]
+    integrated_image_per_shower = integrated_image/num_showers
+    image_scale = np.max(integrated_image_per_shower)
+
+    norm_image = integrated_image_per_shower/image_scale
+    norm_image8 = norm_image*255
+    norm_image8 = norm_image8.astype(np.uint8)
+    image_scale8 = image_scale*255
+
+    with io.BytesIO() as fbuffer:
+        image = PIL.Image.fromarray(norm_image8)
+        image.save(fbuffer, format="PNG")
+        image_bytes = fbuffer.getvalue()
+    image_bytes_len = len(image_bytes)
+
+    with open(output_path+".png", "wb") as f:
+        f.write(image_bytes)
+
+    with open(output_path+".json", "wt") as f:
+        f.write(json.dumps({"photons_per_shower_scale": image_scale8}))
 
 
 MERLICT_EVENTIO_CONVERTER_PATH = op.join(
@@ -300,7 +459,7 @@ def read_photons(
     lf.cy = photons[valid, 3]
     return lf
 
-
+"""
 def _print_image(image, v_max=None):
     num_cols = image.shape[0]
     num_rows = image.shape[1]
@@ -331,7 +490,7 @@ def _print_photons_cx_cy(
     if v_max is None:
         v_max = np.max(image)
     _print_image(image, v_max)
-
+"""
 
 class Reader:
     def __init__(self, path):
@@ -389,6 +548,29 @@ class Reader:
             field_of_view_radius=self.field_of_view_radius)
 
 
+def _project_to_image(
+    light_field,
+    c_parallel_bin_edges=np.deg2rad(np.linspace(-.5, 3.5, (4*64)+1)),
+    c_perpendicular_bin_edges=np.deg2rad(np.linspace(-.5, .5, 64+1)),
+    x=0,
+    y=0,
+):
+    cxs = light_field.cy
+    cys = light_field.cx
+
+    azimuth = np.arctan2(y, x)
+
+    cPara = np.cos(-azimuth)*cys - np.sin(-azimuth)*cxs
+    cPerp = np.sin(-azimuth)*cys + np.cos(-azimuth)*cxs
+
+    hist = np.histogram2d(
+        x=cPara,
+        y=cPerp,
+        bins=(c_parallel_bin_edges, c_perpendicular_bin_edges))[0]
+    return hist
+
+
+"""
 class Instrument:
     def __init__(self, path, light_field_geometry):
         self.reader = Reader(path)
@@ -540,7 +722,7 @@ def _collection_sphere_scaling(
         source_cy_in_instrument_frame)
     return 1.0/np.cos(approx_rotation_angle)
 
-
+"""
 def _transform_light_field_to_instrument_frame(
     light_field_in_shower_frame,
     source_cx_in_instrument_frame,
