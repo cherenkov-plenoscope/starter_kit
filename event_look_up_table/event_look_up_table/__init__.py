@@ -1190,6 +1190,7 @@ def _add_energy_to_lookup_job(
 
         run = cct.copy()
         run["run_id"] = run_id
+        np.random.seed(run_id)
 
         with tempfile.TemporaryDirectory(prefix='plenoscope_lookup_') as tmp:
             corsika_card_path = op.join(tmp, 'corsika_card.txt')
@@ -1232,11 +1233,31 @@ def _add_energy_to_lookup_job(
                         max_num_photons_in_bin):
                     continue
 
+                bunch_weight = event. \
+                    cherenkov_photon_bunches.\
+                    probability_to_reach_observation_level
+                assert np.sum(bunch_weight > 1) == 0
+                passed_atmosphere = bunch_weight >= np.random.uniform(
+                    size=num_bunches)
+
+                photon_bunch_radius = np.hypot(
+                    event.cherenkov_photon_bunches.x,
+                    event.cherenkov_photon_bunches.y)
+                on_disc = photon_bunch_radius <= cherenkov_collection_radius
+
+                photon_incident = np.hypot(
+                    event.cherenkov_photon_bunches.cx,
+                    event.cherenkov_photon_bunches.cy)
+                in_fov = photon_incident <= fov_r
+
+                valid_geometry = np.logical_and(in_fov, on_disc)
+                valid = np.logical_and(valid_geometry, passed_atmosphere)
+
                 comp_x_y_cx_cy, valid_photons = compress_photons(
-                    x=event.cherenkov_photon_bunches.x,
-                    y=event.cherenkov_photon_bunches.y,
-                    cx=event.cherenkov_photon_bunches.cx,
-                    cy=event.cherenkov_photon_bunches.cy,
+                    x=event.cherenkov_photon_bunches.x[valid],
+                    y=event.cherenkov_photon_bunches.y[valid],
+                    cx=event.cherenkov_photon_bunches.cx[valid],
+                    cy=event.cherenkov_photon_bunches.cy[valid],
                     aperture_binning_config=abc,
                     field_of_view_radius=fov_r)
                 append_compressed_photons(
