@@ -1,6 +1,6 @@
 import functools
 import PIL
-import plenoscope_map_reduce as plmr
+import tarfile
 import io
 import numpy as np
 import os
@@ -34,9 +34,6 @@ integrated_binning = {
         64 + 1),
 }
 
-AZIMUTH_BIN_FILENAME = "{:06d}_azimuth"
-RADIUS_BIN_FILENAME = "{:06d}_radius"
-
 
 def _init_integrated(
     integrated_lookup_dir,
@@ -68,111 +65,98 @@ def _init_integrated(
             indent=4))
 
 
-def _make_sub_jobs_integrated(
+def _make_jobs_integrated(
     integrated_lookup_dir,
     unbinned_lookup_path,
 ):
-    integrated_binning_path = op.join(
-        integrated_lookup_dir,
-        "integrated_binning_config.json")
-    with open(integrated_binning_path, "rt") as fin:
-        itb = json.loads(fin.read())
-
     R = Reader(unbinned_lookup_path)
     jobs = []
     for energy_bin in range(len(R.energy_bin_centers)):
         for altitude_bin in range(len(R.altitude_bin_edges) - 1):
             if R.num_showers[energy_bin][altitude_bin] > 0:
-                for az_bin, az in enumerate(itb["azimuth_bin_centers"]):
-                    for r_bin, r in enumerate(itb["radius_bin_centers"]):
-                        job = {
-                            "unbinned_lookup_path": unbinned_lookup_path,
-                            "integrated_lookup_dir": integrated_lookup_dir,
-                            "energy_bin": energy_bin,
-                            "altitude_bin": altitude_bin,
-                            "radius_bin": r_bin,
-                            "azimuth_bin": az_bin,
-                            "int_binning": itb.copy()}
-                        jobs.append(job)
-    return jobs
-
-
-def _run_sub_job_integrated(sub_job):
-    job = sub_job
-    azimuth_bin_dir = op.join(
-        job["integrated_lookup_dir"],
-        ENERGY_BIN_FILENAME.format(job["energy_bin"]),
-        ALTITUDE_BIN_FILENAME.format(job["altitude_bin"]),
-        AZIMUTH_BIN_FILENAME.format(job["azimuth_bin"]))
-    os.makedirs(azimuth_bin_dir, exist_ok=True)
-    output_path = op.join(
-        azimuth_bin_dir,
-        RADIUS_BIN_FILENAME.format(job["radius_bin"]))
-
-    azimuth = job["int_binning"]["azimuth_bin_centers"][
-        job["azimuth_bin"]]
-
-    radius = job["int_binning"]["radius_bin_centers"][
-        job["radius_bin"]]
-
-    x = np.cos(azimuth)*radius
-    y = np.sin(azimuth)*radius
-
-    R = Reader(job["unbinned_lookup_path"])
-    light_field = R.read_light_field(
-        energy_bin=job["energy_bin"],
-        altitude_bin=job["altitude_bin"],
-        core_x=x,
-        core_y=y,
-        instrument_radius=job["int_binning"]["aperture_bin_radius"])
-
-    integrated_image = _project_to_image(
-        light_field=light_field,
-        c_parallel_bin_edges=job["int_binning"]["c_parallel_bin_edges"],
-        c_perpendicular_bin_edges=job["int_binning"][
-            "c_perpendicular_bin_edges"],
-        x=x,
-        y=y)
-
-    num_showers = R.num_showers[job["energy_bin"]][job["altitude_bin"]]
-    integrated_image_per_shower = integrated_image/num_showers
-    image_scale = np.max(integrated_image_per_shower)
-
-    norm_image = integrated_image_per_shower/image_scale
-    norm_image8 = norm_image*255
-    norm_image8 = norm_image8.astype(np.uint8)
-    image_scale8 = image_scale*255
-
-    with io.BytesIO() as fbuffer:
-        image = PIL.Image.fromarray(norm_image8)
-        image.save(fbuffer, format="PNG")
-        image_bytes = fbuffer.getvalue()
-    image_bytes_len = len(image_bytes)
-
-    with open(output_path+".png", "wb") as f:
-        f.write(image_bytes)
-
-    with open(output_path+".json", "wt") as f:
-        f.write(json.dumps({"photons_per_shower_scale": image_scale8}))
-
-
-def _make_jobs_integrated(
-    integrated_lookup_dir,
-    unbinned_lookup_path,
-    num_jobs
-):
-    sub_jobs = _make_sub_jobs_integrated(
-        integrated_lookup_dir=integrated_lookup_dir,
-        unbinned_lookup_path=unbinned_lookup_path)
-    jobs = plmr.split_list_into_list_of_lists(
-        events=sub_jobs,
-        num_events_in_job=int(np.ceil(len(sub_jobs)/num_jobs)))
+                job = {
+                    "unbinned_lookup_path": unbinned_lookup_path,
+                    "integrated_lookup_dir": integrated_lookup_dir,
+                    "energy_bin": energy_bin,
+                    "altitude_bin": altitude_bin}
+                jobs.append(job)
     return jobs
 
 
 def _run_job_integrated(job):
-    for sub_job in job:
-        _run_sub_job_integrated(sub_job)
+    unbinned_reader = Reader(job["unbinned_lookup_path"])
+
+    altitude_bin = job["altitude_bin"]
+    energy_bin = job["energy_bin"]
+
+    integrated_binning_path = op.join(
+        job["integrated_lookup_dir"],
+        "integrated_binning_config.json")
+    integrated_binning = irf.__read_json(integrated_binning_path)
+    ib = integrated_binning
+
+    energy_dir = op.join(
+        job["integrated_lookup_dir"],
+        ENERGY_BIN_FILENAME.format(energy_bin))
+    os.makedirs(energy_dir, exist_ok=True)
+
+    output_path = op.join(
+        energy_dir,
+        ALTITUDE_BIN_FILENAME.format(altitude_bin)+".tar")
+    part_output_path = output_path + ".part"
+
+    with tarfile.TarFile(part_output_path, "w") as tarf:
+        for az_bin, az in enumerate(ib["azimuth_bin_centers"]):
+            for r_bin, r in enumerate(ib["radius_bin_centers"]):
+
+                aperture_x = np.cos(az)*r
+                aperture_y = np.sin(az)*r
+
+                light_field = unbinned_reader.read_light_field(
+                    energy_bin=energy_bin,
+                    altitude_bin=altitude_bin,
+                    core_x=aperture_x,
+                    core_y=aperture_y,
+                    instrument_radius=ib["aperture_bin_radius"])
+
+                integrated_image = _project_to_image(
+                    light_field=light_field,
+                    c_parallel_bin_edges=ib["c_parallel_bin_edges"],
+                    c_perpendicular_bin_edges=ib["c_perpendicular_bin_edges"],
+                    x=aperture_x,
+                    y=aperture_y)
+
+                num_showers = unbinned_reader.num_showers[
+                    energy_bin][altitude_bin]
+                integrated_image_per_shower = integrated_image/num_showers
+                image_scale = np.max(integrated_image_per_shower)
+
+                norm_image = integrated_image_per_shower/image_scale
+                norm_image8 = norm_image*255
+                norm_image8 = norm_image8.astype(np.uint8)
+                image_scale8 = image_scale*255
+                scale_json_str = json.dumps(
+                    {"photons_per_shower_scale": image_scale8})
+
+                img_path = "{:06d}_azimuth_{:06d}_radius".format(az_bin, r_bin)
+
+                with io.BytesIO() as f:
+                    image = PIL.Image.fromarray(norm_image8)
+                    image.save(f, format="PNG")
+                    f.seek(0)
+                    tarinfo = tarfile.TarInfo(name=img_path+".png")
+                    tarinfo.size=len(f.getvalue())
+                    tarf.addfile(tarinfo=tarinfo, fileobj=f)
+
+                with io.BytesIO() as f:
+                    f.write(str.encode(scale_json_str))
+                    f.seek(0)
+                    tarinfo = tarfile.TarInfo(name=img_path+".json")
+                    tarinfo.size=len(f.getvalue())
+                    tarf.addfile(tarinfo=tarinfo, fileobj=f)
+
+    shutil.move(part_output_path, output_path)
+    return 0
 
 
 MERLICT_EVENTIO_CONVERTER_PATH = op.join(
