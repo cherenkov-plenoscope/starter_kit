@@ -20,21 +20,6 @@ import json
 import cable_robo_mount as crm
 
 
-integrated_binning = {
-    "aperture_bin_radius": 4.6,
-    "radius_bin_centers": np.linspace(0., 256, 128),
-    "azimuth_bin_centers": np.linspace(0., 2*np.pi, 8),
-    "c_parallel_bin_edges": np.linspace(
-        np.deg2rad(-.5),
-        np.deg2rad(2.5),
-        3*64 + 1),
-    "c_perpendicular_bin_edges": np.linspace(
-        np.deg2rad(-.5),
-        np.deg2rad(+.5),
-        64 + 1),
-}
-
-
 def _init_integrated(
     integrated_lookup_dir,
     aperture_bin_radius=4.6,
