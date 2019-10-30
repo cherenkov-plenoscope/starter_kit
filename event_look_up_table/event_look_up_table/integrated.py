@@ -134,3 +134,25 @@ def run_job(job):
 
     shutil.move(part_output_path, output_path)
     return 0
+
+
+def _project_to_image(
+    light_field,
+    c_parallel_bin_edges,
+    c_perpendicular_bin_edges,
+    x,
+    y,
+):
+    cxs = light_field.cy
+    cys = light_field.cx
+
+    azimuth = np.arctan2(y, x)
+
+    cPara = np.cos(-azimuth)*cys - np.sin(-azimuth)*cxs
+    cPerp = np.sin(-azimuth)*cys + np.cos(-azimuth)*cxs
+
+    hist = np.histogram2d(
+        x=cPara,
+        y=cPerp,
+        bins=(c_parallel_bin_edges, c_perpendicular_bin_edges))[0]
+    return hist

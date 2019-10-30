@@ -359,28 +359,6 @@ class Reader:
             field_of_view_radius=self.field_of_view_radius)
 
 
-def _project_to_image(
-    light_field,
-    c_parallel_bin_edges=np.deg2rad(np.linspace(-.5, 3.5, (4*64)+1)),
-    c_perpendicular_bin_edges=np.deg2rad(np.linspace(-.5, .5, 64+1)),
-    x=0,
-    y=0,
-):
-    cxs = light_field.cy
-    cys = light_field.cx
-
-    azimuth = np.arctan2(y, x)
-
-    cPara = np.cos(-azimuth)*cys - np.sin(-azimuth)*cxs
-    cPerp = np.sin(-azimuth)*cys + np.cos(-azimuth)*cxs
-
-    hist = np.histogram2d(
-        x=cPara,
-        y=cPerp,
-        bins=(c_parallel_bin_edges, c_perpendicular_bin_edges))[0]
-    return hist
-
-
 def init(
     lookup_path,
     particle_config_path=op.join(
