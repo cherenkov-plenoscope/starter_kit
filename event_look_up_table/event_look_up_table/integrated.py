@@ -12,7 +12,7 @@ import tempfile
 import json
 
 
-def _init_integrated(
+def init(
     integrated_lookup_dir,
     aperture_bin_radius=4.6,
     radius_bin_centers=np.linspace(0., 256, 128),
@@ -42,7 +42,7 @@ def _init_integrated(
             indent=4))
 
 
-def _make_jobs_integrated(
+def make_jobs(
     integrated_lookup_dir,
     unbinned_lookup_path,
 ):
@@ -60,7 +60,7 @@ def _make_jobs_integrated(
     return jobs
 
 
-def _run_job_integrated(job):
+def run_job(job):
     unbinned_reader = Reader(job["unbinned_lookup_path"])
 
     altitude_bin = job["altitude_bin"]
