@@ -16,7 +16,6 @@ import subprocess
 import glob
 import array
 import json
-import cable_robo_mount as crm
 from . import integrated
 
 
@@ -380,53 +379,6 @@ def _project_to_image(
         y=cPerp,
         bins=(c_parallel_bin_edges, c_perpendicular_bin_edges))[0]
     return hist
-
-
-def _transform_light_field_to_instrument_frame(
-    light_field_in_shower_frame,
-    source_cx_in_instrument_frame,
-    source_cy_in_instrument_frame,
-    shower_core_x_in_instrument_frame,
-    shower_core_y_in_instrument_frame
-):
-    lf_SF = light_field_in_shower_frame
-    num_photons = lf_SF.x.shape[0]
-
-    # represent with 3D vecors
-    # ------------------------
-    support_SF = np.array([lf_SF.x, lf_SF.y, np.zeros(num_photons)])
-    _dir_z = np.sqrt(1. - lf_SF.cx**2.0 - lf_SF.cy**2.0)
-    direction_SF = np.array([lf_SF.cx, lf_SF.cy, _dir_z])
-
-    # rotate
-    # ------
-    # The directional cosines x is the rotation-angles for axis Y,
-    # and vice-versa.
-    T_shower2instrument = crm.HomTra()
-    T_shower2instrument.set_translation(pos=np.array([0., 0., 0.]))
-    T_shower2instrument.set_rotation_tait_bryan_angles(
-        Rx=-source_cy_in_instrument_frame,
-        Ry=-source_cx_in_instrument_frame,
-        Rz=0.)
-    support_IF = T_shower2instrument.transformed_position(support_SF)
-    direction_IF = T_shower2instrument.transformed_orientation(direction_SF)
-
-    # represent support on obs.-level. z=0
-    # ------------------------------------
-    #  0 = sz + alpha*dz
-    #  alpha*dz = -sz
-    #  alpha = -sz/dz
-    alpha = -support_IF[2, :]/direction_IF[2, :]
-    support_zZero_IF = support_IF + alpha*direction_IF
-
-    # translate
-    # ---------
-    lf_IF = np.recarray(shape=num_photons, dtype=LIGHT_FIELD_DTYPE)
-    lf_IF.x = support_zZero_IF[0, :] + shower_core_x_in_instrument_frame
-    lf_IF.y = support_zZero_IF[1, :] + shower_core_y_in_instrument_frame
-    lf_IF.cx = direction_IF[0, :]
-    lf_IF.cy = direction_IF[1, :]
-    return lf_IF
 
 
 def init(
