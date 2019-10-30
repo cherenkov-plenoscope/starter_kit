@@ -17,7 +17,7 @@ def test_reducing():
             for aperture_bin in range(NUM_APERTURE_BINS):
                 aperture_bin_path = opj(
                     job_path,
-                    elut.APERTURE_BIN_FILENAME.format(aperture_bin))
+                    elut.unbinned.APERTURE_BIN_FILENAME.format(aperture_bin))
                 with open(aperture_bin_path, "wb") as f:
                     f.write(np.int64(job*aperture_bin).tobytes())
 
@@ -25,7 +25,7 @@ def test_reducing():
         os.makedirs(final_path)
 
         for job in range(NUM_JOBS):
-            elut._append_apperture_bin(
+            elut.unbinned._append_apperture_bin(
                 input_altitude_bin_path=opj(tmp, "{:06d}".format(job)),
                 output_altitude_bin_path=final_path,
                 num_aperture_bins=NUM_APERTURE_BINS)
@@ -33,7 +33,7 @@ def test_reducing():
         for aperture_bin in range(NUM_APERTURE_BINS):
             final_aperture_bin_path = opj(
                 final_path,
-                elut.APERTURE_BIN_FILENAME.format(aperture_bin))
+                elut.unbinned.APERTURE_BIN_FILENAME.format(aperture_bin))
             assert os.path.exists(final_aperture_bin_path)
             with open(final_aperture_bin_path, "rb") as f:
                 content = np.frombuffer(f.read(), dtype=np.int64)

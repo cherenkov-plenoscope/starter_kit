@@ -5,7 +5,7 @@ import os
 
 
 def test_make_aperture_binning():
-    apbi = elut.make_aperture_binning(aperture_binning_config={
+    apbi = elut.unbinned.make_aperture_binning(aperture_binning_config={
         "bin_edge_width": 128,
         "num_bins_radius": 8})
 
@@ -23,7 +23,7 @@ def test_assign_aperture_binning_1():
     aperture_binning_config = {
         "bin_edge_width": 32,
         "num_bins_radius": 4}
-    xbin, ybin, x_rest, y_rest = elut.compress_x_y(
+    xbin, ybin, x_rest, y_rest = elut.unbinned.compress_x_y(
         x=x_y[:, 0],
         y=x_y[:, 1],
         aperture_binning_config=aperture_binning_config)
@@ -31,7 +31,7 @@ def test_assign_aperture_binning_1():
     assert x_rest == 0
     assert ybin == 4
     assert y_rest == 0
-    x, y = elut.decompress_x_y(
+    x, y = elut.unbinned.decompress_x_y(
         xbin, ybin, x_rest, y_rest, aperture_binning_config)
     assert np.abs(x - x_y[:, 0]) < .1
     assert np.abs(y - x_y[:, 1]) < .1
@@ -42,7 +42,7 @@ def test_assign_aperture_binning_2():
     aperture_binning_config = {
         "bin_edge_width": 32,
         "num_bins_radius": 4}
-    xbin, ybin, x_rest, y_rest = elut.compress_x_y(
+    xbin, ybin, x_rest, y_rest = elut.unbinned.compress_x_y(
         x=x_y[:, 0],
         y=x_y[:, 1],
         aperture_binning_config=aperture_binning_config)
@@ -50,7 +50,7 @@ def test_assign_aperture_binning_2():
     assert x_rest == np.floor((50 - 32)/32.*256)
     assert ybin == 1
     assert y_rest == np.floor((-80 + 96)/32.*256)
-    x, y = elut.decompress_x_y(
+    x, y = elut.unbinned.decompress_x_y(
         xbin, ybin, x_rest, y_rest, aperture_binning_config)
     assert np.abs(x - x_y[:, 0]) < .1
     assert np.abs(y - x_y[:, 1]) < .1
@@ -61,7 +61,7 @@ def test_assign_aperture_binning_out_of_range():
     aperture_binning_config = {
         "bin_edge_width": 32,
         "num_bins_radius": 4}
-    xbin, ybin, x_rest, y_rest = elut.compress_x_y(
+    xbin, ybin, x_rest, y_rest = elut.unbinned.compress_x_y(
         x=x_y[:, 0],
         y=x_y[:, 1],
         aperture_binning_config=aperture_binning_config)
@@ -72,14 +72,14 @@ def test_assign_aperture_binning_out_of_range():
 def test_compression_directions_valid():
     fov_r = np.deg2rad(4)
     cx_cy = np.deg2rad(np.array([[-0.5, 1.0]]))
-    cx_bin, cy_bin = elut.compress_cx_cy(
+    cx_bin, cy_bin = elut.unbinned.compress_cx_cy(
         cx=cx_cy[:, 0],
         cy=cx_cy[:, 1],
         field_of_view_radius=fov_r)
     assert cx_bin == int((-.5)/(8./(2**16 - 1)) + (2**15))
     assert cy_bin == int((1.0)/(8./(2**16 - 1)) + (2**15))
 
-    cx_back, cy_back = elut.decompress_cx_cy(
+    cx_back, cy_back = elut.unbinned.decompress_cx_cy(
         cx_bin=cx_bin,
         cy_bin=cy_bin,
         field_of_view_radius=fov_r)
@@ -89,7 +89,7 @@ def test_compression_directions_valid():
 
 def test_compression_directions_out_of_range():
     cx_cy = np.deg2rad(np.array([[-4.5, 5.0]]))
-    cx_bin, cy_bin = elut.compress_cx_cy(
+    cx_bin, cy_bin = elut.unbinned.compress_cx_cy(
         cx=cx_cy[:, 0],
         cy=cx_cy[:, 1],
         field_of_view_radius=np.deg2rad(4))
@@ -101,9 +101,9 @@ def test_overlap_circle():
     aperture_binning_config = {
         "bin_edge_width": 1,
         "num_bins_radius": 2}
-    abc = elut.make_aperture_binning(aperture_binning_config)
+    abc = elut.unbinned.make_aperture_binning(aperture_binning_config)
 
-    ov = elut._estimate_xy_bins_overlapping_with_circle(
+    ov = elut.unbinned._estimate_xy_bins_overlapping_with_circle(
         aperture_binning_config=abc,
         circle_x=0,
         circle_y=0,
@@ -128,7 +128,7 @@ def test_overlap_circle():
     assert 9 in ov
     assert 10 in ov
 
-    ov = elut._estimate_xy_bins_overlapping_with_circle(
+    ov = elut.unbinned._estimate_xy_bins_overlapping_with_circle(
         aperture_binning_config=abc,
         circle_x=2,
         circle_y=0,
@@ -145,7 +145,7 @@ def test_write_read_photons():
     aperture_binning_config = {
         "bin_edge_width": 64,
         "num_bins_radius": 16}
-    abc = elut.make_aperture_binning(aperture_binning_config)
+    abc = elut.unbinned.make_aperture_binning(aperture_binning_config)
     field_of_view_radius = d2r(4.)
 
     NUM_PHOTONS = 1000*100
@@ -159,7 +159,7 @@ def test_write_read_photons():
     print("cx_mean", np.rad2deg(np.mean(lf[:, 2])), "deg")
     print("cy_mean", np.rad2deg(np.mean(lf[:, 3])), "deg")
 
-    comp_lf, valid_photons = elut.compress_photons(
+    comp_lf, valid_photons = elut.unbinned.compress_photons(
         x=lf[:, 0],
         y=lf[:, 1],
         cx=lf[:, 2],
@@ -170,11 +170,11 @@ def test_write_read_photons():
     num_photons_written = np.sum(valid_photons)
 
     with tempfile.TemporaryDirectory() as tmp:
-        elut.append_compressed_photons(
+        elut.unbinned.append_compressed_photons(
             path=tmp,
             compressed_photons=comp_lf)
 
-        back_lf = elut.read_photons(
+        back_lf = elut.unbinned.read_photons(
             path=tmp,
             aperture_binning_config=abc,
             circle_x=0.,

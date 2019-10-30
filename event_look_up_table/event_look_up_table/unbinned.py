@@ -16,7 +16,6 @@ import subprocess
 import glob
 import array
 import json
-from . import integrated
 
 
 MERLICT_EVENTIO_CONVERTER_PATH = op.join(

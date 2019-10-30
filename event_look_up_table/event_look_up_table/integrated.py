@@ -10,10 +10,12 @@ from os import path as op
 import shutil
 import tempfile
 import json
+from .unbinned import Reader as unbinned_Reader
 
 
-def init(
+def init_and_make_jobs(
     integrated_lookup_dir,
+    unbinned_lookup_path,
     aperture_bin_radius=4.6,
     radius_bin_centers=np.linspace(0., 256, 128),
     azimuth_bin_centers=np.linspace(0., 2*np.pi, 6),
@@ -40,13 +42,25 @@ def init(
                 "c_perpendicular_bin_edges": c_perpendicular_bin_edges.tolist()
             },
             indent=4))
+    config_filenames = [
+        "particle_config.json",
+        "location_config.json",
+        "binning_config.json",
+        "filling_config.json"]
+    for config_filename in config_filenames:
+        shutil.copy(
+            op.join(unbinned_lookup_path, config_filename),
+            op.join(integrated_lookup_dir, config_filename))
+    return _make_jobs(
+        integrated_lookup_dir=integrated_lookup_dir,
+        unbinned_lookup_path=unbinned_lookup_path)
 
 
-def make_jobs(
+def _make_jobs(
     integrated_lookup_dir,
     unbinned_lookup_path,
 ):
-    R = Reader(unbinned_lookup_path)
+    R = unbinned_Reader(unbinned_lookup_path)
     jobs = []
     for energy_bin in range(len(R.energy_bin_centers)):
         for altitude_bin in range(len(R.altitude_bin_edges) - 1):
@@ -61,7 +75,7 @@ def make_jobs(
 
 
 def run_job(job):
-    unbinned_reader = Reader(job["unbinned_lookup_path"])
+    unbinned_reader = unbinned_Reader(job["unbinned_lookup_path"])
 
     altitude_bin = job["altitude_bin"]
     energy_bin = job["energy_bin"]

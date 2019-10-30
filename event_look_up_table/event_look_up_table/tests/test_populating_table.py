@@ -9,11 +9,11 @@ def test_populating():
     opj = os.path.join
     with tempfile.TemporaryDirectory(prefix='plenoscope_lookup_') as tmp:
         lookup_path = os.path.join(tmp, "my_table")
-        elut.init(
+        elut.unbinned.init(
             lookup_path=lookup_path,
             max_num_photons_in_bin=1000)
 
-        elut._add_energy_to_lookup(
+        elut.unbinned._add_energy_to_lookup(
             lookup_path=lookup_path,
             energy_bin_center=0,
             energy_per_iteration=5.)
@@ -23,7 +23,7 @@ def test_populating():
         assert ope(opj(lookup_path, "000000_energy", "000000_altitude"))
         assert ope(opj(lookup_path, "000000_energy", "000010_altitude"))
 
-        elut._remove_incomplete_altitude_bins_in_energy_bin(
+        elut.unbinned._remove_incomplete_altitude_bins_in_energy_bin(
             lookup_path=lookup_path,
             energy_bin_idx=0)
 
