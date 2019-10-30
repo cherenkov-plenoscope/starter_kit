@@ -495,9 +495,15 @@ def reduce_jobs(lookup_path):
         _reduce_energy_bin(
             lookup_path=lookup_path,
             energy_bin_idx=energy_bin_idx)
+        _remove_incomplete_altitude_bins_in_energy_bin(
+            lookup_path=lookup_path,
+            energy_bin_idx=energy_bin_idx)
 
 
-def _remove_incomplete_altitude_bins(lookup_path, energy_bin_idx):
+def _remove_incomplete_altitude_bins_in_energy_bin(
+    lookup_path,
+    energy_bin_idx
+):
     filling_config = irf.__read_json(
         os.path.join(lookup_path, "filling_config.json"))
     max_num_photons_in_bin = filling_config["max_num_photons_in_bin"]
@@ -505,43 +511,28 @@ def _remove_incomplete_altitude_bins(lookup_path, energy_bin_idx):
     energy_bin_path = op.join(
         lookup_path,
         ENERGY_BIN_FILENAME.format(energy_bin_idx))
-    energy_bin_part_path = energy_bin_path + ".part"
+    energy_bin_fill_path = op.join(energy_bin_path, "fill.json")
 
-    shutil.copytree(energy_bin_path, energy_bin_part_path)
-
-    with open(op.join(energy_bin_part_path, "fill.json"), "rt") as f:
+    with open(energy_bin_fill_path, "rt") as f:
         fill = json.loads(f.read())
-    num_photons = np.array(fill["num_photons"])
-    num_showers = np.array(fill["num_showers"])
 
-    # from bottom
-    altitude_bin = 0
-    while num_photons[altitude_bin] < max_num_photons_in_bin:
-        altitude_bin_path = op.join(
-            energy_bin_part_path,
-            ALTITUDE_BIN_FILENAME.format(altitude_bin))
-        shutil.rmtree(altitude_bin_path)
-        num_photons[altitude_bin] = 0
-        num_showers[altitude_bin] = 0
-        altitude_bin += 1
+    from_bottom_and_top = [
+        {"start_bin": 0, "increment": +1},
+        {"start_bin": num_photons.shape[0]-1, "increment": -1}]
 
-    # from top
-    altitude_bin = num_photons.shape[0] - 1
-    while num_photons[altitude_bin] < max_num_photons_in_bin:
-        altitude_bin_path = op.join(
-            energy_bin_part_path,
-            ALTITUDE_BIN_FILENAME.format(altitude_bin))
-        shutil.rmtree(altitude_bin_path)
-        num_photons[altitude_bin] = 0
-        num_showers[altitude_bin] = 0
-        altitude_bin -= 1
+    for side in from_bottom_and_top:
+        altitude_bin = side["start_bin"]
+        while num_photons[altitude_bin] < max_num_photons_in_bin:
+            altitude_bin_path = op.join(
+                energy_bin_path,
+                ALTITUDE_BIN_FILENAME.format(altitude_bin))
+            shutil.rmtree(altitude_bin_path)
+            fill["num_photons"][altitude_bin] = 0
+            fill["num_showers"][altitude_bin] = 0
+            altitude_bin += side["increment"]
 
-    with open(op.join(energy_bin_part_path, "fill.json"), "wt") as fout:
-        fout.write(json.dumps({
-            "num_showers": num_showers.tolist(),
-            "num_photons": num_photons.tolist()},
-            indent=4))
-    # shutil.move(energy_bin_part_path, energy_bin_path)
+    with open(energy_bin_fill_path, "wt") as fout:
+        fout.write(json.dumps(fill, indent=4))
 
 
 def _append_apperture_bin(
