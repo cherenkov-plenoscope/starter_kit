@@ -10,23 +10,21 @@ from os import path as op
 import shutil
 import tempfile
 import json
-from .unbinned import Reader as unbinned_Reader
-
+from . import unbinned
 
 def init_and_make_jobs(
     integrated_lookup_dir,
     unbinned_lookup_path,
     aperture_bin_radius=4.6,
-    radius_bin_centers=np.linspace(0., 256, 128),
-    azimuth_bin_centers=np.linspace(0., 2*np.pi, 6),
-    c_parallel_bin_edges=np.linspace(
-        np.deg2rad(-.5),
-        np.deg2rad(2.5),
-        3*64 + 1),
-    c_perpendicular_bin_edges=np.linspace(
-        np.deg2rad(-.5),
-        np.deg2rad(+.5),
-        64 + 1),
+    radius_stop=256,
+    num_radius_bins=96,
+    num_azimuth_bin=8,
+    c_parallel_bin_edges_start=np.deg2rad(-.5),
+    c_parallel_bin_edges_stop=np.deg2rad(2.5),
+    num_c_parallel_bin_edges=3*64+1,
+    c_perpendicular_bin_edges_start=np.deg2rad(-.5),
+    c_perpendicular_bin_edges_stop=np.deg2rad(+.5),
+    num_c_perpendicular_bin_edges=64+1,
 ):
     os.makedirs(integrated_lookup_dir)
     integrated_binning_path = op.join(
@@ -36,10 +34,21 @@ def init_and_make_jobs(
         fout.write(json.dumps(
             {
                 "aperture_bin_radius": float(aperture_bin_radius),
-                "radius_bin_centers": radius_bin_centers.tolist(),
-                "azimuth_bin_centers": azimuth_bin_centers.tolist(),
-                "c_parallel_bin_edges": c_parallel_bin_edges.tolist(),
-                "c_perpendicular_bin_edges": c_perpendicular_bin_edges.tolist()
+                "radius_stop": float(radius_stop),
+                "num_radius_bins": int(num_radius_bins),
+                "num_azimuth_bin": int(num_azimuth_bin),
+                "c_parallel_bin_edges_start": float(
+                    c_parallel_bin_edges_start),
+                "c_parallel_bin_edges_stop": float(
+                    c_parallel_bin_edges_stop),
+                "num_c_parallel_bin_edges": int(
+                    num_c_parallel_bin_edges),
+                "c_perpendicular_bin_edges_start": float(
+                    c_perpendicular_bin_edges_start),
+                "c_perpendicular_bin_edges_stop": float(
+                    c_perpendicular_bin_edges_stop),
+                "num_c_perpendicular_bin_edges": int(
+                    num_c_perpendicular_bin_edges),
             },
             indent=4))
     config_filenames = [
@@ -56,11 +65,33 @@ def init_and_make_jobs(
         unbinned_lookup_path=unbinned_lookup_path)
 
 
+def _make_integrated_binning_config(binning_construct):
+    b = binning_construct.copy()
+    b["c_parallel_bin_edges"] = np.linspace(
+        b["c_parallel_bin_edges_start"],
+        b["c_parallel_bin_edges_stop"],
+        b["num_c_parallel_bin_edges"])
+    b["c_perpendicular_bin_edges"] = np.linspace(
+        b["c_perpendicular_bin_edges_start"],
+        b["c_perpendicular_bin_edges_stop"],
+        b["num_c_perpendicular_bin_edges"])
+    b["azimuth_bin_centers"] = np.linspace(
+        0.,
+        2.*np.pi,
+        b["num_azimuth_bin"],
+        endpoint=False)
+    b["radius_bin_centers"] = np.linspace(
+        0.,
+        b["radius_stop"],
+        b["num_radius_bins"])
+    return b
+
+
 def _make_jobs(
     integrated_lookup_dir,
     unbinned_lookup_path,
 ):
-    R = unbinned_Reader(unbinned_lookup_path)
+    R = unbinned.Reader(unbinned_lookup_path)
     jobs = []
     for energy_bin in range(len(R.energy_bin_centers)):
         for altitude_bin in range(len(R.altitude_bin_edges) - 1):
@@ -75,7 +106,7 @@ def _make_jobs(
 
 
 def run_job(job):
-    unbinned_reader = unbinned_Reader(job["unbinned_lookup_path"])
+    unbinned_reader = unbinned.Reader(job["unbinned_lookup_path"])
 
     altitude_bin = job["altitude_bin"]
     energy_bin = job["energy_bin"]
@@ -83,17 +114,17 @@ def run_job(job):
     integrated_binning_path = op.join(
         job["integrated_lookup_dir"],
         "integrated_binning_config.json")
-    integrated_binning = irf.__read_json(integrated_binning_path)
-    ib = integrated_binning
+    ib = _make_integrated_binning_config(
+        irf.__read_json(integrated_binning_path))
 
     energy_dir = op.join(
         job["integrated_lookup_dir"],
-        ENERGY_BIN_FILENAME.format(energy_bin))
+        unbinned.ENERGY_BIN_FILENAME.format(energy_bin))
     os.makedirs(energy_dir, exist_ok=True)
 
     output_path = op.join(
         energy_dir,
-        ALTITUDE_BIN_FILENAME.format(altitude_bin)+".tar")
+        unbinned.ALTITUDE_BIN_FILENAME.format(altitude_bin)+".tar")
     part_output_path = output_path + ".part"
 
     with tarfile.TarFile(part_output_path, "w") as tarf:
