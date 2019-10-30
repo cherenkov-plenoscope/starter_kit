@@ -5,6 +5,7 @@ import os
 
 
 def test_populating():
+    ope = os.path.exists
     opj = os.path.join
     with tempfile.TemporaryDirectory(prefix='plenoscope_lookup_') as tmp:
         lookup_path = os.path.join(tmp, "my_table")
@@ -17,7 +18,14 @@ def test_populating():
             energy_bin_center=0,
             energy_per_iteration=5.)
 
-        ope = os.path.exists
         assert ope(opj(lookup_path, "000000_energy"))
         assert ope(opj(lookup_path, "000000_energy", "fill.json"))
         assert ope(opj(lookup_path, "000000_energy", "000000_altitude"))
+        assert ope(opj(lookup_path, "000000_energy", "000010_altitude"))
+
+        elut._remove_incomplete_altitude_bins_in_energy_bin(
+            lookup_path=lookup_path,
+            energy_bin_idx=0)
+
+        assert not ope(opj(lookup_path, "000000_energy", "000000_altitude"))
+        assert ope(opj(lookup_path, "000000_energy", "000010_altitude"))

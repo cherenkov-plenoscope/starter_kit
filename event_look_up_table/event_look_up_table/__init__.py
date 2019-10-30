@@ -515,14 +515,15 @@ def _remove_incomplete_altitude_bins_in_energy_bin(
 
     with open(energy_bin_fill_path, "rt") as f:
         fill = json.loads(f.read())
+    num_altitude_bins = len(fill["num_photons"])
 
     from_bottom_and_top = [
         {"start_bin": 0, "increment": +1},
-        {"start_bin": num_photons.shape[0]-1, "increment": -1}]
+        {"start_bin": num_altitude_bins - 1, "increment": -1}]
 
     for side in from_bottom_and_top:
         altitude_bin = side["start_bin"]
-        while num_photons[altitude_bin] < max_num_photons_in_bin:
+        while fill["num_photons"][altitude_bin] < max_num_photons_in_bin:
             altitude_bin_path = op.join(
                 energy_bin_path,
                 ALTITUDE_BIN_FILENAME.format(altitude_bin))
