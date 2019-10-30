@@ -302,6 +302,25 @@ def read_photons(
     return lf
 
 
+def _read_num_showers_num_photons(lookup_path, num_energy_bins):
+    num_showers = []
+    num_photons = []
+    for e in range(num_energy_bins):
+        p = op.join(
+            lookup_path,
+            ENERGY_BIN_FILENAME.format(e),
+            "fill.json")
+        if op.exists(p):
+            with open(p, "rt") as fin:
+                energy_bin_fill = json.loads(fin.read())
+            num_showers.append(energy_bin_fill["num_showers"])
+            num_photons.append(energy_bin_fill["num_photons"])
+        else:
+            num_showers.append([])
+            num_photons.append([])
+    return num_showers, num_photons
+
+
 class Reader:
     def __init__(self, path):
         self.lookup_path = path
@@ -324,22 +343,11 @@ class Reader:
                     ALTITUDE_BIN_FILENAME.format(a))
                 altitude_paths.append(p)
             self.__energy_altitude_paths.append(altitude_paths)
-
-        self.num_showers = []
-        self.num_photons = []
-        for e in range(len(self.energy_bin_centers)):
-            p = os.path.join(
-                self.lookup_path,
-                ENERGY_BIN_FILENAME.format(e),
-                "fill.json")
-            if os.path.exists(p):
-                with open(p, "rt") as fin:
-                    energy_bin_fill = json.loads(fin.read())
-                self.num_showers.append(energy_bin_fill["num_showers"])
-                self.num_photons.append(energy_bin_fill["num_photons"])
-            else:
-                self.num_showers.append([])
-                self.num_photons.append([])
+        _A, _B = _read_num_showers_num_photons(
+            lookup_path=path,
+            num_energy_bins=len(self.energy_bin_centers))
+        self.num_showers = _A
+        self.num_photons = _B
 
     def read_light_field(
         self,

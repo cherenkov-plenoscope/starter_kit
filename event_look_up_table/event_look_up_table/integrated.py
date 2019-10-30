@@ -12,13 +12,20 @@ import tempfile
 import json
 from . import unbinned
 
+CONFIG_FILENAMES = [
+    "particle_config.json",
+    "location_config.json",
+    "binning_config.json",
+    "filling_config.json"]
+
+
 def init_and_make_jobs(
     integrated_lookup_dir,
     unbinned_lookup_path,
     aperture_bin_radius=4.6,
     radius_stop=256,
     num_radius_bins=96,
-    num_azimuth_bin=8,
+    num_azimuth_bins=8,
     c_parallel_bin_edges_start=np.deg2rad(-.5),
     c_parallel_bin_edges_stop=np.deg2rad(2.5),
     num_c_parallel_bin_edges=3*64+1,
@@ -36,7 +43,7 @@ def init_and_make_jobs(
                 "aperture_bin_radius": float(aperture_bin_radius),
                 "radius_stop": float(radius_stop),
                 "num_radius_bins": int(num_radius_bins),
-                "num_azimuth_bin": int(num_azimuth_bin),
+                "num_azimuth_bins": int(num_azimuth_bins),
                 "c_parallel_bin_edges_start": float(
                     c_parallel_bin_edges_start),
                 "c_parallel_bin_edges_stop": float(
@@ -51,15 +58,19 @@ def init_and_make_jobs(
                     num_c_perpendicular_bin_edges),
             },
             indent=4))
-    config_filenames = [
-        "particle_config.json",
-        "location_config.json",
-        "binning_config.json",
-        "filling_config.json"]
-    for config_filename in config_filenames:
+    for config_filename in CONFIG_FILENAMES:
         shutil.copy(
             op.join(unbinned_lookup_path, config_filename),
             op.join(integrated_lookup_dir, config_filename))
+
+    R = unbinned.Reader(unbinned_lookup_path)
+    for energy_bin, _ in enumerate(R.energy_bin_centers):
+        energy_bin_dirname = unbinned.ENERGY_BIN_FILENAME.format(energy_bin)
+        os.makedirs(op.join(integrated_lookup_dir, energy_bin_dirname))
+        shutil.copy(
+            op.join(unbinned_lookup_path, energy_bin_dirname, "fill.json"),
+            op.join(integrated_lookup_dir, energy_bin_dirname, "fill.json"))
+
     return _make_jobs(
         integrated_lookup_dir=integrated_lookup_dir,
         unbinned_lookup_path=unbinned_lookup_path)
@@ -78,7 +89,7 @@ def _make_integrated_binning_config(binning_construct):
     b["azimuth_bin_centers"] = np.linspace(
         0.,
         2.*np.pi,
-        b["num_azimuth_bin"],
+        b["num_azimuth_bins"],
         endpoint=False)
     b["radius_bin_centers"] = np.linspace(
         0.,
@@ -152,11 +163,13 @@ def run_job(job):
                     energy_bin][altitude_bin]
                 integrated_image_per_shower = integrated_image/num_showers
                 image_scale = np.max(integrated_image_per_shower)
-
-                norm_image = integrated_image_per_shower/image_scale
+                if image_scale > 0.:
+                    norm_image = integrated_image_per_shower/image_scale
+                else:
+                    norm_image = integrated_image_per_shower
                 norm_image8 = norm_image*255
                 norm_image8 = norm_image8.astype(np.uint8)
-                image_scale8 = image_scale*255
+                image_scale8 = image_scale/255
                 scale_json_str = json.dumps(
                     {"photons_per_shower_scale": image_scale8})
 
@@ -201,3 +214,108 @@ def _project_to_image(
         y=cPerp,
         bins=(c_parallel_bin_edges, c_perpendicular_bin_edges))[0]
     return hist
+
+
+def _read_energy_altitude_tar(path):
+    scales = []
+    png_images = []
+    with tarfile.TarFile(path, "r") as tarf:
+        for item in tarf:
+            name = item.name
+            az_bin = int(name[0:6])
+            r_bin = int(name[15:21])
+            is_png = name.split(".")[1] == "png"
+            raw = tarf.extractfile(item).read()
+            if is_png:
+                png_images.append(
+                    {"azimuth": az_bin, "radius": r_bin, "png": raw})
+            else:
+                scales.append(
+                    {"azimuth": az_bin, "radius": r_bin, "scale": raw})
+
+    for scale in scales:
+        scale["scale"] = json.loads(scale["scale"])["photons_per_shower_scale"]
+
+    azs = list(set([s["azimuth"] for s in scales]))
+    ras = list(set([s["radius"] for s in scales]))
+    num_azimuth_bin = np.max(azs) + 1
+    num_radius_bins = np.max(ras) + 1
+
+    out = []
+    for a_idx in range(num_azimuth_bin):
+        out.append([])
+
+    comb = []
+    for i in range(len(scales)):
+        a_idx = png_images[i]["azimuth"]
+        assert png_images[i]["azimuth"] == scales[i]["azimuth"]
+        assert png_images[i]["radius"] == scales[i]["radius"]
+        len_radius_bins = len(out[a_idx])
+        assert len_radius_bins == scales[i]["radius"]
+        out[a_idx].append({
+            "scale": scales[i]["scale"],
+            "png": png_images[i]["png"]})
+    return out
+
+
+class Reader:
+    def __init__(self, path):
+        self._read_configs(path)
+
+        _A, _B = unbinned._read_num_showers_num_photons(
+            lookup_path=path,
+            num_energy_bins=len(self.energy_bin_centers))
+        self.num_showers = _A
+        self.num_photons = _B
+
+        self.png_images = []
+        for energy_bin, _ in enumerate(self.energy_bin_centers):
+            altitude_png_images = []
+            for altitude_bin, _ in enumerate(self.altitude_bin_edges):
+                e_a_tar_path = op.join(
+                    path,
+                    unbinned.ENERGY_BIN_FILENAME.format(energy_bin),
+                    unbinned.ALTITUDE_BIN_FILENAME.format(altitude_bin)+".tar")
+                if op.exists(e_a_tar_path):
+                    block = _read_energy_altitude_tar(e_a_tar_path)
+                    altitude_png_images.append(block)
+                else:
+                    altitude_png_images.append(None)
+            self.png_images.append(altitude_png_images)
+
+
+
+
+    def _read_configs(self, path):
+        with open(op.join(path, "location_config.json"), "rt") as f:
+            self.location = json.loads(f.read())
+        with open(op.join(path, "particle_config.json"), "rt") as f:
+            self.particle = json.loads(f.read())
+        with open(op.join(path, "filling_config.json"), "rt") as f:
+            self.filling = json.loads(f.read())
+        with open(op.join(path, "binning_config.json"), "rt") as f:
+            self.unbinned = json.loads(f.read())
+        with open(op.join(path, "integrated_binning_config.json"), "rt") as f:
+            self.integrated = _make_integrated_binning_config(
+                json.loads(f.read()))
+
+        self.energy_bin_centers = self.unbinned["energy_bin_centers"]
+        self.altitude_bin_edges = self.unbinned["altitude_bin_edges"]
+
+    def image(
+        self,
+        energy_bin,
+        altitude_bin,
+        azimuth_bin,
+        radius_bin
+    ):
+        _image = self.png_images[
+            energy_bin][altitude_bin][azimuth_bin][radius_bin]
+        scale = _image["scale"]
+        raw_png = _image["png"]
+        with io.BytesIO() as buf:
+            buf.write(raw_png)
+            image = np.array(PIL.Image.open(buf), dtype=np.float32)
+        image *= scale
+        image /= (255**2)
+        return image
