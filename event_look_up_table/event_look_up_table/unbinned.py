@@ -343,11 +343,11 @@ class Reader:
                     ALTITUDE_BIN_FILENAME.format(a))
                 altitude_paths.append(p)
             self.__energy_altitude_paths.append(altitude_paths)
-        _A, _B = _read_num_showers_num_photons(
+        _nshow, _nphot = _read_num_showers_num_photons(
             lookup_path=path,
             num_energy_bins=len(self.energy_bin_centers))
-        self.num_showers = _A
-        self.num_photons = _B
+        self.num_showers = _nshow
+        self.num_photons = _nphot
 
     def read_light_field(
         self,

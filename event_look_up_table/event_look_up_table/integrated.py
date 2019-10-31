@@ -180,14 +180,14 @@ def run_job(job):
                     image.save(f, format="PNG")
                     f.seek(0)
                     tarinfo = tarfile.TarInfo(name=img_path+".png")
-                    tarinfo.size=len(f.getvalue())
+                    tarinfo.size = len(f.getvalue())
                     tarf.addfile(tarinfo=tarinfo, fileobj=f)
 
                 with io.BytesIO() as f:
                     f.write(str.encode(scale_json_str))
                     f.seek(0)
                     tarinfo = tarfile.TarInfo(name=img_path+".json")
-                    tarinfo.size=len(f.getvalue())
+                    tarinfo.size = len(f.getvalue())
                     tarf.addfile(tarinfo=tarinfo, fileobj=f)
 
     shutil.move(part_output_path, output_path)
@@ -262,11 +262,11 @@ class Reader:
     def __init__(self, path):
         self._read_configs(path)
 
-        _A, _B = unbinned._read_num_showers_num_photons(
+        _nshow, _nphot = unbinned._read_num_showers_num_photons(
             lookup_path=path,
             num_energy_bins=len(self.energy_bin_centers))
-        self.num_showers = _A
-        self.num_photons = _B
+        self.num_showers = _nshow
+        self.num_photons = _nphot
 
         self.png_images = []
         for energy_bin, _ in enumerate(self.energy_bin_centers):
@@ -282,9 +282,6 @@ class Reader:
                 else:
                     altitude_png_images.append(None)
             self.png_images.append(altitude_png_images)
-
-
-
 
     def _read_configs(self, path):
         with open(op.join(path, "location_config.json"), "rt") as f:

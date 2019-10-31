@@ -4,58 +4,6 @@ import os
 r2d = np.rad2deg
 d2r = np.deg2rad
 
-"""
-image_integrated = np.zeros((64, 192))
-image_integrated[25, 43] = 3
-image_scale = 100.
-
-c_parallel_bin_edges=np.linspace(
-    np.deg2rad(-.5),
-    np.deg2rad(2.5),
-    3*64 + 1)
-c_perpendicular_bin_edges=np.linspace(
-    np.deg2rad(-.5),
-    np.deg2rad(+.5),
-    64 + 1)
-
-max_core_radius = 250
-
-altitude_bin = 5
-energy_bin = 2
-
-azimuth_bin = 2
-radius_bin = 50
-
-azimuth_bin_centers = np.linspace(0, 2*np.pi, 8, endpoint=False)
-radius_bin_centers = np.linspace(0., max_core_radius, 250)
-
-azimuth = azimuth_bin_centers[azimuth_bin]
-radius = radius_bin_centers[radius_bin]
-
-aperture_x = radius*np.cos(azimuth)
-aperture_y = radius*np.sin(azimuth)
-
-aperture_bin_radius = 4.6
-
-
-energy_bin_centers = np.geomspace(0.25, 25, 8)
-altitude_bin_edges = np.geomspace(5e3, 5e3+8e3,  8)
-num_shower = [
-    [0, 0, 0, 1, 5, 7, 9, 9],
-    [0, 0, 0, 3, 4, 9, 9, 8],
-    [0, 0, 3, 7, 9, 9, 7, 6],
-    [0, 2, 5, 8, 8, 7, 4, 1],
-    [3, 7, 9, 9, 7, 2, 0, 0],
-    [8, 9, 9, 8, 3, 1, 0, 0],
-    [9, 9, 8, 4, 3, 0, 0, 0],
-    [9, 9, 5, 2, 0, 0, 0, 0],
-]
-
-energy = energy_bin_centers[energy_bin]
-altitude = altitude_bin_edges[altitude_bin]
-
-path = os.path.join("lookup_view", "{:06d}.png".format(42))
-"""
 
 def sz(x_start, x_stop, y_start, y_stop, figsize, dpi):
     num_cols = figsize[0]*dpi
@@ -67,11 +15,13 @@ def sz(x_start, x_stop, y_start, y_stop, figsize, dpi):
     out = (x_s_rel, y_s_rel, x_e_rel-x_s_rel, y_e_rel-y_s_rel)
     return out
 
+
 def add_circle(ax, x, y, r, linestyle):
     phis = np.linspace(0, 2*np.pi, 512)
     xs = r*np.cos(phis) + x
     ys = r*np.sin(phis) + y
     ax.plot(xs, ys, linestyle)
+
 
 def rm_splines(ax):
     ax.spines['right'].set_visible(False)
@@ -109,7 +59,7 @@ def save_view(
         altitude_bin=altitude_bin,
         azimuth_bin=azimuth_bin,
         radius_bin=radius_bin)
-    #print(image_integrated.shape)
+
     num_showers = np.array(il.num_showers)
     num_photons = np.array(il.num_photons)
 
@@ -145,7 +95,8 @@ def save_view(
     img_height = 0.5
 
     fig = plt.figure(figsize=figsize, dpi=dpi)
-    ax_img = fig.add_axes(sz(75, 1920-75, 480, 480+((1920-150)/3), figsize, dpi))
+    ax_img = fig.add_axes(
+        sz(75, 1920-75, 480, 480+((1920-150)/3), figsize, dpi))
     ax_img.pcolor(
         r2d(c_parallel_bin_edges),
         r2d(c_perpendicular_bin_edges),
@@ -177,7 +128,8 @@ def save_view(
     ax_ap_text.text(0.1, 0.9, "y {:0.1f}m".format(aperture_y))
     ax_ap_text.text(0.1, 0.7, "azimuth {:0.1f}deg".format(r2d(azimuth)))
     ax_ap_text.text(0.1, 0.6, "radius {:0.1f}m".format(radius))
-    ax_ap_text.text(0.1, 0.5, "apertur-radius {:0.1f}m".format(aperture_bin_radius))
+    ax_ap_text.text(0.1, 0.5, "apertur-radius {:0.1f}m".format(
+        aperture_bin_radius))
     ax_ap_text.text(0.1, 0.3, "azimuth-bin {:d}".format(azimuth_bin))
     ax_ap_text.text(0.1, 0.2, "radius-bin {:d}".format(radius_bin))
     ax_ap_text.text(0.1, 0.1, "energy-bin {:d}".format(energy_bin))
@@ -217,7 +169,8 @@ def save_view(
         log=False,
         label="altitude/km\n{:.1f}km".format(altitude*1e-3))
 
-    ax_energy_slider = fig.add_axes(sz(1400, 1920-475, 75, 75+330, figsize, dpi))
+    ax_energy_slider = fig.add_axes(
+        sz(1400, 1920-475, 75, 75+330, figsize, dpi))
     add_slider_axes(
         ax=ax_energy_slider,
         start=energy_bin_centers[0],
