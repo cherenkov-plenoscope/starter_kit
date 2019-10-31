@@ -308,6 +308,71 @@ class Reader:
             scale=i["scale"])
 
 
+def image_interpolate(
+    integrated_lookup,
+    energy,
+    altitude,
+    azimuth,
+    radius
+):
+    il = integrated_lookup
+    ene = unbinned._find_bins_in_centers(
+        bin_centers=np.array(il.energy_bin_centers), value=energy)
+    if ene["overflow"] or ene["underflow"]:
+        raise InedxError
+
+    alt = unbinned._find_bins_in_centers(
+        bin_centers=np.array(il.altitude_bin_edges), value=altitude)
+    if alt["overflow"] or alt["underflow"]:
+        raise InedxError
+
+    azi = unbinned._find_bins_in_centers(
+        bin_centers=np.array(il.integrated["azimuth_bin_centers"]),
+        value=azimuth)
+    if azi["overflow"] or azi["underflow"]:
+        raise InedxError
+
+    rad = unbinned._find_bins_in_centers(
+        bin_centers=np.array(il.integrated["radius_bin_centers"]),
+        value=radius)
+    if rad["overflow"] or rad["underflow"]:
+        raise InedxError
+
+    avg_img = np.zeros((
+        il.integrated["num_c_parallel_bin_edges"]-1,
+        il.integrated["num_c_perpendicular_bin_edges"]-1),
+        dtype=np.float32)
+    ene_map = {
+        ene["lower_bin"]: ene["lower_weight"],
+        ene["upper_bin"]: ene["upper_weight"]}
+    alt_map = {
+        alt["lower_bin"]: alt["lower_weight"],
+        alt["upper_bin"]: alt["upper_weight"]}
+    azi_map = {
+        azi["lower_bin"]: azi["lower_weight"],
+        azi["upper_bin"]: azi["upper_weight"]}
+    rad_map = {
+        rad["lower_bin"]: rad["lower_weight"],
+        rad["upper_bin"]: rad["upper_weight"]}
+
+    for enebin in ene_map:
+        for altbin in alt_map:
+            for azibin in azi_map:
+                for radbin in rad_map:
+                    img = il.image(
+                        energy_bin=enebin,
+                        altitude_bin=altbin,
+                        azimuth_bin=azibin,
+                        radius_bin=radbin)
+                    weigth = (
+                        ene_map[enebin] +
+                        alt_map[altbin] +
+                        azi_map[azibin] +
+                        rad_map[radbin])/4
+                    avg_img = avg_img + img*weigth
+    return avg_img/16.
+
+
 def _compress_histogram2d(histogram2d):
     assert np.sum(histogram2d < 0.) == 0, "histogram2d must be >= 0."
     scale = np.max(histogram2d)
