@@ -138,6 +138,8 @@ def run_job(job):
         unbinned.ALTITUDE_BIN_FILENAME.format(altitude_bin)+".tar")
     part_output_path = output_path + ".part"
 
+    num_showers = unbinned_reader.num_showers[energy_bin][altitude_bin]
+
     with tarfile.TarFile(part_output_path, "w") as tarf:
         for az_bin, az in enumerate(ib["azimuth_bin_centers"]):
             for r_bin, r in enumerate(ib["radius_bin_centers"]):
@@ -159,25 +161,17 @@ def run_job(job):
                     x=aperture_x,
                     y=aperture_y)
 
-                num_showers = unbinned_reader.num_showers[
-                    energy_bin][altitude_bin]
                 integrated_image_per_shower = integrated_image/num_showers
-                image_scale = np.max(integrated_image_per_shower)
-                if image_scale > 0.:
-                    norm_image = integrated_image_per_shower/image_scale
-                else:
-                    norm_image = integrated_image_per_shower
-                norm_image8 = norm_image*255
-                norm_image8 = norm_image8.astype(np.uint8)
-                image_scale8 = image_scale/255
-                scale_json_str = json.dumps(
-                    {"photons_per_shower_scale": image_scale8})
 
+                png_bytes, scale = _compress_histogram2d(
+                    histogram2d=integrated_image_per_shower)
+
+                scale_json_str = json.dumps(
+                    {"photons_per_shower_scale": scale})
                 img_path = "{:06d}_azimuth_{:06d}_radius".format(az_bin, r_bin)
 
                 with io.BytesIO() as f:
-                    image = PIL.Image.fromarray(norm_image8)
-                    image.save(f, format="PNG")
+                    f.write(png_bytes)
                     f.seek(0)
                     tarinfo = tarfile.TarInfo(name=img_path+".png")
                     tarinfo.size = len(f.getvalue())
@@ -306,13 +300,32 @@ class Reader:
         azimuth_bin,
         radius_bin
     ):
-        _image = self.png_images[
-            energy_bin][altitude_bin][azimuth_bin][radius_bin]
-        scale = _image["scale"]
-        raw_png = _image["png"]
-        with io.BytesIO() as buf:
-            buf.write(raw_png)
-            image = np.array(PIL.Image.open(buf), dtype=np.float32)
-        image *= scale
-        image /= (255**2)
-        return image
+        i = self.png_images[energy_bin][altitude_bin][azimuth_bin][radius_bin]
+        return _decompress_histogram2d(
+            png_bytes=_i["png"],
+            scale=i["scale"])
+
+
+def _compress_histogram2d(histogram2d):
+    assert np.sum(histogram2d < 0.) == 0, "histogram2d must be >= 0."
+    scale = np.max(histogram2d)
+    if scale > 0.:
+        norm_hist = histogram2d/scale
+    else:
+        norm_hist = histogram2d
+    norm_hist8 = norm_hist*255
+    norm_hist8 = norm_hist8.astype(np.uint8)
+    scale8 = np.float32(scale/255.)
+    with io.BytesIO() as f:
+        image = PIL.Image.fromarray(norm_hist8)
+        image.save(f, format="PNG")
+        png_bytes = f.getvalue()
+    return png_bytes, scale8
+
+
+def _decompress_histogram2d(png_bytes, scale):
+    with io.BytesIO() as buf:
+        buf.write(png_bytes)
+        norm_hist8 = np.array(PIL.Image.open(buf), dtype=np.float32)
+    histogram2d = norm_hist8*scale
+    return histogram2d
