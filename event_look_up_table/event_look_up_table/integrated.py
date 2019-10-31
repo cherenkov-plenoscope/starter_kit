@@ -302,7 +302,7 @@ class Reader:
     ):
         i = self.png_images[energy_bin][altitude_bin][azimuth_bin][radius_bin]
         return _decompress_histogram2d(
-            png_bytes=_i["png"],
+            png_bytes=i["png"],
             scale=i["scale"])
 
 
