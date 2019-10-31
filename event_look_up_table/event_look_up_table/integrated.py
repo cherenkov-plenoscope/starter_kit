@@ -167,7 +167,7 @@ def run_job(job):
                     histogram2d=integrated_image_per_shower)
 
                 scale_json_str = json.dumps(
-                    {"photons_per_shower_scale": scale})
+                    {"photons_per_shower_scale": float(scale)})
                 img_path = "{:06d}_azimuth_{:06d}_radius".format(az_bin, r_bin)
 
                 with io.BytesIO() as f:
@@ -306,6 +306,20 @@ class Reader:
         return _decompress_histogram2d(
             png_bytes=i["png"],
             scale=i["scale"])
+
+    def image_interpolate(
+        self,
+        energy,
+        altitude,
+        azimuth,
+        radius
+    ):
+        return image_interpolate(
+            integrated_lookup=self,
+            energy=energy,
+            altitude=altitude,
+            azimuth=azimuth,
+            radius=radius)
 
 
 def image_interpolate(
