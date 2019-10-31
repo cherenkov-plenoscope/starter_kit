@@ -277,6 +277,8 @@ class Reader:
                     altitude_png_images.append(None)
             self.png_images.append(altitude_png_images)
 
+        self.valid_energy_altitude_bins = _valid_energy_altitude_bins(self)
+
     def _read_configs(self, path):
         with open(op.join(path, "location_config.json"), "rt") as f:
             self.location = json.loads(f.read())
@@ -329,3 +331,41 @@ def _decompress_histogram2d(png_bytes, scale):
         norm_hist8 = np.array(PIL.Image.open(buf), dtype=np.float32)
     histogram2d = norm_hist8*scale
     return histogram2d
+
+
+def _benchmark(integrated_lookup, num_requests=1000, random_seed=0):
+    il = integrated_lookup
+    np.random.seed(random_seed)
+    request = 0
+    while request < num_requests:
+        energy_bin = int(
+            np.random.uniform()*len(il.energy_bin_centers))
+        altitude_bin = int(
+            np.random.uniform()*(len(il.altitude_bin_edges)-1))
+        azimuth_bin = int(
+            np.random.uniform()*il.integrated["num_azimuth_bins"])
+        radius_bin = int(
+            np.random.uniform()*il.integrated["num_radius_bins"])
+
+        if not il.valid_energy_altitude_bins[energy_bin][altitude_bin]:
+            continue
+
+        image = il.image(
+            energy_bin=energy_bin,
+            altitude_bin=altitude_bin,
+            azimuth_bin=azimuth_bin,
+            radius_bin=radius_bin)
+        request += 1
+    return True
+
+
+def _valid_energy_altitude_bins(integrated_lookup):
+    il = integrated_lookup
+    num_e_bins = len(il.energy_bin_centers)
+    num_a_bins = len(il.altitude_bin_edges)-1
+    mask = np.zeros((num_e_bins, num_a_bins), dtype=np.bool)
+    for ebin in range(num_e_bins):
+        for abin in range(num_a_bins):
+            if il.png_images[ebin][abin] is not None:
+                mask[ebin, abin] = True
+    return mask
