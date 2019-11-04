@@ -82,19 +82,37 @@ def _make_integrated_binning_config(binning_construct):
         b["c_parallel_bin_edges_start"],
         b["c_parallel_bin_edges_stop"],
         b["num_c_parallel_bin_edges"])
+    b["c_parallel_bin_centers"] = (
+        b["c_parallel_bin_edges"][0:-1] +
+        b["c_parallel_bin_edges"][1:])/2.
     b["c_perpendicular_bin_edges"] = np.linspace(
         b["c_perpendicular_bin_edges_start"],
         b["c_perpendicular_bin_edges_stop"],
         b["num_c_perpendicular_bin_edges"])
+    b["c_perpendicular_bin_centers"] = (
+        b["c_perpendicular_bin_edges"][0:-1] +
+        b["c_perpendicular_bin_edges"][1:])/2.
     b["azimuth_bin_centers"] = np.linspace(
         0.,
         2.*np.pi,
         b["num_azimuth_bins"],
         endpoint=False)
+    b["azimuth_bin_edges"] = np.linspace(
+        0.,
+        2.*np.pi,
+        b["num_azimuth_bins"])
     b["radius_bin_centers"] = np.linspace(
         0.,
         b["radius_stop"],
         b["num_radius_bins"])
+    b["pixel_c_para"] = []
+    b["pixel_c_perp"] = []
+    for par in b["c_parallel_bin_centers"]:
+        for per in b["c_perpendicular_bin_centers"]:
+            b["pixel_c_para"].append(par)
+            b["pixel_c_perp"].append(per)
+    b["pixel_c_para"] = np.array(b["pixel_c_para"])
+    b["pixel_c_perp"] = np.array(b["pixel_c_perp"])
     return b
 
 
@@ -355,7 +373,7 @@ def _find_bins(
         raise IndexError("altitude out of range")
 
     azi = unbinned._find_bins_in_centers(
-        bin_centers=np.array(il.integrated["azimuth_bin_centers"]),
+        bin_centers=np.array(il.integrated["azimuth_bin_edges"]),
         value=azimuth)
     if azi["overflow"] or azi["underflow"]:
         raise IndexError("azimuth out of range")

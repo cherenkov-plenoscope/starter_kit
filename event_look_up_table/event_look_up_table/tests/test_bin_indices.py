@@ -76,3 +76,33 @@ def test_finding_bin_index_in_centers():
         assert scenario[UPPER_IDX] == match["upper_bin"]
         assert_close(scenario[LOWER_WEIGHT], match["lower_weight"])
         assert_close(match["lower_weight"] + match["upper_weight"], 1.)
+
+
+def test_finding_bin_index_in_circular():
+    VALUE = 0
+    UNDERFLOW = 1
+    LOWER_IDX = 2
+    OVERFLOW = 3
+    UPPER_IDX = 4
+    LOWER_WEIGHT = 5
+    bin_centers = np.linspace(0, 1, 3)
+    # 0., .5, 1.
+    scenarios = [
+        (0., False, 0, False, 1, 1.),
+        (-1e-6, True, 0, False, 1, 0.),
+        (1-1e-6, False, 1, False, 2, 2e-6),
+        (1, False, 2, True, 3, 1.),
+    ]
+
+    for scenario in scenarios:
+        print(scenario)
+        match = elut.unbinned._find_bins_in_centers(
+            bin_centers=bin_centers,
+            value=scenario[VALUE])
+
+        assert scenario[UNDERFLOW] == match["underflow"]
+        assert scenario[OVERFLOW] == match["overflow"]
+        assert scenario[LOWER_IDX] == match["lower_bin"]
+        assert scenario[UPPER_IDX] == match["upper_bin"]
+        assert_close(scenario[LOWER_WEIGHT], match["lower_weight"])
+        assert_close(match["lower_weight"] + match["upper_weight"], 1.)
