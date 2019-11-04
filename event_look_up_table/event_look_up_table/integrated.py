@@ -321,8 +321,22 @@ class Reader:
             azimuth=azimuth,
             radius=radius)
 
+    def find_bins(
+        self,
+        energy,
+        altitude,
+        azimuth,
+        radius
+    ):
+        return _find_bins(
+            integrated_lookup=self,
+            energy=energy,
+            altitude=altitude,
+            azimuth=azimuth,
+            radius=radius)
 
-def image_interpolate(
+
+def _find_bins(
     integrated_lookup,
     energy,
     altitude,
@@ -333,58 +347,77 @@ def image_interpolate(
     ene = unbinned._find_bins_in_centers(
         bin_centers=np.array(il.energy_bin_centers), value=energy)
     if ene["overflow"] or ene["underflow"]:
-        raise InedxError
+        raise IndexError("energy out of range")
 
     alt = unbinned._find_bins_in_centers(
         bin_centers=np.array(il.altitude_bin_edges), value=altitude)
     if alt["overflow"] or alt["underflow"]:
-        raise InedxError
+        raise IndexError("altitude out of range")
 
     azi = unbinned._find_bins_in_centers(
         bin_centers=np.array(il.integrated["azimuth_bin_centers"]),
         value=azimuth)
     if azi["overflow"] or azi["underflow"]:
-        raise InedxError
+        raise IndexError("azimuth out of range")
 
     rad = unbinned._find_bins_in_centers(
         bin_centers=np.array(il.integrated["radius_bin_centers"]),
         value=radius)
     if rad["overflow"] or rad["underflow"]:
-        raise InedxError
+        raise IndexError("radius out of range")
+
+    return {
+        "energy_bins": [
+            {"bin": ene["lower_bin"], "weight": ene["lower_weight"]},
+            {"bin": ene["upper_bin"], "weight": ene["upper_weight"]}],
+        "altitude_bins": [
+            {"bin": alt["lower_bin"], "weight": alt["lower_weight"]},
+            {"bin": alt["upper_bin"], "weight": alt["upper_weight"]}],
+        "azimuth_bins": [
+            {"bin": azi["lower_bin"], "weight": azi["lower_weight"]},
+            {"bin": azi["upper_bin"], "weight": azi["upper_weight"]}],
+        "radius_bins": [
+            {"bin": rad["lower_bin"], "weight": rad["lower_weight"]},
+            {"bin": rad["upper_bin"], "weight": rad["upper_weight"]}],
+    }
+
+
+def image_interpolate(
+    integrated_lookup,
+    energy,
+    altitude,
+    azimuth,
+    radius
+):
+    il = integrated_lookup
+    b = _find_bins(
+        integrated_lookup=il,
+        energy=energy,
+        altitude=altitude,
+        azimuth=azimuth,
+        radius=radius)
 
     avg_img = np.zeros((
         il.integrated["num_c_parallel_bin_edges"]-1,
         il.integrated["num_c_perpendicular_bin_edges"]-1),
         dtype=np.float32)
-    ene_map = {
-        ene["lower_bin"]: ene["lower_weight"],
-        ene["upper_bin"]: ene["upper_weight"]}
-    alt_map = {
-        alt["lower_bin"]: alt["lower_weight"],
-        alt["upper_bin"]: alt["upper_weight"]}
-    azi_map = {
-        azi["lower_bin"]: azi["lower_weight"],
-        azi["upper_bin"]: azi["upper_weight"]}
-    rad_map = {
-        rad["lower_bin"]: rad["lower_weight"],
-        rad["upper_bin"]: rad["upper_weight"]}
 
-    for enebin in ene_map:
-        for altbin in alt_map:
-            for azibin in azi_map:
-                for radbin in rad_map:
+    for ene in b["energy_bins"]:
+        for alt in b["altitude_bins"]:
+            for azi in b["azimuth_bins"]:
+                for rad in b["radius_bins"]:
                     img = il.image(
-                        energy_bin=enebin,
-                        altitude_bin=altbin,
-                        azimuth_bin=azibin,
-                        radius_bin=radbin)
+                        energy_bin=ene["bin"],
+                        altitude_bin=alt["bin"],
+                        azimuth_bin=azi["bin"],
+                        radius_bin=rad["bin"])
                     weigth = (
-                        ene_map[enebin] +
-                        alt_map[altbin] +
-                        azi_map[azibin] +
-                        rad_map[radbin])/4
+                        ene["weight"] +
+                        alt["weight"] +
+                        azi["weight"] +
+                        rad["weight"])/4
                     avg_img = avg_img + img*weigth
-    return avg_img/16.
+    return avg_img/2.
 
 
 def _compress_histogram2d(histogram2d):
