@@ -429,13 +429,13 @@ def image_interpolate(
                         altitude_bin=alt["bin"],
                         azimuth_bin=azi["bin"],
                         radius_bin=rad["bin"])
-                    weigth = (
+                    weight = (
                         ene["weight"] +
                         alt["weight"] +
                         azi["weight"] +
                         rad["weight"])/4
-                    avg_img = avg_img + img*weigth
-    return avg_img/2.
+                    avg_img = avg_img + img*weight
+    return avg_img/8.
 
 
 def _compress_histogram2d(histogram2d):
