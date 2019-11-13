@@ -1493,4 +1493,3 @@ fig.savefig(
     os.path.join(
         work_dir,
         'cherenkov-light-pool-spread.png'))
-

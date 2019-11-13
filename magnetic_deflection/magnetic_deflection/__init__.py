@@ -51,7 +51,7 @@ def __ellipse(xs, ys):
     x_mean = np.mean(xs)
     y_mean = np.mean(ys)
     cov_matrix = np.cov(np.c_[xs, ys].T)
-    eigen_vals, eigen_vecs= np.linalg.eig(cov_matrix)
+    eigen_vals, eigen_vecs = np.linalg.eig(cov_matrix)
     major_idx = np.argmax(eigen_vals)
     if major_idx == 0:
         minor_idx = 1
@@ -69,7 +69,7 @@ def __ellipse(xs, ys):
         "minor_axis_x": float(minor_axis[0]),
         "minor_axis_y": float(minor_axis[1]),
         "major_std": float(major_std),
-        "minor_std": float(minor_std),}
+        "minor_std": float(minor_std)}
 
 
 def great_circle_distance_alt_zd_deg(az1_deg, zd1_deg, az2_deg, zd2_deg):
@@ -133,7 +133,8 @@ MAGNET {magnetic_field_x_muT:3.3e} {magnetic_field_z_muT:3.3e}\n\
 ELMFLG T T\n\
 MAXPRT 1\n\
 PAROUT F F\n\
-TELESCOPE {telescope_x_cm:3.3e} {telescope_y_cm:3.3e} .0 {telescope_radius_cm:3.3e}\n\
+TELESCOPE {telescope_x_cm:3.3e} {telescope_y_cm:3.3e} .0 \
+{telescope_radius_cm:3.3e}\n\
 ATMOSPHERE {atmosphere_model:d} T\n\
 CWAVLG 250 700\n\
 CSCAT 1 {max_scatter_radius_cm:3.3e} .0\n\
@@ -191,13 +192,13 @@ def __read_state(work_dir, state_number):
         s = json.loads(f.read())
     return s
 
+
 def __write_state(work_dir, state, iteration):
     abs_work_dir = os.path.abspath(work_dir)
     state_path = os.path.join(
         abs_work_dir, "{:06d}_state.json".format(iteration))
     with open(state_path, "wt") as f:
         f.write(json.dumps(state, indent=4))
-
 
 
 def __run_job(job):
@@ -245,7 +246,8 @@ def __one_iteration(
     energy_iteration = len(s["energy"])
 
     if energy_iteration == 0:
-        energy_iteration_factor = s["input"]["initial"]["energy_iteration_factor"]
+        energy_iteration_factor = s["input"]["initial"][
+            "energy_iteration_factor"]
         energy = s["input"]["initial"]["energy"]
         azimuth_phi_deg = s["input"]["initial"]["azimuth_phi_deg"]
         zenith_theta_deg = s["input"]["initial"]["zenith_theta_deg"]
@@ -265,7 +267,7 @@ def __one_iteration(
         instrument_radius = s["instrument_radius"][-1]
 
     expected_ratio_detected_over_thrown = \
-        s["input"]["target_containment_angle_deg"]**2/\
+        s["input"]["target_containment_angle_deg"]**2 / \
         scatter_angle_deg**2
 
     on_target = False
@@ -348,10 +350,12 @@ def __one_iteration(
 
         azimuth_phi_deg_valid = float(
             np.rad2deg(
-                np.median(events_valid[:, EventSummary.particle_azimuth_phi])))
+                np.median(
+                    events_valid[:, EventSummary.particle_azimuth_phi])))
         zenith_theta_deg_valid = float(
             np.rad2deg(
-                np.median(events_valid[:, EventSummary.particle_zenith_theta])))
+                np.median(
+                    events_valid[:, EventSummary.particle_zenith_theta])))
 
         cherenkov_core_xs = 1e-2*events_valid[:, EventSummary.xs_median]
         cherenkov_core_ys = 1e-2*events_valid[:, EventSummary.ys_median]
@@ -410,7 +414,6 @@ def __one_iteration(
     __write_state(work_dir=work_dir, state=s, iteration=energy_iteration)
 
 
-
 def __make_jobs(
     tmp_dir,
     particle_id,
@@ -446,7 +449,8 @@ def __make_jobs(
             earth_magnetic_field_x_muT=site["earth_magnetic_field_x_muT"],
             earth_magnetic_field_z_muT=site["earth_magnetic_field_z_muT"],
             atmosphere_model=site["corsika_atmosphere_model"],
-            observation_level_altitude_asl=site["observation_level_altitude_asl"],
+            observation_level_altitude_asl=site[
+                "observation_level_altitude_asl"],
             instrument_x=instrument_x,
             instrument_y=instrument_y,
             instrument_radius=instrument_radius,
