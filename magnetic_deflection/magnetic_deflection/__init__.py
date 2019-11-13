@@ -77,14 +77,14 @@ def great_circle_distance_alt_zd_deg(az1_deg, zd1_deg, az2_deg, zd2_deg):
     zd1 = np.deg2rad(zd1_deg)
     az2 = np.deg2rad(az2_deg)
     zd2 = np.deg2rad(zd2_deg)
-    return np.rad2deg(__great_circle_distance_long_lat(
+    return np.rad2deg(_great_circle_distance_long_lat(
         lam_long1=az1,
         phi_alt1=np.pi/2 - zd1,
         lam_long2=az2,
         phi_alt2=np.pi/2 - zd2))
 
 
-def __great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
+def _great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
     delta_lam = np.abs(lam_long2 - lam_long1)
     delta_sigma = np.arccos(
         np.sin(phi_alt1) * np.sin(phi_alt2) +
@@ -92,7 +92,7 @@ def __great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
     return delta_sigma
 
 
-def __make_corsika_steering_card_str(
+def _make_corsika_steering_card_str(
     random_seed,
     run_number,
     num_events,
@@ -168,7 +168,7 @@ EXIT\n'.format(
     return card
 
 
-def __init_work_dir(work_dir, initial_state):
+def _init_work_dir(work_dir, initial_state):
     abs_work_dir = os.path.abspath(work_dir)
     os.makedirs(work_dir, exist_ok=True)
     state_path = os.path.join(abs_work_dir, "{:06d}_state.json".format(0))
@@ -176,7 +176,7 @@ def __init_work_dir(work_dir, initial_state):
         f.write(json.dumps(initial_state, indent=4))
 
 
-def __latest_state_number(work_dir):
+def _latest_state_number(work_dir):
     abs_work_dir = os.path.abspath(work_dir)
     state_paths = glob.glob(os.path.join(abs_work_dir, "*_state.json"))
     state_numbers = [
@@ -184,7 +184,7 @@ def __latest_state_number(work_dir):
     return np.max(state_numbers)
 
 
-def __read_state(work_dir, state_number):
+def _read_state(work_dir, state_number):
     abs_work_dir = os.path.abspath(work_dir)
     state_path = os.path.join(
         abs_work_dir, "{:06d}_state.json".format(state_number))
@@ -193,7 +193,7 @@ def __read_state(work_dir, state_number):
     return s
 
 
-def __write_state(work_dir, state, iteration):
+def _write_state(work_dir, state, iteration):
     abs_work_dir = os.path.abspath(work_dir)
     state_path = os.path.join(
         abs_work_dir, "{:06d}_state.json".format(iteration))
@@ -201,7 +201,7 @@ def __write_state(work_dir, state, iteration):
         f.write(json.dumps(state, indent=4))
 
 
-def __run_job(job):
+def _run_job(job):
     tmp = job["tmp_dir"]
     os.makedirs(tmp, exist_ok=True)
     card_path = os.path.join(tmp, "card.txt")
@@ -230,7 +230,7 @@ def __run_job(job):
     return summary_block
 
 
-def __one_iteration(
+def _one_iteration(
     work_dir,
     merlict_path=os.path.abspath(
         'build/merlict/merlict-magnetic-field-explorer'),
@@ -240,9 +240,9 @@ def __one_iteration(
 ):
     on_target_direction_threshold_deg = 0.5
 
-    s = __read_state(
+    s = _read_state(
         work_dir=work_dir,
-        state_number=__latest_state_number(work_dir))
+        state_number=_latest_state_number(work_dir))
     energy_iteration = len(s["energy"])
 
     if energy_iteration == 0:
@@ -290,7 +290,7 @@ def __one_iteration(
             work_dir,
             "{:06d}_energy".format(energy_iteration))
 
-        jobs = __make_jobs(
+        jobs = _make_jobs(
             tmp_dir=tmp_dir,
             particle_id=s["input"]["corsika_particle_id"],
             energy=energy,
@@ -307,7 +307,7 @@ def __one_iteration(
             num_jobs=num_jobs,
             merlict_path=merlict_path)
 
-        result_blocks = pool.map(__run_job, jobs)
+        result_blocks = pool.map(_run_job, jobs)
         events = np.concatenate(result_blocks)
 
         num_thrown = events.shape[0]
@@ -411,10 +411,10 @@ def __one_iteration(
     s["zenith_theta_deg"].append(float(zenith_theta_deg_valid))
     s["scatter_angle_deg"].append(float(scatter_angle_deg))
     s["cherenkov_core_spread_xy"].append(cherenkov_core_ellipse)
-    __write_state(work_dir=work_dir, state=s, iteration=energy_iteration)
+    _write_state(work_dir=work_dir, state=s, iteration=energy_iteration)
 
 
-def __make_jobs(
+def _make_jobs(
     tmp_dir,
     particle_id,
     energy,
@@ -435,7 +435,7 @@ def __make_jobs(
     for i in range(num_jobs):
         run_number = i + 1
         job = {}
-        job["steering_card"] = __make_corsika_steering_card_str(
+        job["steering_card"] = _make_corsika_steering_card_str(
             random_seed=energy_iteration,
             run_number=run_number,
             num_events=num_events,
