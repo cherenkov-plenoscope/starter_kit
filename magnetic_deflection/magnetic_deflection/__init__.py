@@ -47,7 +47,7 @@ example_state = {
 }
 
 
-def __ellipse(xs, ys):
+def _estimate_ellipse(xs, ys):
     x_mean = np.mean(xs)
     y_mean = np.mean(ys)
     cov_matrix = np.cov(np.c_[xs, ys].T)
@@ -366,7 +366,7 @@ def __one_iteration(
         y_std_valid = float(np.std(cherenkov_core_ys))
         xy_std_valid = np.hypot(x_std_valid, y_std_valid)
 
-        cherenkov_core_ellipse = __ellipse(
+        cherenkov_core_ellipse = _estimate_ellipse(
             xs=cherenkov_core_xs,
             ys=cherenkov_core_ys)
 
