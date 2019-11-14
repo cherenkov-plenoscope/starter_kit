@@ -245,6 +245,10 @@ def _one_iteration(
         state_number=_latest_state_number(work_dir))
     energy_iteration = len(s["energy"])
 
+    tmp_dir = os.path.join(
+        work_dir,
+        "{:06d}_energy".format(energy_iteration))
+
     if energy_iteration == 0:
         energy_iteration_factor = s["input"]["initial"][
             "energy_iteration_factor"]
@@ -276,6 +280,8 @@ def _one_iteration(
         direction_converged = False
         position_converged = False
         if sub_iteration > max_subiterations:
+            if os.path.exists(tmp_dir):
+                shutil.rmtree(tmp_dir)
             raise RuntimeError("Can not converge. Quit.")
 
         print("E: {:0.3f}, It: ({:d},{:d})".format(
@@ -285,10 +291,6 @@ def _one_iteration(
 
         num_events_per_job = int(
             s["input"]["energy_thrown_per_iteration"]/energy)
-
-        tmp_dir = os.path.join(
-            work_dir,
-            "{:06d}_energy".format(energy_iteration))
 
         jobs = _make_jobs(
             tmp_dir=tmp_dir,
