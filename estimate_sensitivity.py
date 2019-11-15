@@ -110,7 +110,7 @@ if __name__ == '__main__':
                         'resources',
                         'acp',
                         '71m',
-                        '.low_energy_'+p+'_steering.json'),
+                        'low_energy_'+p+'.json'),
                     location_config_path=location_config_path,
                     light_field_geometry_path=lfg_path,
                     merlict_plenoscope_propagator_path=absjoin(
