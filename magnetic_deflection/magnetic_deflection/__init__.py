@@ -7,6 +7,7 @@ import numpy as np
 import multiprocessing
 import corsika_wrapper
 import subprocess
+import tempfile
 
 
 example_state = {
@@ -200,32 +201,25 @@ def _write_state(work_dir, state, iteration):
 
 
 def _run_job(job):
-    tmp = job["tmp_dir"]
-    os.makedirs(tmp, exist_ok=True)
-    card_path = os.path.join(tmp, "card.txt")
-    if os.path.exists(card_path):
-        os.remove(card_path)
-    with open(card_path, "wt") as f:
-        f.write(job["steering_card"])
-
-    corsika_out_path = os.path.join(tmp, "run.evtio")
-    if os.path.exists(corsika_out_path):
-        os.remove(corsika_out_path)
-    cor_rc = corsika_wrapper.corsika(
-        steering_card=corsika_wrapper.read_steering_card(card_path),
-        output_path=corsika_out_path,
-        save_stdout=True)
-
-    summary_out_path = os.path.join(tmp, "run.float32")
-    if os.path.exists(summary_out_path):
-        os.remove(summary_out_path)
-    with open(summary_out_path+'.stdout', 'w') as out:
-        with open(summary_out_path+'.stderr', 'w') as err:
-            call = [job["merlict_path"], corsika_out_path, summary_out_path]
-            mct_rc = subprocess.call(call, stdout=out, stderr=err)
-
-    summary_block = EventSummary.read_event_summary_block(summary_out_path)
-    return summary_block
+    with tempfile.TemporaryDirectory() as tmp:
+        card_path = os.path.join(tmp, "card.txt")
+        with open(card_path, "wt") as f:
+            f.write(job["steering_card"])
+        corsika_out_path = os.path.join(tmp, "run.evtio")
+        cor_rc = corsika_wrapper.corsika(
+            steering_card=corsika_wrapper.read_steering_card(card_path),
+            output_path=corsika_out_path,
+            save_stdout=True)
+        summary_out_path = os.path.join(tmp, "run.float32")
+        with open(summary_out_path+'.stdout', 'w') as out:
+            with open(summary_out_path+'.stderr', 'w') as err:
+                call = [
+                    job["merlict_path"],
+                    corsika_out_path,
+                    summary_out_path]
+                mct_rc = subprocess.call(call, stdout=out, stderr=err)
+        summary_block = EventSummary.read_event_summary_block(summary_out_path)
+        return summary_block
 
 
 def _one_iteration(
@@ -242,10 +236,6 @@ def _one_iteration(
         work_dir=work_dir,
         state_number=_latest_state_number(work_dir))
     energy_iteration = len(s["energy"])
-
-    tmp_dir = os.path.join(
-        work_dir,
-        "{:06d}_energy".format(energy_iteration))
 
     if energy_iteration == 0:
         energy_iteration_factor = s["input"]["initial"][
@@ -278,8 +268,6 @@ def _one_iteration(
         direction_converged = False
         position_converged = False
         if sub_iteration > max_subiterations:
-            if os.path.exists(tmp_dir):
-                shutil.rmtree(tmp_dir)
             raise RuntimeError("Can not converge. Quit.")
 
         print("E: {:0.3f}, It: ({:d},{:d})".format(
@@ -291,7 +279,6 @@ def _one_iteration(
             s["input"]["energy_thrown_per_iteration"]/energy)
 
         jobs = _make_jobs(
-            tmp_dir=tmp_dir,
             particle_id=s["input"]["corsika_particle_id"],
             energy=energy,
             site=s["input"]["site"],
@@ -400,7 +387,6 @@ def _one_iteration(
             zenith_theta_deg = (zenith_theta_deg + zenith_theta_deg_valid)/2
 
         sub_iteration += 1
-        shutil.rmtree(tmp_dir)
 
     s["energy"].append(float(energy))
     s["energy_iteration_factor"].append(float(energy_iteration_factor))
@@ -415,7 +401,6 @@ def _one_iteration(
 
 
 def _make_jobs(
-    tmp_dir,
     particle_id,
     energy,
     site,
@@ -456,10 +441,6 @@ def _make_jobs(
             instrument_radius=instrument_radius,
             max_scatter_radius=0.,
             bunch_size=1)
-        job["tmp_dir"] = os.path.join(
-            tmp_dir,
-            "{:06d}_sub".format(sub_iteration),
-            "{:06d}_job".format(i),)
         job["merlict_path"] = merlict_path
         jobs.append(job)
     return jobs
