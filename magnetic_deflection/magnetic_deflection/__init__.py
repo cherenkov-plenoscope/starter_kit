@@ -209,7 +209,8 @@ def _run_job(job):
         cor_rc = corsika_wrapper.corsika(
             steering_card=corsika_wrapper.read_steering_card(card_path),
             output_path=corsika_out_path,
-            save_stdout=True)
+            save_stdout=True,
+            corsika_path=job["corsika_path"])
         summary_out_path = os.path.join(tmp, "run.float32")
         with open(summary_out_path+'.stdout', 'w') as out:
             with open(summary_out_path+'.stderr', 'w') as err:
@@ -226,6 +227,8 @@ def _one_iteration(
     work_dir,
     merlict_path=os.path.abspath(
         'build/merlict/merlict-magnetic-field-explorer'),
+    corsika_path=os.path.abspath(
+        'build/corsika/corsika-75600/run/corsika75600Linux_QGSII_urqmd'),
     num_jobs=4,
     pool=multiprocessing.Pool(4),
     max_subiterations=12,
@@ -292,7 +295,8 @@ def _one_iteration(
             energy_iteration=energy_iteration,
             sub_iteration=sub_iteration,
             num_jobs=num_jobs,
-            merlict_path=merlict_path)
+            merlict_path=merlict_path,
+            corsika_path=corsika_path)
 
         result_blocks = pool.map(_run_job, jobs)
         events = np.concatenate(result_blocks)
@@ -415,6 +419,7 @@ def _make_jobs(
     sub_iteration,
     num_jobs,
     merlict_path,
+    corsika_path,
 ):
     jobs = []
     for i in range(num_jobs):
@@ -442,5 +447,6 @@ def _make_jobs(
             max_scatter_radius=0.,
             bunch_size=1)
         job["merlict_path"] = merlict_path
+        job["corsika_path"] = corsika_path
         jobs.append(job)
     return jobs
