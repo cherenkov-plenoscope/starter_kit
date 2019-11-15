@@ -270,7 +270,7 @@ def _one_iteration(
     while not on_target:
         direction_converged = False
         position_converged = False
-        if sub_iteration > max_subiterations:
+        if sub_iteration > max_subiterations or energy_iteration_factor > 0.98:
             raise RuntimeError("Can not converge. Quit.")
 
         print("E: {:0.3f}, It: ({:d},{:d})".format(
