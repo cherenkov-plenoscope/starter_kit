@@ -28,7 +28,6 @@ example_state = {
             "zenith_theta_deg": 0.,
             "scatter_angle_deg": 5.,
         },
-        "energy_lower_limit": 0.6,
         "energy_thrown_per_iteration": 4e2,
         "target_cx": 0.,
         "target_cy": 0.,
