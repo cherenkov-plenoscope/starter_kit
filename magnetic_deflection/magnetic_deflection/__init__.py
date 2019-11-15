@@ -27,7 +27,6 @@ example_state = {
             "azimuth_phi_deg": 0.,
             "zenith_theta_deg": 0.,
             "scatter_angle_deg": 5.,
-            "instrument_radius": 1e3,
         },
         "energy_lower_limit": 0.6,
         "energy_thrown_per_iteration": 4e2,
