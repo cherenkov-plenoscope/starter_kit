@@ -190,7 +190,7 @@ if __name__ == '__main__':
             past_trigger_dir = op.join(p_dir, 'past_trigger')
             map_dir = op.join(p_dir, '__'+feature_table_name)
             out_path = op.join(p_dir, feature_table_name+'.jsonl')
-            true_particle_id = irf.__particle_str_to_corsika_id(p)
+            true_particle_id = irf.PARTICLE_STR_TO_CORSIKA_ID[p]
             if not op.exists(out_path):
                 os.makedirs(map_dir, exist_ok=True)
                 feature_jobs += plmr.make_jobs_feature_extraction(
