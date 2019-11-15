@@ -1,0 +1,16 @@
+{
+    "input": {
+        "corsika_particle_id": 1,
+        "site": {
+            "earth_magnetic_field_x_muT": 12.5,
+            "earth_magnetic_field_z_muT": -25.9,
+            "observation_level_altitude_asl": 2347.0,
+            "corsika_atmosphere_model": 10,
+        }
+    },
+    "energy": [1e4, 1e-1],
+    "instrument_x": [0.0, 0.0],
+    "instrument_y": [0.0, 0.0],
+    "azimuth_phi_deg": [0.0, 0.0],
+    "zenith_theta_deg": [0.0, 0.0]
+}

@@ -201,7 +201,7 @@ def _write_state(work_dir, state, iteration):
 
 
 def _run_job(job):
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(prefix="mag_defl_job_") as tmp:
         card_path = os.path.join(tmp, "card.txt")
         with open(card_path, "wt") as f:
             f.write(job["steering_card"])
