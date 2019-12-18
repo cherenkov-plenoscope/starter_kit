@@ -124,6 +124,7 @@ if __name__ == '__main__':
                     corsika_path=absjoin(
                         "build",
                         "corsika",
+                        "original",
                         "corsika-75600",
                         "run",
                         "corsika75600Linux_QGSII_urqmd"),

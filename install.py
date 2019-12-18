@@ -33,16 +33,10 @@ def main():
             '--username', arguments['--username'],
             '--password', arguments['--password'],
             '--resource_path', join('.', 'corsika_install', 'resources')])
-        call(['pip', 'install', '-e', join('.', 'corsika_wrapper')])
-        call([
-            'corsika',
-            '--corsika_path',
-            os.path.abspath(join(
-                'build',
-                'corsika',
-                'corsika-75600',
-                'run',
-                'corsika75600Linux_QGSII_urqmd'))])
+        call(['pip', 'install', '-e',
+            join('.', 'corsika_install', 'corsika_primary_wrapper')])
+        call(['pip', 'install', '-e',
+            join('.', 'corsika_wrapper')])
 
         # Photon-propagator merlict
         # -------------------------
