@@ -813,7 +813,7 @@ x_train_unscaled = np.array([
 ]).T
 y_train = np.array([
     gamma_mask_train,
-    events_features_gh_train.energy
+    np.log10(events_features_gh_train.energy)
 ]).T
 
 gamma_mask_test = np.logical_and(
@@ -827,7 +827,7 @@ x_test_unscaled = np.array([
 ]).T
 y_test = np.array([
     gamma_mask_test,
-    events_features_gh_test.energy
+    np.log10(events_features_gh_test.energy)
 ]).T
 
 print("scale feature space")
@@ -846,7 +846,7 @@ clf = sklearn.neural_network.MLPRegressor(
     random_state=1,
     verbose=True,
     max_iter=1000)
-clf.fit(x_train, y_train[:, 0])
+clf.fit(x_train, y_train)
 
 model_gh_path = os.path.join(out_dir, "gamma_hadron_model")
 with open(model_gh_path+".pkl", "wb") as fout:
@@ -856,11 +856,11 @@ print("receiver operating characteristic")
 
 fpr_gh, tpr_gh, thresholds_gh = sklearn.metrics.roc_curve(
     y_true=y_test[:, 0],
-    y_score=clf.predict(x_test))
+    y_score=clf.predict(x_test)[:, 0])
 
 auc_gh = sklearn.metrics.roc_auc_score(
     y_true=y_test[:, 0],
-    y_score=clf.predict(x_test))
+    y_score=clf.predict(x_test)[:, 0])
 
 roc_gh = {
     "false_positive_rate": fpr_gh.tolist(),
@@ -913,7 +913,7 @@ energy_stop = 1e3
 energy_bin_edges = np.geomspace(energy_start, energy_stop, number_energy_bins + 1)
 energy_bin_start = energy_bin_edges[:-1]
 
-gammaness_cut = 0.33
+gammaness_cut = 0.25
 
 irf = {}
 gh = {}
@@ -971,7 +971,7 @@ for sg in source_geometries:
                 gh[sg][p]["events_features"])
         ]).T
         gh[sg][p]["x"] = scaler.transform(x_unscaled)
-        gammaness = clf.predict(gh[sg][p]["x"])
+        gammaness = clf.predict(gh[sg][p]["x"])[:, 0]
         detection_feature_mask = gammaness >= gammaness_cut
         gh[sg][p]["detection_mask"] = make_detection_mask(
             events_thrown=gh[sg][p]["events_thrown"],
