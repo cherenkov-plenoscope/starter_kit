@@ -68,6 +68,8 @@ def main():
             '.', 'cable_robo_mount')])
         call(['pip', 'install', '-e', join(
             '.', 'plenoscope_map_reduce')])
+        call(['pip', 'install', '-e', join(
+            '.', 'simpleio')])
 
     except docopt.DocoptExit as e:
         print(e)
