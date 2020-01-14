@@ -1,12 +1,14 @@
 import numpy as np
 import os
+import shutil
 import tempfile
 import json
 import tarfile
 import io
-import time
+import datetime
 import subprocess
 import corsika_primary_wrapper as cpw
+import plenopy as pl
 
 
 CORSIKA_PRIMARY_PATH = os.path.abspath(
@@ -54,9 +56,9 @@ EXAMPLE_SITE = {
 
 EXAMPLE_PARTICLE = {
     "particle_id": 1,
-    "energy_bin_edges": [0.25, 1, 10, 100, 1000],
-    "max_zenith_deg_vs_energy": [10, 10, 10, 10, 10,],
-    "max_depth_g_per_cm2_vs_energy": [0, 0, 0, 0, 0],
+    "energy_bin_edges": [1, 10, 100, 1000],
+    "max_zenith_deg_vs_energy": [3, 3, 3, 3],
+    "max_depth_g_per_cm2_vs_energy": [0, 0, 0, 0],
     "energy_power_law_slope": -1.5,
 }
 
@@ -66,8 +68,12 @@ EXAMPLE_APERTURE_GRID = {
 
 EXAMPLE_SUM_TRIGGER = {
     "patch_threshold": 103,
-    "integration_time_in_slices": 10
+    "integration_time_in_slices": 10,
+    "min_num_neighbors": 3,
+    "object_distances": [10e3, 15e3, 20e3],
 }
+
+EXAMPLE_LOG_DIRECTORY = os.path.join(".", "log")
 
 EXAMPLE_JOB = {
     "run_id": 1,
@@ -75,7 +81,7 @@ EXAMPLE_JOB = {
     "num_max_air_shower_reuse": 1,
     "particle": EXAMPLE_PARTICLE,
     "site": EXAMPLE_SITE,
-    "aperture_grid_threshold_pe": 1,
+    "aperture_grid_threshold_pe": 50,
     "sum_trigger": EXAMPLE_SUM_TRIGGER,
     "aperture_grid": EXAMPLE_APERTURE_GRID,
     "corsika_primary_path": CORSIKA_PRIMARY_PATH,
@@ -84,7 +90,7 @@ EXAMPLE_JOB = {
     "light_field_geometry_path": LIGHT_FIELD_GEOMETRY_PATH,
     "merlict_plenoscope_propagator_config_path":
         MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH,
-    "logging_directory": ".",
+    "log_dir": EXAMPLE_LOG_DIRECTORY,
 }
 
 
@@ -100,6 +106,7 @@ def _read_plenoscope_geometry(scenery_path):
             light_field_sensor = child.copy()
     return light_field_sensor
 
+
 """
 LEVEL 1
 =======
@@ -114,16 +121,36 @@ I_VERSION_1 = 0
 I_VERSION_2 = 1
 I_VERSION_3 = 2
 
-I_LEVEL = 3
-
 I_RUN_ID = 10
 I_AIR_SHOWER_ID = 11
+I_REUSE_ID = 12
 
 I_TRUE_PRIMARY_ID = 20
 I_TRUE_PRIMARY_ENERGY_GEV = 21
 I_TRUE_PRIMARY_AZIMUTH_RAD = 22
 I_TRUE_PRIMARY_ZENITH_RAD = 23
 I_TRUE_PRIMARY_DEPTH_G_PER_CM2 = 24
+
+I_TRUE_PRIMARY_MOMENTUM_X_GEV_PER_C = 25
+I_TRUE_PRIMARY_MOMENTUM_Y_GEV_PER_C = 26
+I_TRUE_PRIMARY_MOMENTUM_Z_GEV_PER_C = 27
+
+I_TRUE_NUM_CHERENKOV_BUNCHES = 28
+I_TRUE_NUM_CHERENKOV_PHOTONS = 29
+
+I_TRUE_CHERENKOV_MAXIMUM_ASL_M = 30
+
+I_GRID_NUM_BINS_RADIUS = 100
+I_GRID_BIN_RADIUS = 101
+I_GRID_POINTING_X = 102
+I_GRID_POINTING_Y = 103
+I_GRID_POINTING_Z = 104
+I_GRID_FIELD_OF_VIEW_RADIUS_DEG = 105
+I_GRID_THRESHOLD = 106
+I_GRID_HISTOGRAM_0_TO_1 = 110
+I_GRID_HISTOGRAM_1_TO_2 = 111
+I_GRID_HISTOGRAM_2_TO_4 = 112
+I_GRID_HISTOGRAM_4_TO_8 = 113
 
 I_SITE_OBSERVATION_LEVEL_ALTITUDE_ASL_M = 200
 I_SITE_EARTH_MAGNETIC_FIELD_X_MUT = 201
@@ -135,8 +162,8 @@ def _draw_power_law(lower_limit, upper_limit, power_slope, num_samples):
     # Adopted from CORSIKA
     rd = np.random.uniform(size=num_samples)
     if (power_slope != -1.):
-        ll   = lower_limit ** (power_slope + 1.)
-        ul   = upper_limit ** (power_slope + 1.)
+        ll = lower_limit**(power_slope + 1.)
+        ul = upper_limit**(power_slope + 1.)
         slex = 1./(power_slope + 1.)
         return (rd*ul + (1. - rd)*ll)**slex
     else:
@@ -154,13 +181,15 @@ def _draw_zenith_distance(
     v = np.random.uniform(low=v_min, high=v_max, size=num_samples)
     return np.arccos(2 * v - 1)
 
-MAX_NUM_EVENTS_IN_RUN = 1000
 
 def _random_seed_based_on(run_id, event_id):
     return run_id*MAX_NUM_EVENTS_IN_RUN + event_id
 
 
-def draw_LEVEL_1_corsika_primary_steering(
+MAX_NUM_EVENTS_IN_RUN = 1000
+
+
+def draw_corsika_primary_steering(
     run_id=1,
     site=EXAMPLE_SITE,
     particle=EXAMPLE_PARTICLE,
@@ -225,6 +254,7 @@ def draw_LEVEL_1_corsika_primary_steering(
     return steering
 
 
+"""
 def corsika_primary_steering_to_LEVEL_1_dict(corsika_primary_steering):
     level1 = []
     run_cfg = corsika_primary_steering["run"]
@@ -247,32 +277,29 @@ def corsika_primary_steering_to_LEVEL_1_dict(corsika_primary_steering):
         a["site_atmosphere_id"] = int(run_cfg["atmosphere_id"])
         level1.append(a)
     return level1
+"""
 
 
-def corsika_primary_steering_to_LEVEL_1_array(corsika_primary_steering):
-    num_primaries = len(corsika_primary_steering["primaries"])
-    l = np.zeros(
-        shape=(num_primaries, NUM_FIELDS_IN_LEVEL_BLOCK),
-        dtype=np.float32)
+def set_corsika_primary_steering_to_block(block, corsika_primary_steering):
     run_cfg = corsika_primary_steering["run"]
     for a, primary in enumerate(corsika_primary_steering["primaries"]):
-        l[a, I_RUN_ID] = run_cfg["run_id"]
-        l[a, I_AIR_SHOWER_ID] = a + 1
+        block[a, I_RUN_ID] = run_cfg["run_id"]
+        block[a, I_AIR_SHOWER_ID] = a + 1
 
-        l[a, I_TRUE_PRIMARY_ID] = primary["particle_id"]
-        l[a, I_TRUE_PRIMARY_ENERGY_GEV] = primary["energy_GeV"]
-        l[a, I_TRUE_PRIMARY_AZIMUTH_RAD] = primary["azimuth_rad"]
-        l[a, I_TRUE_PRIMARY_ZENITH_RAD] = primary["zenith_rad"]
-        l[a, I_TRUE_PRIMARY_DEPTH_G_PER_CM2] = primary["depth_g_per_cm2"]
+        block[a, I_TRUE_PRIMARY_ID] = primary["particle_id"]
+        block[a, I_TRUE_PRIMARY_ENERGY_GEV] = primary["energy_GeV"]
+        block[a, I_TRUE_PRIMARY_AZIMUTH_RAD] = primary["azimuth_rad"]
+        block[a, I_TRUE_PRIMARY_ZENITH_RAD] = primary["zenith_rad"]
+        block[a, I_TRUE_PRIMARY_DEPTH_G_PER_CM2] = primary["depth_g_per_cm2"]
 
-        l[a, I_SITE_OBSERVATION_LEVEL_ALTITUDE_ASL_M] = run_cfg[
+        block[a, I_SITE_OBSERVATION_LEVEL_ALTITUDE_ASL_M] = run_cfg[
             "observation_level_altitude_asl"]
-        l[a, I_SITE_EARTH_MAGNETIC_FIELD_X_MUT] = run_cfg[
+        block[a, I_SITE_EARTH_MAGNETIC_FIELD_X_MUT] = run_cfg[
             "earth_magnetic_field_x_muT"]
-        l[a, I_SITE_EARTH_MAGNETIC_FIELD_Z_MUT] = run_cfg[
+        block[a, I_SITE_EARTH_MAGNETIC_FIELD_Z_MUT] = run_cfg[
             "earth_magnetic_field_z_muT"]
-        l[a, I_SITE_ATMOSPHERE_ID] = run_cfg["atmosphere_id"]
-    return l
+        block[a, I_SITE_ATMOSPHERE_ID] = run_cfg["atmosphere_id"]
+    return block
 
 
 """
@@ -283,6 +310,7 @@ Run CORSIKA-primary-mod.
 reuse showers.
 """
 
+
 def _init_plenoscope_grid(
     plenoscope_diameter=36,
     num_bins_radius=512,
@@ -290,8 +318,8 @@ def _init_plenoscope_grid(
     """
      num_bins_radius = 2
      _______^______
-    /              \
-    +-------+-------+-------+-------+\
+    /              -
+    +-------+-------+-------+-------+-
     |       |       |       |       | |
     |       |       |       |       | |
     |       |       |       |       | |
@@ -319,14 +347,10 @@ def _init_plenoscope_grid(
         -g["plenoscope_diameter"]*g["num_bins_radius"],
         g["plenoscope_diameter"]*g["num_bins_radius"],
         2*g["num_bins_radius"] + 1)
-    g["num_bins_diameter"] = len(g["xy_bin_edges"] - 1)
+    g["num_bins_diameter"] = len(g["xy_bin_edges"]) - 1
     g["xy_bin_centers"] = .5*(g["xy_bin_edges"][:-1] + g["xy_bin_edges"][1:])
     return g
 
-
-EXAMPLE_PLENOSCOPE_GRID = _init_plenoscope_grid(
-    plenoscope_diameter=36,
-    num_bins_radius=512)
 
 def _power2_bin_edges(power):
     be = np.geomspace(1, 2**power, power+1)
@@ -334,7 +358,9 @@ def _power2_bin_edges(power):
     beiz[1:] = be
     return beiz
 
+
 PH_BIN_EDGES = _power2_bin_edges(16)
+
 
 def _make_bunch_direction(cx, cy):
     d = np.zeros(shape=(cx.shape[0], 3))
@@ -343,14 +369,14 @@ def _make_bunch_direction(cx, cy):
     d[:, 2] = -1.0*np.sqrt(1.0 - cx**2 - cy**2)
     return d
 
+
 def _make_angle_between(directions, direction):
     # expect normalized
     return np.arccos(np.dot(directions, direction))
 
-EXAMPLE_STEERING = draw_LEVEL_1_corsika_primary_steering(
-    num_events=100)
 
 CM2M = 1e-2
+M2CM = 1./CM2M
 
 
 def _reuse_id_based_on(bin_idx_x, bin_idx_y, num_bins_per_edge):
@@ -363,10 +389,10 @@ def _core_position(bin_idx, bin_centers, offset):
 
 def _assign_plenoscope_grid(
     cherenkov_bunches,
-    plenoscope_field_of_view_radius_deg=3.5,
-    plenoscope_pointing_direction=[0, 0, 1],
-    plenoscope_grid_geometry=EXAMPLE_PLENOSCOPE_GRID,
-    threshold_1=10,
+    plenoscope_field_of_view_radius_deg,
+    plenoscope_pointing_direction,
+    plenoscope_grid_geometry,
+    threshold_1,
 ):
     pgg = plenoscope_grid_geometry
 
@@ -408,6 +434,8 @@ def _assign_plenoscope_grid(
             pgg["xy_bin_edges"],
             pgg["xy_bin_edges"])
         )[0]
+    assert integrated_bins.shape[0] == pgg["num_bins_diameter"]
+    assert integrated_bins.shape[1] == pgg["num_bins_diameter"]
 
     bin_intensity_histogram = np.histogram(
         integrated_bins.flatten(),
@@ -422,6 +450,9 @@ def _assign_plenoscope_grid(
         reuse_bin = np.random.choice(np.arange(num_bins_above_threshold))
         bin_idx_x = bin_idxs_above_threshold[0][reuse_bin]
         bin_idx_y = bin_idxs_above_threshold[1][reuse_bin]
+
+        num_bunches_in_integrated_bin = integrated_bins[bin_idx_x, bin_idx_y]
+
         evt = {}
         evt["reuse_id"] = int(_reuse_id_based_on(
             bin_idx_x=bin_idx_x,
@@ -431,12 +462,26 @@ def _assign_plenoscope_grid(
         evt["grid_bin_idx_y"] = int(bin_idx_y)
         evt["grid_x_offset"] = float(x_offset)
         evt["grid_y_offset"] = float(y_offset)
-        evt["true_primary_core_x"] = pgg["xy_bin_centers"][bin_idx_x] - x_offset
-        evt["true_primary_core_y"] = pgg["xy_bin_centers"][bin_idx_y] - y_offset
-        match_bin_idx_x = bunch_x_bin_idxs == bin_idx_x
-        match_bin_idx_y = bunch_y_bin_idxs == bin_idx_y
+        evt["grid_x_bin_center"] = float(pgg["xy_bin_centers"][bin_idx_x])
+        evt["grid_y_bin_center"] = float(pgg["xy_bin_centers"][bin_idx_y])
+
+        evt["true_primary_core_x"] = (
+            pgg["xy_bin_centers"][bin_idx_x] - x_offset)
+        evt["true_primary_core_y"] = (
+            pgg["xy_bin_centers"][bin_idx_y] - y_offset)
+
+        match_bin_idx_x = bunch_x_bin_idxs - 1 == bin_idx_x
+        match_bin_idx_y = bunch_y_bin_idxs - 1 == bin_idx_y
         match_bin = np.logical_and(match_bin_idx_x, match_bin_idx_y)
-        evt["cherenkov_bunches"] = bunches_in_fov[match_bin, :]
+        assert np.sum(match_bin) == num_bunches_in_integrated_bin
+
+        evt["cherenkov_bunches"] = bunches_in_fov[match_bin, :].copy()
+        evt["cherenkov_bunches"][:, cpw.IX] -= M2CM*evt["true_primary_core_x"]
+        evt["cherenkov_bunches"][:, cpw.IY] -= M2CM*evt["true_primary_core_y"]
+        print("true_primary_core_x/m", evt["true_primary_core_x"])
+        print("true_primary_core_y/m", evt["true_primary_core_y"])
+        print("IX/m", CM2M*evt["cherenkov_bunches"][:, cpw.IX])
+        print("IY/m", CM2M*evt["cherenkov_bunches"][:, cpw.IY])
 
         return evt, bin_intensity_histogram
 
@@ -449,25 +494,21 @@ def _addbinaryfile(tarout, file_name, file_bytes):
         tarout.addfile(info, buff)
 
 
-class Timer:
-    def __init__(self, task):
-        self.history = []
-        self.history.append({"time": time.time(), "task": task})
+class JsonlLog:
+    def __init__(self, path):
+        self.last_log_time = datetime.datetime.now()
+        self.path = path
+        self.log("start")
 
-    def append(self, task):
-        self.history.append({"time": time.time(), "task": task})
-
-    def export_jsonl(self, path):
-        with open(path, "wt") as f:
-            for e, _ in enumerate(self.history):
-                if e > 0:
-                    d = {"s": (
-                            self.history[e]["time"] -
-                            self.history[e-1]["time"]),
-                        "task": self.history[e]["task"]}
-                else:
-                    d = {"s": 0, "task": self.history[e]["task"]}
-                f.write(json.dumps(d)+"\n")
+    def log(self, msg):
+        now = datetime.datetime.now()
+        with open(self.path, "at") as f:
+            d = {
+                "t": now.strftime("%Y-%m-%d_%H:%M:%S"),
+                "delta_t": (now - self.last_log_time).total_seconds(),
+                "msg": msg}
+            f.write(json.dumps(d)+"\n")
+        self.last_log_time = now
 
 
 def _merlict_plenoscope_propagator(
@@ -486,7 +527,7 @@ def _merlict_plenoscope_propagator(
     and saves the stdout and stderr
     """
     with open(output_path+stdout_postfix, 'w') as out, \
-        open(output_path+stderr_postfix, 'w') as err:
+            open(output_path+stderr_postfix, 'w') as err:
         call = [
             merlict_plenoscope_propagator_path,
             '-l', light_field_geometry_path,
@@ -500,45 +541,73 @@ def _merlict_plenoscope_propagator(
     return mct_rc
 
 
+def _summarize_trigger_response(
+    unique_id,
+    trigger_responses,
+    detector_truth,
+):
+    tr = unique_id.copy()
+    tr["true_pe_cherenkov"] = int(detector_truth.number_air_shower_pulses())
+    tr["trigger_response"] = int(np.max(
+        [layer['patch_threshold'] for layer in trigger_responses]))
+    for o in range(len(trigger_responses)):
+        tr["trigger_{:d}_object_distance".format(o)] = float(
+            trigger_responses[o]['object_distance'])
+        tr["trigger_{:d}_respnse".format(o)] = int(
+            trigger_responses[o]['patch_threshold'])
+    return tr
+
+
+"""
+IDs:
+1.) run_id
+2.) airshower_id
+3.) reuse_id
+"""
+
+
 def run(job=EXAMPLE_JOB):
-    _t = Timer("start")
+    os.makedirs(job["log_dir"], exist_ok=True)
+    run_id_str = "{:06d}".format(job["run_id"])
+    _t = JsonlLog(os.path.join(job["log_dir"], run_id_str+".josnl"))
+
     assert os.path.exists(job["corsika_primary_path"])
     assert os.path.exists(job["merlict_plenoscope_propagator_path"])
     assert os.path.exists(job["merlict_plenoscope_propagator_config_path"])
     assert os.path.exists(job["plenoscope_scenery_path"])
     assert os.path.exists(job["light_field_geometry_path"])
+    _t.log("assert resource-paths exist.")
+
+    # set up plenoscope grid
+    _scenery_path = os.path.join(
+        job["plenoscope_scenery_path"],
+        "scenery.json")
+    _light_field_sensor_geometry = _read_plenoscope_geometry(_scenery_path)
+    plenoscope_diameter = 2.0*_light_field_sensor_geometry[
+        "expected_imaging_system_aperture_radius"]
+    plenoscope_pointing_direction = np.array([0, 0, 1])
+    plenoscope_field_of_view_radius_deg = 0.5*_light_field_sensor_geometry[
+        "max_FoV_diameter_deg"]
+    plenoscope_grid_geometry = _init_plenoscope_grid(
+        plenoscope_diameter=plenoscope_diameter,
+        num_bins_radius=job["aperture_grid"]["num_bins_radius"])
+
+    table_primaries = []
+    table_airshowers = []
+    table_grid_histograms = []
 
     with tempfile.TemporaryDirectory(prefix="plenoscope_irf_") as tmp_dir:
-        run_id_str = "{:06d}".format(job["run_id"])
         tmp_dir = "/home/relleums/Desktop/work"
         os.makedirs(tmp_dir, exist_ok=True)
+        _t.log("make temp_dir:'{:s}'".format(tmp_dir))
 
-        # LEVEL 1
-        # -------
-        corsika_primary_steering = draw_LEVEL_1_corsika_primary_steering(
+        corsika_primary_steering = draw_corsika_primary_steering(
             run_id=job["run_id"],
             site=job["site"],
             particle=job["particle"],
             num_events=job["num_air_showers"])
-        _t.append("draw primaries")
+        _t.log("draw primaries")
 
-        lvl1_jsonl_path = os.path.join(tmp_dir, run_id_str+"_LEVEL1.jsonl")
-        with open(lvl1_jsonl_path, "wt") as f:
-            air_showers = corsika_primary_steering_to_LEVEL_1_dict(
-                corsika_primary_steering)
-            for air_shower in air_showers:
-                f.write(json.dumps(air_shower) + "\n")
-
-        lvl1_bin_path = os.path.join(tmp_dir, run_id_str+"_LEVEL1.273xfloat32")
-        level1_bin = corsika_primary_steering_to_LEVEL_1_array(
-            corsika_primary_steering)
-        with open(lvl1_bin_path, "wb") as f:
-            f.write(level1_bin.tobytes())
-
-        _t.append("exporrt level 1")
-
-        # LEVEL 2
-        # -------
         corsika_run_path = os.path.join(tmp_dir, run_id_str+"_corsika.tar")
         if not os.path.exists(corsika_run_path):
             cpw_rc = cpw.corsika_primary(
@@ -547,36 +616,22 @@ def run(job=EXAMPLE_JOB):
                 output_path=corsika_run_path,
                 stdout_postfix=".stdout",
                 stderr_postfix=".stderr")
+        shutil.copy(
+            corsika_run_path+".stdout",
+            os.path.join(job["log_dir"], run_id_str+"_corsika.stdout"))
+        shutil.copy(
+            corsika_run_path+".stderr",
+            os.path.join(job["log_dir"], run_id_str+"_corsika.stderr"))
+        _t.log("run CORSIKA")
         with open(corsika_run_path+".stdout", "rt") as f:
             assert cpw.stdout_ends_with_end_of_run_marker(f.read())
-        _t.append("run CORSIKA")
-
-        # set up plenoscope grid
-        _scenery_path = os.path.join(
-            job["plenoscope_scenery_path"],
-            "scenery.json")
-        _light_field_sensor_geometry = _read_plenoscope_geometry(_scenery_path)
-
-        plenoscope_diameter = 2.0*_light_field_sensor_geometry[
-            "expected_imaging_system_aperture_radius"]
-        plenoscope_pointing_direction = np.array([0, 0, 1])
-        plenoscope_field_of_view_radius_deg = 0.5*_light_field_sensor_geometry[
-            "max_FoV_diameter_deg"]
-
-        plenoscope_grid_geometry = _init_plenoscope_grid(
-            plenoscope_diameter=plenoscope_diameter,
-            num_bins_radius=job["aperture_grid"]["num_bins_radius"])
+        _t.log("assert CORSIKA quit ok")
 
         # loop over air-showers
-        lvl2 = []
         run = cpw.Tario(corsika_run_path)
         reuse_run_path = os.path.join(tmp_dir, run_id_str+"_reuse.tar")
-        lvl2_jsonl_path =  os.path.join(tmp_dir, run_id_str+"_LEVEL2.jsonl")
-        with tarfile.open(reuse_run_path, "w") as tarout, \
-            open(lvl2_jsonl_path, "wt") as flvl2:
-
+        with tarfile.open(reuse_run_path, "w") as tarout:
             _addbinaryfile(tarout, "runh.float32", run.runh.tobytes())
-
             for event_idx, event in enumerate(run):
                 event_header, cherenkov_bunches = event
 
@@ -585,56 +640,90 @@ def run(job=EXAMPLE_JOB):
                 assert (run_id == corsika_primary_steering["run"]["run_id"])
                 event_id = event_idx + 1
                 assert (event_id == cpw._evth_event_number(event_header))
-                event_steering = corsika_primary_steering["primaries"][event_idx]
-                event_seed = event_steering["random_seed"][0]["SEED"]
+                primary = corsika_primary_steering["primaries"][event_idx]
+                event_seed = primary["random_seed"][0]["SEED"]
+                ide = {"run_id":  int(run_id), "airshower_id": int(event_id)}
                 assert (event_seed == _random_seed_based_on(
                     run_id=run_id,
                     event_id=event_id))
-
                 # set event's random-seed
                 np.random.seed(event_seed)
 
-                reuse_event, plenoscope_grid_histogram = _assign_plenoscope_grid(
+                (
+                    reuse_event,
+                    plenoscope_grid_histogram
+                ) = _assign_plenoscope_grid(
                     cherenkov_bunches=cherenkov_bunches,
-                    plenoscope_field_of_view_radius_deg=
-                        plenoscope_field_of_view_radius_deg,
-                    plenoscope_pointing_direction=plenoscope_pointing_direction,
+                    plenoscope_field_of_view_radius_deg=(
+                        plenoscope_field_of_view_radius_deg),
+                    plenoscope_pointing_direction=(
+                        plenoscope_pointing_direction),
                     plenoscope_grid_geometry=plenoscope_grid_geometry,
                     threshold_1=job["aperture_grid_threshold_pe"])
 
-                #print(reuse_event)
-                l2 = {}
-                l2["run_id"] = int(run_id)
-                l2["air_shower_id"] = int(event_id)
-
-                l2["true_primary_momentum_x_GeV_per_c"] = float(
+                # primary
+                # -------
+                pre = ide.copy()
+                pre["particle_id"] = float(primary["particle_id"])
+                pre["energy_GeV"] = float(primary["energy_GeV"])
+                pre["azimuth_rad"] = float(primary["azimuth_rad"])
+                pre["zenith_rad"] = float(primary["zenith_rad"])
+                pre["depth_g_per_cm2"] = float(primary["depth_g_per_cm2"])
+                pre["momentum_x_GeV_per_c"] = float(
                     cpw._evth_px_momentum_in_x_direction_GeV_per_c(
                         event_header))
-                l2["true_primary_momentum_y_GeV_per_c"] = float(
+                pre["momentum_y_GeV_per_c"] = float(
                     cpw._evth_py_momentum_in_y_direction_GeV_per_c(
                         event_header))
-                l2["true_primary_momentum_z_GeV_per_c"] = float(
+                pre["momentum_z_GeV_per_c"] = float(
                     cpw._evth_pz_momentum_in_z_direction_GeV_per_c(
                         event_header))
+                table_primaries.append(pre)
 
-                l2["true_total_number_cherenkov_photons"] = int(
-                    cherenkov_bunches.shape[0])
-
-                if l2["true_total_number_cherenkov_photons"] > 0:
-                    l2["true_air_shower_cherenkov_median_asl_m"] = float(
+                # shower statistics
+                # -----------------
+                ase = ide.copy()
+                ase["num_bunches"] = int(cherenkov_bunches.shape[0])
+                ase["num_photons"] = float(
+                    np.sum(cherenkov_bunches[:, cpw.IBSIZE]))
+                if cherenkov_bunches.shape[0] > 0:
+                    ase["maximum_asl_m"] = float(
                         CM2M*np.median(cherenkov_bunches[:, cpw.IZEM]))
+                    ase["wavelength_median_nm"] = float(
+                        np.median(cherenkov_bunches[:, cpw.IWVL]))
+                    ase["cx_median_rad"] = float(
+                        np.median(cherenkov_bunches[:, cpw.ICX]))
+                    ase["cy_median_rad"] = float(
+                        np.median(cherenkov_bunches[:, cpw.ICY]))
+                    ase["x_median_m"] = float(
+                        CM2M*np.median(cherenkov_bunches[:, cpw.IX]))
+                    ase["y_median_m"] = float(
+                        CM2M*np.median(cherenkov_bunches[:, cpw.IY]))
+                    ase["bunch_size_median"] = float(
+                        np.median(cherenkov_bunches[:, cpw.IBSIZE]))
                 else:
-                    l2["true_air_shower_cherenkov_median_asl_m"] = 0.
+                    ase["maximum_asl_m"] = float("nan")
+                    ase["wavelength_median_nm"] = float("nan")
+                    ase["cx_median_rad"] = float("nan")
+                    ase["cy_median_rad"] = float("nan")
+                    ase["x_median_m"] = float("nan")
+                    ase["y_median_m"] = float("nan")
+                    ase["bunch_size_median"] = float("nan")
+                table_airshowers.append(ase)
 
+                # grid statistics
+                # ---------------
+                gre = ide.copy()
+                gre["num_bins_radius"] = int(
+                    plenoscope_grid_geometry["num_bins_radius"])
+                gre["plenoscope_diameter"] = float(
+                    plenoscope_grid_geometry["plenoscope_diameter"])
                 for i in range(len(plenoscope_grid_histogram)):
-                    l2["grid_hist_{:02d}".format(i)] = int(
+                    gre["hist_{:02d}".format(i)] = int(
                         plenoscope_grid_histogram[i])
-                flvl2.write(json.dumps(l2)+"\n")
+                table_grid_histograms.append(gre)
 
                 if reuse_event is not None:
-                    l3 = {}
-                    l3["reuse_id"] = reuse_event["reuse_id"]
-
                     _addbinaryfile(
                         tarout=tarout,
                         file_name="{:09d}.evth.float32".format(event_id),
@@ -644,7 +733,7 @@ def run(job=EXAMPLE_JOB):
                         file_name="{:09d}.cherenkov_bunches.Nx8_float32".format(event_id),
                         file_bytes=reuse_event["cherenkov_bunches"].tobytes())
 
-        _t.append("reuse, grid")
+        _t.log("reuse, grid")
 
         # LEVEL 3
         # -------
@@ -659,14 +748,65 @@ def run(job=EXAMPLE_JOB):
                     "merlict_plenoscope_propagator_path"],
                 merlict_plenoscope_propagator_config_path=job[
                     "merlict_plenoscope_propagator_config_path"],
-                random_seed=run_id)
-            assert(merlict_rc == 0)
+                random_seed=run_id,
+                stdout_postfix=".stdout",
+                stderr_postfix=".stderr")
+        shutil.copy(
+            merlict_run_path+".stdout",
+            os.path.join(job["log_dir"], run_id_str+"_merlict.stdout"))
+        shutil.copy(
+            merlict_run_path+".stderr",
+            os.path.join(job["log_dir"], run_id_str+"_merlict.stderr"))
+        _t.log("run merlict")
+        assert(merlict_rc == 0)
 
-        _t.append("run merlict")
+        run = pl.Run(merlict_run_path)
+        trigger_preparation = pl.trigger.prepare_refocus_sum_trigger(
+            light_field_geometry=run.light_field_geometry,
+            object_distances=job["sum_trigger"]["object_distances"])
 
+        _t.log("prepare_refocus_sum_trigger")
 
+        trigger_truth_table = []
+        past_trigger_table = []
 
+        past_trigger_path = os.path.join(tmp_dir, "past_trigger")
+        os.makedirs(past_trigger_path, exist_ok=True)
 
+        for event in run:
+            trigger_responses = pl.trigger.apply_refocus_sum_trigger(
+                event=event,
+                trigger_preparation=trigger_preparation,
+                min_number_neighbors=job["sum_trigger"]["min_num_neighbors"],
+                integration_time_in_slices=job["sum_trigger"]["integration_time_in_slices"])
+            with open(os.path.join(event._path, "refocus_sum_trigger.json"), "wt") as f:
+                f.write(json.dumps(trigger_responses, indent=4))
 
-        _t.append("end")
-        _t.export_jsonl(os.path.join(tmp_dir, "hist.jsonl"))
+            crunh = event.simulation_truth.event.corsika_run_header.raw
+            cevth = event.simulation_truth.event.corsika_event_header.raw
+            run_id = int(cpw._evth_run_number(cevth))
+            event_id = int(cpw._evth_event_number(cevth))
+
+            trigger_truth = _summarize_trigger_response(
+                unique_id={},
+                trigger_responses=trigger_responses,
+                detector_truth=event.simulation_truth.detector)
+            trigger_truth_table.append(trigger_truth)
+
+            if trigger_truth["trigger_response"] >= job["sum_trigger"]["patch_threshold"]:
+
+                event_filename = '{run_id:06d}{event_id:06d}'.format(
+                    run_id=run_id,
+                    event_id=event_id)
+                event_path = os.path.join(
+                    past_trigger_path,
+                    event_filename)
+                shutil.copytree(event._path, event_path)
+                pl.tools.acp_format.compress_event_in_place(event_path)
+        _t.log("run sum-trigger")
+
+        with open(os.path.join(tmp_dir, "trigger_truth.jsonl"), 'wt') as f:
+            for e in trigger_truth_table:
+                f.write(json.dumps(e)+"\n")
+
+        _t.log("end")
