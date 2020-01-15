@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from os import path as op
 import shutil
 import tempfile
 import json
@@ -12,7 +13,7 @@ import plenopy as pl
 
 
 CORSIKA_PRIMARY_PATH = os.path.abspath(
-    os.path.join(
+    op.join(
         "build",
         "corsika",
         "modified",
@@ -21,25 +22,25 @@ CORSIKA_PRIMARY_PATH = os.path.abspath(
         "corsika75600Linux_QGSII_urqmd"))
 
 MERLICT_PLENOSCOPE_PROPAGATOR_PATH = os.path.abspath(
-    os.path.join(
+    op.join(
         "build",
         "merlict",
         "merlict-plenoscope-propagation"))
 
 LIGHT_FIELD_GEOMETRY_PATH = os.path.abspath(
-    os.path.join(
+    op.join(
         "run20190724_10",
         "light_field_calibration"))
 
 EXAMPLE_PLENOSCOPE_SCENERY_PATH = os.path.abspath(
-    os.path.join(
+    op.join(
         "resources",
         "acp",
         "71m",
         "scenery"))
 
 MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH = os.path.abspath(
-    os.path.join(
+    op.join(
         "resources",
         "acp",
         "merlict_propagation_config.json"))
@@ -73,12 +74,13 @@ EXAMPLE_SUM_TRIGGER = {
     "object_distances": [10e3, 15e3, 20e3],
 }
 
-EXAMPLE_LOG_DIRECTORY = os.path.join(".", "log")
+EXAMPLE_LOG_DIRECTORY = op.join(".", "_log")
+EXAMPLE_PAST_TRIGGER_DIRECTORY = op.join(".", "_past_trigger")
+EXAMPLE_FEATURE_DIRECTORY = op.join(".", "_features")
 
 EXAMPLE_JOB = {
     "run_id": 1,
     "num_air_showers": 100,
-    "num_max_air_shower_reuse": 1,
     "particle": EXAMPLE_PARTICLE,
     "site": EXAMPLE_SITE,
     "aperture_grid_threshold_pe": 50,
@@ -91,6 +93,8 @@ EXAMPLE_JOB = {
     "merlict_plenoscope_propagator_config_path":
         MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH,
     "log_dir": EXAMPLE_LOG_DIRECTORY,
+    "past_trigger_dir": EXAMPLE_PAST_TRIGGER_DIRECTORY,
+    "feature_dir": EXAMPLE_FEATURE_DIRECTORY
 }
 
 
@@ -107,55 +111,46 @@ def _read_plenoscope_geometry(scenery_path):
     return light_field_sensor
 
 
-"""
-LEVEL 1
-=======
+IX = {}
+IX["marker"] = 0
+IX["version"] = 1
 
-Draw basic particle properties.
-Create steering for CORSIKA-primary-mod.
+IX["run_id"] = 5
+IX["airshower_id"] = 6
+IX["primary_id"] = 20
+IX["primary_energy_gev"] = 21
+IX["primary_azimuth_rad"] = 22
+IX["primary_zenith_rad"] = 23
+IX["primary_depth_g_per_cm2"] = 24
+IX["primary_momentum_x_gev_per_c"] = 25
+IX["primary_momentum_y_gev_per_c"] = 26
+IX["primary_momentum_z_gev_per_c"] = 27
+IX["primary_first_interaction_height_asl_m"] = 28
 
-"""
-NUM_FIELDS_IN_LEVEL_BLOCK = 273
+IX["full_shower_num_bunches"] = 40
+IX["full_shower_num_photons"] = 41
+IX["full_shower_maximum_asl_m"] = 42
+IX["full_shower_wavelength_median_nm"] = 43
+IX["full_shower_cx_median_rad"] = 44
+IX["full_shower_cy_median_rad"] = 45
+IX["full_shower_x_median_m"] = 46
+IX["full_shower_y_median_m"] = 47
+IX["full_shower_bunch_size_median"] = 48
 
-I_VERSION_1 = 0
-I_VERSION_2 = 1
-I_VERSION_3 = 2
+IX["grid_histogram_0"] = 60
+IX["grid_histogram_1"] = 61
+IX["grid_histogram_2"] = 62
+IX["grid_histogram_3"] = 63
+IX["grid_histogram_16"] = 76
+# and so on
+IX["grid_random_shift_x_m"] = 78
+IX["grid_random_shift_y_m"] = 79
+IX["grid_plenoscope_pointing_direction_x"] = 80
+IX["grid_plenoscope_pointing_direction_y"] = 81
+IX["grid_plenoscope_pointing_direction_z"] = 82
+IX["grid_plenoscope_field_of_view_radius_deg"] = 83
 
-I_RUN_ID = 10
-I_AIR_SHOWER_ID = 11
-I_REUSE_ID = 12
-
-I_TRUE_PRIMARY_ID = 20
-I_TRUE_PRIMARY_ENERGY_GEV = 21
-I_TRUE_PRIMARY_AZIMUTH_RAD = 22
-I_TRUE_PRIMARY_ZENITH_RAD = 23
-I_TRUE_PRIMARY_DEPTH_G_PER_CM2 = 24
-
-I_TRUE_PRIMARY_MOMENTUM_X_GEV_PER_C = 25
-I_TRUE_PRIMARY_MOMENTUM_Y_GEV_PER_C = 26
-I_TRUE_PRIMARY_MOMENTUM_Z_GEV_PER_C = 27
-
-I_TRUE_NUM_CHERENKOV_BUNCHES = 28
-I_TRUE_NUM_CHERENKOV_PHOTONS = 29
-
-I_TRUE_CHERENKOV_MAXIMUM_ASL_M = 30
-
-I_GRID_NUM_BINS_RADIUS = 100
-I_GRID_BIN_RADIUS = 101
-I_GRID_POINTING_X = 102
-I_GRID_POINTING_Y = 103
-I_GRID_POINTING_Z = 104
-I_GRID_FIELD_OF_VIEW_RADIUS_DEG = 105
-I_GRID_THRESHOLD = 106
-I_GRID_HISTOGRAM_0_TO_1 = 110
-I_GRID_HISTOGRAM_1_TO_2 = 111
-I_GRID_HISTOGRAM_2_TO_4 = 112
-I_GRID_HISTOGRAM_4_TO_8 = 113
-
-I_SITE_OBSERVATION_LEVEL_ALTITUDE_ASL_M = 200
-I_SITE_EARTH_MAGNETIC_FIELD_X_MUT = 201
-I_SITE_EARTH_MAGNETIC_FIELD_Z_MUT = 202
-I_SITE_ATMOSPHERE_ID = 203
+IX[""] = 0
 
 
 def _draw_power_law(lower_limit, upper_limit, power_slope, num_samples):
@@ -254,63 +249,6 @@ def draw_corsika_primary_steering(
     return steering
 
 
-"""
-def corsika_primary_steering_to_LEVEL_1_dict(corsika_primary_steering):
-    level1 = []
-    run_cfg = corsika_primary_steering["run"]
-    for asidx, primary in enumerate(corsika_primary_steering["primaries"]):
-        a = {}
-        a["run_id"] = int(run_cfg["run_id"])
-        a["air_shower_id"] = int(asidx + 1)
-
-        a["true_particle_energy_GeV"] = float(primary["energy_GeV"])
-        a["true_particle_azimuth_rad"] = float(primary["azimuth_rad"])
-        a["true_particle_zenith_rad"] = float(primary["zenith_rad"])
-        a["true_particle_depth_g_per_cm2"] = float(primary["depth_g_per_cm2"])
-
-        a["site_observation_level_altitude_asl"] = float(
-            run_cfg["observation_level_altitude_asl"])
-        a["site_earth_magnetic_field_x_muT"] = float(
-            run_cfg["earth_magnetic_field_x_muT"])
-        a["site_earth_magnetic_field_z_muT"] = float(
-            run_cfg["earth_magnetic_field_z_muT"])
-        a["site_atmosphere_id"] = int(run_cfg["atmosphere_id"])
-        level1.append(a)
-    return level1
-"""
-
-
-def set_corsika_primary_steering_to_block(block, corsika_primary_steering):
-    run_cfg = corsika_primary_steering["run"]
-    for a, primary in enumerate(corsika_primary_steering["primaries"]):
-        block[a, I_RUN_ID] = run_cfg["run_id"]
-        block[a, I_AIR_SHOWER_ID] = a + 1
-
-        block[a, I_TRUE_PRIMARY_ID] = primary["particle_id"]
-        block[a, I_TRUE_PRIMARY_ENERGY_GEV] = primary["energy_GeV"]
-        block[a, I_TRUE_PRIMARY_AZIMUTH_RAD] = primary["azimuth_rad"]
-        block[a, I_TRUE_PRIMARY_ZENITH_RAD] = primary["zenith_rad"]
-        block[a, I_TRUE_PRIMARY_DEPTH_G_PER_CM2] = primary["depth_g_per_cm2"]
-
-        block[a, I_SITE_OBSERVATION_LEVEL_ALTITUDE_ASL_M] = run_cfg[
-            "observation_level_altitude_asl"]
-        block[a, I_SITE_EARTH_MAGNETIC_FIELD_X_MUT] = run_cfg[
-            "earth_magnetic_field_x_muT"]
-        block[a, I_SITE_EARTH_MAGNETIC_FIELD_Z_MUT] = run_cfg[
-            "earth_magnetic_field_z_muT"]
-        block[a, I_SITE_ATMOSPHERE_ID] = run_cfg["atmosphere_id"]
-    return block
-
-
-"""
-LEVEL 2
-=======
-
-Run CORSIKA-primary-mod.
-reuse showers.
-"""
-
-
 def _init_plenoscope_grid(
     plenoscope_diameter=36,
     num_bins_radius=512,
@@ -379,20 +317,15 @@ CM2M = 1e-2
 M2CM = 1./CM2M
 
 
-def _reuse_id_based_on(bin_idx_x, bin_idx_y, num_bins_per_edge):
-    return bin_idx_x*num_bins_per_edge + bin_idx_y
-
-
-def _core_position(bin_idx, bin_centers, offset):
-    return bin_centers[bin_idx] + offset
-
-
 def _assign_plenoscope_grid(
     cherenkov_bunches,
     plenoscope_field_of_view_radius_deg,
     plenoscope_pointing_direction,
     plenoscope_grid_geometry,
-    threshold_1,
+    grid_random_shift_x,
+    grid_random_shift_y,
+    reuse_threshold,
+    FIELD_OF_VIEW_OVERHEAD=1.1,
 ):
     pgg = plenoscope_grid_geometry
 
@@ -408,28 +341,22 @@ def _assign_plenoscope_grid(
         direction=plenoscope_pointing_direction)
 
     mask_inside_field_of_view = angle_bunch_pointing < np.deg2rad(
-        plenoscope_field_of_view_radius_deg)
+        plenoscope_field_of_view_radius_deg*FIELD_OF_VIEW_OVERHEAD)
 
     bunches_in_fov = cherenkov_bunches[mask_inside_field_of_view, :]
 
     # Supports
     # --------
-    plenoscope_radius = .5*pgg["plenoscope_diameter"]
-    x_offset, y_offset = np.random.uniform(
-        low=-plenoscope_radius,
-        high=plenoscope_radius,
-        size=2)
-
     bunch_x_bin_idxs = np.digitize(
-        CM2M*bunches_in_fov[:, cpw.IX] + x_offset,
+        CM2M*bunches_in_fov[:, cpw.IX] + grid_random_shift_x,
         bins=pgg["xy_bin_edges"])
     bunch_y_bin_idxs = np.digitize(
-        CM2M*bunches_in_fov[:, cpw.IY] + y_offset,
+        CM2M*bunches_in_fov[:, cpw.IY] + grid_random_shift_y,
         bins=pgg["xy_bin_edges"])
 
     integrated_bins = np.histogram2d(
-        CM2M*bunches_in_fov[:, cpw.IX] + x_offset,
-        CM2M*bunches_in_fov[:, cpw.IY] + y_offset,
+        CM2M*bunches_in_fov[:, cpw.IX] + grid_random_shift_x,
+        CM2M*bunches_in_fov[:, cpw.IY] + grid_random_shift_y,
         bins=(
             pgg["xy_bin_edges"],
             pgg["xy_bin_edges"])
@@ -441,7 +368,7 @@ def _assign_plenoscope_grid(
         integrated_bins.flatten(),
         bins=PH_BIN_EDGES)[0]
 
-    bin_idxs_above_threshold = np.where(integrated_bins > threshold_1)
+    bin_idxs_above_threshold = np.where(integrated_bins > reuse_threshold)
     num_bins_above_threshold = bin_idxs_above_threshold[0].shape[0]
 
     if num_bins_above_threshold == 0:
@@ -454,21 +381,12 @@ def _assign_plenoscope_grid(
         num_bunches_in_integrated_bin = integrated_bins[bin_idx_x, bin_idx_y]
 
         evt = {}
-        evt["reuse_id"] = int(_reuse_id_based_on(
-            bin_idx_x=bin_idx_x,
-            bin_idx_y=bin_idx_y,
-            num_bins_per_edge=pgg["num_bins_diameter"]))
-        evt["grid_bin_idx_x"] = int(bin_idx_x)
-        evt["grid_bin_idx_y"] = int(bin_idx_y)
-        evt["grid_x_offset"] = float(x_offset)
-        evt["grid_y_offset"] = float(y_offset)
-        evt["grid_x_bin_center"] = float(pgg["xy_bin_centers"][bin_idx_x])
-        evt["grid_y_bin_center"] = float(pgg["xy_bin_centers"][bin_idx_y])
-
-        evt["true_primary_core_x"] = (
-            pgg["xy_bin_centers"][bin_idx_x] - x_offset)
-        evt["true_primary_core_y"] = (
-            pgg["xy_bin_centers"][bin_idx_y] - y_offset)
+        evt["bin_idx_x"] = int(bin_idx_x)
+        evt["bin_idx_y"] = int(bin_idx_y)
+        evt["core_x_m"] = float(
+            pgg["xy_bin_centers"][bin_idx_x] - grid_random_shift_x)
+        evt["core_y_m"] = float(
+            pgg["xy_bin_centers"][bin_idx_y] - grid_random_shift_y)
 
         match_bin_idx_x = bunch_x_bin_idxs - 1 == bin_idx_x
         match_bin_idx_y = bunch_y_bin_idxs - 1 == bin_idx_y
@@ -476,17 +394,12 @@ def _assign_plenoscope_grid(
         assert np.sum(match_bin) == num_bunches_in_integrated_bin
 
         evt["cherenkov_bunches"] = bunches_in_fov[match_bin, :].copy()
-        evt["cherenkov_bunches"][:, cpw.IX] -= M2CM*evt["true_primary_core_x"]
-        evt["cherenkov_bunches"][:, cpw.IY] -= M2CM*evt["true_primary_core_y"]
-        print("true_primary_core_x/m", evt["true_primary_core_x"])
-        print("true_primary_core_y/m", evt["true_primary_core_y"])
-        print("IX/m", CM2M*evt["cherenkov_bunches"][:, cpw.IX])
-        print("IY/m", CM2M*evt["cherenkov_bunches"][:, cpw.IY])
-
+        evt["cherenkov_bunches"][:, cpw.IX] -= M2CM*evt["core_x_m"]
+        evt["cherenkov_bunches"][:, cpw.IY] -= M2CM*evt["core_y_m"]
         return evt, bin_intensity_histogram
 
 
-def _addbinaryfile(tarout, file_name, file_bytes):
+def tar_append(tarout, file_name, file_bytes):
     with io.BytesIO() as buff:
         info = tarfile.TarInfo(file_name)
         info.size = buff.write(file_bytes)
@@ -541,13 +454,13 @@ def _merlict_plenoscope_propagator(
     return mct_rc
 
 
-def _summarize_trigger_response(
-    unique_id,
+def _append_trigger_truth(
+    trigger_dict,
     trigger_responses,
     detector_truth,
 ):
-    tr = unique_id.copy()
-    tr["true_pe_cherenkov"] = int(detector_truth.number_air_shower_pulses())
+    tr = trigger_dict
+    tr["num_cherenkov_pe"] = int(detector_truth.number_air_shower_pulses())
     tr["trigger_response"] = int(np.max(
         [layer['patch_threshold'] for layer in trigger_responses]))
     for o in range(len(trigger_responses)):
@@ -562,15 +475,46 @@ def _summarize_trigger_response(
 IDs:
 1.) run_id
 2.) airshower_id
-3.) reuse_id
 """
+
+
+def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
+    cb = cherenkov_bunches
+    ase = airshower_dict
+    ase["num_bunches"] = int(cb.shape[0])
+    ase["num_photons"] = float(np.sum(cb[:, cpw.IBSIZE]))
+    if cb.shape[0] > 0:
+        ase["maximum_asl_m"] = float(CM2M*np.median(cb[:, cpw.IZEM]))
+        ase["wavelength_median_nm"] = float(np.abs(np.median(cb[:, cpw.IWVL])))
+        ase["cx_median_rad"] = float(np.median(cb[:, cpw.ICX]))
+        ase["cy_median_rad"] = float(np.median(cb[:, cpw.ICY]))
+        ase["x_median_m"] = float(CM2M*np.median(cb[:, cpw.IX]))
+        ase["y_median_m"] = float(CM2M*np.median(cb[:, cpw.IY]))
+        ase["bunch_size_median"] = float(np.median(cb[:, cpw.IBSIZE]))
+    else:
+        ase["maximum_asl_m"] = float("nan")
+        ase["wavelength_median_nm"] = float("nan")
+        ase["cx_median_rad"] = float("nan")
+        ase["cy_median_rad"] = float("nan")
+        ase["x_median_m"] = float("nan")
+        ase["y_median_m"] = float("nan")
+        ase["bunch_size_median"] = float("nan")
+    return ase
+
+
+def write_jsonl(path, list_of_dicts):
+    with open(path, "wt") as f:
+        for d in list_of_dicts:
+            f.write(json.dumps(d)+"\n")
 
 
 def run(job=EXAMPLE_JOB):
     os.makedirs(job["log_dir"], exist_ok=True)
     run_id_str = "{:06d}".format(job["run_id"])
-    _t = JsonlLog(os.path.join(job["log_dir"], run_id_str+".josnl"))
+    _t = JsonlLog(op.join(job["log_dir"], run_id_str+".josnl"))
 
+    # assert resources exist
+    # ----------------------
     assert os.path.exists(job["corsika_primary_path"])
     assert os.path.exists(job["merlict_plenoscope_propagator_path"])
     assert os.path.exists(job["merlict_plenoscope_propagator_config_path"])
@@ -579,36 +523,37 @@ def run(job=EXAMPLE_JOB):
     _t.log("assert resource-paths exist.")
 
     # set up plenoscope grid
-    _scenery_path = os.path.join(
-        job["plenoscope_scenery_path"],
-        "scenery.json")
+    # ----------------------
+    _scenery_path = op.join(job["plenoscope_scenery_path"], "scenery.json")
     _light_field_sensor_geometry = _read_plenoscope_geometry(_scenery_path)
     plenoscope_diameter = 2.0*_light_field_sensor_geometry[
         "expected_imaging_system_aperture_radius"]
+    plenoscope_radius = .5*plenoscope_diameter
     plenoscope_pointing_direction = np.array([0, 0, 1])
     plenoscope_field_of_view_radius_deg = 0.5*_light_field_sensor_geometry[
         "max_FoV_diameter_deg"]
     plenoscope_grid_geometry = _init_plenoscope_grid(
         plenoscope_diameter=plenoscope_diameter,
         num_bins_radius=job["aperture_grid"]["num_bins_radius"])
+    _t.log("set plenoscope-grid")
 
-    table_primaries = []
-    table_airshowers = []
-    table_grid_histograms = []
+    # draw primaries
+    # --------------
+    corsika_primary_steering = draw_corsika_primary_steering(
+        run_id=job["run_id"],
+        site=job["site"],
+        particle=job["particle"],
+        num_events=job["num_air_showers"])
+    _t.log("draw primaries")
 
     with tempfile.TemporaryDirectory(prefix="plenoscope_irf_") as tmp_dir:
         tmp_dir = "/home/relleums/Desktop/work"
         os.makedirs(tmp_dir, exist_ok=True)
         _t.log("make temp_dir:'{:s}'".format(tmp_dir))
 
-        corsika_primary_steering = draw_corsika_primary_steering(
-            run_id=job["run_id"],
-            site=job["site"],
-            particle=job["particle"],
-            num_events=job["num_air_showers"])
-        _t.log("draw primaries")
-
-        corsika_run_path = os.path.join(tmp_dir, run_id_str+"_corsika.tar")
+        # run CORSIKA
+        # -----------
+        corsika_run_path = op.join(tmp_dir, run_id_str+"_corsika.tar")
         if not os.path.exists(corsika_run_path):
             cpw_rc = cpw.corsika_primary(
                 corsika_path=job["corsika_primary_path"],
@@ -618,20 +563,27 @@ def run(job=EXAMPLE_JOB):
                 stderr_postfix=".stderr")
         shutil.copy(
             corsika_run_path+".stdout",
-            os.path.join(job["log_dir"], run_id_str+"_corsika.stdout"))
+            op.join(job["log_dir"], run_id_str+"_corsika.stdout"))
         shutil.copy(
             corsika_run_path+".stderr",
-            os.path.join(job["log_dir"], run_id_str+"_corsika.stderr"))
+            op.join(job["log_dir"], run_id_str+"_corsika.stderr"))
         _t.log("run CORSIKA")
         with open(corsika_run_path+".stdout", "rt") as f:
             assert cpw.stdout_ends_with_end_of_run_marker(f.read())
         _t.log("assert CORSIKA quit ok")
 
         # loop over air-showers
+        # ---------------------
+        table_prim = []
+        table_fase = []
+        table_grhi = []
+        table_rase = []
+        table_rcor = []
+
         run = cpw.Tario(corsika_run_path)
-        reuse_run_path = os.path.join(tmp_dir, run_id_str+"_reuse.tar")
+        reuse_run_path = op.join(tmp_dir, run_id_str+"_reuse.tar")
         with tarfile.open(reuse_run_path, "w") as tarout:
-            _addbinaryfile(tarout, "runh.float32", run.runh.tobytes())
+            tar_append(tarout, cpw.TARIO_RUNH_FILENAME, run.runh.tobytes())
             for event_idx, event in enumerate(run):
                 event_header, cherenkov_bunches = event
 
@@ -646,9 +598,45 @@ def run(job=EXAMPLE_JOB):
                 assert (event_seed == _random_seed_based_on(
                     run_id=run_id,
                     event_id=event_id))
-                # set event's random-seed
-                np.random.seed(event_seed)
 
+                np.random.seed(event_seed)
+                grid_random_shift_x, grid_random_shift_y = np.random.uniform(
+                    low=-plenoscope_radius,
+                    high=plenoscope_radius,
+                    size=2)
+
+                # export primary table
+                # --------------------
+                prim = ide.copy()
+                prim["particle_id"] = int(primary["particle_id"])
+                prim["energy_GeV"] = float(primary["energy_GeV"])
+                prim["azimuth_rad"] = float(primary["azimuth_rad"])
+                prim["zenith_rad"] = float(primary["zenith_rad"])
+                prim["depth_g_per_cm2"] = float(primary["depth_g_per_cm2"])
+                prim["momentum_x_GeV_per_c"] = float(
+                    cpw._evth_px_momentum_in_x_direction_GeV_per_c(
+                        event_header))
+                prim["momentum_y_GeV_per_c"] = float(
+                    cpw._evth_py_momentum_in_y_direction_GeV_per_c(
+                        event_header))
+                prim["momentum_z_GeV_per_c"] = float(
+                    -1.0*cpw._evth_pz_momentum_in_z_direction_GeV_per_c(
+                        event_header))
+                prim["first_interaction_height_asl_m"] = float(
+                    CM2M*cpw._evth_z_coordinate_of_first_interaction_cm(
+                        event_header))
+                table_prim.append(prim)
+
+                # export full shower statistics
+                # -----------------------------
+                fase = ide.copy()
+                fase = _append_bunch_statistics(
+                    airshower_dict=fase,
+                    cherenkov_bunches=cherenkov_bunches)
+                table_fase.append(fase)
+
+                # assign grid
+                # -----------
                 (
                     reuse_event,
                     plenoscope_grid_histogram
@@ -659,85 +647,84 @@ def run(job=EXAMPLE_JOB):
                     plenoscope_pointing_direction=(
                         plenoscope_pointing_direction),
                     plenoscope_grid_geometry=plenoscope_grid_geometry,
-                    threshold_1=job["aperture_grid_threshold_pe"])
-
-                # primary
-                # -------
-                pre = ide.copy()
-                pre["particle_id"] = float(primary["particle_id"])
-                pre["energy_GeV"] = float(primary["energy_GeV"])
-                pre["azimuth_rad"] = float(primary["azimuth_rad"])
-                pre["zenith_rad"] = float(primary["zenith_rad"])
-                pre["depth_g_per_cm2"] = float(primary["depth_g_per_cm2"])
-                pre["momentum_x_GeV_per_c"] = float(
-                    cpw._evth_px_momentum_in_x_direction_GeV_per_c(
-                        event_header))
-                pre["momentum_y_GeV_per_c"] = float(
-                    cpw._evth_py_momentum_in_y_direction_GeV_per_c(
-                        event_header))
-                pre["momentum_z_GeV_per_c"] = float(
-                    cpw._evth_pz_momentum_in_z_direction_GeV_per_c(
-                        event_header))
-                table_primaries.append(pre)
-
-                # shower statistics
-                # -----------------
-                ase = ide.copy()
-                ase["num_bunches"] = int(cherenkov_bunches.shape[0])
-                ase["num_photons"] = float(
-                    np.sum(cherenkov_bunches[:, cpw.IBSIZE]))
-                if cherenkov_bunches.shape[0] > 0:
-                    ase["maximum_asl_m"] = float(
-                        CM2M*np.median(cherenkov_bunches[:, cpw.IZEM]))
-                    ase["wavelength_median_nm"] = float(
-                        np.median(cherenkov_bunches[:, cpw.IWVL]))
-                    ase["cx_median_rad"] = float(
-                        np.median(cherenkov_bunches[:, cpw.ICX]))
-                    ase["cy_median_rad"] = float(
-                        np.median(cherenkov_bunches[:, cpw.ICY]))
-                    ase["x_median_m"] = float(
-                        CM2M*np.median(cherenkov_bunches[:, cpw.IX]))
-                    ase["y_median_m"] = float(
-                        CM2M*np.median(cherenkov_bunches[:, cpw.IY]))
-                    ase["bunch_size_median"] = float(
-                        np.median(cherenkov_bunches[:, cpw.IBSIZE]))
-                else:
-                    ase["maximum_asl_m"] = float("nan")
-                    ase["wavelength_median_nm"] = float("nan")
-                    ase["cx_median_rad"] = float("nan")
-                    ase["cy_median_rad"] = float("nan")
-                    ase["x_median_m"] = float("nan")
-                    ase["y_median_m"] = float("nan")
-                    ase["bunch_size_median"] = float("nan")
-                table_airshowers.append(ase)
+                    grid_random_shift_x=grid_random_shift_x,
+                    grid_random_shift_y=grid_random_shift_y,
+                    reuse_threshold=job["aperture_grid_threshold_pe"])
 
                 # grid statistics
                 # ---------------
-                gre = ide.copy()
-                gre["num_bins_radius"] = int(
+                grhi = ide.copy()
+                grhi["num_bins_radius"] = int(
                     plenoscope_grid_geometry["num_bins_radius"])
-                gre["plenoscope_diameter"] = float(
+                grhi["plenoscope_diameter_m"] = float(
                     plenoscope_grid_geometry["plenoscope_diameter"])
+                grhi["random_shift_x_m"] = grid_random_shift_x
+                grhi["random_shift_y_m"] = grid_random_shift_y
+                grhi["plenoscope_field_of_view_radius_deg"] = float(
+                    plenoscope_field_of_view_radius_deg)
+                grhi["plenoscope_pointing_direction_x"] = float(
+                    plenoscope_pointing_direction[0])
+                grhi["plenoscope_pointing_direction_y"] = float(
+                    plenoscope_pointing_direction[1])
+                grhi["plenoscope_pointing_direction_z"] = float(
+                    plenoscope_pointing_direction[2])
                 for i in range(len(plenoscope_grid_histogram)):
-                    gre["hist_{:02d}".format(i)] = int(
+                    grhi["hist_{:02d}".format(i)] = int(
                         plenoscope_grid_histogram[i])
-                table_grid_histograms.append(gre)
+                table_grhi.append(grhi)
 
                 if reuse_event is not None:
-                    _addbinaryfile(
+                    IEVTH_NUM_REUSES = 98-1
+                    IEVTH_CORE_X = IEVTH_NUM_REUSES + 1
+                    IEVTH_CORE_Y = IEVTH_NUM_REUSES + 11
+                    reuse_evth = event_header.copy()
+                    reuse_evth[IEVTH_NUM_REUSES] = 1.0
+                    reuse_evth[IEVTH_CORE_X] = M2CM*reuse_event["core_x_m"]
+                    reuse_evth[IEVTH_CORE_Y] = M2CM*reuse_event["core_y_m"]
+
+                    tar_append(
                         tarout=tarout,
-                        file_name="{:09d}.evth.float32".format(event_id),
-                        file_bytes=event_header.tobytes())
-                    _addbinaryfile(
+                        file_name=cpw.TARIO_EVTH_FILENAME.format(event_id),
+                        file_bytes=reuse_evth.tobytes())
+                    tar_append(
                         tarout=tarout,
-                        file_name="{:09d}.cherenkov_bunches.Nx8_float32".format(event_id),
+                        file_name=cpw.TARIO_BUNCHES_FILENAME.format(event_id),
                         file_bytes=reuse_event["cherenkov_bunches"].tobytes())
 
+                    rase = ide.copy()
+                    rase = _append_bunch_statistics(
+                        airshower_dict=rase,
+                        cherenkov_bunches=reuse_event["cherenkov_bunches"])
+                    table_rase.append(rase)
+
+                    rcor = ide.copy()
+                    rcor["bin_idx_x"] = int(reuse_event["bin_idx_x"])
+                    rcor["bin_idx_y"] = int(reuse_event["bin_idx_y"])
+                    rcor["core_x_m"] = float(reuse_event["core_x_m"])
+                    rcor["core_y_m"] = float(reuse_event["core_y_m"])
+                    table_rcor.append(rcor)
         _t.log("reuse, grid")
 
-        # LEVEL 3
-        # -------
-        merlict_run_path = os.path.join(tmp_dir, run_id_str+"_merlict.cp")
+        write_jsonl(
+            op.join(tmp_dir, run_id_str+"_level1_primary.jsonl"),
+            table_prim)
+        write_jsonl(
+            op.join(tmp_dir, run_id_str+"_level1_airshower.jsonl"),
+            table_fase)
+        write_jsonl(
+            op.join(tmp_dir, run_id_str+"_level1_grid.jsonl"),
+            table_grhi)
+        write_jsonl(
+            op.join(tmp_dir, run_id_str+"_level2_airshower.jsonl"),
+            table_rase)
+        write_jsonl(
+            op.join(tmp_dir, run_id_str+"_level2_core.jsonl"),
+            table_rcor)
+        _t.log("export, level 1, and level 2")
+
+        # run merlict
+        # -----------
+        merlict_run_path = op.join(tmp_dir, run_id_str+"_merlict.cp")
         if not os.path.exists(merlict_run_path):
             merlict_rc = _merlict_plenoscope_propagator(
                 corsika_run_path=reuse_run_path,
@@ -753,60 +740,163 @@ def run(job=EXAMPLE_JOB):
                 stderr_postfix=".stderr")
         shutil.copy(
             merlict_run_path+".stdout",
-            os.path.join(job["log_dir"], run_id_str+"_merlict.stdout"))
+            op.join(job["log_dir"], run_id_str+"_merlict.stdout"))
         shutil.copy(
             merlict_run_path+".stderr",
-            os.path.join(job["log_dir"], run_id_str+"_merlict.stderr"))
+            op.join(job["log_dir"], run_id_str+"_merlict.stderr"))
         _t.log("run merlict")
         assert(merlict_rc == 0)
 
-        run = pl.Run(merlict_run_path)
+        # prepare trigger
+        # ---------------
+        merlict_run = pl.Run(merlict_run_path)
         trigger_preparation = pl.trigger.prepare_refocus_sum_trigger(
-            light_field_geometry=run.light_field_geometry,
+            light_field_geometry=merlict_run.light_field_geometry,
             object_distances=job["sum_trigger"]["object_distances"])
+        _t.log("prepare refocus-sum-trigger")
 
-        _t.log("prepare_refocus_sum_trigger")
+        table_trigger_truth = []
+        table_past_trigger = []
+        table_past_trigger_paths = []
 
-        trigger_truth_table = []
-        past_trigger_table = []
-
-        past_trigger_path = os.path.join(tmp_dir, "past_trigger")
+        past_trigger_path = op.join(tmp_dir, "past_trigger")
         os.makedirs(past_trigger_path, exist_ok=True)
 
-        for event in run:
+        # loop over sensor responses
+        # --------------------------
+        for event in merlict_run:
             trigger_responses = pl.trigger.apply_refocus_sum_trigger(
                 event=event,
                 trigger_preparation=trigger_preparation,
                 min_number_neighbors=job["sum_trigger"]["min_num_neighbors"],
-                integration_time_in_slices=job["sum_trigger"]["integration_time_in_slices"])
-            with open(os.path.join(event._path, "refocus_sum_trigger.json"), "wt") as f:
+                integration_time_in_slices=(
+                    job["sum_trigger"]["integration_time_in_slices"]))
+            sum_trigger_info_path = op.join(
+                event._path,
+                "refocus_sum_trigger.json")
+            with open(sum_trigger_info_path, "wt") as f:
                 f.write(json.dumps(trigger_responses, indent=4))
 
-            crunh = event.simulation_truth.event.corsika_run_header.raw
             cevth = event.simulation_truth.event.corsika_event_header.raw
             run_id = int(cpw._evth_run_number(cevth))
-            event_id = int(cpw._evth_event_number(cevth))
+            airshower_id = int(cpw._evth_event_number(cevth))
+            ide = {"run_id": run_id, "airshower_id": airshower_id}
 
-            trigger_truth = _summarize_trigger_response(
-                unique_id={},
+            trigger_truth = ide.copy()
+            trigger_truth = _append_trigger_truth(
+                trigger_dict=trigger_truth,
                 trigger_responses=trigger_responses,
                 detector_truth=event.simulation_truth.detector)
-            trigger_truth_table.append(trigger_truth)
+            table_trigger_truth.append(trigger_truth)
 
-            if trigger_truth["trigger_response"] >= job["sum_trigger"]["patch_threshold"]:
-
-                event_filename = '{run_id:06d}{event_id:06d}'.format(
+            if (trigger_truth["trigger_response"] >=
+                    job["sum_trigger"]["patch_threshold"]):
+                event_filename = '{run_id:06d}{airshower_id:06d}'.format(
                     run_id=run_id,
-                    event_id=event_id)
-                event_path = os.path.join(
+                    airshower_id=airshower_id)
+                event_path = op.join(
                     past_trigger_path,
                     event_filename)
                 shutil.copytree(event._path, event_path)
                 pl.tools.acp_format.compress_event_in_place(event_path)
+                table_past_trigger_paths.append(event_path)
+
+                past_trigger = ide.copy()
+                table_past_trigger.append(past_trigger)
         _t.log("run sum-trigger")
 
-        with open(os.path.join(tmp_dir, "trigger_truth.jsonl"), 'wt') as f:
-            for e in trigger_truth_table:
-                f.write(json.dumps(e)+"\n")
+        write_jsonl(
+            op.join(tmp_dir, run_id_str+"_level2_trigger_truth.jsonl"),
+            table_trigger_truth)
+        write_jsonl(
+            op.join(tmp_dir, run_id_str+"_level3_past_trigger.jsonl"),
+            table_past_trigger)
+
+        # Cherenkov classification
+        # ------------------------
+        table_cherenkov_classification_scores = []
+        for past_trigger_event_path in table_past_trigger_paths:
+            event = pl.Event(
+                path=past_trigger_event_path,
+                light_field_geometry=merlict_run.light_field_geometry)
+            roi = pl.classify.center_for_region_of_interest(event)
+            photons = pl.classify.RawPhotons.from_event(event)
+            (
+                cherenkov_photons,
+                roi_settings
+            ) = pl.classify.cherenkov_photons_in_roi_in_image(
+                roi=roi,
+                photons=photons)
+            pl.classify.write_dense_photon_ids_to_event(
+                event_path=os.path.abspath(event._path),
+                photon_ids=cherenkov_photons.photon_ids,
+                settings=roi_settings)
+            score = pl.classify.benchmark(
+                pulse_origins=event.simulation_truth.detector.pulse_origins,
+                photon_ids_cherenkov=cherenkov_photons.photon_ids)
+            score["run_id"] = int(
+                event.simulation_truth.event.corsika_run_header.number)
+            score["airshower_id"] = int(
+                event.simulation_truth.event.corsika_event_header.number)
+            table_cherenkov_classification_scores.append(score)
+        write_jsonl(
+            op.join(
+                tmp_dir,
+                run_id_str+"_level3_cherenkov_classification.jsonl"),
+            table_cherenkov_classification_scores)
+        _t.log("Cherenkov classification")
+
+        # extracting features
+        # -------------------
+        lfg = merlict_run.light_field_geometry
+        lfg_addon = {}
+        lfg_addon["paxel_radius"] = (
+            lfg.sensor_plane2imaging_system.
+            expected_imaging_system_max_aperture_radius /
+            lfg.sensor_plane2imaging_system.number_of_paxel_on_pixel_diagonal)
+        lfg_addon["nearest_neighbor_paxel_enclosure_radius"] = \
+            3*lfg_addon["paxel_radius"]
+        lfg_addon["paxel_neighborhood"] = (
+            pl.features.estimate_nearest_neighbors(
+                x=lfg.paxel_pos_x,
+                y=lfg.paxel_pos_y,
+                epsilon=lfg_addon["nearest_neighbor_paxel_enclosure_radius"]))
+        lfg_addon["fov_radius"] = \
+            .5*lfg.sensor_plane2imaging_system.max_FoV_diameter
+        lfg_addon["fov_radius_leakage"] = 0.9*lfg_addon["fov_radius"]
+        lfg_addon["num_pixel_on_diagonal"] = \
+            np.floor(2*np.sqrt(lfg.number_pixel/np.pi))
+        _t.log("create light_field_geometry addons")
+
+        table_features = []
+        for event_path in table_past_trigger_paths:
+            event = pl.Event(path=event_path, light_field_geometry=lfg)
+            run_id = int(
+                event.simulation_truth.event.corsika_run_header.number)
+            airshower_id = int(
+                event.simulation_truth.event.corsika_event_header.number)
+            try:
+                cp = event.cherenkov_photons
+                if cp is None:
+                    raise RuntimeError("No Cherenkov-photons classified yet.")
+                f = pl.features.extract_features(
+                    cherenkov_photons=cp,
+                    light_field_geometry=lfg,
+                    light_field_geometry_addon=lfg_addon)
+                f["run_id"] = int(run_id)
+                f["airshower_id"] = int(airshower_id)
+                table_features.append(f)
+            except Exception as e:
+                print(
+                    "run_id {:d}, airshower_id: {:d} :".format(
+                        run_id,
+                        airshower_id),
+                    e)
+        write_jsonl(
+            op.join(
+                tmp_dir,
+                run_id_str+"_level3_features.jsonl"),
+            table_features)
+        _t.log("extract features from light-field")
 
         _t.log("end")
