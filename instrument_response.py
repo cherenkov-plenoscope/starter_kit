@@ -674,7 +674,7 @@ def image_to_8bit_png_logscale_bytes(img):
     return png_bytes
 
 
-def save_copy(src, dst):
+def safe_copy(src, dst):
     try:
         shutil.copytree(src, dst+".tmp")
     except OSError as exc:
@@ -744,10 +744,10 @@ def run(job=EXAMPLE_JOB):
                 output_path=corsika_run_path,
                 stdout_postfix=".stdout",
                 stderr_postfix=".stderr")
-            save_copy(
+            safe_copy(
                 corsika_run_path+".stdout",
                 op.join(job["log_dir"], run_id_str+"_corsika.stdout"))
-            save_copy(
+            safe_copy(
                 corsika_run_path+".stderr",
                 op.join(job["log_dir"], run_id_str+"_corsika.stderr"))
             logger.log("run CORSIKA")
@@ -930,7 +930,7 @@ def run(job=EXAMPLE_JOB):
         write_jsonl(
             op.join(job["feature_dir"], run_id_str+"_l2_core.jsonl"),
             table_rcor)
-        save_copy(
+        safe_copy(
             tmp_imgtar_path,
             op.join(job["feature_dir"], run_id_str+"_grid_images.tar"))
 
@@ -1010,7 +1010,7 @@ def run(job=EXAMPLE_JOB):
                 final_event_path = op.join(
                     job["past_trigger_dir"],
                     final_event_filename)
-                save_copy(event._path, final_event_path)
+                safe_copy(event._path, final_event_path)
                 past_trigger = ide.copy()
                 table_past_trigger.append(past_trigger)
         logger.log("run sum-trigger")
