@@ -35,8 +35,6 @@ def main():
             '--resource_path', join('.', 'corsika_install', 'resources')])
         call(['pip', 'install', '-e',
             join('.', 'corsika_install', 'corsika_primary_wrapper')])
-        call(['pip', 'install', '-e',
-            join('.', 'corsika_wrapper')])
 
         # Photon-propagator merlict
         # -------------------------
