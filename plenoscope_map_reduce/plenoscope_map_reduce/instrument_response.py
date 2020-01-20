@@ -152,8 +152,8 @@ MERLICT_PLENOSCOPE_PROPAGATOR_PATH = os.path.abspath(
 
 LIGHT_FIELD_GEOMETRY_PATH = os.path.abspath(
     op.join(
-        "run20190724_10",
-        "light_field_calibration"))
+        "run",
+        "light_field_geometry"))
 
 EXAMPLE_PLENOSCOPE_SCENERY_PATH = os.path.abspath(
     op.join(
@@ -169,10 +169,10 @@ MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH = os.path.abspath(
         "merlict_propagation_config.json"))
 
 EXAMPLE_SITE = {
-    "observation_level_asl_m": 2300,
-    "earth_magnetic_field_x_muT": 12.5,
-    "earth_magnetic_field_z_muT": -25.9,
-    "atmosphere_id": 10,
+    "observation_level_asl_m": 5000,
+    "earth_magnetic_field_x_muT": 20.815,
+    "earth_magnetic_field_z_muT": -11.366,
+    "atmosphere_id": 26,
 }
 
 EXAMPLE_PARTICLE = {
@@ -687,7 +687,8 @@ def run_job(job=EXAMPLE_JOB):
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
     run_id_str = "{:06d}".format(job["run_id"])
-    logger = JsonlLog(op.join(job["log_dir"], run_id_str+"_log.josnl"))
+    time_log_path = op.join(job["log_dir"], run_id_str+"_log.josnl")
+    logger = JsonlLog(time_log_path+".tmp")
     job_path = op.join(job["feature_dir"], run_id_str+"_job.json")
     with open(job_path, "wt") as f:
         f.write(json.dumps(job, indent=4))
@@ -1105,3 +1106,4 @@ def run_job(job=EXAMPLE_JOB):
         logger.log("extract features from light-field")
 
         logger.log("end")
+        shutil.move(time_log_path+".tmp", time_log_path)
