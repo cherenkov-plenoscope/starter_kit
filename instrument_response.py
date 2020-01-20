@@ -110,11 +110,9 @@ altitude -  -2/-  -  -  -  /  -  -X-----/  <-shift y /            /        |
                                   |                      ___--- |
                                   |                ___---        |
                                   |          ___---               |
-                                  |    ___---                     |
-                                  |_---         azimuth           |
-                                  |                               /
-                 sea leavel z=0   |______________________________/___ x
-                                  / (0,0,0)
+                                  |    ___---       azimuth       |
+                sea leavel z=0    |_---__________________________/______ x
+                                  /
                                  /
                                 /
                                /
@@ -124,8 +122,7 @@ altitude -  -2/-  -  -  -  /  -  -X-----/  <-shift y /            /        |
                            /
                           /
                          /
-                        /
-                       / y
+                        / y
 Drawn by Sebastian
 """
 
@@ -685,7 +682,7 @@ def safe_copy(src, dst):
     shutil.move(dst+".tmp", dst)
 
 
-def run(job=EXAMPLE_JOB):
+def run_job(job=EXAMPLE_JOB):
     os.makedirs(job["log_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
