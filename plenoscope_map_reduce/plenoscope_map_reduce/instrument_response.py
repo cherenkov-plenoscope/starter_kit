@@ -177,7 +177,7 @@ EXAMPLE_SITE = {
 
 EXAMPLE_PARTICLE = {
     "particle_id": 14,
-    "energy_bin_edges": [5, 10, 100, 1000],
+    "energy_bin_edges_GeV": [5, 10, 100, 1000],
     "max_zenith_deg_vs_energy": [30, 30, 30, 30],
     "max_depth_g_per_cm2_vs_energy": [0, 0, 0, 0],
     "energy_power_law_slope": -2.0,
@@ -327,22 +327,22 @@ def draw_corsika_primary_steering(
     num_events=100
 ):
     particle_id = particle["particle_id"]
-    energy_bin_edges = particle["energy_bin_edges"]
+    energy_bin_edges_GeV = particle["energy_bin_edges_GeV"]
     max_zenith_deg_vs_energy = particle["max_zenith_deg_vs_energy"]
     max_depth_g_per_cm2_vs_energy = particle["max_depth_g_per_cm2_vs_energy"]
     energy_power_law_slope = particle["energy_power_law_slope"]
 
     assert(run_id > 0)
-    assert(np.all(np.diff(energy_bin_edges) >= 0))
-    assert(len(energy_bin_edges) == len(max_zenith_deg_vs_energy))
-    assert(len(energy_bin_edges) == len(max_depth_g_per_cm2_vs_energy))
+    assert(np.all(np.diff(energy_bin_edges_GeV) >= 0))
+    assert(len(energy_bin_edges_GeV) == len(max_zenith_deg_vs_energy))
+    assert(len(energy_bin_edges_GeV) == len(max_depth_g_per_cm2_vs_energy))
     max_zenith_vs_energy = np.deg2rad(max_zenith_deg_vs_energy)
     assert(num_events <= MAX_NUM_EVENTS_IN_RUN)
 
     np.random.seed(run_id)
     energies = _draw_power_law(
-        lower_limit=np.min(energy_bin_edges),
-        upper_limit=np.max(energy_bin_edges),
+        lower_limit=np.min(energy_bin_edges_GeV),
+        upper_limit=np.max(energy_bin_edges_GeV),
         power_slope=energy_power_law_slope,
         num_samples=num_events)
     steering = {}
@@ -360,7 +360,7 @@ def draw_corsika_primary_steering(
         primary["energy_GeV"] = float(energies[e])
         max_zenith_distance = np.interp(
             x=energies[e],
-            xp=energy_bin_edges,
+            xp=energy_bin_edges_GeV,
             fp=max_zenith_vs_energy)
         primary["zenith_rad"] = float(
             _draw_zenith_distance(
@@ -372,7 +372,7 @@ def draw_corsika_primary_steering(
                 high=2*np.pi))
         max_depth_g_per_cm2 = np.interp(
             x=energies[e],
-            xp=energy_bin_edges,
+            xp=energy_bin_edges_GeV,
             fp=max_depth_g_per_cm2_vs_energy)
         primary["depth_g_per_cm2"] = float(
             np.random.uniform(
