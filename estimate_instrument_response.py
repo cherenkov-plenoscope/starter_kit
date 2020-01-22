@@ -32,98 +32,98 @@ if MULTIPROCESSING_POOL == "sun_grid_engine":
 else:
     pool = multiprocessing.Pool(8)
 
+cfg = {
+    "corsika_primary_path": absjoin(
+        "build",
+        "corsika",
+        "modified",
+        "corsika-75600",
+        "run",
+        "corsika75600Linux_QGSII_urqmd"),
 
-CORSIKA_PRIMARY_PATH = absjoin(
-    "build",
-    "corsika",
-    "modified",
-    "corsika-75600",
-    "run",
-    "corsika75600Linux_QGSII_urqmd")
+    "merlict_plenoscope_propagator_path": absjoin(
+        "build",
+        "merlict",
+        "merlict-plenoscope-propagation"),
 
-MERLICT_PLENOSCOPE_PROPAGATOR_PATH = absjoin(
-    "build",
-    "merlict",
-    "merlict-plenoscope-propagation")
+    "merlict_plenoscope_calibration_map_path": absjoin(
+        "build",
+        "merlict",
+        "merlict-plenoscope-calibration-map"),
 
-MERLICT_PLENOSCOPE_CALIBRATION_MAP_PATH = absjoin(
-    "build",
-    "merlict",
-    "merlict-plenoscope-calibration-map")
+    "merlict_plenoscope_calibration_reduce_path": absjoin(
+        "build",
+        "merlict",
+        "merlict-plenoscope-calibration-reduce"),
 
-MERLICT_PLENOSCOPE_CALIBRATION_REDUCE_PATH = absjoin(
-    "build",
-    "merlict",
-    "merlict-plenoscope-calibration-reduce")
+    "plenoscope_scenery_path": absjoin(
+        "resources",
+        "acp",
+        "71m",
+        "scenery"),
 
-PLENOSCOPE_SCENERY_PATH = absjoin(
-    "resources",
-    "acp",
-    "71m",
-    "scenery")
+    "merlict_plenoscope_propagator_config_path": absjoin(
+        "resources",
+        "acp",
+        "merlict_propagation_config.json"),
 
-MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH = absjoin(
-    "resources",
-    "acp",
-    "merlict_propagation_config.json")
-
-SITES = {
-    "namibia": {
-        "observation_level_asl_m": 2300,
-        "earth_magnetic_field_x_muT": 12.5,
-        "earth_magnetic_field_z_muT": -25.9,
-        "atmosphere_id": 10,
+    "sites": {
+        "namibia": {
+            "observation_level_asl_m": 2300,
+            "earth_magnetic_field_x_muT": 12.5,
+            "earth_magnetic_field_z_muT": -25.9,
+            "atmosphere_id": 10,
+        },
+        "chile": {
+            "observation_level_asl_m": 5000,
+            "earth_magnetic_field_x_muT": 20.815,
+            "earth_magnetic_field_z_muT": -11.366,
+            "atmosphere_id": 26,
+        },
     },
-    "chile": {
-        "observation_level_asl_m": 5000,
-        "earth_magnetic_field_x_muT": 20.815,
-        "earth_magnetic_field_z_muT": -11.366,
-        "atmosphere_id": 26,
+
+    "particles": {
+        "gamma": {
+            "particle_id": 1,
+            "energy_bin_edges_GeV": [0.5, 100],
+            "max_scatter_angle_deg": 5,
+            "energy_power_law_slope": -1.5,
+        },
+        "electron": {
+            "particle_id": 3,
+            "energy_bin_edges_GeV": [1, 100],
+            "max_scatter_angle_deg": 30,
+            "energy_power_law_slope": -1.5,
+        },
+        "proton": {
+            "particle_id": 14,
+            "energy_bin_edges_GeV": [5, 100],
+            "max_scatter_angle_deg": 30,
+            "energy_power_law_slope": -1.5,
+        },
     },
+
+    "grid": {
+        "num_bins_radius": 512,
+        "threshold_num_photons": 50
+    },
+
+    "sum_trigger": {
+        "patch_threshold": 103,
+        "integration_time_in_slices": 10,
+        "min_num_neighbors": 3,
+        "object_distances": [10e3, 15e3, 20e3],
+    },
+
+    "num_runs": {
+        "gamma": 3,
+        "electron": 3,
+        "proton": 3
+    },
+
+    "num_airshowers_per_run": 100,
 }
 
-PARTICLES = {
-    "gamma": {
-        "particle_id": 1,
-        "energy_bin_edges_GeV": [0.5, 10, 100],
-        "max_zenith_deg_vs_energy": [5, 5, 5],
-        "max_depth_g_per_cm2_vs_energy": [0, 0, 0],
-        "energy_power_law_slope": -1.5,
-    },
-    "electron": {
-        "particle_id": 3,
-        "energy_bin_edges_GeV": [1, 10, 100],
-        "max_zenith_deg_vs_energy": [30, 30, 30],
-        "max_depth_g_per_cm2_vs_energy": [0, 0, 0],
-        "energy_power_law_slope": -1.5,
-    },
-    "proton": {
-        "particle_id": 14,
-        "energy_bin_edges_GeV": [5, 10, 100],
-        "max_zenith_deg_vs_energy": [30, 30, 30],
-        "max_depth_g_per_cm2_vs_energy": [0, 0, 0],
-        "energy_power_law_slope": -1.5,
-    },
-}
-
-GRID = {
-    "num_bins_radius": 512,
-    "threshold_num_photons": 50
-}
-
-SUM_TRIGGER = {
-    "patch_threshold": 103,
-    "integration_time_in_slices": 10,
-    "min_num_neighbors": 3,
-    "object_distances": [10e3, 15e3, 20e3],
-}
-
-NUM_RUNS = {
-    "gamma": 3,
-    "electron": 3,
-    "proton": 3
-}
-NUM_AIRSHOWERS_PER_RUN = 100
 
 if __name__ == '__main__':
     try:
@@ -134,23 +134,25 @@ if __name__ == '__main__':
 
     date_dict_now = plmr.instrument_response.date_dict_now()
     print("-------start---------")
+    os.makedirs(out_dir, exist_ok=True)
+    with open(op.join(out_dir, "config.json"), "wt") as fout:
+        fout.write(json.dumps(cfg, indent=4))
 
     print("-------light-field-geometry---------")
-    os.makedirs(out_dir, exist_ok=True)
     lfg_path = absjoin(out_dir, 'light_field_geometry')
     if not op.exists(lfg_path):
         lfg_tmp_dir = lfg_path+".tmp"
         os.makedirs(lfg_tmp_dir)
         lfg_jobs = plmr.make_jobs_light_field_geometry(
-            merlict_map_path=MERLICT_PLENOSCOPE_CALIBRATION_MAP_PATH,
-            scenery_path=PLENOSCOPE_SCENERY_PATH,
+            merlict_map_path=cfg["merlict_plenoscope_calibration_map_path"],
+            scenery_path=cfg["plenoscope_scenery_path"],
             out_dir=lfg_tmp_dir,
             num_photons_per_block=1000*1000,
             num_blocks=1337,
             random_seed=0)
         rc = pool.map(plmr.run_job_light_field_geometry, lfg_jobs)
         subprocess.call([
-            MERLICT_PLENOSCOPE_CALIBRATION_REDUCE_PATH,
+            cfg["merlict_plenoscope_calibration_reduce_path"],
             '--input', lfg_tmp_dir,
             '--output', lfg_path])
         shutil.rmtree(lfg_tmp_dir)
@@ -158,33 +160,33 @@ if __name__ == '__main__':
     print("-------instrument-response---------")
     irf_jobs = []
     run_id = 1
-    for site_key in SITES:
+    for site_key in cfg["sites"]:
         site_dir = op.join(out_dir, site_key)
         if op.exists(site_dir):
             continue
         os.makedirs(site_dir, exist_ok=True)
 
-        for particle_key in PARTICLES:
+        for particle_key in cfg["particles"]:
             site_particle_dir = op.join(site_dir, particle_key)
             if op.exists(site_particle_dir):
                 continue
             os.makedirs(site_particle_dir, exist_ok=True)
-            for job_idx in np.arange(NUM_RUNS[particle_key]):
+            for job_idx in np.arange(cfg["num_runs"][particle_key]):
 
                 irf_job = {
                     "run_id": run_id,
-                    "num_air_showers": NUM_AIRSHOWERS_PER_RUN,
-                    "particle": PARTICLES[particle_key],
-                    "site": SITES[site_key],
-                    "grid": GRID,
-                    "sum_trigger": SUM_TRIGGER,
-                    "corsika_primary_path": CORSIKA_PRIMARY_PATH,
-                    "plenoscope_scenery_path": PLENOSCOPE_SCENERY_PATH,
+                    "num_air_showers": cfg["num_airshowers_per_run"],
+                    "particle": cfg["particles"][particle_key],
+                    "site": cfg["sites"][site_key],
+                    "grid": cfg["grid"],
+                    "sum_trigger": cfg["sum_trigger"],
+                    "corsika_primary_path": cfg["corsika_primary_path"],
+                    "plenoscope_scenery_path": cfg["plenoscope_scenery_path"],
                     "merlict_plenoscope_propagator_path":
-                        MERLICT_PLENOSCOPE_PROPAGATOR_PATH,
+                        cfg["merlict_plenoscope_propagator_path"],
                     "light_field_geometry_path": lfg_path,
                     "merlict_plenoscope_propagator_config_path":
-                        MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH,
+                        cfg["merlict_plenoscope_propagator_config_path"],
                     "log_dir": op.join(site_particle_dir, "log"),
                     "past_trigger_dir":
                         op.join(site_particle_dir, "past_trigger"),

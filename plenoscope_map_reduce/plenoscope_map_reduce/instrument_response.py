@@ -177,9 +177,8 @@ EXAMPLE_SITE = {
 
 EXAMPLE_PARTICLE = {
     "particle_id": 14,
-    "energy_bin_edges_GeV": [5, 10, 100, 1000],
-    "max_zenith_deg_vs_energy": [30, 30, 30, 30],
-    "max_depth_g_per_cm2_vs_energy": [0, 0, 0, 0],
+    "energy_bin_edges_GeV": [5, 100],
+    "max_scatter_angle_deg": 30,
     "energy_power_law_slope": -2.0,
 }
 
@@ -328,15 +327,13 @@ def draw_corsika_primary_steering(
 ):
     particle_id = particle["particle_id"]
     energy_bin_edges_GeV = particle["energy_bin_edges_GeV"]
-    max_zenith_deg_vs_energy = particle["max_zenith_deg_vs_energy"]
-    max_depth_g_per_cm2_vs_energy = particle["max_depth_g_per_cm2_vs_energy"]
+    max_scatter_angle_deg = particle["max_scatter_angle_deg"]
     energy_power_law_slope = particle["energy_power_law_slope"]
 
     assert(run_id > 0)
     assert(np.all(np.diff(energy_bin_edges_GeV) >= 0))
-    assert(len(energy_bin_edges_GeV) == len(max_zenith_deg_vs_energy))
-    assert(len(energy_bin_edges_GeV) == len(max_depth_g_per_cm2_vs_energy))
-    max_zenith_vs_energy = np.deg2rad(max_zenith_deg_vs_energy)
+    assert(len(energy_bin_edges_GeV) == 2)
+    max_scatter_angle = np.deg2rad(max_scatter_angle_deg)
     assert(num_events <= MAX_NUM_EVENTS_IN_RUN)
 
     np.random.seed(run_id)
@@ -358,26 +355,15 @@ def draw_corsika_primary_steering(
         primary = {}
         primary["particle_id"] = int(particle_id)
         primary["energy_GeV"] = float(energies[e])
-        max_zenith_distance = np.interp(
-            x=energies[e],
-            xp=energy_bin_edges_GeV,
-            fp=max_zenith_vs_energy)
         primary["zenith_rad"] = float(
             _draw_zenith_distance(
                 min_zenith_distance=0.,
-                max_zenith_distance=max_zenith_distance))
+                max_zenith_distance=max_scatter_angle))
         primary["azimuth_rad"] = float(
             np.random.uniform(
                 low=0,
                 high=2*np.pi))
-        max_depth_g_per_cm2 = np.interp(
-            x=energies[e],
-            xp=energy_bin_edges_GeV,
-            fp=max_depth_g_per_cm2_vs_energy)
-        primary["depth_g_per_cm2"] = float(
-            np.random.uniform(
-                low=0.0,
-                high=max_depth_g_per_cm2))
+        primary["depth_g_per_cm2"] = 0.0
         primary["random_seed"] = cpw._simple_seed(
             _random_seed_based_on(run_id=run_id, event_id=event_id))
 
