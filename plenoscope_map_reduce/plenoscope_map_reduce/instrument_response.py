@@ -175,6 +175,11 @@ EXAMPLE_SITE = {
     "atmosphere_id": 26,
 }
 
+EXAMPLE_PLENOSCOPE_POINTING = {
+    "azimuth_deg": 0.,
+    "zenith_deg": 0.
+}
+
 EXAMPLE_PARTICLE = {
     "particle_id": 14,
     "energy_bin_edges_GeV": [5, 100],
@@ -203,6 +208,7 @@ EXAMPLE_JOB = {
     "run_id": 1,
     "num_air_showers": 100,
     "particle": EXAMPLE_PARTICLE,
+    "plenoscope_pointing": EXAMPLE_PLENOSCOPE_POINTING,
     "site": EXAMPLE_SITE,
     "grid": EXAMPLE_GRID,
     "sum_trigger": EXAMPLE_SUM_TRIGGER,
@@ -305,19 +311,19 @@ def _draw_zenith_distance(
 def _draw_azimuth_zenith_in_viewcone(
     azimuth_rad,
     zenith_rad,
-    scatter_min_rad,
-    scatter_max_rad,
+    min_scatter_opening_angle_rad,
+    max_scatter_opening_angle_rad,
     max_zenith_rad=np.deg2rad(70),
 ):
-    assert scatter_min_rad >= 0.
-    assert scatter_max_rad >= scatter_min_rad
+    assert min_scatter_opening_angle_rad >= 0.
+    assert max_scatter_opening_angle_rad >= min_scatter_opening_angle_rad
     assert max_zenith_rad >= 0.
     # Adopted from CORSIKA
     zenith_too_large = True
     while zenith_too_large:
         rd1, rd2 = np.random.uniform(size=2)
-        ct1 = np.cos(scatter_min_rad)
-        ct2 = np.cos(scatter_max_rad)
+        ct1 = np.cos(min_scatter_opening_angle_rad)
+        ct2 = np.cos(max_scatter_opening_angle_rad)
         ctt = rd2*(ct2 - ct1) + ct1
         theta = np.arccos(ctt)
         phi = rd1*np.pi*2.
@@ -343,6 +349,11 @@ def _draw_azimuth_zenith_in_viewcone(
     return az, zd
 
 
+def _cone_solid_angle(cone_radial_opening_angle_rad):
+    cap_hight = (1.0 - np.cos(cone_radial_opening_angle_rad))
+    return 2.0*np.pi*cap_hight
+
+
 def ray_plane_x_y_intersection(support, direction, plane_z):
     direction = np.array(direction)
     support = np.array(support)
@@ -364,6 +375,7 @@ def draw_corsika_primary_steering(
     run_id=1,
     site=EXAMPLE_SITE,
     particle=EXAMPLE_PARTICLE,
+    plenoscope_pointing=EXAMPLE_PLENOSCOPE_POINTING,
     num_events=100
 ):
     particle_id = particle["particle_id"]
@@ -374,7 +386,7 @@ def draw_corsika_primary_steering(
     assert(run_id > 0)
     assert(np.all(np.diff(energy_bin_edges_GeV) >= 0))
     assert(len(energy_bin_edges_GeV) == 2)
-    max_scatter_angle = np.deg2rad(max_scatter_angle_deg)
+    max_scatter_rad = np.deg2rad(max_scatter_angle_deg)
     assert(num_events <= MAX_NUM_EVENTS_IN_RUN)
 
     np.random.seed(run_id)
@@ -396,14 +408,14 @@ def draw_corsika_primary_steering(
         primary = {}
         primary["particle_id"] = int(particle_id)
         primary["energy_GeV"] = float(energies[e])
-        primary["zenith_rad"] = float(
-            _draw_zenith_distance(
-                min_zenith_distance=0.,
-                max_zenith_distance=max_scatter_angle))
-        primary["azimuth_rad"] = float(
-            np.random.uniform(
-                low=0,
-                high=2*np.pi))
+        az, zd = _draw_azimuth_zenith_in_viewcone(
+            azimuth_rad=np.deg2rad(plenoscope_pointing["azimuth_deg"]),
+            zenith_rad=np.deg2rad(plenoscope_pointing["zenith_deg"]),
+            min_scatter_opening_angle_rad=0.,
+            max_scatter_opening_angle_rad=max_scatter_rad)
+        primary["max_scatter_rad"] = max_scatter_rad
+        primary["zenith_rad"] = zd
+        primary["azimuth_rad"] = az
         primary["depth_g_per_cm2"] = 0.0
         primary["random_seed"] = cpw._simple_seed(
             _random_seed_based_on(run_id=run_id, event_id=event_id))
@@ -450,6 +462,7 @@ def _init_plenoscope_grid(
         2*g["num_bins_radius"] + 1)
     g["num_bins_diameter"] = len(g["xy_bin_edges"]) - 1
     g["xy_bin_centers"] = .5*(g["xy_bin_edges"][:-1] + g["xy_bin_edges"][1:])
+    g["total_area"] = (g["num_bins_diameter"]*g["plenoscope_diameter"])**2
     return g
 
 
@@ -731,12 +744,15 @@ def run_job(job=EXAMPLE_JOB):
 
     # set up plenoscope grid
     # ----------------------
+    assert job["plenoscope_pointing"]["zenith_deg"] == 0.
+    assert job["plenoscope_pointing"]["azimuth_deg"] == 0.
+    plenoscope_pointing_direction = np.array([0, 0, 1])  # For now this is fix.
+
     _scenery_path = op.join(job["plenoscope_scenery_path"], "scenery.json")
     _light_field_sensor_geometry = _read_plenoscope_geometry(_scenery_path)
     plenoscope_diameter = 2.0*_light_field_sensor_geometry[
         "expected_imaging_system_aperture_radius"]
     plenoscope_radius = .5*plenoscope_diameter
-    plenoscope_pointing_direction = np.array([0, 0, 1])
     plenoscope_field_of_view_radius_deg = 0.5*_light_field_sensor_geometry[
         "max_FoV_diameter_deg"]
     plenoscope_grid_geometry = _init_plenoscope_grid(
@@ -750,6 +766,7 @@ def run_job(job=EXAMPLE_JOB):
         run_id=job["run_id"],
         site=job["site"],
         particle=job["particle"],
+        plenoscope_pointing=job["plenoscope_pointing"],
         num_events=job["num_air_showers"])
     logger.log("draw primaries")
 
@@ -823,6 +840,9 @@ def run_job(job=EXAMPLE_JOB):
                 prim["energy_GeV"] = float(primary["energy_GeV"])
                 prim["azimuth_rad"] = float(primary["azimuth_rad"])
                 prim["zenith_rad"] = float(primary["zenith_rad"])
+                prim["max_scatter_rad"] = float(primary["max_scatter_rad"])
+                prim["solid_angle_thrown_sr"] = float(_cone_solid_angle(
+                    prim["max_scatter_rad"]))
                 prim["depth_g_per_cm2"] = float(primary["depth_g_per_cm2"])
                 prim["momentum_x_GeV_per_c"] = float(
                     cpw._evth_px_momentum_in_x_direction_GeV_per_c(
@@ -905,6 +925,8 @@ def run_job(job=EXAMPLE_JOB):
                 grhi["underflow_x"] = int(grid_result["underflow_x"])
                 grhi["overflow_y"] = int(grid_result["overflow_y"])
                 grhi["underflow_y"] = int(grid_result["underflow_y"])
+                grhi["area_thrown_m2"] = float(plenoscope_grid_geometry[
+                    "total_area"])
                 table_grhi.append(grhi)
 
                 reuse_event = grid_result["random_choice"]
