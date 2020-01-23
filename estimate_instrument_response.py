@@ -56,16 +56,21 @@ cfg = {
         "merlict",
         "merlict-plenoscope-calibration-reduce"),
 
+    "merlict_plenoscope_propagator_config_path": absjoin(
+        "resources",
+        "acp",
+        "merlict_propagation_config.json"),
+
     "plenoscope_scenery_path": absjoin(
         "resources",
         "acp",
         "71m",
         "scenery"),
 
-    "merlict_plenoscope_propagator_config_path": absjoin(
-        "resources",
-        "acp",
-        "merlict_propagation_config.json"),
+    "plenoscope_pointing": {
+        "azimuth_deg": 0.,
+        "zenith_deg": 0.
+    },
 
     "sites": {
         "namibia": {
@@ -176,6 +181,7 @@ if __name__ == '__main__':
                 irf_job = {
                     "run_id": run_id,
                     "num_air_showers": cfg["num_airshowers_per_run"],
+                    "plenoscope_pointing": cfg["plenoscope_pointing"],
                     "particle": cfg["particles"][particle_key],
                     "site": cfg["sites"][site_key],
                     "grid": cfg["grid"],
