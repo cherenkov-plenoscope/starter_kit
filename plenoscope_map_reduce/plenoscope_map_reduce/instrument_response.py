@@ -10,6 +10,7 @@ import io
 import datetime
 import subprocess
 import PIL
+import pandas as pd
 import corsika_primary_wrapper as cpw
 import plenopy as pl
 
@@ -240,48 +241,210 @@ def _read_plenoscope_geometry(scenery_path):
 
 
 """
-IX = {}
-IX["marker"] = 0
-IX["version"] = 1
-
-IX["run_id"] = 5
-IX["airshower_id"] = 6
-IX["primary_id"] = 20
-IX["primary_energy_gev"] = 21
-IX["primary_azimuth_rad"] = 22
-IX["primary_zenith_rad"] = 23
-IX["primary_depth_g_per_cm2"] = 24
-IX["primary_height_asl_m"] = 25
-IX["primary_momentum_x_gev_per_c"] = 26
-IX["primary_momentum_y_gev_per_c"] = 27
-IX["primary_momentum_z_gev_per_c"] = 28
-IX["primary_first_interaction_height_asl_m"] = 29
-
-IX["full_shower_num_bunches"] = 40
-IX["full_shower_num_photons"] = 41
-IX["full_shower_maximum_asl_m"] = 42
-IX["full_shower_wavelength_median_nm"] = 43
-IX["full_shower_cx_median_rad"] = 44
-IX["full_shower_cy_median_rad"] = 45
-IX["full_shower_x_median_m"] = 46
-IX["full_shower_y_median_m"] = 47
-IX["full_shower_bunch_size_median"] = 48
-
-IX["grid_histogram_0"] = 60
-IX["grid_histogram_1"] = 61
-IX["grid_histogram_2"] = 62
-IX["grid_histogram_3"] = 63
-IX["grid_histogram_16"] = 76
-# and so on
-IX["grid_random_shift_x_m"] = 78
-IX["grid_random_shift_y_m"] = 79
-IX["grid_plenoscope_pointing_direction_x"] = 80
-IX["grid_plenoscope_pointing_direction_y"] = 81
-IX["grid_plenoscope_pointing_direction_z"] = 82
-IX["grid_plenoscope_field_of_view_radius_deg"] = 83
-
-IX[""] = 0
+KEYS
+====
 """
+TABLE = {
+    "index": {
+        "run_id": {'dtype': '<i8', 'comment': ''},
+        "airshower_id": {'dtype': '<i8', 'comment': ''},
+    },
+    "level": {}
+}
+
+TABLE["level"]["primary"] = {
+    "particle_id": {'dtype': '<i8', 'comment': 'CORSIKA particle-id'},
+    "energy_GeV": {'dtype': '<f8', 'comment': ''},
+    "azimuth_rad": {'dtype': '<f8', 'comment': 'w.r.t. magnetic north.'},
+    "zenith_rad": {'dtype': '<f8', 'comment': ''},
+    "max_scatter_rad": {'dtype': '<f8', 'comment': ''},
+    "solid_angle_thrown_sr": {'dtype': '<f8', 'comment': ''},
+    "depth_g_per_cm2": {'dtype': '<f8', 'comment': ''},
+    "momentum_x_GeV_per_c": {'dtype': '<f8', 'comment': ''},
+    "momentum_y_GeV_per_c": {'dtype': '<f8', 'comment': ''},
+    "momentum_z_GeV_per_c": {'dtype': '<f8', 'comment': ''},
+    "first_interaction_height_asl_m": {'dtype': '<f8', 'comment': ''},
+    "starting_height_asl_m": {'dtype': '<f8', 'comment': ''},
+    "starting_x_m": {'dtype': '<f8', 'comment': ''},
+    "starting_y_m": {'dtype': '<f8', 'comment': ''},
+}
+
+TABLE["level"]["cherenkovsize"] = {
+    "num_bunches": {'dtype': '<i8', 'comment': ''},
+    "num_photons": {'dtype': '<f8', 'comment': ''},
+}
+
+TABLE["level"]["grid"] = {
+    "num_bins_radius": {'dtype': '<i8', 'comment': ''},
+    "plenoscope_diameter_m": {'dtype': '<f8', 'comment': ''},
+    "plenoscope_field_of_view_radius_deg": {'dtype': '<f8', 'comment': ''},
+    "plenoscope_pointing_direction_x": {'dtype': '<f8', 'comment': ''},
+    "plenoscope_pointing_direction_y": {'dtype': '<f8', 'comment': ''},
+    "plenoscope_pointing_direction_z": {'dtype': '<f8', 'comment': ''},
+    "random_shift_x_m": {'dtype': '<f8', 'comment': ''},
+    "random_shift_y_m": {'dtype': '<f8', 'comment': ''},
+    "hist_00": {'dtype': '<i8', 'comment': ''},
+    "hist_01": {'dtype': '<i8', 'comment': ''},
+    "hist_02": {'dtype': '<i8', 'comment': ''},
+    "hist_03": {'dtype': '<i8', 'comment': ''},
+    "hist_04": {'dtype': '<i8', 'comment': ''},
+    "hist_05": {'dtype': '<i8', 'comment': ''},
+    "hist_06": {'dtype': '<i8', 'comment': ''},
+    "hist_07": {'dtype': '<i8', 'comment': ''},
+    "hist_08": {'dtype': '<i8', 'comment': ''},
+    "hist_09": {'dtype': '<i8', 'comment': ''},
+    "hist_10": {'dtype': '<i8', 'comment': ''},
+    "hist_11": {'dtype': '<i8', 'comment': ''},
+    "hist_12": {'dtype': '<i8', 'comment': ''},
+    "hist_13": {'dtype': '<i8', 'comment': ''},
+    "hist_14": {'dtype': '<i8', 'comment': ''},
+    "hist_15": {'dtype': '<i8', 'comment': ''},
+    "hist_16": {'dtype': '<i8', 'comment': ''},
+    "num_bins_above_threshold": {'dtype': '<i8', 'comment': ''},
+    "overflow_x": {'dtype': '<i8', 'comment': ''},
+    "overflow_y": {'dtype': '<i8', 'comment': ''},
+    "underflow_x": {'dtype': '<i8', 'comment': ''},
+    "underflow_y": {'dtype': '<i8', 'comment': ''},
+    "area_thrown_m2": {'dtype': '<f8', 'comment': ''},
+}
+
+TABLE["level"]["cherenkovpool"] = {
+    "maximum_asl_m": {'dtype': '<f8', 'comment': ''},
+    "wavelength_median_nm": {'dtype': '<f8', 'comment': ''},
+    "cx_median_rad": {'dtype': '<f8', 'comment': ''},
+    "cy_median_rad": {'dtype': '<f8', 'comment': ''},
+    "x_median_m": {'dtype': '<f8', 'comment': ''},
+    "y_median_m": {'dtype': '<f8', 'comment': ''},
+    "bunch_size_median": {'dtype': '<f8', 'comment': ''},
+}
+
+TABLE["level"]["cherenkovsizepart"] = TABLE["level"]["cherenkovsize"].copy()
+TABLE["level"]["cherenkovpoolpart"] = TABLE["level"]["cherenkovpool"].copy()
+
+TABLE["level"]["core"] = {
+    "bin_idx_x": {'dtype': '<i8', 'comment': ''},
+    "bin_idx_y": {'dtype': '<i8', 'comment': ''},
+    "core_x_m": {'dtype': '<f8', 'comment': ''},
+    "core_y_m": {'dtype': '<f8', 'comment': ''},
+}
+
+TABLE["level"]["trigger"] = {
+    "num_cherenkov_pe": {'dtype': '<i8', 'comment': ''},
+    "response_pe": {'dtype': '<i8', 'comment': ''},
+    "refocus_0_object_distance_m": {'dtype': '<f8', 'comment': ''},
+    "refocus_0_respnse_pe": {'dtype': '<i8', 'comment': ''},
+    "refocus_1_object_distance_m": {'dtype': '<f8', 'comment': ''},
+    "refocus_1_respnse_pe": {'dtype': '<i8', 'comment': ''},
+    "refocus_2_object_distance_m": {'dtype': '<f8', 'comment': ''},
+    "refocus_2_respnse_pe": {'dtype': '<i8', 'comment': ''},
+}
+
+TABLE["level"]["pasttrigger"] = {
+}
+
+TABLE["level"]["cherenkovclassification"] = {
+    "num_true_positives": {'dtype': '<i8', 'comment': ''},
+    "num_false_negatives": {'dtype': '<i8', 'comment': ''},
+    "num_false_positives": {'dtype': '<i8', 'comment': ''},
+    "num_true_negatives": {'dtype': '<i8', 'comment': ''},
+}
+
+TABLE["level"]["features"] = {
+    "num_photons": {'dtype': '<i8', 'comment': ''},
+    "paxel_intensity_peakness_std_over_mean": {'dtype': '<f8', 'comment': ''},
+    "paxel_intensity_peakness_max_over_mean": {'dtype': '<f8', 'comment': ''},
+    "paxel_intensity_median_x": {'dtype': '<f8', 'comment': ''},
+    "paxel_intensity_median_y": {'dtype': '<f8', 'comment': ''},
+    "aperture_num_islands_watershed_rel_thr_2":
+        {'dtype': '<i8', 'comment': ''},
+    "aperture_num_islands_watershed_rel_thr_4":
+        {'dtype': '<i8', 'comment': ''},
+    "aperture_num_islands_watershed_rel_thr_8":
+        {'dtype': '<i8', 'comment': ''},
+    "light_front_cx": {'dtype': '<f8', 'comment': ''},
+    "light_front_cy": {'dtype': '<f8', 'comment': ''},
+    "image_infinity_cx_mean": {'dtype': '<f8', 'comment': ''},
+    "image_infinity_cy_mean": {'dtype': '<f8', 'comment': ''},
+    "image_infinity_cx_std": {'dtype': '<f8', 'comment': ''},
+    "image_infinity_cy_std": {'dtype': '<f8', 'comment': ''},
+    "image_infinity_num_photons_on_edge_field_of_view":
+        {'dtype': '<i8', 'comment': ''},
+    "image_smallest_ellipse_object_distance": {'dtype': '<f8', 'comment': ''},
+    "image_smallest_ellipse_solid_angle": {'dtype': '<f8', 'comment': ''},
+    "image_smallest_ellipse_half_depth": {'dtype': '<f8', 'comment': ''},
+    "image_half_depth_shift_cx": {'dtype': '<f8', 'comment': ''},
+    "image_half_depth_shift_cy": {'dtype': '<f8', 'comment': ''},
+    "image_smallest_ellipse_num_photons_on_edge_field_of_view":
+        {'dtype': '<i8', 'comment': ''},
+    "image_num_islands": {'dtype': '<i8', 'comment': ''},
+}
+
+
+def _empty_recarray(table_config, level):
+    dtypes = []
+    for k in table_config["index"]:
+        dtypes.append((k, table_config['index'][k]['dtype']))
+    for k in table_config['level'][level]:
+        dtypes.append((k, table_config['level'][level][k]['dtype']))
+    return np.rec.array(
+        obj=np.array([]),
+        dtype=dtypes)
+
+
+def _assert_same_keys(keys_a, keys_b):
+    uni_keys = list(set(keys_a + keys_b))
+    for key in uni_keys:
+        assert key in keys_a and key in keys_b, "Key: {:s}".format(key)
+
+
+def _expected_keys(table_config, level):
+    return (
+        list(table_config['index'].keys()) +
+        list(table_config['level'][level].keys()))
+
+
+def _assert_recarray_keys(rec, table_config, level):
+    rec_keys = list(rec.dtype.names)
+    expected_keys = _expected_keys(table_config=table_config, level=level)
+    _assert_same_keys(rec_keys, expected_keys)
+    for index_key in table_config['index']:
+        rec_dtype = rec.dtype[index_key]
+        exp_dtype = np.dtype(table_config["index"][index_key]['dtype'])
+        assert rec_dtype == exp_dtype, (
+            'Wrong dtype for index-key: "{:s}", on level {:s}'.format(
+                rec_key, level))
+    for rec_key in table_config["level"][level]:
+        rec_dtype = rec.dtype[rec_key]
+        exp_dtype = np.dtype(table_config["level"][level][rec_key]['dtype'])
+        assert rec_dtype == exp_dtype, (
+            'Wrong dtype for key: "{:s}", on level {:s}'.format(
+                rec_key, level))
+
+
+def write_table(path, list_of_dicts, table_config, level):
+    expected_keys = _expected_keys(table_config=table_config, level=level)
+    # assert keys are valid
+    if len(list_of_dicts) > 0:
+        for one_dict in list_of_dicts:
+            one_dict_keys = list(one_dict.keys())
+            _assert_same_keys(one_dict_keys, expected_keys)
+        df = pd.DataFrame(list_of_dicts)
+    else:
+        df = pd.DataFrame(columns=expected_keys)
+    with open(path+".tmp", "wt") as f:
+        f.write(df.to_csv(index=False))
+    shutil.move(path+".tmp", path)
+
+
+def read_table_to_recarray(path, table_config, level):
+    expected_keys = _expected_keys(table_config=table_config, level=level)
+    df = pd.read_csv(path)
+    if len(df) > 0:
+        rec = df.to_records(index=False)
+    else:
+        rec = _empty_recarray(table_config=table_config, level=level)
+    _assert_recarray_keys(rec=rec, table_config=table_config, level=level)
+    return rec
 
 
 def _draw_power_law(lower_limit, upper_limit, power_slope, num_samples):
@@ -364,11 +527,11 @@ def ray_plane_x_y_intersection(support, direction, plane_z):
     return intersection
 
 
+MAX_NUM_EVENTS_IN_RUN = 1000
+
+
 def _random_seed_based_on(run_id, event_id):
     return run_id*MAX_NUM_EVENTS_IN_RUN + event_id
-
-
-MAX_NUM_EVENTS_IN_RUN = 1000
 
 
 def draw_corsika_primary_steering(
@@ -648,52 +811,36 @@ def _append_trigger_truth(
 ):
     tr = trigger_dict
     tr["num_cherenkov_pe"] = int(detector_truth.number_air_shower_pulses())
-    tr["trigger_response"] = int(np.max(
+    tr["response_pe"] = int(np.max(
         [layer['patch_threshold'] for layer in trigger_responses]))
     for o in range(len(trigger_responses)):
-        tr["trigger_{:d}_object_distance".format(o)] = float(
+        tr["refocus_{:d}_object_distance_m".format(o)] = float(
             trigger_responses[o]['object_distance'])
-        tr["trigger_{:d}_respnse".format(o)] = int(
+        tr["refocus_{:d}_respnse_pe".format(o)] = int(
             trigger_responses[o]['patch_threshold'])
     return tr
 
 
-"""
-IDs:
-1.) run_id
-2.) airshower_id
-"""
+def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):
+    cb = cherenkov_bunches
+    ase = cherenkovsise_dict
+    ase["num_bunches"] = int(cb.shape[0])
+    ase["num_photons"] = float(np.sum(cb[:, cpw.IBSIZE]))
+    return ase
 
 
 def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = airshower_dict
-    ase["num_bunches"] = int(cb.shape[0])
-    ase["num_photons"] = float(np.sum(cb[:, cpw.IBSIZE]))
-    if cb.shape[0] > 0:
-        ase["maximum_asl_m"] = float(CM2M*np.median(cb[:, cpw.IZEM]))
-        ase["wavelength_median_nm"] = float(np.abs(np.median(cb[:, cpw.IWVL])))
-        ase["cx_median_rad"] = float(np.median(cb[:, cpw.ICX]))
-        ase["cy_median_rad"] = float(np.median(cb[:, cpw.ICY]))
-        ase["x_median_m"] = float(CM2M*np.median(cb[:, cpw.IX]))
-        ase["y_median_m"] = float(CM2M*np.median(cb[:, cpw.IY]))
-        ase["bunch_size_median"] = float(np.median(cb[:, cpw.IBSIZE]))
-    else:
-        ase["maximum_asl_m"] = float("nan")
-        ase["wavelength_median_nm"] = float("nan")
-        ase["cx_median_rad"] = float("nan")
-        ase["cy_median_rad"] = float("nan")
-        ase["x_median_m"] = float("nan")
-        ase["y_median_m"] = float("nan")
-        ase["bunch_size_median"] = float("nan")
+    assert cb.shape[0] > 0
+    ase["maximum_asl_m"] = float(CM2M*np.median(cb[:, cpw.IZEM]))
+    ase["wavelength_median_nm"] = float(np.abs(np.median(cb[:, cpw.IWVL])))
+    ase["cx_median_rad"] = float(np.median(cb[:, cpw.ICX]))
+    ase["cy_median_rad"] = float(np.median(cb[:, cpw.ICY]))
+    ase["x_median_m"] = float(CM2M*np.median(cb[:, cpw.IX]))
+    ase["y_median_m"] = float(CM2M*np.median(cb[:, cpw.IY]))
+    ase["bunch_size_median"] = float(np.median(cb[:, cpw.IBSIZE]))
     return ase
-
-
-def write_jsonl(path, list_of_dicts):
-    with open(path+".tmp", "wt") as f:
-        for d in list_of_dicts:
-            f.write(json.dumps(d)+"\n")
-    shutil.move(path+".tmp", path)
 
 
 def image_to_8bit_png_logscale_bytes(img):
@@ -805,6 +952,8 @@ def run_job(job=EXAMPLE_JOB):
         table_grhi = []
         table_rase = []
         table_rcor = []
+        table_crsz = []
+        table_crszpart = []
 
         run = cpw.Tario(corsika_run_path)
         reuse_run_path = op.join(tmp_dir, run_id_str+"_reuse.tar")
@@ -869,13 +1018,11 @@ def run_job(job=EXAMPLE_JOB):
                 prim["starting_y_m"] = -float(obs_lvl_intersection[1])
                 table_prim.append(prim)
 
-                # export full shower statistics
-                # -----------------------------
-                fase = ide.copy()
-                fase = _append_bunch_statistics(
-                    airshower_dict=fase,
-                    cherenkov_bunches=cherenkov_bunches)
-                table_fase.append(fase)
+                # cherenkov size
+                # --------------
+                crsz = ide.copy()
+                crsz = _append_bunch_ssize(crsz, cherenkov_bunches)
+                table_crsz.append(crsz)
 
                 # assign grid
                 # -----------
@@ -929,6 +1076,15 @@ def run_job(job=EXAMPLE_JOB):
                     "total_area"])
                 table_grhi.append(grhi)
 
+                # cherenkov statistics
+                # --------------------
+                if cherenkov_bunches.shape[0] > 0:
+                    fase = ide.copy()
+                    fase = _append_bunch_statistics(
+                        airshower_dict=fase,
+                        cherenkov_bunches=cherenkov_bunches)
+                    table_fase.append(fase)
+
                 reuse_event = grid_result["random_choice"]
                 if reuse_event is not None:
                     IEVTH_NUM_REUSES = 98-1
@@ -948,6 +1104,10 @@ def run_job(job=EXAMPLE_JOB):
                         file_name=cpw.TARIO_BUNCHES_FILENAME.format(event_id),
                         file_bytes=reuse_event["cherenkov_bunches"].tobytes())
 
+                    crszp = ide.copy()
+                    crszp = _append_bunch_ssize(crszp, cherenkov_bunches)
+                    table_crszpart.append(crszp)
+
                     rase = ide.copy()
                     rase = _append_bunch_statistics(
                         airshower_dict=rase,
@@ -962,21 +1122,47 @@ def run_job(job=EXAMPLE_JOB):
                     table_rcor.append(rcor)
         logger.log("reuse, grid")
 
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l1_primary.jsonl"),
-            table_prim)
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l1_airshower.jsonl"),
-            table_fase)
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l1_grid.jsonl"),
-            table_grhi)
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l2_airshower.jsonl"),
-            table_rase)
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l2_core.jsonl"),
-            table_rcor)
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_primary.csv"),
+            list_of_dicts=table_prim,
+            table_config=TABLE,
+            level='primary')
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_cherenkovsize.csv"),
+            list_of_dicts=table_crsz,
+            table_config=TABLE,
+            level='cherenkovsize')
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_grid.csv"),
+            list_of_dicts=table_grhi,
+            table_config=TABLE,
+            level="grid")
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_cherenkovpool.csv"),
+            list_of_dicts=table_fase,
+            table_config=TABLE,
+            level="cherenkovpool")
+
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_core.csv"),
+            list_of_dicts=table_rcor,
+            table_config=TABLE,
+            level="core")
+        write_table(
+            path=op.join(
+                job["feature_dir"],
+                run_id_str+"_cherenkovsizepart.csv"),
+            list_of_dicts=table_crszpart,
+            table_config=TABLE,
+            level="cherenkovsizepart")
+        write_table(
+            path=op.join(
+                job["feature_dir"],
+                run_id_str+"_cherenkovpoolpart.csv"),
+            list_of_dicts=table_rase,
+            table_config=TABLE,
+            level="cherenkovpoolpart")
+
         safe_copy(
             tmp_imgtar_path,
             op.join(job["feature_dir"], run_id_str+"_grid_images.tar"))
@@ -1047,7 +1233,7 @@ def run_job(job=EXAMPLE_JOB):
                 detector_truth=event.simulation_truth.detector)
             table_trigger_truth.append(trigger_truth)
 
-            if (trigger_truth["trigger_response"] >=
+            if (trigger_truth["response_pe"] >=
                     job["sum_trigger"]["patch_threshold"]):
                 table_past_trigger_paths.append(event._path)
                 pl.tools.acp_format.compress_event_in_place(event._path)
@@ -1062,12 +1248,16 @@ def run_job(job=EXAMPLE_JOB):
                 table_past_trigger.append(past_trigger)
         logger.log("run sum-trigger")
 
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l2_trigger_truth.jsonl"),
-            table_trigger_truth)
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l3_past_trigger.jsonl"),
-            table_past_trigger)
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_trigger.csv"),
+            list_of_dicts=table_trigger_truth,
+            table_config=TABLE,
+            level="trigger")
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_pasttrigger.csv"),
+            list_of_dicts=table_past_trigger,
+            table_config=TABLE,
+            level="pasttrigger")
 
         # Cherenkov classification
         # ------------------------
@@ -1096,11 +1286,13 @@ def run_job(job=EXAMPLE_JOB):
             score["airshower_id"] = int(
                 event.simulation_truth.event.corsika_event_header.number)
             table_cherenkov_classification_scores.append(score)
-        write_jsonl(
-            op.join(
+        write_table(
+            path=op.join(
                 job["feature_dir"],
-                run_id_str+"_l3_cherenkov_classification.jsonl"),
-            table_cherenkov_classification_scores)
+                run_id_str+"_cherenkovclassification.csv"),
+            list_of_dicts=table_cherenkov_classification_scores,
+            table_config=TABLE,
+            level="cherenkovclassification")
         logger.log("Cherenkov classification")
 
         # extracting features
@@ -1149,9 +1341,11 @@ def run_job(job=EXAMPLE_JOB):
                         run_id,
                         airshower_id),
                     e)
-        write_jsonl(
-            op.join(job["feature_dir"], run_id_str+"_l4_features.jsonl"),
-            table_features)
+        write_table(
+            path=op.join(job["feature_dir"], run_id_str+"_features.csv"),
+            list_of_dicts=table_features,
+            table_config=TABLE,
+            level="features")
         logger.log("extract features from light-field")
 
         logger.log("end")
