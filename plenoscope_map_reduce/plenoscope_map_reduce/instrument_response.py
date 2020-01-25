@@ -733,7 +733,6 @@ def _assign_plenoscope_grid(
             bunches_in_fov[match_bin, cpw.IBSIZE])
         if np.abs(num_photons_in_recovered_bin-num_photons_in_bin) > 1e-2:
             msg = "".join([
-                "run_id: {:s}\n".format(run_id_str),
                 "num_photons_in_bin: {:E}\n".format(float(num_photons_in_bin)),
                 "num_photons_in_recovered_bin: {:E}\n".format(float(
                     num_photons_in_recovered_bin)),
@@ -741,7 +740,7 @@ def _assign_plenoscope_grid(
                     num_photons_in_recovered_bin-num_photons_in_bin),
                 "bin_idx_x: {:d}\n".format(bin_idx_x),
                 "bin_idx_y: {:d}\n".format(bin_idx_y),
-                "sum(match_bin): {:d}\n".format(match_bin),
+                "sum(match_bin): {:d}\n".format(np.sum(match_bin)),
             ])
             assert False, msg
         choice["cherenkov_bunches"] = bunches_in_fov[match_bin, :].copy()
