@@ -13,6 +13,7 @@ import PIL
 import pandas as pd
 import corsika_primary_wrapper as cpw
 import plenopy as pl
+import gzip
 
 """
 I think I have an efficient and very simple algorithm
@@ -728,9 +729,21 @@ def _assign_plenoscope_grid(
         match_bin_idx_x = bunch_x_bin_idxs - 1 == bin_idx_x
         match_bin_idx_y = bunch_y_bin_idxs - 1 == bin_idx_y
         match_bin = np.logical_and(match_bin_idx_x, match_bin_idx_y)
-        assert 1e-2 > np.abs(
-            np.sum(bunches_in_fov[match_bin, cpw.IBSIZE]) -
-            num_photons_in_bin)
+        num_photons_in_recovered_bin = np.sum(
+            bunches_in_fov[match_bin, cpw.IBSIZE])
+        if np.abs(num_photons_in_recovered_bin-num_photons_in_bin) > 1e-2:
+            msg = "".join([
+                "run_id: {:s}\n".format(run_id_str),
+                "num_photons_in_bin: {:E}\n".format(float(num_photons_in_bin)),
+                "num_photons_in_recovered_bin: {:E}\n".format(float(
+                    num_photons_in_recovered_bin)),
+                "abs(diff): {:E}\n".format(
+                    num_photons_in_recovered_bin-num_photons_in_bin),
+                "bin_idx_x: {:d}\n".format(bin_idx_x),
+                "bin_idx_y: {:d}\n".format(bin_idx_y),
+                "sum(match_bin): {:d}\n".format(match_bin),
+            ])
+            assert False, msg
         choice["cherenkov_bunches"] = bunches_in_fov[match_bin, :].copy()
         choice["cherenkov_bunches"][:, cpw.IX] -= M2CM*choice["core_x_m"]
         choice["cherenkov_bunches"][:, cpw.IY] -= M2CM*choice["core_y_m"]
@@ -858,6 +871,14 @@ def image_to_8bit_png_logscale_bytes(img):
     return png_bytes
 
 
+def histogram_to_bytes(img):
+    img_f4 = img.astype('<f4')
+    img_f4_flat_c = img_f4.flatten(order='c')
+    img_f4_flat_c_bytes = img_f4_flat_c.tobytes()
+    img_gzip_bytes = gzip.compress(img_f4_flat_c_bytes)
+    return img_gzip_bytes
+
+
 def safe_copy(src, dst):
     try:
         shutil.copytree(src, dst+".tmp")
@@ -874,11 +895,12 @@ def run_job(job=EXAMPLE_JOB):
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
     run_id_str = "{:06d}".format(job["run_id"])
-    time_log_path = op.join(job["log_dir"], run_id_str+"_log.josnl")
+    time_log_path = op.join(job["log_dir"], run_id_str+"_log.jsonl")
     logger = JsonlLog(time_log_path+".tmp")
     job_path = op.join(job["feature_dir"], run_id_str+"_job.json")
     with open(job_path, "wt") as f:
         f.write(json.dumps(job, indent=4))
+    remove_tmp = True if job["non_temp_work_dir"] is None else False
 
     # assert resources exist
     # ----------------------
@@ -944,6 +966,8 @@ def run_job(job=EXAMPLE_JOB):
         with open(corsika_run_path+".stdout", "rt") as f:
             assert cpw.stdout_ends_with_end_of_run_marker(f.read())
         logger.log("assert CORSIKA quit ok")
+        corsika_run_size = os.stat(corsika_run_path).st_size
+        logger.log("corsika_run size: {:d}".format(corsika_run_size))
 
         # loop over air-showers
         # ---------------------
@@ -957,7 +981,7 @@ def run_job(job=EXAMPLE_JOB):
 
         run = cpw.Tario(corsika_run_path)
         reuse_run_path = op.join(tmp_dir, run_id_str+"_reuse.tar")
-        tmp_imgtar_path = op.join(tmp_dir, "grid_histogram_images.tar")
+        tmp_imgtar_path = op.join(tmp_dir, run_id_str+"_grid.tar")
         with tarfile.open(reuse_run_path, "w") as tarout,\
                 tarfile.open(tmp_imgtar_path, "w") as imgtar:
             tar_append(tarout, cpw.TARIO_RUNH_FILENAME, run.runh.tobytes())
@@ -1039,12 +1063,8 @@ def run_job(job=EXAMPLE_JOB):
 
                 tar_append(
                     tarout=imgtar,
-                    file_name="run{:06d}_shower{:06d}_max{:06d}pe".format(
-                        run_id,
-                        event_id,
-                        int(np.max(grid_result["histogram"]))),
-                    file_bytes=image_to_8bit_png_logscale_bytes(
-                        grid_result["histogram"]))
+                    file_name="{:06d}.f4".format(event_id),
+                    file_bytes=histogram_to_bytes(grid_result["histogram"]))
 
                 # grid statistics
                 # ---------------
@@ -1122,6 +1142,9 @@ def run_job(job=EXAMPLE_JOB):
                     table_rcor.append(rcor)
         logger.log("reuse, grid")
 
+        if remove_tmp:
+            os.remove(corsika_run_path)
+
         write_table(
             path=op.join(job["feature_dir"], run_id_str+"_primary.csv"),
             list_of_dicts=table_prim,
@@ -1193,6 +1216,9 @@ def run_job(job=EXAMPLE_JOB):
                 op.join(job["log_dir"], run_id_str+"_merlict.stderr"))
             logger.log("run merlict")
             assert(merlict_rc == 0)
+
+        if remove_tmp:
+            os.remove(reuse_run_path)
 
         # prepare trigger
         # ---------------
