@@ -203,6 +203,5 @@ if __name__ == '__main__':
                 run_id += 1
                 irf_jobs.append(irf_job)
 
-    random.shuffle(irf_jobs)
     rc = pool.map(plmr.instrument_response.run_job, irf_jobs)
     print("-------instrument-response---------")
