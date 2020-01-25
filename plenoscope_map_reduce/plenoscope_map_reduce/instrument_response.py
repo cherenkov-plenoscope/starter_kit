@@ -901,6 +901,7 @@ def run_job(job=EXAMPLE_JOB):
     with open(job_path, "wt") as f:
         f.write(json.dumps(job, indent=4))
     remove_tmp = True if job["non_temp_work_dir"] is None else False
+    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
 
     # assert resources exist
     # ----------------------
@@ -1208,10 +1209,10 @@ def run_job(job=EXAMPLE_JOB):
                 random_seed=run_id,
                 stdout_postfix=".stdout",
                 stderr_postfix=".stderr")
-            shutil.move(
+            safe_copy(
                 merlict_run_path+".stdout",
                 op.join(job["log_dir"], run_id_str+"_merlict.stdout"))
-            shutil.move(
+            safe_copy(
                 merlict_run_path+".stderr",
                 op.join(job["log_dir"], run_id_str+"_merlict.stderr"))
             logger.log("run merlict")
