@@ -731,13 +731,15 @@ def _assign_plenoscope_grid(
         match_bin = np.logical_and(match_bin_idx_x, match_bin_idx_y)
         num_photons_in_recovered_bin = np.sum(
             bunches_in_fov[match_bin, cpw.IBSIZE])
-        if np.abs(num_photons_in_recovered_bin-num_photons_in_bin) > 1e-2:
+        abs_diff_num_photons = np.abs(
+            num_photons_in_recovered_bin -
+            num_photons_in_bin)
+        if abs_diff_num_photons > 1e-2*num_photons_in_bin:
             msg = "".join([
                 "num_photons_in_bin: {:E}\n".format(float(num_photons_in_bin)),
                 "num_photons_in_recovered_bin: {:E}\n".format(float(
                     num_photons_in_recovered_bin)),
-                "abs(diff): {:E}\n".format(
-                    num_photons_in_recovered_bin-num_photons_in_bin),
+                "abs(diff): {:E}\n".format(abs_diff_num_photons),
                 "bin_idx_x: {:d}\n".format(bin_idx_x),
                 "bin_idx_y: {:d}\n".format(bin_idx_y),
                 "sum(match_bin): {:d}\n".format(np.sum(match_bin)),
