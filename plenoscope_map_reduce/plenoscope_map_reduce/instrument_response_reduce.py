@@ -11,71 +11,23 @@ from plenoscope_map_reduce import instrument_response as irf
 import tarfile
 
 
-def run_ids_in_dir(feature_dir, wild_card):
-    paths = glob.glob(op.join(feature_dir, wild_card))
-    run_ids = []
-    for path in paths:
-        basename = op.basename(path)
-        run_ids.append(int(basename[0:6]))
-    return list(set(run_ids))
+
+def resizs_hist(hist, shape):
+    xf = hist.shape[0] // shape[0]
+    assert hist.shape[0] % shape[0] == 0
+    yf = hist.shape[1] // shape[1]
+    assert hist.shape[1] % shape[1] == 0
+    out = np.zeros(shape, dtype=hist.dtype)
+    for x in range(shape[0]):
+        for y in range(shape[1]):
+            x_start = x*xf
+            x_stop = (x+1)*xf - 1
+            y_start = y*yf
+            y_stop = (y+1)*yf - 1
+            out[x, y] = np.sum(hist[x_start:x_stop, y_start:y_stop])
+    return out
 
 
-def reduce_site_particle_features(
-    site_particle_feature_dir,
-    format_suffix='csv',
-    table_config=irf.TABLE,
-):
-    wild_card = '*.{:s}'.format(format_suffix)
-    spf_dir = site_particle_feature_dir
-    features = {}
-    for level in table_config["level"]:
-        features[level] = []
-        for run_id in run_ids_in_dir(spf_dir, wild_card=wild_card):
-            fpath = op.join(
-                feature_dir,
-                "{:06d}_{:s}.{:s}".format(run_id, level, format_suffix))
-            _rec = irf.read_table_to_recarray(
-                path=fpath,
-                table_config=table_config,
-                level=level)
-            features[level].append(_rec)
-    for level in table_config["level"]:
-        print(particle_key, level)
-        ll = features[level]
-        cat = np.concatenate(ll)
-        features[level] = cat
-    return features
-
-
-def write_site_particle_features(path, features, table_config=irf.TABLE):
-    assert op.splitext(path)[1] == ".tar"
-    with tarfile.open(path, "w") as tarout:
-        for level in table_config['level']:
-            level_df = pd.DataFrame(features[level])
-            level_csv = level_df.to_csv(index=False)
-            level_filename = "{:s}.csv".format(level)
-            with io.BytesIO() as fbuff:
-                fbuff.write(str.encode(level_csv))
-                fbuff.seek(0)
-                tarinfo = tarfile.TarInfo(name=level_filename)
-                tarinfo.size = len(fbuff.getvalue())
-                tarout.addfile(tarinfo=tarinfo, fileobj=fbuff)
-
-
-def read_site_particle_features(path, table_config=irf.TABLE):
-    features = {}
-    with tarfile.open(path, "r") as tarin:
-        for level in table_config['level']:
-            level_filename = "{:s}.csv".format(level)
-            tarinfo = tarin.getmember(level_filename)
-            with io.BytesIO() as fbuff:
-                fbuff.write(tarin.extractfile(tarinfo).read())
-                fbuff.seek(0)
-                features[level] = irf.read_table_to_recarray(
-                    fbuff,
-                    table_config=table_config,
-                    level=level)
-    return features
 
 
 EXAMPLE_IRF_DIR = op.join("..", "run-2020-01-27_1011")
@@ -95,27 +47,29 @@ site_key = "namibia"
 
 query_str = '(run_id == {:d}) and (airshower_id == {:d})'
 
+grid_shape = (128, 128)
 
 features = {}
+grids = {}
 for particle_key in particle_keys:
     site_particle_dir = op.join(irf_dir, site_key, particle_key)
     feature_dir = op.join(site_particle_dir, "features")
 
     pp = "{:s}_{:s}.tar".format(site_key, particle_key)
     if not op.exists(pp):
-        features[particle_key] = reduce_site_particle_features(
+        features[particle_key] = irf.table.reduce_site_particle(
             site_particle_feature_dir=feature_dir,
-            format_suffix='csv',
-            table_config=irf.TABLE)
+            format_suffix=irf.table.FORMAT_SUFFIX,
+            config=irf.table.CONFIG)
 
-        write_site_particle_features(
+        irf.table.write_site_particle(
             path=pp,
-            features=features[particle_key],
-            table_config=irf.TABLE)
+            table=features[particle_key],
+            config=irf.table.CONFIG)
     else:
-        features[particle_key] = read_site_particle_features(
+        features[particle_key] = irf.table.read_site_particle(
             pp,
-            table_config=irf.TABLE)
+            config=irf.table.CONFIG)
 
     # reduce grid_histogram
     num_bins_grid_edge = 1024
@@ -134,57 +88,55 @@ for particle_key in particle_keys:
         cx_start_stop,
         num_cxy_bins + 1)
 
-    his = []
-    for i_energy in range(num_energy_bins):
-        his.append([])
-        for i_cx in range(num_cxy_bins):
-            his[i_energy].append([])
-            for i_cy in range(num_cxy_bins):
-                his[i_energy][i_cx].append([])
+    grids[particle_key] = irf.grid.reduce_histograms(feature_dir=feature_dir)
 
-    prm_df = pd.DataFrame(features[particle_key]["primary"])
-    prm_df = prm_df.set_index(list(irf.TABLE['index'].keys()))
+energy = 1
+energy_abs_delta = 1
+cx_deg = 0.0
+cy_deg = 0.0
+c_delta_deg = 1.5
 
-    run_ids = run_ids_in_dir(feature_dir, wild_card="*grid_images.tar")
-    for run_id in run_ids:
-        tarpath = op.join(
-            feature_dir,
-            "{:06d}_grid_images.tar".format(run_id))
+prm = features['electron']['primary']
 
-        with tarfile.open(tarpath, "r") as tarin:
-            for tarinfo in tarin:
-                airshower_id = int(tarinfo.name[0:6])
 
-                ss = prm_df.query(query_str.format(run_id, airshower_id))
+cxs = np.cos(prm['azimuth_rad'])*prm['zenith_rad']
+cys = np.sin(prm['azimuth_rad'])*prm['zenith_rad']
 
-                energy = ss['energy_GeV'].values[0]
-                az = ss['azimuth_rad'].values[0]
-                zd = ss['zenith_rad'].values[0]
+directions = irf.grid._make_bunch_direction(cxs, cys)
+target_direction = irf.grid._make_bunch_direction(
+    np.array([np.deg2rad(cx_deg)]),
+    np.array([np.deg2rad(cy_deg)]))
 
-                en_bin = np.digitize(energy, energy_bin_edges) - 1
-                if en_bin == -1 or en_bin == len(energy_bin_edges)-1:
-                    print('energy out of range', energy)
-                    continue
+deltas = irf.grid._make_angle_between(
+    directions=directions,
+    direction=target_direction.T)[:, 0]
+mask_cxcy = deltas <= np.deg2rad(c_delta_deg)
+mask_energy = np.logical_and(
+    prm['energy_GeV'] > (energy - energy_abs_delta),
+    prm['energy_GeV'] <= (energy + energy_abs_delta))
+mask_match = np.logical_and(mask_cxcy, mask_energy)
 
-                cx = np.cos(az)*zd
-                cy = np.sin(az)*zd
+match = prm[mask_match]
 
-                cx_bin = np.digitize(cx, cxy_bin_edges) - 1
-                if cx_bin == -1 or cx_bin == len(cxy_bin_edges)-1:
-                    print('energy out of cx range', cx)
-                    continue
+cx_match = cxs[mask_match]
+cy_match = cys[mask_match]
 
-                cy_bin = np.digitize(cy, cxy_bin_edges) - 1
-                if cy_bin == -1 or cy_bin == len(cxy_bin_edges)-1:
-                    print('energy out of cy range', cy)
-                    continue
+hist = np.zeros((1024, 1024))
+num_airshower = 0
+for asho in match:
+    seed = irf.table.random_seed_based_on(
+        run_id=asho['run_id'],
+        airshower_id=asho['airshower_id'])
+    print(seed)
+    hist += irf.grid.bytes_to_histogram(grids[particle_key][seed])
+    num_airshower += 1
 
-                print(run_id, airshower_id, en_bin, cx_bin, cy_bin)
-                his[en_bin][cx_bin][cy_bin].append(
-                    tarin.extractfile(tarinfo).read())
-
-                '''
-                arr_bytes = gzip.decompress(tarin.extractfile(tarinfo).read())
-                arr = np.frombuffer(arr_bytes, dtype='<f4')
-                arr = arr.reshape((1024, 1024), order='c')
-                '''
+hh, nn = irf.query.query_grid_histograms(
+    energy_GeV_start=100,
+    energy_GeV_stop=1000,
+    cx_deg=0.,
+    cy_deg=0.,
+    cone_opening_angle_deg=5,
+    primary_table=features[particle_key]['primary'],
+    grid_histograms=grids[particle_key],
+    num_bins_radius=512)
