@@ -6,6 +6,12 @@ import io
 import glob
 import os
 
+MAX_NUM_EVENTS_IN_RUN = 1000
+
+
+def random_seed_based_on(run_id, airshower_id):
+    return run_id*MAX_NUM_EVENTS_IN_RUN + airshower_id
+
 
 CONFIG = {
     'index': {

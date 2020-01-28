@@ -3,6 +3,7 @@ from . import table
 from . import grid
 from . import merlict
 from . import logging
+from . import query
 
 import numpy as np
 import os
@@ -248,13 +249,6 @@ def ray_plane_x_y_intersection(support, direction, plane_z):
     return intersection
 
 
-MAX_NUM_EVENTS_IN_RUN = 1000
-
-
-def _random_seed_based_on(run_id, event_id):
-    return run_id*MAX_NUM_EVENTS_IN_RUN + event_id
-
-
 def draw_corsika_primary_steering(
     run_id=1,
     site=EXAMPLE_SITE,
@@ -271,7 +265,7 @@ def draw_corsika_primary_steering(
     assert(np.all(np.diff(energy_bin_edges_GeV) >= 0))
     assert(len(energy_bin_edges_GeV) == 2)
     max_scatter_rad = np.deg2rad(max_scatter_angle_deg)
-    assert(num_events <= MAX_NUM_EVENTS_IN_RUN)
+    assert(num_events <= table.MAX_NUM_EVENTS_IN_RUN)
 
     np.random.seed(run_id)
     energies = random.draw_power_law(
@@ -302,7 +296,7 @@ def draw_corsika_primary_steering(
         primary["azimuth_rad"] = az
         primary["depth_g_per_cm2"] = 0.0
         primary["random_seed"] = cpw._simple_seed(
-            _random_seed_based_on(run_id=run_id, event_id=event_id))
+            table.random_seed_based_on(run_id=run_id, airshower_id=event_id))
 
         steering["primaries"].append(primary)
     return steering
@@ -474,9 +468,9 @@ def run_job(job=EXAMPLE_JOB):
                 primary = corsika_primary_steering["primaries"][event_idx]
                 event_seed = primary["random_seed"][0]["SEED"]
                 ide = {"run_id":  int(run_id), "airshower_id": int(event_id)}
-                assert (event_seed == _random_seed_based_on(
+                assert (event_seed == table.random_seed_based_on(
                     run_id=run_id,
-                    event_id=event_id))
+                    airshower_id=event_id))
 
                 np.random.seed(event_seed)
                 grid_random_shift_x, grid_random_shift_y = np.random.uniform(

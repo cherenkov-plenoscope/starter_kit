@@ -1,6 +1,9 @@
 import numpy as np
 import corsika_primary_wrapper as cpw
 import gzip
+import os
+from . import table
+import tarfile
 
 
 def init(
@@ -189,3 +192,32 @@ def bytes_to_histogram(img_bytes_gz):
     num_bins_edge = int(np.sqrt(num_bins))
     assert num_bins_edge*num_bins_edge == num_bins
     return arr.reshape((num_bins_edge, num_bins_edge), order='c')
+
+
+# histograms
+# ----------
+# A dict with the random_seed as key for the airshowers, containing the
+# gzip-bytes to be read with bytes_to_histogram()
+
+
+def reduce_histograms(
+    feature_dir,
+    wild_card='*_grid_images.tar',
+    max_num_events_in_run=table.MAX_NUM_EVENTS_IN_RUN,
+):
+    run_ids = table._run_ids_in_dir(feature_dir, wild_card=wild_card)
+    suffix = wild_card[1:]
+    grids = {}
+    for run_id in run_ids:
+        tarpath = os.path.join(
+            feature_dir,
+            "{:06d}{:s}".format(run_id, suffix))
+        with tarfile.open(tarpath, "r") as tarin:
+            for tarinfo in tarin:
+                airshower_id = int(tarinfo.name[0:6])
+                unique_id = table.random_seed_based_on(
+                    run_id=run_id,
+                    airshower_id=airshower_id)
+                grids[unique_id] = tarin.extractfile(tarinfo).read()
+    return grids
+
