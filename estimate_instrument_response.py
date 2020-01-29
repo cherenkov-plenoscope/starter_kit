@@ -27,10 +27,7 @@ def absjoin(*args):
 
 
 MULTIPROCESSING_POOL = ""
-if MULTIPROCESSING_POOL == "sun_grid_engine":
-    pool = sge
-else:
-    pool = multiprocessing.Pool(8)
+TMP_DIR_ON_WORKERNODE = False
 
 executables = {
     "corsika_primary_abspath": absjoin(
@@ -113,7 +110,7 @@ cfg = {
         },
         "electron": {
             "particle_id": 3,
-            "energy_bin_edges_GeV": [1, 100],
+            "energy_bin_edges_GeV": [0.5, 100],
             "max_scatter_angle_deg": 30,
             "energy_power_law_slope": -1.5,
         },
@@ -156,6 +153,22 @@ if __name__ == '__main__':
 
     date_dict_now = plmr.instrument_response.date_dict_now()
     sge._print("Start main()")
+
+    if TMP_DIR_ON_WORKERNODE:
+        tmp_absdir = None
+        sge._print("Use tmp_dir on workernodes.")
+    else:
+        tmp_absdir = op.join(out_absdir, "tmp")
+        os.makedirs(tmp_absdir, exist_ok=True)
+        sge._print("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
+
+    if MULTIPROCESSING_POOL == "sun_grid_engine":
+        pool = sge
+        sge._print("Use sun-grid-engine multiprocessing-pool.")
+    else:
+        pool = multiprocessing.Pool(8)
+        sge._print("Use local multiprocessing-pool.")
+
     os.makedirs(out_absdir, exist_ok=True)
 
     sge._print("Copy resources")
@@ -248,7 +261,8 @@ if __name__ == '__main__':
                     "past_trigger_dir":
                         op.join(site_particle_absdir, "past_trigger"),
                     "feature_dir": op.join(site_particle_absdir, "features"),
-                    "non_temp_work_dir": None,
+                    "keep_tmp": False,
+                    "tmp_dir": tmp_absdir,
                     "date": date_dict_now,
                 }
                 run_id += 1
