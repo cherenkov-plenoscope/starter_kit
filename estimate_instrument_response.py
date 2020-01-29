@@ -79,6 +79,11 @@ cfg = {
         "input",
         "merlict_propagation_config.json"),
 
+    "light_field_geometry": {
+        "num_photons_per_block": 1000*1000,
+        "num_blocks": 1337,
+    },
+
     "plenoscope_pointing": {
         "azimuth_deg": 0.,
         "zenith_deg": 0.
@@ -191,8 +196,10 @@ if __name__ == '__main__':
                 out_absdir,
                 cfg["plenoscope_scenery_relpath"]),
             out_dir=lfg_tmp_absdir,
-            num_photons_per_block=1000*1000,
-            num_blocks=16,
+            num_photons_per_block=cfg[
+                'light_field_geometry']['num_photons_per_block'],
+            num_blocks=cfg[
+                'light_field_geometry']['num_blocks'],
             random_seed=0)
         rc = pool.map(plmr.run_job_light_field_geometry, lfg_jobs)
         subprocess.call([
