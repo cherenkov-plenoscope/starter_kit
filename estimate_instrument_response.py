@@ -32,8 +32,8 @@ if MULTIPROCESSING_POOL == "sun_grid_engine":
 else:
     pool = multiprocessing.Pool(8)
 
-cfg = {
-    "corsika_primary_path": absjoin(
+executables = {
+    "corsika_primary_abspath": absjoin(
         "build",
         "corsika",
         "modified",
@@ -41,31 +41,43 @@ cfg = {
         "run",
         "corsika75600Linux_QGSII_urqmd"),
 
-    "merlict_plenoscope_propagator_path": absjoin(
+    "merlict_plenoscope_propagator_abspath": absjoin(
         "build",
         "merlict",
         "merlict-plenoscope-propagation"),
 
-    "merlict_plenoscope_calibration_map_path": absjoin(
+    "merlict_plenoscope_calibration_map_abspath": absjoin(
         "build",
         "merlict",
         "merlict-plenoscope-calibration-map"),
 
-    "merlict_plenoscope_calibration_reduce_path": absjoin(
+    "merlict_plenoscope_calibration_reduce_abspath": absjoin(
         "build",
         "merlict",
         "merlict-plenoscope-calibration-reduce"),
+}
 
-    "merlict_plenoscope_propagator_config_path": absjoin(
+cfg_files = {
+    "merlict_plenoscope_propagator_config_abspath": absjoin(
         "resources",
         "acp",
         "merlict_propagation_config.json"),
 
-    "plenoscope_scenery_path": absjoin(
+    "plenoscope_scenery_abspath": absjoin(
         "resources",
         "acp",
         "71m",
         "scenery"),
+}
+
+cfg = {
+    "plenoscope_scenery_relpath": op.join(
+        "input",
+        "scenery"),
+
+    "merlict_plenoscope_propagator_config_relpath": op.join(
+        "input",
+        "merlict_propagation_config.json"),
 
     "plenoscope_pointing": {
         "azimuth_deg": 0.,
@@ -133,49 +145,77 @@ cfg = {
 if __name__ == '__main__':
     try:
         arguments = docopt.docopt(__doc__)
-        out_dir = op.abspath(arguments['--out_dir'])
+        out_absdir = op.abspath(arguments['--out_dir'])
     except docopt.DocoptExit as e:
         print(e)
 
     date_dict_now = plmr.instrument_response.date_dict_now()
-    print("-------start---------")
-    os.makedirs(out_dir, exist_ok=True)
-    with open(op.join(out_dir, "config.json"), "wt") as fout:
+    sge._print("Start main()")
+    os.makedirs(out_absdir, exist_ok=True)
+
+    sge._print("Copy resources")
+    # ==========================
+    input_absdir = op.join(out_absdir, 'input')
+    os.makedirs(input_absdir, exist_ok=True)
+
+    for cfg_file in cfg_files:
+        cfg_file_abspath = cfg_files[cfg_file]
+        local_cfg_file_abspath = op.join(
+            input_absdir,
+            op.basename(cfg_file_abspath))
+        local_cfg_file_relpath = op.join(
+            'input',
+            op.basename(cfg_file_abspath))
+        if not op.exists(local_cfg_file_abspath):
+            plmr.instrument_response.safe_copy(
+                src=cfg_file_abspath,
+                dst=local_cfg_file_abspath)
+        cfg_file_rel = cfg_file.replace('abspath', 'relpath')
+        cfg[cfg_file_rel] = local_cfg_file_relpath
+
+    cfg['executables'] = executables
+
+    with open(op.join(input_absdir, "config.json"), "wt") as fout:
         fout.write(json.dumps(cfg, indent=4))
 
-    print("-------light-field-geometry---------")
-    lfg_path = absjoin(out_dir, 'light_field_geometry')
-    if not op.exists(lfg_path):
-        lfg_tmp_dir = lfg_path+".tmp"
-        os.makedirs(lfg_tmp_dir)
+    sge._print("Estimating light-field-geometry.")
+    # ============================================
+    lfg_abspath = op.join(out_absdir, 'light_field_geometry')
+    if not op.exists(lfg_abspath):
+        lfg_tmp_absdir = lfg_abspath+".tmp"
+        os.makedirs(lfg_tmp_absdir)
         lfg_jobs = plmr.make_jobs_light_field_geometry(
-            merlict_map_path=cfg["merlict_plenoscope_calibration_map_path"],
-            scenery_path=cfg["plenoscope_scenery_path"],
-            out_dir=lfg_tmp_dir,
+            merlict_map_path=executables[
+                "merlict_plenoscope_calibration_map_abspath"],
+            scenery_path=op.join(
+                out_absdir,
+                cfg["plenoscope_scenery_relpath"]),
+            out_dir=lfg_tmp_absdir,
             num_photons_per_block=1000*1000,
-            num_blocks=1337,
+            num_blocks=16,
             random_seed=0)
         rc = pool.map(plmr.run_job_light_field_geometry, lfg_jobs)
         subprocess.call([
-            cfg["merlict_plenoscope_calibration_reduce_path"],
-            '--input', lfg_tmp_dir,
-            '--output', lfg_path])
-        shutil.rmtree(lfg_tmp_dir)
+            executables["merlict_plenoscope_calibration_reduce_abspath"],
+            '--input', lfg_tmp_absdir,
+            '--output', lfg_abspath])
+        shutil.rmtree(lfg_tmp_absdir)
 
-    print("-------instrument-response---------")
+    sge._print("Estimating instrument-response.")
+    # ===========================================
     irf_jobs = []
     run_id = 1
     for site_key in cfg["sites"]:
-        site_dir = op.join(out_dir, site_key)
-        if op.exists(site_dir):
+        site_absdir = op.join(out_absdir, site_key)
+        if op.exists(site_absdir):
             continue
-        os.makedirs(site_dir, exist_ok=True)
+        os.makedirs(site_absdir, exist_ok=True)
 
         for particle_key in cfg["particles"]:
-            site_particle_dir = op.join(site_dir, particle_key)
-            if op.exists(site_particle_dir):
+            site_particle_absdir = op.join(site_absdir, particle_key)
+            if op.exists(site_particle_absdir):
                 continue
-            os.makedirs(site_particle_dir, exist_ok=True)
+            os.makedirs(site_particle_absdir, exist_ok=True)
             for job_idx in np.arange(cfg["num_runs"][particle_key]):
 
                 irf_job = {
@@ -186,17 +226,21 @@ if __name__ == '__main__':
                     "site": cfg["sites"][site_key],
                     "grid": cfg["grid"],
                     "sum_trigger": cfg["sum_trigger"],
-                    "corsika_primary_path": cfg["corsika_primary_path"],
-                    "plenoscope_scenery_path": cfg["plenoscope_scenery_path"],
-                    "merlict_plenoscope_propagator_path":
-                        cfg["merlict_plenoscope_propagator_path"],
-                    "light_field_geometry_path": lfg_path,
-                    "merlict_plenoscope_propagator_config_path":
-                        cfg["merlict_plenoscope_propagator_config_path"],
-                    "log_dir": op.join(site_particle_dir, "log"),
+                    "corsika_primary_path": executables[
+                        "corsika_primary_abspath"],
+                    "plenoscope_scenery_path": op.join(
+                        out_absdir,
+                        cfg["plenoscope_scenery_relpath"]),
+                    "merlict_plenoscope_propagator_path": executables[
+                        "merlict_plenoscope_propagator_abspath"],
+                    "light_field_geometry_path": lfg_abspath,
+                    "merlict_plenoscope_propagator_config_path": op.join(
+                        out_absdir,
+                        cfg["merlict_plenoscope_propagator_config_relpath"]),
+                    "log_dir": op.join(site_particle_absdir, "log"),
                     "past_trigger_dir":
-                        op.join(site_particle_dir, "past_trigger"),
-                    "feature_dir": op.join(site_particle_dir, "features"),
+                        op.join(site_particle_absdir, "past_trigger"),
+                    "feature_dir": op.join(site_particle_absdir, "features"),
                     "non_temp_work_dir": None,
                     "date": date_dict_now,
                 }
@@ -204,4 +248,4 @@ if __name__ == '__main__':
                 irf_jobs.append(irf_job)
 
     rc = pool.map(plmr.instrument_response.run_job, irf_jobs)
-    print("-------instrument-response---------")
+    sge._print("End main().")
