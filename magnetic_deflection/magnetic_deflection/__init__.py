@@ -5,7 +5,7 @@ import glob
 import shutil
 import numpy as np
 import multiprocessing
-import corsika_wrapper
+import corsika_primary_wrapper
 import subprocess
 import tempfile
 
@@ -16,8 +16,8 @@ example_state = {
         "site": {
             "earth_magnetic_field_x_muT": 20.815,
             "earth_magnetic_field_z_muT": -11.366,
-            "observation_level_altitude_asl": 5e3,
-            "corsika_atmosphere_model": 26,
+            "observation_level_asl_m": 5e3,
+            "corsika_atmosphere_id": 26,
         },
         "initial": {
             "energy": 14.,
@@ -91,80 +91,47 @@ def _great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
     return delta_sigma
 
 
-def _make_corsika_steering_card_str(
+def _make_corsika_steering(
     random_seed,
     run_number,
     num_events,
     particle_id,
-    energy_start,
-    energy_stop,
-    energy_slope,
+    energy,
     cone_azimuth_deg,
     cone_zenith_distance_deg,
     cone_max_scatter_angle_deg,
     earth_magnetic_field_x_muT,
     earth_magnetic_field_z_muT,
-    atmosphere_model,
-    instrument_x,
-    instrument_y,
-    observation_level_altitude_asl,
-    instrument_radius,
-    max_scatter_radius,
-    bunch_size,
+    atmosphere_id,
+    observation_level_asl_m,
 ):
-    card = '\
-RUNNR {run_number:d}\n\
-EVTNR 1\n\
-NSHOW {num_events:d}\n\
-PRMPAR {particle_id:d}\n\
-ESLOPE {energy_slope:3.3e}\n\
-ERANGE {energy_start:3.3e} {energy_stop:3.3e}\n\
-THETAP {cone_zenith_distance_deg:3.3e} {cone_zenith_distance_deg:3.3e}\n\
-PHIP {cone_azimuth_deg:3.3e} {cone_azimuth_deg:3.3e}\n\
-VIEWCONE .0 {cone_max_scatter_angle_deg:3.3e}\n\
-SEED {seed1:d} 0 0\n\
-SEED {seed2:d} 0 0\n\
-SEED {seed3:d} 0 0\n\
-SEED {seed4:d} 0 0\n\
-OBSLEV {observation_level_altitude_asl_cm:3.3e}\n\
-FIXCHI .0\n\
-MAGNET {magnetic_field_x_muT:3.3e} {magnetic_field_z_muT:3.3e}\n\
-ELMFLG T T\n\
-MAXPRT 1\n\
-PAROUT F F\n\
-TELESCOPE {telescope_x_cm:3.3e} {telescope_y_cm:3.3e} .0 \
-{telescope_radius_cm:3.3e}\n\
-ATMOSPHERE {atmosphere_model:d} T\n\
-CWAVLG 250 700\n\
-CSCAT 1 {max_scatter_radius_cm:3.3e} .0\n\
-CERQEF F T F\n\
-CERSIZ {bunch_size:d}\n\
-CERFIL F\n\
-TSTART T\n\
-EXIT\n'.format(
-        run_number=run_number,
-        num_events=num_events,
-        particle_id=particle_id,
-        energy_slope=energy_slope,
-        energy_start=energy_start,
-        energy_stop=energy_stop,
-        cone_zenith_distance_deg=cone_zenith_distance_deg,
-        cone_azimuth_deg=cone_azimuth_deg,
-        cone_max_scatter_angle_deg=cone_max_scatter_angle_deg,
-        seed1=random_seed + run_number,
-        seed2=random_seed + run_number + 1,
-        seed3=random_seed + run_number + 2,
-        seed4=random_seed + run_number + 3,
-        magnetic_field_x_muT=earth_magnetic_field_x_muT,
-        magnetic_field_z_muT=earth_magnetic_field_z_muT,
-        atmosphere_model=atmosphere_model,
-        observation_level_altitude_asl_cm=observation_level_altitude_asl*1e2,
-        telescope_x_cm=instrument_x*1e2,
-        telescope_y_cm=instrument_y*1e2,
-        telescope_radius_cm=instrument_radius*1e2,
-        max_scatter_radius_cm=max_scatter_radius*1e2,
-        bunch_size=bunch_size)
-    return card
+    steering = {}
+    steering['run'] = {
+        'run_id': run_number,
+        'event_id_of_first_event': 1,
+        "observation_level_asl_m": observation_level_asl_m,
+        "earth_magnetic_field_x_muT": earth_magnetic_field_x_muT,
+        "earth_magnetic_field_z_muT": earth_magnetic_field_z_muT,
+        "atmosphere_id": atmosphere_id,
+    }
+    steering['primaries'] = []
+    for idx in range(num_events):
+        prm = {}
+        np.random.seed(run_number)
+        az, zd = cpw.random.draw_azimuth_zenith_in_viewcone(
+            azimuth_rad=np.deg2rad(cone_azimuth_deg),
+            zenith_rad=np.deg2rad(cone_zenith_distance_deg),
+            min_scatter_opening_angle_rad=0.,
+            max_scatter_opening_angle_rad=np.deg2rad(
+                cone_max_scatter_angle_deg))
+        prm["particle_id"] = int(particle_id)
+        prm["energy_GeV"] = float(energy)
+        prm["zenith_rad"] = zd
+        prm["azimuth_rad"] = az
+        prm["depth_g_per_cm2"] = 0.0
+        prm["random_seed"] = cpw._simple_seed(run_number*10000 + event_id)
+    steering['primaries'].append(prm)
+    return steering
 
 
 def _init_work_dir(work_dir, initial_state):
@@ -202,33 +169,24 @@ def _write_state(work_dir, state, iteration):
 
 def _run_job(job):
     with tempfile.TemporaryDirectory(prefix="mag_defl_job_") as tmp:
-        card_path = os.path.join(tmp, "card.txt")
-        with open(card_path, "wt") as f:
-            f.write(job["steering_card"])
-        corsika_out_path = os.path.join(tmp, "run.evtio")
-        cor_rc = corsika_wrapper.corsika(
-            steering_card=corsika_wrapper.read_steering_card(card_path),
+        corsika_out_path = os.path.join(tmp, "run.tar")
+        cor_rc = corsika_primary_wrapper.corsika(
+            steering_dict=job['steering_dict'],
             output_path=corsika_out_path,
-            save_stdout=True,
-            corsika_path=job["corsika_path"])
-        summary_out_path = os.path.join(tmp, "run.float32")
-        with open(summary_out_path+'.stdout', 'w') as out:
-            with open(summary_out_path+'.stderr', 'w') as err:
-                call = [
-                    job["merlict_path"],
-                    corsika_out_path,
-                    summary_out_path]
-                mct_rc = subprocess.call(call, stdout=out, stderr=err)
+            corsika_path=job["corsika_primary_path"])
+
+        run = corsika_primary_wrapper.Tario(corsika_out_path)
+        for event in run:
+
+
         summary_block = EventSummary.read_event_summary_block(summary_out_path)
         return summary_block
 
 
 def _one_iteration(
     work_dir,
-    merlict_path=os.path.abspath(
-        'build/merlict/merlict-magnetic-field-explorer'),
-    corsika_path=os.path.abspath(
-        'build/corsika/corsika-75600/run/corsika75600Linux_QGSII_urqmd'),
+    corsika_primary_path=os.path.abspath(
+        './build/corsika/modified/corsika-75600/run/corsika75600Linux_QGSII_urqmd'),
     num_jobs=4,
     pool=multiprocessing.Pool(4),
     max_subiterations=12,
@@ -288,15 +246,11 @@ def _one_iteration(
             azimuth_phi_deg=azimuth_phi_deg,
             zenith_theta_deg=zenith_theta_deg,
             scatter_angle_deg=scatter_angle_deg,
-            instrument_x=instrument_x,
-            instrument_y=instrument_y,
-            instrument_radius=instrument_radius,
             num_events=num_events_per_job,
             energy_iteration=energy_iteration,
             sub_iteration=sub_iteration,
             num_jobs=num_jobs,
-            merlict_path=merlict_path,
-            corsika_path=corsika_path)
+            corsika_primary_path=corsika_primary_path)
 
         result_blocks = pool.map(_run_job, jobs)
         events = np.concatenate(result_blocks)
@@ -411,42 +365,29 @@ def _make_jobs(
     azimuth_phi_deg,
     zenith_theta_deg,
     scatter_angle_deg,
-    instrument_x,
-    instrument_y,
-    instrument_radius,
     num_events,
     energy_iteration,
     sub_iteration,
     num_jobs,
-    merlict_path,
-    corsika_path,
+    corsika_primary_path,
 ):
     jobs = []
     for i in range(num_jobs):
         run_number = i + 1
         job = {}
-        job["steering_card"] = _make_corsika_steering_card_str(
+        job["steering_card"] = _make_corsika_steering(
             random_seed=energy_iteration,
             run_number=run_number,
             num_events=num_events,
             particle_id=particle_id,
-            energy_start=energy,
-            energy_stop=energy,
-            energy_slope=-1.,
+            energy=energy,
             cone_azimuth_deg=azimuth_phi_deg,
             cone_zenith_distance_deg=zenith_theta_deg,
             cone_max_scatter_angle_deg=scatter_angle_deg,
             earth_magnetic_field_x_muT=site["earth_magnetic_field_x_muT"],
             earth_magnetic_field_z_muT=site["earth_magnetic_field_z_muT"],
-            atmosphere_model=site["corsika_atmosphere_model"],
-            observation_level_altitude_asl=site[
-                "observation_level_altitude_asl"],
-            instrument_x=instrument_x,
-            instrument_y=instrument_y,
-            instrument_radius=instrument_radius,
-            max_scatter_radius=0.,
-            bunch_size=1)
-        job["merlict_path"] = merlict_path
-        job["corsika_path"] = corsika_path
+            atmosphere_id=site["corsika_atmosphere_id"],
+            observation_level_asl_m=site["observation_level_asl_m"])
+        job["corsika_primary_path"] = corsika_primary_path
         jobs.append(job)
     return jobs
