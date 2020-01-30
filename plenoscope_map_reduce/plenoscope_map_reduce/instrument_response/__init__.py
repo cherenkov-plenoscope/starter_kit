@@ -437,7 +437,7 @@ def run_job(job=EXAMPLE_JOB):
 
     with open(corsika_run_path+".stdout", "rt") as f:
         assert cpw.stdout_ends_with_end_of_run_marker(f.read())
-    logger.log("assert CORSIKA quit ok")
+    logger.log("assert corsika quit ok")
     corsika_run_size = os.stat(corsika_run_path).st_size
     logger.log("corsika_run size: {:d}".format(corsika_run_size))
 
