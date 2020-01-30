@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='magnetic_deflection',
-    version='0.0.0',
+    version='0.0.1',
     description='Explore magnetic deflection of cosmic-rays below 10GeV.',
     url='https://github.com/cherenkov-plenoscope',
     author='Sebastian Achim Mueller',
