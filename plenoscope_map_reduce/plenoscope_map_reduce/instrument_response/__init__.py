@@ -433,7 +433,7 @@ def run_job(job=EXAMPLE_JOB):
         safe_copy(
             corsika_run_path+".stderr",
             op.join(job["log_dir"], run_id_str+"_corsika.stderr"))
-        logger.log("run CORSIKA")
+        logger.log("corsika")
 
     with open(corsika_run_path+".stdout", "rt") as f:
         assert cpw.stdout_ends_with_end_of_run_marker(f.read())
@@ -614,7 +614,7 @@ def run_job(job=EXAMPLE_JOB):
                 rcor["core_x_m"] = float(reuse_event["core_x_m"])
                 rcor["core_y_m"] = float(reuse_event["core_y_m"])
                 table_rcor.append(rcor)
-    logger.log("reuse, grid")
+    logger.log("grid")
 
     if not job["keep_tmp"]:
         os.remove(corsika_run_path)
@@ -664,7 +664,7 @@ def run_job(job=EXAMPLE_JOB):
         tmp_imgtar_path,
         op.join(job["feature_dir"], run_id_str+"_grid_images.tar"))
 
-    logger.log("export, level 1, and level 2")
+    logger.log("export_grid_images")
 
     # run merlict
     # -----------
@@ -688,7 +688,7 @@ def run_job(job=EXAMPLE_JOB):
         safe_copy(
             merlict_run_path+".stderr",
             op.join(job["log_dir"], run_id_str+"_merlict.stderr"))
-        logger.log("run merlict")
+        logger.log("merlict")
         assert(merlict_rc == 0)
 
     if not job["keep_tmp"]:
@@ -700,7 +700,7 @@ def run_job(job=EXAMPLE_JOB):
     trigger_preparation = pl.trigger.prepare_refocus_sum_trigger(
         light_field_geometry=merlict_run.light_field_geometry,
         object_distances=job["sum_trigger"]["object_distances"])
-    logger.log("prepare refocus-sum-trigger")
+    logger.log("prepare_trigger")
 
     table_trigger_truth = []
     table_past_trigger = []
@@ -746,7 +746,7 @@ def run_job(job=EXAMPLE_JOB):
             safe_copy(event._path, final_event_path)
             past_trigger = ide.copy()
             table_past_trigger.append(past_trigger)
-    logger.log("run sum-trigger")
+    logger.log("trigger")
 
     table.write_level(
         path=op.join(job["feature_dir"], run_id_str+"_trigger.csv"),
@@ -793,7 +793,7 @@ def run_job(job=EXAMPLE_JOB):
         list_of_dicts=table_cherenkov_classification_scores,
         config=table.CONFIG,
         level="cherenkovclassification")
-    logger.log("Cherenkov classification")
+    logger.log("cherenkov_classification")
 
     # extracting features
     # -------------------
@@ -846,7 +846,7 @@ def run_job(job=EXAMPLE_JOB):
         list_of_dicts=table_features,
         config=table.CONFIG,
         level="features")
-    logger.log("extract features from light-field")
+    logger.log("feature_extraction")
 
     logger.log("end")
     shutil.move(time_log_path+".tmp", time_log_path)
