@@ -14,7 +14,7 @@ class JsonlLog:
         with open(self.path, "at") as f:
             d = {
                 "time": now.strftime("%Y-%m-%d %H:%M:%S"),
-                "run_time": (now - self.last_log_time).total_seconds(),
+                "runtime": (now - self.last_log_time).total_seconds(),
                 "msg": msg}
             f.write(json.dumps(d)+"\n")
         self.last_log_time = now
@@ -43,6 +43,6 @@ def reduce(
             for line in fin:
                 logline = json.loads(line)
                 if logline['msg'] in keys:
-                    run[logline['msg']] = logline['run_time']
+                    run[logline['msg']] = logline['runtime']
             logs.append(run)
     return logs

@@ -5,6 +5,7 @@ import tarfile
 import io
 import glob
 import os
+from os import path as op
 
 MAX_NUM_EVENTS_IN_RUN = 1000
 
@@ -151,6 +152,7 @@ CONFIG['levels']['features'] = {
 }
 
 FORMAT_SUFFIX = 'csv'
+CONFIG_LEVELS_KEYS = list(CONFIG['levels'].keys())
 
 
 def _empty_recarray(config, level):
@@ -194,24 +196,21 @@ def _assert_recarray_keys(rec, config, level):
                 rec_key, level))
 
 
-def write_level(path, list_of_dicts, config, level):
+def level_records_to_csv(level_records, config, level):
     expected_keys = _expected_keys(config=config, level=level)
     # assert keys are valid
-    if len(list_of_dicts) > 0:
-        for one_dict in list_of_dicts:
+    if len(level_records) > 0:
+        for one_dict in level_records:
             one_dict_keys = list(one_dict.keys())
             _assert_same_keys(one_dict_keys, expected_keys)
-        df = pd.DataFrame(list_of_dicts)
+        df = pd.DataFrame(level_records)
     else:
         df = pd.DataFrame(columns=expected_keys)
-    with open(path+'.tmp', 'wt') as f:
-        f.write(df.to_csv(index=False))
-    shutil.move(path+'.tmp', path)
+    return df.to_csv(index=False)
 
 
-def read_level(path, config, level):
+def df_to_recarray(df, config, level):
     expected_keys = _expected_keys(config=config, level=level)
-    df = pd.read_csv(path)
     if len(df) > 0:
         rec = df.to_records(index=False)
     else:
@@ -220,52 +219,57 @@ def read_level(path, config, level):
     return rec
 
 
-def _run_ids_in_dir(feature_dir, wild_card):
-    paths = glob.glob(os.path.join(feature_dir, wild_card))
+def run_ids_in_dir(feature_dir, wild_card):
+    paths = glob.glob(op.join(feature_dir, wild_card))
     run_ids = []
     for path in paths:
-        basename = os.path.basename(path)
+        basename = op.basename(path)
         run_ids.append(int(basename[0:6]))
     return list(set(run_ids))
 
 
-def reduce_site_particle(
-    site_particle_feature_dir,
+def reduce_feature_dir(
+    feature_dir,
     format_suffix=FORMAT_SUFFIX,
     config=CONFIG,
 ):
-    wild_card = '*.{:s}'.format(format_suffix)
-    spf_dir = site_particle_feature_dir
-    table = {}
+    evttab = {}
     for level in config['levels']:
-        table[level] = []
-        for run_id in _run_ids_in_dir(spf_dir, wild_card=wild_card):
-            fpath = op.join(
-                feature_dir,
-                '{:06d}_{:s}.{:s}'.format(run_id, level, format_suffix))
-            _rec = read_level(
-                path=fpath,
-                config=config,
-                level=level)
-            table[level].append(_rec)
+        evttab[level] = []
+
+    for run_id in run_ids_in_dir(feature_dir, wild_card= '*_event_table.tar'):
+        rpath = op.join(feature_dir, '{:06d}_event_table.tar'.format(run_id))
+        num_levels = 0
+        with tarfile.open(rpath, "r") as tarfin:
+            for tarinfo in tarfin:
+                level, format_suffix = str.split(tarinfo.name, '.')
+                assert level in config['levels']
+                assert format_suffix == FORMAT_SUFFIX
+                level_df = pd.read_csv(tarfin.extractfile(tarinfo))
+                level_recarray = df_to_recarray(
+                    df=level_df,
+                    config=config,
+                    level=level)
+                evttab[level].append(level_recarray)
+                num_levels += 1
+        assert num_levels == len(config["levels"])
     for level in config['levels']:
-        print(particle_key, level)
-        ll = table[level]
+        ll = evttab[level]
         cat = np.concatenate(ll)
-        table[level] = cat
-    return table
+        evttab[level] = cat
+    return evttab
 
 
 def write_site_particle(
     path,
-    table,
+    event_table,
     config=CONFIG,
     format_suffix=FORMAT_SUFFIX
 ):
     assert op.splitext(path)[1] == '.tar'
     with tarfile.open(path, 'w') as tarout:
         for level in config['levels']:
-            level_df = pd.DataFrame(table[level])
+            level_df = pd.DataFrame(event_table[level])
             level_csv = level_df.to_csv(index=False)
             level_filename = '{:s}.{:s}'.format(level, format_suffix)
             with io.BytesIO() as fbuff:
@@ -281,16 +285,25 @@ def read_site_particle(
     config=CONFIG,
     format_suffix=FORMAT_SUFFIX
 ):
-    table = {}
-    with tarfile.open(path, 'r') as tarin:
-        for level in config['levels']:
-            level_filename = '{:s}.{:s}'.format(level, format_suffix)
-            tarinfo = tarin.getmember(level_filename)
-            with io.BytesIO() as fbuff:
-                fbuff.write(tarin.extractfile(tarinfo).read())
-                fbuff.seek(0)
-                table[level] = read_level(
-                    fbuff,
-                    config=config,
-                    level=level)
-    return table
+    evttab = {}
+    num_levels = 0
+    with tarfile.open(path, "r") as tarfin:
+        for tarinfo in tarfin:
+            level, format_suffix = str.split(tarinfo.name, '.')
+            assert level in config['levels']
+            assert format_suffix == FORMAT_SUFFIX
+            level_df = pd.read_csv(tarfin.extractfile(tarinfo))
+            evttab[level] = df_to_recarray(
+                df=level_df,
+                config=config,
+                level=level)
+            num_levels += 1
+    assert num_levels == len(config["levels"])
+    return evttab
+
+
+def write_level(path, level_records, config, level):
+    csv = level_records_to_csv(level_records, config, level)
+    with open(path+'.tmp', 'wt') as f:
+        f.write(csv)
+    shutil.move(path+'.tmp', path)

@@ -4,12 +4,14 @@ from . import grid
 from . import merlict
 from . import logging
 from . import query
+from . import reduce
 
 import numpy as np
 import os
 from os import path as op
 import shutil
 import errno
+import uuid
 import tempfile
 import json
 import tarfile
@@ -350,15 +352,35 @@ def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
     return ase
 
 
+def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
+    if output_tar_path is None:
+        output_tar_path = event_dir+".tar"
+    with tarfile.open(output_tar_path, "w") as tarfout:
+        tarfout.add(event_dir, arcname=".")
+
+
 def safe_copy(src, dst):
+    copy_id = uuid.uuid4().__str__()
+    tmp_dst = "{:s}.{:s}.tmp".format(dst, copy_id)
     try:
-        shutil.copytree(src, dst+".tmp")
+        shutil.copytree(src, tmp_dst)
     except OSError as exc:
         if exc.errno == errno.ENOTDIR:
-            shutil.copy2(src, dst+".tmp")
+            shutil.copy2(src, tmp_dst)
         else:
             raise
-    shutil.move(dst+".tmp", dst)
+    os.rename(tmp_dst, dst)
+
+
+def safe_move(src, dst):
+    try:
+        os.rename(src, dst)
+    except OSError as err:
+        if err.errno == errno.EXDEV:
+            safe_copy(src, dst)
+            os.unlink(src)
+        else:
+            raise
 
 
 def run_job(job=EXAMPLE_JOB):
@@ -366,11 +388,12 @@ def run_job(job=EXAMPLE_JOB):
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
     run_id_str = "{:06d}".format(job["run_id"])
-    time_log_path = op.join(job["log_dir"], run_id_str+"_log.jsonl")
+    time_log_path = op.join(job["log_dir"], run_id_str+"_runtime.jsonl")
     logger = logging.JsonlLog(time_log_path+".tmp")
-    job_path = op.join(job["feature_dir"], run_id_str+"_job.json")
-    with open(job_path, "wt") as f:
+    job_path = op.join(job["log_dir"], run_id_str+"_job.json")
+    with open(job_path+".tmp", "wt") as f:
         f.write(json.dumps(job, indent=4))
+    safe_move(job_path+".tmp", job_path)
     print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
 
     # assert resources exist
@@ -411,13 +434,16 @@ def run_job(job=EXAMPLE_JOB):
         num_events=job["num_air_showers"])
     logger.log("draw primaries")
 
-    tmp_obj = tempfile.TemporaryDirectory(
-        prefix="plenoscope_irf_",
-        dir=job['tmp_dir'])
-    tmp_dir = tmp_obj.name
+    # tmp dir
+    # -------
+    if job['tmp_dir'] is None:
+        tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
+    else:
+        tmp_dir = op.join(job['tmp_dir'], run_id_str)
+        os.makedirs(tmp_dir, exist_ok=True)
     logger.log("make temp_dir:'{:s}'".format(tmp_dir))
 
-    # run CORSIKA
+    # run corsika
     # -----------
     corsika_run_path = op.join(tmp_dir, run_id_str+"_corsika.tar")
     if not op.exists(corsika_run_path):
@@ -434,7 +460,6 @@ def run_job(job=EXAMPLE_JOB):
             corsika_run_path+".stderr",
             op.join(job["log_dir"], run_id_str+"_corsika.stderr"))
         logger.log("corsika")
-
     with open(corsika_run_path+".stdout", "rt") as f:
         assert cpw.stdout_ends_with_end_of_run_marker(f.read())
     logger.log("assert corsika quit ok")
@@ -443,19 +468,15 @@ def run_job(job=EXAMPLE_JOB):
 
     # loop over air-showers
     # ---------------------
-    table_prim = []
-    table_fase = []
-    table_grhi = []
-    table_rase = []
-    table_rcor = []
-    table_crsz = []
-    table_crszpart = []
-
+    evttab = {}
+    for level_key in table.CONFIG_LEVELS_KEYS:
+        evttab[level_key] = []
     run = cpw.Tario(corsika_run_path)
     reuse_run_path = op.join(tmp_dir, run_id_str+"_reuse.tar")
-    tmp_imgtar_path = op.join(tmp_dir, run_id_str+"_grid.tar")
+    grid_histogram_filename = run_id_str+"_grid.tar"
+    tmp_grid_histogram_path = op.join(tmp_dir, grid_histogram_filename)
     with tarfile.open(reuse_run_path, "w") as tarout,\
-            tarfile.open(tmp_imgtar_path, "w") as imgtar:
+            tarfile.open(tmp_grid_histogram_path, "w") as imgtar:
         tar_append(tarout, cpw.TARIO_RUNH_FILENAME, run.runh.tobytes())
         for event_idx, event in enumerate(run):
             event_header, cherenkov_bunches = event
@@ -513,13 +534,13 @@ def run_job(job=EXAMPLE_JOB):
                 plane_z=job["site"]["observation_level_asl_m"])
             prim["starting_x_m"] = -float(obs_lvl_intersection[0])
             prim["starting_y_m"] = -float(obs_lvl_intersection[1])
-            table_prim.append(prim)
+            evttab["primary"].append(prim)
 
             # cherenkov size
             # --------------
             crsz = ide.copy()
             crsz = _append_bunch_ssize(crsz, cherenkov_bunches)
-            table_crsz.append(crsz)
+            evttab["cherenkovsize"].append(crsz)
 
             # assign grid
             # -----------
@@ -533,10 +554,9 @@ def run_job(job=EXAMPLE_JOB):
                 grid_random_shift_x=grid_random_shift_x,
                 grid_random_shift_y=grid_random_shift_y,
                 threshold_num_photons=job["grid"]["threshold_num_photons"])
-
             tar_append(
                 tarout=imgtar,
-                file_name="{:06d}.f4".format(event_id),
+                file_name="{:06d}{:06d}.f4.gz".format(run_id, event_id),
                 file_bytes=grid.histogram_to_bytes(
                     grid_result["histogram"]))
 
@@ -568,7 +588,7 @@ def run_job(job=EXAMPLE_JOB):
             grhi["underflow_y"] = int(grid_result["underflow_y"])
             grhi["area_thrown_m2"] = float(plenoscope_grid_geometry[
                 "total_area"])
-            table_grhi.append(grhi)
+            evttab["grid"].append(grhi)
 
             # cherenkov statistics
             # --------------------
@@ -577,7 +597,7 @@ def run_job(job=EXAMPLE_JOB):
                 fase = _append_bunch_statistics(
                     airshower_dict=fase,
                     cherenkov_bunches=cherenkov_bunches)
-                table_fase.append(fase)
+                evttab["cherenkovpool"].append(fase)
 
             reuse_event = grid_result["random_choice"]
             if reuse_event is not None:
@@ -588,7 +608,6 @@ def run_job(job=EXAMPLE_JOB):
                 reuse_evth[IEVTH_NUM_REUSES] = 1.0
                 reuse_evth[IEVTH_CORE_X] = cpw.M2CM*reuse_event["core_x_m"]
                 reuse_evth[IEVTH_CORE_Y] = cpw.M2CM*reuse_event["core_y_m"]
-
                 tar_append(
                     tarout=tarout,
                     file_name=cpw.TARIO_EVTH_FILENAME.format(event_id),
@@ -597,74 +616,24 @@ def run_job(job=EXAMPLE_JOB):
                     tarout=tarout,
                     file_name=cpw.TARIO_BUNCHES_FILENAME.format(event_id),
                     file_bytes=reuse_event["cherenkov_bunches"].tobytes())
-
                 crszp = ide.copy()
                 crszp = _append_bunch_ssize(crszp, cherenkov_bunches)
-                table_crszpart.append(crszp)
-
+                evttab["cherenkovsizepart"].append(crszp)
                 rase = ide.copy()
                 rase = _append_bunch_statistics(
                     airshower_dict=rase,
                     cherenkov_bunches=reuse_event["cherenkov_bunches"])
-                table_rase.append(rase)
-
+                evttab["cherenkovpoolpart"].append(rase)
                 rcor = ide.copy()
                 rcor["bin_idx_x"] = int(reuse_event["bin_idx_x"])
                 rcor["bin_idx_y"] = int(reuse_event["bin_idx_y"])
                 rcor["core_x_m"] = float(reuse_event["core_x_m"])
                 rcor["core_y_m"] = float(reuse_event["core_y_m"])
-                table_rcor.append(rcor)
+                evttab["core"].append(rcor)
     logger.log("grid")
 
     if not job["keep_tmp"]:
         os.remove(corsika_run_path)
-
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_primary.csv"),
-        list_of_dicts=table_prim,
-        config=table.CONFIG,
-        level='primary')
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_cherenkovsize.csv"),
-        list_of_dicts=table_crsz,
-        config=table.CONFIG,
-        level='cherenkovsize')
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_grid.csv"),
-        list_of_dicts=table_grhi,
-        config=table.CONFIG,
-        level="grid")
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_cherenkovpool.csv"),
-        list_of_dicts=table_fase,
-        config=table.CONFIG,
-        level="cherenkovpool")
-
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_core.csv"),
-        list_of_dicts=table_rcor,
-        config=table.CONFIG,
-        level="core")
-    table.write_level(
-        path=op.join(
-            job["feature_dir"],
-            run_id_str+"_cherenkovsizepart.csv"),
-        list_of_dicts=table_crszpart,
-        config=table.CONFIG,
-        level="cherenkovsizepart")
-    table.write_level(
-        path=op.join(
-            job["feature_dir"],
-            run_id_str+"_cherenkovpoolpart.csv"),
-        list_of_dicts=table_rase,
-        config=table.CONFIG,
-        level="cherenkovpoolpart")
-
-    safe_copy(
-        tmp_imgtar_path,
-        op.join(job["feature_dir"], run_id_str+"_grid_images.tar"))
-
-    logger.log("export_grid_images")
 
     # run merlict
     # -----------
@@ -702,69 +671,62 @@ def run_job(job=EXAMPLE_JOB):
         object_distances=job["sum_trigger"]["object_distances"])
     logger.log("prepare_trigger")
 
-    table_trigger_truth = []
-    table_past_trigger = []
-    table_past_trigger_paths = []
-
     # loop over sensor responses
     # --------------------------
+    table_past_trigger = []
+    tmp_past_trigger_dir = op.join(tmp_dir, "past_trigger")
+    os.makedirs(tmp_past_trigger_dir, exist_ok=True)
+
     for event in merlict_run:
+        # id
+        # --
+        cevth = event.simulation_truth.event.corsika_event_header.raw
+        run_id = int(cpw._evth_run_number(cevth))
+        airshower_id = int(cpw._evth_event_number(cevth))
+        ide = {"run_id": run_id, "airshower_id": airshower_id}
+
+        # apply trigger
+        # -------------
         trigger_responses = pl.trigger.apply_refocus_sum_trigger(
             event=event,
             trigger_preparation=trigger_preparation,
             min_number_neighbors=job["sum_trigger"]["min_num_neighbors"],
             integration_time_in_slices=(
                 job["sum_trigger"]["integration_time_in_slices"]))
-        sum_trigger_info_path = op.join(
-            event._path,
-            "refocus_sum_trigger.json")
-        with open(sum_trigger_info_path, "wt") as f:
+        trg_resp_path = op.join(event._path, "refocus_sum_trigger.json")
+        with open(trg_resp_path, "wt") as f:
             f.write(json.dumps(trigger_responses, indent=4))
 
-        cevth = event.simulation_truth.event.corsika_event_header.raw
-        run_id = int(cpw._evth_run_number(cevth))
-        airshower_id = int(cpw._evth_event_number(cevth))
-        ide = {"run_id": run_id, "airshower_id": airshower_id}
-
-        trigger_truth = ide.copy()
-        trigger_truth = _append_trigger_truth(
-            trigger_dict=trigger_truth,
+        # export trigger-truth
+        # --------------------
+        trgtru = ide.copy()
+        trgtru = _append_trigger_truth(
+            trigger_dict=trgtru,
             trigger_responses=trigger_responses,
             detector_truth=event.simulation_truth.detector)
-        table_trigger_truth.append(trigger_truth)
+        evttab["trigger"].append(trgtru)
 
-        if (trigger_truth["response_pe"] >=
-                job["sum_trigger"]["patch_threshold"]):
-            table_past_trigger_paths.append(event._path)
-            pl.tools.acp_format.compress_event_in_place(event._path)
-            final_event_filename = '{run_id:06d}{airshower_id:06d}'.format(
-                run_id=run_id,
-                airshower_id=airshower_id)
-            final_event_path = op.join(
-                job["past_trigger_dir"],
-                final_event_filename)
-            safe_copy(event._path, final_event_path)
-            past_trigger = ide.copy()
-            table_past_trigger.append(past_trigger)
+        # passing trigger
+        # ---------------
+        if (trgtru["response_pe"] >= job["sum_trigger"]["patch_threshold"]):
+            ptp = ide.copy()
+            ptp["tmp_path"] = event._path
+            ptp["unique_id_str"] = '{run_id:06d}{airshower_id:06d}'.format(
+                run_id=ptp["run_id"],
+                airshower_id=ptp["airshower_id"])
+            table_past_trigger.append(ptp)
+
+            # export past trigger
+            # -------------------
+            ptrg = ide.copy()
+            evttab["pasttrigger"].append(ptrg)
     logger.log("trigger")
-
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_trigger.csv"),
-        list_of_dicts=table_trigger_truth,
-        config=table.CONFIG,
-        level="trigger")
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_pasttrigger.csv"),
-        list_of_dicts=table_past_trigger,
-        config=table.CONFIG,
-        level="pasttrigger")
 
     # Cherenkov classification
     # ------------------------
-    table_cherenkov_classification_scores = []
-    for past_trigger_event_path in table_past_trigger_paths:
+    for pt in table_past_trigger:
         event = pl.Event(
-            path=past_trigger_event_path,
+            path=pt["tmp_path"],
             light_field_geometry=merlict_run.light_field_geometry)
         roi = pl.classify.center_for_region_of_interest(event)
         photons = pl.classify.RawPhotons.from_event(event)
@@ -778,21 +740,12 @@ def run_job(job=EXAMPLE_JOB):
             event_path=op.abspath(event._path),
             photon_ids=cherenkov_photons.photon_ids,
             settings=roi_settings)
-        score = pl.classify.benchmark(
+        crcl = pl.classify.benchmark(
             pulse_origins=event.simulation_truth.detector.pulse_origins,
             photon_ids_cherenkov=cherenkov_photons.photon_ids)
-        score["run_id"] = int(
-            event.simulation_truth.event.corsika_run_header.number)
-        score["airshower_id"] = int(
-            event.simulation_truth.event.corsika_event_header.number)
-        table_cherenkov_classification_scores.append(score)
-    table.write_level(
-        path=op.join(
-            job["feature_dir"],
-            run_id_str+"_cherenkovclassification.csv"),
-        list_of_dicts=table_cherenkov_classification_scores,
-        config=table.CONFIG,
-        level="cherenkovclassification")
+        crcl["run_id"] = pt["run_id"]
+        crcl["airshower_id"] = pt["airshower_id"]
+        evttab["cherenkovclassification"].append(crcl)
     logger.log("cherenkov_classification")
 
     # extracting features
@@ -817,39 +770,78 @@ def run_job(job=EXAMPLE_JOB):
         np.floor(2*np.sqrt(lfg.number_pixel/np.pi))
     logger.log("create light_field_geometry addons")
 
-    table_features = []
-    for event_path in table_past_trigger_paths:
-        event = pl.Event(path=event_path, light_field_geometry=lfg)
-        run_id = int(
-            event.simulation_truth.event.corsika_run_header.number)
-        airshower_id = int(
-            event.simulation_truth.event.corsika_event_header.number)
+    for pt in table_past_trigger:
+        event = pl.Event(path=pt["tmp_path"], light_field_geometry=lfg)
         try:
-            cp = event.cherenkov_photons
-            if cp is None:
-                raise RuntimeError("No Cherenkov-photons classified yet.")
-            f = pl.features.extract_features(
-                cherenkov_photons=cp,
+            lfft = pl.features.extract_features(
+                cherenkov_photons=event.cherenkov_photons,
                 light_field_geometry=lfg,
                 light_field_geometry_addon=lfg_addon)
-            f["run_id"] = int(run_id)
-            f["airshower_id"] = int(airshower_id)
-            table_features.append(f)
-        except Exception as e:
+            lfft["run_id"] = pt["run_id"]
+            lfft["airshower_id"] = pt["airshower_id"]
+            evttab["features"].append(lfft)
+        except Exception as excep:
             print(
-                "run_id {:d}, airshower_id: {:d} :".format(
-                    run_id,
-                    airshower_id),
-                e)
-    table.write_level(
-        path=op.join(job["feature_dir"], run_id_str+"_features.csv"),
-        list_of_dicts=table_features,
-        config=table.CONFIG,
-        level="features")
-    logger.log("feature_extraction")
+                "run_id {:d}, airshower_id: {:d}:".format(
+                    pt["run_id"],
+                    pt["airshower_id"]),
+                excep)
 
+    # compress and tar
+    # ----------------
+    for pt in table_past_trigger:
+        pl.tools.acp_format.compress_event_in_place(pt["tmp_path"])
+        final_tarname = pt["unique_id_str"]+'.tar'
+        plenoscope_event_dir_to_tar(
+            event_dir=pt["tmp_path"],
+            output_tar_path=op.join(tmp_past_trigger_dir, final_tarname))
+    logger.log("compress_and_tar")
+
+    # export event-table
+    # ------------------
+    table_filename = run_id_str+"_event_table.tar"
+    with tarfile.open(op.join(tmp_dir, table_filename+".tmp"), "w") as tarfout:
+        for level_key in table.CONFIG_LEVELS_KEYS:
+            level_csv = table.level_records_to_csv(
+                level_records=evttab[level_key],
+                config=table.CONFIG,
+                level=level_key)
+            with io.BytesIO() as buff:
+                level_csv_bytes = str.encode(level_csv)
+                buff.write(level_csv_bytes)
+                buff.seek(0)
+                tarinfo = tarfile.TarInfo()
+                tarinfo.name = level_key+"."+table.FORMAT_SUFFIX
+                tarinfo.size = len(buff.getvalue())
+                tarfout.addfile(tarinfo=tarinfo, fileobj=buff)
+    safe_move(
+        src=op.join(tmp_dir, table_filename+".tmp"),
+        dst=op.join(tmp_dir, table_filename))
+    safe_copy(
+        src=op.join(tmp_dir, table_filename),
+        dst=op.join(job["feature_dir"], table_filename))
+    logger.log("export_event_table")
+
+    # export grid histograms
+    # ----------------------
+    safe_copy(
+        src=tmp_grid_histogram_path,
+        dst=op.join(job["feature_dir"], grid_histogram_filename))
+    logger.log("export_past_trigger")
+
+    # export past trigger
+    # -------------------
+    for pt in table_past_trigger:
+        final_tarname = pt["unique_id_str"]+'.tar'
+        safe_copy(
+            src=op.join(tmp_past_trigger_dir, final_tarname),
+            dst=op.join(job["past_trigger_dir"], final_tarname))
+    logger.log("export_past_trigger")
+
+    # end
+    # ---
     logger.log("end")
-    shutil.move(time_log_path+".tmp", time_log_path)
+    safe_move(time_log_path+".tmp", time_log_path)
 
     if not job["keep_tmp"]:
-        tmp_obj.cleanup()
+        shutil.rmtree(tmp_dir)
