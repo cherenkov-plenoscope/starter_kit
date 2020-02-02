@@ -155,6 +155,38 @@ FORMAT_SUFFIX = 'csv'
 CONFIG_LEVELS_KEYS = list(CONFIG['levels'].keys())
 
 
+def merge_level(
+    event_table,
+    level_a,
+    level_b,
+    keys_a=None,
+    keys_b=None,
+    on=["run_id", "airshower_id"]
+):
+    a_df = pd.DataFrame(event_table[level_a])
+    if keys_a is not None:
+        a_df = a_df[on + keys_a]
+    b_df = pd.DataFrame(event_table[level_b])
+    if keys_b is not None:
+        b_df = b_df[on + keys_b]
+
+    a_rename = {}
+    for key in list(a_df.columns):
+        if key not in on:
+            a_rename[key] = "{:s}.{:s}".format(level_a, key)
+    a_df = a_df.rename(columns=a_rename)
+    b_rename = {}
+    for key in list(b_df.columns):
+        if key not in on:
+            b_rename[key] = "{:s}.{:s}".format(level_b, key)
+    b_df = b_df.rename(columns=b_rename)
+
+    return pd.merge(
+        pd.DataFrame(a_df),
+        pd.DataFrame(b_df),
+        on=on).to_records(index=False)
+
+
 def _empty_recarray(config, level):
     dtypes = []
     for k in config['index']:
