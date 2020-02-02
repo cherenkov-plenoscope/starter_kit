@@ -403,7 +403,7 @@ def run_job(job=EXAMPLE_JOB):
     assert op.exists(job["merlict_plenoscope_propagator_config_path"])
     assert op.exists(job["plenoscope_scenery_path"])
     assert op.exists(job["light_field_geometry_path"])
-    logger.log("assert resource-paths exist.")
+    logger.log("assert_resource_paths_exist.")
 
     # set up plenoscope grid
     # ----------------------
@@ -422,7 +422,7 @@ def run_job(job=EXAMPLE_JOB):
     plenoscope_grid_geometry = grid.init(
         plenoscope_diameter=plenoscope_diameter,
         num_bins_radius=job["grid"]["num_bins_radius"])
-    logger.log("set plenoscope-grid")
+    logger.log("init_plenoscope_grid")
 
     # draw primaries
     # --------------
@@ -432,7 +432,7 @@ def run_job(job=EXAMPLE_JOB):
         particle=job["particle"],
         plenoscope_pointing=job["plenoscope_pointing"],
         num_events=job["num_air_showers"])
-    logger.log("draw primaries")
+    logger.log("draw_primaries")
 
     # tmp dir
     # -------
@@ -441,7 +441,7 @@ def run_job(job=EXAMPLE_JOB):
     else:
         tmp_dir = op.join(job['tmp_dir'], run_id_str)
         os.makedirs(tmp_dir, exist_ok=True)
-    logger.log("make temp_dir:'{:s}'".format(tmp_dir))
+    logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
 
     # run corsika
     # -----------
@@ -462,9 +462,9 @@ def run_job(job=EXAMPLE_JOB):
         logger.log("corsika")
     with open(corsika_run_path+".stdout", "rt") as f:
         assert cpw.stdout_ends_with_end_of_run_marker(f.read())
-    logger.log("assert corsika quit ok")
+    logger.log("assert_corsika_ok")
     corsika_run_size = os.stat(corsika_run_path).st_size
-    logger.log("corsika_run size: {:d}".format(corsika_run_size))
+    logger.log("corsika_run_size:{:d}".format(corsika_run_size))
 
     # loop over air-showers
     # ---------------------
@@ -657,8 +657,8 @@ def run_job(job=EXAMPLE_JOB):
         safe_copy(
             merlict_run_path+".stderr",
             op.join(job["log_dir"], run_id_str+"_merlict.stderr"))
-        logger.log("merlict")
         assert(merlict_rc == 0)
+    logger.log("merlict")
 
     if not job["keep_tmp"]:
         os.remove(reuse_run_path)
@@ -768,7 +768,7 @@ def run_job(job=EXAMPLE_JOB):
     lfg_addon["fov_radius_leakage"] = 0.9*lfg_addon["fov_radius"]
     lfg_addon["num_pixel_on_diagonal"] = \
         np.floor(2*np.sqrt(lfg.number_pixel/np.pi))
-    logger.log("create light_field_geometry addons")
+    logger.log("light_field_geometry_addons")
 
     for pt in table_past_trigger:
         event = pl.Event(path=pt["tmp_path"], light_field_geometry=lfg)
@@ -786,6 +786,7 @@ def run_job(job=EXAMPLE_JOB):
                     pt["run_id"],
                     pt["airshower_id"]),
                 excep)
+    logger.log("feature_extraction")
 
     # compress and tar
     # ----------------
@@ -795,7 +796,7 @@ def run_job(job=EXAMPLE_JOB):
         plenoscope_event_dir_to_tar(
             event_dir=pt["tmp_path"],
             output_tar_path=op.join(tmp_past_trigger_dir, final_tarname))
-    logger.log("compress_and_tar")
+    logger.log("past_trigger_gz_tar")
 
     # export event-table
     # ------------------
@@ -827,7 +828,7 @@ def run_job(job=EXAMPLE_JOB):
     safe_copy(
         src=tmp_grid_histogram_path,
         dst=op.join(job["feature_dir"], grid_histogram_filename))
-    logger.log("export_past_trigger")
+    logger.log("export_grid_histograms")
 
     # export past trigger
     # -------------------

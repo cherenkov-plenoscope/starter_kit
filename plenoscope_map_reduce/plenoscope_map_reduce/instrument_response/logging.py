@@ -19,19 +19,23 @@ class JsonlLog:
             f.write(json.dumps(d)+"\n")
         self.last_log_time = now
 
+KEYS = [
+    'corsika',
+    'merlict',
+    'grid',
+    'prepare_trigger',
+    'trigger',
+    'cherenkov_classification',
+    'feature_extraction',
+    'past_trigger_gz_tar',
+    'export_event_table',
+    'export_grid_histograms',
+    'export_past_trigger',
+]
 
 def reduce(
     list_of_log_paths,
-    keys=[
-        'corsika',
-        'merlict',
-        'grid',
-        'export_grid_images',
-        'prepare_trigger',
-        'trigger',
-        'cherenkov_classification',
-        'feature_extraction',
-    ]
+    keys=KEYS
 ):
     logs = []
     for log_path in list_of_log_paths:
