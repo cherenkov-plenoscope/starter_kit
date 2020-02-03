@@ -285,10 +285,13 @@ def reduce_feature_dir(
                 evttab[level].append(level_recarray)
                 num_levels += 1
         assert num_levels == len(config["levels"])
+
     for level in config['levels']:
-        ll = evttab[level]
-        cat = np.concatenate(ll)
-        evttab[level] = cat
+        ll = []
+        for level_part in evttab[level]:
+            ll.append(pd.DataFrame(level_part))
+        level_df = pd.concat(ll, sort=False)
+        evttab[level] = level_df.to_records(index=False)
     return evttab
 
 
