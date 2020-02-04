@@ -261,8 +261,8 @@ def run_ids_in_dir(feature_dir, wild_card):
     return list(set(run_ids))
 
 
-def reduce_feature_dir(
-    feature_dir,
+def reduce_into_table(
+    list_of_feature_paths,
     format_suffix=FORMAT_SUFFIX,
     config=CONFIG,
 ):
@@ -270,10 +270,9 @@ def reduce_feature_dir(
     for level in config['levels']:
         evttab[level] = []
 
-    for run_id in run_ids_in_dir(feature_dir, wild_card= '*_event_table.tar'):
-        rpath = op.join(feature_dir, '{:06d}_event_table.tar'.format(run_id))
+    for feature_path in list_of_feature_paths:
         num_levels = 0
-        with tarfile.open(rpath, "r") as tarfin:
+        with tarfile.open(feature_path, "r") as tarfin:
             for tarinfo in tarfin:
                 level, format_suffix = str.split(tarinfo.name, '.')
                 assert level in config['levels']
@@ -296,14 +295,14 @@ def reduce_feature_dir(
     return evttab
 
 
-def write_site_particle(
+def write(
     path,
     event_table,
     config=CONFIG,
     format_suffix=FORMAT_SUFFIX
 ):
     assert op.splitext(path)[1] == '.tar'
-    with tarfile.open(path, 'w') as tarout:
+    with tarfile.open(path+".tmp", 'w') as tarout:
         for level in config['levels']:
             level_df = pd.DataFrame(event_table[level])
             level_csv = level_df.to_csv(index=False)
@@ -314,6 +313,24 @@ def write_site_particle(
                 tarinfo = tarfile.TarInfo(name=level_filename)
                 tarinfo.size = len(fbuff.getvalue())
                 tarout.addfile(tarinfo=tarinfo, fileobj=fbuff)
+    shutil.move(path+".tmp", path)
+
+
+def reduce(
+    list_of_feature_paths,
+    out_path,
+    format_suffix=FORMAT_SUFFIX,
+    config=CONFIG,
+):
+    event_table = reduce_into_table(
+        list_of_feature_paths=list_of_feature_paths,
+        format_suffix=format_suffix,
+        config=config)
+    write(
+        path=out_path,
+        event_table=event_table,
+        config=config,
+        format_suffix=format_suffix)
 
 
 def read_site_particle(

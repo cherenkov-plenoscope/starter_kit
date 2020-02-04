@@ -9,8 +9,6 @@ Options:
     -o --out_dir=DIR        Output directory [default: ./run]
 """
 import docopt
-import sun_grid_engine_map as sge
-import plenoscope_map_reduce as plmr
 import os
 import numpy as np
 from os import path as op
@@ -20,14 +18,37 @@ import random
 import plenopy as pl
 import json
 import multiprocessing
+import glob
+import sun_grid_engine_map as sge
+import plenoscope_map_reduce as plmr
+from plenoscope_map_reduce import instrument_response as irf
+
+
+MODE = "test"
+
+if MODE == "test":
+    MULTIPROCESSING_POOL = "local"
+    TMP_DIR_ON_WORKERNODE = False
+    KEEP_TMP = True
+    MAX_ENERGY_GEV = 1e2
+    NUM_AIRSHOWERS_PER_RUN = 100
+    NUM_GAMMA_RUNS = 2
+    LAZY_REDUCTION = True
+elif MODE == "production":
+    MULTIPROCESSING_POOL = "sun_grid_engine"
+    TMP_DIR_ON_WORKERNODE = True
+    KEEP_TMP = False
+    MAX_ENERGY_GEV = 1e3
+    NUM_AIRSHOWERS_PER_RUN = 1000
+    NUM_GAMMA_RUNS = 300
+    LAZY_REDUCTION = False
+else:
+    raise KeyError("unknown mode {:s}".format(MODE))
 
 
 def absjoin(*args):
     return op.abspath(op.join(*args))
 
-
-MULTIPROCESSING_POOL = ""
-TMP_DIR_ON_WORKERNODE = False
 
 executables = {
     "corsika_primary_abspath": absjoin(
@@ -104,21 +125,21 @@ cfg = {
     "particles": {
         "gamma": {
             "particle_id": 1,
-            "energy_bin_edges_GeV": [0.5, 100],
+            "energy_bin_edges_GeV": [0.5, MAX_ENERGY_GEV],
             "max_scatter_angle_deg": 5,
-            "energy_power_law_slope": -1.5,
+            "energy_power_law_slope": -1.7,
         },
         "electron": {
             "particle_id": 3,
-            "energy_bin_edges_GeV": [0.5, 100],
+            "energy_bin_edges_GeV": [0.5, MAX_ENERGY_GEV],
             "max_scatter_angle_deg": 30,
-            "energy_power_law_slope": -1.5,
+            "energy_power_law_slope": -1.7,
         },
         "proton": {
             "particle_id": 14,
-            "energy_bin_edges_GeV": [5, 100],
+            "energy_bin_edges_GeV": [5, MAX_ENERGY_GEV],
             "max_scatter_angle_deg": 30,
-            "energy_power_law_slope": -1.5,
+            "energy_power_law_slope": -1.7,
         },
     },
 
@@ -135,12 +156,12 @@ cfg = {
     },
 
     "num_runs": {
-        "gamma": 3,
-        "electron": 3,
-        "proton": 3
+        "gamma": NUM_GAMMA_RUNS,
+        "electron": 5*NUM_GAMMA_RUNS,
+        "proton": 4*NUM_GAMMA_RUNS
     },
 
-    "num_airshowers_per_run": 100,
+    "num_airshowers_per_run": NUM_AIRSHOWERS_PER_RUN,
 }
 
 
@@ -151,7 +172,7 @@ if __name__ == '__main__':
     except docopt.DocoptExit as e:
         print(e)
 
-    date_dict_now = plmr.instrument_response.date_dict_now()
+    date_dict_now = irf.date_dict_now()
     sge._print("Start main()")
 
     if TMP_DIR_ON_WORKERNODE:
@@ -165,9 +186,12 @@ if __name__ == '__main__':
     if MULTIPROCESSING_POOL == "sun_grid_engine":
         pool = sge
         sge._print("Use sun-grid-engine multiprocessing-pool.")
-    else:
+    elif MULTIPROCESSING_POOL == "local":
         pool = multiprocessing.Pool(8)
         sge._print("Use local multiprocessing-pool.")
+    else:
+        raise KeyError(
+            "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL))
 
     os.makedirs(out_absdir, exist_ok=True)
 
@@ -257,16 +281,62 @@ if __name__ == '__main__':
                     "merlict_plenoscope_propagator_config_path": op.join(
                         out_absdir,
                         cfg["merlict_plenoscope_propagator_config_relpath"]),
-                    "log_dir": op.join(site_particle_absdir, "log"),
+                    "log_dir":
+                        op.join(site_particle_absdir, "log.map"),
                     "past_trigger_dir":
-                        op.join(site_particle_absdir, "past_trigger"),
-                    "feature_dir": op.join(site_particle_absdir, "features"),
-                    "keep_tmp": False,
+                        op.join(site_particle_absdir, "past_trigger.map"),
+                    "feature_dir":
+                        op.join(site_particle_absdir, "features.map"),
+                    "keep_tmp": KEEP_TMP,
                     "tmp_dir": tmp_absdir,
                     "date": date_dict_now,
                 }
                 run_id += 1
                 irf_jobs.append(irf_job)
 
-    rc = pool.map(plmr.instrument_response.run_job, irf_jobs)
+    random.shuffle(irf_jobs)
+    rc = pool.map(irf.run_job, irf_jobs)
+    sge._print("Reduce instrument-response.")
+
+    for site_key in cfg["sites"]:
+        site_absdir = op.join(out_absdir, site_key)
+        for particle_key in cfg["particles"]:
+            site_particle_absdir = op.join(site_absdir, particle_key)
+            log_absdir = op.join(site_particle_absdir, "log.map")
+            feature_absdir = op.join(site_particle_absdir, "features.map")
+
+            # run-time
+            # ========
+            log_abspath = op.join(site_particle_absdir, 'runtime.csv')
+            if not op.exists(log_abspath) or not LAZY_REDUCTION:
+                _lop_paths = glob.glob(op.join(log_absdir, "*_runtime.jsonl"))
+                irf.logging.reduce(
+                    list_of_log_paths=_lop_paths,
+                    out_path=log_abspath)
+            sge._print(
+                "Reduce {:s} {:s} run-time.".format(site_key, particle_key))
+
+            # event table
+            # ===========
+            event_table_abspath = op.join(site_particle_absdir, 'event_table.tar')
+            if not op.exists(event_table_abspath) or not LAZY_REDUCTION:
+                _feature_paths = glob.glob(
+                    op.join(feature_absdir, "*_event_table.tar"))
+                irf.table.reduce(
+                    list_of_feature_paths=_feature_paths,
+                    out_path=event_table_abspath)
+            sge._print(
+                "Reduce {:s} {:s} event_table.".format(site_key, particle_key))
+
+            # grid images
+            # ===========
+            grid_abspath = op.join(site_particle_absdir, 'grid.tar')
+            if not op.exists(grid_abspath) or not LAZY_REDUCTION:
+                _grid_paths = glob.glob(op.join(feature_absdir, "*_grid.tar"))
+                irf.grid.reduce(
+                    list_of_grid_paths=_grid_paths,
+                    out_path=grid_abspath)
+            sge._print(
+                "Reduce {:s} {:s} grid.".format(site_key, particle_key))
+
     sge._print("End main().")

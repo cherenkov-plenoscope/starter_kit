@@ -4,7 +4,6 @@ from . import grid
 from . import merlict
 from . import logging
 from . import query
-from . import reduce
 
 import numpy as np
 import os

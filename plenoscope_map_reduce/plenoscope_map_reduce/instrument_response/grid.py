@@ -1,9 +1,10 @@
 import numpy as np
-import corsika_primary_wrapper as cpw
 import gzip
 import os
-from . import table
 import tarfile
+import shutil
+import corsika_primary_wrapper as cpw
+from . import table
 
 
 def init(
@@ -207,3 +208,14 @@ def read_histograms(path):
             airshower_id = int(tarinfo.name[6:12])
             grids[run_id, airshower_id] = tarfin.extractfile(tarinfo).read()
     return grids
+
+
+def reduce(list_of_grid_paths, out_path):
+    with tarfile.open(out_path+".tmp", "w") as tarfout:
+        for grid_path in list_of_grid_paths:
+            with tarfile.open(grid_path, "r") as tarfin:
+                for tarinfo in tarfin:
+                    tarfout.addfile(
+                        tarinfo=tarinfo,
+                        fileobj=tarfin.extractfile(tarinfo))
+    shutil.move(out_path+".tmp", out_path)

@@ -1,6 +1,8 @@
 import datetime
 import json
 import os
+import pandas as pd
+import shutil
 
 
 class JsonlLog:
@@ -33,11 +35,25 @@ KEYS = [
     'export_past_trigger',
 ]
 
+
 def reduce(
+    list_of_log_paths,
+    out_path,
+    keys=KEYS,
+):
+    log_records = reduce_into_records(
+        list_of_log_paths=list_of_log_paths,
+        keys=keys)
+    log_df = pd.DataFrame(log_records)
+    log_df.to_csv(out_path+".tmp", index=False)
+    shutil.move(out_path+".tmp", out_path)
+
+
+def reduce_into_records(
     list_of_log_paths,
     keys=KEYS
 ):
-    logs = []
+    list_of_log_records = []
     for log_path in list_of_log_paths:
         run_id = int(os.path.basename(log_path)[0:6])
         run = {'run_id': run_id}
@@ -48,5 +64,5 @@ def reduce(
                 logline = json.loads(line)
                 if logline['msg'] in keys:
                     run[logline['msg']] = logline['runtime']
-            logs.append(run)
-    return logs
+            list_of_log_records.append(run)
+    return list_of_log_records
