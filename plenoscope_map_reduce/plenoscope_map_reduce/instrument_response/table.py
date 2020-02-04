@@ -153,6 +153,7 @@ CONFIG['levels']['features'] = {
 
 FORMAT_SUFFIX = 'csv'
 CONFIG_LEVELS_KEYS = list(CONFIG['levels'].keys())
+INDEX = list(CONFIG["index"].keys())
 
 
 def merge_level(
