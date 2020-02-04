@@ -318,7 +318,9 @@ if __name__ == '__main__':
 
             # event table
             # ===========
-            event_table_abspath = op.join(site_particle_absdir, 'event_table.tar')
+            event_table_abspath = op.join(
+                site_particle_absdir,
+                'event_table.tar')
             if not op.exists(event_table_abspath) or not LAZY_REDUCTION:
                 _feature_paths = glob.glob(
                     op.join(feature_absdir, "*_event_table.tar"))

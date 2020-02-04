@@ -21,6 +21,7 @@ class JsonlLog:
             f.write(json.dumps(d)+"\n")
         self.last_log_time = now
 
+
 KEYS = [
     'corsika',
     'merlict',
