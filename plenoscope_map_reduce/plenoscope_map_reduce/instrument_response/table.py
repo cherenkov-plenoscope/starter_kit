@@ -333,7 +333,7 @@ def reduce(
         format_suffix=format_suffix)
 
 
-def read_site_particle(
+def read(
     path,
     config=CONFIG,
     format_suffix=FORMAT_SUFFIX
@@ -360,3 +360,6 @@ def write_level(path, level_records, config, level):
     with open(path+'.tmp', 'wt') as f:
         f.write(csv)
     shutil.move(path+'.tmp', path)
+
+
+

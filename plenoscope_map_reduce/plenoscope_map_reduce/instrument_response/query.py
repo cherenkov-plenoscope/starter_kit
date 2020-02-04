@@ -52,9 +52,7 @@ def query_grid_histograms(
     hist = np.zeros((num_bins_edge, num_bins_edge))
     num_airshower = 0
     for mat in matches:
-        seed = table.random_seed_based_on(
-            run_id=mat['run_id'],
-            airshower_id=mat['airshower_id'])
-        hist += grid.bytes_to_histogram(grid_histograms[seed])
+        hist += grid.bytes_to_histogram(
+            grid_histograms[(mat['run_id'], mat['airshower_id'])])
         num_airshower += 1
     return hist, num_airshower
