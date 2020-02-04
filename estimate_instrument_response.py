@@ -194,31 +194,33 @@ if __name__ == '__main__':
             "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL))
 
     os.makedirs(out_absdir, exist_ok=True)
-
-    sge._print("Copy resources")
-    # ==========================
     input_absdir = op.join(out_absdir, 'input')
     os.makedirs(input_absdir, exist_ok=True)
+    cfg_abspath = op.join(input_absdir, "config.json")
 
-    for cfg_file in cfg_files:
-        cfg_file_abspath = cfg_files[cfg_file]
-        local_cfg_file_abspath = op.join(
-            input_absdir,
-            op.basename(cfg_file_abspath))
-        local_cfg_file_relpath = op.join(
-            'input',
-            op.basename(cfg_file_abspath))
-        if not op.exists(local_cfg_file_abspath):
-            plmr.instrument_response.safe_copy(
-                src=cfg_file_abspath,
-                dst=local_cfg_file_abspath)
-        cfg_file_rel = cfg_file.replace('abspath', 'relpath')
-        cfg[cfg_file_rel] = local_cfg_file_relpath
+    if op.exists(cfg_abspath):
+        sge._print("Read existing config")
+        with open(cfg_abspath, "rt") as fin:
+            cfg = json.loads(fout.read())
+    else:
+        sge._print("Write new config")
+        with open(cfg_abspath, "wt") as fout:
+            fout.write(json.dumps(cfg, indent=4))
 
-    cfg['executables'] = executables
-
-    with open(op.join(input_absdir, "config.json"), "wt") as fout:
-        fout.write(json.dumps(cfg, indent=4))
+        for cfg_file in cfg_files:
+            cfg_file_abspath = cfg_files[cfg_file]
+            local_cfg_file_abspath = op.join(
+                input_absdir,
+                op.basename(cfg_file_abspath))
+            local_cfg_file_relpath = op.join(
+                'input',
+                op.basename(cfg_file_abspath))
+            if not op.exists(local_cfg_file_abspath):
+                plmr.instrument_response.safe_copy(
+                    src=cfg_file_abspath,
+                    dst=local_cfg_file_abspath)
+            cfg_file_rel = cfg_file.replace('abspath', 'relpath')
+            cfg[cfg_file_rel] = local_cfg_file_relpath
 
     sge._print("Estimating light-field-geometry.")
     # ============================================
