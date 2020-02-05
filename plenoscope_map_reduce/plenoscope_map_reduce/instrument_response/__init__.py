@@ -5,7 +5,6 @@ from os.path import join as opj
 import shutil
 import subprocess
 import random
-import plenopy as pl
 import json
 import multiprocessing
 import glob
