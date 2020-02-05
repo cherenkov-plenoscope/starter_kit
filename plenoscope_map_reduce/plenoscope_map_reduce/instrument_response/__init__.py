@@ -1,3 +1,12 @@
+from . import random
+from . import table
+from . import grid
+from . import merlict
+from . import logging
+from . import query
+from . import map_and_reduce
+from .. import light_field_geometry as plmr_light_field_geometry
+
 import os
 import numpy as np
 from os import path as op
@@ -8,25 +17,13 @@ import random
 import json
 import multiprocessing
 import glob
+import tempfile
+
 import sun_grid_engine_map as sge
-import plenoscope_map_reduce as plmr
-from plenoscope_map_reduce import instrument_response as irf
-
-from . import random
-from . import table
-from . import grid
-from . import merlict
-from . import logging
-from . import query
-from . import map_and_reduce
-
-
-def absjoin(*args):
-    return op.abspath(opj(*args))
 
 
 EXAMPLE_EXECUTABLES = {
-    "corsika_primary_abspath": absjoin(
+    "corsika_primary_path": opj(
         "build",
         "corsika",
         "modified",
@@ -34,29 +31,29 @@ EXAMPLE_EXECUTABLES = {
         "run",
         "corsika75600Linux_QGSII_urqmd"),
 
-    "merlict_plenoscope_propagator_abspath": absjoin(
+    "merlict_plenoscope_propagator_path": opj(
         "build",
         "merlict",
         "merlict-plenoscope-propagation"),
 
-    "merlict_plenoscope_calibration_map_abspath": absjoin(
+    "merlict_plenoscope_calibration_map_path": opj(
         "build",
         "merlict",
         "merlict-plenoscope-calibration-map"),
 
-    "merlict_plenoscope_calibration_reduce_abspath": absjoin(
+    "merlict_plenoscope_calibration_reduce_path": opj(
         "build",
         "merlict",
         "merlict-plenoscope-calibration-reduce"),
 }
 
 EXAMPLE_CONFIG_FILES = {
-    "merlict_plenoscope_propagator_config_abspath": absjoin(
+    "merlict_plenoscope_propagator_config_path": opj(
         "resources",
         "acp",
         "merlict_propagation_config.json"),
 
-    "plenoscope_scenery_abspath": absjoin(
+    "plenoscope_scenery_path": opj(
         "resources",
         "acp",
         "71m",
@@ -137,17 +134,17 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
     os.makedirs(out_absdir)
     os.makedirs(opj(out_absdir, 'input'))
     with open(opj(out_absdir, 'input', 'config.json'+'tmp'), "wt") as fout:
-        fout.write(json.dumps(cfg, indent=4))
+        fout.write(json.dumps(config, indent=4))
     shutil.move(
         opj(out_absdir, 'input', 'config.json'+'tmp'),
         opj(out_absdir, 'input', 'config.json'))
 
-    plmr.instrument_response.safe_copy(
-        src=cfg_files['plenoscope_scenery_abspath'],
+    map_and_reduce.safe_copy(
+        src=cfg_files['plenoscope_scenery_path'],
         dst=opj(out_absdir, 'input', 'scenery'))
 
-    plmr.instrument_response.safe_copy(
-        src=cfg_files['merlict_plenoscope_propagator_config_abspath'],
+    map_and_reduce.safe_copy(
+        src=cfg_files['merlict_plenoscope_propagator_config_path'],
         dst=opj(out_absdir, 'input', 'merlict_propagation_config.json'))
 
 
@@ -161,7 +158,10 @@ def run(
 ):
     date_dict_now = map_and_reduce.date_dict_now()
     sge._print("Start run()")
+
     out_absdir =op.abspath(path)
+    for exe_path in executables:
+        executables[exe_path] = op.abspath(executables[exe_path])
 
     if TMP_DIR_ON_WORKERNODE:
         tmp_absdir = None
@@ -183,14 +183,14 @@ def run(
 
     sge._print("Read config")
     with open(opj(out_absdir, 'input', 'config.json'), "rt") as fin:
-        cfg = json.loads(fout.read())
+        cfg = json.loads(fin.read())
 
     sge._print("Estimating light-field-geometry.")
     # ============================================
     if op.exists(opj(out_absdir, 'light_field_geometry')):
-        assert plmr.contains_same_bytes(
+        assert map_and_reduce.contains_same_bytes(
             opj(
-                out_dir,
+                out_absdir,
                 'input',
                 'scenery',
                 'scenery.json'),
@@ -202,24 +202,22 @@ def run(
                 'scenery.json'))
     else:
         with tempfile.TemporaryDirectory(
-            prefix='light_field_geometry',
+            prefix='light_field_geometry_',
             dir=out_absdir
         ) as tmp_dir:
-            lfg_jobs = plmr.light_field_geometry.make_jobs(
+            lfg_jobs = plmr_light_field_geometry.make_jobs(
                 merlict_map_path=executables[
-                    "merlict_plenoscope_calibration_map_abspath"],
-                scenery_path=opj(
-                    out_absdir,
-                    cfg["plenoscope_scenery_relpath"]),
+                    "merlict_plenoscope_calibration_map_path"],
+                scenery_path=opj(out_absdir, 'input', 'scenery'),
                 out_dir=tmp_dir,
                 num_photons_per_block=cfg[
                     'light_field_geometry']['num_photons_per_block'],
                 num_blocks=cfg[
                     'light_field_geometry']['num_blocks'],
                 random_seed=0)
-            rc = pool.map(plmr.light_field_geometry.run_job, lfg_jobs)
+            rc = pool.map(plmr_light_field_geometry.run_job, lfg_jobs)
             subprocess.call([
-                executables["merlict_plenoscope_calibration_reduce_abspath"],
+                executables["merlict_plenoscope_calibration_reduce_path"],
                 '--input', tmp_dir,
                 '--output', opj(out_absdir, 'light_field_geometry')])
 
@@ -249,13 +247,13 @@ def run(
                     "grid": cfg["grid"],
                     "sum_trigger": cfg["sum_trigger"],
                     "corsika_primary_path": executables[
-                        "corsika_primary_abspath"],
+                        "corsika_primary_path"],
                     "plenoscope_scenery_path": opj(
                         out_absdir,
                         'input',
                         'scenery'),
                     "merlict_plenoscope_propagator_path": executables[
-                        "merlict_plenoscope_propagator_abspath"],
+                        "merlict_plenoscope_propagator_path"],
                     "light_field_geometry_path":
                         opj(out_absdir, 'light_field_geometry'),
                     "merlict_plenoscope_propagator_config_path": opj(
@@ -276,7 +274,7 @@ def run(
                 irf_jobs.append(irf_job)
 
     random.shuffle(irf_jobs)
-    rc = pool.map(irf.run_job, irf_jobs)
+    rc = pool.map(map_and_reduce.run_job, irf_jobs)
     sge._print("Reduce instrument-response.")
 
     for site_key in cfg["sites"]:
@@ -291,7 +289,7 @@ def run(
             log_abspath = opj(site_particle_absdir, 'runtime.csv')
             if not op.exists(log_abspath) or not LAZY_REDUCTION:
                 _lop_paths = glob.glob(opj(log_absdir, "*_runtime.jsonl"))
-                irf.logging.reduce(
+                logging.reduce(
                     list_of_log_paths=_lop_paths,
                     out_path=log_abspath)
             sge._print(
@@ -305,7 +303,7 @@ def run(
             if not op.exists(event_table_abspath) or not LAZY_REDUCTION:
                 _feature_paths = glob.glob(
                     opj(feature_absdir, "*_event_table.tar"))
-                irf.table.reduce(
+                table.reduce(
                     list_of_feature_paths=_feature_paths,
                     out_path=event_table_abspath)
             sge._print(
@@ -316,7 +314,7 @@ def run(
             grid_abspath = opj(site_particle_absdir, 'grid.tar')
             if not op.exists(grid_abspath) or not LAZY_REDUCTION:
                 _grid_paths = glob.glob(opj(feature_absdir, "*_grid.tar"))
-                irf.grid.reduce(
+                grid.reduce(
                     list_of_grid_paths=_grid_paths,
                     out_path=grid_abspath)
             sge._print(

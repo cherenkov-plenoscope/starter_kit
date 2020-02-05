@@ -8,12 +8,6 @@ from . import instrument_response
 from . import light_field_geometry
 
 
-def contains_same_bytes(path_a, path_b):
-    with open(path_a, 'rb') as fa, open(path_b, 'rb') as fb:
-        a_bytes = fa.read()
-        b_bytes = fb.read()
-        return a_bytes == b_bytes:
-
 
 def split_list_into_list_of_lists(events, num_events_in_job):
     """
