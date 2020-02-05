@@ -3,7 +3,6 @@ from . import table
 from . import grid
 from . import merlict
 from . import logging
-from . import query
 
 import numpy as np
 import os
