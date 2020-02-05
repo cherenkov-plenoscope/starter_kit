@@ -156,38 +156,6 @@ CONFIG_LEVELS_KEYS = list(CONFIG['levels'].keys())
 INDEX = list(CONFIG["index"].keys())
 
 
-def merge_level(
-    event_table,
-    level_a,
-    level_b,
-    keys_a=None,
-    keys_b=None,
-    on=["run_id", "airshower_id"]
-):
-    a_df = pd.DataFrame(event_table[level_a])
-    if keys_a is not None:
-        a_df = a_df[on + keys_a]
-    b_df = pd.DataFrame(event_table[level_b])
-    if keys_b is not None:
-        b_df = b_df[on + keys_b]
-
-    a_rename = {}
-    for key in list(a_df.columns):
-        if key not in on:
-            a_rename[key] = "{:s}.{:s}".format(level_a, key)
-    a_df = a_df.rename(columns=a_rename)
-    b_rename = {}
-    for key in list(b_df.columns):
-        if key not in on:
-            b_rename[key] = "{:s}.{:s}".format(level_b, key)
-    b_df = b_df.rename(columns=b_rename)
-
-    return pd.merge(
-        pd.DataFrame(a_df),
-        pd.DataFrame(b_df),
-        on=on).to_records(index=False)
-
-
 def _empty_recarray(config, level):
     dtypes = []
     for k in config['index']:
@@ -360,3 +328,98 @@ def write_level(path, level_records, config, level):
     with open(path+'.tmp', 'wt') as f:
         f.write(csv)
     shutil.move(path+'.tmp', path)
+
+
+def find_common_indices(level_a, level_b):
+    _a = {}
+    _b = {}
+    for idx in INDEX:
+        _a[idx] = level_a[idx]
+        _b[idx] = level_b[idx]
+    merge_df = pd.merge(
+        pd.DataFrame(_a),
+        pd.DataFrame(_b),
+        on=INDEX)[INDEX]
+    return merge_df.to_records(index=False)
+
+
+def mask_to_indices(level, mask):
+    _part = {}
+    for idx in INDEX:
+        _part[idx] = level[idx]
+    level_df = pd.DataFrame(_part)
+    del _part
+    level_mask_df = level_df[mask]
+    return level_mask_df.to_records(index=False)
+
+
+def by_indices(event_table, level_key, indices, keys=None):
+    if keys == None:
+        keys = CONFIG['levels'][level_key].keys()
+    _part = {}
+    for idx in INDEX:
+        _part[idx] = event_table[level_key][idx]
+    for key in keys:
+        _part[key] = event_table[level_key][key]
+    part_df = pd.DataFrame(_part)
+    del _part
+    common_df = pd.merge(
+        part_df,
+        pd.DataFrame(indices),
+        on=INDEX,
+        how='inner')
+    del part_df
+    common = common_df.to_records(index=False)
+    del common_df
+    common_order_args = np.argsort(_unique_index(common))
+    common_sorted = common[common_order_args]
+    del common_order_args
+    indices_order_args = np.argsort(_unique_index(indices))
+    inverse_order = np.zeros(shape=indices_order_args.shape, dtype=np.int)
+    inverse_order[indices_order_args] = np.arange(len(indices))
+    del indices_order_args
+    common_same_order_as_indices = common_sorted[inverse_order]
+    del inverse_order
+    for idx in INDEX:
+        np.testing.assert_array_equal(
+            common_same_order_as_indices[idx],
+            indices[idx])
+    return common_same_order_as_indices
+
+
+def merge(event_table, level_keys=CONFIG_LEVELS_KEYS):
+    common = _find_common_indices(
+        event_table=event_table,
+        level_keys=level_keys)
+    out = {}
+    for idx in INDEX:
+        out[idx] = common[idx]
+    for level_key in level_keys:
+        for key in CONFIG['levels'][level_key].keys():
+            out['{:s}.{:s}'.format(level_key, key)] = by_indices(
+                event_table=event_table,
+                level_key=level_key,
+                indices=common,
+                keys=[key])[key]
+    out_df = pd.DataFrame(out)
+    del out
+    return out_df.to_records(index=False)
+
+
+UNIQUE_INDEX_FACTOR = (MAX_NUM_EVENTS_IN_RUN*10)
+
+
+def _find_common_indices(event_table, level_keys=CONFIG_LEVELS_KEYS):
+    uids = _unique_index(event_table[level_keys[0]])
+    for lidx in np.arange(1, len(level_keys)):
+        level_key = level_keys[lidx]
+        _uids = _unique_index(event_table[level_key])
+        uids = np.intersect1d(uids, _uids)
+    run_ids = uids//UNIQUE_INDEX_FACTOR
+    airshower_ids = uids%UNIQUE_INDEX_FACTOR
+    df = pd.DataFrame({'run_id': run_ids, 'airshower_id': airshower_ids})
+    return df.to_records(index=False)
+
+
+def _unique_index(level):
+     return level['run_id']*UNIQUE_INDEX_FACTOR + level['airshower_id']
