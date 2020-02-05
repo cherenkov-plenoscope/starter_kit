@@ -3,13 +3,13 @@ from . import table
 from . import grid
 from . import merlict
 from . import logging
+from . import network_file_system as nfs
 
 import numpy as np
 import os
 from os import path as op
 import shutil
-import errno
-import uuid
+
 import tempfile
 import json
 import tarfile
@@ -364,30 +364,6 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
         tarfout.add(event_dir, arcname=".")
 
 
-def safe_copy(src, dst):
-    copy_id = uuid.uuid4().__str__()
-    tmp_dst = "{:s}.{:s}.tmp".format(dst, copy_id)
-    try:
-        shutil.copytree(src, tmp_dst)
-    except OSError as exc:
-        if exc.errno == errno.ENOTDIR:
-            shutil.copy2(src, tmp_dst)
-        else:
-            raise
-    os.rename(tmp_dst, dst)
-
-
-def safe_move(src, dst):
-    try:
-        os.rename(src, dst)
-    except OSError as err:
-        if err.errno == errno.EXDEV:
-            safe_copy(src, dst)
-            os.unlink(src)
-        else:
-            raise
-
-
 def run_job(job=EXAMPLE_JOB):
     os.makedirs(job["log_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
@@ -398,7 +374,7 @@ def run_job(job=EXAMPLE_JOB):
     job_path = op.join(job["log_dir"], run_id_str+"_job.json")
     with open(job_path+".tmp", "wt") as f:
         f.write(json.dumps(job, indent=4))
-    safe_move(job_path+".tmp", job_path)
+    nfs.move(job_path+".tmp", job_path)
     print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
 
     # assert resources exist
@@ -458,10 +434,10 @@ def run_job(job=EXAMPLE_JOB):
             output_path=corsika_run_path,
             stdout_postfix=".stdout",
             stderr_postfix=".stderr")
-        safe_copy(
+        nfs.copy(
             corsika_run_path+".stdout",
             op.join(job["log_dir"], run_id_str+"_corsika.stdout"))
-        safe_copy(
+        nfs.copy(
             corsika_run_path+".stderr",
             op.join(job["log_dir"], run_id_str+"_corsika.stderr"))
         logger.log("corsika")
@@ -656,10 +632,10 @@ def run_job(job=EXAMPLE_JOB):
             random_seed=run_id,
             stdout_postfix=".stdout",
             stderr_postfix=".stderr")
-        safe_copy(
+        nfs.copy(
             merlict_run_path+".stdout",
             op.join(job["log_dir"], run_id_str+"_merlict.stdout"))
-        safe_copy(
+        nfs.copy(
             merlict_run_path+".stderr",
             op.join(job["log_dir"], run_id_str+"_merlict.stderr"))
         assert(merlict_rc == 0)
@@ -820,17 +796,17 @@ def run_job(job=EXAMPLE_JOB):
                 tarinfo.name = level_key+"."+table.FORMAT_SUFFIX
                 tarinfo.size = len(buff.getvalue())
                 tarfout.addfile(tarinfo=tarinfo, fileobj=buff)
-    safe_move(
+    nfs.move(
         src=op.join(tmp_dir, table_filename+".tmp"),
         dst=op.join(tmp_dir, table_filename))
-    safe_copy(
+    nfs.copy(
         src=op.join(tmp_dir, table_filename),
         dst=op.join(job["feature_dir"], table_filename))
     logger.log("export_event_table")
 
     # export grid histograms
     # ----------------------
-    safe_copy(
+    nfs.copy(
         src=tmp_grid_histogram_path,
         dst=op.join(job["feature_dir"], grid_histogram_filename))
     logger.log("export_grid_histograms")
@@ -839,7 +815,7 @@ def run_job(job=EXAMPLE_JOB):
     # -------------------
     for pt in table_past_trigger:
         final_tarname = pt["unique_id_str"]+'.tar'
-        safe_copy(
+        nfs.copy(
             src=op.join(tmp_past_trigger_dir, final_tarname),
             dst=op.join(job["past_trigger_dir"], final_tarname))
     logger.log("export_past_trigger")
@@ -847,7 +823,7 @@ def run_job(job=EXAMPLE_JOB):
     # end
     # ---
     logger.log("end")
-    safe_move(time_log_path+".tmp", time_log_path)
+    nfs.move(time_log_path+".tmp", time_log_path)
 
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)

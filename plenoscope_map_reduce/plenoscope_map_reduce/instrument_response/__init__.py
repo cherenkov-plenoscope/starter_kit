@@ -5,6 +5,7 @@ from . import merlict
 from . import logging
 from . import query
 from . import map_and_reduce
+from . import network_file_system
 from .. import light_field_geometry as plmr_light_field_geometry
 
 import os
@@ -139,11 +140,11 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
         opj(out_absdir, 'input', 'config.json'+'tmp'),
         opj(out_absdir, 'input', 'config.json'))
 
-    map_and_reduce.safe_copy(
+    network_file_system.copy(
         src=cfg_files['plenoscope_scenery_path'],
         dst=opj(out_absdir, 'input', 'scenery'))
 
-    map_and_reduce.safe_copy(
+    network_file_system.copy(
         src=cfg_files['merlict_plenoscope_propagator_config_path'],
         dst=opj(out_absdir, 'input', 'merlict_propagation_config.json'))
 
