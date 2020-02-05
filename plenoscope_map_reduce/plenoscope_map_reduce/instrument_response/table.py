@@ -360,6 +360,3 @@ def write_level(path, level_records, config, level):
     with open(path+'.tmp', 'wt') as f:
         f.write(csv)
     shutil.move(path+'.tmp', path)
-
-
-

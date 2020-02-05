@@ -131,7 +131,7 @@ EXAMPLE_CONFIG = {
 
 
 def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
-    out_absdir =op.abspath(out_dir)
+    out_absdir = op.abspath(out_dir)
     os.makedirs(out_absdir)
     os.makedirs(opj(out_absdir, 'input'))
     with open(opj(out_absdir, 'input', 'config.json'+'tmp'), "wt") as fout:
@@ -151,7 +151,7 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
 
 def run(
     path,
-    MULTIPROCESSING_POOL = "sun_grid_engine",
+    MULTIPROCESSING_POOL="sun_grid_engine",
     executables=EXAMPLE_EXECUTABLES,
     TMP_DIR_ON_WORKERNODE=True,
     KEEP_TMP=False,
@@ -160,7 +160,7 @@ def run(
     date_dict_now = map_and_reduce.date_dict_now()
     sge._print("Start run()")
 
-    out_absdir =op.abspath(path)
+    out_absdir = op.abspath(path)
     for exe_path in executables:
         executables[exe_path] = op.abspath(executables[exe_path])
 
