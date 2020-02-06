@@ -9,7 +9,7 @@ import os
 import json
 import shutil
 from .. import logging
-
+from . import figure
 
 def read(path):
     return pd.read_csv(path).to_records(index=False)
@@ -73,7 +73,7 @@ def merge_event_table(runtime_table, event_table):
     return rta.to_records(index=False)
 
 
-def write_relative_runtime(table, out_path):
+def write_relative_runtime(table, out_path, figure_config=figure.CONFIG):
     ert = table
     total_times = {}
     total_time = 0
@@ -85,8 +85,7 @@ def write_relative_runtime(table, out_path):
     for key in logging.KEYS:
         relative_times[key] = float(total_times[key]/total_time)
 
-    sc = 0.4
-    fig = plt.figure(figsize=(sc*16, sc*9), dpi=120/sc)
+    fig = figure.figure(figure_config)
     ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])
     labels = []
     sizes = []
@@ -116,7 +115,7 @@ def write_relative_runtime(table, out_path):
     os.rename(out_path_json+'.tmp', out_path_json)
 
 
-def write_speed(table, out_path):
+def write_speed(table, out_path, figure_config=figure.CONFIG):
     ert = table
     speed_keys = {
         "corsika": "num_events_corsika",
@@ -135,8 +134,7 @@ def write_speed(table, out_path):
         else:
             speeds[key] = float(np.mean(ert[key][mask]/num_events[mask]))
 
-    sc = 0.4
-    fig = plt.figure(figsize=(sc*16, sc*9), dpi=120/sc)
+    fig = figure.figure(figure_config)
     ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])
     labels = []
     sizes = []
