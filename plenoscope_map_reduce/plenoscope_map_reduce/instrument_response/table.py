@@ -392,18 +392,12 @@ def merge(event_table, level_keys=CONFIG_LEVELS_KEYS):
         event_table=event_table,
         level_keys=level_keys)
     out = {}
-    for idx in INDEX:
-        out[idx] = common[idx]
     for level_key in level_keys:
-        for key in CONFIG['levels'][level_key].keys():
-            out['{:s}.{:s}'.format(level_key, key)] = by_indices(
-                event_table=event_table,
-                level_key=level_key,
-                indices=common,
-                keys=[key])[key]
-    out_df = pd.DataFrame(out)
-    del out
-    return out_df.to_records(index=False)
+        out[level_key] = by_indices(
+            event_table=event_table,
+            level_key=level_key,
+            indices=common)
+    return out
 
 
 UNIQUE_INDEX_FACTOR = (MAX_NUM_EVENTS_IN_RUN*10)
