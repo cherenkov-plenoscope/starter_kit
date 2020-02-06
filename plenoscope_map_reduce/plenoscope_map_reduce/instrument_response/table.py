@@ -354,7 +354,7 @@ def mask_to_indices(level, mask):
 
 
 def by_indices(event_table, level_key, indices, keys=None):
-    if keys == None:
+    if keys is None:
         keys = CONFIG['levels'][level_key].keys()
     _part = {}
     for idx in INDEX:
@@ -410,10 +410,25 @@ def _find_common_indices(event_table, level_keys=CONFIG_LEVELS_KEYS):
         _uids = _unique_index(event_table[level_key])
         uids = np.intersect1d(uids, _uids)
     run_ids = uids//UNIQUE_INDEX_FACTOR
-    airshower_ids = uids%UNIQUE_INDEX_FACTOR
+    airshower_ids = uids % UNIQUE_INDEX_FACTOR
     df = pd.DataFrame({'run_id': run_ids, 'airshower_id': airshower_ids})
     return df.to_records(index=False)
 
 
 def _unique_index(level):
-     return level['run_id']*UNIQUE_INDEX_FACTOR + level['airshower_id']
+    return level['run_id']*UNIQUE_INDEX_FACTOR + level['airshower_id']
+
+
+def make_mask_of_right_in_left(left_level, right_level):
+    _left = {}
+    for idx in INDEX:
+        _left[idx] = left_level[idx]
+    _right = {}
+    for idx in INDEX:
+        _right[idx] = right_level[idx]
+    left_df = pd.DataFrame(_left)
+    right_df = pd.DataFrame(_right)
+    mask_df = pd.merge(left_df, right_df, on=INDEX, how='left', indicator=True)
+    indicator_df = mask_df['_merge']
+    mask = np.array(indicator_df == 'both', dtype=np.int64)
+    return mask

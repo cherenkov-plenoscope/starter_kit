@@ -7,7 +7,7 @@ from . import runtime
 from .. import table
 from .. import merlict
 from .. import grid
-from . import grid_trigger_vs_direction
+from . import grid_direction
 from . import figure
 
 
@@ -19,9 +19,15 @@ def summarize(
     run_dir,
     out_dir,
     energy_bin_edges=EXAMPLE_ENERGY_BIN_EDGES,
-    figure_config=figure.CONFIG,
+    figure_config_16by9=figure.CONFIG_16_9,
     num_c_bins=None,
 ):
+    fc16by9 = figure_config_16by9
+    fc4by3 = fc16by9.copy()
+    fc4by3['cols'] = fc16by9['cols']*(9/16)*(4/3)
+    fc5by4 = fc16by9.copy()
+    fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
+
     with open(opj(run_dir, 'input', 'config.json'), 'rt') as f:
         config = json.loads(f.read())
     os.makedirs(out_dir, exist_ok=True)
@@ -60,12 +66,12 @@ def summarize(
             runtime.write_relative_runtime(
                 table=extended_runtime_table,
                 out_path=opj(out_dir, prefix+'_relative_runtime'),
-                figure_config=figure_config)
+                figure_config=fc16by9)
 
             runtime.write_speed(
                 table=extended_runtime_table,
                 out_path=opj(out_dir, prefix+'_speed_runtime'),
-                figure_config=figure_config)
+                figure_config=fc16by9)
 
             com_pri_grd = table.merge(
                 event_table=event_table,
@@ -74,33 +80,37 @@ def summarize(
             if num_c_bins is None:
                 num_c_bins = int(0.05*np.sqrt(com_pri_grd['primary'].shape[0]))
                 num_c_bins = np.max([np.min([num_c_bins, 129]), 17])
+            c_bin_edges = np.linspace(-40, 40, num_c_bins)
 
-            grid_trigger_vs_direction.write(
+            icu, ecu, nev = grid_direction.histogram_grid_trigger(
                 event_table_common_primary_grid=com_pri_grd,
-                grid_geometry=grid_geometry,
                 energy_bin_edges=energy_bin_edges,
-                max_zenith_deg=40,
+                c_bin_edges=c_bin_edges)
+            grid_direction.write_qube_of_figures(
                 out_path=opj(out_dir, prefix+'_grid_direction'),
-                figure_config=figure_config,
-                num_c_bins=num_c_bins)
-
-            com_pri_grd_pat = table.merge(
-                event_table=event_table,
-                level_keys=['primary', 'grid', 'pasttrigger'])
+                intensity_cube=icu,
+                exposure_cube=ecu,
+                num_events_stack=nev,
+                c_bin_edges=c_bin_edges,
+                energy_bin_edges=energy_bin_edges,
+                figure_config=fc5by4)
 
             if num_c_bins is None:
                 num_c_bins = int(
-                    0.05*np.sqrt(com_pri_grd_pat['primary'].shape[0]))
+                    0.05*np.sqrt(event_table['pasttrigger'].shape[0]))
                 num_c_bins = np.max([np.min([num_c_bins, 129]), 17])
 
-            grid_trigger_vs_direction.write(
-                event_table_common_primary_grid=com_pri_grd_pat,
-                grid_geometry=grid_geometry,
+            icu, ecu, nev = grid_direction.histogram_plenoscope_trigger(
+                event_table=event_table,
                 energy_bin_edges=energy_bin_edges,
-                max_zenith_deg=40,
+                c_bin_edges=c_bin_edges)
+            grid_direction.write_qube_of_figures(
                 out_path=opj(out_dir, prefix+'_pasttrigger_direction'),
-                figure_config=figure_config,
-                num_c_bins=num_c_bins)
-
+                intensity_cube=icu,
+                exposure_cube=ecu,
+                num_events_stack=nev,
+                c_bin_edges=c_bin_edges,
+                energy_bin_edges=energy_bin_edges,
+                figure_config=fc5by4)
 
     return config, event_table, grid_geometry

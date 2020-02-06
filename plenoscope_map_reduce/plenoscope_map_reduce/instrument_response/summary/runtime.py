@@ -1,8 +1,4 @@
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-
 import pandas as pd
 import numpy as np
 import os
@@ -10,6 +6,7 @@ import json
 import shutil
 from .. import logging
 from . import figure
+
 
 def read(path):
     return pd.read_csv(path).to_records(index=False)
@@ -73,7 +70,7 @@ def merge_event_table(runtime_table, event_table):
     return rta.to_records(index=False)
 
 
-def write_relative_runtime(table, out_path, figure_config=figure.CONFIG):
+def write_relative_runtime(table, out_path, figure_config=figure.CONFIG_16_9):
     ert = table
     total_times = {}
     total_time = 0
@@ -115,15 +112,15 @@ def write_relative_runtime(table, out_path, figure_config=figure.CONFIG):
     os.rename(out_path_json+'.tmp', out_path_json)
 
 
-def write_speed(table, out_path, figure_config=figure.CONFIG):
+def write_speed(table, out_path, figure_config=figure.CONFIG_16_9):
     ert = table
     speed_keys = {
         "corsika": "num_events_corsika",
         "grid": "num_events_corsika",
         "merlict": "num_events_merlict",
         "trigger": "num_events_merlict",
-        "feature_extraction": "num_events_pasttrigger",
         "cherenkov_classification": "num_events_pasttrigger",
+        "feature_extraction": "num_events_pasttrigger",
     }
     speeds = {}
     for key in speed_keys:
@@ -132,7 +129,7 @@ def write_speed(table, out_path, figure_config=figure.CONFIG):
         if np.sum(mask) == 0:
             speeds[key] = 0.
         else:
-            speeds[key] = float(np.mean(ert[key][mask]/num_events[mask]))
+            speeds[key] = float(np.mean(num_events[mask]/ert[key][mask]))
 
     fig = figure.figure(figure_config)
     ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])

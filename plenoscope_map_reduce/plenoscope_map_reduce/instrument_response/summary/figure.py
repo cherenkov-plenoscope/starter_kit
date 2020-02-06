@@ -1,9 +1,7 @@
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-CONFIG = {
+CONFIG_16_9 = {
     "rows": 1080,
     "cols": 1920,
     "fontsize": 2,
@@ -11,7 +9,7 @@ CONFIG = {
 }
 
 
-def figure(config=CONFIG, dpi=120):
+def figure(config=CONFIG_16_9, dpi=120):
     sc = config['fontsize']
     width = config['cols']/dpi
     height = config['rows']/dpi

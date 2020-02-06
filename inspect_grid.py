@@ -13,7 +13,7 @@ from plenoscope_map_reduce import instrument_response as irf
 
 
 
-run_dir = 'run-2020-02-02_1316'
+run_dir = 'run-2020-02-04_0955'
 out_dir = 'walk'
 os.makedirs(out_dir, exist_ok=True)
 
@@ -57,6 +57,7 @@ def ax_add_slider(ax, start, stop, values, label, log=False):
             [value, value],
             "k",
             linewidth=5)
+
 
 def write_histogram_figure(
     out_path,
@@ -202,5 +203,10 @@ for idx, view in enumerate(views):
     job['num_bins_radius'] = cfg['grid']['num_bins_radius']
     jobs.append(job)
 
-pool = multiprocessing.Pool(4)
-pool.map(run_job, jobs)
+"""
+for job in jobs:
+    run_job(job)
+"""
+
+np.histogram2d(
+    )
