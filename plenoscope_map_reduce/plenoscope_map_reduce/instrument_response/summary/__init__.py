@@ -49,6 +49,9 @@ def summarize(
                 site_key,
                 particle_key,
                 'event_table.tar'))
+
+            # runtime
+            # -------
             runtime_table = runtime.read(opj(
                 run_dir,
                 site_key,
@@ -73,6 +76,8 @@ def summarize(
                 out_path=opj(out_dir, prefix+'_speed_runtime'),
                 figure_config=fc16by9)
 
+            # grid directions
+            # ---------------
             com_pri_grd = table.merge(
                 event_table=event_table,
                 level_keys=['primary', 'grid'])
