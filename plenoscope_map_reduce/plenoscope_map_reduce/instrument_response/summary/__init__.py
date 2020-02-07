@@ -82,11 +82,9 @@ def summarize(
                 event_table=event_table,
                 level_keys=['primary', 'grid'])
 
-            if num_c_bins is None:
-                num_c_bins = int(0.05*np.sqrt(com_pri_grd['primary'].shape[0]))
-                num_c_bins = np.max([np.min([num_c_bins, 129]), 17])
-            c_bin_edges = np.linspace(-40, 40, num_c_bins)
-
+            c_bin_edges = grid_direction.guess_c_bin_edges(
+                num_events=com_pri_grd['primary'].shape[0],
+                num_c_bins=num_c_bins)
             icu, ecu, nev = grid_direction.histogram_grid_trigger(
                 event_table_common_primary_grid=com_pri_grd,
                 energy_bin_edges=energy_bin_edges,
@@ -100,11 +98,9 @@ def summarize(
                 energy_bin_edges=energy_bin_edges,
                 figure_config=fc5by4)
 
-            if num_c_bins is None:
-                num_c_bins = int(
-                    0.05*np.sqrt(event_table['pasttrigger'].shape[0]))
-                num_c_bins = np.max([np.min([num_c_bins, 129]), 17])
-
+            c_bin_edges = grid_direction.guess_c_bin_edges(
+                num_events=event_table['pasttrigger'].shape[0],
+                num_c_bins=num_c_bins)
             icu, ecu, nev = grid_direction.histogram_plenoscope_trigger(
                 event_table=event_table,
                 energy_bin_edges=energy_bin_edges,
@@ -117,5 +113,13 @@ def summarize(
                 c_bin_edges=c_bin_edges,
                 energy_bin_edges=energy_bin_edges,
                 figure_config=fc5by4)
+
+            # effective quantity
+            # ------------------
+            source_type = {
+                'point': {'max_between_reconstruction_and_pointing_deg': 2.0},
+                'diffuse': {'max_between_reconstruction_and_pointing_deg': 180.0},
+            }
+
 
     return config, event_table, grid_geometry

@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as plt_colors
 
@@ -10,6 +12,19 @@ from .. import grid
 from .. import query
 from .. import table
 from . import figure
+
+
+def guess_c_bin_edges(
+    num_events,
+    num_c_bins,
+    min_max_c_deg=40,
+):
+    if num_c_bins is None:
+        _num_c_bins = int(0.05*np.sqrt(num_events))
+        _num_c_bins = np.max([np.min([_num_c_bins, 129]), 17])
+    else:
+        _num_c_bins = num_c_bins
+    return np.linspace(-min_max_c_deg, min_max_c_deg, _num_c_bins + 1)
 
 
 def add_hatches(ax, ix, iy, x_bin_edges, y_bin_edges, alpha=0.1):
