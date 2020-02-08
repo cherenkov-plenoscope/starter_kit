@@ -1,6 +1,7 @@
 import numpy as np
 import gzip
 import os
+import io
 import tarfile
 import shutil
 import corsika_primary_wrapper as cpw
@@ -200,7 +201,7 @@ def bytes_to_histogram(img_bytes_gz):
 # A dict with the random_seed as key for the airshowers, containing the
 # gzip-bytes to be read with bytes_to_histogram()
 
-def read_histograms(path):
+def read_all_histograms(path):
     grids = {}
     with tarfile.open(path, "r") as tarfin:
         for tarinfo in tarfin:
@@ -208,6 +209,38 @@ def read_histograms(path):
             airshower_id = int(tarinfo.name[6:12])
             grids[run_id, airshower_id] = tarfin.extractfile(tarinfo).read()
     return grids
+
+
+def read_histograms(path, indices=None):
+    if indices is None:
+        return read_all_histograms(path)
+    else:
+        unique_ids = indices['run_id']*1000*1000 + indices['airshower_id']
+        unique_ids = set(unique_ids)
+        grids = {}
+        with tarfile.open(path, "r") as tarfin:
+            for tarinfo in tarfin:
+                unique_id = int(tarinfo.name[0:12])
+                if unique_id in unique_ids:
+                    run_id = unique_id // (1000*1000)
+                    airshower_id = unique_id % (1000*1000)
+                    grids[run_id, airshower_id] = tarfin.extractfile(
+                        tarinfo).read()
+        return grids
+
+
+def write_histograms(path, grid_histograms):
+    with tarfile.open(path+".tmp", "w") as tarfout:
+        for key in grid_histograms:
+            run_id = key[0]
+            airshower_id = key[1]
+            filename = "{:06d}{:06d}.f4.gz".format(run_id, airshower_id)
+            with io.BytesIO() as buff:
+                info = tarfile.TarInfo(filename)
+                info.size = buff.write(grid_histograms[key])
+                buff.seek(0)
+                tarfout.addfile(info, buff)
+    shutil.move(path+".tmp", path)
 
 
 def reduce(list_of_grid_paths, out_path):

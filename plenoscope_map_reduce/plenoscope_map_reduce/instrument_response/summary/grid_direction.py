@@ -51,7 +51,7 @@ def write_qube_of_figures(
         fig = figure.figure(figure_config)
         ax_size = [0.1, 0.15, 0.8, 0.75]
         ax = fig.add_axes(ax_size)
-        ax_cb = fig.add_axes([0.8, 0.15, 0.02, 0.75])
+        ax_cb = fig.add_axes([0.83, 0.15, 0.02, 0.75])
         ax.set_title(
             '{: 1.1f} to {: 1.1f} GeV, {:1.1e} events'.format(
                 energy_bin_edges[eidx],

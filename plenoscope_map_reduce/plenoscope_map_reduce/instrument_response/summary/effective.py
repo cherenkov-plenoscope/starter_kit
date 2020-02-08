@@ -1,0 +1,78 @@
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from . import figure
+
+
+def estimate_effective_quantity(
+    energy_bin_edges,
+    energies,
+    max_scatter_quantities,
+    thrown_mask,
+    detection_mask,
+):
+    num_thrown = np.histogram(
+        energies,
+        weights=thrown_mask,
+        bins=energy_bin_edges)[0]
+    num_detected = np.histogram(
+        energies,
+        weights=detection_mask,
+        bins=energy_bin_edges)[0]
+    quantity_thrown = np.histogram(
+        energies,
+        weights=max_scatter_quantities,
+        bins=energy_bin_edges)[0]
+    quantity_detected = np.histogram(
+        energies,
+        weights=max_scatter_quantities*detection_mask,
+        bins=energy_bin_edges)[0]
+    num_bins = energy_bin_edges.shape[0] - 1
+    effective_quantity = np.nan*np.ones(num_bins)
+    for i in range(num_bins):
+        if num_thrown[i] > 0 and quantity_thrown[i] > 0.:
+            effective_quantity[i] = (
+                (quantity_detected[i]/quantity_thrown[i])*
+                (quantity_thrown[i]/num_thrown[i]))
+    return {
+        "energy_bin_edges": energy_bin_edges,
+        "num_thrown": num_thrown,
+        "num_detected": num_detected,
+        "quantity_thrown": quantity_thrown,
+        "quantity_detected": quantity_detected,
+        "effective_quantity": effective_quantity,}
+
+
+def write_effective_quantity_figure(
+    effective_quantity,
+    quantity_label,
+    path,
+    figure_config=figure.CONFIG_16_9,
+    y_start=1e1,
+    y_stop=1e6,
+    linestyle='k-',
+    color='blue',
+    alpha=0.0,
+):
+    fig = figure.figure(figure_config)
+    ax = fig.add_axes([.1, .15, .85, .8])
+    figure.ax_add_hist(
+        ax=ax,
+        bin_edges=effective_quantity["energy_bin_edges"],
+        bincounts=effective_quantity["effective_quantity"],
+        linestyle=linestyle,
+        color=color,
+        alpha=alpha)
+    ax.loglog()
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    ax.set_xlabel('energy / GeV')
+    ax.set_ylabel(quantity_label)
+    ax.set_ylim([y_start, y_stop])
+    ax.set_xlim([
+        np.min(effective_quantity["energy_bin_edges"]),
+        np.max(effective_quantity["energy_bin_edges"]),])
+    ax.spines['top'].set_color('none')
+    ax.spines['right'].set_color('none')
+    plt.savefig(path+'.'+figure_config['format'])
+    plt.close(fig)
