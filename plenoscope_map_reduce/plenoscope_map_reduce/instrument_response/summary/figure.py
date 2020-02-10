@@ -56,19 +56,30 @@ def ax_add_slider(ax, start, stop, values, label, log=False):
             linewidth=5)
 
 
-def ax_add_hist(ax, bin_edges, bincounts, linestyle, color, alpha):
+def ax_add_hist(
+    ax,
+    bin_edges,
+    bincounts,
+    linestyle,
+    bincounts_upper=None,
+    bincounts_lower=None,
+    face_color=None,
+    face_alpha=None,
+):
     assert bin_edges.shape[0] == bincounts.shape[0] + 1
     for i, bincount in enumerate(bincounts):
         ax.plot(
             [bin_edges[i], bin_edges[i + 1]],
             [bincount, bincount],
             linestyle)
-        ax.fill_between(
-            x=[bin_edges[i], bin_edges[i + 1]],
-            y1=[bincount, bincount],
-            color=color,
-            alpha=alpha,
-            edgecolor='none')
+        if bincounts_upper is not None and bincounts_lower is not None:
+            ax.fill_between(
+                x=[bin_edges[i], bin_edges[i + 1]],
+                y1=[bincounts_lower[i], bincounts_lower[i]],
+                y2=[bincounts_upper[i], bincounts_upper[i]],
+                color=face_color,
+                alpha=face_alpha,
+                edgecolor='none')
 
 
 def ax_add_hatches(ax, ix, iy, x_bin_edges, y_bin_edges, alpha=0.1):
