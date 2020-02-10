@@ -5,6 +5,7 @@ import tarfile
 import io
 import glob
 import os
+import msgpack
 from os import path as op
 
 MAX_NUM_EVENTS_IN_RUN = 1000
@@ -432,3 +433,56 @@ def make_mask_of_right_in_left(left_level, right_level):
     indicator_df = mask_df['_merge']
     mask = np.array(indicator_df == 'both', dtype=np.int64)
     return mask
+
+
+def _append_tar(tarfout, name, payload_bytes):
+    info = tarfile.TarInfo()
+    info.name = name
+    info.size = len(payload_bytes)
+    with io.BytesIO() as fbuff:
+        fbuff.write(payload_bytes)
+        fbuff.seek(0)
+        tarfout.addfile(tarinfo=info, fileobj=fbuff)
+
+
+def write_bin(path, event_table, config=CONFIG):
+    config_levels = list(config['levels'].keys())
+    index = list(config['index'].keys())
+    assert op.splitext(path)[1] == '.tar'
+    with tarfile.open(path+'.tmp', 'w') as tarfout:
+        for level in config_levels:
+            for key in _expected_keys(config=config, level=level):
+                if key in index:
+                    dtype = config['index'][key]['dtype']
+                else:
+                    dtype = config['levels'][level][key]['dtype']
+                assert event_table[level][key].dtype == dtype
+                _append_tar(
+                    tarfout=tarfout,
+                    name='{:s}.{:s}.{:s}'.format(level, key, dtype),
+                    payload_bytes=event_table[level][key].tobytes())
+    shutil.move(path+".tmp", path)
+
+
+def read_bin(path, config=CONFIG):
+    # 23% of CSV runtime
+    config_levels = list(config['levels'].keys())
+    index = list(config['index'].keys())
+    out = {}
+    for level in config_levels:
+        out[level] = {}
+    with tarfile.open(path, 'r') as tarfin:
+        for tarinfo in tarfin:
+            level, key, dtype = str.split(tarinfo.name, '.')
+            assert level in config['levels']
+            assert key in _expected_keys(config=config, level=level)
+            if key in index:
+                assert dtype == config['index'][key]['dtype']
+            else:
+                assert dtype == config['levels'][level][key]['dtype']
+            level_key_bytes = tarfin.extractfile(tarinfo).read()
+            out[level][key] = np.frombuffer(level_key_bytes, dtype=dtype)
+    for level in config_levels:
+        out[level] = pd.DataFrame(out[level]).to_records(index=False)
+        _assert_recarray_keys(rec=out[level], config=config, level=level)
+    return out

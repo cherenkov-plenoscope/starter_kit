@@ -21,11 +21,23 @@ def figure(config=CONFIG_16_9, dpi=120):
         dpi=dpi*sc)
 
 
-def ax_add_circle(ax, x, y, r, linetyle='k-', num_steps=1000):
+def ax_add_circle(
+    ax,
+    x,
+    y,
+    r,
+    linewidth=1.,
+    linestyle='-',
+    color='k',
+    alpha=1,
+    num_steps=1000
+):
     phi = np.linspace(0, 2*np.pi, num_steps)
     xs = x + r*np.cos(phi)
     ys = y + r*np.sin(phi)
-    ax.plot(xs, ys, linetyle)
+    ax.plot(
+        xs, ys,
+        linewidth=linewidth, linestyle=linestyle, alpha=alpha, color=color)
 
 
 def ax_add_slider(ax, start, stop, values, label, log=False):
@@ -57,3 +69,11 @@ def ax_add_hist(ax, bin_edges, bincounts, linestyle, color, alpha):
             color=color,
             alpha=alpha,
             edgecolor='none')
+
+
+def ax_add_hatches(ax, ix, iy, x_bin_edges, y_bin_edges, alpha=0.1):
+    x0 = x_bin_edges[ix]
+    x1 = x_bin_edges[ix + 1]
+    y0 = y_bin_edges[iy]
+    y1 = y_bin_edges[iy + 1]
+    ax.plot([x0, x1], [y0, y1], '-k', alpha=alpha)
