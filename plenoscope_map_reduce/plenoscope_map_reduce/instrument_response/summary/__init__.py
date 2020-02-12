@@ -88,44 +88,6 @@ def init(
         fout.write(json.dumps(cfg, indent=4))
 
 
-num_energy_bins = 10
-EXAMPLE_ENERGY_BIN_EDGES = np.geomspace(0.5, 1000, num_energy_bins + 1)
-
-
-def summarize(
-    run_dir,
-    out_dir,
-    energy_bin_edges=EXAMPLE_ENERGY_BIN_EDGES,
-    figure_config_16by9=figure.CONFIG_16_9,
-    num_c_bins=None,
-):
-    fc16by9 = figure_config_16by9
-    fc5by4 = fc16by9.copy()
-    fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
-
-    os.makedirs(out_dir, exist_ok=True)
-    os.makedirs(opj(out_dir, 'cache'), exist_ok=True)
-
-    inp = read_instrument_response_config(run_dir)
-    config = inp['config']
-    for site_key in config['sites']:
-        for particle_key in config['particles']:
-            prefix = '{:s}_{:s}'.format(site_key, particle_key)
-
-            event_table = table.read(opj(
-                run_dir,
-                site_key,
-                particle_key,
-                'event_table.tar'))
-
-            # effective quantity
-            # ------------------
-            source_type = {
-                'point': {'max_between_reconstruction_and_pointing_deg': 2.0},
-                'diffuse': {'max_between_reconstruction_and_pointing_deg': 180.0},
-            }
-
-
 def read_instrument_response_config(run_dir):
     with open(opj(run_dir, 'input', 'config.json'), 'rt') as f:
         config = json.loads(f.read())
