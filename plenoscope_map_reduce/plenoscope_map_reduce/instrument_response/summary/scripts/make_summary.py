@@ -229,6 +229,34 @@ doc += make_site_particle_index_table(
     wild_card='{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg')
 
 
+doc += h('Cherenkov and night-sky-background classification', level=2)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_size_confusion.jpg')
+
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_sensitivity_vs_true_energy.jpg')
+
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_true_size_over_extracted_size_vs_true_energy.jpg')
+
+
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_true_size_over_extracted_size_vs_true_size.jpg')
+
+
+
 doc += h('Configurations', level=2)
 
 doc += h('Plenoscope-scenery', level=3)
