@@ -31,7 +31,7 @@ def table(matrix, width=100, indent=4):
     for row in matrix:
         out += off+'<tr>\n'
         for column in row:
-            out += 2*off+'<th>'+ column+'</th>\n'
+            out += 2*off+'<th>'+column+'</th>\n'
         out += off+'</tr>\n'
     out += '</table>'
     return out
@@ -47,7 +47,14 @@ def h(text, level=1, font_family='calibri', text_align='left'):
     ])
 
 
-def p(text, font_size=100, font_family='courier', text_align='left', line_height=100, width=640):
+def p(
+    text,
+    font_size=100,
+    font_family='courier',
+    text_align='left',
+    line_height=100,
+    width=640
+):
     return ''.join([
         '<p style="',
         'font-size:{:.1f}%;'.format(float(font_size)),
@@ -63,12 +70,21 @@ def image(path, width=100):
     return '<img src="{:s}"style="width:{:.1f}px;">'.format(path, width)
 
 
-def code(text, font_family='courier', font_size=100, line_height=100, margin_px=0, padding_px=0):
+def code(
+    text,
+    font_family='courier',
+    font_size=100,
+    line_height=100,
+    margin_px=0,
+    padding_px=0
+):
     out = ''
-    out += '<pre style="font-size:{:.1f}%;font-family:{:s};line-height:{:.1f}%;margin:{:.1f}px;padding:{:.1f}px">'.format(
+    out += '<pre style="'
+    out += 'font-size:{:.1f}%;font-family:{:s};line-height:{:.1f}%;'.format(
         font_size,
         font_family,
-        line_height,
+        line_height)
+    out += 'margin:{:.1f}px;padding:{:.1f}px">'.format(
         margin_px,
         padding_px)
     out += '<code>'
@@ -90,8 +106,6 @@ def page(title, text):
     out += '</body>\n'
     out += '</html>\n'
     return out
-
-key = 'grid_direction_pasttrigger'
 
 
 def make_site_particle_index_table(
@@ -161,11 +175,14 @@ doc += make_site_particle_index_table(
 
 doc += h('Effective area, ponit source, past trigger', level=2)
 doc += p(
-    "Only events where both the reconstructed incident-direction < 2.5deg off axis, "
+    "Only events where both the reconstructed incident-direction < 2.5deg"
+    " off axis, "
     "AND the primary's incident-direction < 2.5deg off axis."
-    "<br>Although technically applicable, this might be misleading for charged cosmic-rays. "
+    "<br>Although technically applicable, this might be misleading for charged"
+    " cosmic-rays. "
     "For low energetic cosmic-rays there is almost no intersection of the "
-    "two directional criteria due to deflection of the airshower in earth's magnetig field. "
+    "two directional criteria due to deflection of the airshower in earth's "
+    "magnetig field. "
     "This leads to an underestimation of the effective area at low energies. "
     "However, this is not relevant for the estimation of the plenoscope's "
     "performance to detect point-sources of gamma-rays.",
@@ -189,7 +206,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=sum_config['energy_bin_edges_GeV_coarse'],
-    wild_card='{site_key:s}_{particle_key:s}_grid_direction_pasttrigger_{energy_bin_index:06d}.jpg')
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'grid_direction_pasttrigger_{energy_bin_index:06d}.jpg')
 
 doc += h('Cherenkov-intensity on observation-level, past trigger', level=2)
 doc += p(
@@ -198,11 +216,13 @@ doc += p(
     "Color-coding shows the average intensity of a single airshower. ",
     text_align='justify',
     font_family='calibri')
+
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=sum_config['energy_bin_edges_GeV_coarse'],
-    wild_card='{site_key:s}_{particle_key:s}__grid_area_pasttrigger__{energy_bin_index:06d}.jpg')
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'grid_area_pasttrigger_{energy_bin_index:06d}.jpg')
 
 
 doc += h('Trigger-probability vs. Cherenkov-photon-equivalent (p.e.)', level=2)
@@ -210,7 +230,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_trigger_probability_vs_cherenkov_size.jpg')
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'trigger_probability_vs_cherenkov_size.jpg')
 
 
 doc += h('Trigger-probability vs. offaxis-angle', level=2)
@@ -218,7 +239,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis.jpg')
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'trigger_probability_vs_offaxis.jpg')
 
 
 doc += h('Trigger-probability vs. offaxis-angle vs. energy', level=2)
@@ -226,7 +248,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1, 2, 3, 4],
-    wild_card='{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg')
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg')
 
 
 doc += h('Cherenkov and night-sky-background classification', level=2)
@@ -234,40 +257,52 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_size_confusion.jpg')
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'cherenkovclassification_size_confusion.jpg')
 
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_sensitivity_vs_true_energy.jpg')
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'cherenkovclassification_sensitivity_vs_true_energy.jpg')
 
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_true_size_over_extracted_size_vs_true_energy.jpg')
-
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'cherenkovclassification_'
+    'true_size_over_extracted_size_vs_true_energy.jpg')
 
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_cherenkovclassification_true_size_over_extracted_size_vs_true_size.jpg')
-
+    wild_card='{site_key:s}_{particle_key:s}_'
+    'cherenkovclassification_'
+    'true_size_over_extracted_size_vs_true_size.jpg')
 
 
 doc += h('Configurations', level=2)
 
 doc += h('Plenoscope-scenery', level=3)
-doc += code(json.dumps(irf_config['plenoscope_scenery'], indent=4), font_size=50, line_height=100)
+doc += code(
+    json.dumps(irf_config['plenoscope_scenery'], indent=4),
+    font_size=50,
+    line_height=100)
 
 doc += h('Plenoscope read-out, and night-sky-background', level=3)
-doc += code(json.dumps(irf_config['merlict_propagation_config'], indent=4), font_size=50, line_height=100)
+doc += code(
+    json.dumps(irf_config['merlict_propagation_config'], indent=4),
+    font_size=50,
+    line_height=100)
 
 doc += h('Sites and particles', level=3)
-doc += code(json.dumps(irf_config['config'], indent=4),  font_size=50, line_height=100)
-
+doc += code(
+    json.dumps(irf_config['config'], indent=4),
+    font_size=50,
+    line_height=100)
 
 doc += h('Relative runtime', level=2)
 doc += make_site_particle_index_table(

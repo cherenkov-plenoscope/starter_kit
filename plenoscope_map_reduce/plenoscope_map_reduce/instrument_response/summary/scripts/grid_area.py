@@ -125,9 +125,9 @@ for site_key in irf_config['config']['sites']:
             plt.colorbar(_pcm_grid, cax=ax_cb, extend='max')
             ax.set_title(
                 'num. airshower {:d}, energy {:.1f} - {:.1f}GeV'.format(
-                num_airshower,
-                energy_bin_edges_GeV[energy_idx],
-                energy_bin_edges_GeV[energy_idx + 1]))
+                    num_airshower,
+                    energy_bin_edges_GeV[energy_idx],
+                    energy_bin_edges_GeV[energy_idx + 1]))
             ax.set_xlabel('x/km')
             ax.set_ylabel('y/km')
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
@@ -137,7 +137,7 @@ for site_key in irf_config['config']['sites']:
                     summary_dir,
                     '{:s}_{:s}_{:06d}.{:s}'.format(
                         prefix_str,
-                        '_grid_area_pasttrigger_',
+                        'grid_area_pasttrigger',
                         energy_idx,
                         fc5by4['format'])))
             plt.close(fig)

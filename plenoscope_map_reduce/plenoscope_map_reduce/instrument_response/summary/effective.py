@@ -1,4 +1,5 @@
 import numpy as np
+import json
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -101,3 +102,23 @@ def write_effective_quantity_figure(
     ax.spines['right'].set_color('none')
     plt.savefig(path+'.'+figure_config['format'])
     plt.close(fig)
+
+
+def write_effective_quantity_table(
+    path,
+    effective_quantity,
+    quantity_key,
+):
+    key = quantity_key
+    eq = effective_quantity
+    out = {}
+    out["energy_bin_edges_GeV"] = eq['energy_bin_edges'].tolist()
+    out["num_thrown"] = eq['num_thrown'].tolist()
+    out["num_detected"] = eq['num_detected'].tolist()
+    out[key+"_thrown"] = eq['quantity_thrown'].tolist()
+    out[key+"_detected"] = eq['quantity_detected'].tolist()
+    out["effective_"+key] = eq['effective_quantity'].tolist()
+    out["effective_"+key+"_abs_uncertainty"] = eq[
+        'effective_quantity_abs_uncertainty'].tolist()
+    with open(path, 'wt') as fout:
+        fout.write(json.dumps(out, indent=4))

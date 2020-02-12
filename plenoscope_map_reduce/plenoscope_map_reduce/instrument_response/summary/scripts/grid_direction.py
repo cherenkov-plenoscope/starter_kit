@@ -50,10 +50,10 @@ for site_key in irf_config['config']['sites']:
         intensity_cube = []
         exposure_cube = []
         num_events_stack = []
-        for eidx in range(len(energy_bin_edges) - 1):
+        for ex in range(len(energy_bin_edges) - 1):
             e_mask = np.logical_and(
-                event_table['primary']['energy_GeV'] >= energy_bin_edges[eidx],
-                event_table['primary']['energy_GeV'] < energy_bin_edges[eidx + 1])
+                event_table['primary']['energy_GeV'] >= energy_bin_edges[ex],
+                event_table['primary']['energy_GeV'] < energy_bin_edges[ex+1])
 
             num_events = np.sum(pasttrigger_mask[e_mask])
             num_events_stack.append(num_events)
@@ -107,9 +107,9 @@ for site_key in irf_config['config']['sites']:
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
             ax.set_title(
                 'num. airshower {:d}, energy {:.1f} - {:.1f}GeV'.format(
-                num_events_stack[energy_idx],
-                energy_bin_edges[energy_idx],
-                energy_bin_edges[energy_idx + 1]))
+                    num_events_stack[energy_idx],
+                    energy_bin_edges[energy_idx],
+                    energy_bin_edges[energy_idx + 1]))
             for rr in [10, 20, 30, 40, 50]:
                 irf.summary.figure.ax_add_circle(
                     ax=ax,

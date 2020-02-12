@@ -185,7 +185,6 @@ for site_key in cfg['sites']:
             figure_config=sum_config['figure_16_9'],
             title='')
 
-
         # versus energy
         # -------------
         num_energy_bins = len(energy_bin_edges) - 1
