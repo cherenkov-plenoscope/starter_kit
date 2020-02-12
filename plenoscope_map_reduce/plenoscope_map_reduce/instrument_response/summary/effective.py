@@ -10,23 +10,31 @@ def estimate_effective_quantity(
     energies,
     max_scatter_quantities,
     thrown_mask,
+    thrown_weights,
     detection_mask,
+    detection_weights,
 ):
     num_thrown = np.histogram(
         energies,
-        weights=thrown_mask,
+        weights=thrown_mask*thrown_weights,
         bins=energy_bin_edges)[0]
     num_detected = np.histogram(
         energies,
+        weights=detection_mask*detection_weights,
+        bins=energy_bin_edges)[0]
+
+    num_detected_no_weights = np.histogram(
+        energies,
         weights=detection_mask,
         bins=energy_bin_edges)[0]
+
     quantity_thrown = np.histogram(
         energies,
         weights=max_scatter_quantities,
         bins=energy_bin_edges)[0]
     quantity_detected = np.histogram(
         energies,
-        weights=max_scatter_quantities*detection_mask,
+        weights=max_scatter_quantities*detection_mask*detection_weights,
         bins=energy_bin_edges)[0]
     num_bins = energy_bin_edges.shape[0] - 1
     effective_quantity = np.nan*np.ones(num_bins)
@@ -35,13 +43,24 @@ def estimate_effective_quantity(
             effective_quantity[i] = (
                 (quantity_detected[i]/quantity_thrown[i])*
                 (quantity_thrown[i]/num_thrown[i]))
+
+    effective_quantity_relunc = np.nan*np.ones(num_bins)
+    effective_quantity_absunc = np.nan*np.ones(num_bins)
+    for i in range(num_bins):
+        if num_detected_no_weights[i] > 0:
+            effective_quantity_relunc[i] = (
+                np.sqrt(num_detected_no_weights[i])/num_detected_no_weights[i])
+            effective_quantity_absunc[i] = (
+                effective_quantity_relunc[i]*effective_quantity[i])
+
     return {
         "energy_bin_edges": energy_bin_edges,
         "num_thrown": num_thrown,
         "num_detected": num_detected,
         "quantity_thrown": quantity_thrown,
         "quantity_detected": quantity_detected,
-        "effective_quantity": effective_quantity,}
+        "effective_quantity": effective_quantity,
+        "effective_quantity_abs_uncertainty": effective_quantity_absunc}
 
 
 def write_effective_quantity_figure(
@@ -52,9 +71,13 @@ def write_effective_quantity_figure(
     y_start=1e1,
     y_stop=1e6,
     linestyle='k-',
-    color='blue',
-    alpha=0.0,
 ):
+    uu = (
+        effective_quantity["effective_quantity"] +
+        effective_quantity["effective_quantity_abs_uncertainty"])
+    ll = (
+        effective_quantity["effective_quantity"] -
+        effective_quantity["effective_quantity_abs_uncertainty"])
     fig = figure.figure(figure_config)
     ax = fig.add_axes([.1, .15, .85, .8])
     figure.ax_add_hist(
@@ -62,8 +85,10 @@ def write_effective_quantity_figure(
         bin_edges=effective_quantity["energy_bin_edges"],
         bincounts=effective_quantity["effective_quantity"],
         linestyle=linestyle,
-        color=color,
-        alpha=alpha)
+        bincounts_upper=uu,
+        bincounts_lower=ll,
+        face_color='k',
+        face_alpha=0.33,)
     ax.loglog()
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.set_xlabel('energy / GeV')

@@ -146,6 +146,38 @@ doc += p(
     text_align='justify',
     font_family='calibri')
 
+doc += h('Effective acceptance, diffuse source, past trigger', level=2)
+doc += p(
+    "Only events where the incident-direction is reconstructed to be within "
+    "a suitable field-of-view for on-regions, i.e. max. 2.5deg off axis.",
+    text_align='justify',
+    font_family='calibri')
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card='{site_key:s}_{particle_key:s}_diffuse_trigger.jpg')
+
+
+doc += h('Effective area, ponit source, past trigger', level=2)
+doc += p(
+    "Only events where both the reconstructed incident-direction < 2.5deg off axis, "
+    "AND the primary's incident-direction < 2.5deg off axis."
+    "<br>Although technically applicable, this might be misleading for charged cosmic-rays. "
+    "For low energetic cosmic-rays there is almost no intersection of the "
+    "two directional criteria due to deflection of the airshower in earth's magnetig field. "
+    "This leads to an underestimation of the effective area at low energies. "
+    "However, this is not relevant for the estimation of the plenoscope's "
+    "performance to detect point-sources of gamma-rays.",
+    text_align='justify',
+    font_family='calibri')
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card='{site_key:s}_{particle_key:s}_point_trigger.jpg')
+
+
 doc += h('Directions of primaries, past trigger', level=2)
 doc += p(
     "Primary particle's incidend direction color-coded "
@@ -179,6 +211,23 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card='{site_key:s}_{particle_key:s}_trigger_probability_vs_cherenkov_size.jpg')
+
+
+doc += h('Trigger-probability vs. offaxis-angle', level=2)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card='{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis.jpg')
+
+
+doc += h('Trigger-probability vs. offaxis-angle vs. energy', level=2)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1, 2, 3, 4],
+    wild_card='{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg')
+
 
 doc += h('Configurations', level=2)
 
