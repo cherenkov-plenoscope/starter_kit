@@ -7,6 +7,7 @@ from . import logging
 from . import query
 from . import map_and_reduce
 from . import network_file_system
+from . import fluxes
 from .. import light_field_geometry as plmr_light_field_geometry
 
 import os
