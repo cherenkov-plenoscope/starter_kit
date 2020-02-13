@@ -1,14 +1,13 @@
 import os
-import json
 import numpy as np
 import pkg_resources
-import astropy
+from astropy.io import fits as astropy_io_fits
 
 
 def read_cosmic_proton_flux_from_resources():
     path = pkg_resources.resource_filename(
-        'acp_instrument_sensitivity_function',
-        os.path.join('resources', 'proton_spec.dat'))
+        'cosmic_fluxes',
+        os.path.join('resources', 'proton_flux_ams02.csv'))
     proton_flux = np.genfromtxt(path)
     proton_flux[:, 0] *= 1  # in GeV
     proton_flux[:, 1] /= proton_flux[:, 0]**2.7
@@ -31,8 +30,8 @@ def read_cosmic_proton_flux_from_resources():
 
 def read_cosmic_electron_positron_flux_from_resources():
     res_path = pkg_resources.resource_filename(
-        'acp_instrument_sensitivity_function',
-        os.path.join('resources', 'e_plus_e_minus_spec.dat'))
+        'cosmic_fluxes',
+        os.path.join('resources', 'electron_positron_flux_ams02.csv'))
     electron_flux = np.genfromtxt(res_path)
     electron_flux[:, 0] *= 1  # in GeV
     electron_flux[:, 1] /= electron_flux[:, 0]**3.0
@@ -53,12 +52,28 @@ def read_cosmic_electron_positron_flux_from_resources():
     }
 
 
+'''
+According to:
+
+@article{acero2015fermi3fgl,
+  Author = {
+    Acero, F and Ackermann, M and Ajello, M and Albert, A and
+    Atwood, WB and Axelsson, Magnus and Baldini, L and Ballet, J and
+    Barbiellini, G and Bastieri, D and others},
+  Journal = {The Astrophysical Journal Supplement Series},
+  Number = {2},
+  Pages = {23},
+  Publisher = {IOP Publishing},
+  Title = {Fermi large area telescope third source catalog},
+  Volume = {218},
+  Year = {2015}}
+'''
+
+
 def read_fermi_3rd_galactic_from_resources():
     fermi_3fgl_path = pkg_resources.resource_filename(
-        'acp_instrument_sensitivity_function',
-        resource_name=os.path.join(
-            'resources',
-            'FermiLAT_3FGL_gll_psc_v16.fit'))
+        'cosmic_fluxes',
+        os.path.join('resources', 'fermi_lat_3fgl_gll_psc_v16.fits'))
     gamma_sources_raw = []
     fermi_keys = [
         "Source_Name",  # str
@@ -76,7 +91,7 @@ def read_fermi_3rd_galactic_from_resources():
         'Flux1000',  # photons cm^{-2} s^{-1}
     ]
 
-    with astropy.io.fits.open(fermi_3fgl_path) as fits:
+    with astropy_io_fits.open(fermi_3fgl_path) as fits:
         num_sources = fits[1].header["NAXIS2"]
         for source_idx in range(num_sources):
             s = {}
@@ -107,7 +122,7 @@ def read_fermi_3rd_galactic_from_resources():
     return gamma_sources
 
 
-def _power_law_super_exp_cutoff_according_to_3fgl(
+def _power_law_super_exp_cutoff(
     energy,
     flux_density,
     spectral_index,
@@ -115,25 +130,20 @@ def _power_law_super_exp_cutoff_according_to_3fgl(
     cutoff_energy,
     exp_index
 ):
-    '''
-    according to 3FGL cat, but with already negative spectral_index
-    '''
-    return (flux_density*(energy/pivot_energy)**(spectral_index))*np.exp(
+    expo = (
         (pivot_energy/cutoff_energy)**exp_index -
         (energy/cutoff_energy)**exp_index
     )
+    return (flux_density*(energy/pivot_energy)**(spectral_index))*np.exp(expo)
 
 
-def _power_law_log_parabola_according_to_3fgl(
+def _power_law_log_parabola(
     energy,
     flux_density,
     spectral_index,
     pivot_energy,
     beta
 ):
-    '''
-    according to 3fgl cat, but with already negative spectral_index and beta
-    '''
     expo = (+spectral_index+beta*np.log10(energy/pivot_energy))
     return flux_density*(energy/pivot_energy)**expo
 
@@ -143,9 +153,6 @@ def _power_law(energy, flux_density, spectral_index, pivot_energy):
 
 
 def flux_of_fermi_source(fermi_source, energy):
-    '''
-    according to fermi-lat 3fgl
-    '''
     fs = fermi_source
     if fs['spectrum_type'] == 'PowerLaw':
         fluxes = _power_law(
@@ -154,7 +161,7 @@ def flux_of_fermi_source(fermi_source, energy):
             spectral_index=fs['spectral_index'],
             pivot_energy=fs['pivot_energy_GeV'])
     elif fs['spectrum_type'] == 'LogParabola':
-        fluxes = _power_law_log_parabola_according_to_3fgl(
+        fluxes = _power_law_log_parabola(
             energy=energy,
             flux_density=fs['flux_density_per_m2_per_GeV_per_s'],
             spectral_index=fs['spectral_index'],
@@ -164,7 +171,7 @@ def flux_of_fermi_source(fermi_source, energy):
         fs['spectrum_type'] == 'PLExpCutoff' or
         fs['spectrum_type'] == 'PLSuperExpCutoff'
     ):
-        fluxes = _power_law_super_exp_cutoff_according_to_3fgl(
+        fluxes = _power_law_super_exp_cutoff(
             energy=energy,
             flux_density=fs['flux_density_per_m2_per_GeV_per_s'],
             spectral_index=fs['spectral_index'],
@@ -174,5 +181,4 @@ def flux_of_fermi_source(fermi_source, energy):
     else:
         raise KeyError(
             'Unknown spectrum_type: {:s}'.format(fs['spectrum_type']))
-
     return fluxes
