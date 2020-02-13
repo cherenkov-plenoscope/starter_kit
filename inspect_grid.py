@@ -64,7 +64,11 @@ def write_histogram_figure(
     grid_intensity,
     num_airshower,
     xy_bin_edges,
-    view
+    energy_GeV_start,
+    energy_GeV_stop,
+    cx_deg,
+    cy_deg,
+    cone_opening_angle_deg,
 ):
     scale = 0.6
     fig = plt.figure(figsize=(16*scale, 9*scale), dpi=120/scale)
@@ -95,7 +99,7 @@ def write_histogram_figure(
     ax_add_circle(ax_poiting, 0, 0, 30, '-k')
     ax_add_circle(ax_poiting, 0, 0, 20, '-k')
     ax_add_circle(ax_poiting, 0, 0, 10, '-k')
-    ax_add_circle(ax_poiting, view['cx'], view['cy'], view['oa'], '-r')
+    ax_add_circle(ax_poiting, cx_deg, cy_deg, cone_opening_angle_deg, '-r')
     ax_poiting.set_xlabel('incident x/deg')
     ax_poiting.set_ylabel('incident y/deg')
 
@@ -106,7 +110,7 @@ def write_histogram_figure(
         ax=ax_energy,
         start=1e-1,
         stop=1e3,
-        values=[view['el'], view['eu']],
+        values=[energy_GeV_start, energy_GeV_stop],
         label='energy/GeV',
         log=True)
 
@@ -173,7 +177,11 @@ def run_job(job):
         grid_intensity=grid_intensity,
         num_airshower=num_airshower,
         xy_bin_edges=job['grid_geometry']['xy_bin_edges'],
-        view=job['view'])
+        energy_GeV_start=view['el'],
+        energy_GeV_stop=view['eu'],
+        cx_deg=view['cx'],
+        cy_deg=view['cy'],
+        cone_opening_angle_deg=view['oa'])
     return 0
 
 
