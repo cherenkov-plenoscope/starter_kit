@@ -54,6 +54,7 @@ def main():
 
         # Tools
         # -----
+        call(['pip', 'install', '-e', join('.', 'cosmic_fluxes')])
         call(['pip', 'install', '-e', join('.', 'plenopy')])
         call(['pip', 'install', '-e', join('.', 'corsika_wrapper')])
         call(['pip', 'install', '-e', join('.', 'gamma_limits_sensitivity')])
