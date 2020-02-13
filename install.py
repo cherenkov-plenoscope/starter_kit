@@ -57,11 +57,6 @@ def main():
         call(['pip', 'install', '-e', join('.', 'cosmic_fluxes')])
         call(['pip', 'install', '-e', join('.', 'plenopy')])
         call(['pip', 'install', '-e', join('.', 'corsika_wrapper')])
-        call(['pip', 'install', '-e', join('.', 'gamma_limits_sensitivity')])
-        call(['pip', 'install', '-e', join(
-            '.', 'instrument_response_function')])
-        call(['pip', 'install', '-e', join(
-            '.', 'instrument_sensitivity_function')])
         call(['pip', 'install', '-e', join('.', 'cable_robo_mount')])
         call(['pip', 'install', '-e', join('.', 'plenoscope_map_reduce')])
         call(['pip', 'install', '-e', join('.', 'simpleio')])
