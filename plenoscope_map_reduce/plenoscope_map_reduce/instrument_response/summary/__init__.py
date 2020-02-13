@@ -3,6 +3,7 @@ from os.path import join as opj
 import pandas as pd
 import numpy as np
 import json
+import cosmic_fluxes
 from .. import table
 from .. import merlict
 from .. import grid
@@ -48,44 +49,39 @@ def init(
     figure_config_16by9=figure.CONFIG_16_9,
 ):
     os.makedirs(summary_dir, exist_ok=True)
-    irf_cfg = read_instrument_response_config(run_dir=run_dir)
+    irf_config = read_instrument_response_config(run_dir=run_dir)
 
-    # guess energy_bin_edges
-    particles = irf_cfg['config']['particles']
-    min_energies = []
-    max_energies = []
-    for particle_key in particles:
-        e_bins = particles[particle_key]['energy_bin_edges_GeV']
-        min_energies.append(np.min(e_bins))
-        max_energies.append(np.max(e_bins))
-    min_energy = np.min(min_energies)
-    max_energy = np.max(max_energies)
+    num_events_past_trigger = estimate_num_events_past_trigger(
+        summary_dir=summary_dir,
+        run_dir=run_dir,
+        irf_config=irf_config)
 
-    num_events_past_trigger = 10*1000
-    sites = irf_cfg['config']['sites']
-    for site_key in sites:
-        for particle_key in particles:
-            event_table = read_event_table_cache(
-                summary_dir=summary_dir,
-                run_dir=run_dir,
-                site_key=site_key,
-                particle_key=particle_key)
-            if event_table['pasttrigger'].shape[0] < num_events_past_trigger:
-                num_events_past_trigger = event_table['pasttrigger'].shape[0]
+    energy_bin_edges = guess_energy_bin_edges(
+        irf_config=irf_config,
+        num_events=num_events_past_trigger)
 
-    num_energy_bins = int(np.sqrt(num_events_past_trigger)//2)
-    num_energy_bins = 2*(num_energy_bins//2)
-    num_energy_bins = np.max([np.min([num_energy_bins, 2**6]), 2**2])
-    energy_bin_edges = np.geomspace(min_energy, max_energy, num_energy_bins+1)
+    c_bin_edges_deg = guess_c_bin_edges(
+        num_events=num_events_past_trigger)
 
-    cfg = {}
-    cfg['energy_bin_edges_GeV'] = list(energy_bin_edges)
-    cfg['energy_bin_edges_GeV_coarse'] = list(energy_bin_edges[::2])
-    cfg['c_bin_edges_deg'] = list(grid_direction.guess_c_bin_edges(
-        num_events=num_events_past_trigger))
-    cfg['figure_16_9'] = figure_config_16by9
+    summary_config = {}
+    summary_config['energy_bin_edges_GeV'] = list(energy_bin_edges)
+    summary_config['energy_bin_edges_GeV_coarse'] = list(energy_bin_edges[::2])
+    summary_config['c_bin_edges_deg'] = list()
+    summary_config['figure_16_9'] = figure_config_16by9
     with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
-        fout.write(json.dumps(cfg, indent=4))
+        fout.write(json.dumps(summary_config, indent=4))
+
+    proton_flux = cosmic_fluxes.read_cosmic_proton_flux_from_resources()
+    with open(opj(summary_dir, 'proton_flux.json'), 'wt') as fout:
+        fout.write(json.dumps(proton_flux, indent=4))
+
+    ep_flux = cosmic_fluxes.read_cosmic_electron_positron_flux_from_resources()
+    with open(opj(summary_dir, 'electron_positron_flux.json'), 'wt') as fout:
+        fout.write(json.dumps(ep_flux, indent=4))
+
+    fermi_fgl = cosmic_fluxes.read_fermi_3rd_galactic_from_resources()
+    with open(opj(summary_dir, 'gamma_sources.json'), 'wt') as fout:
+        fout.write(json.dumps(fermi_fgl, indent=4))
 
 
 def read_instrument_response_config(run_dir):
@@ -110,3 +106,44 @@ def read_instrument_response_config(run_dir):
         'merlict_propagation_config': merlict_propagation_config,
     }
     return bundle
+
+
+def estimate_num_events_past_trigger(summary_dir, run_dir, irf_config):
+    irf_config = read_instrument_response_config(run_dir=run_dir)
+
+    num_events_past_trigger = 10*1000
+    for site_key in irf_config['config']['sites']:
+        for particle_key in irf_config['config']['particles']:
+            event_table = read_event_table_cache(
+                summary_dir=summary_dir,
+                run_dir=run_dir,
+                site_key=site_key,
+                particle_key=particle_key)
+            if event_table['pasttrigger'].shape[0] < num_events_past_trigger:
+                num_events_past_trigger = event_table['pasttrigger'].shape[0]
+    return num_events_past_trigger
+
+
+def guess_energy_bin_edges(irf_config, num_events):
+    particles = irf_config['config']['particles']
+    min_energies = []
+    max_energies = []
+    for particle_key in particles:
+        e_bins = particles[particle_key]['energy_bin_edges_GeV']
+        min_energies.append(np.min(e_bins))
+        max_energies.append(np.max(e_bins))
+    min_energy = np.min(min_energies)
+    max_energy = np.max(max_energies)
+
+    num_energy_bins = int(np.sqrt(num_events)//2)
+    num_energy_bins = 2*(num_energy_bins//2)
+    num_energy_bins = np.max([np.min([num_energy_bins, 2**6]), 2**2])
+    energy_bin_edges = np.geomspace(min_energy, max_energy, num_energy_bins+1)
+    return energy_bin_edges
+
+
+def guess_c_bin_edges(num_events):
+    num_bins = int(0.1*np.sqrt(num_events)//2)
+    num_bins = np.max([np.min([num_bins, 2**7]), 2**3])
+    c_bin_edges = np.linspace(-35, 35, num_bins+1)
+    return c_bin_edges
