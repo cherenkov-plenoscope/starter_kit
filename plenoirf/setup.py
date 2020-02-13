@@ -1,4 +1,5 @@
 import setuptools
+import os
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -19,6 +20,8 @@ setuptools.setup(
         'cosmic_fluxes',
         'corsika_primary_wrapper',
     ],
+    package_data={
+        'plenoirf': [os.path.join('summary', 'scripts', '*')]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

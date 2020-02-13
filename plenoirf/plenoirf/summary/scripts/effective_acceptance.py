@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys
-from plenoscope_map_reduce import instrument_response as irf
+import plenoirf as irf
 import os
 from os.path import join as opj
 import pandas as pd

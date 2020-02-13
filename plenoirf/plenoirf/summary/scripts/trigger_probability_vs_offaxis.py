@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import json
 
-from plenoscope_map_reduce import instrument_response as irf
+import plenoirf as irf
 
 import matplotlib
 matplotlib.use('Agg')

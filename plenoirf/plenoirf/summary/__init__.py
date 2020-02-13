@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import json
 import cosmic_fluxes
+import pkg_resources
+import subprocess
 from .. import table
 from .. import merlict
 from .. import grid
@@ -64,9 +66,9 @@ def init(
         num_events=num_events_past_trigger)
 
     summary_config = {}
-    summary_config['energy_bin_edges_GeV'] = list(energy_bin_edges)
+    summary_config['energy_bin_edges_GeV'] = energy_bin_edges.tolist()
     summary_config['energy_bin_edges_GeV_coarse'] = list(energy_bin_edges[::2])
-    summary_config['c_bin_edges_deg'] = list()
+    summary_config['c_bin_edges_deg'] = c_bin_edges_deg.tolist()
     summary_config['figure_16_9'] = figure_config_16by9
     with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
         fout.write(json.dumps(summary_config, indent=4))
@@ -108,6 +110,30 @@ def read_instrument_response_config(run_dir):
     return bundle
 
 
+def run(run_dir, summary_dir):
+    scripts = [
+        'runtime.py',
+        'trigger_probability_vs_cherenkov_size.py',
+        'trigger_probability_vs_offaxis.py',
+        'cherenkov_photon_classification.py',
+        'grid_area.py',
+        'grid_direction.py',
+        'template.py',
+        'effective_acceptance.py',
+        'make_summary.py',
+    ]
+    for script in scripts:
+        script_path = _script_abspath(script)
+        subprocess.call(['python', script_path ,run_dir ,summary_dir])
+
+
+def _script_abspath(filename):
+    path = pkg_resources.resource_filename(
+        'plenoirf',
+        os.path.join('summary', 'scripts', filename))
+    return os.path.abspath(path)
+
+
 def estimate_num_events_past_trigger(summary_dir, run_dir, irf_config):
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
@@ -143,7 +169,7 @@ def guess_energy_bin_edges(irf_config, num_events):
 
 
 def guess_c_bin_edges(num_events):
-    num_bins = int(0.1*np.sqrt(num_events)//2)
-    num_bins = np.max([np.min([num_bins, 2**7]), 2**3])
+    num_bins = int(0.5*np.sqrt(num_events))
+    num_bins = np.max([np.min([num_bins, 2**7]), 2**4])
     c_bin_edges = np.linspace(-35, 35, num_bins+1)
     return c_bin_edges

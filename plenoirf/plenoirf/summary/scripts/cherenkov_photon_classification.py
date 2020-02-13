@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 import os
-from plenoscope_map_reduce import instrument_response as irf
+import plenoirf as irf
 import json
 
 import matplotlib
