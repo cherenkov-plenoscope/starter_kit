@@ -4,8 +4,6 @@ import subprocess
 import numpy as np
 import plenopy as pl
 import json
-from . import light_field_geometry
-
 
 
 def split_list_into_list_of_lists(events, num_events_in_job):
