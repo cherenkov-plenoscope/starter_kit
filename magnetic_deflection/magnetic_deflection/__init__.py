@@ -1,46 +1,41 @@
-from . import EventSummary
 import json
 import os
 import glob
 import shutil
 import numpy as np
 import multiprocessing
-import corsika_wrapper
+import corsika_primary_wrapper as cpw
 import subprocess
 import tempfile
 
 
-example_state = {
+EXAMPLE_STATE = {
     "input": {
         "corsika_particle_id": 3,
         "site": {
             "earth_magnetic_field_x_muT": 20.815,
             "earth_magnetic_field_z_muT": -11.366,
-            "observation_level_altitude_asl": 5e3,
-            "corsika_atmosphere_model": 26,
+            "observation_level_asl_m": 5e3,
+            "atmosphere_id": 26,
         },
         "initial": {
-            "energy": 14.,
+            "energy": 30.,
             "energy_iteration_factor": 0.95,
-            "instrument_radius": 1e3,
-            "instrument_x": 0.,
-            "instrument_y": 0.,
-            "azimuth_phi_deg": 0.,
-            "zenith_theta_deg": 0.,
+            "azimuth_deg": 0.,
+            "zenith_deg": 0.,
             "scatter_angle_deg": 5.,
         },
-        "energy_thrown_per_iteration": 4e2,
+        "energy_thrown_per_iteration": 8e2,
         "target_cx": 0.,
         "target_cy": 0.,
         "target_containment_angle_deg": 2.5,
     },
     "energy": [],
     "energy_iteration_factor": [],
-    "instrument_radius": [],
-    "instrument_x": [],
-    "instrument_y": [],
-    "azimuth_phi_deg": [],
-    "zenith_theta_deg": [],
+    "x": [],
+    "y": [],
+    "azimuth_deg": [],
+    "zenith_deg": [],
     "scatter_angle_deg": [],
     "cherenkov_core_spread_xy": [],
 }
@@ -91,82 +86,6 @@ def _great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
     return delta_sigma
 
 
-def _make_corsika_steering_card_str(
-    random_seed,
-    run_number,
-    num_events,
-    particle_id,
-    energy_start,
-    energy_stop,
-    energy_slope,
-    cone_azimuth_deg,
-    cone_zenith_distance_deg,
-    cone_max_scatter_angle_deg,
-    earth_magnetic_field_x_muT,
-    earth_magnetic_field_z_muT,
-    atmosphere_model,
-    instrument_x,
-    instrument_y,
-    observation_level_altitude_asl,
-    instrument_radius,
-    max_scatter_radius,
-    bunch_size,
-):
-    card = '\
-RUNNR {run_number:d}\n\
-EVTNR 1\n\
-NSHOW {num_events:d}\n\
-PRMPAR {particle_id:d}\n\
-ESLOPE {energy_slope:3.3e}\n\
-ERANGE {energy_start:3.3e} {energy_stop:3.3e}\n\
-THETAP {cone_zenith_distance_deg:3.3e} {cone_zenith_distance_deg:3.3e}\n\
-PHIP {cone_azimuth_deg:3.3e} {cone_azimuth_deg:3.3e}\n\
-VIEWCONE .0 {cone_max_scatter_angle_deg:3.3e}\n\
-SEED {seed1:d} 0 0\n\
-SEED {seed2:d} 0 0\n\
-SEED {seed3:d} 0 0\n\
-SEED {seed4:d} 0 0\n\
-OBSLEV {observation_level_altitude_asl_cm:3.3e}\n\
-FIXCHI .0\n\
-MAGNET {magnetic_field_x_muT:3.3e} {magnetic_field_z_muT:3.3e}\n\
-ELMFLG T T\n\
-MAXPRT 1\n\
-PAROUT F F\n\
-TELESCOPE {telescope_x_cm:3.3e} {telescope_y_cm:3.3e} .0 \
-{telescope_radius_cm:3.3e}\n\
-ATMOSPHERE {atmosphere_model:d} T\n\
-CWAVLG 250 700\n\
-CSCAT 1 {max_scatter_radius_cm:3.3e} .0\n\
-CERQEF F T F\n\
-CERSIZ {bunch_size:d}\n\
-CERFIL F\n\
-TSTART T\n\
-EXIT\n'.format(
-        run_number=run_number,
-        num_events=num_events,
-        particle_id=particle_id,
-        energy_slope=energy_slope,
-        energy_start=energy_start,
-        energy_stop=energy_stop,
-        cone_zenith_distance_deg=cone_zenith_distance_deg,
-        cone_azimuth_deg=cone_azimuth_deg,
-        cone_max_scatter_angle_deg=cone_max_scatter_angle_deg,
-        seed1=random_seed + run_number,
-        seed2=random_seed + run_number + 1,
-        seed3=random_seed + run_number + 2,
-        seed4=random_seed + run_number + 3,
-        magnetic_field_x_muT=earth_magnetic_field_x_muT,
-        magnetic_field_z_muT=earth_magnetic_field_z_muT,
-        atmosphere_model=atmosphere_model,
-        observation_level_altitude_asl_cm=observation_level_altitude_asl*1e2,
-        telescope_x_cm=instrument_x*1e2,
-        telescope_y_cm=instrument_y*1e2,
-        telescope_radius_cm=instrument_radius*1e2,
-        max_scatter_radius_cm=max_scatter_radius*1e2,
-        bunch_size=bunch_size)
-    return card
-
-
 def _init_work_dir(work_dir, initial_state):
     abs_work_dir = os.path.abspath(work_dir)
     os.makedirs(work_dir, exist_ok=True)
@@ -200,37 +119,110 @@ def _write_state(work_dir, state, iteration):
         f.write(json.dumps(state, indent=4))
 
 
+def _make_jobs(
+    particle_id,
+    energy,
+    site,
+    azimuth_deg,
+    zenith_deg,
+    scatter_angle_deg,
+    num_events,
+    num_jobs,
+    corsika_primary_path,
+):
+    jobs = []
+    for i in range(num_jobs):
+        run_number = i + 1
+
+        cpw_run_steering = {}
+        cpw_run_steering["run"] = {
+            "run_id": int(run_number),
+            "event_id_of_first_event": 1,
+            "observation_level_asl_m": site["observation_level_asl_m"],
+            "earth_magnetic_field_x_muT": site["earth_magnetic_field_x_muT"],
+            "earth_magnetic_field_z_muT": site["earth_magnetic_field_z_muT"],
+            "atmosphere_id": site["atmosphere_id"],
+        }
+        cpw_run_steering["primaries"] = []
+        for event_id in range(num_events):
+            az, zd = cpw.random_distributions.draw_azimuth_zenith_in_viewcone(
+                azimuth_rad=np.deg2rad(azimuth_deg),
+                zenith_rad=np.deg2rad(zenith_deg),
+                min_scatter_opening_angle_rad=0.,
+                max_scatter_opening_angle_rad=np.deg2rad(scatter_angle_deg))
+            prm = {
+                "particle_id": particle_id,
+                "energy_GeV": energy,
+                "zenith_rad": zd,
+                "azimuth_rad": az,
+                "depth_g_per_cm2": 0.0,
+                "random_seed": cpw._simple_seed(event_id),
+            }
+            cpw_run_steering["primaries"].append(prm)
+        job = {}
+        job["corsika_primary_steering"] = cpw_run_steering
+        job["corsika_primary_path"] = corsika_primary_path
+        jobs.append(job)
+    return jobs
+
+
+NUM_FLOATS_IN_EVENTSUMMARY = 25
+
+PARTICLE_ZENITH_RAD = 0
+PARTICLE_AZIMUTH_RAD = 1
+NUM_PHOTONS = 2
+XS_MEDIAN = 3
+YS_MEDIAN = 4
+CXS_MEDIAN = 5
+CYS_MEDIAN = 6
+
+
 def _run_job(job):
-    with tempfile.TemporaryDirectory(prefix="mag_defl_job_") as tmp:
-        card_path = os.path.join(tmp, "card.txt")
-        with open(card_path, "wt") as f:
-            f.write(job["steering_card"])
-        corsika_out_path = os.path.join(tmp, "run.evtio")
-        cor_rc = corsika_wrapper.corsika(
-            steering_card=corsika_wrapper.read_steering_card(card_path),
-            output_path=corsika_out_path,
-            save_stdout=True,
-            corsika_path=job["corsika_path"])
-        summary_out_path = os.path.join(tmp, "run.float32")
-        with open(summary_out_path+'.stdout', 'w') as out:
-            with open(summary_out_path+'.stderr', 'w') as err:
-                call = [
-                    job["merlict_path"],
-                    corsika_out_path,
-                    summary_out_path]
-                mct_rc = subprocess.call(call, stdout=out, stderr=err)
-        summary_block = EventSummary.read_event_summary_block(summary_out_path)
-        return summary_block
+    with tempfile.TemporaryDirectory(prefix="mag_defl_") as tmp:
+
+        corsika_output_path = os.path.join(tmp, "run.tario")
+        cpw.corsika_primary(
+            corsika_path=job['corsika_primary_path'],
+            steering_dict=job['corsika_primary_steering'],
+            output_path=corsika_output_path)
+
+        num_events = len(job['corsika_primary_steering']['primaries'])
+        event_summaries = np.nan*np.ones(
+            shape=(num_events, NUM_FLOATS_IN_EVENTSUMMARY),
+            dtype=np.float32)
+        es = event_summaries
+        run = cpw.Tario(corsika_output_path)
+        for idx, airshower in enumerate(run):
+            corsika_event_header, photon_bunches = airshower
+            ceh = corsika_event_header
+            es[idx, PARTICLE_ZENITH_RAD] = cpw._evth_zenith_rad(ceh)
+            es[idx, PARTICLE_AZIMUTH_RAD] = cpw._evth_azimuth_rad(ceh)
+            es[idx, NUM_PHOTONS] = np.sum(photon_bunches[:, cpw.IBSIZE])
+            num_bunches = photon_bunches.shape[0]
+            if num_bunches > 0:
+                es[idx, XS_MEDIAN] = np.median(photon_bunches[:, cpw.IX])
+                es[idx, YS_MEDIAN] = np.median(photon_bunches[:, cpw.IY])
+                es[idx, CXS_MEDIAN] = np.median(photon_bunches[:, cpw.ICX])
+                es[idx, CYS_MEDIAN] = np.median(photon_bunches[:, cpw.ICY])
+        assert idx+1 == num_events
+        return es
 
 
-def _one_iteration(
+EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
+    os.path.join(
+        'build',
+        'corsika',
+        'modified',
+        'corsika-75600',
+        'run',
+        'corsika75600Linux_QGSII_urqmd'))
+
+
+def one_more_iteration(
     work_dir,
-    merlict_path=os.path.abspath(
-        'build/merlict/merlict-magnetic-field-explorer'),
-    corsika_path=os.path.abspath(
-        'build/corsika/corsika-75600/run/corsika75600Linux_QGSII_urqmd'),
+    corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
     num_jobs=4,
-    pool=multiprocessing.Pool(4),
+    pool=multiprocessing.Pool(7),
     max_subiterations=12,
 ):
     on_target_direction_threshold_deg = 0.5
@@ -244,22 +236,16 @@ def _one_iteration(
         energy_iteration_factor = s["input"]["initial"][
             "energy_iteration_factor"]
         energy = s["input"]["initial"]["energy"]
-        azimuth_phi_deg = s["input"]["initial"]["azimuth_phi_deg"]
-        zenith_theta_deg = s["input"]["initial"]["zenith_theta_deg"]
+        azimuth_deg = s["input"]["initial"]["azimuth_deg"]
+        zenith_deg = s["input"]["initial"]["zenith_deg"]
         scatter_angle_deg = s["input"]["initial"]["scatter_angle_deg"]
-        instrument_x = s["input"]["initial"]["instrument_x"]
-        instrument_y = s["input"]["initial"]["instrument_y"]
-        instrument_radius = s["input"]["initial"]["instrument_radius"]
     else:
         last_energy = s["energy"][-1]
         energy_iteration_factor = s["energy_iteration_factor"][-1]
         energy = last_energy*energy_iteration_factor
-        azimuth_phi_deg = s["azimuth_phi_deg"][-1]
-        zenith_theta_deg = s["zenith_theta_deg"][-1]
+        azimuth_deg = s["azimuth_deg"][-1]
+        zenith_deg = s["zenith_deg"][-1]
         scatter_angle_deg = s["scatter_angle_deg"][-1]
-        instrument_x = s["instrument_x"][-1]
-        instrument_y = s["instrument_y"][-1]
-        instrument_radius = s["instrument_radius"][-1]
 
     expected_ratio_detected_over_thrown = \
         s["input"]["target_containment_angle_deg"]**2 / \
@@ -273,7 +259,7 @@ def _one_iteration(
         if sub_iteration > max_subiterations or energy_iteration_factor > 0.98:
             raise RuntimeError("Can not converge. Quit.")
 
-        print("E: {:0.3f}, It: ({:d},{:d})".format(
+        print("E: {:0.3f}GeV, It: ({:d},{:d})".format(
             energy,
             energy_iteration,
             sub_iteration))
@@ -285,36 +271,33 @@ def _one_iteration(
             particle_id=s["input"]["corsika_particle_id"],
             energy=energy,
             site=s["input"]["site"],
-            azimuth_phi_deg=azimuth_phi_deg,
-            zenith_theta_deg=zenith_theta_deg,
+            azimuth_deg=azimuth_deg,
+            zenith_deg=zenith_deg,
             scatter_angle_deg=scatter_angle_deg,
-            instrument_x=instrument_x,
-            instrument_y=instrument_y,
-            instrument_radius=instrument_radius,
             num_events=num_events_per_job,
-            energy_iteration=energy_iteration,
-            sub_iteration=sub_iteration,
             num_jobs=num_jobs,
-            merlict_path=merlict_path,
-            corsika_path=corsika_path)
+            corsika_primary_path=corsika_primary_path)
 
         result_blocks = pool.map(_run_job, jobs)
         events = np.concatenate(result_blocks)
 
         num_thrown = events.shape[0]
-        above100ph = events[:, EventSummary.num_photons] >= 100.
+        above100ph = events[:, NUM_PHOTONS] >= 100.
         num_above100ph = int(np.sum(above100ph))
 
         events_above100 = events[above100ph]
 
-        cxs = events_above100[:, EventSummary.cxs_median]
-        cys = events_above100[:, EventSummary.cys_median]
+        cxs = events_above100[:, CXS_MEDIAN]
+        cys = events_above100[:, CYS_MEDIAN]
         target_offset = np.hypot(
             cxs - s["input"]["target_cx"],
             cys - s["input"]["target_cy"])
 
         near_target = target_offset < \
             np.deg2rad(s["input"]["target_containment_angle_deg"])
+        print("target_offset: {:0.1f}deg".format(
+            np.rad2deg(
+                np.median(target_offset))))
         events_valid = events_above100[near_target]
         num_above100ph_and_on_target = events_valid.shape[0]
 
@@ -339,17 +322,17 @@ def _one_iteration(
             sub_iteration += 1
             continue
 
-        azimuth_phi_deg_valid = float(
+        azimuth_deg_valid = float(
             np.rad2deg(
                 np.median(
-                    events_valid[:, EventSummary.particle_azimuth_phi])))
-        zenith_theta_deg_valid = float(
+                    events_valid[:, PARTICLE_AZIMUTH_RAD])))
+        zenith_deg_valid = float(
             np.rad2deg(
                 np.median(
-                    events_valid[:, EventSummary.particle_zenith_theta])))
+                    events_valid[:, PARTICLE_ZENITH_RAD])))
 
-        cherenkov_core_xs = 1e-2*events_valid[:, EventSummary.xs_median]
-        cherenkov_core_ys = 1e-2*events_valid[:, EventSummary.ys_median]
+        cherenkov_core_xs = 1e-2*events_valid[:, XS_MEDIAN]
+        cherenkov_core_ys = 1e-2*events_valid[:, YS_MEDIAN]
 
         x_valid = float(np.median(cherenkov_core_xs))
         y_valid = float(np.median(cherenkov_core_ys))
@@ -362,91 +345,31 @@ def _one_iteration(
             ys=cherenkov_core_ys)
 
         delta_directiong_deg = great_circle_distance_alt_zd_deg(
-            az1_deg=azimuth_phi_deg_valid,
-            zd1_deg=zenith_theta_deg_valid,
-            az2_deg=azimuth_phi_deg,
-            zd2_deg=zenith_theta_deg)
+            az1_deg=azimuth_deg_valid,
+            zd1_deg=zenith_deg_valid,
+            az2_deg=azimuth_deg,
+            zd2_deg=zenith_deg)
         print("delta_directiong_deg: {:0.1f}".format(delta_directiong_deg))
+        print("az: {:0.1f}, zd: {:0.1f}".format(
+            azimuth_deg_valid,
+            zenith_deg_valid))
         if delta_directiong_deg <= on_target_direction_threshold_deg:
             direction_converged = True
 
-        delta_position = np.hypot(x_valid, y_valid)
-        print(
-            "delta_position: {:0.1f}+-{:0.1f}".format(
-                delta_position,
-                xy_std_valid))
-        on_target_position_threshold = (1./2.)*xy_std_valid
-        if delta_position <= on_target_position_threshold:
-            position_converged = True
-
-        if position_converged and direction_converged:
+        if direction_converged:
             on_target = True
         else:
-            instrument_x += x_valid/2
-            instrument_y += y_valid/2
-            instrument_radius = np.min([
-                np.max([instrument_radius, 2*xy_std_valid]),
-                2.5e3])
-            azimuth_phi_deg = (azimuth_phi_deg + azimuth_phi_deg_valid)/2
-            zenith_theta_deg = (zenith_theta_deg + zenith_theta_deg_valid)/2
+            azimuth_deg = (azimuth_deg + azimuth_deg_valid)/2
+            zenith_deg = (zenith_deg + zenith_deg_valid)/2
 
         sub_iteration += 1
 
     s["energy"].append(float(energy))
     s["energy_iteration_factor"].append(float(energy_iteration_factor))
-    s["instrument_radius"].append(float(instrument_radius))
-    s["instrument_x"].append(float(x_valid + instrument_x))
-    s["instrument_y"].append(float(y_valid + instrument_y))
-    s["azimuth_phi_deg"].append(float(azimuth_phi_deg_valid))
-    s["zenith_theta_deg"].append(float(zenith_theta_deg_valid))
+    s["x"].append(float(x_valid))
+    s["y"].append(float(y_valid))
+    s["azimuth_deg"].append(float(azimuth_deg_valid))
+    s["zenith_deg"].append(float(zenith_deg_valid))
     s["scatter_angle_deg"].append(float(scatter_angle_deg))
     s["cherenkov_core_spread_xy"].append(cherenkov_core_ellipse)
     _write_state(work_dir=work_dir, state=s, iteration=energy_iteration)
-
-
-def _make_jobs(
-    particle_id,
-    energy,
-    site,
-    azimuth_phi_deg,
-    zenith_theta_deg,
-    scatter_angle_deg,
-    instrument_x,
-    instrument_y,
-    instrument_radius,
-    num_events,
-    energy_iteration,
-    sub_iteration,
-    num_jobs,
-    merlict_path,
-    corsika_path,
-):
-    jobs = []
-    for i in range(num_jobs):
-        run_number = i + 1
-        job = {}
-        job["steering_card"] = _make_corsika_steering_card_str(
-            random_seed=energy_iteration,
-            run_number=run_number,
-            num_events=num_events,
-            particle_id=particle_id,
-            energy_start=energy,
-            energy_stop=energy,
-            energy_slope=-1.,
-            cone_azimuth_deg=azimuth_phi_deg,
-            cone_zenith_distance_deg=zenith_theta_deg,
-            cone_max_scatter_angle_deg=scatter_angle_deg,
-            earth_magnetic_field_x_muT=site["earth_magnetic_field_x_muT"],
-            earth_magnetic_field_z_muT=site["earth_magnetic_field_z_muT"],
-            atmosphere_model=site["corsika_atmosphere_model"],
-            observation_level_altitude_asl=site[
-                "observation_level_altitude_asl"],
-            instrument_x=instrument_x,
-            instrument_y=instrument_y,
-            instrument_radius=instrument_radius,
-            max_scatter_radius=0.,
-            bunch_size=1)
-        job["merlict_path"] = merlict_path
-        job["corsika_path"] = corsika_path
-        jobs.append(job)
-    return jobs
