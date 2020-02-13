@@ -70,6 +70,23 @@ According to:
 '''
 
 
+GAMMA_SOURCES_DTYPES = {
+    'source_name': str,
+    'right_ascension_j2000_deg': float,
+    'declination_j2000_deg': float,
+    'galactic_longitude_deg': float,
+    'galactic_latitude_deg': float,
+    'spectrum_type': str,
+    'spectral_index': float,
+    'beta': float,
+    'exp_index': float,
+    'pivot_energy_GeV': float,
+    'cutoff_energy_GeV': float,
+    "flux1000_per_m2_per_s": float,
+    "flux_density_per_m2_per_GeV_per_s": float,
+}
+
+
 def read_fermi_3rd_galactic_from_resources():
     fermi_3fgl_path = pkg_resources.resource_filename(
         'cosmic_fluxes',
@@ -99,7 +116,7 @@ def read_fermi_3rd_galactic_from_resources():
                 s[fermi_key] = fits[1].data[source_idx][fermi_key]
             gamma_sources_raw.append(s)
 
-    gamma_sources = []
+    tmp_gamma_sources = []
     for i in range(len(gamma_sources_raw)):
         raw = gamma_sources_raw[i]
         so = {}
@@ -118,7 +135,15 @@ def read_fermi_3rd_galactic_from_resources():
         Flux_Density_tmp = raw["Flux_Density"]*1e4  # cm^2 to m^2
         # MeV^{-1} to GeV^{-1}
         so["flux_density_per_m2_per_GeV_per_s"] = Flux_Density_tmp*1e3
-        gamma_sources.append(so)
+        tmp_gamma_sources.append(so)
+
+    gamma_sources = []
+    for i in range(len(tmp_gamma_sources)):
+        tmp_source = tmp_gamma_sources[i]
+        final_source = {}
+        for key in tmp_source:
+            final_source[key] = GAMMA_SOURCES_DTYPES[key](tmp_source[key])
+        gamma_sources.append(final_source)
     return gamma_sources
 
 
