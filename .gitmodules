@@ -4,9 +4,6 @@
 [submodule "plenopy"]
 	path = plenopy
 	url = git@github.com:cherenkov-plenoscope/plenopy.git
-[submodule "instrument_sensitivity_function"]
-	path = instrument_sensitivity_function
-	url = git@github.com:cherenkov-plenoscope/instrument_sensitivity_function.git
 [submodule "corsika_install"]
 	path = corsika_install
 	url = git@github.com:cherenkov-plenoscope/corsika_install.git
