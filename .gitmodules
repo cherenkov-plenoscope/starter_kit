@@ -7,9 +7,6 @@
 [submodule "instrument_sensitivity_function"]
 	path = instrument_sensitivity_function
 	url = git@github.com:cherenkov-plenoscope/instrument_sensitivity_function.git
-[submodule "gamma_limits_sensitivity"]
-	path = gamma_limits_sensitivity
-	url = git@github.com:mahnen/gamma_limits_sensitivity.git
 [submodule "corsika_install"]
 	path = corsika_install
 	url = git@github.com:cherenkov-plenoscope/corsika_install.git
