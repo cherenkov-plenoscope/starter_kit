@@ -94,8 +94,8 @@ def read_fermi_3rd_galactic_from_resources():
         so['galactic_longitude_deg'] = raw['GLON']
         so['galactic_latitude_deg'] = raw['GLAT']
         so['spectrum_type'] = raw['SpectrumType']
-        so['spectral_index'] = raw['Spectral_Index']
-        so['beta'] = raw['beta']
+        so['spectral_index'] = -1.0*raw['Spectral_Index']
+        so['beta'] = -1.0*raw['beta']
         so['exp_index'] = raw['Exp_Index']
         so['pivot_energy_GeV'] = raw["Pivot_Energy"]*1e-3  # MeV to GeV
         so['cutoff_energy_GeV'] = raw["Cutoff"]*1e-3  # MeV to GeV
@@ -146,32 +146,33 @@ def flux_of_fermi_source(fermi_source, energy):
     '''
     according to fermi-lat 3fgl
     '''
-    if source['spectrum_type'] == 'PowerLaw':
+    fs = fermi_source
+    if fs['spectrum_type'] == 'PowerLaw':
         fluxes = _power_law(
             energy=energy,
-            flux_density=source['flux_density_per_m2_per_GeV_per_s'],
-            spectral_index=source['spectral_index'],
-            pivot_energy=source['pivot_energy_GeV'])
-    elif source['spectrum_type'] == 'LogParabola':
+            flux_density=fs['flux_density_per_m2_per_GeV_per_s'],
+            spectral_index=fs['spectral_index'],
+            pivot_energy=fs['pivot_energy_GeV'])
+    elif fs['spectrum_type'] == 'LogParabola':
         fluxes = _power_law_log_parabola_according_to_3fgl(
             energy=energy,
-            flux_density=source['flux_density_per_m2_per_GeV_per_s'],
-            spectral_index=source['spectral_index'],
-            pivot_energy=source['pivot_energy_GeV'],
-            beta=source['beta'])
+            flux_density=fs['flux_density_per_m2_per_GeV_per_s'],
+            spectral_index=fs['spectral_index'],
+            pivot_energy=fs['pivot_energy_GeV'],
+            beta=fs['beta'])
     elif (
-        source['spectrum_type'] == 'PLExpCutoff' or
-        source['spectrum_type'] == 'PLSuperExpCutoff'
+        fs['spectrum_type'] == 'PLExpCutoff' or
+        fs['spectrum_type'] == 'PLSuperExpCutoff'
     ):
         fluxes = _power_law_super_exp_cutoff_according_to_3fgl(
             energy=energy,
-            flux_density=source['flux_density_per_m2_per_GeV_per_s'],
-            spectral_index=source['spectral_index'],
-            pivot_energy=source['pivot_energy_GeV'],
-            cutoff_energy=source['cutoff_energy_GeV'],
-            exp_index=source['exp_index'])
+            flux_density=fs['flux_density_per_m2_per_GeV_per_s'],
+            spectral_index=fs['spectral_index'],
+            pivot_energy=fs['pivot_energy_GeV'],
+            cutoff_energy=fs['cutoff_energy_GeV'],
+            exp_index=fs['exp_index'])
     else:
         raise KeyError(
-            'Unknown spectrum_type: {:s}'.format(source['spectrum_type']))
+            'Unknown spectrum_type: {:s}'.format(fs['spectrum_type']))
 
     return fluxes
