@@ -4,7 +4,6 @@ import subprocess
 import numpy as np
 import plenopy as pl
 import json
-from . import instrument_response
 from . import light_field_geometry
 
 
