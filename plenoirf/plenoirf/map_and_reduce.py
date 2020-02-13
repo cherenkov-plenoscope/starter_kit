@@ -1,4 +1,3 @@
-from . import random
 from . import table
 from . import grid
 from . import merlict
@@ -276,7 +275,7 @@ def draw_corsika_primary_steering(
     assert(num_events <= table.MAX_NUM_EVENTS_IN_RUN)
 
     np.random.seed(run_id)
-    energies = random.draw_power_law(
+    energies = cpw.random_distribution.draw_power_law(
         lower_limit=np.min(energy_bin_edges_GeV),
         upper_limit=np.max(energy_bin_edges_GeV),
         power_slope=energy_power_law_slope,
@@ -294,7 +293,7 @@ def draw_corsika_primary_steering(
         primary = {}
         primary["particle_id"] = int(particle_id)
         primary["energy_GeV"] = float(energies[e])
-        az, zd = random.draw_azimuth_zenith_in_viewcone(
+        az, zd = cpw.random_distribution.draw_azimuth_zenith_in_viewcone(
             azimuth_rad=np.deg2rad(plenoscope_pointing["azimuth_deg"]),
             zenith_rad=np.deg2rad(plenoscope_pointing["zenith_deg"]),
             min_scatter_opening_angle_rad=0.,
