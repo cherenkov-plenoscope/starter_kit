@@ -9,36 +9,51 @@ import subprocess
 import tempfile
 
 
-EXAMPLE_STATE = {
+EXAMPLE_INITIAL_STATE = {
     "input": {
-        "corsika_particle_id": 3,
         "site": {
             "earth_magnetic_field_x_muT": 20.815,
             "earth_magnetic_field_z_muT": -11.366,
             "observation_level_asl_m": 5e3,
             "atmosphere_id": 26,
         },
-        "initial": {
-            "energy": 30.,
-            "energy_iteration_factor": 0.95,
+        "primary": {
+            "particle_id": 3,
+            "energy_GeV": 10.,
             "azimuth_deg": 0.,
             "zenith_deg": 0.,
-            "scatter_angle_deg": 5.,
+            "max_scatter_angle_deg": 5.,
         },
-        "energy_thrown_per_iteration": 8e2,
-        "target_cx": 0.,
-        "target_cy": 0.,
-        "target_containment_angle_deg": 2.5,
+        "plenoscope": {
+            "azimuth_deg": 0.0,
+            "zenith_deg": 0.0,
+            "field_of_view_radius_deg": 2.5,
+        },
+        "energy_iteration_factor": 0.95,
+        "energy_thrown_per_iteration_GeV": 4e2,
     },
-    "energy": [],
-    "energy_iteration_factor": [],
-    "x": [],
-    "y": [],
-    "azimuth_deg": [],
-    "zenith_deg": [],
-    "scatter_angle_deg": [],
-    "cherenkov_core_spread_xy": [],
+    "primary_energy_GeV": [],
+    "primary_azimuth_deg": [],
+    "primary_zenith_deg": [],
+    "cherenkov_pool_x_m": [],
+    "cherenkov_pool_y_m": [],
+    "cherenkov_pool_major_x": [],
+    "cherenkov_pool_major_y": [],
+    "cherenkov_pool_minor_x": [],
+    "cherenkov_pool_minor_y": [],
+    "cherenkov_pool_major_std_m": [],
+    "cherenkov_pool_minor_std_m": [],
 }
+
+
+def _az_zd_to_cx_cy(azimuth_deg, zenith_deg):
+    # Adopted from CORSIKA
+    az = np.deg2rad(azimuth_deg)
+    zd = np.deg2rad(zenith_deg)
+    cx = np.cos(az)*np.sin(zd)
+    cy = np.sin(az)*np.sin(zd)
+    _cz = np.cos(zd)
+    return cx, cy
 
 
 def _estimate_ellipse(xs, ys):
@@ -58,15 +73,15 @@ def _estimate_ellipse(xs, ys):
     return {
         "x_mean": float(x_mean),
         "y_mean": float(y_mean),
-        "major_axis_x": float(major_axis[0]),
-        "major_axis_y": float(major_axis[1]),
-        "minor_axis_x": float(minor_axis[0]),
-        "minor_axis_y": float(minor_axis[1]),
+        "major_x": float(major_axis[0]),
+        "major_y": float(major_axis[1]),
+        "minor_x": float(minor_axis[0]),
+        "minor_y": float(minor_axis[1]),
         "major_std": float(major_std),
         "minor_std": float(minor_std)}
 
 
-def great_circle_distance_alt_zd_deg(az1_deg, zd1_deg, az2_deg, zd2_deg):
+def _great_circle_distance_alt_zd_deg(az1_deg, zd1_deg, az2_deg, zd2_deg):
     az1 = np.deg2rad(az1_deg)
     zd1 = np.deg2rad(zd1_deg)
     az2 = np.deg2rad(az2_deg)
@@ -86,7 +101,7 @@ def _great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
     return delta_sigma
 
 
-def _init_work_dir(work_dir, initial_state):
+def init(work_dir, initial_state):
     abs_work_dir = os.path.abspath(work_dir)
     os.makedirs(work_dir, exist_ok=True)
     state_path = os.path.join(abs_work_dir, "{:06d}_state.json".format(0))
@@ -125,7 +140,7 @@ def _make_jobs(
     site,
     azimuth_deg,
     zenith_deg,
-    scatter_angle_deg,
+    max_scatter_angle_deg,
     num_events,
     num_jobs,
     corsika_primary_path,
@@ -149,7 +164,8 @@ def _make_jobs(
                 azimuth_rad=np.deg2rad(azimuth_deg),
                 zenith_rad=np.deg2rad(zenith_deg),
                 min_scatter_opening_angle_rad=0.,
-                max_scatter_opening_angle_rad=np.deg2rad(scatter_angle_deg))
+                max_scatter_opening_angle_rad=np.deg2rad(
+                    max_scatter_angle_deg))
             prm = {
                 "particle_id": particle_id,
                 "energy_GeV": energy,
@@ -222,7 +238,7 @@ def one_more_iteration(
     work_dir,
     corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
     num_jobs=4,
-    pool=multiprocessing.Pool(7),
+    pool=multiprocessing.Pool(4),
     max_subiterations=12,
 ):
     on_target_direction_threshold_deg = 0.5
@@ -230,33 +246,28 @@ def one_more_iteration(
     s = _read_state(
         work_dir=work_dir,
         state_number=_latest_state_number(work_dir))
-    energy_iteration = len(s["energy"])
+    energy_iteration = len(s["primary_energy_GeV"])
 
     if energy_iteration == 0:
-        energy_iteration_factor = s["input"]["initial"][
-            "energy_iteration_factor"]
-        energy = s["input"]["initial"]["energy"]
-        azimuth_deg = s["input"]["initial"]["azimuth_deg"]
-        zenith_deg = s["input"]["initial"]["zenith_deg"]
-        scatter_angle_deg = s["input"]["initial"]["scatter_angle_deg"]
+        energy = s["input"]["primary"]["energy_GeV"]
+        azimuth_deg = s["input"]["primary"]["azimuth_deg"]
+        zenith_deg = s["input"]["primary"]["zenith_deg"]
     else:
-        last_energy = s["energy"][-1]
-        energy_iteration_factor = s["energy_iteration_factor"][-1]
-        energy = last_energy*energy_iteration_factor
-        azimuth_deg = s["azimuth_deg"][-1]
-        zenith_deg = s["zenith_deg"][-1]
-        scatter_angle_deg = s["scatter_angle_deg"][-1]
+        last_energy = s["primary_energy_GeV"][-1]
+        energy = last_energy*s["input"]["energy_iteration_factor"]
+        azimuth_deg = s["primary_azimuth_deg"][-1]
+        zenith_deg = s["primary_zenith_deg"][-1]
 
     expected_ratio_detected_over_thrown = \
-        s["input"]["target_containment_angle_deg"]**2 / \
-        scatter_angle_deg**2
+        s["input"]["plenoscope"]["field_of_view_radius_deg"]**2 / \
+        s["input"]["primary"]["max_scatter_angle_deg"]**2
 
     on_target = False
     sub_iteration = 0
     while not on_target:
         direction_converged = False
         position_converged = False
-        if sub_iteration > max_subiterations or energy_iteration_factor > 0.98:
+        if sub_iteration > max_subiterations:
             raise RuntimeError("Can not converge. Quit.")
 
         print("E: {:0.3f}GeV, It: ({:d},{:d})".format(
@@ -265,15 +276,16 @@ def one_more_iteration(
             sub_iteration))
 
         num_events_per_job = int(
-            s["input"]["energy_thrown_per_iteration"]/energy)
+            s["input"]["energy_thrown_per_iteration_GeV"]/energy)
 
         jobs = _make_jobs(
-            particle_id=s["input"]["corsika_particle_id"],
+            particle_id=s["input"]["primary"]["particle_id"],
             energy=energy,
             site=s["input"]["site"],
             azimuth_deg=azimuth_deg,
             zenith_deg=zenith_deg,
-            scatter_angle_deg=scatter_angle_deg,
+            max_scatter_angle_deg=s["input"]["primary"][
+                "max_scatter_angle_deg"],
             num_events=num_events_per_job,
             num_jobs=num_jobs,
             corsika_primary_path=corsika_primary_path)
@@ -289,38 +301,29 @@ def one_more_iteration(
 
         cxs = events_above100[:, CXS_MEDIAN]
         cys = events_above100[:, CYS_MEDIAN]
-        target_offset = np.hypot(
-            cxs - s["input"]["target_cx"],
-            cys - s["input"]["target_cy"])
+        target_cx, target_cy = _az_zd_to_cx_cy(
+            azimuth_deg=s["input"]["plenoscope"]["azimuth_deg"],
+            zenith_deg=s["input"]["plenoscope"]["zenith_deg"])
+        target_offset = np.hypot(cxs-target_cx, cys-target_cy)
 
         near_target = target_offset < \
-            np.deg2rad(s["input"]["target_containment_angle_deg"])
+            np.deg2rad(s["input"]["plenoscope"]["field_of_view_radius_deg"])
         print("target_offset: {:0.1f}deg".format(
             np.rad2deg(
                 np.median(target_offset))))
         events_valid = events_above100[near_target]
         num_above100ph_and_on_target = events_valid.shape[0]
 
-        print(
-            "thrown: {:d}, >100ph: {:d}, on target: {:d}.".format(
-                num_thrown,
-                num_above100ph,
-                num_above100ph_and_on_target))
+        print("thrown: {:d}, >100ph: {:d}, on target: {:d}.".format(
+            num_thrown,
+            num_above100ph,
+            num_above100ph_and_on_target))
 
         num_events_expected = expected_ratio_detected_over_thrown*num_thrown
         min_num_events_expected = int(0.25*num_events_expected)
 
         if num_above100ph_and_on_target < min_num_events_expected:
-            energy_iteration_factor = (energy_iteration_factor + 1.)/2.
-            energy = last_energy*energy_iteration_factor
-            print(
-                "Expected valid events > {:d}, but found only {:d}.".format(
-                    min_num_events_expected,
-                    num_above100ph_and_on_target))
-            print("Reducing energy_iteration_factor to: {:.4f}".format(
-                energy_iteration_factor))
-            sub_iteration += 1
-            continue
+            raise RuntimeError("Can not converge. Quit.")
 
         azimuth_deg_valid = float(
             np.rad2deg(
@@ -344,7 +347,7 @@ def one_more_iteration(
             xs=cherenkov_core_xs,
             ys=cherenkov_core_ys)
 
-        delta_directiong_deg = great_circle_distance_alt_zd_deg(
+        delta_directiong_deg = _great_circle_distance_alt_zd_deg(
             az1_deg=azimuth_deg_valid,
             zd1_deg=zenith_deg_valid,
             az2_deg=azimuth_deg,
@@ -364,12 +367,18 @@ def one_more_iteration(
 
         sub_iteration += 1
 
-    s["energy"].append(float(energy))
-    s["energy_iteration_factor"].append(float(energy_iteration_factor))
-    s["x"].append(float(x_valid))
-    s["y"].append(float(y_valid))
-    s["azimuth_deg"].append(float(azimuth_deg_valid))
-    s["zenith_deg"].append(float(zenith_deg_valid))
-    s["scatter_angle_deg"].append(float(scatter_angle_deg))
-    s["cherenkov_core_spread_xy"].append(cherenkov_core_ellipse)
+    s["primary_energy_GeV"].append(float(energy))
+    s["primary_azimuth_deg"].append(float(azimuth_deg_valid))
+    s["primary_zenith_deg"].append(float(zenith_deg_valid))
+
+    cce = cherenkov_core_ellipse
+    s["cherenkov_pool_x_m"].append(float(x_valid))
+    s["cherenkov_pool_y_m"].append(float(y_valid))
+    s["cherenkov_pool_major_x"].append(float(cce["major_x"]))
+    s["cherenkov_pool_major_y"].append(float(cce["major_y"]))
+    s["cherenkov_pool_minor_x"].append(float(cce["minor_x"]))
+    s["cherenkov_pool_minor_y"].append(float(cce["minor_y"]))
+    s["cherenkov_pool_major_std_m"].append(float(cce["major_std"]))
+    s["cherenkov_pool_minor_std_m"].append(float(cce["minor_std"]))
+
     _write_state(work_dir=work_dir, state=s, iteration=energy_iteration)
