@@ -27,18 +27,27 @@ info_str = "{:.1f}km a.s.l., Atm.-id. {:d}, Bx {:.1f}uT, Bz {:.1f}uT".format(
     t['input']['site']["earth_magnetic_field_x_muT"],
     t['input']['site']["earth_magnetic_field_z_muT"])
 
-
-
-
 keys = {
     'primary_azimuth_deg': {
-        "unit": "deg", "name": "primary-azimuth", "factor": 1, "yscale": "lin"},
+        "unit": "deg",
+        "name": "primary-azimuth",
+        "factor": 1,
+        "yscale": "lin"},
     'primary_zenith_deg': {
-        "unit": "deg", "name": "primary-zenith", "factor": 1, "yscale": "lin"},
+        "unit": "deg",
+        "name": "primary-zenith",
+        "factor": 1,
+        "yscale": "lin"},
     'cherenkov_pool_x_m': {
-        "unit": "km", "name": "Cherenkov-pool-x", "factor": 1e-3, "yscale": "log"},
+        "unit": "km",
+        "name": "Cherenkov-pool-x",
+        "factor": 1e-3,
+        "yscale": "log"},
     'cherenkov_pool_y_m': {
-        "unit": "km", "name": "Cherenkov-pool-y", "factor": 1e-3, "yscale": "log"}
+        "unit": "km",
+        "name": "Cherenkov-pool-y",
+        "factor": 1e-3,
+        "yscale": "log"}
 }
 
 for key in keys:
