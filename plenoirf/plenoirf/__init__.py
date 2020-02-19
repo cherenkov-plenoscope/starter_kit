@@ -97,12 +97,18 @@ EXAMPLE_CONFIG = {
         "electron": {
             "particle_id": 3,
             "energy_bin_edges_GeV": [0.5, 100],
-            "max_scatter_angle_deg": 30,
+            "max_scatter_angle_deg": 10,
             "energy_power_law_slope": -1.7,
         },
         "proton": {
             "particle_id": 14,
             "energy_bin_edges_GeV": [5, 100],
+            "max_scatter_angle_deg": 30,
+            "energy_power_law_slope": -1.7,
+        },
+        "helium": {
+            "particle_id": 402,
+            "energy_bin_edges_GeV": [10, 100],
             "max_scatter_angle_deg": 30,
             "energy_power_law_slope": -1.7,
         },
@@ -123,7 +129,8 @@ EXAMPLE_CONFIG = {
     "num_runs": {
         "gamma": 1,
         "electron": 4,
-        "proton": 5
+        "proton": 5,
+        "helium": 3
     },
 
     "num_airshowers_per_run": 100,
