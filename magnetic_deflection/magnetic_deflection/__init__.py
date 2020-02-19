@@ -190,6 +190,7 @@ def estimate_deflection(
     corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
     iteration_speed=0.5,
     min_num_cherenkov_photons_in_airshower=100,
+    verbose=False,
 ):
     assert iteration_speed > 0
     assert iteration_speed <= 1.0
@@ -228,13 +229,14 @@ def estimate_deflection(
         num_pools = len(cherenkov_pools)
         rel_uncertainty = np.sqrt(num_pools)/num_pools
 
-        print(_info_json(
-            run_id,
-            off_axis_deg,
-            num_events,
-            primary_cx,
-            primary_cy,
-            num_pools))
+        if verbose:
+            print(_info_json(
+                run_id,
+                off_axis_deg,
+                num_events,
+                primary_cx,
+                primary_cy,
+                num_pools))
 
         if previous_off_axis_deg < off_axis_deg:
             num_events *= 2
@@ -275,3 +277,27 @@ def estimate_deflection(
         "cherenkov_pool_y_m": float(cer_y),
         "rel_uncertainty": float(rel_uncertainty)
     }
+
+
+def run_job(job):
+    try:
+        deflection = estimate_deflection(
+            site=job['site'],
+            primary_energy=job['primary_energy'],
+            primary_particle_id=job['primary_particle_id'],
+            instrument_azimuth_deg=job['instrument_azimuth_deg'],
+            instrument_zenith_deg=job['instrument_zenith_deg'],
+            max_off_axis_deg=job['max_off_axis_deg'],
+            corsika_primary_path=job['corsika_primary_path'])
+        deflection["valid"] = True
+    except RuntimeError as whatever:
+        print("RuntimeError:")
+        print(job['site_key'], job['particle_key'], job['primary_energy'])
+        print(whatever)
+        deflection = {}
+        deflection["valid"] = False
+    deflection['site_key'] = job['site_key']
+    deflection['particle_key'] = job['particle_key']
+    deflection['particle_id'] = job['primary_particle_id']
+    deflection['energy_GeV'] = job['primary_energy']
+    return deflection
