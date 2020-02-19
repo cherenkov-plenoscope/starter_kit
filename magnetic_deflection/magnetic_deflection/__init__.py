@@ -9,50 +9,19 @@ import subprocess
 import tempfile
 
 
-EXAMPLE_INITIAL_STATE = {
-    "input": {
-        "site": {
-            "earth_magnetic_field_x_muT": 20.815,
-            "earth_magnetic_field_z_muT": -11.366,
-            "observation_level_asl_m": 5e3,
-            "atmosphere_id": 26,
-        },
-        "primary": {
-            "particle_id": 3,
-            "energy_GeV": 10.,
-            "azimuth_deg": 0.,
-            "zenith_deg": 0.,
-            "max_scatter_angle_deg": 5.,
-        },
-        "plenoscope": {
-            "azimuth_deg": 0.0,
-            "zenith_deg": 0.0,
-            "field_of_view_radius_deg": 2.5,
-        },
-        "energy_iteration_factor": 0.95,
-        "energy_thrown_per_iteration_GeV": 4e2,
-    },
-    "primary_energy_GeV": [],
-    "primary_azimuth_deg": [],
-    "primary_zenith_deg": [],
-    "cherenkov_pool_x_m": [],
-    "cherenkov_pool_y_m": [],
-    "cherenkov_pool_major_x": [],
-    "cherenkov_pool_major_y": [],
-    "cherenkov_pool_minor_x": [],
-    "cherenkov_pool_minor_y": [],
-    "cherenkov_pool_major_std_m": [],
-    "cherenkov_pool_minor_std_m": [],
+EXAMPLE_SITE = {
+    "earth_magnetic_field_x_muT": 20.815,
+    "earth_magnetic_field_z_muT": -11.366,
+    "observation_level_asl_m": 5e3,
+    "atmosphere_id": 26,
 }
 
 
 def _azimuth_range(azimuth_deg):
     # Enforce azimuth between -180deg and +180deg
-    azimuth_deg =  azimuth_deg % 360
-
+    azimuth_deg = azimuth_deg % 360
     # force it to be the positive remainder, so that 0 <= angle < 360
     azimuth_deg = (azimuth_deg + 360) % 360
-
     # force into the minimum absolute value residue class,
     # so that -180 < angle <= 180
     if azimuth_deg > 180:
@@ -120,9 +89,11 @@ EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
 
 CORSIKA_ZENITH_LIMIT_DEG = 70.0
 
+
 def estimate_cherenkov_pool(
     corsika_primary_steering,
     corsika_primary_path,
+    min_num_cherenkov_photons,
 ):
     with tempfile.TemporaryDirectory(prefix="mag_defl_") as tmp:
         corsika_output_path = os.path.join(tmp, "run.tario")
@@ -135,7 +106,7 @@ def estimate_cherenkov_pool(
         for idx, airshower in enumerate(run):
             corsika_event_header, photon_bunches = airshower
             num_bunches = photon_bunches.shape[0]
-            if num_bunches > 0:
+            if num_bunches >= min_num_cherenkov_photons:
                 cps = np.zeros(NUM_FLOATS_IN_EVENTSUMMARY, dtype=np.float32)
                 cps[XS_MEDIAN] = np.median(photon_bunches[:, cpw.IX])
                 cps[YS_MEDIAN] = np.median(photon_bunches[:, cpw.IY])
@@ -208,50 +179,54 @@ def _info_json(
 
 def estimate_deflection(
     site,
-    plenoscope_pointing,
-    field_of_view_radius_deg,
-    energy,
-    particle_id,
+    primary_energy,
+    primary_particle_id,
+    instrument_azimuth_deg,
+    instrument_zenith_deg,
+    max_off_axis_deg,
     initial_num_events_per_iteration=2**7,
     max_num_events_per_iteration=2**14,
     max_rel_uncertainty=0.1,
     max_iterations=100,
     corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
+    iteration_speed=0.5,
+    min_num_cherenkov_photons_in_airshower=100,
 ):
-    run_id = 0
-    target_cx, target_cy = _az_zd_to_cx_cy(
-        azimuth_deg=plenoscope_pointing['azimuth_deg'],
-        zenith_deg=plenoscope_pointing['zenith_deg'])
-    primary_cx = float(target_cx)
-    primary_cy = float(target_cy)
+    assert iteration_speed > 0
+    assert iteration_speed <= 1.0
+    instrument_cx, instrument_cy = _az_zd_to_cx_cy(
+        azimuth_deg=instrument_azimuth_deg,
+        zenith_deg=instrument_zenith_deg)
+    primary_cx = float(instrument_cx)
+    primary_cy = float(instrument_cy)
     num_events = int(initial_num_events_per_iteration)
     previous_off_axis_deg = 180.0
 
+    run_id = 0
     while True:
         run_id += 1
         steering = _make_steering(
             run_id=run_id,
             site=site,
             num_events=num_events,
-            primary_particle_id=particle_id,
-            primary_energy=energy,
+            primary_particle_id=primary_particle_id,
+            primary_energy=primary_energy,
             primary_cx=primary_cx,
             primary_cy=primary_cy)
         cherenkov_pools = estimate_cherenkov_pool(
             corsika_primary_steering=steering,
-            corsika_primary_path=corsika_primary_path)
+            corsika_primary_path=corsika_primary_path,
+            min_num_cherenkov_photons=min_num_cherenkov_photons_in_airshower)
 
         cer_cx = np.median(cherenkov_pools[:, CXS_MEDIAN])
         cer_cy = np.median(cherenkov_pools[:, CYS_MEDIAN])
-        cer_x = np.median(cherenkov_pools[:, XS_MEDIAN])*cpw.CM2M
-        cer_y = np.median(cherenkov_pools[:, YS_MEDIAN])*cpw.CM2M
 
-        cer_cx_off = cer_cx - target_cx
-        cer_cy_off = cer_cy - target_cy
+        cer_cx_off = cer_cx - instrument_cx
+        cer_cy_off = cer_cy - instrument_cy
 
         off_axis_deg = np.rad2deg(np.hypot(cer_cx_off, cer_cy_off))
 
-        num_pools =len(cherenkov_pools)
+        num_pools = len(cherenkov_pools)
         rel_uncertainty = np.sqrt(num_pools)/num_pools
 
         print(_info_json(
@@ -265,9 +240,9 @@ def estimate_deflection(
         if previous_off_axis_deg < off_axis_deg:
             num_events *= 2
 
-        if off_axis_deg >= field_of_view_radius_deg:
-            primary_cx = primary_cx - cer_cx_off/2
-            primary_cy = primary_cy - cer_cy_off/2
+        if off_axis_deg >= max_off_axis_deg:
+            primary_cx = primary_cx - iteration_speed*cer_cx_off
+            primary_cy = primary_cy - iteration_speed*cer_cy_off
             previous_off_axis_deg = off_axis_deg
         else:
             if rel_uncertainty > max_rel_uncertainty:
@@ -288,6 +263,9 @@ def estimate_deflection(
     primary_azimuth_deg, primary_zenith_deg = _cx_cy_to_az_zd_deg(
         cx=primary_cx,
         cy=primary_cy)
+
+    cer_x = np.median(cherenkov_pools[:, XS_MEDIAN])*cpw.CM2M
+    cer_y = np.median(cherenkov_pools[:, YS_MEDIAN])*cpw.CM2M
 
     return {
         "primary_azimuth_deg": float(primary_azimuth_deg),
