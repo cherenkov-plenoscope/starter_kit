@@ -46,7 +46,22 @@ EXAMPLE_INITIAL_STATE = {
 }
 
 
+def _azimuth_range(azimuth_deg):
+    # Enforce azimuth between -180deg and +180deg
+    azimuth_deg =  azimuth_deg % 360
+
+    # force it to be the positive remainder, so that 0 <= angle < 360
+    azimuth_deg = (azimuth_deg + 360) % 360
+
+    # force into the minimum absolute value residue class,
+    # so that -180 < angle <= 180
+    if azimuth_deg > 180:
+        azimuth_deg -= 360
+    return azimuth_deg
+
+
 def _az_zd_to_cx_cy(azimuth_deg, zenith_deg):
+    azimuth_deg = _azimuth_range(azimuth_deg)
     # Adopted from CORSIKA
     az = np.deg2rad(azimuth_deg)
     zd = np.deg2rad(zenith_deg)
@@ -56,29 +71,12 @@ def _az_zd_to_cx_cy(azimuth_deg, zenith_deg):
     return cx, cy
 
 
-def _estimate_ellipse(xs, ys):
-    x_mean = np.mean(xs)
-    y_mean = np.mean(ys)
-    cov_matrix = np.cov(np.c_[xs, ys].T)
-    eigen_vals, eigen_vecs = np.linalg.eig(cov_matrix)
-    major_idx = np.argmax(eigen_vals)
-    if major_idx == 0:
-        minor_idx = 1
-    else:
-        minor_idx = 0
-    major_axis = eigen_vecs[:, major_idx]
-    major_std = np.sqrt(eigen_vals[major_idx])
-    minor_axis = eigen_vecs[:, minor_idx]
-    minor_std = np.sqrt(eigen_vals[minor_idx])
-    return {
-        "x_mean": float(x_mean),
-        "y_mean": float(y_mean),
-        "major_x": float(major_axis[0]),
-        "major_y": float(major_axis[1]),
-        "minor_x": float(minor_axis[0]),
-        "minor_y": float(minor_axis[1]),
-        "major_std": float(major_std),
-        "minor_std": float(minor_std)}
+def _cx_cy_to_az_zd_deg(cx, cy):
+    cz = np.sqrt(1.0 - cx**2 - cy**2)
+    # 1 = sqrt(cx**2 + cy**2 + cz**2)
+    az = np.arctan2(cy, cx)
+    zd = np.arccos(cz)
+    return np.rad2deg(az), np.rad2deg(zd)
 
 
 def _great_circle_distance_alt_zd_deg(az1_deg, zd1_deg, az2_deg, zd2_deg):
@@ -101,87 +99,6 @@ def _great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
     return delta_sigma
 
 
-def init(work_dir, initial_state):
-    abs_work_dir = os.path.abspath(work_dir)
-    os.makedirs(work_dir, exist_ok=True)
-    state_path = os.path.join(abs_work_dir, "{:06d}_state.json".format(0))
-    with open(state_path, "wt") as f:
-        f.write(json.dumps(initial_state, indent=4))
-
-
-def _latest_state_number(work_dir):
-    abs_work_dir = os.path.abspath(work_dir)
-    state_paths = glob.glob(os.path.join(abs_work_dir, "*_state.json"))
-    state_numbers = [
-        int(os.path.basename(sp).split("_")[0]) for sp in state_paths]
-    return np.max(state_numbers)
-
-
-def _read_state(work_dir, state_number):
-    abs_work_dir = os.path.abspath(work_dir)
-    state_path = os.path.join(
-        abs_work_dir, "{:06d}_state.json".format(state_number))
-    with open(state_path, "rt") as f:
-        s = json.loads(f.read())
-    return s
-
-
-def _write_state(work_dir, state, iteration):
-    abs_work_dir = os.path.abspath(work_dir)
-    state_path = os.path.join(
-        abs_work_dir, "{:06d}_state.json".format(iteration))
-    with open(state_path, "wt") as f:
-        f.write(json.dumps(state, indent=4))
-
-
-def _make_jobs(
-    particle_id,
-    energy,
-    site,
-    azimuth_deg,
-    zenith_deg,
-    max_scatter_angle_deg,
-    num_events,
-    num_jobs,
-    corsika_primary_path,
-):
-    jobs = []
-    for i in range(num_jobs):
-        run_number = i + 1
-
-        cpw_run_steering = {}
-        cpw_run_steering["run"] = {
-            "run_id": int(run_number),
-            "event_id_of_first_event": 1,
-            "observation_level_asl_m": site["observation_level_asl_m"],
-            "earth_magnetic_field_x_muT": site["earth_magnetic_field_x_muT"],
-            "earth_magnetic_field_z_muT": site["earth_magnetic_field_z_muT"],
-            "atmosphere_id": site["atmosphere_id"],
-        }
-        cpw_run_steering["primaries"] = []
-        for event_id in range(num_events):
-            az, zd = cpw.random_distributions.draw_azimuth_zenith_in_viewcone(
-                azimuth_rad=np.deg2rad(azimuth_deg),
-                zenith_rad=np.deg2rad(zenith_deg),
-                min_scatter_opening_angle_rad=0.,
-                max_scatter_opening_angle_rad=np.deg2rad(
-                    max_scatter_angle_deg))
-            prm = {
-                "particle_id": particle_id,
-                "energy_GeV": energy,
-                "zenith_rad": zd,
-                "azimuth_rad": az,
-                "depth_g_per_cm2": 0.0,
-                "random_seed": cpw._simple_seed(event_id),
-            }
-            cpw_run_steering["primaries"].append(prm)
-        job = {}
-        job["corsika_primary_steering"] = cpw_run_steering
-        job["corsika_primary_path"] = corsika_primary_path
-        jobs.append(job)
-    return jobs
-
-
 NUM_FLOATS_IN_EVENTSUMMARY = 25
 
 PARTICLE_ZENITH_RAD = 0
@@ -192,38 +109,6 @@ YS_MEDIAN = 4
 CXS_MEDIAN = 5
 CYS_MEDIAN = 6
 
-
-def _run_job(job):
-    with tempfile.TemporaryDirectory(prefix="mag_defl_") as tmp:
-
-        corsika_output_path = os.path.join(tmp, "run.tario")
-        cpw.corsika_primary(
-            corsika_path=job['corsika_primary_path'],
-            steering_dict=job['corsika_primary_steering'],
-            output_path=corsika_output_path)
-
-        num_events = len(job['corsika_primary_steering']['primaries'])
-        event_summaries = np.nan*np.ones(
-            shape=(num_events, NUM_FLOATS_IN_EVENTSUMMARY),
-            dtype=np.float32)
-        es = event_summaries
-        run = cpw.Tario(corsika_output_path)
-        for idx, airshower in enumerate(run):
-            corsika_event_header, photon_bunches = airshower
-            ceh = corsika_event_header
-            es[idx, PARTICLE_ZENITH_RAD] = cpw._evth_zenith_rad(ceh)
-            es[idx, PARTICLE_AZIMUTH_RAD] = cpw._evth_azimuth_rad(ceh)
-            es[idx, NUM_PHOTONS] = np.sum(photon_bunches[:, cpw.IBSIZE])
-            num_bunches = photon_bunches.shape[0]
-            if num_bunches > 0:
-                es[idx, XS_MEDIAN] = np.median(photon_bunches[:, cpw.IX])
-                es[idx, YS_MEDIAN] = np.median(photon_bunches[:, cpw.IY])
-                es[idx, CXS_MEDIAN] = np.median(photon_bunches[:, cpw.ICX])
-                es[idx, CYS_MEDIAN] = np.median(photon_bunches[:, cpw.ICY])
-        assert idx+1 == num_events
-        return es
-
-
 EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
     os.path.join(
         'build',
@@ -233,152 +118,183 @@ EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
         'run',
         'corsika75600Linux_QGSII_urqmd'))
 
+CORSIKA_ZENITH_LIMIT_DEG = 70.0
 
-def one_more_iteration(
-    work_dir,
-    corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
-    num_jobs=4,
-    pool=multiprocessing.Pool(4),
-    max_subiterations=12,
+def estimate_cherenkov_pool(
+    corsika_primary_steering,
+    corsika_primary_path,
 ):
-    on_target_direction_threshold_deg = 0.5
+    with tempfile.TemporaryDirectory(prefix="mag_defl_") as tmp:
+        corsika_output_path = os.path.join(tmp, "run.tario")
+        cpw.corsika_primary(
+            corsika_path=corsika_primary_path,
+            steering_dict=corsika_primary_steering,
+            output_path=corsika_output_path)
+        cherenkov_pool_summaries = []
+        run = cpw.Tario(corsika_output_path)
+        for idx, airshower in enumerate(run):
+            corsika_event_header, photon_bunches = airshower
+            num_bunches = photon_bunches.shape[0]
+            if num_bunches > 0:
+                cps = np.zeros(NUM_FLOATS_IN_EVENTSUMMARY, dtype=np.float32)
+                cps[XS_MEDIAN] = np.median(photon_bunches[:, cpw.IX])
+                cps[YS_MEDIAN] = np.median(photon_bunches[:, cpw.IY])
+                cps[CXS_MEDIAN] = np.median(photon_bunches[:, cpw.ICX])
+                cps[CYS_MEDIAN] = np.median(photon_bunches[:, cpw.ICY])
+                ceh = corsika_event_header
+                cps[PARTICLE_ZENITH_RAD] = cpw._evth_zenith_rad(ceh)
+                cps[PARTICLE_AZIMUTH_RAD] = cpw._evth_azimuth_rad(ceh)
+                cps[NUM_PHOTONS] = np.sum(photon_bunches[:, cpw.IBSIZE])
+                cherenkov_pool_summaries.append(cps)
 
-    s = _read_state(
-        work_dir=work_dir,
-        state_number=_latest_state_number(work_dir))
-    energy_iteration = len(s["primary_energy_GeV"])
+        actual_num_valid_pools = len(cherenkov_pool_summaries)
+        expected_num_valid_pools = len(corsika_primary_steering['primaries'])
+        if actual_num_valid_pools < 0.1*expected_num_valid_pools:
+            raise RuntimeError("Too few Cherenkov-pools")
 
-    if energy_iteration == 0:
-        energy = s["input"]["primary"]["energy_GeV"]
-        azimuth_deg = s["input"]["primary"]["azimuth_deg"]
-        zenith_deg = s["input"]["primary"]["zenith_deg"]
-    else:
-        last_energy = s["primary_energy_GeV"][-1]
-        energy = last_energy*s["input"]["energy_iteration_factor"]
-        azimuth_deg = s["primary_azimuth_deg"][-1]
-        zenith_deg = s["primary_zenith_deg"][-1]
+        return np.vstack(cherenkov_pool_summaries)
 
-    expected_ratio_detected_over_thrown = \
-        s["input"]["plenoscope"]["field_of_view_radius_deg"]**2 / \
-        s["input"]["primary"]["max_scatter_angle_deg"]**2
 
-    on_target = False
-    sub_iteration = 0
-    while not on_target:
-        direction_converged = False
-        position_converged = False
-        if sub_iteration > max_subiterations:
-            raise RuntimeError("Can not converge. Quit.")
+def _make_steering(
+    run_id,
+    site,
+    num_events,
+    primary_particle_id,
+    primary_energy,
+    primary_cx,
+    primary_cy,
+):
+    steering = {}
+    steering["run"] = {
+        "run_id": int(run_id),
+        "event_id_of_first_event": 1,
+        "observation_level_asl_m": site["observation_level_asl_m"],
+        "earth_magnetic_field_x_muT": site["earth_magnetic_field_x_muT"],
+        "earth_magnetic_field_z_muT": site["earth_magnetic_field_z_muT"],
+        "atmosphere_id": site["atmosphere_id"],
+    }
+    steering["primaries"] = []
+    for event_id in range(num_events):
+        az_deg, zd_deg = _cx_cy_to_az_zd_deg(cx=primary_cx, cy=primary_cy)
+        prm = {
+            "particle_id": int(primary_particle_id),
+            "energy_GeV": float(primary_energy),
+            "zenith_rad": np.deg2rad(zd_deg),
+            "azimuth_rad": np.deg2rad(az_deg),
+            "depth_g_per_cm2": 0.0,
+            "random_seed": cpw._simple_seed(event_id + run_id*num_events),
+        }
+        steering["primaries"].append(prm)
+    return steering
 
-        print("E: {:0.3f}GeV, It: ({:d},{:d})".format(
-            energy,
-            energy_iteration,
-            sub_iteration))
 
-        num_events_per_job = int(
-            s["input"]["energy_thrown_per_iteration_GeV"]/energy)
+def _info_json(
+    run_id,
+    off_axis_deg,
+    num_events,
+    primary_cx,
+    primary_cy,
+    num_cherenkov_pools,
+):
+    prm_az_deg, prm_zd_deg = _cx_cy_to_az_zd_deg(cx=primary_cx, cy=primary_cy)
+    s = '"it": {:d}, '.format(run_id)
+    s += '"num_airshower_thrown": {:d}, '.format(num_events)
+    s += '"azimuth_deg": {:.2f}, '.format(prm_az_deg)
+    s += '"zenith_deg": {:.2f}, '.format(prm_zd_deg)
+    s += '"off_deg": {:.2f}, '.format(off_axis_deg)
+    s += '"num_valid_Cherenkov_pools": {:d}'.format(num_cherenkov_pools)
+    return '{' + s + '}'
 
-        jobs = _make_jobs(
-            particle_id=s["input"]["primary"]["particle_id"],
-            energy=energy,
-            site=s["input"]["site"],
-            azimuth_deg=azimuth_deg,
-            zenith_deg=zenith_deg,
-            max_scatter_angle_deg=s["input"]["primary"][
-                "max_scatter_angle_deg"],
-            num_events=num_events_per_job,
-            num_jobs=num_jobs,
+
+def estimate_deflection(
+    site,
+    plenoscope_pointing,
+    field_of_view_radius_deg,
+    energy,
+    particle_id,
+    initial_num_events_per_iteration=2**7,
+    max_num_events_per_iteration=2**14,
+    max_rel_uncertainty=0.1,
+    max_iterations=100,
+    corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
+):
+    run_id = 0
+    target_cx, target_cy = _az_zd_to_cx_cy(
+        azimuth_deg=plenoscope_pointing['azimuth_deg'],
+        zenith_deg=plenoscope_pointing['zenith_deg'])
+    primary_cx = float(target_cx)
+    primary_cy = float(target_cy)
+    num_events = int(initial_num_events_per_iteration)
+    previous_off_axis_deg = 180.0
+
+    while True:
+        run_id += 1
+        steering = _make_steering(
+            run_id=run_id,
+            site=site,
+            num_events=num_events,
+            primary_particle_id=particle_id,
+            primary_energy=energy,
+            primary_cx=primary_cx,
+            primary_cy=primary_cy)
+        cherenkov_pools = estimate_cherenkov_pool(
+            corsika_primary_steering=steering,
             corsika_primary_path=corsika_primary_path)
 
-        result_blocks = pool.map(_run_job, jobs)
-        events = np.concatenate(result_blocks)
+        cer_cx = np.median(cherenkov_pools[:, CXS_MEDIAN])
+        cer_cy = np.median(cherenkov_pools[:, CYS_MEDIAN])
+        cer_x = np.median(cherenkov_pools[:, XS_MEDIAN])*cpw.CM2M
+        cer_y = np.median(cherenkov_pools[:, YS_MEDIAN])*cpw.CM2M
 
-        num_thrown = events.shape[0]
-        above100ph = events[:, NUM_PHOTONS] >= 100.
-        num_above100ph = int(np.sum(above100ph))
+        cer_cx_off = cer_cx - target_cx
+        cer_cy_off = cer_cy - target_cy
 
-        events_above100 = events[above100ph]
+        off_axis_deg = np.rad2deg(np.hypot(cer_cx_off, cer_cy_off))
 
-        cxs = events_above100[:, CXS_MEDIAN]
-        cys = events_above100[:, CYS_MEDIAN]
-        target_cx, target_cy = _az_zd_to_cx_cy(
-            azimuth_deg=s["input"]["plenoscope"]["azimuth_deg"],
-            zenith_deg=s["input"]["plenoscope"]["zenith_deg"])
-        target_offset = np.hypot(cxs-target_cx, cys-target_cy)
+        num_pools =len(cherenkov_pools)
+        rel_uncertainty = np.sqrt(num_pools)/num_pools
 
-        near_target = target_offset < \
-            np.deg2rad(s["input"]["plenoscope"]["field_of_view_radius_deg"])
-        print("target_offset: {:0.1f}deg".format(
-            np.rad2deg(
-                np.median(target_offset))))
-        events_valid = events_above100[near_target]
-        num_above100ph_and_on_target = events_valid.shape[0]
+        print(_info_json(
+            run_id,
+            off_axis_deg,
+            num_events,
+            primary_cx,
+            primary_cy,
+            num_pools))
 
-        print("thrown: {:d}, >100ph: {:d}, on target: {:d}.".format(
-            num_thrown,
-            num_above100ph,
-            num_above100ph_and_on_target))
+        if previous_off_axis_deg < off_axis_deg:
+            num_events *= 2
 
-        num_events_expected = expected_ratio_detected_over_thrown*num_thrown
-        min_num_events_expected = int(0.25*num_events_expected)
-
-        if num_above100ph_and_on_target < min_num_events_expected:
-            raise RuntimeError("Can not converge. Quit.")
-
-        azimuth_deg_valid = float(
-            np.rad2deg(
-                np.median(
-                    events_valid[:, PARTICLE_AZIMUTH_RAD])))
-        zenith_deg_valid = float(
-            np.rad2deg(
-                np.median(
-                    events_valid[:, PARTICLE_ZENITH_RAD])))
-
-        cherenkov_core_xs = 1e-2*events_valid[:, XS_MEDIAN]
-        cherenkov_core_ys = 1e-2*events_valid[:, YS_MEDIAN]
-
-        x_valid = float(np.median(cherenkov_core_xs))
-        y_valid = float(np.median(cherenkov_core_ys))
-        x_std_valid = float(np.std(cherenkov_core_xs))
-        y_std_valid = float(np.std(cherenkov_core_ys))
-        xy_std_valid = np.hypot(x_std_valid, y_std_valid)
-
-        cherenkov_core_ellipse = _estimate_ellipse(
-            xs=cherenkov_core_xs,
-            ys=cherenkov_core_ys)
-
-        delta_directiong_deg = _great_circle_distance_alt_zd_deg(
-            az1_deg=azimuth_deg_valid,
-            zd1_deg=zenith_deg_valid,
-            az2_deg=azimuth_deg,
-            zd2_deg=zenith_deg)
-        print("delta_directiong_deg: {:0.1f}".format(delta_directiong_deg))
-        print("az: {:0.1f}, zd: {:0.1f}".format(
-            azimuth_deg_valid,
-            zenith_deg_valid))
-        if delta_directiong_deg <= on_target_direction_threshold_deg:
-            direction_converged = True
-
-        if direction_converged:
-            on_target = True
+        if off_axis_deg >= field_of_view_radius_deg:
+            primary_cx = primary_cx - cer_cx_off/2
+            primary_cy = primary_cy - cer_cy_off/2
+            previous_off_axis_deg = off_axis_deg
         else:
-            azimuth_deg = (azimuth_deg + azimuth_deg_valid)/2
-            zenith_deg = (zenith_deg + zenith_deg_valid)/2
+            if rel_uncertainty > max_rel_uncertainty:
+                num_events *= 2
+            else:
+                break
 
-        sub_iteration += 1
+        if run_id > max_iterations:
+            raise RuntimeError(
+                "Can not converge. "
+                "Reached limit of {:d} iterations".format(max_iterations))
+        if num_events > max_num_events_per_iteration:
+            raise RuntimeError(
+                "Can not converge. "
+                "Reached limit of {:d} num. events per iteration".format(
+                    max_num_events_per_iteration))
 
-    s["primary_energy_GeV"].append(float(energy))
-    s["primary_azimuth_deg"].append(float(azimuth_deg_valid))
-    s["primary_zenith_deg"].append(float(zenith_deg_valid))
+    primary_azimuth_deg, primary_zenith_deg = _cx_cy_to_az_zd_deg(
+        cx=primary_cx,
+        cy=primary_cy)
 
-    cce = cherenkov_core_ellipse
-    s["cherenkov_pool_x_m"].append(float(x_valid))
-    s["cherenkov_pool_y_m"].append(float(y_valid))
-    s["cherenkov_pool_major_x"].append(float(cce["major_x"]))
-    s["cherenkov_pool_major_y"].append(float(cce["major_y"]))
-    s["cherenkov_pool_minor_x"].append(float(cce["minor_x"]))
-    s["cherenkov_pool_minor_y"].append(float(cce["minor_y"]))
-    s["cherenkov_pool_major_std_m"].append(float(cce["major_std"]))
-    s["cherenkov_pool_minor_std_m"].append(float(cce["minor_std"]))
-
-    _write_state(work_dir=work_dir, state=s, iteration=energy_iteration)
+    return {
+        "primary_azimuth_deg": float(primary_azimuth_deg),
+        "primary_zenith_deg": float(primary_zenith_deg),
+        "primary_cx": float(primary_cx),
+        "primary_cy": float(primary_cy),
+        "cherenkov_pool_x_m": float(cer_x),
+        "cherenkov_pool_y_m": float(cer_y),
+        "rel_uncertainty": float(rel_uncertainty)
+    }
