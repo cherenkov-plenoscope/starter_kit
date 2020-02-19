@@ -16,6 +16,27 @@ EXAMPLE_SITE = {
     "atmosphere_id": 26,
 }
 
+NUM_FLOATS_IN_EVENTSUMMARY = 25
+
+PARTICLE_ZENITH_RAD = 0
+PARTICLE_AZIMUTH_RAD = 1
+NUM_PHOTONS = 2
+XS_MEDIAN = 3
+YS_MEDIAN = 4
+CXS_MEDIAN = 5
+CYS_MEDIAN = 6
+
+EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
+    os.path.join(
+        'build',
+        'corsika',
+        'modified',
+        'corsika-75600',
+        'run',
+        'corsika75600Linux_QGSII_urqmd'))
+
+CORSIKA_ZENITH_LIMIT_DEG = 70.0
+
 
 def _azimuth_range(azimuth_deg):
     # Enforce azimuth between -180deg and +180deg
@@ -66,28 +87,6 @@ def _great_circle_distance_long_lat(lam_long1, phi_alt1, lam_long2, phi_alt2):
         np.sin(phi_alt1) * np.sin(phi_alt2) +
         np.cos(phi_alt1) * np.cos(phi_alt2) * np.cos(delta_lam))
     return delta_sigma
-
-
-NUM_FLOATS_IN_EVENTSUMMARY = 25
-
-PARTICLE_ZENITH_RAD = 0
-PARTICLE_AZIMUTH_RAD = 1
-NUM_PHOTONS = 2
-XS_MEDIAN = 3
-YS_MEDIAN = 4
-CXS_MEDIAN = 5
-CYS_MEDIAN = 6
-
-EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
-    os.path.join(
-        'build',
-        'corsika',
-        'modified',
-        'corsika-75600',
-        'run',
-        'corsika75600Linux_QGSII_urqmd'))
-
-CORSIKA_ZENITH_LIMIT_DEG = 70.0
 
 
 def estimate_cherenkov_pool(
