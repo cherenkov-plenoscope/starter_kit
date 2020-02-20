@@ -32,6 +32,20 @@ max_energy_GeV = 24.0
 pool = sun_grid_engine_map
 
 
+def power_space(start, stop, power_index, num, iterations=10000):
+    full = []
+    for iti in range(iterations):
+        points = np.sort(cpw.random_distributions.draw_power_law(
+            lower_limit=start,
+            upper_limit=stop,
+            power_slope=power_index,
+            num_samples=num))
+        points = [start] + points.tolist() + [stop]
+        full.append(points)
+    full = np.array(full)
+    return np.mean(full, axis=0)
+
+
 def sort_combined_results(
     combined_results,
     particles,
@@ -93,11 +107,11 @@ def make_jobs(
             particle_id = particles[particle_key]["particle_id"]
             max_off_axis_deg = .1*particles[particle_key]["max_scatter_angle_deg"]
             min_energy = np.min(particles[particle_key]["energy_bin_edges_GeV"])
-            energy_supports = np.sort(cpw.random_distributions.draw_power_law(
-                lower_limit=min_energy,
-                upper_limit=max_energy,
-                power_slope=power_slope,
-                num_samples=num_energy_supports))
+            energy_supports = power_space(
+                start=min_energy,
+                stop=max_energy,
+                power_index=power_slope,
+                num=num_energy_supports)
             for energy_idx in range(len(energy_supports)):
                 job = {}
                 job['site'] = site
