@@ -478,7 +478,8 @@ def estimate_deflection(
         min_num_valid_Cherenkov_pools=min_num_valid_Cherenkov_pools,
         corsika_primary_path=corsika_primary_path,
         iteration_speed=iteration_speed,
-        min_num_cherenkov_photons_in_airshower=min_num_cherenkov_photons_in_airshower,
+        min_num_cherenkov_photons_in_airshower=(
+            min_num_cherenkov_photons_in_airshower),
         verbose=verbose,
     )
 
@@ -511,7 +512,8 @@ def estimate_deflection(
             max_off_axis_deg=max_off_axis_deg,
             site=site,
             corsika_primary_path=corsika_primary_path,
-            min_num_cherenkov_photons_in_airshower=min_num_cherenkov_photons_in_airshower,
+            min_num_cherenkov_photons_in_airshower=(
+                min_num_cherenkov_photons_in_airshower),
         )
 
         print("direct_discovery {:d}, spray {:1.2f}deg, off {:1.2f}deg".format(
@@ -523,6 +525,7 @@ def estimate_deflection(
             direct_guess["valid"] and
             direct_guess["off_axis_deg"] <= max_off_axis_deg
         ):
+            direct_guess["total_num_events"] = total_num_events
             return direct_guess
 
         if spray_radius_deg < max_off_axis_deg:
@@ -543,12 +546,15 @@ def estimate_deflection(
         prm_az_deg = direct_guess["primary_azimuth_deg"]
         prm_zd_deg = direct_guess["primary_zenith_deg"]
 
+        if np.isnan(prm_az_deg) or np.isnan(prm_zd_deg):
+            print("direct_discovery failed. Nan.")
+            break
+
     # Both methods failed. Return best guess.
     if indirect_guess['off_axis_deg'] < direct_guess['off_axis_deg']:
         return indirect_guess
     else:
         return direct_guess
-
 
 
 def run_job(job):
@@ -565,4 +571,8 @@ def run_job(job):
         corsika_primary_path=job['corsika_primary_path'],
         iteration_speed=job['iteration_speed'],
     )
+    deflection['particle_id'] = job['primary_particle_id']
+    deflection['energy_GeV'] = job['primary_energy']
+    deflection['site_key'] = job['site_key']
+    deflection['particle_key'] = job['particle_key']
     return deflection

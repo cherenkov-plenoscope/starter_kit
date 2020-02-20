@@ -58,11 +58,12 @@ def sort_combined_results(
         "energy_GeV",
         "primary_azimuth_deg",
         "primary_zenith_deg",
-        "primary_cx",
-        "primary_cy",
         "cherenkov_pool_x_m",
         "cherenkov_pool_y_m",
-        "rel_uncertainty",
+        "off_axis_deg",
+        "num_valid_Cherenkov_pools",
+        "num_thrown_Cherenkov_pools",
+        "total_num_events",
     ]
 
     res = {}
@@ -93,11 +94,13 @@ def write_recarray_to_csv(recarray, path):
 def make_jobs(
     sites,
     particles,
+    plenoscope_pointing,
     max_energy,
     num_energy_supports,
+    energy_supports_power_law_slope=-1.7,
     iteration_speed=0.9,
-    max_iterations=25,
-    power_slope=-1.7,
+    initial_num_events_per_iteration=2**5,
+    max_total_num_events=2**13,
     corsika_primary_path=CORSIKA_PRIMARY_PATH,
 ):
     jobs = []
@@ -110,7 +113,7 @@ def make_jobs(
             energy_supports = power_space(
                 start=min_energy,
                 stop=max_energy,
-                power_index=power_slope,
+                power_index=energy_supports_power_law_slope,
                 num=num_energy_supports)
             for energy_idx in range(len(energy_supports)):
                 job = {}
@@ -120,15 +123,15 @@ def make_jobs(
                 job['instrument_azimuth_deg'] = plenoscope_pointing['azimuth_deg']
                 job['instrument_zenith_deg'] = plenoscope_pointing['zenith_deg']
                 job['max_off_axis_deg'] = max_off_axis_deg
-                job['primary_particle_id'] = particle_id
                 job['corsika_primary_path'] = CORSIKA_PRIMARY_PATH
                 job['site_key'] = site_key
                 job['particle_key'] = particle_key
                 job['iteration_speed'] = iteration_speed
-                job['max_iterations'] = max_iterations
+                job['initial_num_events_per_iteration'] = (
+                    initial_num_events_per_iteration)
+                job['max_total_num_events'] = max_total_num_events
                 jobs.append(job)
     return jobs
-
 
 os.makedirs(work_dir, exist_ok=True)
 
@@ -139,12 +142,9 @@ jobs = make_jobs(
     num_energy_supports=64)
 
 print(len(jobs))
-if os.path.exists('combined_results.pkl'):
-    with open('combined_results.pkl', 'rb') as f:
-        combined_results = pickle.loads(f.read())
-else:
-    random.shuffle(jobs)
-    combined_results = pool.map(mdfl.run_job, jobs)
+
+random.shuffle(jobs)
+combined_results = pool.map(mdfl.run_job, jobs)
 
 res = sort_combined_results(
     combined_results=combined_results,
