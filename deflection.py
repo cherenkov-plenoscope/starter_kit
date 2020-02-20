@@ -33,17 +33,22 @@ pool = sun_grid_engine_map
 
 
 def power_space(start, stop, power_index, num, iterations=10000):
-    full = []
-    for iti in range(iterations):
-        points = np.sort(cpw.random_distributions.draw_power_law(
-            lower_limit=start,
-            upper_limit=stop,
-            power_slope=power_index,
-            num_samples=num))
-        points = [start] + points.tolist() + [stop]
-        full.append(points)
-    full = np.array(full)
-    return np.mean(full, axis=0)
+    assert num >= 2
+    num_points_without_start_and_end = num - 2
+    if num_points_without_start_and_end > 1:
+        full = []
+        for iti in range(iterations):
+            points = np.sort(cpw.random_distributions.draw_power_law(
+                lower_limit=start,
+                upper_limit=stop,
+                power_slope=power_index,
+                num_samples=num_points_without_start_and_end))
+            points = [start] + points.tolist() + [stop]
+            full.append(points)
+        full = np.array(full)
+        return np.mean(full, axis=0)
+    else:
+        return np.array([start, stop])
 
 
 def sort_combined_results(
@@ -100,7 +105,7 @@ def make_jobs(
     energy_supports_power_law_slope=-1.7,
     iteration_speed=0.9,
     initial_num_events_per_iteration=2**5,
-    max_total_num_events=2**13,
+    max_total_num_events=2**12,
     corsika_primary_path=CORSIKA_PRIMARY_PATH,
 ):
     jobs = []
@@ -133,17 +138,29 @@ def make_jobs(
                 jobs.append(job)
     return jobs
 
+
+def sort_jobs_by_key(jobs, key):
+    _values = [job[key] for job in jobs]
+    _values_argsort = np.argsort(_values)
+    jobs_sorted = [jobs[_values_argsort[i]] for i in range(len(jobs))]
+    return jobs_sorted
+
+
 os.makedirs(work_dir, exist_ok=True)
 
 jobs = make_jobs(
     sites=sites,
     particles=particles,
+    plenoscope_pointing=plenoscope_pointing,
     max_energy=24,
-    num_energy_supports=64)
+    num_energy_supports=256)
 
 print(len(jobs))
 
-random.shuffle(jobs)
+jobs_sorted_energy = sort_jobs_by_key(jobs=jobs, key='primary_energy')
+
+"""
+# random.shuffle(jobs)
 combined_results = pool.map(mdfl.run_job, jobs)
 
 res = sort_combined_results(
@@ -158,48 +175,5 @@ for site_key in sites:
         write_recarray_to_csv(
             recarray=res[site_key][particle_key],
             path=out_path)
-
-
 """
-def _estimate_num_additional_steps(
-    primary_zenith_deg,
-    max_off_axis_deg
-):
-    return (
-        np.abs(np.gradient(primary_zenith_deg)) // max_off_axis_deg
-    ).astype(np.int)
 
-
-def _estimate_additional_energies(
-    num_additional_steps,
-    energy_bin_edges,
-):
-    additional_energies = []
-    for idx in range(len(energy_bin_edges) - 1):
-        energy_start = energy_bin_edges[idx]
-        energy_stop = energy_bin_edges[idx + 1]
-
-        additional_including_existing_bin_edges = np.geomspace(
-            energy_start,
-            energy_stop,
-            2+num_additional_steps[idx])
-        additional = additional_including_existing_bin_edges[1:-1]
-        additional = additional.tolist()
-
-        additional_energies += additional
-    return additional_energies
-
-
-def estimate_additional_energies(
-    primary_zenith_deg,
-    max_off_axis_deg,
-    energy_bin_edges,
-):
-    num_additional_steps = _estimate_num_additional_steps(
-        primary_zenith_deg=primary_zenith_deg,
-        max_off_axis_deg=max_off_axis_deg)
-
-    return _estimate_additional_energies(
-        num_additional_steps=num_additional_steps,
-        energy_bin_edges=energy_bin_edges)
-"""
