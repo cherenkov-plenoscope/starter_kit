@@ -47,6 +47,25 @@ EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
 CORSIKA_ZENITH_LIMIT_DEG = 70.0
 
 
+def powerspace(start, stop, power_index, num, iterations=10000):
+    assert num >= 2
+    num_points_without_start_and_end = num - 2
+    if num_points_without_start_and_end >= 1:
+        full = []
+        for iti in range(iterations):
+            points = np.sort(cpw.random_distributions.draw_power_law(
+                lower_limit=start,
+                upper_limit=stop,
+                power_slope=power_index,
+                num_samples=num_points_without_start_and_end))
+            points = [start] + points.tolist() + [stop]
+            full.append(points)
+        full = np.array(full)
+        return np.mean(full, axis=0)
+    else:
+        return np.array([start, stop])
+
+
 def _azimuth_range(azimuth_deg):
     # Enforce azimuth between -180deg and +180deg
     azimuth_deg = azimuth_deg % 360
