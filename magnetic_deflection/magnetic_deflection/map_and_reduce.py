@@ -1,8 +1,12 @@
 import pandas as pd
 import shutil
 import os
+import glob
 import numpy as np
 import corsika_primary_wrapper as cpw
+from . import examples
+from . import discovery
+
 
 
 def make_jobs(
@@ -15,7 +19,7 @@ def make_jobs(
     iteration_speed=0.9,
     initial_num_events_per_iteration=2**5,
     max_total_num_events=2**12,
-    corsika_primary_path=CORSIKA_PRIMARY_PATH,
+    corsika_primary_path=examples.CORSIKA_PRIMARY_MOD_PATH,
 ):
     jobs = []
     for site_key in sites:
@@ -37,7 +41,7 @@ def make_jobs(
                 job['instrument_azimuth_deg'] = plenoscope_pointing['azimuth_deg']
                 job['instrument_zenith_deg'] = plenoscope_pointing['zenith_deg']
                 job['max_off_axis_deg'] = max_off_axis_deg
-                job['corsika_primary_path'] = CORSIKA_PRIMARY_PATH
+                job['corsika_primary_path'] = corsika_primary_path
                 job['site_key'] = site_key
                 job['particle_key'] = particle_key
                 job['iteration_speed'] = iteration_speed
@@ -56,7 +60,7 @@ def sort_jobs_by_key(jobs, key):
 
 
 def run_job(job):
-    deflection = estimate_deflection(
+    deflection = discovery.estimate_deflection(
         site=job['site'],
         primary_energy=job['primary_energy'],
         primary_particle_id=job['primary_particle_id'],
@@ -76,25 +80,25 @@ def run_job(job):
     return deflection
 
 
-def sort_combined_results(
+KEEP_KEYS = [
+    "particle_id",
+    "energy_GeV",
+    "primary_azimuth_deg",
+    "primary_zenith_deg",
+    "cherenkov_pool_x_m",
+    "cherenkov_pool_y_m",
+    "off_axis_deg",
+    "num_valid_Cherenkov_pools",
+    "num_thrown_Cherenkov_pools",
+    "total_num_events",
+]
+
+def structure_combined_results(
     combined_results,
     particles,
     sites,
 ):
     df = pd.DataFrame(combined_results)
-
-    KEEP_KEYS = [
-        "particle_id",
-        "energy_GeV",
-        "primary_azimuth_deg",
-        "primary_zenith_deg",
-        "cherenkov_pool_x_m",
-        "cherenkov_pool_y_m",
-        "off_axis_deg",
-        "num_valid_Cherenkov_pools",
-        "num_thrown_Cherenkov_pools",
-        "total_num_events",
-    ]
 
     res = {}
     for site_key in sites:
@@ -119,6 +123,38 @@ def write_recarray_to_csv(recarray, path):
     with open(path+".tmp", 'wt') as f:
         f.write(csv)
     shutil.move(path+".tmp", path)
+
+
+def read_csv_to_recarray(path):
+    df = pd.read_csv(path)
+    rec = df.to_records(index=False)
+    return rec
+
+
+def read_deflection_table(path):
+    paths = glob.glob(os.path.join(path, "*.csv"))
+    deflection_table = {}
+    for pa in paths:
+        basename = os.path.basename(pa)
+        name = basename.split('.')[0]
+        split_name = name.split('_')
+        assert len(split_name) == 2
+        site_key, particle_key = split_name
+        if not site_key in deflection_table:
+            deflection_table[site_key] = {}
+        deflection_table[site_key][particle_key] = read_csv_to_recarray(pa)
+    return deflection_table
+
+
+def write_deflection_table(deflection_table, path):
+    os.makedirs(path)
+    for site_key in deflection_table:
+        for particle_key in deflection_table[site_key]:
+            out_path = os.path.join(path, '{:s}_{:s}.csv'.format(
+                site_key, particle_key))
+            write_recarray_to_csv(
+                recarray=deflection_table[site_key][particle_key],
+                path=out_path)
 
 
 def powerspace(start, stop, power_index, num, iterations=10000):

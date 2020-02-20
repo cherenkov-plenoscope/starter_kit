@@ -1,29 +1,11 @@
 import json
 import os
-import glob
-import shutil
 import numpy as np
-import multiprocessing
 import corsika_primary_wrapper as cpw
-import subprocess
 import tempfile
-import sys
 import time
+from . import examples
 
-
-EXAMPLE_SITE_CHILE = {
-    "earth_magnetic_field_x_muT": 20.815,
-    "earth_magnetic_field_z_muT": -11.366,
-    "observation_level_asl_m": 5e3,
-    "atmosphere_id": 26,
-}
-
-EXAMPLE_SITE_NAMIBIA = {
-    'earth_magnetic_field_x_muT': 12.5,
-    'earth_magnetic_field_z_muT': -25.9,
-    'observation_level_asl_m': 2300,
-    'atmosphere_id': 10
-}
 
 NUM_FLOATS_IN_EVENTSUMMARY = 25
 
@@ -34,15 +16,6 @@ XS_MEDIAN = 3
 YS_MEDIAN = 4
 CXS_MEDIAN = 5
 CYS_MEDIAN = 6
-
-EXAMPLE_CORSIKA_PRIMARY_MOD_PATH = os.path.abspath(
-    os.path.join(
-        'build',
-        'corsika',
-        'modified',
-        'corsika-75600',
-        'run',
-        'corsika75600Linux_QGSII_urqmd'))
 
 CORSIKA_ZENITH_LIMIT_DEG = 70.0
 
@@ -196,7 +169,7 @@ def indirect_discovery(
     initial_num_events_per_iteration=2**5,
     max_total_num_events=2**14,
     min_num_valid_Cherenkov_pools=100,
-    corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
+    corsika_primary_path=examples.CORSIKA_PRIMARY_MOD_PATH,
     iteration_speed=0.5,
     min_num_cherenkov_photons_in_airshower=100,
     verbose=True,
@@ -339,7 +312,7 @@ def direct_discovery(
     instrument_zenith_deg,
     max_off_axis_deg,
     site,
-    corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
+    corsika_primary_path=examples.CORSIKA_PRIMARY_MOD_PATH,
     min_num_cherenkov_photons_in_airshower=100,
 ):
     out = {
@@ -461,7 +434,7 @@ def estimate_deflection(
     initial_num_events_per_iteration=2**5,
     max_total_num_events=2**13,
     min_num_valid_Cherenkov_pools=100,
-    corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
+    corsika_primary_path=examples.CORSIKA_PRIMARY_MOD_PATH,
     iteration_speed=0.9,
     min_num_cherenkov_photons_in_airshower=100,
     verbose=True,
