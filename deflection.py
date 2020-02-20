@@ -7,9 +7,11 @@ import multiprocessing
 import random
 import pandas as pd
 import shutil
+import pickle
+import corsika_primary_wrapper as cpw
 
 
-work_dir = os.path.join('.', 'deflection')
+work_dir = os.path.join('.', 'explore_deflection')
 
 particles = plenoirf.EXAMPLE_CONFIG['particles']
 plenoscope_pointing = plenoirf.EXAMPLE_CONFIG['plenoscope_pointing']
@@ -24,12 +26,10 @@ CORSIKA_PRIMARY_PATH = os.path.abspath(os.path.join(
     "corsika75600Linux_QGSII_urqmd"))
 
 max_energy_GeV = 24.0
-max_scatter_angle_deg = 5.0
 
-num_parallel = 12
-
-pool = multiprocessing.Pool(num_parallel)
-# pool = sun_grid_engine_map
+# num_parallel = 12
+# pool = multiprocessing.Pool(num_parallel)
+pool = sun_grid_engine_map
 
 
 def sort_combined_results(
@@ -52,9 +52,9 @@ def sort_combined_results(
     ]
 
     res = {}
-    for site_key in ['chile']: # sites:
+    for site_key in sites:
         res[site_key] = {}
-        for particle_key in ['electron']: # particles:
+        for particle_key in particles:
             site_mask = (df['site_key'] == site_key).values
             particle_mask = (df['particle_key'] == particle_key).values
             mask = np.logical_and(site_mask, particle_mask)
@@ -70,7 +70,7 @@ def sort_combined_results(
 
 def write_recarray_to_csv(recarray, path):
     df = pd.DataFrame(recarray)
-    csv = level_df.to_csv(index=False)
+    csv = df.to_csv(index=False)
     with open(path+".tmp", 'wt') as f:
         f.write(csv)
     shutil.move(path+".tmp", path)
@@ -81,6 +81,9 @@ def make_jobs(
     particles,
     max_energy,
     num_energy_supports,
+    iteration_speed=0.9,
+    max_iterations=25,
+    power_slope=-1.7,
     corsika_primary_path=CORSIKA_PRIMARY_PATH,
 ):
     jobs = []
@@ -90,10 +93,11 @@ def make_jobs(
             particle_id = particles[particle_key]["particle_id"]
             max_off_axis_deg = .1*particles[particle_key]["max_scatter_angle_deg"]
             min_energy = np.min(particles[particle_key]["energy_bin_edges_GeV"])
-            energy_supports = np.geomspace(
-                min_energy,
-                max_energy,
-                num_energy_supports)
+            energy_supports = np.sort(cpw.random_distributions.draw_power_law(
+                lower_limit=min_energy,
+                upper_limit=max_energy,
+                power_slope=power_slope,
+                num_samples=num_energy_supports))
             for energy_idx in range(len(energy_supports)):
                 job = {}
                 job['site'] = site
@@ -106,6 +110,8 @@ def make_jobs(
                 job['corsika_primary_path'] = CORSIKA_PRIMARY_PATH
                 job['site_key'] = site_key
                 job['particle_key'] = particle_key
+                job['iteration_speed'] = iteration_speed
+                job['max_iterations'] = max_iterations
                 jobs.append(job)
     return jobs
 
@@ -116,10 +122,15 @@ jobs = make_jobs(
     sites=sites,
     particles=particles,
     max_energy=24,
-    num_energy_supports=16)
+    num_energy_supports=64)
 
-random.shuffle(jobs)
-combined_results = pool.map(mdfl.run_job, jobs)
+print(len(jobs))
+if os.path.exists('combined_results.pkl'):
+    with open('combined_results.pkl', 'rb') as f:
+        combined_results = pickle.loads(f.read())
+else:
+    random.shuffle(jobs)
+    combined_results = pool.map(mdfl.run_job, jobs)
 
 res = sort_combined_results(
     combined_results=combined_results,

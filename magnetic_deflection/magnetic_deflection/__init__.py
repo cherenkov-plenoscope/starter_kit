@@ -7,6 +7,8 @@ import multiprocessing
 import corsika_primary_wrapper as cpw
 import subprocess
 import tempfile
+import sys
+import time
 
 
 EXAMPLE_SITE = {
@@ -160,6 +162,9 @@ def _make_steering(
 
 def _info_json(
     run_id,
+    atmosphere_id,
+    particle_id,
+    energy,
     off_axis_deg,
     num_events,
     primary_cx,
@@ -167,12 +172,16 @@ def _info_json(
     num_cherenkov_pools,
 ):
     prm_az_deg, prm_zd_deg = _cx_cy_to_az_zd_deg(cx=primary_cx, cy=primary_cy)
-    s = '"it": {:d}, '.format(run_id)
-    s += '"num_airshower_thrown": {:d}, '.format(num_events)
+    s = '"time": {:d}, '.format(int(time.time()))
+    s += '"atmosphere_id": {:d}, '.format(atmosphere_id)
+    s += '"particle_id": {:d}, '.format(particle_id)
+    s += '"energy_GeV": {:.2f}, '.format(energy)
+    s += '"it": {:d}, '.format(run_id)
+    s += '"airshower": {:d}, '.format(num_events)
     s += '"azimuth_deg": {:.2f}, '.format(prm_az_deg)
     s += '"zenith_deg": {:.2f}, '.format(prm_zd_deg)
     s += '"off_deg": {:.2f}, '.format(off_axis_deg)
-    s += '"num_valid_Cherenkov_pools": {:d}'.format(num_cherenkov_pools)
+    s += '"pools": {:d}'.format(num_cherenkov_pools)
     return '{' + s + '}'
 
 
@@ -190,7 +199,7 @@ def estimate_deflection(
     corsika_primary_path=EXAMPLE_CORSIKA_PRIMARY_MOD_PATH,
     iteration_speed=0.5,
     min_num_cherenkov_photons_in_airshower=100,
-    verbose=False,
+    verbose=True,
 ):
     assert iteration_speed > 0
     assert iteration_speed <= 1.0
@@ -232,6 +241,9 @@ def estimate_deflection(
         if verbose:
             print(_info_json(
                 run_id,
+                site['atmosphere_id'],
+                primary_particle_id,
+                primary_energy,
                 off_axis_deg,
                 num_events,
                 primary_cx,
@@ -279,6 +291,10 @@ def estimate_deflection(
     }
 
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def run_job(job):
     try:
         deflection = estimate_deflection(
@@ -288,12 +304,14 @@ def run_job(job):
             instrument_azimuth_deg=job['instrument_azimuth_deg'],
             instrument_zenith_deg=job['instrument_zenith_deg'],
             max_off_axis_deg=job['max_off_axis_deg'],
-            corsika_primary_path=job['corsika_primary_path'])
+            corsika_primary_path=job['corsika_primary_path'],
+            iteration_speed=job['iteration_speed'],
+            max_iterations=job['max_iterations'])
         deflection["valid"] = True
     except RuntimeError as whatever:
-        print("RuntimeError:")
-        print(job['site_key'], job['particle_key'], job['primary_energy'])
-        print(whatever)
+        eprint("RuntimeError:")
+        eprint(job['site_key'], job['particle_key'], job['primary_energy'])
+        eprint(whatever)
         deflection = {}
         deflection["valid"] = False
     deflection['site_key'] = job['site_key']
