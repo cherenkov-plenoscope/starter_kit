@@ -78,12 +78,14 @@ EXAMPLE_CONFIG = {
             "earth_magnetic_field_x_muT": 12.5,
             "earth_magnetic_field_z_muT": -25.9,
             "atmosphere_id": 10,
+            "geomagnetic_cutoff_rigidity_GV": 12.5,
         },
         "chile": {
             "observation_level_asl_m": 5000,
             "earth_magnetic_field_x_muT": 20.815,
             "earth_magnetic_field_z_muT": -11.366,
             "atmosphere_id": 26,
+            "geomagnetic_cutoff_rigidity_GV": 10.0,
         },
     },
 
@@ -93,24 +95,28 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [0.5, 100],
             "max_scatter_angle_deg": 5,
             "energy_power_law_slope": -1.7,
+            "electric_charge_qe": 0.,
         },
         "electron": {
             "particle_id": 3,
             "energy_bin_edges_GeV": [0.5, 100],
             "max_scatter_angle_deg": 10,
             "energy_power_law_slope": -1.7,
+            "electric_charge_qe": -1.,
         },
         "proton": {
             "particle_id": 14,
             "energy_bin_edges_GeV": [5, 100],
             "max_scatter_angle_deg": 30,
             "energy_power_law_slope": -1.7,
+            "electric_charge_qe": +1.,
         },
         "helium": {
             "particle_id": 402,
             "energy_bin_edges_GeV": [10, 100],
             "max_scatter_angle_deg": 30,
             "energy_power_law_slope": -1.7,
+            "electric_charge_qe": +2.,
         },
     },
 
