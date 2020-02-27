@@ -6,7 +6,7 @@ import numpy as np
 import corsika_primary_wrapper as cpw
 from . import examples
 from . import discovery
-
+from . import light_field_characterization
 
 
 def make_jobs(
@@ -19,6 +19,7 @@ def make_jobs(
     iteration_speed=0.9,
     initial_num_events_per_iteration=2**5,
     max_total_num_events=2**12,
+    outlier_percentile=50.0,
     corsika_primary_path=examples.CORSIKA_PRIMARY_MOD_PATH,
 ):
     jobs = []
@@ -26,8 +27,10 @@ def make_jobs(
         for particle_key in particles:
             site = sites[site_key]
             particle_id = particles[particle_key]["particle_id"]
-            max_off_axis_deg = .1*particles[particle_key]["max_scatter_angle_deg"]
-            min_energy = np.min(particles[particle_key]["energy_bin_edges_GeV"])
+            max_off_axis_deg = .1*particles[particle_key][
+                "max_scatter_angle_deg"]
+            min_energy = np.min(particles[particle_key][
+                "energy_bin_edges_GeV"])
             energy_supports = mdfl.powerspace(
                 start=min_energy,
                 stop=max_energy,
@@ -38,8 +41,10 @@ def make_jobs(
                 job['site'] = site
                 job['primary_energy'] = energy_supports[energy_idx]
                 job['primary_particle_id'] = particle_id
-                job['instrument_azimuth_deg'] = plenoscope_pointing['azimuth_deg']
-                job['instrument_zenith_deg'] = plenoscope_pointing['zenith_deg']
+                job['instrument_azimuth_deg'] = plenoscope_pointing[
+                    'azimuth_deg']
+                job['instrument_zenith_deg'] = plenoscope_pointing[
+                    'zenith_deg']
                 job['max_off_axis_deg'] = max_off_axis_deg
                 job['corsika_primary_path'] = corsika_primary_path
                 job['site_key'] = site_key
@@ -48,6 +53,7 @@ def make_jobs(
                 job['initial_num_events_per_iteration'] = (
                     initial_num_events_per_iteration)
                 job['max_total_num_events'] = max_total_num_events
+                job['outlier_percentile'] = outlier_percentile
                 jobs.append(job)
     return jobs
 
@@ -77,6 +83,19 @@ def run_job(job):
     deflection['energy_GeV'] = job['primary_energy']
     deflection['site_key'] = job['site_key']
     deflection['particle_key'] = job['particle_key']
+
+    lfc = light_field_characterization.characterize_cherenkov_pool(
+        site=job['site'],
+        primary_energy=job['primary_energy'],
+        primary_particle_id=job['primary_particle_id'],
+        primary_azimuth_deg=deflection['primary_azimuth_deg'],
+        primary_zenith_deg=deflection['primary_zenith_deg'],
+        corsika_primary_path=job['corsika_primary_path'],
+        total_energy_thrown=1e3,
+        min_num_cherenkov_photons=1e2,
+        outlier_percentile=job['outlier_percentile'])
+    deflection.update(lfc)
+
     return deflection
 
 
@@ -100,6 +119,8 @@ def structure_combined_results(
 ):
     df = pd.DataFrame(combined_results)
 
+    all_keys_keep = KEEP_KEYS + light_field_characterization.KEYS
+
     res = {}
     for site_key in sites:
         res[site_key] = {}
@@ -109,7 +130,7 @@ def structure_combined_results(
             mask = np.logical_and(site_mask, particle_mask)
             site_particle_df = df[mask]
             site_particle_df = site_particle_df[site_particle_df['valid']]
-            site_particle_keep_df = site_particle_df[KEEP_KEYS]
+            site_particle_keep_df = site_particle_df[all_keys_keep]
             site_particle_rec = site_particle_keep_df.to_records(index=False)
             argsort = np.argsort(site_particle_rec['energy_GeV'])
             site_particle_rec = site_particle_rec[argsort]

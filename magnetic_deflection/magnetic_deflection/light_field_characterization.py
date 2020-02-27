@@ -6,12 +6,33 @@ import os
 import pandas as pd
 
 
-def estimate_cherenkov_pool(
+KEYPREFIX = 'char_'
+
+KEYS = [
+    'char_position_med_x_m',
+    'char_position_med_y_m',
+    'char_position_phi_rad',
+    'char_position_std_major_m',
+    'char_position_std_minor_m',
+    'char_direction_med_cx_rad',
+    'char_direction_med_cy_rad',
+    'char_direction_phi_rad',
+    'char_direction_std_major_rad',
+    'char_direction_std_minor_rad',
+    'char_arrival_time_mean_s',
+    'char_arrival_time_median_s',
+    'char_arrival_time_std_s',
+    'char_total_num_photons',
+    'char_total_num_airshowers',
+]
+
+
+def characterize_cherenkov_pool(
     site,
     primary_particle_id,
     primary_energy,
-    primary_cx,
-    primary_cy,
+    primary_azimuth_deg,
+    primary_zenith_deg,
     corsika_primary_path,
     total_energy_thrown=1e3,
     min_num_cherenkov_photons=1e2,
@@ -19,6 +40,10 @@ def estimate_cherenkov_pool(
 ):
     assert total_energy_thrown > primary_energy
     num_airshower = int(np.ceil(total_energy_thrown/primary_energy))
+
+    primary_cx, primary_cy = discovery._az_zd_to_cx_cy(
+        azimuth_deg=primary_azimuth_deg,
+        zenith_deg=primary_zenith_deg)
 
     corsika_primary_steering = discovery._make_steering(
         run_id=1,
@@ -45,15 +70,18 @@ def estimate_cherenkov_pool(
 
         num_airshowers_found = len(pools)
         bunches = np.vstack(pools)
-        out = parameterize_light_field(
+        _out = parameterize_light_field(
             xs=bunches[:, cpw.IX]*cpw.CM2M,
             ys=bunches[:, cpw.IY]*cpw.CM2M,
             cxs=bunches[:, cpw.ICX],
             cys=bunches[:, cpw.ICY],
             ts=bunches[:, cpw.ITIME]*1e-9,  # ns to s
             outlier_percentile=outlier_percentile)
-        out["num_photons"] = float(np.sum(bunches[:, cpw.IBSIZE]))
-        out['num_airshowers'] = int(num_airshowers_found)
+        _out["total_num_photons"] = float(np.sum(bunches[:, cpw.IBSIZE]))
+        _out['total_num_airshowers'] = int(num_airshowers_found)
+        out = {}
+        for key in _out:
+            out[KEYPREFIX+key] = _out[key]
         return out
 
 
