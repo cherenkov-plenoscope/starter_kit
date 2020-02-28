@@ -96,6 +96,7 @@ EXAMPLE_CONFIG = {
             "max_scatter_angle_deg": 5,
             "energy_power_law_slope": -1.7,
             "electric_charge_qe": 0.,
+            "magnetic_deflection_max_off_axis_deg": 0.25,
         },
         "electron": {
             "particle_id": 3,
@@ -103,6 +104,7 @@ EXAMPLE_CONFIG = {
             "max_scatter_angle_deg": 10,
             "energy_power_law_slope": -1.7,
             "electric_charge_qe": -1.,
+            "magnetic_deflection_max_off_axis_deg": 0.5,
         },
         "proton": {
             "particle_id": 14,
@@ -110,6 +112,7 @@ EXAMPLE_CONFIG = {
             "max_scatter_angle_deg": 30,
             "energy_power_law_slope": -1.7,
             "electric_charge_qe": +1.,
+            "magnetic_deflection_max_off_axis_deg": 1.5,
         },
         "helium": {
             "particle_id": 402,
@@ -117,6 +120,7 @@ EXAMPLE_CONFIG = {
             "max_scatter_angle_deg": 30,
             "energy_power_law_slope": -1.7,
             "electric_charge_qe": +2.,
+            "magnetic_deflection_max_off_axis_deg": 1.5,
         },
     },
 

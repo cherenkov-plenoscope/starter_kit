@@ -27,8 +27,6 @@ def make_jobs(
         for particle_key in particles:
             site = sites[site_key]
             particle_id = particles[particle_key]["particle_id"]
-            max_off_axis_deg = .1*particles[particle_key][
-                "max_scatter_angle_deg"]
             min_energy = np.min(particles[particle_key][
                 "energy_bin_edges_GeV"])
             energy_supports = powerspace(
@@ -45,7 +43,8 @@ def make_jobs(
                     'azimuth_deg']
                 job['instrument_zenith_deg'] = plenoscope_pointing[
                     'zenith_deg']
-                job['max_off_axis_deg'] = max_off_axis_deg
+                job['max_off_axis_deg'] = particles[particle_key][
+                    "magnetic_deflection_max_off_axis_deg"]
                 job['corsika_primary_path'] = corsika_primary_path
                 job['site_key'] = site_key
                 job['particle_key'] = particle_key

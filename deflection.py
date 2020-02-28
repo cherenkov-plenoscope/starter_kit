@@ -12,9 +12,9 @@ particles = plenoirf.EXAMPLE_CONFIG['particles']
 plenoscope_pointing = plenoirf.EXAMPLE_CONFIG['plenoscope_pointing']
 sites = plenoirf.EXAMPLE_CONFIG['sites']
 
-max_energy_GeV = 24.0
+max_energy_GeV = 32.0
 
-# num_parallel = 12
+# num_parallel = 8
 # pool = multiprocessing.Pool(num_parallel)
 pool = sun_grid_engine_map
 
@@ -23,7 +23,7 @@ if not os.path.exists(work_dir):
         sites=sites,
         particles=particles,
         plenoscope_pointing=plenoscope_pointing,
-        max_energy=24,
+        max_energy=max_energy_GeV,
         num_energy_supports=256)
     print(len(jobs))
     jobs_sorted_energy = mdfl.map_and_reduce.sort_jobs_by_key(
