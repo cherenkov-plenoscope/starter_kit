@@ -24,6 +24,7 @@ KEYS = [
     'char_arrival_time_std_s',
     'char_total_num_photons',
     'char_total_num_airshowers',
+    'char_outlier_percentile',
 ]
 
 
@@ -79,6 +80,7 @@ def characterize_cherenkov_pool(
             outlier_percentile=outlier_percentile)
         _out["total_num_photons"] = float(np.sum(bunches[:, cpw.IBSIZE]))
         _out['total_num_airshowers'] = int(num_airshowers_found)
+        _out['outlier_percentile'] = float(outlier_percentile)
         out = {}
         for key in _out:
             out[KEYPREFIX+key] = _out[key]

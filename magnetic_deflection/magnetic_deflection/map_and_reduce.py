@@ -31,7 +31,7 @@ def make_jobs(
                 "max_scatter_angle_deg"]
             min_energy = np.min(particles[particle_key][
                 "energy_bin_edges_GeV"])
-            energy_supports = mdfl.powerspace(
+            energy_supports = powerspace(
                 start=min_energy,
                 stop=max_energy,
                 power_index=energy_supports_power_law_slope,
@@ -91,7 +91,7 @@ def run_job(job):
         primary_azimuth_deg=deflection['primary_azimuth_deg'],
         primary_zenith_deg=deflection['primary_zenith_deg'],
         corsika_primary_path=job['corsika_primary_path'],
-        total_energy_thrown=1e3,
+        total_energy_thrown=1e2,
         min_num_cherenkov_photons=1e2,
         outlier_percentile=job['outlier_percentile'])
     deflection.update(lfc)
