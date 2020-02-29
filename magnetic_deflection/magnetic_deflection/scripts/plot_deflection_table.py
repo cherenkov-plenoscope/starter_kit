@@ -114,7 +114,9 @@ def add_grid_in_half_dome(
     zeniths_deg,
     linewidth,
     color,
-    alpha):
+    alpha,
+    draw_lower_horizontal_edge_deg=None,
+):
     zeniths = np.deg2rad(zeniths_deg)
     proj_radii = np.sin(zeniths)
     for i in range(len(zeniths)):
@@ -144,6 +146,24 @@ def add_grid_in_half_dome(
                 color=color,
                 linewidth=linewidth*np.cos(zeniths[z-1]),
                 alpha=alpha)
+
+    if draw_lower_horizontal_edge_deg is not None:
+        zd_edge = np.deg2rad(draw_lower_horizontal_edge_deg)
+        r = np.sin(zd_edge)
+        ax.plot(
+            [-1, 0],
+            [-r, -r],
+            color=color,
+            linewidth=linewidth,
+            alpha=alpha)
+        add_circle(
+            ax=ax,
+            x=0,
+            y=0,
+            r=r,
+            linewidth=linewidth,
+            color=color,
+            alpha=alpha)
 
 
 def add_ticklabels_in_half_dome(
@@ -179,6 +199,43 @@ def percentile_indices(values, target_value, percentile=90):
     return idxs_sorted[0: idx_limit]
 
 
+def smooth(energies, values):
+    suggested_num_energy_bins = int(np.ceil(2*np.sqrt(len(values))))
+    suggested_energy_bin_edges = np.geomspace(
+        np.min(energies),
+        np.max(energies),
+        suggested_num_energy_bins+1)
+    suggested_energy_supports = 0.5*(
+        suggested_energy_bin_edges[0:-1] +
+        suggested_energy_bin_edges[1:])
+
+    actual_energy_supports = []
+    key_med = []
+    key_mean80 = []
+    key_std80 = []
+    for ibin in range(len(suggested_energy_bin_edges) - 1):
+        e_start = suggested_energy_bin_edges[ibin]
+        e_stop = suggested_energy_bin_edges[ibin+1]
+        mask = np.logical_and(energies >= e_start, energies < e_stop)
+        if np.sum(mask) > 3:
+            actual_energy_supports.append(suggested_energy_supports[ibin])
+            med = np.median(values[mask])
+            key_med.append(med)
+            indices80 = percentile_indices(
+                values=values[mask],
+                target_value=med,
+                percentile=80)
+            key_std80.append(np.std(values[mask][indices80]))
+            key_mean80.append(np.mean(values[mask][indices80]))
+    return {
+        "energy_supports": np.array(actual_energy_supports),
+        "key_med": np.array(key_med),
+        "key_std80": np.array(key_std80),
+        "key_mean80": np.array(key_mean80),
+    }
+
+
+
 for site_key in deflection_table:
     for particle_key in deflection_table[site_key]:
         site = irf_config['config']['sites'][site_key]
@@ -193,13 +250,9 @@ for site_key in deflection_table:
                 site["earth_magnetic_field_x_muT"],
                 site["earth_magnetic_field_z_muT"])
 
-        t = deflection_table[site_key][particle_key]
-        num_energy_bins = int(np.ceil(2*np.sqrt(t.shape[0])))
-        energy_bin_edges = np.geomspace(
-            np.min(t["energy_GeV"]),
-            np.max(t["energy_GeV"]),
-            num_energy_bins+1)
-        energy_bins = 0.5*(energy_bin_edges[0:-1] + energy_bin_edges[1:])
+        t_raw = deflection_table[site_key][particle_key]
+        defelction_detected = t_raw['primary_azimuth_deg'] != 0.
+        t = t_raw[defelction_detected]
 
         energy_fine = np.geomspace(
             np.min(t["energy_GeV"]),
@@ -207,35 +260,29 @@ for site_key in deflection_table:
             1000)
 
         for key in key_map:
-
             print(site_key, particle_key, key)
-            key_med = []
-            key_mean80 = []
-            key_std80 = []
-            for ibin in range(len(energy_bin_edges) - 1):
-                e_start = energy_bin_edges[ibin]
-                e_stop = energy_bin_edges[ibin+1]
-                mask = np.logical_and(
-                    t["energy_GeV"] >= e_start,
-                    t["energy_GeV"] < e_stop)
-                med = np.median(t[key][mask])
-                key_med.append(med)
-                indices80 = percentile_indices(
-                    values=t[key][mask],
-                    target_value=med,
-                    percentile=80)
-                key_std80.append(np.std(t[key][mask][indices80]))
-                key_mean80.append(np.mean(t[key][mask][indices80]))
-            key_med = np.array(key_med)
-            key_std80 = np.array(key_std80)
-            key_mean80 = np.array(key_mean80)
+
+            sres = smooth(energies=t["energy_GeV"], values=t[key])
+            energy_supports = sres["energy_supports"]
+            key_med = sres["key_med"]
+            key_std80 = sres["key_std80"]
+            key_mean80 = sres["key_mean80"]
             unc80_upper = key_mean80 + key_std80
             unc80_lower = key_mean80 - key_std80
+
+            if particle_key == "electron":
+                valid_range = energy_supports > 0.75
+                energy_supports = energy_supports[valid_range]
+                key_med = key_med[valid_range]
+                key_std80 = key_std80[valid_range]
+                key_mean80 = key_mean80[valid_range]
+                unc80_upper = unc80_upper[valid_range]
+                unc80_lower = unc80_lower[valid_range]
 
             key_start = charge_signs[particle_key]*key_map[key]["start"]
 
             energy_bins_ext = np.array(
-                energy_bins.tolist() +
+                energy_supports.tolist() +
                 np.geomspace(200, 600, 20).tolist())
             key_mean80_ext = np.array(
                 key_mean80.tolist() +
@@ -282,11 +329,11 @@ for site_key in deflection_table:
                 'ko',
                 alpha=0.05)
             ax.plot(
-                energy_bins,
+                energy_supports,
                 key_mean80*key_map[key]["factor"],
                 'kx')
-            for ibin in range(len(energy_bins)):
-                _x = energy_bins[ibin]
+            for ibin in range(len(energy_supports)):
+                _x = energy_supports[ibin]
                 _y_low = unc80_lower[ibin]
                 _y_high = unc80_upper[ibin]
                 ax.plot(
@@ -307,7 +354,15 @@ for site_key in deflection_table:
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             ax.set_xlabel('energy$\,/\,$GeV')
-            ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
+            ax.set_xlim([0.4, 110])
+
+            y_fit_lower = key_map[key]["factor"]*np.min(unc80_lower)
+            y_fit_upper = key_map[key]["factor"]*np.max(unc80_upper)
+            y_fit_range = y_fit_upper - y_fit_lower
+            assert y_fit_range > 0
+            _ll = y_fit_lower - 0.2*y_fit_range
+            _uu = y_fit_upper + 0.2*y_fit_range
+            ax.set_ylim([_ll, _uu])
             ax.set_ylabel(
                 '{key:s}$\,/\,${unit:s}'.format(
                     key=key_map[key]["name"],
@@ -462,10 +517,11 @@ for site_key in deflection_table:
         add_grid_in_half_dome(
             ax=ax,
             azimuths_deg=azimuths_deg_steps,
-            zeniths_deg=np.linspace(0, 90, 11),
-            linewidth=1,
+            zeniths_deg=np.linspace(0, fov_deg, 10),
+            linewidth=1.4,
             color='k',
-            alpha=0.1)
+            alpha=0.1,
+            draw_lower_horizontal_edge_deg=fov_deg)
 
         cmap_name = "nipy_spectral"
         cmap_norm = plt_colors.LogNorm(
@@ -486,10 +542,13 @@ for site_key in deflection_table:
             point_diameter=0.1*rfov,
             rgbas=rgbas)
         ax.text(
-            -1.4*rfov,
-            -1*rfov,
-            "sky-dome\nradius {:1.1f}$^\circ$\nw.r.t. magnetic north".format(
-                fov_deg))
+            -1.5*rfov,
+            0.8*rfov,
+            "sky-dome\nw.r.t. magnetic north")
+        ax.text(
+            -1.0*rfov,
+            -1.0*rfov,
+            "{:1.1f}$^\circ$".format(fov_deg))
 
         ax.set_axis_off()
         ax.set_aspect('equal')
@@ -498,8 +557,8 @@ for site_key in deflection_table:
             ax=ax,
             azimuths_deg=azimuths_deg_steps,
             rfov=rfov)
-        ax.set_xlim([-rfov, rfov])
-        ax.set_ylim([-rfov, rfov])
+        ax.set_xlim([-1.01*rfov, 1.01*rfov])
+        ax.set_ylim([-1.01*rfov, 1.01*rfov])
 
         fig.savefig(
             os.path.join(
