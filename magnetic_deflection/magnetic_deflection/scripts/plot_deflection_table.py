@@ -13,6 +13,9 @@ import scipy
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib import patches as plt_patches
+from matplotlib import colors as plt_colors
+
 
 argv = irf.summary.argv_since_py(sys.argv)
 assert len(argv) == 3
@@ -55,6 +58,115 @@ charge_signs = {
     "helium": 1.,
 }
 
+figsize = (16/2, 9/2)
+dpi = 240
+ax_size = (0.15, 0.12, 0.8, 0.8)
+
+def add_circle(ax, x, y, r, linewidth, color, alpha):
+    phis = np.linspace(0, 2*np.pi, 1001)
+    xs = r*np.cos(phis)
+    ys = r*np.sin(phis)
+    ax.plot(xs, ys, linewidth=linewidth, color=color, alpha=alpha)
+
+
+def add_points_in_half_dome(
+    ax,
+    azimuths_deg,
+    zeniths_deg,
+    point_diameter,
+    color=None,
+    alpha=None,
+    rgbas=None,
+):
+    zeniths = np.deg2rad(zeniths_deg)
+    azimuths = np.deg2rad(azimuths_deg)
+
+    proj_radii = np.sin(zeniths)
+    proj_x = np.cos(azimuths)*proj_radii
+    proj_y = np.sin(azimuths)*proj_radii
+
+    if rgbas is not None:
+        _colors = rgbas[:, 0:3]
+        _alphas = rgbas[:, 3]
+    else:
+        assert color is not None
+        assert alpha is not None
+        _colors = [color for i in range(len(zeniths))]
+        _alphas = [alpha for i in range(len(zeniths))]
+
+    for i in range(len(zeniths)):
+        e1 = plt_patches.Ellipse(
+            (proj_x[i], proj_y[i]),
+            width=point_diameter*np.cos(zeniths[i]),
+            height=point_diameter,
+            angle=np.rad2deg(azimuths[i]),
+            linewidth=0,
+            fill=True,
+            zorder=2,
+            facecolor=_colors[i],
+            alpha=_alphas[i])
+        ax.add_patch(e1)
+
+
+def add_grid_in_half_dome(
+    ax,
+    azimuths_deg,
+    zeniths_deg,
+    linewidth,
+    color,
+    alpha):
+    zeniths = np.deg2rad(zeniths_deg)
+    proj_radii = np.sin(zeniths)
+    for i in range(len(zeniths)):
+        add_circle(
+            ax=ax,
+            x=0,
+            y=0,
+            r=proj_radii[i],
+            linewidth=linewidth*np.cos(zeniths[i]),
+            color=color,
+            alpha=alpha)
+
+    azimuths = np.deg2rad(azimuths_deg)
+    for a in range(len(azimuths)):
+        for z in range(len(zeniths)):
+            if z == 0:
+                continue
+            r_start = np.sin(zeniths[z-1])
+            r_stop = np.sin(zeniths[z])
+            start_x = r_start*np.cos(azimuths[a])
+            start_y = r_start*np.sin(azimuths[a])
+            stop_x = r_stop*np.cos(azimuths[a])
+            stop_y = r_stop*np.sin(azimuths[a])
+            ax.plot(
+                [start_x, stop_x],
+                [start_y, stop_y],
+                color=color,
+                linewidth=linewidth*np.cos(zeniths[z-1]),
+                alpha=alpha)
+
+
+def add_ticklabels_in_half_dome(
+    ax,
+    azimuths_deg,
+    rfov=1.0,
+    fmt="{:1.0f}$^\circ$",
+):
+    xshift = -0.1*rfov
+    yshift = -0.05*rfov
+
+    azimuths = np.deg2rad(azimuths_deg)
+    azimuth_deg_strs = [fmt.format(az) for az in azimuths_deg]
+    xs = rfov*np.cos(azimuths) + xshift
+    ys = rfov*np.sin(azimuths) + yshift
+    for a in range(len(azimuths)):
+        ax.text(
+            x=xs[a],
+            y=ys[a],
+            s=azimuth_deg_strs[a])
+
+
+
 def percentile_indices(values, target_value, percentile=90):
     values = np.array(values)
     factor = percentile/100.
@@ -72,7 +184,7 @@ for site_key in deflection_table:
         site = irf_config['config']['sites'][site_key]
         site_str = "".join([
             "{:s}, {:.1f}$\,$km$\,$a.s.l., ",
-            "Atm.-id. {:d}, ",
+            "Atm.-id {:d}, ",
             "Bx {:.1f}$\,$uT, ",
             "Bz {:.1f}$\,$uT"]).format(
                 site_key,
@@ -154,15 +266,14 @@ for site_key in deflection_table:
                 key_start
             ))
 
+            info_str = particle_key + ", " + site_str
+
             rec_key = power_law(
                 energy=energy_fine,
                 scale=expy[0],
                 index=expy[1])
             rec_key += key_start
 
-            figsize = (6, 4)
-            dpi = 320
-            ax_size = (0.15, 0.12, 0.80, 0.75)
             fig = plt.figure(figsize=figsize, dpi=dpi)
             ax = fig.add_axes(ax_size)
             ax.plot(
@@ -191,8 +302,7 @@ for site_key in deflection_table:
                 energy_fine,
                 rec_key*key_map[key]["factor"],
                 'r-')
-            info_str = particle_key +"\n" + site_str
-            ax.set_title(info_str)
+            ax.set_title(info_str, alpha=.5)
             ax.semilogx()
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
@@ -218,9 +328,6 @@ for site_key in deflection_table:
             t['char_total_num_photons']/
             t['char_total_num_airshowers'])
 
-        figsize = (6, 4)
-        dpi = 320
-        ax_size = (0.15, 0.12, 0.80, 0.75)
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_axes(ax_size)
         ax.plot(
@@ -228,8 +335,7 @@ for site_key in deflection_table:
             num_cherenkov_photons_per_shower,
             'ko',
             alpha=0.3)
-        info_str = particle_key +"\n" + site_str
-        ax.set_title(info_str)
+        ax.set_title(info_str, alpha=.5)
         ax.loglog()
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -251,10 +357,6 @@ for site_key in deflection_table:
             t['char_position_std_major_m']*
             t['char_position_std_minor_m'])
 
-
-        figsize = (6, 4)
-        dpi = 320
-        ax_size = (0.15, 0.12, 0.80, 0.75)
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_axes(ax_size)
         ax.plot(
@@ -262,8 +364,7 @@ for site_key in deflection_table:
             areal_spread_m2,
             'ko',
             alpha=0.3)
-        info_str = particle_key +"\n" + site_str
-        ax.set_title(info_str)
+        ax.set_title(info_str, alpha=.5)
         ax.loglog()
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -286,9 +387,6 @@ for site_key in deflection_table:
             np.rad2deg(t['char_direction_std_major_rad'])*
             np.rad2deg(t['char_direction_std_minor_rad']))
 
-        figsize = (6, 4)
-        dpi = 320
-        ax_size = (0.15, 0.12, 0.80, 0.75)
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_axes(ax_size)
         ax.plot(
@@ -296,8 +394,7 @@ for site_key in deflection_table:
             directional_spread_deg2,
             'ko',
             alpha=0.3)
-        info_str = particle_key +"\n" + site_str
-        ax.set_title(info_str)
+        ax.set_title(info_str, alpha=.5)
         ax.loglog()
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -318,10 +415,6 @@ for site_key in deflection_table:
             num_cherenkov_photons_per_shower/
             (directional_spread_deg2*areal_spread_m2))
 
-
-        figsize = (6, 4)
-        dpi = 320
-        ax_size = (0.15, 0.12, 0.80, 0.75)
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_axes(ax_size)
         ax.plot(
@@ -329,8 +422,7 @@ for site_key in deflection_table:
             light_field_outer_density,
             'ko',
             alpha=0.3)
-        info_str = particle_key +"\n" + site_str
-        ax.set_title(info_str)
+        ax.set_title(info_str, alpha=.5)
         ax.loglog()
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -346,3 +438,75 @@ for site_key in deflection_table:
                     particle_key,
                     "light_field_outer_density")))
         plt.close(fig)
+
+        azimuths_deg_steps = np.linspace(0, 360, 12, endpoint=False)
+
+
+        if particle_key == "gamma":
+            fov_deg = 1.
+        elif particle_key == "proton":
+            fov_deg = 10.
+        elif particle_key == "helium":
+            fov_deg = 10.
+        else:
+            fov_deg = 90.
+
+        fov = np.deg2rad(fov_deg)
+        rfov = np.sin(fov)
+
+        fig = plt.figure(figsize=figsize, dpi=dpi)
+        ax = fig.add_axes((0.07, 0.07, 0.85, 0.85))
+        cmap_ax = fig.add_axes((0.8, 0.07, 0.02, 0.85))
+        ax.set_title(info_str, alpha=0.5)
+
+        add_grid_in_half_dome(
+            ax=ax,
+            azimuths_deg=azimuths_deg_steps,
+            zeniths_deg=np.linspace(0, 90, 11),
+            linewidth=1,
+            color='k',
+            alpha=0.1)
+
+        cmap_name = "nipy_spectral"
+        cmap_norm = plt_colors.LogNorm(
+            vmin=np.min(t['energy_GeV']),
+            vmax=np.max(t['energy_GeV']))
+        cmap_mappable = matplotlib.cm.ScalarMappable(
+            norm=cmap_norm,
+            cmap=cmap_name)
+        plt.colorbar(cmap_mappable, cax=cmap_ax)
+        cmap_ax.set_xlabel('energy$\,/\,$GeV')
+
+        rgbas = cmap_mappable.to_rgba(t['energy_GeV'])
+        rgbas[:, 3] = 0.25
+        add_points_in_half_dome(
+            ax=ax,
+            azimuths_deg=t['primary_azimuth_deg'],
+            zeniths_deg=t['primary_zenith_deg'],
+            point_diameter=0.1*rfov,
+            rgbas=rgbas)
+        ax.text(
+            -1.4*rfov,
+            -1*rfov,
+            "sky-dome\nradius {:1.1f}$^\circ$\nw.r.t. magnetic north".format(
+                fov_deg))
+
+        ax.set_axis_off()
+        ax.set_aspect('equal')
+
+        add_ticklabels_in_half_dome(
+            ax=ax,
+            azimuths_deg=azimuths_deg_steps,
+            rfov=rfov)
+        ax.set_xlim([-rfov, rfov])
+        ax.set_ylim([-rfov, rfov])
+
+        fig.savefig(
+            os.path.join(
+                deflection_table_path,
+                '{:s}_{:s}_{:s}.jpg'.format(
+                    site_key,
+                    particle_key,
+                    "dome")))
+        plt.close(fig)
+
