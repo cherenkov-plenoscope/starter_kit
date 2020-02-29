@@ -71,10 +71,10 @@ for site_key in deflection_table:
     for particle_key in deflection_table[site_key]:
         site = irf_config['config']['sites'][site_key]
         site_str = "".join([
-            "{:s}, {:.1f}km a.s.l., ",
+            "{:s}, {:.1f}$\,$km$\,$a.s.l., ",
             "Atm.-id. {:d}, ",
-            "Bx {:.1f}uT, ",
-            "Bz {:.1f}uT"]).format(
+            "Bx {:.1f}$\,$uT, ",
+            "Bz {:.1f}$\,$uT"]).format(
                 site_key,
                 site['observation_level_asl_m']*1e-3,
                 site["atmosphere_id"],
@@ -82,7 +82,7 @@ for site_key in deflection_table:
                 site["earth_magnetic_field_z_muT"])
 
         t = deflection_table[site_key][particle_key]
-        num_energy_bins = 32
+        num_energy_bins = int(np.ceil(2*np.sqrt(t.shape[0])))
         energy_bin_edges = np.geomspace(
             np.min(t["energy_GeV"]),
             np.max(t["energy_GeV"]),
@@ -196,10 +196,10 @@ for site_key in deflection_table:
             ax.semilogx()
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
-            ax.set_xlabel('energy / GeV')
+            ax.set_xlabel('energy$\,/\,$GeV')
             ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
             ax.set_ylabel(
-                '{key:s} / {unit:s}'.format(
+                '{key:s}$\,/\,${unit:s}'.format(
                     key=key_map[key]["name"],
                     unit=key_map[key]["unit"]))
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
@@ -211,3 +211,138 @@ for site_key in deflection_table:
                         particle_key,
                         key)))
             plt.close(fig)
+
+        print("Density of Cherenkov-photons")
+
+        num_cherenkov_photons_per_shower = (
+            t['char_total_num_photons']/
+            t['char_total_num_airshowers'])
+
+        figsize = (6, 4)
+        dpi = 320
+        ax_size = (0.15, 0.12, 0.80, 0.75)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
+        ax = fig.add_axes(ax_size)
+        ax.plot(
+            t["energy_GeV"],
+            num_cherenkov_photons_per_shower,
+            'ko',
+            alpha=0.3)
+        info_str = particle_key +"\n" + site_str
+        ax.set_title(info_str)
+        ax.loglog()
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.set_xlabel('energy$\,/\,$GeV')
+        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
+        ax.set_ylabel('size of Cherenkov-photons$\,/\,$1')
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        fig.savefig(
+            os.path.join(
+                deflection_table_path,
+                '{:s}_{:s}_{:s}.jpg'.format(
+                    site_key,
+                    particle_key,
+                    "num_photons_per_shower")))
+        plt.close(fig)
+
+        areal_spread_m2 = (
+            np.pi*
+            t['char_position_std_major_m']*
+            t['char_position_std_minor_m'])
+
+
+        figsize = (6, 4)
+        dpi = 320
+        ax_size = (0.15, 0.12, 0.80, 0.75)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
+        ax = fig.add_axes(ax_size)
+        ax.plot(
+            t["energy_GeV"],
+            areal_spread_m2,
+            'ko',
+            alpha=0.3)
+        info_str = particle_key +"\n" + site_str
+        ax.set_title(info_str)
+        ax.loglog()
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.set_xlabel('energy$\,/\,$GeV')
+        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
+        ax.set_ylabel('spread in area$\,/\,$m$^2$')
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        fig.savefig(
+            os.path.join(
+                deflection_table_path,
+                '{:s}_{:s}_{:s}.jpg'.format(
+                    site_key,
+                    particle_key,
+                    "areal_spread")))
+        plt.close(fig)
+
+
+        directional_spread_deg2 = (
+            np.pi*
+            np.rad2deg(t['char_direction_std_major_rad'])*
+            np.rad2deg(t['char_direction_std_minor_rad']))
+
+        figsize = (6, 4)
+        dpi = 320
+        ax_size = (0.15, 0.12, 0.80, 0.75)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
+        ax = fig.add_axes(ax_size)
+        ax.plot(
+            t["energy_GeV"],
+            directional_spread_deg2,
+            'ko',
+            alpha=0.3)
+        info_str = particle_key +"\n" + site_str
+        ax.set_title(info_str)
+        ax.loglog()
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.set_xlabel('energy$\,/\,$GeV')
+        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
+        ax.set_ylabel('spread in solid angle$\,/\,$deg$^2$')
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        fig.savefig(
+            os.path.join(
+                deflection_table_path,
+                '{:s}_{:s}_{:s}.jpg'.format(
+                    site_key,
+                    particle_key,
+                    "directional_spread")))
+        plt.close(fig)
+
+        light_field_outer_density = (
+            num_cherenkov_photons_per_shower/
+            (directional_spread_deg2*areal_spread_m2))
+
+
+        figsize = (6, 4)
+        dpi = 320
+        ax_size = (0.15, 0.12, 0.80, 0.75)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
+        ax = fig.add_axes(ax_size)
+        ax.plot(
+            t["energy_GeV"],
+            light_field_outer_density,
+            'ko',
+            alpha=0.3)
+        info_str = particle_key +"\n" + site_str
+        ax.set_title(info_str)
+        ax.loglog()
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.set_xlabel('energy$\,/\,$GeV')
+        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
+        ax.set_ylabel("density of outer light-field$\,/\,$m$^{-2}\,$deg$^{-2}$")
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        fig.savefig(
+            os.path.join(
+                deflection_table_path,
+                '{:s}_{:s}_{:s}.jpg'.format(
+                    site_key,
+                    particle_key,
+                    "light_field_outer_density")))
+        plt.close(fig)
