@@ -33,22 +33,26 @@ key_map = {
         "unit": "deg",
         "name": "primary-azimuth",
         "factor": 1,
-        "start": 90.0},
+        "start": 90.0,
+        "etend_high_energies": True,},
     'primary_zenith_deg': {
         "unit": "deg",
         "name": "primary-zenith",
         "factor": 1,
-        "start": 0.0},
+        "start": 0.0,
+        "etend_high_energies": True,},
     'cherenkov_pool_x_m': {
         "unit": "km",
         "name": "Cherenkov-pool-x",
         "factor": 1e-3,
-        "start": 0.0},
+        "start": 0.0,
+        "etend_high_energies": True,},
     'cherenkov_pool_y_m': {
         "unit": "km",
         "name": "Cherenkov-pool-y",
         "factor": 1e-3,
-        "start": 0.0}
+        "start": 0.0,
+        "etend_high_energies": True,},
 }
 
 charge_signs = {
@@ -61,6 +65,61 @@ charge_signs = {
 figsize = (16/2, 9/2)
 dpi = 240
 ax_size = (0.15, 0.12, 0.8, 0.8)
+
+
+def add_fields(deflection_table):
+    out = {}
+    for site_key in deflection_table:
+        out[site_key] = {}
+        for particle_key in deflection_table[site_key]:
+            t = deflection_table[site_key][particle_key]
+            dicout = pd.DataFrame(t).to_dict(orient="list")
+
+            dicout['num_cherenkov_photons_per_shower'] = (
+                t['char_total_num_photons']/
+                t['char_total_num_airshowers'])
+
+            dicout['spread_area_m2'] = (
+                np.pi*
+                t['char_position_std_major_m']*
+                t['char_position_std_minor_m'])
+
+            dicout['spread_solid_angle_deg2'] = (
+                np.pi*
+                np.rad2deg(t['char_direction_std_major_rad'])*
+                np.rad2deg(t['char_direction_std_minor_rad']))
+
+            dicout['light_field_outer_density'] = (
+                dicout['num_cherenkov_photons_per_shower']/
+                (dicout['spread_solid_angle_deg2']*dicout['spread_area_m2']))
+            out[site_key][particle_key] = pd.DataFrame(dicout).to_records(
+                index=False)
+    return out
+
+
+def cut_invalid_estimations(deflection_table):
+    out = {}
+    for site_key in deflection_table:
+        out[site_key] = {}
+        for particle_key in deflection_table[site_key]:
+            t_raw = deflection_table[site_key][particle_key]
+            defelction_valid = t_raw['primary_azimuth_deg'] != 0.
+            out[site_key][particle_key] = t_raw[defelction_valid]
+    return out
+
+
+def make_site_str(site_key, site):
+    return "".join([
+        "{:s}, {:.1f}$\,$km$\,$a.s.l., ",
+        "Atm.-id {:d}, ",
+        "Bx {:.1f}$\,$uT, ",
+        "Bz {:.1f}$\,$uT"]).format(
+            site_key,
+            site['observation_level_asl_m']*1e-3,
+            site["atmosphere_id"],
+            site["earth_magnetic_field_x_muT"],
+            site["earth_magnetic_field_z_muT"])
+
 
 def add_circle(ax, x, y, r, linewidth, color, alpha):
     phis = np.linspace(0, 2*np.pi, 1001)
@@ -186,7 +245,6 @@ def add_ticklabels_in_half_dome(
             s=azimuth_deg_strs[a])
 
 
-
 def percentile_indices(values, target_value, percentile=90):
     values = np.array(values)
     factor = percentile/100.
@@ -235,24 +293,18 @@ def smooth(energies, values):
     }
 
 
+deflection_table = cut_invalid_estimations(deflection_table)
+deflection_table = add_fields(deflection_table)
+
 
 for site_key in deflection_table:
     for particle_key in deflection_table[site_key]:
-        site = irf_config['config']['sites'][site_key]
-        site_str = "".join([
-            "{:s}, {:.1f}$\,$km$\,$a.s.l., ",
-            "Atm.-id {:d}, ",
-            "Bx {:.1f}$\,$uT, ",
-            "Bz {:.1f}$\,$uT"]).format(
-                site_key,
-                site['observation_level_asl_m']*1e-3,
-                site["atmosphere_id"],
-                site["earth_magnetic_field_x_muT"],
-                site["earth_magnetic_field_z_muT"])
+        print(site_key, particle_key)
+        site_str = make_site_str(
+            site_key,
+            irf_config['config']['sites'][site_key])
 
-        t_raw = deflection_table[site_key][particle_key]
-        defelction_detected = t_raw['primary_azimuth_deg'] != 0.
-        t = t_raw[defelction_detected]
+        t = deflection_table[site_key][particle_key]
 
         energy_fine = np.geomspace(
             np.min(t["energy_GeV"]),
@@ -260,8 +312,6 @@ for site_key in deflection_table:
             1000)
 
         for key in key_map:
-            print(site_key, particle_key, key)
-
             sres = smooth(energies=t["energy_GeV"], values=t[key])
             energy_supports = sres["energy_supports"]
             key_med = sres["key_med"]
@@ -281,12 +331,17 @@ for site_key in deflection_table:
 
             key_start = charge_signs[particle_key]*key_map[key]["start"]
 
-            energy_bins_ext = np.array(
-                energy_supports.tolist() +
-                np.geomspace(200, 600, 20).tolist())
-            key_mean80_ext = np.array(
-                key_mean80.tolist() +
-                (key_start*np.ones(20)).tolist())
+            if key_map[key]["etend_high_energies"]:
+                energy_bins_ext = np.array(
+                    energy_supports.tolist() +
+                    np.geomspace(200, 600, 20).tolist())
+                key_mean80_ext = np.array(
+                    key_mean80.tolist() +
+                    (key_start*np.ones(20)).tolist())
+            else:
+                energy_bins_ext = energy_supports.copy()
+                key_mean80_ext = key_mean80.copy()
+
 
             def power_law(energy, scale, index):
                 # return a*np.exp(b*np.log(t))
@@ -305,13 +360,6 @@ for site_key in deflection_table:
                     sig*charge_signs[particle_key],
                     1.
                 ))
-
-            print("{:s} = {:1.1E}*energy**({:1.2f}) + {:1.2E}".format(
-                key_map[key]["name"],
-                expy[0],
-                expy[1],
-                key_start
-            ))
 
             info_str = particle_key + ", " + site_str
 
@@ -368,135 +416,28 @@ for site_key in deflection_table:
                     key=key_map[key]["name"],
                     unit=key_map[key]["unit"]))
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-            fig.savefig(
-                os.path.join(
-                    deflection_table_path,
-                    '{:s}_{:s}_{:s}.jpg'.format(
-                        site_key,
-                        particle_key,
-                        key)))
+            filename = '{:s}_{:s}_{:s}'.format(site_key, particle_key, key)
+            filepath = os.path.join(deflection_table_path, filename)
+            fig.savefig(filepath+'.jpg')
             plt.close(fig)
 
-        print("Density of Cherenkov-photons")
-
-        num_cherenkov_photons_per_shower = (
-            t['char_total_num_photons']/
-            t['char_total_num_airshowers'])
-
-        fig = plt.figure(figsize=figsize, dpi=dpi)
-        ax = fig.add_axes(ax_size)
-        ax.plot(
-            t["energy_GeV"],
-            num_cherenkov_photons_per_shower,
-            'ko',
-            alpha=0.3)
-        ax.set_title(info_str, alpha=.5)
-        ax.loglog()
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.set_xlabel('energy$\,/\,$GeV')
-        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
-        ax.set_ylabel('size of Cherenkov-photons$\,/\,$1')
-        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        fig.savefig(
-            os.path.join(
-                deflection_table_path,
-                '{:s}_{:s}_{:s}.jpg'.format(
-                    site_key,
-                    particle_key,
-                    "num_photons_per_shower")))
-        plt.close(fig)
-
-        areal_spread_m2 = (
-            np.pi*
-            t['char_position_std_major_m']*
-            t['char_position_std_minor_m'])
-
-        fig = plt.figure(figsize=figsize, dpi=dpi)
-        ax = fig.add_axes(ax_size)
-        ax.plot(
-            t["energy_GeV"],
-            areal_spread_m2,
-            'ko',
-            alpha=0.3)
-        ax.set_title(info_str, alpha=.5)
-        ax.loglog()
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.set_xlabel('energy$\,/\,$GeV')
-        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
-        ax.set_ylabel('spread in area$\,/\,$m$^2$')
-        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        fig.savefig(
-            os.path.join(
-                deflection_table_path,
-                '{:s}_{:s}_{:s}.jpg'.format(
-                    site_key,
-                    particle_key,
-                    "areal_spread")))
-        plt.close(fig)
-
-
-        directional_spread_deg2 = (
-            np.pi*
-            np.rad2deg(t['char_direction_std_major_rad'])*
-            np.rad2deg(t['char_direction_std_minor_rad']))
-
-        fig = plt.figure(figsize=figsize, dpi=dpi)
-        ax = fig.add_axes(ax_size)
-        ax.plot(
-            t["energy_GeV"],
-            directional_spread_deg2,
-            'ko',
-            alpha=0.3)
-        ax.set_title(info_str, alpha=.5)
-        ax.loglog()
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.set_xlabel('energy$\,/\,$GeV')
-        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
-        ax.set_ylabel('spread in solid angle$\,/\,$deg$^2$')
-        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        fig.savefig(
-            os.path.join(
-                deflection_table_path,
-                '{:s}_{:s}_{:s}.jpg'.format(
-                    site_key,
-                    particle_key,
-                    "directional_spread")))
-        plt.close(fig)
-
-        light_field_outer_density = (
-            num_cherenkov_photons_per_shower/
-            (directional_spread_deg2*areal_spread_m2))
-
-        fig = plt.figure(figsize=figsize, dpi=dpi)
-        ax = fig.add_axes(ax_size)
-        ax.plot(
-            t["energy_GeV"],
-            light_field_outer_density,
-            'ko',
-            alpha=0.3)
-        ax.set_title(info_str, alpha=.5)
-        ax.loglog()
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.set_xlabel('energy$\,/\,$GeV')
-        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
-        ax.set_ylabel("density of outer light-field$\,/\,$m$^{-2}\,$deg$^{-2}$")
-        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        fig.savefig(
-            os.path.join(
-                deflection_table_path,
-                '{:s}_{:s}_{:s}.jpg'.format(
-                    site_key,
-                    particle_key,
-                    "light_field_outer_density")))
-        plt.close(fig)
+            with open(filepath+'.json', 'wt') as fout:
+                fout.write(json.dumps(
+                    {
+                        "name": key,
+                        "power_law": {
+                            "formula": "f(Energy) = A*Energy**B + C",
+                            "A": float(expy[0]),
+                            "B": float(expy[1]),
+                            "C": float(key_start),
+                        },
+                        "energy_GeV": sres["energy_supports"].tolist(),
+                        "mean": sres["key_mean80"].tolist(),
+                        "std": sres["key_std80"].tolist(),
+                    },
+                    indent=4))
 
         azimuths_deg_steps = np.linspace(0, 360, 12, endpoint=False)
-
-
         if particle_key == "gamma":
             fov_deg = 1.
         elif particle_key == "proton":
@@ -505,15 +446,12 @@ for site_key in deflection_table:
             fov_deg = 10.
         else:
             fov_deg = 90.
-
         fov = np.deg2rad(fov_deg)
         rfov = np.sin(fov)
-
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_axes((0.07, 0.07, 0.85, 0.85))
         cmap_ax = fig.add_axes((0.8, 0.07, 0.02, 0.85))
         ax.set_title(info_str, alpha=0.5)
-
         add_grid_in_half_dome(
             ax=ax,
             azimuths_deg=azimuths_deg_steps,
@@ -522,7 +460,6 @@ for site_key in deflection_table:
             color='k',
             alpha=0.1,
             draw_lower_horizontal_edge_deg=fov_deg)
-
         cmap_name = "nipy_spectral"
         cmap_norm = plt_colors.LogNorm(
             vmin=np.min(t['energy_GeV']),
@@ -532,7 +469,6 @@ for site_key in deflection_table:
             cmap=cmap_name)
         plt.colorbar(cmap_mappable, cax=cmap_ax)
         cmap_ax.set_xlabel('energy$\,/\,$GeV')
-
         rgbas = cmap_mappable.to_rgba(t['energy_GeV'])
         rgbas[:, 3] = 0.25
         add_points_in_half_dome(
@@ -542,24 +478,21 @@ for site_key in deflection_table:
             point_diameter=0.1*rfov,
             rgbas=rgbas)
         ax.text(
-            -1.5*rfov,
-            0.8*rfov,
-            "sky-dome\nw.r.t. magnetic north")
+            -1.6*rfov,
+            0.65*rfov,
+            "direction of primary\n\nazimuth w.r.t.\nmagnetic north")
         ax.text(
+            -1.5*rfov,
             -1.0*rfov,
-            -1.0*rfov,
-            "{:1.1f}$^\circ$".format(fov_deg))
-
+            "zenith {:1.0f}$^\circ$".format(fov_deg))
         ax.set_axis_off()
         ax.set_aspect('equal')
-
         add_ticklabels_in_half_dome(
             ax=ax,
             azimuths_deg=azimuths_deg_steps,
             rfov=rfov)
         ax.set_xlim([-1.01*rfov, 1.01*rfov])
         ax.set_ylim([-1.01*rfov, 1.01*rfov])
-
         fig.savefig(
             os.path.join(
                 deflection_table_path,
@@ -569,3 +502,57 @@ for site_key in deflection_table:
                     "dome")))
         plt.close(fig)
 
+
+    density_map = {
+        "num_cherenkov_photons_per_shower": {
+            "label": "size of Cherenkov-pool$\,/\,$1"
+        },
+        "spread_area_m2": {
+            "label": "Cherenkov-pool's spread in area$\,/\,$m$^{2}$"
+        },
+        "spread_solid_angle_deg2": {
+            "label": "Cherenkov-pool's spread in solid angle$\,/\,$deg$^{2}$"
+        },
+        "light_field_outer_density": {
+            "label": "density of Cherenkov-pool$\,/\,$m$^{-2}\,$deg$^{-2}$"
+        },
+    }
+
+    parmap = {
+        "gamma": "k",
+        "electron": "b",
+        "proton": "r",
+        "helium": "orange"
+    }
+
+    for den_key in density_map:
+        ts = deflection_table[site_key]
+        alpha = 0.2
+        fig = plt.figure(figsize=figsize, dpi=dpi)
+        ax = fig.add_axes(ax_size)
+        for particle_key in parmap:
+            ax.plot(
+                ts[particle_key]["energy_GeV"],
+                ts[particle_key][den_key],
+                'o',
+                color=parmap[particle_key],
+                alpha=alpha,
+                label=particle_key)
+        leg = ax.legend()
+        for line in leg.get_lines():
+            line.set_alpha(0)
+        ax.set_title(site_str, alpha=.5)
+        ax.loglog()
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.set_xlabel('energy$\,/\,$GeV')
+        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
+        ax.set_ylabel(density_map[den_key]["label"])
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        fig.savefig(
+            os.path.join(
+                deflection_table_path,
+                '{:s}_{:s}.jpg'.format(
+                    site_key,
+                    den_key)))
+        plt.close(fig)
