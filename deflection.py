@@ -3,7 +3,6 @@ import magnetic_deflection as mdfl
 import os
 import sun_grid_engine_map
 import multiprocessing
-import corsika_primary_wrapper as cpw
 
 
 work_dir = os.path.join('.', 'explore_deflection')
@@ -14,8 +13,7 @@ sites = plenoirf.EXAMPLE_CONFIG['sites']
 
 max_energy_GeV = 32.0
 
-# num_parallel = 8
-# pool = multiprocessing.Pool(num_parallel)
+# pool = multiprocessing.Pool(8)
 pool = sun_grid_engine_map
 
 if not os.path.exists(work_dir):
