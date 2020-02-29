@@ -8,7 +8,7 @@ import magnetic_deflection as mdfl
 import sun_grid_engine_map
 import plenoirf
 
-argv = irf.summary.argv_since_py(sys.argv)
+argv = plenoirf.summary.argv_since_py(sys.argv)
 assert len(argv) == 2
 work_dir = argv[1]
 
