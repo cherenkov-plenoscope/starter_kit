@@ -26,7 +26,7 @@ deflection_table = mdfl.map_and_reduce.read_deflection_table(
     path=deflection_table_path)
 
 irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-
+sites = irf_config['config']['sites']
 
 key_map = {
     'primary_azimuth_deg': {
@@ -296,21 +296,16 @@ def smooth(energies, values):
 deflection_table = cut_invalid_estimations(deflection_table)
 deflection_table = add_fields(deflection_table)
 
-
 for site_key in deflection_table:
     for particle_key in deflection_table[site_key]:
         print(site_key, particle_key)
-        site_str = make_site_str(
-            site_key,
-            irf_config['config']['sites'][site_key])
+        site_str = make_site_str(site_key, sites[site_key])
 
         t = deflection_table[site_key][particle_key]
-
         energy_fine = np.geomspace(
             np.min(t["energy_GeV"]),
             10*np.max(t["energy_GeV"]),
             1000)
-
         for key in key_map:
             sres = smooth(energies=t["energy_GeV"], values=t[key])
             energy_supports = sres["energy_supports"]
