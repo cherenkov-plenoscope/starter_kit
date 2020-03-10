@@ -18,15 +18,20 @@ from matplotlib import colors as plt_colors
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 3
-deflection_table_path = argv[1]
-run_dir = argv[2]
+assert len(argv) == 2
+deflection_dir = argv[1]
 
 deflection_table = mdfl.map_and_reduce.read_deflection_table(
-    path=deflection_table_path)
+    path=deflection_dir)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sites = irf_config['config']['sites']
+with open(os.path.join(deflection_dir, "sites.json"), "rt") as f:
+    sites = json.loads(f.read())
+
+with open(os.path.join(deflection_dir, "particles.json"), "rt") as f:
+    particles = json.loads(f.read())
+
+with open(os.path.join(deflection_dir, "pointing.json"), "rt") as f:
+    pointing = json.loads(f.read())
 
 key_map = {
     'primary_azimuth_deg': {
@@ -97,14 +102,17 @@ def add_fields(deflection_table):
     return out
 
 
-def cut_invalid_estimations(deflection_table):
+def cut_invalid_estimations(deflection_table, but_keep):
     out = {}
     for site_key in deflection_table:
-        out[site_key] = {}
-        for particle_key in deflection_table[site_key]:
-            t_raw = deflection_table[site_key][particle_key]
-            defelction_valid = t_raw['primary_azimuth_deg'] != 0.
-            out[site_key][particle_key] = t_raw[defelction_valid]
+        if but_keep in site_key:
+            out[site_key] = deflection_table[site_key]
+        else:
+            out[site_key] = {}
+            for particle_key in deflection_table[site_key]:
+                t_raw = deflection_table[site_key][particle_key]
+                defelction_valid = t_raw['primary_azimuth_deg'] != 0.
+                out[site_key][particle_key] = t_raw[defelction_valid]
     return out
 
 
@@ -293,7 +301,7 @@ def smooth(energies, values):
     }
 
 
-deflection_table = cut_invalid_estimations(deflection_table)
+deflection_table = cut_invalid_estimations(deflection_table, but_keep="Off")
 deflection_table = add_fields(deflection_table)
 
 for site_key in deflection_table:
@@ -306,6 +314,10 @@ for site_key in deflection_table:
             np.min(t["energy_GeV"]),
             10*np.max(t["energy_GeV"]),
             1000)
+
+        if "Off" in site_key:
+            continue
+
         for key in key_map:
             sres = smooth(energies=t["energy_GeV"], values=t[key])
             energy_supports = sres["energy_supports"]
@@ -402,7 +414,8 @@ for site_key in deflection_table:
             y_fit_lower = key_map[key]["factor"]*np.min(unc80_lower)
             y_fit_upper = key_map[key]["factor"]*np.max(unc80_upper)
             y_fit_range = y_fit_upper - y_fit_lower
-            assert y_fit_range > 0
+            assert y_fit_range >= 0
+            y_fit_range = np.max([y_fit_range, 1.])
             _ll = y_fit_lower - 0.2*y_fit_range
             _uu = y_fit_upper + 0.2*y_fit_range
             ax.set_ylim([_ll, _uu])
@@ -412,7 +425,7 @@ for site_key in deflection_table:
                     unit=key_map[key]["unit"]))
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
             filename = '{:s}_{:s}_{:s}'.format(site_key, particle_key, key)
-            filepath = os.path.join(deflection_table_path, filename)
+            filepath = os.path.join(deflection_dir, filename)
             fig.savefig(filepath+'.jpg')
             plt.close(fig)
 
@@ -490,7 +503,7 @@ for site_key in deflection_table:
         ax.set_ylim([-1.01*rfov, 1.01*rfov])
         fig.savefig(
             os.path.join(
-                deflection_table_path,
+                deflection_dir,
                 '{:s}_{:s}_{:s}.jpg'.format(
                     site_key,
                     particle_key,
@@ -541,12 +554,13 @@ for site_key in deflection_table:
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         ax.set_xlabel('energy$\,/\,$GeV')
-        ax.set_xlim([0.4, 10*np.max(t["energy_GeV"])])
+        ax.set_xlim([0.4, 200.0])
+        ax.set_ylim([1e-6, 1e3])
         ax.set_ylabel(density_map[den_key]["label"])
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
         fig.savefig(
             os.path.join(
-                deflection_table_path,
+                deflection_dir,
                 '{:s}_{:s}.jpg'.format(
                     site_key,
                     den_key)))
