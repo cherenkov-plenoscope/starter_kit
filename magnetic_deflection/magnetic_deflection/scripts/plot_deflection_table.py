@@ -60,60 +60,14 @@ key_map = {
         "etend_high_energies": True,},
 }
 
-charge_signs = {
-    "gamma": 0.,
-    "electron": -1.,
-    "proton": 1.,
-    "helium": 1.,
-}
+charge_signs = {}
+for particle_key in particles:
+    charge_signs[particle_key] = np.sign(
+        particles[particle_key]["electric_charge_qe"])
 
 figsize = (16/2, 9/2)
 dpi = 240
 ax_size = (0.15, 0.12, 0.8, 0.8)
-
-
-def add_fields(deflection_table):
-    out = {}
-    for site_key in deflection_table:
-        out[site_key] = {}
-        for particle_key in deflection_table[site_key]:
-            t = deflection_table[site_key][particle_key]
-            dicout = pd.DataFrame(t).to_dict(orient="list")
-
-            dicout['num_cherenkov_photons_per_shower'] = (
-                t['char_total_num_photons']/
-                t['char_total_num_airshowers'])
-
-            dicout['spread_area_m2'] = (
-                np.pi*
-                t['char_position_std_major_m']*
-                t['char_position_std_minor_m'])
-
-            dicout['spread_solid_angle_deg2'] = (
-                np.pi*
-                np.rad2deg(t['char_direction_std_major_rad'])*
-                np.rad2deg(t['char_direction_std_minor_rad']))
-
-            dicout['light_field_outer_density'] = (
-                dicout['num_cherenkov_photons_per_shower']/
-                (dicout['spread_solid_angle_deg2']*dicout['spread_area_m2']))
-            out[site_key][particle_key] = pd.DataFrame(dicout).to_records(
-                index=False)
-    return out
-
-
-def cut_invalid_estimations(deflection_table, but_keep):
-    out = {}
-    for site_key in deflection_table:
-        if but_keep in site_key:
-            out[site_key] = deflection_table[site_key]
-        else:
-            out[site_key] = {}
-            for particle_key in deflection_table[site_key]:
-                t_raw = deflection_table[site_key][particle_key]
-                defelction_valid = t_raw['primary_azimuth_deg'] != 0.
-                out[site_key][particle_key] = t_raw[defelction_valid]
-    return out
 
 
 def make_site_str(site_key, site):
@@ -301,8 +255,11 @@ def smooth(energies, values):
     }
 
 
-deflection_table = cut_invalid_estimations(deflection_table, but_keep="Off")
-deflection_table = add_fields(deflection_table)
+deflection_table = mdfl.analysis.cut_invalid_from_deflection_table(
+    deflection_table=deflection_table,
+    but_keep_site="Off")
+deflection_table = mdfl.analysis.add_density_fields_to_deflection_table(
+    deflection_table=deflection_table)
 
 for site_key in deflection_table:
     for particle_key in deflection_table[site_key]:
