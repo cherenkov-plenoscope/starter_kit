@@ -34,6 +34,20 @@ with open(os.path.join(deflection_dir, "particles.json"), "rt") as f:
 with open(os.path.join(deflection_dir, "pointing.json"), "rt") as f:
     pointing = json.loads(f.read())
 
+PLOT_TITLE_INFO = False
+PLOT_TITLE_INFO_SKY_DOME = False
+
+PLOT_POWER_LAW_FIT = True
+POWER_LAW_FIT_COLOR = 'k'
+PLOT_ENERGY_SUPPORTS = False
+PLOT_RAW_ESTIMATES = True
+
+
+labels = {
+    "energy": '$E$'
+}
+
+
 key_map = {
     'primary_azimuth_deg': {
         "unit": "deg",
@@ -84,53 +98,6 @@ def make_site_str(site_key, site):
             site["earth_magnetic_field_z_muT"])
 
 
-def percentile_indices(values, target_value, percentile=90):
-    values = np.array(values)
-    factor = percentile/100.
-    delta = np.abs(values - target_value)
-    argsort_delta = np.argsort(delta)
-    num_values = len(values)
-    idxs = np.arange(num_values)
-    idxs_sorted = idxs[argsort_delta]
-    idx_limit = int(np.ceil(num_values*factor))
-    return idxs_sorted[0: idx_limit]
-
-
-def smooth(energies, values):
-    suggested_num_energy_bins = int(np.ceil(2*np.sqrt(len(values))))
-    suggested_energy_bin_edges = np.geomspace(
-        np.min(energies),
-        np.max(energies),
-        suggested_num_energy_bins+1)
-    suggested_energy_supports = 0.5*(
-        suggested_energy_bin_edges[0:-1] +
-        suggested_energy_bin_edges[1:])
-
-    actual_energy_supports = []
-    key_med = []
-    key_mean80 = []
-    key_std80 = []
-    for ibin in range(len(suggested_energy_bin_edges) - 1):
-        e_start = suggested_energy_bin_edges[ibin]
-        e_stop = suggested_energy_bin_edges[ibin+1]
-        mask = np.logical_and(energies >= e_start, energies < e_stop)
-        if np.sum(mask) > 3:
-            actual_energy_supports.append(suggested_energy_supports[ibin])
-            med = np.median(values[mask])
-            key_med.append(med)
-            indices80 = percentile_indices(
-                values=values[mask],
-                target_value=med,
-                percentile=80)
-            key_std80.append(np.std(values[mask][indices80]))
-            key_mean80.append(np.mean(values[mask][indices80]))
-    return {
-        "energy_supports": np.array(actual_energy_supports),
-        "key_med": np.array(key_med),
-        "key_std80": np.array(key_std80),
-        "key_mean80": np.array(key_mean80),
-    }
-
 
 deflection_table = mdfl.analysis.cut_invalid_from_deflection_table(
     deflection_table=deflection_table,
@@ -153,7 +120,7 @@ for site_key in deflection_table:
             continue
 
         for key in key_map:
-            sres = smooth(energies=t["energy_GeV"], values=t[key])
+            sres = mdfl.analysis.smooth(energies=t["energy_GeV"], values=t[key])
             energy_supports = sres["energy_supports"]
             key_med = sres["key_med"]
             key_std80 = sres["key_std80"]
@@ -183,18 +150,13 @@ for site_key in deflection_table:
                 energy_bins_ext = energy_supports.copy()
                 key_mean80_ext = key_mean80.copy()
 
-
-            def power_law(energy, scale, index):
-                # return a*np.exp(b*np.log(t))
-                return scale*energy**(index)
-
             if np.mean(key_mean80 - key_start) > 0:
                 sig = -1
             else:
                 sig = 1
 
             expy, pcov = scipy.optimize.curve_fit(
-                power_law,
+                mdfl.analysis.power_law,
                 energy_bins_ext,
                 key_mean80_ext - key_start,
                 p0=(
@@ -204,7 +166,7 @@ for site_key in deflection_table:
 
             info_str = particle_key + ", " + site_str
 
-            rec_key = power_law(
+            rec_key = mdfl.analysis.power_law(
                 energy=energy_fine,
                 scale=expy[0],
                 index=expy[1])
@@ -212,33 +174,41 @@ for site_key in deflection_table:
 
             fig = plt.figure(figsize=figsize, dpi=dpi)
             ax = fig.add_axes(ax_size)
-            ax.plot(
-                t["energy_GeV"],
-                np.array(t[key])*key_map[key]["factor"],
-                'ko',
-                alpha=0.05)
-            ax.plot(
-                energy_supports,
-                key_mean80*key_map[key]["factor"],
-                'kx')
-            for ibin in range(len(energy_supports)):
-                _x = energy_supports[ibin]
-                _y_low = unc80_lower[ibin]
-                _y_high = unc80_upper[ibin]
+            if PLOT_RAW_ESTIMATES:
                 ax.plot(
-                    [_x, _x],
-                    np.array([_y_low, _y_high])*key_map[key]["factor"],
-                    'k-')
-            ax.plot(
-                energy_bins_ext,
-                key_mean80_ext*key_map[key]["factor"],
-                'bo',
-                alpha=0.3)
-            ax.plot(
-                energy_fine,
-                rec_key*key_map[key]["factor"],
-                'r-')
-            ax.set_title(info_str, alpha=.5)
+                    t["energy_GeV"],
+                    np.array(t[key])*key_map[key]["factor"],
+                    'ko',
+                    alpha=0.05)
+
+            if PLOT_ENERGY_SUPPORTS:
+                ax.plot(
+                    energy_supports,
+                    key_mean80*key_map[key]["factor"],
+                    'kx')
+                for ibin in range(len(energy_supports)):
+                    _x = energy_supports[ibin]
+                    _y_low = unc80_lower[ibin]
+                    _y_high = unc80_upper[ibin]
+                    ax.plot(
+                        [_x, _x],
+                        np.array([_y_low, _y_high])*key_map[key]["factor"],
+                        'k-')
+                ax.plot(
+                    energy_bins_ext,
+                    key_mean80_ext*key_map[key]["factor"],
+                    'bo',
+                    alpha=0.3)
+
+            if PLOT_POWER_LAW_FIT:
+                ax.plot(
+                    energy_fine,
+                    rec_key*key_map[key]["factor"],
+                    color=POWER_LAW_FIT_COLOR,
+                    linestyle='-')
+
+            if PLOT_TITLE_INFO:
+                ax.set_title(info_str, alpha=.5)
             ax.semilogx()
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
@@ -293,7 +263,8 @@ for site_key in deflection_table:
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_axes((0.07, 0.07, 0.85, 0.85))
         cmap_ax = fig.add_axes((0.8, 0.07, 0.02, 0.85))
-        ax.set_title(info_str, alpha=0.5)
+        if PLOT_TITLE_INFO:
+            ax.set_title(site_str, alpha=.5)
         mdfl_plot.add_grid_in_half_dome(
             ax=ax,
             azimuths_deg=azimuths_deg_steps,
@@ -319,12 +290,13 @@ for site_key in deflection_table:
             zeniths_deg=t['primary_zenith_deg'],
             point_diameter=0.1*rfov,
             rgbas=rgbas)
+        if PLOT_TITLE_INFO_SKY_DOME:
+            ax.text(
+                -1.6*rfov,
+                0.65*rfov,
+                "direction of primary\n\nazimuth w.r.t.\nmagnetic north")
         ax.text(
-            -1.6*rfov,
-            0.65*rfov,
-            "direction of primary\n\nazimuth w.r.t.\nmagnetic north")
-        ax.text(
-            -1.5*rfov,
+            -1.0*rfov,
             -1.0*rfov,
             "zenith {:1.0f}$^\circ$".format(fov_deg))
         ax.set_axis_off()
@@ -381,9 +353,8 @@ for site_key in deflection_table:
                 alpha=alpha,
                 label=particle_key)
         leg = ax.legend()
-        for line in leg.get_lines():
-            line.set_alpha(0)
-        ax.set_title(site_str, alpha=.5)
+        if PLOT_TITLE_INFO:
+            ax.set_title(site_str, alpha=.5)
         ax.loglog()
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -399,3 +370,72 @@ for site_key in deflection_table:
                     site_key,
                     den_key)))
         plt.close(fig)
+
+
+"""
+density by side
+"""
+den_key = "light_field_outer_density"
+
+sitemap = {
+    "namibia": "+",
+    "lapalma": "^",
+    "chile": "*",
+    "namibiaOff": "."
+}
+
+nice_site_labels = {
+    "namibiaOff": "Gamsberg-Off",
+    "namibia": "Gamsberg",
+    "chile": "Atacama",
+    "lapalma": "Roque",
+}
+
+def smooth(y, box_pts):
+    box = np.ones(box_pts)/box_pts
+    y_smooth = np.convolve(y, box, mode='same')
+    return y_smooth
+
+
+particle_colors = {
+    "electron": "blue",
+    "gamma": "black",
+}
+
+fig = plt.figure(figsize=figsize, dpi=dpi)
+ax = fig.add_axes(ax_size)
+for particle_key in ["electron", "gamma"]:
+    for site_key in nice_site_labels:
+        E = deflection_table[site_key][particle_key]["energy_GeV"]
+        V = deflection_table[site_key][particle_key][den_key]
+        mask = np.arange(20, len(E), len(E)//10)
+        ax.plot(
+            E,
+            V,
+            sitemap[site_key],
+            color=particle_colors[particle_key],
+            alpha=0.1*alpha)
+        if particle_colors[particle_key] == 'black':
+            label = nice_site_labels[site_key]
+        else:
+            label = None
+        ax.plot(
+            E[mask],
+            smooth(V, 9)[mask],
+            sitemap[site_key],
+            color=particle_colors[particle_key],
+            label=label)
+
+ax.text(1.1, 50, "gamma-ray", color=particle_colors["gamma"])
+ax.text(1.1, 25, "electron", color=particle_colors["electron"])
+leg = ax.legend()
+ax.loglog()
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+ax.set_xlabel('energy$\,/\,$GeV')
+ax.set_xlim([0.4, 20.0])
+ax.set_ylim([1e-3, 1e2])
+ax.set_ylabel(density_map[den_key]["label"])
+ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+fig.savefig(os.path.join(deflection_dir, '{:s}.jpg'.format(den_key)))
+plt.close(fig)

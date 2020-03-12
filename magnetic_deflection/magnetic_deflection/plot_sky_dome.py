@@ -93,7 +93,7 @@ def add_grid_in_half_dome(
         zd_edge = np.deg2rad(draw_lower_horizontal_edge_deg)
         r = np.sin(zd_edge)
         ax.plot(
-            [-1, 0],
+            [-2/3*r, 0],
             [-r, -r],
             color=color,
             linewidth=linewidth,
