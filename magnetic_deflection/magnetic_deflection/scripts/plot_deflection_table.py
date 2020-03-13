@@ -42,12 +42,6 @@ POWER_LAW_FIT_COLOR = 'k'
 PLOT_ENERGY_SUPPORTS = False
 PLOT_RAW_ESTIMATES = True
 
-
-labels = {
-    "energy": '$E$'
-}
-
-
 key_map = {
     'primary_azimuth_deg': {
         "unit": "deg",
@@ -75,14 +69,49 @@ key_map = {
         "etend_high_energies": True,},
 }
 
+nice_site_labels = {
+    "namibiaOff": "Gamsberg-Off",
+    "namibia": "Gamsberg",
+    "chile": "Chajnantor",
+    "lapalma": "Roque",
+}
+
+nice_variable_keys = {
+    "primary_azimuth_deg": "$\\PrmAz{}$\\,/\\,deg",
+    "primary_zenith_deg": "$\\PrmZd{}$\\,/\\,deg",
+    "cherenkov_pool_x_m": "$\\CerX{}$\\,/\\,m",
+    "cherenkov_pool_y_m": "$\\CerY{}$\\,/\\,m",
+}
+
+nice_particle_keys = {
+    "gamma": "Gamma-ray",
+    "electron": "Electron",
+    "proton": "Proton",
+    "helium": "Helium",
+}
+
+nice_power_law_variable_keys = {
+    "A": "$\\PowerLawA{}$",
+    "B": "$\\PowerLawB{}$",
+    "C": "$\\PowerLawC{}$",
+}
+
+
+
+
 charge_signs = {}
 for particle_key in particles:
     charge_signs[particle_key] = np.sign(
         particles[particle_key]["electric_charge_qe"])
 
+
 figsize = (16/2, 9/2)
 dpi = 240
 ax_size = (0.15, 0.12, 0.8, 0.8)
+
+figsize_fit = (9/2, 9/2)
+dpi = 240
+ax_size_fit = (0.2, 0.12, 0.75, 0.8)
 
 
 def make_site_str(site_key, site):
@@ -97,6 +126,62 @@ def make_site_str(site_key, site):
             site["earth_magnetic_field_x_muT"],
             site["earth_magnetic_field_z_muT"])
 
+power_law_fit_table = {}
+
+
+def latex_table(matrix):
+    out = ""
+    for line in matrix:
+        for idx, item in enumerate(line):
+            out += item
+            if idx+1 == len(line):
+                out += " \\\\"
+            else:
+                out += " & "
+        out += "\n"
+    return out
+
+
+def latex_format_scientific(f):
+    pass
+
+
+
+def make_latex_table_with_power_law_fit(power_law_fit_table):
+    matrix = []
+    partile_line = ["", "", ""]
+    for particle_key in nice_particle_keys:
+        partile_line.append(nice_particle_keys[particle_key])
+    matrix.append(partile_line)
+    for site_key in nice_site_labels:
+        if "Off" in site_key:
+            continue
+        site_line = [nice_site_labels[site_key], "", "", "", "", "", ""]
+        matrix.append(site_line)
+        for variable_key in nice_variable_keys:
+            variable_line = [
+                "", nice_variable_keys[variable_key], "", "", "", "", ""]
+            matrix.append(variable_line)
+
+            for param_key in ["A", "B", "C"]:
+                value_line = ["", "", nice_power_law_variable_keys[param_key]]
+                for particle_key in nice_particle_keys:
+
+                    print(site_key, particle_key, variable_key, param_key)
+                    power_law_fit = power_law_fit_table[
+                                        site_key][
+                                        particle_key][
+                                        variable_key][
+                                        'power_law']
+
+                    if param_key == "B":
+                        value = "{:,.3f}".format(power_law_fit[param_key])
+                    else:
+                        value = "{:,.1f}".format(power_law_fit[param_key])
+                    value_line.append(value)
+                matrix.append(value_line)
+    return latex_table(matrix)
+
 
 
 deflection_table = mdfl.analysis.cut_invalid_from_deflection_table(
@@ -105,7 +190,10 @@ deflection_table = mdfl.analysis.cut_invalid_from_deflection_table(
 deflection_table = mdfl.analysis.add_density_fields_to_deflection_table(
     deflection_table=deflection_table)
 
+
+
 for site_key in deflection_table:
+    power_law_fit_table[site_key] = {}
     for particle_key in deflection_table[site_key]:
         print(site_key, particle_key)
         site_str = make_site_str(site_key, sites[site_key])
@@ -119,6 +207,7 @@ for site_key in deflection_table:
         if "Off" in site_key:
             continue
 
+        power_law_fit_table[site_key][particle_key] = {}
         for key in key_map:
             sres = mdfl.analysis.smooth(energies=t["energy_GeV"], values=t[key])
             energy_supports = sres["energy_supports"]
@@ -129,7 +218,7 @@ for site_key in deflection_table:
             unc80_lower = key_mean80 - key_std80
 
             if particle_key == "electron":
-                valid_range = energy_supports > 0.75
+                valid_range = energy_supports > 1.0
                 energy_supports = energy_supports[valid_range]
                 key_med = key_med[valid_range]
                 key_std80 = key_std80[valid_range]
@@ -172,8 +261,8 @@ for site_key in deflection_table:
                 index=expy[1])
             rec_key += key_start
 
-            fig = plt.figure(figsize=figsize, dpi=dpi)
-            ax = fig.add_axes(ax_size)
+            fig = plt.figure(figsize=figsize_fit, dpi=dpi)
+            ax = fig.add_axes(ax_size_fit)
             if PLOT_RAW_ESTIMATES:
                 ax.plot(
                     t["energy_GeV"],
@@ -233,21 +322,23 @@ for site_key in deflection_table:
             fig.savefig(filepath+'.jpg')
             plt.close(fig)
 
+            _fit = {
+                "name": key,
+                "power_law": {
+                    "formula": "f(Energy) = A*Energy**B + C",
+                    "A": float(expy[0]),
+                    "B": float(expy[1]),
+                    "C": float(key_start),
+                },
+                "energy_GeV": sres["energy_supports"].tolist(),
+                "mean": sres["key_mean80"].tolist(),
+                "std": sres["key_std80"].tolist(),
+            }
+
             with open(filepath+'.json', 'wt') as fout:
-                fout.write(json.dumps(
-                    {
-                        "name": key,
-                        "power_law": {
-                            "formula": "f(Energy) = A*Energy**B + C",
-                            "A": float(expy[0]),
-                            "B": float(expy[1]),
-                            "C": float(key_start),
-                        },
-                        "energy_GeV": sres["energy_supports"].tolist(),
-                        "mean": sres["key_mean80"].tolist(),
-                        "std": sres["key_std80"].tolist(),
-                    },
-                    indent=4))
+                fout.write(json.dumps(_fit, indent=4))
+
+            power_law_fit_table[site_key][particle_key][key] = _fit
 
         azimuths_deg_steps = np.linspace(0, 360, 12, endpoint=False)
         if particle_key == "gamma":
@@ -372,6 +463,12 @@ for site_key in deflection_table:
         plt.close(fig)
 
 
+_table = make_latex_table_with_power_law_fit(power_law_fit_table)
+print(_table)
+with open(os.path.join(deflection_dir, "power_law_table.tex"), "wt") as fout:
+    fout.write(_table)
+
+
 """
 density by side
 """
@@ -382,13 +479,6 @@ sitemap = {
     "lapalma": "^",
     "chile": "*",
     "namibiaOff": "."
-}
-
-nice_site_labels = {
-    "namibiaOff": "Gamsberg-Off",
-    "namibia": "Gamsberg",
-    "chile": "Atacama",
-    "lapalma": "Roque",
 }
 
 def smooth(y, box_pts):
