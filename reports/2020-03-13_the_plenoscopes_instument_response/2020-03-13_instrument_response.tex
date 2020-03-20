@@ -1,0 +1,625 @@
+\documentclass[a4paper,12pt,oneside]{article}
+
+\usepackage[textwidth=400pt,textheight=730pt,top=60pt,left=100pt]{geometry}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage[nolist]{acronym}
+%\usepackage[onehalfspacing]{setspace}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{cite}
+\usepackage{tikz}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{dirtree}
+\usepackage[figuresright]{rotating}
+\usepackage{subcaption}
+\usepackage{adjustbox}
+\usepackage{lineno}
+\usepackage{multicol}
+\linenumbers
+
+\usetikzlibrary{matrix,calc}
+%---------------------------
+%\usepackage{showframe}
+
+\def\Tab{\mathcal{T}^\text{thrown}}
+\def\WeightGridTrials{w^\text{grid-trials}}
+\def\WeightGridSuccesses{w^\text{grid-intense}}
+
+\begin{document}
+%
+\noindent
+2020\,March\,20\\
+\\
+%
+\LARGE
+\textbf{Estimating the Cherenkov-plenoscope's instrument-response}
+\normalsize\\
+\\
+%
+Sebastian Achim Mueller\\
+\\
+%
+The implementation of the algorithms discussed here is hosted on git-hub:\\
+%
+\begin{center}
+\url{https://github.com/cherenkov-plenoscope}
+\end{center}
+%
+Not all repositories are public. Send Sebastian your git-hub-user-name to gain full access.
+%
+This report is about the \texttt{starter\_kit}-repository at:\\
+%
+\url{https://github.com/cherenkov-plenoscope/starter_kit}\\
+at git-commit \texttt{6dbffc9472}\\
+2020\,March\,13.
+%
+\newpage
+%
+\section{Structure}
+%
+First, we run the simulations of many air-showers to populate a table of thrown air-showers $\Tab{}\footnote{Implemented here \url{starter_kit/plenoirf/plenoirf/table.py}}$.
+%
+Second, we estimate the plenoscope's effective areas and acceptances based on this table.
+%
+Each combination of particle-type and site has its own table.
+%
+Figure \ref{FigLevels} shows the conditional flow of the simulation.
+%
+\begin{figure}[H]
+\dirtree{%
+.1 .
+.1 Defining the random-seed, see Section \ref{SubSecRandomSeed}.
+.1 Setting the primary particle, see Section \ref{SubSecSettingPrimary}.
+.1 Simulating the Cherenkov-pool, see Section \ref{SubSecSimulatingTheCherenkovPool}.
+.1 Histograming the Cherenkov-pool in a grid, see Section \ref{SubSecHistogrammingTheCherenkovPool}.
+.1 \color{blue}{if} \color{black}(at least one bin in grid $I_\texttt{bin} \geq T_\texttt{grid}$), $p\sim90\%$.
+.2 Simulating the response of the plenoscope's light-field-sensor, see Section \ref{SubSecSimulatingLightFieldSensor}.
+.2 Simulating the trigger in the plenoscope's light-field-sensor, see Section \ref{SubSecSimulatingPlenoscopeTrigger}.
+.2 \color{blue}{if} \color{black}(passed trigger), $p\sim10\%$.
+.3 Creating a plenoscope-event, exporting the light-field-sequence.
+.3 Separating Cherenkov-photons from night-sky-background-photons.
+.3 \color{blue}{if} \color{black}(found Cherenkov-photons), $p\sim90\%$.
+.4 Extracting features from Cherenkov-light-field.
+.4 \color{blue}{if} \color{black}(enough photons \color{blue}{and}\color{black}\,\,numerically stable), $p\sim90\%$.
+.6 Exporting features.
+.6 Classifying particle-type with machine-learner.
+.6 \color{blue}{if} \color{black}(classified to be a gamma-ray).
+.7 estimating direction and energy.
+}
+\caption{%
+   Conditional levels in the simulation. The probabilities $p$ are based on experience, but also on expectation by design.
+}
+\label{FigLevels}
+\end{figure}
+%
+\section{Motivating the grid}
+\label{SecMotivatingTheGrid}
+%
+A part of the plenoscope's simulation is a grid on the observation-level, see Figure \ref{FigGridCoordinates}.
+%
+\begin{figure}
+\begin{lstlisting}[language=C,basicstyle=\tiny\ttfamily]
+Coordinate system
+=================
+                                  | z
+                                  |                               starting pos.
+                                  |                                  ___---O
+                                  |                            ___---    / |
+                                  |                      ___---     n  /   |
+                                  |                ___---         io /     |
+                                  |          ___---             ct /       |
+                                  |    ___---                 re /         |
+              starting altitude __|_---                     di /           |
+                                  |                       y- /             |
+                                  | _-------__          ar /               |
+                                  |-    th    |_      im /                 |
+                                  |   ni        |_  pr /                   |
+                                  | ze            |  /                     |
+                                  |               |/                       |
+                      ____________|______________/________________________ |
+                     /            |            /            /            / |
+                    /            /|          //            /            /  |
+                  3/            / |        / /            /            /   |
+                  /            /  |      /  /            /            /    |
+                 /____________/___|____/___/____________/____________/     |
+                /            /    |  /    /            /            /      |
+obs. level     /            /     |/     /    grid    /            /       |
+altitude -  -2/-  -  -  -  /  -  -X-----/  <-shift y /            /        |
+             /            /      /|    /            /            /         |
+            /____________/______/_____/____________/____________/          |
+           /            /     -|  |  /            /            /           |
+          /            /      /   | /            /            /            |
+        1/            /  grid     |/            /            /             |
+        /            /  shift x   /            /            /              |
+       /____________/____________/____________/____________/               |
+      /            /            / |          /            /                |
+     /            /            /  |         /            /                 |
+   0/            /            /   |        /            /                  |
+   /            /            /    |       /            /                   |
+  /____________/____________/____________/____________/                    |
+        0            1           2|             3                          |
+                                  |                                  ___---O
+                                  |                            ___---
+                                  |                      ___--- |
+                                  |                ___---        |
+                                  |          ___---               |
+                                  |    ___---       azimuth       |
+                sea leavel z=0    |_---__________________________/______ x
+                                  /
+                                 /
+                                /
+                               /
+                              /
+                             /
+                            /
+                           /
+                          /
+                         /
+                        / y
+\end{lstlisting}
+\caption{The grid on the observation-level. From the source-code.}
+\label{FigGridCoordinates}
+\end{figure}
+%
+The grid's sole purpose is to estimate the plenoscop's response to air-showers more efficiently.\\
+%
+Without the grid, we would simulate the Cherenkov-pool of an air-shower and then randomly shift it within a huge scatter-area on the observation-level in order to simulate random core-positions with respect to the plenoscope.
+%
+The scatter-areas need to be several 100\,km$^2$ large when we do not want to involve assumptions on the magnetic deflection within air-showers with energies below $\approx 10\,$GeV.
+%
+So it would be very unlikely for the plenoscope to trigger such a randomly shifted air-shower, and we would have to simulate many air-showers which never lead to a response in the plenoscope.
+%
+However, this does work.
+%
+But it is slow.
+%
+The estimate of the plenoscope's instrument-response would take about 1\,year.\\
+%
+To accelerate the estimate by about a factor $10^2$ we introduce the grid.
+%
+The idea is to not shift the core-position randomly, but to shift the core-position based on the Cherenkov-pool's intensity-distribution on the observation-level.
+%
+We use the grid to histogram the Cherenkov-pool's intensity, identify grid-bins which collected a reasonable size of Cherenkov-photons, and then choose randomly a single one (1) of these reasonable intense grid-bins to shift the core-position, and pass on to the plenoscope-simulations.
+%
+The fact, that the grid uses the simulation-truth of the Cherenkov-pool's intensity on the observation-level introduces a bias that must be corrected for.
+%
+We will correct for this bias by weighting the plenoscope's detection of the air-shower with the number of all grid-bins $\WeightGridTrials$, and the number of the reasonable intense grid-bins $\WeightGridSuccesses$.
+%
+\section{Histograming the Cherenkov-pool in a grid}
+\label{SubSecHistogrammingTheCherenkovPool}
+%
+The grid has quadratic bins with the bin-edges matching the aperture-diameter of the Cherenkov-plenoscope $D^\text{plenoscope} = 71\,$m.
+%
+The quadratic grid has $1,024$ bins on each edge, resulting in an area \mbox{$A^\text{grid}$ = 5,285,871,616\,m$^{2}$}.
+%
+For each air-shower, we randomly shift the grid uniformly by up to $\pm1/2 D^\text{plenoscope}$ in $x$, and $y$ on the observation-level.
+%
+We reject all Cherenkov-bunches with directions further out than 110\% of the plenoscope's field-of-view-radius.
+%
+We histogram all the air-shower's Cherenkov-bunches into the grid-bins.\\
+%
+When the intensity of Cherenkov-photons $I^\text{Cherenkov-size}_b$ within the $b$-th grid-bin exceeds a predefined threshold $T^\text{grid}$ = 50.0\,photons, this grid-bin is a part of the $\WeightGridSuccesses$ grid-bins to choose the core-position from.
+%
+From all the $\WeightGridSuccesses$ grid-bins exceeding the threshold $T_\text{grid}$, we randomly choose exactly one (1) single grid-bin with grid-bin-index $b=b^\text{chosen}$.
+%
+Now we translate the air-shower into the plenoscope's frame, so that the plenoscope is centered in the chosen grid-bin $b^\text{chosen}$.
+%
+Finally, the Cherenkov-photons of the single, chosen grid-bin $b^\text{chosen}$ are put into the plenoscope-simulation.
+%
+\section{Estimating effective quantities}
+%
+The instrument's effective quantities can be either an area, or an acceptance, which is the product of area and solid angle.
+%
+We estimate the effective quantity independently in limited bins of the primary particle's true energy.
+%
+\subsection*{For every air-shower $j$}
+%
+For every thrown air-shower $j$ in the table $\Tab{}$ we estimate:
+%
+\begin{itemize}
+\item $m^e_j$ A flag (0,\,1) indicating the $e$-th energy-bin.
+\item $q^\text{scatter-max}_j$ The maximum scatter of the quantity.
+\item $\WeightGridTrials_j$ The number of all grid-bins.
+\item $\WeightGridSuccesses_j$ The number of reasonable intense grid-bins.
+\item $f^\text{detected}_j$ A flag (0, 1) indicating whether an air-shower and its plenoscope-event fulfill a certain set of conditions relevant for the performance-aspect we want to estimate.
+\end{itemize}
+%
+The flag
+%
+\begin{eqnarray}
+m^e_j &=& \begin{cases}
+  1, & \text{if}\ E^\text{min}_e \leq \Tab{}[E][j] < E^\text{max}_e \\
+  0, & \text{otherwise}
+\end{cases}
+\label{EqEnergyMask}
+\end{eqnarray}
+%
+indicates whether the $j$-th air-shower is inside the $e$-th energy-bin with the limits $[E^\text{min}_e,\,E^\text{max}_e]$.\\
+%
+The maximum scatter
+%
+\begin{eqnarray}
+q^\text{scatter-max}_j &=& \begin{cases}
+  A^\text{grid}, & \text{if point} \\
+  A^\text{grid} \times \Omega_j, & \text{if diffuse}
+\end{cases}
+\label{EqScatterQuantity}
+\end{eqnarray}
+%
+depends on the geometry of the source.\\
+%
+The counts $\WeightGridTrials_j$, and $\WeightGridSuccesses_j$ correct for the grid's use of simulation-truth when it shifts the core-position based on the true distribution of Cherenkov-photons on the observation-level.
+%
+\begin{eqnarray}
+\WeightGridTrials_j &=& N^\text{grid}
+\label{EqWeightThrown}
+\end{eqnarray}
+%
+is the total number of grid-bins $N^\text{grid}$ and represents the number of trials the grid offers when we check each bin to contain a size of Cherenkov-photons above the grid-bin-threshold $T^\text{grid}$.
+%
+The count
+%
+\begin{eqnarray}
+\WeightGridSuccesses_j &=& \sum_{b=0}^{N^\text{grid}} t_b
+\label{EqWeightDetected}
+\end{eqnarray}
+%
+is the number of grid-bins
+%
+\begin{eqnarray}
+t_b &=& \begin{cases}
+  1, & \text{if}\,\,I^\text{Cherenkov-size}_b \geq T^\text{grid}\\
+  0, & \text{otherwise}
+\end{cases}
+\label{EqNumBinsAboveThreshold}
+\end{eqnarray}
+%
+that contain a size of Cherenkov-photons $I^\text{Cherenkov-size}_b$ above the grid-bin-threshold $T^\text{grid}$.\\
+%
+The flag
+%
+\begin{eqnarray}
+f^\text{detected}_j &=& \prod_l^L f^l_j
+\label{EqSetOfConditions}
+\end{eqnarray}
+%
+is the logical AND among a certain set of $L$ conditions that all need to be fulfilled by a plenoscope-event and the primary particle.
+%
+For example, to estimate the effective area of the plenoscope's trigger for diffuse electrons in the context of estimating the total trigger-rate, the set of conditions is only
+%
+\begin{itemize}
+  \item passing the trigger.
+\end{itemize}
+%
+But to estimate the effective area for gamma-rays coming from a point-source in the context of detecting sources of gamma-rays, the set of conditions is
+%
+\begin{itemize}
+  \item passing the trigger,
+  \item the true particle direction is in a potential on-region,
+  \item the reconstructed direction is close enough to the true direction to be within the on-regions containment-radius,
+  \item the true gamma-ray was also reconstructed to be a gamma-ray.
+\end{itemize}
+%
+\subsection*{For every energy-bin $e$}
+%
+After we have estimated $m^e_j$, $q^\text{scatter-max}_j$, $\WeightGridTrials_j$, $\WeightGridSuccesses_j$, and $f^\text{detected}_j$ for every $j$-th air-shower, we loop over every energy-bin $e$ and sum the intermediate counts, and quantities.
+%
+The number of all thrown trials in energy-bin $e$ is
+%
+\begin{eqnarray}
+C^\text{thrown}_e &=& \sum_{j=0}^J\,m^e_j\,\WeightGridTrials_j.
+\end{eqnarray}
+%
+The total detected quantity in the $e$-th energy-bin is
+%
+\begin{eqnarray}
+Q^\text{detected}_e &=& \sum_{j=0}^J\,m^e_j\, q^\text{scatter-max}_j  f^\text{detected}_j\,\WeightGridSuccesses_j.
+\end{eqnarray}
+%
+And for the uncertainties we count the number of air-showers with detections, independent of the grid.
+%
+\begin{eqnarray}
+C^\text{detected}_e &=& \sum_{j=0}^J\,m^e_j\,f^\text{detected}_j.
+\end{eqnarray}
+%
+Thus finally, the effective quantity in energy-bin $e$ is
+%
+\begin{eqnarray}
+Q^\text{effective}_e &=& \frac{Q^\text{detected}_e}{C^\text{thrown}_e},
+\end{eqnarray}
+%
+with a relative uncertainty
+%
+\begin{eqnarray}
+\Delta Q^\text{effective}_e &=& \frac{1}{\sqrt{C^\text{detected}_e}}.
+\end{eqnarray}
+%
+\def\EnergyBinEdges{E^\text{min}_e}
+\def\HistNumThrown{N}
+\def\HistNumDetected{ND}
+\def\HistNumDetectedNoWeigths{NDW}
+\def\QThrown{QT}
+\def\QDetected{Q^\text{detected}_e}
+\def\Qeff{Q^\text{effective}_e}
+\def\QeffRel{\Delta Q^\text{effective}_e}
+\def\QeffAbs{QeffAbs}
+\def\HistDetectionMask{C^\text{detected}_e}
+\def\HistDetectionWeights{\sum_j^J\,m^e_j\,\WeightGridSuccesses_j}
+\def\HistThorwnWeights{C^\text{thrown}_e}
+\def\HistThorwnMask{\sum_j^J\,m^e_j}
+\def\HistEnergies{HE}
+%
+\begin{table}
+\caption{The effective area for gamma-rays passing the trigger at site Chile.}
+\label{TabExample}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{rrrrrrrrrrrrrr}
+\hline\noalign{\smallskip}
+$\EnergyBinEdges$ & $\Qeff$ & $\QeffRel$ & $\HistDetectionMask$ & $\HistDetectionWeights$ & $\QDetected$ & $\HistThorwnWeights$ & $\HistThorwnMask$ \\
+GeV & m$^2$ &   &   &   & m$^2$ &   &   &   &    \\
+\hline\noalign{\smallskip}
+0.5 & 7719.8 & 0.05 & 365 & 637660 & 1.23e+14 & 1.59e+10 & 15158 \\
+0.7 & 19829.2 & 0.04 & 624 & 707132 & 2.50e+14 & 1.26e+10 & 12002 \\
+0.9 & 39096.8 & 0.03 & 837 & 768472 & 3.99e+14 & 1.02e+10 & 9724 \\
+1.3 & 60651.9 & 0.03 & 844 & 787506 & 4.91e+14 & 8.10e+09 & 7725 \\
+1.8 & 83670.5 & 0.04 & 791 & 797398 & 5.44e+14 & 6.51e+09 & 6204 \\
+2.4 & 114007.6 & 0.04 & 740 & 770659 & 5.94e+14 & 5.21e+09 & 4967 \\
+3.3 & 155053.8 & 0.04 & 666 & 734363 & 6.43e+14 & 4.15e+09 & 3955 \\
+4.6 & 179171.1 & 0.04 & 546 & 667987 & 5.91e+14 & 3.30e+09 & 3145 \\
+6.3 & 234054.8 & 0.04 & 518 & 613573 & 6.37e+14 & 2.72e+09 & 2594 \\
+8.6 & 263506.1 & 0.05 & 412 & 504290 & 5.47e+14 & 2.08e+09 & 1981 \\
+11.9 & 284479.5 & 0.05 & 338 & 430792 & 4.75e+14 & 1.67e+09 & 1593 \\
+16.3 & 324585.5 & 0.06 & 308 & 354722 & 4.37e+14 & 1.35e+09 & 1285 \\
+22.4 & 385210.7 & 0.06 & 296 & 315571 & 4.47e+14 & 1.16e+09 & 1107 \\
+30.7 & 337458.9 & 0.07 & 199 & 259953 & 3.10e+14 & 9.18e+08 & 875 \\
+42.1 & 319649.8 & 0.08 & 152 & 209281 & 2.35e+14 & 7.34e+08 & 700 \\
+57.8 & 373587.9 & 0.09 & 128 & 166407 & 2.10e+14 & 5.63e+08 & 537 \\
+79.4 & 362517.6 & 0.10 & 102 & 135206 & 1.68e+14 & 4.62e+08 & 441 \\
+108.9 & 386676.1 & 0.11 & 78 & 107599 & 1.37e+14 & 3.53e+08 & 337 \\
+149.5 & 353186.1 & 0.12 & 74 & 98572 & 1.18e+14 & 3.34e+08 & 319 \\
+205.3 & 310497.6 & 0.18 & 32 & 59016 & 5.86e+13 & 1.89e+08 & 180 \\
+281.7 & 213320.4 & 0.21 & 22 & 53638 & 3.67e+13 & 1.72e+08 & 164 \\
+386.7 & 374057.4 & 0.19 & 29 & 44009 & 5.22e+13 & 1.39e+08 & 133 \\
+530.8 & 298591.3 & 0.27 & 14 & 28501 & 2.69e+13 & 9.02e+07 & 86 \\
+728.5 & 359905.2 & 0.24 & 18 & 32407 & 3.43e+13 & 9.54e+07 & 91 \\
+\noalign{\smallskip}\hline
+\end{tabular}
+} %resizebox
+\end{table}
+%
+Table \ref{TabExample} shows the intermediate counts and quantities for gamma-rays from a point-source passing the trigger at site Chile.
+%
+\section{Conclusion}
+%
+I identify interfaces within the estimate for the plenoscope's response-functions that  help us to separate layers of abstraction.
+%
+First, the table of thrown air-showers $\Tab{}$ marks the interface between the simulation and the following estimates.
+%
+Second, the grid which we only use to increase the simulation's efficiency, can be abstracted away with the two weights $w^\text{thrown}_j$, and $\WeightGridSuccesses_j$ which count the number of trials and successes in the grid, see Equations \ref{EqWeightThrown}, and \ref{EqWeightDetected}.
+%
+Third, the geometry of the source, and the technical aspect to be estimated can be fully represented with the mask $f^\text{detected}_j$ acting on table $\Tab{}$.
+%
+This mask is the logical AND among a set of conditions, see Equation \ref{EqSetOfConditions}.\\
+%
+I identify a potential for mistakes when I try to describe this set of conditions using vague statements such as "Observing gamma-rays coming from a point-source in the on-region".
+%
+To reduce mistakes, I will list, and explain this set of conditions more explicitly in the future.
+%
+\newpage
+\section{Appendix}
+%
+\subsection{Simulating air-showers}
+%
+We simulate air-showers using \texttt{CORSIKA}, see Figure \ref{FigCorsika}.
+%
+We add two modifications to \texttt{CORSIKA}.
+%
+First, explicit control over each primary particle, and its full random-seed.
+%
+And second, a hot-fix in
+\dirtree{%
+.1 CORSIKA.
+.2 MAIN().
+.3 AAMAIN().
+.4 BOX3().
+.5 EM().
+.6 EGS4().
+.7 SHOWER().
+.8 ELECTR().
+}
+\noindent to make \texttt{TELEVT()} write event-end-blocks into the Cherenkov-photon-output when the simulation stops with the primary electron, or positron when this is not descending fast enough in atmospheric depths, as it can happen with energies below $\approx 1\,$GeV.
+%
+We are discussing our hot-fix, and alternative solutions with the developers of \texttt{CORSIKA}, i.e. Dieter Heck, and Konrad Bernloehr.
+%
+\begin{figure}[H]
+\begin{lstlisting}[language=C,basicstyle=\tiny\ttfamily]
+HAVE_BERNLOHR
+HAVE_DLFCN_H
+HAVE_INTTYPES_H
+HAVE_MEMORY_H
+HAVE_STDINT_H
+HAVE_STDLIB_H
+HAVE_STRINGS_H
+HAVE_STRING_H
+HAVE_SYS_STAT_H
+HAVE_SYS_TYPES_H
+HAVE_UNISTD_H
+LT_OBJDIR ".libs/
+PACKAGE "corsika
+PACKAGE_BUGREPORT "
+PACKAGE_NAME "corsika
+PACKAGE_STRING "corsika 75600
+PACKAGE_TARNAME "corsika
+PACKAGE_URL "
+PACKAGE_VERSION "75600
+STDC_HEADERS
+VERSION "75600
+__ATMEXT__
+__BYTERECL__
+__CACHE_ATMEXT__ /**
+__CACHE_CEFFIC__ /**
+__CACHE_CERENKOV__ /**
+__CACHE_IACT__ /**
+__CACHE_KEEPSOURCE__ /**
+__CACHE_NOCOMPILE__ /**
+__CACHE_QGSJETII__ /**
+__CACHE_URQMD__ /**
+__CACHE_VIEWCONE__ /**
+__CACHE_VOLUMEDET__ /**
+__CEFFIC__
+__CERENKOV__
+__GFORTRAN__
+__IACT__
+__NOCOMPILE__
+__OFFIC__
+__QGSII__
+__QGSJET__
+__SAVEDCORS__
+__TIMERC__
+__UNIX__
+__URQMD__
+__VIEWCONE__
+__VOLUMEDET__
+\end{lstlisting}
+\caption{%
+    \textit{CORSIKA}'s build-options in \textit{config.h} created by \textit{CORSIKA}'s build-environment named \textit{COCONUT}.
+}
+\label{FigCorsika}
+\end{figure}
+%
+Our modification is located here:\\
+%
+\begin{center}
+\url{https://github.com/cherenkov-plenoscope/corsika_install/}
+git-commit \texttt{2530df1825}
+\end{center}
+%
+\subsection{Simulating a plenoscope-response}
+%
+Before the individual air-showers and plenoscope-responses are simulated, two estimates are made.\\
+%
+First, for each plenoscope-geometry the plenoscope's light-field-geometry $G_\texttt{plenoscope}$ is estimated.
+%
+A burst of \mbox{$\sim 10^{10}$\,photons} with uniformly distributed directions, and support-positions, and an emission spectrum of the night-sky-background is propagated in the plenoscope-scenery.
+%
+The statistics of the photons detected by each photo-sensor is stored in the light-field-geometry $G_\texttt{plenoscope}$.
+%
+Later, the trigger, and other estimators use the light-field-geometry $G_\texttt{plenoscope}$ to construct a light-field-sequence from the light-field-sensor's raw response.
+%
+The light-field-geometry is also used to take the geometric variations in efficiency of the read-out-channels into account when injecting night-sky-background-photons.\\
+%
+Second, for each site we estimate the deflection of air-showers in earth magnetic field to find the direction of the primary particle for Cherenkov-light to be seen by the plenoscope.
+%
+This might be used to throw primary particles only in directions where it matters to improve efficiency.\\
+%
+The Figure \ref{FigLevels} traces the simulation of a plenoscope-response.
+%
+Each indention-level is conditional.
+%
+The probability $p$ marks how likely it is to pass a conditional level.
+%
+The values for $p$ are estimates based on experience.
+%
+Because of these conditional levels, the table of thrown air-showers is not rectangular.
+%
+For most air-showers, only the early levels are populated in the table.
+%
+\subsubsection{Defining the random-seed}
+\label{SubSecRandomSeed}
+%
+We assign a unique ID composed of a run-id $i^\text{run}$, and an air-shower-id $i^\text{air-shower}$ to every thrown air-shower $j$.
+%
+The $j$-th air-shower's random-seed
+%
+\begin{eqnarray}
+S_j &=& i^\text{run}_j N^\texttt{MAX NUM EVENTS IN RUN} + i^\text{air-shower}_j
+\end{eqnarray}
+%
+will yield the bit-wise same air-shower, plensocope-trigger, and plenoscope-record when rerun, regardless of the ordering with other air-showers.\\
+%
+The four seeds in \texttt{CORSIKA} for each particular air-shower are
+%
+\begin{eqnarray}
+\texttt{SEED}_1 = S_j & \texttt{CALLS}_1 = 0 & \texttt{BILLIONS}_1 = 0\\
+\texttt{SEED}_2 = S_j+1 & \texttt{CALLS}_2 = 0 & \texttt{BILLIONS}_2 = 0\\
+\texttt{SEED}_3 = S_j+2 & \texttt{CALLS}_3 = 0 & \texttt{BILLIONS}_3 = 0\\
+\texttt{SEED}_4 = S_j+3 & \texttt{CALLS}_4 = 0 & \texttt{BILLIONS}_4 = 0.
+\end{eqnarray}
+%
+This incremental rise of \texttt{CORSIKA}'s seeds is the default implemented in \texttt{CORSIKA}, and also used in the MAGIC, and FACT Cherenkov-telescopes.
+%
+All other subroutines only need one random-seed, and just use $S$ directly.
+%
+\subsubsection{Setting the primary particle}
+\label{SubSecSettingPrimary}
+%
+We draw the direction \mbox{$(\theta^\text{primary}, \phi^\text{primary})$}, and energy $E^\text{primary}$ of the primary particle.
+%
+Currently, all primary particles start at atmospheric-depth \mbox{$\rho^\text{primary} = 0\,$g\,cm$^{-2}$}.
+%
+The initial trajectory of the primary particle intersects the observation-level at $x = 0\,$m, $y = 0\,$m.
+%
+The random-distributions e.g. scatter-angle vs. energy can depend on the previously estimated magnetic deflection.
+%
+\subsubsection{Simulating the Cherenkov-pool}
+\label{SubSecSimulatingTheCherenkovPool}
+%
+We make \texttt{CORSIKA} output all Cherenkov-photons. The bunch-size for Cherenkov-photons is $1.0$.
+%
+From this entire Cherenkov-pool, we extract e.g. the median emission-altitude of Cherenkov-photons, what makes a good estimate for the altitude of the air-shower-maximum.
+%
+\subsubsection{Simulating the response of the plenoscope's light-field-sensor}
+\label{SubSecSimulatingLightFieldSensor}
+%
+We propagate the Cherenkov-photons in the plenoscope's scenery.
+%
+The photons are reflected on mirrors, refracted in lenses or absorbed on support-structures.
+%
+Eventually some Cherenkov-photons are absorbed in photo-sensors.
+%
+Now for each read-out-channel we know the arrival-times of the Cherenkov-photons.
+%
+Based on the plensocope's light-field-geometry $G_\texttt{plenoscope}$ folded with a flux, we randomly add night-sky-background-photons to the read-out-channels.
+%
+Next we randomly add read-out-artifacts based on the FACT Cherenkov-telescope.
+%
+The only relevant artifact here is the normal-spread of \mbox{$\sigma \approx 450\,$ps} for the reconstructed arrival-time of a photon.
+%
+Finally, we export a list of reconstructed photon-arrival-times for all \mbox{$\approx 5\times10^5$} read-out-channels in finite time-slices of \mbox{$500\,$ps}.
+%
+This is implemented here:
+\begin{center}
+\url{https://github.com/cherenkov-plenoscope/merlict_development_kit}
+\end{center}
+%
+\subsubsection{Simulating the trigger in the plenoscope's light-field-sensor}
+\label{SubSecSimulatingPlenoscopeTrigger}
+%
+The trigger takes all the reconstructed arrival-times of the detected photons.
+%
+Mostly night-sky-background, and very few Cherenkov-photons.
+%
+The trigger estimates the density of the light-field-sequence.
+%
+The density is based on neighboring directions (pixel) and a running-window in time with an integration-duration of $5\,$ns, c.f. MAGIC.
+%
+The density estimate is done at multiple positions in the sensor-plane in parallel, each in a limited volume of the light-field-sensor, taken only near-by read-out-channels into account.
+%
+This is inspired by the sum-triggers of Cherenkov-telescopes, and makes sure that the trigger can be implemented with established technology.
+%
+The trigger-simulation returns the maximum density found in the light-field-sequence, which is then compared to a predefined threshold $T_\texttt{plenoscope} = 110\,$p.e.
+%
+The trigger is implemented here:
+%
+\begin{center}
+\url{https://github.com/cherenkov-plenoscope/plenopy}
+\end{center}
+%
+\end{document}
+%
