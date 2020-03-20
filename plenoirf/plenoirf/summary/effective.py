@@ -54,14 +54,42 @@ def estimate_effective_quantity(
             effective_quantity_absunc[i] = (
                 effective_quantity_relunc[i]*effective_quantity[i])
 
+    _detection_mask = np.histogram(
+        energies,
+        weights=detection_mask,
+        bins=energy_bin_edges)[0]
+    _detection_weights = np.histogram(
+        energies,
+        weights=detection_weights,
+        bins=energy_bin_edges)[0]
+    _thrown_weights = np.histogram(
+        energies,
+        weights=thrown_weights,
+        bins=energy_bin_edges)[0]
+    _thrown_mask = np.histogram(
+        energies,
+        weights=thrown_mask,
+        bins=energy_bin_edges)[0]
+    _energies = np.histogram(
+        energies,
+        bins=energy_bin_edges)[0]
+
     return {
         "energy_bin_edges": energy_bin_edges,
         "num_thrown": num_thrown,
         "num_detected": num_detected,
+        "num_detected_no_weights": num_detected_no_weights,
         "quantity_thrown": quantity_thrown,
         "quantity_detected": quantity_detected,
         "effective_quantity": effective_quantity,
-        "effective_quantity_abs_uncertainty": effective_quantity_absunc}
+        "effective_quantity_rel_uncertainty": effective_quantity_relunc,
+        "effective_quantity_abs_uncertainty": effective_quantity_absunc,
+        "_detection_mask": _detection_mask,
+        "_detection_weights": _detection_weights,
+        "_thrown_weights": _thrown_weights,
+        "_thrown_mask": _thrown_mask,
+        "_energies": _energies,
+    }
 
 
 def write_effective_quantity_figure(

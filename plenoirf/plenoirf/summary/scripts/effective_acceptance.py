@@ -21,6 +21,57 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
 sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
 
 
+def make_latex_table(matrix):
+    out = ""
+    for line in matrix:
+        for idx, item in enumerate(line):
+            out += item
+            if idx+1 == len(line):
+                out += " \\\\"
+            else:
+                out += " & "
+        out += "\n"
+    return out
+
+
+def trigger_table(effective_quantity):
+    varmap = {
+        'energy_bin_edges': ("\\EnergyBinEdges", "{:1.1f}"),
+        # 'num_thrown': ("\\HistNumThrown", "{:1.2e}"),
+        # 'num_detected': ("\\HistNumDetected", "{:1.2e}"),
+        # 'num_detected_no_weights': ("\\HistNumDetectedNoWeigths", "{:1.2e}"),
+        # 'quantity_thrown': ("\\QThrown", "{:1.2e}"),
+        'effective_quantity': ("\\Qeff", "{:1.1f}"),
+        'effective_quantity_rel_uncertainty': ("\\QeffRel", "{:1.2f}"),
+        # 'effective_quantity_abs_uncertainty': ("\\QeffAbs", "{:1.2e}"),
+        '_detection_mask': ("\\HistDetectionMask", "{:1.0f}"),
+        '_detection_weights': ("\\HistDetectionWeights", "{:1.0f}"),
+        'quantity_detected': ("\\QDetected", "{:1.2e}"),
+        '_thrown_weights': ("\\HistThorwnWeights", "{:1.2e}"),
+        '_thrown_mask': ("\\HistThorwnMask", "{:1.0f}"),
+        # "_energies": ("\\HistEnergies", "{:1.0f}"),
+    }
+
+    mat = []
+    top_line = []
+    for key in varmap:
+        top_line.append("${:s}$".format(varmap[key][0]))
+    num_bins = len(effective_quantity['energy_bin_edges']) - 1
+    mat.append(top_line)
+    for row in range(num_bins):
+        line = []
+        for key in varmap:
+            val = effective_quantity[key][row]
+            form = varmap[key][1]
+            line.append(form.format(val))
+        mat.append(line)
+
+    latex_defines = []
+    for key in varmap:
+        latex_defines.append("\\def{:s}{{}}".format(varmap[key][0]))
+    return make_latex_table(mat), "\n".join(latex_defines)
+
+
 def reconstruct_direction_cx_cy(event_features):
     return (
         event_features['image_infinity_cx_mean'],
@@ -145,3 +196,8 @@ for site_key in irf_config['config']['sites']:
                 path=tpath+'.json',
                 effective_quantity=qa_trigger,
                 quantity_key=quantity_key)
+
+            print(particle_key, site_key)
+            tex_table, tex_defines = trigger_table(qa_trigger)
+            print(tex_defines)
+            print(tex_table)
