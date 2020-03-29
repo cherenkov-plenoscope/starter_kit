@@ -54,7 +54,7 @@ def make_jobs(
                 job['max_total_num_events'] = max_total_num_events
                 job['outlier_percentile'] = outlier_percentile
                 jobs.append(job)
-    return jobs
+    return sort_jobs_by_key(jobs=jobs, key='primary_energy')
 
 
 def sort_jobs_by_key(jobs, key):
@@ -167,7 +167,6 @@ def read_deflection_table(path):
 
 
 def write_deflection_table(deflection_table, path):
-    os.makedirs(path)
     for site_key in deflection_table:
         for particle_key in deflection_table[site_key]:
             out_path = os.path.join(path, '{:s}_{:s}.csv'.format(

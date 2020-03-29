@@ -167,7 +167,6 @@ def make_latex_table_with_power_law_fit(power_law_fit_table):
                 value_line = ["", "", nice_power_law_variable_keys[param_key]]
                 for particle_key in nice_particle_keys:
 
-                    print(site_key, particle_key, variable_key, param_key)
                     power_law_fit = power_law_fit_table[
                                         site_key][
                                         particle_key][
@@ -211,7 +210,6 @@ for site_key in deflection_table:
         for key in key_map:
             sres = mdfl.analysis.smooth(energies=t["energy_GeV"], values=t[key])
             energy_supports = sres["energy_supports"]
-            key_med = sres["key_med"]
             key_std80 = sres["key_std80"]
             key_mean80 = sres["key_mean80"]
             unc80_upper = key_mean80 + key_std80
@@ -220,7 +218,6 @@ for site_key in deflection_table:
             if particle_key == "electron":
                 valid_range = energy_supports > 1.0
                 energy_supports = energy_supports[valid_range]
-                key_med = key_med[valid_range]
                 key_std80 = key_std80[valid_range]
                 key_mean80 = key_mean80[valid_range]
                 unc80_upper = unc80_upper[valid_range]
@@ -464,7 +461,6 @@ for site_key in deflection_table:
 
 
 _table = make_latex_table_with_power_law_fit(power_law_fit_table)
-print(_table)
 with open(os.path.join(deflection_dir, "power_law_table.tex"), "wt") as fout:
     fout.write(_table)
 

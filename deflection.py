@@ -90,41 +90,14 @@ sites = {
     },
 }
 
-max_energy_GeV = 64.0
-
-os.makedirs(work_dir)
-
-print("write config")
-with open(os.path.join(work_dir, 'sites.json'), 'wt') as f:
-    f.write(json.dumps(sites, indent=4))
-with open(os.path.join(work_dir, 'pointing.json'), 'wt') as f:
-    f.write(json.dumps(plenoscope_pointing, indent=4))
-with open(os.path.join(work_dir, 'particles.json'), 'wt') as f:
-    f.write(json.dumps(particles, indent=4))
-
-print("create jobs")
-jobs = mdfl.map_and_reduce.make_jobs(
-    sites=sites,
+mdfl.estimate_raw_deflection(
     particles=particles,
+    sites=sites,
     plenoscope_pointing=plenoscope_pointing,
-    max_energy=max_energy_GeV,
+    out_dir=work_dir,
+    multiprocessing_pool=pool,
+    max_energy=64.0,
     num_energy_supports=512)
 
-print("num jobs", len(jobs))
-jobs_sorted_energy = mdfl.map_and_reduce.sort_jobs_by_key(
-    jobs=jobs,
-    key='primary_energy')
+mdfl.summarize_raw_deflection(out_dir=work_dir)
 
-print("submitt jobs")
-combined_results = pool.map(
-    mdfl.map_and_reduce.run_job,
-    jobs_sorted_energy)
-
-print("structure results")
-deflection_table = mdfl.map_and_reduce.structure_combined_results(
-    combined_results=combined_results,
-    sites=sites,
-    particles=particles)
-
-print("write results")
-mdfl.map_and_reduce.write_deflection_table(deflection_table, work_dir)
