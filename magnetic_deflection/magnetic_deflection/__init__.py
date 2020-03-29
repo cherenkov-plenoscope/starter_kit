@@ -12,6 +12,8 @@ import scipy
 from scipy.optimize import curve_fit as  scipy_optimize_curve_fit
 import shutil
 import corsika_primary_wrapper as cpw
+import pkg_resources
+import subprocess
 
 
 def estimate_raw_deflection(
@@ -90,6 +92,13 @@ def summarize_raw_deflection(
         sites=sites2,
         in_path=os.path.join(out_dir, 'raw_valid_add_clean_high_power'),
         out_path=os.path.join(out_dir, 'result'))
+
+    script_path = os.path.abspath(
+        pkg_resources.resource_filename(
+            'magnetic_deflection',
+            os.path.join('scripts', 'make_control_figures.py')))
+    subprocess.call(['python', script_path, out_dir])
+
 
 
 def _cut_invalid(

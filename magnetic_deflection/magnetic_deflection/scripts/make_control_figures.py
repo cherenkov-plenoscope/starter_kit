@@ -73,8 +73,6 @@ for site_key in sites:
     if 'Off' in site_key:
         continue
     for particle_key in particles:
-        print(site_key, particle_key)
-
         for key in mdfl.FIT_KEYS:
 
             fig = plt.figure(figsize=figsize, dpi=dpi)
