@@ -93,33 +93,33 @@ EXAMPLE_CONFIG = {
     "particles": {
         "gamma": {
             "particle_id": 1,
-            "energy_bin_edges_GeV": [0.5, 100],
+            "energy_bin_edges_GeV": [0.5, 1000],
             "max_scatter_angle_deg": 5,
-            "energy_power_law_slope": -1.7,
+            "energy_power_law_slope": -1.5,
             "electric_charge_qe": 0.,
             "magnetic_deflection_max_off_axis_deg": 0.25,
         },
         "electron": {
             "particle_id": 3,
-            "energy_bin_edges_GeV": [0.5, 100],
-            "max_scatter_angle_deg": 10,
-            "energy_power_law_slope": -1.7,
+            "energy_bin_edges_GeV": [0.5, 1000],
+            "max_scatter_angle_deg": 13,
+            "energy_power_law_slope": -1.5,
             "electric_charge_qe": -1.,
             "magnetic_deflection_max_off_axis_deg": 0.5,
         },
         "proton": {
             "particle_id": 14,
-            "energy_bin_edges_GeV": [5, 100],
-            "max_scatter_angle_deg": 30,
-            "energy_power_law_slope": -1.7,
+            "energy_bin_edges_GeV": [5, 1000],
+            "max_scatter_angle_deg": 15,
+            "energy_power_law_slope": -1.5,
             "electric_charge_qe": +1.,
             "magnetic_deflection_max_off_axis_deg": 1.5,
         },
         "helium": {
             "particle_id": 402,
-            "energy_bin_edges_GeV": [10, 100],
-            "max_scatter_angle_deg": 30,
-            "energy_power_law_slope": -1.7,
+            "energy_bin_edges_GeV": [10, 1000],
+            "max_scatter_angle_deg": 15,
+            "energy_power_law_slope": -1.5,
             "electric_charge_qe": +2.,
             "magnetic_deflection_max_off_axis_deg": 1.5,
         },
@@ -138,10 +138,10 @@ EXAMPLE_CONFIG = {
     },
 
     "num_runs": {
-        "gamma": 1,
-        "electron": 4,
-        "proton": 5,
-        "helium": 3
+        "gamma": 64,
+        "electron": 64,
+        "proton": 64,
+        "helium": 64
     },
 
     "magnetic_deflection": {
@@ -216,8 +216,8 @@ def _estimate_magnetic_deflection_of_air_showers(
             job_results=mdfl_job_results,
             work_dir=mdfl_absdir)
 
-        mdfl.D_summarize_raw_deflection(
-            work_dir=mdfl_absdir)
+    mdfl.D_summarize_raw_deflection(
+        work_dir=mdfl_absdir)
 
 
 def _estimate_light_field_geometry_of_plenoscope(
