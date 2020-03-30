@@ -19,6 +19,7 @@ import json
 import multiprocessing
 import glob
 import tempfile
+import pandas as pd
 
 import sun_grid_engine_map as sge
 import magnetic_deflection as mdfl
@@ -272,6 +273,7 @@ def _populate_table_of_thrown_air_showers(
     executables,
     tmp_absdir,
     date_dict_now,
+    KEEP_TMP,
 ):
     sge._print("Estimating instrument-response.")
     table_absdir = opj(out_absdir, "event_table")
@@ -295,13 +297,12 @@ def _populate_table_of_thrown_air_showers(
             site_particle_deflection = pd.read_csv(
                 opj(out_absdir,
                     'magnetic_deflection',
-                    'results',
+                    'result',
                     '{:s}_{:s}.csv'.format(
                         site_key,
                         particle_key)
                 )
             ).to_dict(orient='list')
-
 
             for job_idx in np.arange(cfg["num_runs"][particle_key]):
 
@@ -440,6 +441,7 @@ def run(
         pool=pool,
         executables=executables,
         tmp_absdir=tmp_absdir,
+        KEEP_TMP=KEEP_TMP,
         date_dict_now=date_dict_now)
 
     sge._print("End main().")

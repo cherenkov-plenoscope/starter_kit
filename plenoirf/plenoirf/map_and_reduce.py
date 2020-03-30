@@ -312,9 +312,9 @@ def draw_corsika_primary_steering(
     ])
 
     np.random.seed(run_id)
-    energies = cpw.random_distribution.draw_power_law(
+    energies = cpw.random_distributions.draw_power_law(
         lower_limit=min_common_energy,
-        upper_limit=np.max(energy_bin_edges_GeV),
+        upper_limit=np.max(particle["energy_bin_edges_GeV"]),
         power_slope=particle["energy_power_law_slope"],
         num_samples=num_events)
     steering = {}
@@ -348,7 +348,7 @@ def draw_corsika_primary_steering(
             xp=site_particle_deflection["energy_GeV"],
             fp=site_particle_deflection["cherenkov_pool_y_m"])
 
-        az, zd = cpw.random_distribution.draw_azimuth_zenith_in_viewcone(
+        az, zd = cpw.random_distributions.draw_azimuth_zenith_in_viewcone(
             azimuth_rad=primary["magnet_azimuth_rad"],
             zenith_rad=primary["magnet_zenith_rad"],
             min_scatter_opening_angle_rad=0.,
