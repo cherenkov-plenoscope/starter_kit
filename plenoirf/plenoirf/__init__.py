@@ -217,7 +217,7 @@ def _estimate_magnetic_deflection_of_air_showers(
             work_dir=mdfl_absdir)
 
         mdfl.D_summarize_raw_deflection(
-            out_dir=mdfl_absdir)
+            work_dir=mdfl_absdir)
 
 
 def _estimate_light_field_geometry_of_plenoscope(
