@@ -26,9 +26,27 @@ CONFIG = {
 CONFIG['levels']['primary'] = {
     'particle_id': {'dtype': '<i8', 'comment': 'CORSIKA particle-id'},
     'energy_GeV': {'dtype': '<f8', 'comment': ''},
-    'azimuth_rad': {'dtype': '<f8', 'comment': 'w.r.t. magnetic north.'},
-    'zenith_rad': {'dtype': '<f8', 'comment': ''},
+    'azimuth_rad': {'dtype': '<f8', 'comment':
+        'Direction of the primary particle w.r.t. magnetic north.'},
+    'zenith_rad': {'dtype': '<f8', 'comment':
+        'Direction of the primary particle.'},
     'max_scatter_rad': {'dtype': '<f8', 'comment': ''},
+
+    'magnet_azimuth_rad': {'dtype': '<f8', 'comment':
+        'The azimuth direction that the primary particle needs to have '
+        'in order to induce an air-shower that emits its Cherenkov-light '
+        'head on the pointing of the plenoscope.'},
+    'magnet_zenith_rad': {'dtype': '<f8', 'comment':
+        'The zenith direction that the primary particle needs to have '
+        'in order to induce an air-shower that emits its Cherenkov-light '
+        'head on the pointing of the plenoscope.'},
+    'magnet_cherenkov_pool_x_m': {'dtype': '<f8', 'comment':
+        'This offset must be added to the core-position, where '
+        'the trajectory of the primary particle intersects the '
+        'observation-level, in order for the plenoscope to stand in '
+        'the typical center of the Cherenkov-pool.'},
+    'magnet_cherenkov_pool_y_m': {'dtype': '<f8', 'comment': ''},
+
     'solid_angle_thrown_sr': {'dtype': '<f8', 'comment': ''},
     'depth_g_per_cm2': {'dtype': '<f8', 'comment': ''},
     'momentum_x_GeV_per_c': {'dtype': '<f8', 'comment': ''},

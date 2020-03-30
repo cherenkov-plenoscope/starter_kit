@@ -90,14 +90,21 @@ sites = {
     },
 }
 
-mdfl.estimate_raw_deflection(
+mdfl.A_init_work_dir(
     particles=particles,
     sites=sites,
     plenoscope_pointing=plenoscope_pointing,
-    out_dir=work_dir,
-    multiprocessing_pool=pool,
     max_energy=64.0,
-    num_energy_supports=512)
+    num_energy_supports=512,
+    work_dir=work_dir)
 
-mdfl.summarize_raw_deflection(out_dir=work_dir)
+jobs = mdfl.B_make_jobs_from_work_dir(work_dir=work_dir)
+
+job_results = pool.map(mdfl.map_and_reduce.run_job, jobs)
+
+mdfl.C_reduce_job_results_in_work_dir(
+    job_results=job_results,
+    work_dir=work_dir)
+
+mdfl.D_summarize_raw_deflection(out_dir=work_dir)
 

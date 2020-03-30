@@ -16,37 +16,52 @@ import pkg_resources
 import subprocess
 
 
-def estimate_raw_deflection(
+def A_init_work_dir(
     particles,
     sites,
     plenoscope_pointing,
-    out_dir,
-    multiprocessing_pool,
     max_energy,
     num_energy_supports,
+    work_dir,
 ):
-    os.makedirs(out_dir, exist_ok=True)
-    raw_deflection_table_path = os.path.join(out_dir, "raw")
-    os.makedirs(raw_deflection_table_path, exist_ok=True)
+    os.makedirs(work_dir, exist_ok=True)
 
-    with open(os.path.join(out_dir, 'sites.json'), 'wt') as f:
+    with open(os.path.join(work_dir, 'sites.json'), 'wt') as f:
         f.write(json.dumps(sites, indent=4))
-    with open(os.path.join(out_dir, 'pointing.json'), 'wt') as f:
+    with open(os.path.join(work_dir, 'pointing.json'), 'wt') as f:
         f.write(json.dumps(plenoscope_pointing, indent=4))
-    with open(os.path.join(out_dir, 'particles.json'), 'wt') as f:
+    with open(os.path.join(work_dir, 'particles.json'), 'wt') as f:
         f.write(json.dumps(particles, indent=4))
+    with open(os.path.join(work_dir, 'config.json'), 'wt') as f:
+        f.write(json.dumps({
+                'max_energy_GeV': float(max_energy),
+                'num_energy_supports': int(num_energy_supports)
+            }, indent=4))
 
-    jobs = map_and_reduce.make_jobs(
+
+def B_make_jobs_from_work_dir(work_dir):
+    sites = read_json(os.path.join(work_dir, "sites.json"))
+    particles = read_json(os.path.join(work_dir, "particles.json"))
+    pointing = read_json(os.path.join(work_dir, "pointing.json"))
+    config = read_json(os.path.join(work_dir, "config.json"))
+
+    return map_and_reduce.make_jobs(
         sites=sites,
         particles=particles,
-        plenoscope_pointing=plenoscope_pointing,
-        max_energy=max_energy,
-        num_energy_supports=num_energy_supports)
-    combined_results = multiprocessing_pool.map(
-        map_and_reduce.run_job,
-        jobs_sorted_energy)
+        plenoscope_pointing=pointing,
+        max_energy=config["max_energy_GeV"],
+        num_energy_supports=config["num_energy_supports"])
+
+
+def C_reduce_job_results_in_work_dir(job_results, work_dir):
+    raw_deflection_table_path = os.path.join(work_dir, "raw")
+    os.makedirs(raw_deflection_table_path, exist_ok=True)
+
+    sites = read_json(os.path.join(work_dir, "sites.json"))
+    particles = read_json(os.path.join(work_dir, "particles.json"))
+
     raw_deflection_table = map_and_reduce.structure_combined_results(
-        combined_results=combined_results,
+        combined_results=job_results,
         sites=sites,
         particles=particles)
     map_and_reduce.write_deflection_table(
@@ -54,30 +69,27 @@ def estimate_raw_deflection(
         path=raw_deflection_table_path)
 
 
-def summarize_raw_deflection(
-    out_dir,
+def D_summarize_raw_deflection(
+    work_dir,
     min_fit_energy=0.65,
 ):
-    with open(os.path.join(out_dir, "sites.json"), "rt") as f:
-        sites = json.loads(f.read())
-    with open(os.path.join(out_dir, "particles.json"), "rt") as f:
-        particles = json.loads(f.read())
-    with open(os.path.join(out_dir, "pointing.json"), "rt") as f:
-        pointing = json.loads(f.read())
+    sites = read_json(os.path.join(work_dir, "sites.json"))
+    particles = read_json(os.path.join(work_dir, "particles.json"))
+    pointing = read_json(os.path.join(work_dir, "pointing.json"))
     _cut_invalid(
-        in_path=os.path.join(out_dir, 'raw'),
-        out_path=os.path.join(out_dir, 'raw_valid'),
+        in_path=os.path.join(work_dir, 'raw'),
+        out_path=os.path.join(work_dir, 'raw_valid'),
         min_energy=min_fit_energy)
     _add_density_fields(
-        in_path=os.path.join(out_dir, 'raw_valid'),
-        out_path=os.path.join(out_dir, 'raw_valid_add'))
+        in_path=os.path.join(work_dir, 'raw_valid'),
+        out_path=os.path.join(work_dir, 'raw_valid_add'))
     _smooth_and_reject_outliers(
-        in_path=os.path.join(out_dir, 'raw_valid_add'),
-        out_path=os.path.join(out_dir, 'raw_valid_add_clean'))
+        in_path=os.path.join(work_dir, 'raw_valid_add'),
+        out_path=os.path.join(work_dir, 'raw_valid_add_clean'))
     _set_high_energies(
         particles=particles,
-        in_path=os.path.join(out_dir, 'raw_valid_add_clean'),
-        out_path=os.path.join(out_dir, 'raw_valid_add_clean_high'))
+        in_path=os.path.join(work_dir, 'raw_valid_add_clean'),
+        out_path=os.path.join(work_dir, 'raw_valid_add_clean_high'))
     sites2 = {}
     for site_key in sites:
         if not 'Off' in site_key:
@@ -85,21 +97,24 @@ def summarize_raw_deflection(
     _fit_power_law(
         particles=particles,
         sites=sites2,
-        in_path=os.path.join(out_dir, 'raw_valid_add_clean_high'),
-        out_path=os.path.join(out_dir, 'raw_valid_add_clean_high_power'))
+        in_path=os.path.join(work_dir, 'raw_valid_add_clean_high'),
+        out_path=os.path.join(work_dir, 'raw_valid_add_clean_high_power'))
     _export_table(
         particles=particles,
         sites=sites2,
-        in_path=os.path.join(out_dir, 'raw_valid_add_clean_high_power'),
-        out_path=os.path.join(out_dir, 'result'))
+        in_path=os.path.join(work_dir, 'raw_valid_add_clean_high_power'),
+        out_path=os.path.join(work_dir, 'result'))
 
     script_path = os.path.abspath(
         pkg_resources.resource_filename(
             'magnetic_deflection',
             os.path.join('scripts', 'make_control_figures.py')))
-    subprocess.call(['python', script_path, out_dir])
+    subprocess.call(['python', script_path, work_dir])
 
 
+def read_json(path):
+    with open(path, "rt") as f: out = json.loads(f.read())
+    return out
 
 def _cut_invalid(
     in_path,

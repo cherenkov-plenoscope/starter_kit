@@ -21,6 +21,7 @@ import glob
 import tempfile
 
 import sun_grid_engine_map as sge
+import magnetic_deflection as mdfl
 
 
 EXAMPLE_EXECUTABLES = {
@@ -143,6 +144,11 @@ EXAMPLE_CONFIG = {
         "helium": 3
     },
 
+    "magnetic_deflection": {
+        "num_energy_supports": 512,
+        "max_energy_GeV": 64
+    },
+
     "num_airshowers_per_run": 100,
 }
 
@@ -166,45 +172,62 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
         dst=opj(out_absdir, 'input', 'merlict_propagation_config.json'))
 
 
-def run(
-    path,
-    MULTIPROCESSING_POOL="sun_grid_engine",
-    executables=EXAMPLE_EXECUTABLES,
-    TMP_DIR_ON_WORKERNODE=True,
-    KEEP_TMP=False,
-    LAZY_REDUCTION=False,
+def _estimate_magnetic_deflection_of_air_showers(
+    cfg,
+    out_absdir,
+    pool
 ):
-    date_dict_now = map_and_reduce.date_dict_now()
-    sge._print("Start run()")
+    sge._print("Estimating magnetic deflection.")
+    mdfl_absdir = opj(out_absdir, 'magnetic_deflection')
 
-    out_absdir = op.abspath(path)
-    for exe_path in executables:
-        executables[exe_path] = op.abspath(executables[exe_path])
+    if op.exists(mdfl_absdir):
+        sites = mdfl.read_json(opj(mdfl_absdir, 'sites.json'))
+        particles = mdfl.read_json(opj(mdfl_absdir, 'particles.json'))
+        pointing = mdfl.read_json(opj(mdfl_absdir, 'pointing.json'))
 
-    if TMP_DIR_ON_WORKERNODE:
-        tmp_absdir = None
-        sge._print("Use tmp_dir on workernodes.")
+        for particle in cfg['particles']:
+            assert particle in particles
+        for site in cfg['sites']:
+            assert site in sites
+        np.testing.assert_almost_equal(
+            cfg['plenoscope_pointing']['azimuth_deg'],
+            pointing['azimuth_deg'],
+            decimal=2)
+        np.testing.assert_almost_equal(
+            cfg['plenoscope_pointing']['zenith_deg'],
+            pointing['zenith_deg'],
+            decimal=2)
     else:
-        tmp_absdir = opj(out_absdir, "tmp")
-        os.makedirs(tmp_absdir, exist_ok=True)
-        sge._print("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
+        mdfl.A_init_work_dir(
+            particles=cfg["particles"],
+            sites=cfg["sites"],
+            plenoscope_pointing=cfg["plenoscope_pointing"],
+            max_energy=cfg["magnetic_deflection"]["max_energy_GeV"],
+            num_energy_supports=cfg[
+                "magnetic_deflection"]["num_energy_supports"],
+            work_dir=mdfl_absdir)
 
-    if MULTIPROCESSING_POOL == "sun_grid_engine":
-        pool = sge
-        sge._print("Use sun-grid-engine multiprocessing-pool.")
-    elif MULTIPROCESSING_POOL == "local":
-        pool = multiprocessing.Pool(8)
-        sge._print("Use local multiprocessing-pool.")
-    else:
-        raise KeyError(
-            "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL))
+        mdfl_jobs = mdfl.B_make_jobs_from_work_dir(
+            work_dir=mdfl_absdir)
 
-    sge._print("Read config")
-    with open(opj(out_absdir, 'input', 'config.json'), "rt") as fin:
-        cfg = json.loads(fin.read())
+        mdfl_job_results = pool.map(mdfl.map_and_reduce.run_job, mdfl_jobs)
 
+        mdfl.C_reduce_job_results_in_work_dir(
+            job_results=mdfl_job_results,
+            work_dir=mdfl_absdir)
+
+        mdfl.D_summarize_raw_deflection(
+            out_dir=mdfl_absdir)
+
+
+def _estimate_light_field_geometry_of_plenoscope(
+    cfg,
+    out_absdir,
+    pool,
+    executables
+):
     sge._print("Estimating light-field-geometry.")
-    # ============================================
+
     if op.exists(opj(out_absdir, 'light_field_geometry')):
         assert map_and_reduce.contains_same_bytes(
             opj(
@@ -241,12 +264,24 @@ def run(
                 '--input', tmp_dir,
                 '--output', opj(out_absdir, 'light_field_geometry')])
 
+
+def _populate_table_of_thrown_air_showers(
+    cfg,
+    out_absdir,
+    pool,
+    executables,
+    tmp_absdir,
+    date_dict_now,
+):
     sge._print("Estimating instrument-response.")
-    # ===========================================
+    table_absdir = opj(out_absdir, "event_table")
+    os.makedirs(table_absdir, exist_ok=True)
+
+
     irf_jobs = []
     run_id = 1
     for site_key in cfg["sites"]:
-        site_absdir = opj(out_absdir, site_key)
+        site_absdir = opj(table_absdir, site_key)
         if op.exists(site_absdir):
             continue
         os.makedirs(site_absdir, exist_ok=True)
@@ -256,6 +291,18 @@ def run(
             if op.exists(site_particle_absdir):
                 continue
             os.makedirs(site_particle_absdir, exist_ok=True)
+
+            site_particle_deflection = pd.read_csv(
+                opj(out_absdir,
+                    'magnetic_deflection',
+                    'results',
+                    '{:s}_{:s}.csv'.format(
+                        site_key,
+                        particle_key)
+                )
+            ).to_dict(orient='list')
+
+
             for job_idx in np.arange(cfg["num_runs"][particle_key]):
 
                 irf_job = {
@@ -264,6 +311,7 @@ def run(
                     "plenoscope_pointing": cfg["plenoscope_pointing"],
                     "particle": cfg["particles"][particle_key],
                     "site": cfg["sites"][site_key],
+                    "site_particle_deflection": site_particle_deflection,
                     "grid": cfg["grid"],
                     "sum_trigger": cfg["sum_trigger"],
                     "corsika_primary_path": executables[
@@ -294,11 +342,11 @@ def run(
                 irf_jobs.append(irf_job)
 
     random.shuffle(irf_jobs)
-    rc = pool.map(map_and_reduce.run_job, irf_jobs)
+    _ = pool.map(map_and_reduce.run_job, irf_jobs)
     sge._print("Reduce instrument-response.")
 
     for site_key in cfg["sites"]:
-        site_absdir = opj(out_absdir, site_key)
+        site_absdir = opj(table_absdir, site_key)
         for particle_key in cfg["particles"]:
             site_particle_absdir = opj(site_absdir, particle_key)
             log_absdir = opj(site_particle_absdir, "log.map")
@@ -317,9 +365,7 @@ def run(
 
             # event table
             # ===========
-            event_table_abspath = opj(
-                site_particle_absdir,
-                'event_table.tar')
+            event_table_abspath = opj(site_particle_absdir, 'event_table.tar')
             if not op.exists(event_table_abspath) or not LAZY_REDUCTION:
                 _feature_paths = glob.glob(
                     opj(feature_absdir, "*_event_table.tar"))
@@ -339,5 +385,61 @@ def run(
                     out_path=grid_abspath)
             sge._print(
                 "Reduce {:s} {:s} grid.".format(site_key, particle_key))
+
+
+def run(
+    path,
+    MULTIPROCESSING_POOL="sun_grid_engine",
+    executables=EXAMPLE_EXECUTABLES,
+    TMP_DIR_ON_WORKERNODE=True,
+    KEEP_TMP=False,
+    LAZY_REDUCTION=False,
+):
+    date_dict_now = map_and_reduce.date_dict_now()
+    sge._print("Start run()")
+
+    out_absdir = op.abspath(path)
+    for exe_path in executables:
+        executables[exe_path] = op.abspath(executables[exe_path])
+
+    if TMP_DIR_ON_WORKERNODE:
+        tmp_absdir = None
+        sge._print("Use tmp_dir on workernodes.")
+    else:
+        tmp_absdir = opj(out_absdir, "tmp")
+        os.makedirs(tmp_absdir, exist_ok=True)
+        sge._print("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
+
+    if MULTIPROCESSING_POOL == "sun_grid_engine":
+        pool = sge
+        sge._print("Use sun-grid-engine multiprocessing-pool.")
+    elif MULTIPROCESSING_POOL == "local":
+        pool = multiprocessing.Pool(8)
+        sge._print("Use local multiprocessing-pool.")
+    else:
+        raise KeyError(
+            "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL))
+
+    sge._print("Read config")
+    cfg = mdfl.read_json(opj(out_absdir, 'input', 'config.json'))
+
+    _estimate_magnetic_deflection_of_air_showers(
+        cfg=cfg,
+        out_absdir=out_absdir,
+        pool=pool)
+
+    _estimate_light_field_geometry_of_plenoscope(
+        cfg=cfg,
+        out_absdir=out_absdir,
+        pool=pool,
+        executables=executables)
+
+    _populate_table_of_thrown_air_showers(
+        cfg=cfg,
+        out_absdir=out_absdir,
+        pool=pool,
+        executables=executables,
+        tmp_absdir=tmp_absdir,
+        date_dict_now=date_dict_now)
 
     sge._print("End main().")
