@@ -80,6 +80,8 @@ def assign(
     plenoscope_grid_geometry,
     grid_random_shift_x,
     grid_random_shift_y,
+    grid_magnetic_deflection_shift_x,
+    grid_magnetic_deflection_shift_y,
     threshold_num_photons,
     FIELD_OF_VIEW_OVERHEAD=1.1,
 ):
@@ -103,11 +105,14 @@ def assign(
 
     # Supports
     # --------
+    grid_shift_x = grid_random_shift_x + grid_magnetic_deflection_shift_x
+    grid_shift_y = grid_random_shift_y + grid_magnetic_deflection_shift_y
+
     bunch_x_bin_idxs = np.digitize(
-        cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_random_shift_x,
+        cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x,
         bins=pgg["xy_bin_edges"])
     bunch_y_bin_idxs = np.digitize(
-        cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_random_shift_y,
+        cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y,
         bins=pgg["xy_bin_edges"])
 
     # Add under-, and overflow bin-edges
@@ -115,8 +120,8 @@ def assign(
 
     # histogram num photons, i.e. use bunchsize weights.
     grid_histogram_flow = np.histogram2d(
-        x=cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_random_shift_x,
-        y=cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_random_shift_y,
+        x=cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x,
+        y=cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y,
         bins=(_xy_bin_edges, _xy_bin_edges),
         weights=bunches_in_fov[:, cpw.IBSIZE])[0]
 
@@ -139,9 +144,9 @@ def assign(
         choice["bin_idx_x"] = int(bin_idx_x)
         choice["bin_idx_y"] = int(bin_idx_y)
         choice["core_x_m"] = float(
-            pgg["xy_bin_centers"][bin_idx_x] - grid_random_shift_x)
+            pgg["xy_bin_centers"][bin_idx_x] - grid_shift_x)
         choice["core_y_m"] = float(
-            pgg["xy_bin_centers"][bin_idx_y] - grid_random_shift_y)
+            pgg["xy_bin_centers"][bin_idx_y] - grid_shift_y)
         match_bin_idx_x = bunch_x_bin_idxs - 1 == bin_idx_x
         match_bin_idx_y = bunch_y_bin_idxs - 1 == bin_idx_y
         match_bin = np.logical_and(match_bin_idx_x, match_bin_idx_y)

@@ -570,6 +570,12 @@ def run_job(job=EXAMPLE_JOB):
                 plane_z=job["site"]["observation_level_asl_m"])
             prim["starting_x_m"] = -float(obs_lvl_intersection[0])
             prim["starting_y_m"] = -float(obs_lvl_intersection[1])
+            prim["magnet_azimuth_rad"] = float(primary["magnet_azimuth_rad"])
+            prim["magnet_zenith_rad"] = float(primary["magnet_zenith_rad"])
+            prim["magnet_cherenkov_pool_x_m"] = float(
+                primary["magnet_cherenkov_pool_x_m"])
+            prim["magnet_cherenkov_pool_y_m"] = float(
+                primary["magnet_cherenkov_pool_y_m"])
             evttab["primary"].append(prim)
 
             # cherenkov size
@@ -589,6 +595,10 @@ def run_job(job=EXAMPLE_JOB):
                 plenoscope_grid_geometry=plenoscope_grid_geometry,
                 grid_random_shift_x=grid_random_shift_x,
                 grid_random_shift_y=grid_random_shift_y,
+                grid_magnetic_deflection_shift_x=primary[
+                    "magnet_cherenkov_pool_x_m"],
+                grid_magnetic_deflection_shift_y=primary[
+                    "magnet_cherenkov_pool_y_m"],
                 threshold_num_photons=job["grid"]["threshold_num_photons"])
             tar_append(
                 tarout=imgtar,
