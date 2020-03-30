@@ -44,7 +44,10 @@ def _az_zd_to_cx_cy(azimuth_deg, zenith_deg):
 
 
 def _cx_cy_to_az_zd_deg(cx, cy):
-    cz = np.sqrt(1.0 - cx**2 - cy**2)
+    inner_sqrt = 1.0 - cx**2 - cy**2
+    fine = inner_sqrt >= 0
+    cz = np.nan*np.ones(len(cx))
+    cz[fine] = np.sqrt(inner_sqrt[fine])
     # 1 = sqrt(cx**2 + cy**2 + cz**2)
     az = np.arctan2(cy, cx)
     zd = np.arccos(cz)
