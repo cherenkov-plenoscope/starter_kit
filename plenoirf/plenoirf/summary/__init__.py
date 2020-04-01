@@ -29,6 +29,7 @@ def read_event_table_cache(summary_dir, run_dir, site_key, particle_key):
     if not os.path.exists(cache_path):
         event_table = table.read(opj(
             run_dir,
+            'event_table',
             site_key,
             particle_key,
             'event_table.tar'))

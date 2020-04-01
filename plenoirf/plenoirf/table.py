@@ -419,6 +419,24 @@ def merge(event_table, level_keys=CONFIG_LEVELS_KEYS):
     return out
 
 
+def cut(event_table, indices, level_keys=CONFIG_LEVELS_KEYS):
+    out = {}
+    for level_key in level_keys:
+        out[level_key] = by_indices(
+            event_table=event_table,
+            level_key=level_key,
+            indices=indices)
+    return out
+
+
+def level_indices(level):
+    out = {}
+    for idx in INDEX:
+        out[idx] = level[idx]
+    out_df = pd.DataFrame(out)
+    return out_df.to_records(index=False)
+
+
 UNIQUE_INDEX_FACTOR = (MAX_NUM_EVENTS_IN_RUN*10)
 
 
@@ -504,3 +522,20 @@ def read_bin(path, config=CONFIG):
         out[level] = pd.DataFrame(out[level]).to_records(index=False)
         _assert_recarray_keys(rec=out[level], config=config, level=level)
     return out
+
+
+def combine_in_rectangular_dataframe(event_table):
+    evts = {}
+    for level in event_table:
+        for key in event_table[level].dtype.names:
+            if key in INDEX:
+                if key in evts:
+                    np.testing.assert_array_equal(
+                        evts[key],
+                        event_table[level][key])
+                else:
+                    evts[key] = event_table[level][key]
+            else:
+                evts["{:s}.{:s}".format(level, key)] = event_table[level][key]
+    evts = pd.DataFrame(evts)
+    return evts
