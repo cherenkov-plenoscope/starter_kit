@@ -27,8 +27,10 @@ def _azimuth_range(azimuth_deg):
     azimuth_deg = (azimuth_deg + 360) % 360
     # force into the minimum absolute value residue class,
     # so that -180 < angle <= 180
-    if azimuth_deg > 180:
-        azimuth_deg -= 360
+    #if azimuth_deg > 180:
+    #    azimuth_deg -= 360
+    above180 = azimuth_deg > 180
+    azimuth_deg[above180] -= 360
     return azimuth_deg
 
 
