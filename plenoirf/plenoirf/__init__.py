@@ -65,8 +65,8 @@ EXAMPLE_CONFIG_FILES = {
 
 EXAMPLE_CONFIG = {
     "light_field_geometry": {
-        "num_photons_per_block": 1000*1000,
-        "num_blocks": 1337,
+        "num_photons_per_block": 4*1000*1000,
+        "num_blocks": 360,
     },
 
     "plenoscope_pointing": {
@@ -95,7 +95,7 @@ EXAMPLE_CONFIG = {
         "gamma": {
             "particle_id": 1,
             "energy_bin_edges_GeV": [0.5, 1000],
-            "max_scatter_angle_deg": 5,
+            "max_scatter_angle_deg": 3.25,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": 0.,
             "magnetic_deflection_max_off_axis_deg": 0.25,
