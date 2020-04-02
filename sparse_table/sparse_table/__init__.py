@@ -426,3 +426,13 @@ def records_to_recarray(level_records, level_key, structure):
         return dict_to_recarray(dd)
     else:
         return _empty_recarray(structure=structure, level_key=level_key)
+
+
+def table_of_records_to_sparse_table(table_records, structure):
+    table = {}
+    for level_key in table_records:
+        table[level_key] = records_to_recarray(
+            level_records=table_records[level_key],
+            level_key=level_key,
+            structure=structure)
+    return table

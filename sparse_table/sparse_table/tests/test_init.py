@@ -103,6 +103,9 @@ def test_from_records():
         n = 5
         job_result_paths = []
         for j in range(num_jobs):
+
+            # map the population of the sparse table onto many jobs
+            # -----------------------------------------------------
             i = j*n
             table_records = {}
 
@@ -121,19 +124,16 @@ def test_from_records():
             if rnd() > 0.9:
                 table_records["C"].append({spt.IDX: i+3, "e": -rnd()})
 
-            table = {}
-            for level_key in table_records:
-                table[level_key] = spt.records_to_recarray(
-                    level_records=table_records[level_key],
-                    level_key=level_key,
-                    structure=structure)
-
-            spt.assert_table_has_structure(table=table, structure=structure)
+            table = spt.table_of_records_to_sparse_table(
+                table_records=table_records,
+                structure=structure)
 
             path = os.path.join(tmp, '{:06d}.tar'.format(j))
             job_result_paths.append(path)
             spt.write(path=path, table=table, structure=structure)
 
+        # reduce
+        # ------
         full_table = spt.concatenate_files(
             list_of_table_paths=job_result_paths,
             structure=structure)
