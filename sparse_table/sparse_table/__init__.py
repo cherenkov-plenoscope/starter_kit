@@ -194,16 +194,19 @@ def make_rectangular_DataFrame(table):
 # assertion
 # =========
 
+def _assert_same_keys(keys_a, keys_b):
+    uni_keys = list(set(keys_a + keys_b))
+    for key in uni_keys:
+        assert key in keys_a and key in keys_b, 'Key: {:s}'.format(key)
+
+
 def assert_tables_are_equal(table_a, table_b):
-    all_level_keys = list(set(list(table_a.keys()) + list(table_b.keys())))
-    for level_key in all_level_keys:
-        assert level_key in table_a
-        assert level_key in table_b
-        all_column_keys = list(set(
-            table_a[level_key].dtype.names + table_b[level_key].dtype.names))
-        for column_key in all_column_keys:
-            assert column_key in table_a[level_key].dtype.names, column_key
-            assert column_key in table_b[level_key].dtype.names, column_key
+    _assert_same_keys(list(table_a.keys()), list(table_b.keys()))
+    for level_key in table_a:
+        _assert_same_keys(
+            table_a[level_key].dtype.names,
+            table_b[level_key].dtype.names)
+        for column_key in table_a[level_key].dtype.names:
             assert (
                 table_a[level_key].dtype[column_key] ==
                 table_b[level_key].dtype[column_key])
@@ -396,3 +399,30 @@ def concatenate_files(
     for level_key in out:
         out[level_key] = dict_to_recarray(out[level_key])
     return out
+
+# from records
+# ============
+
+
+def _empty_recarray(structure, level_key):
+    dd = {IDX: np.zeros(0, dtype=IDX_DTYPE)}
+    for column_key in structure[level_key]:
+        dd[column_key] = np.zeros(
+            0,
+            dtype=structure[level_key][column_key]['dtype'])
+    return dict_to_recarray(dd)
+
+
+def records_to_recarray(level_records, level_key, structure):
+    expected_keys = list(structure[level_key].keys()) + [IDX]
+    if len(level_records) > 0:
+        for record in level_records:
+            _assert_same_keys(expected_keys, list(record.keys()))
+        df = pd.DataFrame(level_records)
+        dd = {IDX: df[IDX].values.astype(IDX_DTYPE)}
+        for column_key in structure[level_key]:
+            dd[column_key] = df[column_key].values.astype(
+                structure[level_key][column_key]['dtype'])
+        return dict_to_recarray(dd)
+    else:
+        return _empty_recarray(structure=structure, level_key=level_key)

@@ -75,6 +75,74 @@ def _make_example_table(size, start_index=0):
     return t
 
 
+def test_from_records():
+    np.random.seed(0)
+    rnd = np.random.uniform
+
+    # define what your table will look like
+    # -------------------------------------
+    structure = {
+        "A": {
+            "a": {"dtype": '<f8'},
+            "b": {"dtype": '<f8'},
+        },
+        "B": {
+            "c": {"dtype": '<f8'},
+            "d": {"dtype": '<f8'},
+        },
+        "C": {
+            "e": {"dtype": '<f8'},
+        },
+    }
+
+    # populate the table using records
+    # --------------------------------
+    with tempfile.TemporaryDirectory(prefix='test_sparse_table') as tmp:
+
+        num_jobs = 100
+        n = 5
+        job_result_paths = []
+        for j in range(num_jobs):
+            i = j*n
+            table_records = {}
+
+            table_records["A"] = []
+            table_records["A"].append({spt.IDX: i+0, "a": rnd(), "b": rnd()})
+            table_records["A"].append({spt.IDX: i+1, "a": rnd(), "b": rnd()})
+            table_records["A"].append({spt.IDX: i+2, "a": rnd(), "b": rnd()})
+            table_records["A"].append({spt.IDX: i+3, "a": rnd(), "b": rnd()})
+            table_records["A"].append({spt.IDX: i+4, "a": rnd(), "b": rnd()})
+
+            table_records["B"] = []
+            table_records["B"].append({spt.IDX: i+0, "c": rnd(), "d": 5*rnd()})
+            table_records["B"].append({spt.IDX: i+3, "c": rnd(), "d": 5*rnd()})
+
+            table_records["C"] = []
+            if rnd() > 0.9:
+                table_records["C"].append({spt.IDX: i+3, "e": -rnd()})
+
+            table = {}
+            for level_key in table_records:
+                table[level_key] = spt.records_to_recarray(
+                    level_records=table_records[level_key],
+                    level_key=level_key,
+                    structure=structure)
+
+            spt.assert_table_has_structure(table=table, structure=structure)
+
+            path = os.path.join(tmp, '{:06d}.tar'.format(j))
+            job_result_paths.append(path)
+            spt.write(path=path, table=table, structure=structure)
+
+        full_table = spt.concatenate_files(
+            list_of_table_paths=job_result_paths,
+            structure=structure)
+
+    spt.assert_table_has_structure(
+        table=full_table,
+        structure=structure)
+
+
 def test_write_read_full_table():
     np.random.seed(1337)
     my_table = _make_example_table(size=1000*1000)
