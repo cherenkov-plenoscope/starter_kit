@@ -108,6 +108,13 @@ def find_common_indices(table, structure, level_keys=None):
     return df.to_records(index=False)
 
 
+def intersection(list_of_lists_of_indices):
+    inter = list_of_lists_of_indices[0]
+    for i in range(len(list_of_lists_of_indices)):
+        inter = np.intersect1d(inter, list_of_lists_of_indices[i])
+    return inter
+
+
 def cut_level_on_indices(
     table,
     structure,
@@ -172,6 +179,15 @@ def cut_table_on_indices(
             level_key=level_key,
             indices=common_indices)
     return out
+
+
+def make_mask_of_right_in_left(left_indices, right_indices):
+    left_df = pd.DataFrame({IDX: left_indices})
+    right_df = pd.DataFrame({IDX: right_indices})
+    mask_df = pd.merge(left_df, right_df, on=IDX, how='left', indicator=True)
+    indicator_df = mask_df['_merge']
+    mask = np.array(indicator_df == 'both', dtype=np.int64)
+    return mask
 
 
 def make_rectangular_DataFrame(table):
