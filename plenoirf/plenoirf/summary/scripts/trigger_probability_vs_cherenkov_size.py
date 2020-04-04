@@ -4,6 +4,8 @@ import plenoirf as irf
 import os
 import numpy as np
 from os.path import join as opj
+import sparse_table as spt
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -21,26 +23,28 @@ for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
 
-        event_table = irf.summary.read_event_table_cache(
-            summary_dir=summary_dir,
-            run_dir=run_dir,
-            site_key=site_key,
-            particle_key=particle_key)
+        event_table = spt.read(
+            path=os.path.join(
+                run_dir,
+                'event_table',
+                site_key,
+                particle_key,
+                'event_table.tar'),
+            structure=irf.table.STRUCTURE)
 
-        pretrigger_table = event_table['trigger']
-
-        pasttrigger_mask = irf.table.make_mask_of_right_in_left(
-            event_table['trigger'], event_table['pasttrigger'])
+        pasttrigger_mask = spt.make_mask_of_right_in_left(
+            left_indices=event_table['trigger'][spt.IDX],
+            right_indices=event_table['pasttrigger'][spt.IDX])
 
         num_bins = 12
         size_bin_edges = np.geomspace(1, 2**num_bins, num_bins+1)
 
         num_thrown = np.histogram(
-            pretrigger_table['num_cherenkov_pe'],
+            event_table['trigger']['num_cherenkov_pe'],
             bins=size_bin_edges)[0]
 
         num_pasttrigger = np.histogram(
-            pretrigger_table['num_cherenkov_pe'],
+            event_table['trigger']['num_cherenkov_pe'],
             bins=size_bin_edges,
             weights=pasttrigger_mask)[0]
 

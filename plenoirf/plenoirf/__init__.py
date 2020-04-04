@@ -21,6 +21,7 @@ import glob
 import tempfile
 import pandas as pd
 
+import sparse_table as spt
 import sun_grid_engine_map as sge
 import magnetic_deflection as mdfl
 
@@ -370,9 +371,13 @@ def _populate_table_of_thrown_air_showers(
             if not op.exists(event_table_abspath) or not LAZY_REDUCTION:
                 _feature_paths = glob.glob(
                     opj(feature_absdir, "*_event_table.tar"))
-                table.reduce(
-                    list_of_feature_paths=_feature_paths,
-                    out_path=event_table_abspath)
+                event_table = spt.concatenate_files(
+                    list_of_table_paths=_feature_paths,
+                    structure=table.STRUCTURE)
+                spt.write(
+                    path=event_table_abspath,
+                    table=event_table,
+                    structure=table.STRUCTURE)
             sge._print(
                 "Reduce {:s} {:s} event_table.".format(site_key, particle_key))
 

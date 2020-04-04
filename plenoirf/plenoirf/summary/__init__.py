@@ -6,6 +6,7 @@ import json
 import cosmic_fluxes
 import pkg_resources
 import subprocess
+import sparse_table as spt
 from .. import table
 from .. import merlict
 from .. import grid
@@ -21,23 +22,6 @@ def argv_since_py(sys_argv):
         if '.py' in arg:
             argv.append(arg)
     return argv
-
-
-def read_event_table_cache(summary_dir, run_dir, site_key, particle_key):
-    cache_path = opj(summary_dir, 'cache', '{:s}_{:s}_event_table.tar'.format(
-        site_key, particle_key))
-    if not os.path.exists(cache_path):
-        event_table = table.read(opj(
-            run_dir,
-            'event_table',
-            site_key,
-            particle_key,
-            'event_table.tar'))
-        os.makedirs(opj(summary_dir, 'cache'), exist_ok=True)
-        table.write_bin(path=cache_path, event_table=event_table)
-    else:
-        event_table = table.read_bin(cache_path)
-    return event_table
 
 
 def read_summary_config(summary_dir):
@@ -141,11 +125,14 @@ def estimate_num_events_past_trigger(summary_dir, run_dir, irf_config):
     num_events_past_trigger = 10*1000
     for site_key in irf_config['config']['sites']:
         for particle_key in irf_config['config']['particles']:
-            event_table = read_event_table_cache(
-                summary_dir=summary_dir,
-                run_dir=run_dir,
-                site_key=site_key,
-                particle_key=particle_key)
+            event_table = spt.read(
+                path=os.path.join(
+                    run_dir,
+                    'event_table',
+                    site_key,
+                    particle_key,
+                    'event_table.tar'),
+                structure=table.STRUCTURE)
             if event_table['pasttrigger'].shape[0] < num_events_past_trigger:
                 num_events_past_trigger = event_table['pasttrigger'].shape[0]
     return num_events_past_trigger

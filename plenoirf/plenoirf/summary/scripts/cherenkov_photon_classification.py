@@ -4,6 +4,7 @@ import numpy as np
 import os
 import plenoirf as irf
 import json
+import sparse_table as spt
 
 import matplotlib
 matplotlib.use('Agg')
@@ -28,19 +29,27 @@ for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
 
-        event_table = irf.summary.read_event_table_cache(
-            summary_dir=summary_dir,
-            run_dir=run_dir,
-            site_key=site_key,
-            particle_key=particle_key)
+        event_table = spt.read(
+            path=os.path.join(
+                run_dir,
+                'event_table',
+                site_key,
+                particle_key,
+                'event_table.tar'),
+            structure=irf.table.STRUCTURE)
 
-        mrg_chc_fts = irf.table.merge(
-            event_table=event_table,
+        mrg_chc_fts = spt.cut_table_on_indices(
+            table=event_table,
+            structure=irf.table.STRUCTURE,
+            common_indices=spt.dict_to_recarray({
+                spt.IDX: event_table['features'][spt.IDX]}),
             level_keys=[
                 'primary',
                 'trigger',
                 'cherenkovclassification',
-                'features'])
+                'features'
+            ]
+        )
 
         # confusion matrix
         # ----------------

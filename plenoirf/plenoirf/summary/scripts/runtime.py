@@ -7,6 +7,7 @@ import numpy as np
 import json
 import shutil
 import plenoirf as irf
+import sparse_table as spt
 
 import matplotlib
 matplotlib.use('Agg')
@@ -36,7 +37,8 @@ def write(path, table):
 def _sum_energy_in_runs(event_table, run_ids):
     _out = []
     for run_id in run_ids:
-        mask = event_table["primary"]["run_id"] == run_id
+        _run_ids = irf.table.run_id_from_seed(event_table["primary"][spt.IDX])
+        mask = _run_ids == run_id
         sum_energy = np.sum(event_table["primary"]["energy_GeV"][mask])
         _out.append({
             "run_id": int(run_id),
@@ -48,7 +50,8 @@ def _sum_energy_in_runs(event_table, run_ids):
 def _num_events_in_runs(event_table, level_key, run_ids, key):
     _out = []
     for run_id in run_ids:
-        mask = event_table[level_key]["run_id"] == run_id
+        _run_ids = irf.table.run_id_from_seed(event_table[level_key][spt.IDX])
+        mask = _run_ids == run_id
         _out.append({
             "run_id": int(run_id),
             key: int(np.sum(mask))})
@@ -184,13 +187,17 @@ for site_key in irf_config['config']['sites']:
             extended_runtime_table = read(
                 extended_runtime_path)
         else:
-            event_table = irf.summary.read_event_table_cache(
-                summary_dir=summary_dir,
-                run_dir=run_dir,
-                site_key=site_key,
-                particle_key=particle_key)
+            event_table = spt.read(
+                path=os.path.join(
+                    run_dir,
+                    'event_table',
+                    site_key,
+                    particle_key,
+                    'event_table.tar'),
+                structure=irf.table.STRUCTURE)
             runtime_table = read(opj(
                 run_dir,
+                'event_table',
                 site_key,
                 particle_key,
                 'runtime.csv'))

@@ -20,6 +20,8 @@ import pandas as pd
 import corsika_primary_wrapper as cpw
 import plenopy as pl
 import gzip
+import sparse_table as spt
+
 
 """
 I think I have an efficient and very simple algorithm
@@ -504,9 +506,9 @@ def run_job(job=EXAMPLE_JOB):
 
     # loop over air-showers
     # ---------------------
-    evttab = {}
-    for level_key in table.CONFIG_LEVELS_KEYS:
-        evttab[level_key] = []
+    tabrec = {}
+    for level_key in table.STRUCTURE:
+        tabrec[level_key] = []
     run = cpw.Tario(corsika_run_path)
     reuse_run_path = op.join(tmp_dir, run_id_str+"_reuse.tar")
     grid_histogram_filename = run_id_str+"_grid.tar"
@@ -524,7 +526,7 @@ def run_job(job=EXAMPLE_JOB):
             assert (event_id == cpw._evth_event_number(event_header))
             primary = corsika_primary_steering["primaries"][event_idx]
             event_seed = primary["random_seed"][0]["SEED"]
-            ide = {"run_id":  int(run_id), "airshower_id": int(event_id)}
+            ide = {spt.IDX: event_seed}
             assert (event_seed == table.random_seed_based_on(
                 run_id=run_id,
                 airshower_id=event_id))
@@ -576,13 +578,13 @@ def run_job(job=EXAMPLE_JOB):
                 primary["magnet_cherenkov_pool_x_m"])
             prim["magnet_cherenkov_pool_y_m"] = float(
                 primary["magnet_cherenkov_pool_y_m"])
-            evttab["primary"].append(prim)
+            tabrec["primary"].append(prim)
 
             # cherenkov size
             # --------------
             crsz = ide.copy()
             crsz = _append_bunch_ssize(crsz, cherenkov_bunches)
-            evttab["cherenkovsize"].append(crsz)
+            tabrec["cherenkovsize"].append(crsz)
 
             # assign grid
             # -----------
@@ -634,7 +636,7 @@ def run_job(job=EXAMPLE_JOB):
             grhi["underflow_y"] = int(grid_result["underflow_y"])
             grhi["area_thrown_m2"] = float(plenoscope_grid_geometry[
                 "total_area"])
-            evttab["grid"].append(grhi)
+            tabrec["grid"].append(grhi)
 
             # cherenkov statistics
             # --------------------
@@ -643,7 +645,7 @@ def run_job(job=EXAMPLE_JOB):
                 fase = _append_bunch_statistics(
                     airshower_dict=fase,
                     cherenkov_bunches=cherenkov_bunches)
-                evttab["cherenkovpool"].append(fase)
+                tabrec["cherenkovpool"].append(fase)
 
             reuse_event = grid_result["random_choice"]
             if reuse_event is not None:
@@ -664,18 +666,18 @@ def run_job(job=EXAMPLE_JOB):
                     file_bytes=reuse_event["cherenkov_bunches"].tobytes())
                 crszp = ide.copy()
                 crszp = _append_bunch_ssize(crszp, cherenkov_bunches)
-                evttab["cherenkovsizepart"].append(crszp)
+                tabrec["cherenkovsizepart"].append(crszp)
                 rase = ide.copy()
                 rase = _append_bunch_statistics(
                     airshower_dict=rase,
                     cherenkov_bunches=reuse_event["cherenkov_bunches"])
-                evttab["cherenkovpoolpart"].append(rase)
+                tabrec["cherenkovpoolpart"].append(rase)
                 rcor = ide.copy()
                 rcor["bin_idx_x"] = int(reuse_event["bin_idx_x"])
                 rcor["bin_idx_y"] = int(reuse_event["bin_idx_y"])
                 rcor["core_x_m"] = float(reuse_event["core_x_m"])
                 rcor["core_y_m"] = float(reuse_event["core_y_m"])
-                evttab["core"].append(rcor)
+                tabrec["core"].append(rcor)
     logger.log("grid")
 
     if not job["keep_tmp"]:
@@ -729,7 +731,10 @@ def run_job(job=EXAMPLE_JOB):
         cevth = event.simulation_truth.event.corsika_event_header.raw
         run_id = int(cpw._evth_run_number(cevth))
         airshower_id = int(cpw._evth_event_number(cevth))
-        ide = {"run_id": run_id, "airshower_id": airshower_id}
+        ide = {
+            spt.IDX: table.random_seed_based_on(
+                run_id=run_id,
+                airshower_id=airshower_id)}
 
         # apply trigger
         # -------------
@@ -750,22 +755,20 @@ def run_job(job=EXAMPLE_JOB):
             trigger_dict=trgtru,
             trigger_responses=trigger_responses,
             detector_truth=event.simulation_truth.detector)
-        evttab["trigger"].append(trgtru)
+        tabrec["trigger"].append(trgtru)
 
         # passing trigger
         # ---------------
         if (trgtru["response_pe"] >= job["sum_trigger"]["patch_threshold"]):
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp["unique_id_str"] = '{run_id:06d}{airshower_id:06d}'.format(
-                run_id=ptp["run_id"],
-                airshower_id=ptp["airshower_id"])
+            ptp["unique_id_str"] = '{:012d}'.format(ptp[spt.IDX])
             table_past_trigger.append(ptp)
 
             # export past trigger
             # -------------------
             ptrg = ide.copy()
-            evttab["pasttrigger"].append(ptrg)
+            tabrec["pasttrigger"].append(ptrg)
     logger.log("trigger")
 
     # Cherenkov classification
@@ -789,9 +792,8 @@ def run_job(job=EXAMPLE_JOB):
         crcl = pl.classify.benchmark(
             pulse_origins=event.simulation_truth.detector.pulse_origins,
             photon_ids_cherenkov=cherenkov_photons.photon_ids)
-        crcl["run_id"] = pt["run_id"]
-        crcl["airshower_id"] = pt["airshower_id"]
-        evttab["cherenkovclassification"].append(crcl)
+        crcl[spt.IDX] = pt[spt.IDX]
+        tabrec["cherenkovclassification"].append(crcl)
     logger.log("cherenkov_classification")
 
     # extracting features
@@ -823,15 +825,10 @@ def run_job(job=EXAMPLE_JOB):
                 cherenkov_photons=event.cherenkov_photons,
                 light_field_geometry=lfg,
                 light_field_geometry_addon=lfg_addon)
-            lfft["run_id"] = pt["run_id"]
-            lfft["airshower_id"] = pt["airshower_id"]
-            evttab["features"].append(lfft)
+            lfft[spt.IDX] = pt[spt.IDX]
+            tabrec["features"].append(lfft)
         except Exception as excep:
-            print(
-                "run_id {:d}, airshower_id: {:d}:".format(
-                    pt["run_id"],
-                    pt["airshower_id"]),
-                excep)
+            print("idx {:012d}:".format(pt[spt.IDX]), excep)
     logger.log("feature_extraction")
 
     # compress and tar
@@ -847,23 +844,13 @@ def run_job(job=EXAMPLE_JOB):
     # export event-table
     # ------------------
     table_filename = run_id_str+"_event_table.tar"
-    with tarfile.open(op.join(tmp_dir, table_filename+".tmp"), "w") as tarfout:
-        for level_key in table.CONFIG_LEVELS_KEYS:
-            level_csv = table.level_records_to_csv(
-                level_records=evttab[level_key],
-                config=table.CONFIG,
-                level=level_key)
-            with io.BytesIO() as buff:
-                level_csv_bytes = str.encode(level_csv)
-                buff.write(level_csv_bytes)
-                buff.seek(0)
-                tarinfo = tarfile.TarInfo()
-                tarinfo.name = level_key+"."+table.FORMAT_SUFFIX
-                tarinfo.size = len(buff.getvalue())
-                tarfout.addfile(tarinfo=tarinfo, fileobj=buff)
-    nfs.move(
-        src=op.join(tmp_dir, table_filename+".tmp"),
-        dst=op.join(tmp_dir, table_filename))
+    event_table = spt.table_of_records_to_sparse_table(
+        table_records=tabrec,
+        structure=table.STRUCTURE)
+    spt.write(
+        path=op.join(tmp_dir, table_filename),
+        table=event_table,
+        structure=table.STRUCTURE)
     nfs.copy(
         src=op.join(tmp_dir, table_filename),
         dst=op.join(job["feature_dir"], table_filename))

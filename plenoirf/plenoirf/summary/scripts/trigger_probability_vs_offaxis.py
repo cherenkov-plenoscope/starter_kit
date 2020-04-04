@@ -6,6 +6,7 @@ from os.path import join as opj
 import pandas as pd
 import numpy as np
 import json
+import sparse_table as spt
 
 import plenoirf as irf
 
@@ -118,11 +119,14 @@ for site_key in cfg['sites']:
 
         # read
         # ----
-        event_table = irf.summary.read_event_table_cache(
-            summary_dir=summary_dir,
-            run_dir=run_dir,
-            site_key=site_key,
-            particle_key=particle_key)
+        event_table = spt.read(
+            path=os.path.join(
+                run_dir,
+                'event_table',
+                site_key,
+                particle_key,
+                'event_table.tar'),
+            structure=irf.table.STRUCTURE)
 
         # summarize
         # ---------
@@ -131,9 +135,10 @@ for site_key in cfg['sites']:
             np.max(sum_config['energy_bin_edges_GeV']),
             5)
 
-        pasttrigger_mask = irf.table.make_mask_of_right_in_left(
-                left_level=event_table['primary'],
-                right_level=event_table['pasttrigger'])
+        pasttrigger_mask = spt.make_mask_of_right_in_left(
+                left_indices=event_table['primary'][spt.IDX],
+                right_indices=event_table['pasttrigger'][spt.IDX])
+
         primary_incident_vecs = irf.query.primary_incident_vector(
             event_table['primary'])
 

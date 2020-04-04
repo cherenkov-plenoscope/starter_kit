@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import json
 
+import sparse_table as spt
 import plenoirf as irf
 
 import matplotlib
@@ -29,14 +30,20 @@ for site_key in irf_config['config']['sites']:
 
         # read
         # ----
-        event_table = irf.summary.read_event_table_cache(
-            summary_dir=summary_dir,
-            run_dir=run_dir,
-            site_key=site_key,
-            particle_key=particle_key)
+        event_table = spt.read(
+            path=os.path.join(
+                run_dir,
+                'event_table',
+                site_key,
+                particle_key,
+                'event_table.tar'),
+            structure=irf.table.STRUCTURE)
 
-        mrg_table = irf.table.merge(
-            event_table=event_table,
+        mrg_table = spt.cut_table_on_indices(
+            table=event_table,
+            structure=irf.table.STRUCTURE,
+            common_indices=spt.dict_to_recarray({
+                spt.IDX: event_table['pasttrigger'][spt.IDX]}),
             level_keys=[
                 'primary',
                 'grid',
@@ -46,8 +53,11 @@ for site_key in irf_config['config']['sites']:
                 'cherenkovsizepart',
                 'cherenkovpoolpart',
                 'trigger',
-                'pasttrigger'])
+                'pasttrigger'
+            ]
+        )
 
+        os.makedirs(opj(summary_dir, 'cache'), exist_ok=True)
         _grid_pasttrigger_path = opj(
             summary_dir,
             'cache',
@@ -59,8 +69,13 @@ for site_key in irf_config['config']['sites']:
                 path=_grid_pasttrigger_path)
         else:
             grid_histograms_pasttrigger = irf.grid.read_histograms(
-                path=opj(run_dir, site_key, particle_key, 'grid.tar'),
-                indices=mrg_table['pasttrigger'])
+                path=opj(
+                    run_dir,
+                    'event_table',
+                    site_key,
+                    particle_key,
+                    'grid.tar'),
+                indices=mrg_table['pasttrigger'][spt.IDX])
             irf.grid.write_histograms(
                 path=_grid_pasttrigger_path,
                 grid_histograms=grid_histograms_pasttrigger)
@@ -90,9 +105,7 @@ for site_key in irf_config['config']['sites']:
             num_airshower = 0
             for mat in primary_matches:
                 grid_intensity += irf.grid.bytes_to_histogram(
-                    grid_histograms_pasttrigger[(
-                        mat['run_id'],
-                        mat['airshower_id'])])
+                    grid_histograms_pasttrigger[mat[spt.IDX]])
                 num_airshower += 1
             grid_intensities.append(grid_intensity)
             num_airshowers.append(num_airshower)

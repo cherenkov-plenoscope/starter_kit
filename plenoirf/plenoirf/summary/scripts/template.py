@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import plenoirf as irf
+import sparse_table as spt
 
 import matplotlib
 matplotlib.use('Agg')
@@ -19,8 +20,11 @@ for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
 
-        event_table = irf.summary.read_event_table_cache(
-            summary_dir=summary_dir,
-            run_dir=run_dir,
-            site_key=site_key,
-            particle_key=particle_key)
+        event_table = spt.read(
+            path=os.path.join(
+                run_dir,
+                'event_table',
+                site_key,
+                particle_key,
+                'event_table.tar'),
+            structure=irf.table.STRUCTURE)

@@ -210,9 +210,8 @@ def read_all_histograms(path):
     grids = {}
     with tarfile.open(path, "r") as tarfin:
         for tarinfo in tarfin:
-            run_id = int(tarinfo.name[0:6])
-            airshower_id = int(tarinfo.name[6:12])
-            grids[run_id, airshower_id] = tarfin.extractfile(tarinfo).read()
+            idx = int(tarinfo.name[0:12])
+            grids[idx] = tarfin.extractfile(tarinfo).read()
     return grids
 
 
@@ -220,29 +219,23 @@ def read_histograms(path, indices=None):
     if indices is None:
         return read_all_histograms(path)
     else:
-        unique_ids = indices['run_id']*1000*1000 + indices['airshower_id']
-        unique_ids = set(unique_ids)
+        indices_set = set(indices)
         grids = {}
         with tarfile.open(path, "r") as tarfin:
             for tarinfo in tarfin:
-                unique_id = int(tarinfo.name[0:12])
-                if unique_id in unique_ids:
-                    run_id = unique_id // (1000*1000)
-                    airshower_id = unique_id % (1000*1000)
-                    grids[run_id, airshower_id] = tarfin.extractfile(
-                        tarinfo).read()
+                idx = int(tarinfo.name[0:12])
+                if idx in indices_set:
+                    grids[idx] = tarfin.extractfile(tarinfo).read()
         return grids
 
 
 def write_histograms(path, grid_histograms):
     with tarfile.open(path+".tmp", "w") as tarfout:
-        for key in grid_histograms:
-            run_id = key[0]
-            airshower_id = key[1]
-            filename = "{:06d}{:06d}.f4.gz".format(run_id, airshower_id)
+        for idx in grid_histograms:
+            filename = "{:012d}.f4.gz".format(idx)
             with io.BytesIO() as buff:
                 info = tarfile.TarInfo(filename)
-                info.size = buff.write(grid_histograms[key])
+                info.size = buff.write(grid_histograms[idx])
                 buff.seek(0)
                 tarfout.addfile(info, buff)
     shutil.move(path+".tmp", path)

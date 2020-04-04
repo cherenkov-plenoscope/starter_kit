@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import json
 
+import sparse_table as spt
 import plenoirf as irf
 
 import matplotlib
@@ -29,20 +30,23 @@ for site_key in irf_config['config']['sites']:
 
         # read
         # ----
-        event_table = irf.summary.read_event_table_cache(
-            summary_dir=summary_dir,
-            run_dir=run_dir,
-            site_key=site_key,
-            particle_key=particle_key)
+        event_table = spt.read(
+            path=os.path.join(
+                run_dir,
+                'event_table',
+                site_key,
+                particle_key,
+                'event_table.tar'),
+            structure=irf.table.STRUCTURE)
 
         # summarize
         # ---------
         energy_bin_edges = sum_config['energy_bin_edges_GeV_coarse']
         c_bin_edges_deg = sum_config['c_bin_edges_deg']
 
-        pasttrigger_mask = irf.table.make_mask_of_right_in_left(
-                left_level=event_table['primary'],
-                right_level=event_table['pasttrigger'])
+        pasttrigger_mask = spt.make_mask_of_right_in_left(
+                left_indices=event_table['primary'][spt.IDX],
+                right_indices=event_table['pasttrigger'][spt.IDX])
         _in_vec = irf.query.primary_incident_vector(event_table['primary'])
         primary_cx = _in_vec[:, 0]
         primary_cy = _in_vec[:, 1]

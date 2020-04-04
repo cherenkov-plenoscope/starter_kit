@@ -6,6 +6,8 @@ from os.path import join as opj
 import pandas as pd
 import numpy as np
 import json
+import sparse_table as spt
+import magnetic_deflection as mdfl
 
 import matplotlib
 matplotlib.use('Agg')
@@ -88,24 +90,63 @@ for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
 
-        event_table = irf.summary.read_event_table_cache(
-            summary_dir=summary_dir,
-            run_dir=run_dir,
-            site_key=site_key,
-            particle_key=particle_key)
+        event_table = spt.read(
+            path=os.path.join(
+                run_dir,
+                'event_table',
+                site_key,
+                particle_key,
+                'event_table.tar'),
+            structure=irf.table.STRUCTURE)
 
-        mrg_pri_grd = irf.table.merge(
-            event_table=event_table,
-            level_keys=['primary', 'grid'])
+        # cuts
+        # ----
+
+        cut_idxs_primary = event_table['primary'][spt.IDX]
+        cut_idxs_grid = event_table['grid'][spt.IDX]
+        cut_idxs_features = event_table['features'][spt.IDX]
+
+        _off_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
+            az1_deg=np.rad2deg(event_table['primary']['azimuth_rad']),
+            zd1_deg=np.rad2deg(event_table['primary']['zenith_rad']),
+            az2_deg=irf_config['config']['plenoscope_pointing']['azimuth_deg'],
+            zd2_deg=irf_config['config']['plenoscope_pointing']['zenith_deg'])
+        _off_mask= (_off_deg <= 3.25 - 1.0)
+        cut_idxs_in_possible_on_region = event_table[
+            'primary'][spt.IDX][_off_mask]
 
         rec_cx, rec_cy = reconstruct_direction_cx_cy(
             event_features=event_table['features'])
-        c_radial = np.hypot(rec_cx, rec_cy)
-        pasttrigger_onregion_mask = c_radial <= np.deg2rad(
-            scenarios['point']['max_between_pointing_primary_deg'])
-        pasttrigger_onregion_indices = irf.table.mask_to_indices(
-                level=event_table['features'],
-                mask=pasttrigger_onregion_mask)
+        _prm_mrg_feat = spt.cut_level_on_indices(
+            table=event_table,
+            structure=irf.table.STRUCTURE,
+            level_key='primary',
+            indices=spt.dict_to_recarray({spt.IDX: cut_idxs_features}))
+        rec_az, rec_zd = mdfl.discovery._cx_cy_to_az_zd_deg(rec_cx, rec_cy)
+        _source_off_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
+            az1_deg=np.rad2deg(_prm_mrg_feat['azimuth_rad']),
+            zd1_deg=np.rad2deg(_prm_mrg_feat['zenith_rad']),
+            az2_deg=rec_az,
+            zd2_deg=rec_zd)
+        cut_idxs_reconstructed_in_on_region = event_table['features'][spt.IDX][
+            _source_off_deg <= 1.0]
+
+        cut_idx_thrown = spt.intersection([
+            cut_idxs_primary,
+            cut_idxs_in_possible_on_region])
+
+        cut_idx_detected = spt.intersection([
+            cut_idxs_primary,
+            cut_idxs_features,
+            cut_idxs_in_possible_on_region,
+            cut_idxs_reconstructed_in_on_region])
+
+        mrg_pri_grd = spt.cut_table_on_indices(
+            table=event_table,
+            structure=irf.table.STRUCTURE,
+            common_indices=spt.dict_to_recarray({
+                spt.IDX: event_table['grid'][spt.IDX]}),
+            level_keys=['primary', 'grid'])
 
         for scenario in scenarios:
             primary_inside_cone_mask = irf.query.query_in_viewcone_cx_xy(
@@ -114,9 +155,11 @@ for site_key in irf_config['config']['sites']:
                 cone_opening_angle_deg=scenarios[scenario][
                     'max_between_pointing_primary_deg'],
                 primary_table=mrg_pri_grd['primary'],)
+
             primary_inside_cone_indices = irf.table.mask_to_indices(
                 level=mrg_pri_grd['primary'],
                 mask=primary_inside_cone_mask)
+
             mrg_pri_grd_con = {
                 'primary': irf.table.by_indices(
                     event_table=mrg_pri_grd,
