@@ -32,14 +32,13 @@ def read_summary_config(summary_dir):
 
 def init(
     run_dir,
-    summary_dir,
     figure_config_16by9=figure.CONFIG_16_9,
 ):
+    summary_dir = os.path.join(run_dir, 'summary')
     os.makedirs(summary_dir, exist_ok=True)
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
     num_events_past_trigger = estimate_num_events_past_trigger(
-        summary_dir=summary_dir,
         run_dir=run_dir,
         irf_config=irf_config)
 
@@ -95,7 +94,7 @@ def read_instrument_response_config(run_dir):
     return bundle
 
 
-def run(run_dir, summary_dir):
+def run(run_dir):
     scripts = [
         'runtime.py',
         'trigger_probability_vs_cherenkov_size.py',
@@ -109,7 +108,7 @@ def run(run_dir, summary_dir):
     ]
     for script in scripts:
         script_path = _script_abspath(script)
-        subprocess.call(['python', script_path ,run_dir ,summary_dir])
+        subprocess.call(['python', script_path, run_dir])
 
 
 def _script_abspath(filename):
@@ -119,7 +118,7 @@ def _script_abspath(filename):
     return os.path.abspath(path)
 
 
-def estimate_num_events_past_trigger(summary_dir, run_dir, irf_config):
+def estimate_num_events_past_trigger(run_dir, irf_config):
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
     num_events_past_trigger = 10*1000

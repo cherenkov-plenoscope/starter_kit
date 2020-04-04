@@ -2,6 +2,7 @@
 import sys
 import plenoirf as irf
 import sparse_table as spt
+import os
 
 import matplotlib
 matplotlib.use('Agg')
@@ -9,9 +10,9 @@ import matplotlib.pyplot as plt
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 3
+assert len(argv) == 2
 run_dir = argv[1]
-summary_dir = argv[2]
+summary_dir = os.path.join(run_dir, 'summary')
 
 irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
 sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
