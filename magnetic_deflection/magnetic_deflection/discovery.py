@@ -27,10 +27,13 @@ def _azimuth_range(azimuth_deg):
     azimuth_deg = (azimuth_deg + 360) % 360
     # force into the minimum absolute value residue class,
     # so that -180 < angle <= 180
-    #if azimuth_deg > 180:
-    #    azimuth_deg -= 360
-    above180 = azimuth_deg > 180
-    azimuth_deg[above180] -= 360
+    if np.isscalar(azimuth_deg):
+        if azimuth_deg > 180:
+            azimuth_deg -= 360
+    else:
+        azimuth_deg = np.asarray(azimuth_deg)
+        mask = azimuth_deg > 180.
+        azimuth_deg[mask] -= 360.
     return azimuth_deg
 
 
@@ -47,9 +50,15 @@ def _az_zd_to_cx_cy(azimuth_deg, zenith_deg):
 
 def _cx_cy_to_az_zd_deg(cx, cy):
     inner_sqrt = 1.0 - cx**2 - cy**2
-    fine = inner_sqrt >= 0
-    cz = np.nan*np.ones(len(cx))
-    cz[fine] = np.sqrt(inner_sqrt[fine])
+    if np.isscalar(inner_sqrt):
+        if inner_sqrt >= 0:
+            cz = np.sqrt(inner_sqrt)
+        else:
+            cz = float("nan")
+    else:
+        cz = np.nan*np.ones(len(inner_sqrt))
+        fine = inner_sqrt >= 0
+        cz[fine] = np.sqrt(inner_sqrt)
     # 1 = sqrt(cx**2 + cy**2 + cz**2)
     az = np.arctan2(cy, cx)
     zd = np.arccos(cz)
