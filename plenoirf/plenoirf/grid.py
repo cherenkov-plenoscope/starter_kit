@@ -105,8 +105,8 @@ def assign(
 
     # Supports
     # --------
-    grid_shift_x = grid_random_shift_x + grid_magnetic_deflection_shift_x
-    grid_shift_y = grid_random_shift_y + grid_magnetic_deflection_shift_y
+    grid_shift_x = grid_random_shift_x - grid_magnetic_deflection_shift_x
+    grid_shift_y = grid_random_shift_y - grid_magnetic_deflection_shift_y
 
     bunch_x_bin_idxs = np.digitize(
         cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x,
