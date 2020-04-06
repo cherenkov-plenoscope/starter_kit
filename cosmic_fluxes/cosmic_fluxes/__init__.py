@@ -52,6 +52,28 @@ def read_cosmic_electron_positron_flux_from_resources():
     }
 
 
+def read_cosmic_helium_flux_from_resources():
+    res_path = pkg_resources.resource_filename(
+        'cosmic_fluxes',
+        os.path.join('resources', 'helium_flux.csv'))
+    helium_flux = np.genfromtxt(res_path, delimiter=',')
+    return {
+        "energy": {
+            "values": helium_flux[:, 0].tolist(),
+            "unit_tex": "GeV",
+            "unit": "GeV",
+        },
+        "differential_flux": {
+            "values": helium_flux[:, 1].tolist(),
+            "unit_tex": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
+            "unit": "per_m2_per_s_per_sr_per_GeV"
+        },
+        "title": "Cosmic-ray primary spectra "
+        "Revised October 2017 by J.J. Beatty (Ohio State Univ.), J. Matthews "
+        "(Louisiana State Univ.), and S.P. Wakely (Univ. of Chicago)",
+    }
+
+
 '''
 According to:
 
