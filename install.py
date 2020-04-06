@@ -61,6 +61,7 @@ def main():
         call(['pip', 'install', '-e', join('.', 'plenoscope_map_reduce')])
         call(['pip', 'install', '-e', join('.', 'simpleio')])
         call(['pip', 'install', '-e', join('.', 'plenoirf')])
+        call(['pip', 'install', '-e', join('.', 'sparse_table')])
 
     except docopt.DocoptExit as e:
         print(e)
