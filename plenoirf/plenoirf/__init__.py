@@ -159,11 +159,23 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
     out_absdir = op.abspath(out_dir)
     os.makedirs(out_absdir)
     os.makedirs(opj(out_absdir, 'input'))
+
     with open(opj(out_absdir, 'input', 'config.json'+'tmp'), "wt") as fout:
         fout.write(json.dumps(config, indent=4))
     shutil.move(
         opj(out_absdir, 'input', 'config.json'+'tmp'),
         opj(out_absdir, 'input', 'config.json'))
+
+    with open(opj(out_absdir, 'input', 'max_seed.json'+'tmp'), "wt") as fout:
+        fout.write(json.dumps({
+            "NUM_DIGITS_RUN_ID": int(plenoirf.table.NUM_DIGITS_RUN_ID),
+            "NUM_DIGITS_AIRSHOWER_ID": int(
+                plenoirf.table.NUM_DIGITS_AIRSHOWER_ID),
+            }, indent=4))
+    shutil.move(
+        opj(out_absdir, 'input', 'max_seed.json'+'tmp'),
+        opj(out_absdir, 'input', 'max_seed.json'))
+
 
     network_file_system.copy(
         src=cfg_files['plenoscope_scenery_path'],
