@@ -8,15 +8,25 @@ import os
 import msgpack
 from os import path as op
 
-MAX_NUM_EVENTS_IN_RUN = 1000*1000
+NUM_DIGITS_RUN_ID = 6
+NUM_DIGITS_AIRSHOWER_ID = 3
+NUM_DIGITS_SEED = NUM_DIGITS_RUN_ID + NUM_DIGITS_AIRSHOWER_ID
+
+MAX_NUM_EVENTS_IN_RUN = 10**NUM_DIGITS_AIRSHOWER_ID
+MAX_NUM_RUNS = 10**NUM_DIGITS_RUN_ID
+MAX_NUM_EVENTS_TOTAL = MAX_NUM_EVENTS_IN_RUN*MAX_NUM_RUNS
+
+SEED_TEMPLATE_STR = '{seed:0'+str(NUM_DIGITS_SEED)+'d}'
 
 
 def random_seed_based_on(run_id, airshower_id):
+    assert run_id < MAX_NUM_RUNS
     assert airshower_id < MAX_NUM_EVENTS_IN_RUN
     return run_id*MAX_NUM_EVENTS_IN_RUN + airshower_id
 
 
 def run_id_from_seed(seed):
+    assert seed <= MAX_NUM_EVENTS_TOTAL
     return seed//MAX_NUM_EVENTS_IN_RUN
 
 

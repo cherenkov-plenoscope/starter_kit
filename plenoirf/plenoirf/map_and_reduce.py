@@ -762,7 +762,7 @@ def run_job(job=EXAMPLE_JOB):
         if (trgtru["response_pe"] >= job["sum_trigger"]["patch_threshold"]):
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp["unique_id_str"] = '{:012d}'.format(ptp[spt.IDX])
+            ptp["unique_id_str"] = table.SEED_TEMPLATE_STR.format(ptp[spt.IDX])
             table_past_trigger.append(ptp)
 
             # export past trigger
@@ -828,7 +828,7 @@ def run_job(job=EXAMPLE_JOB):
             lfft[spt.IDX] = pt[spt.IDX]
             tabrec["features"].append(lfft)
         except Exception as excep:
-            print("idx {:012d}:".format(pt[spt.IDX]), excep)
+            print("idx:", pt[spt.IDX], excep)
     logger.log("feature_extraction")
 
     # compress and tar
