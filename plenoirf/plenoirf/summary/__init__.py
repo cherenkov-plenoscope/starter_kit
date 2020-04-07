@@ -61,6 +61,10 @@ def init(
     with open(opj(summary_dir, 'proton_flux.json'), 'wt') as fout:
         fout.write(json.dumps(proton_flux, indent=4))
 
+    helium_flux = cosmic_fluxes.read_cosmic_helium_flux_from_resources()
+    with open(opj(summary_dir, 'helium_flux.json'), 'wt') as fout:
+        fout.write(json.dumps(helium_flux, indent=4))
+
     ep_flux = cosmic_fluxes.read_cosmic_electron_positron_flux_from_resources()
     with open(opj(summary_dir, 'electron_positron_flux.json'), 'wt') as fout:
         fout.write(json.dumps(ep_flux, indent=4))
