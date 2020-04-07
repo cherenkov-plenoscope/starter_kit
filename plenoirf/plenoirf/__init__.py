@@ -168,9 +168,8 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
 
     with open(opj(out_absdir, 'input', 'max_seed.json'+'tmp'), "wt") as fout:
         fout.write(json.dumps({
-            "NUM_DIGITS_RUN_ID": int(plenoirf.table.NUM_DIGITS_RUN_ID),
-            "NUM_DIGITS_AIRSHOWER_ID": int(
-                plenoirf.table.NUM_DIGITS_AIRSHOWER_ID),
+            "NUM_DIGITS_RUN_ID": int(table.NUM_DIGITS_RUN_ID),
+            "NUM_DIGITS_AIRSHOWER_ID": int(table.NUM_DIGITS_AIRSHOWER_ID),
             }, indent=4))
     shutil.move(
         opj(out_absdir, 'input', 'max_seed.json'+'tmp'),
