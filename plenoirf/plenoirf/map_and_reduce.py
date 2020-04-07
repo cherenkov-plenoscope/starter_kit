@@ -762,7 +762,8 @@ def run_job(job=EXAMPLE_JOB):
         if (trgtru["response_pe"] >= job["sum_trigger"]["patch_threshold"]):
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp["unique_id_str"] = table.SEED_TEMPLATE_STR.format(ptp[spt.IDX])
+            ptp["unique_id_str"] = table.SEED_TEMPLATE_STR.format(
+                seed=ptp[spt.IDX])
             table_past_trigger.append(ptp)
 
             # export past trigger
