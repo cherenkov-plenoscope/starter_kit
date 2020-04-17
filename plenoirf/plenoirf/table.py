@@ -26,7 +26,11 @@ def random_seed_based_on(run_id, airshower_id):
 
 
 def run_id_from_seed(seed):
-    assert seed <= MAX_NUM_EVENTS_TOTAL
+    if np.isscalar(seed):
+        assert seed <= MAX_NUM_EVENTS_TOTAL
+    else:
+        seed = np.array(seed)
+        assert (seed <= MAX_NUM_EVENTS_TOTAL).all()
     return seed//MAX_NUM_EVENTS_IN_RUN
 
 
