@@ -65,7 +65,7 @@ def _cx_cy_to_az_zd_deg(cx, cy):
     return np.rad2deg(az), np.rad2deg(zd)
 
 
-def _great_circle_distance_alt_zd_deg(az1_deg, zd1_deg, az2_deg, zd2_deg):
+def _angle_between_az_zd_deg(az1_deg, zd1_deg, az2_deg, zd2_deg):
     az1 = np.deg2rad(az1_deg)
     zd1 = np.deg2rad(zd1_deg)
     az2 = np.deg2rad(az2_deg)
