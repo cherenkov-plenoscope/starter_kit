@@ -139,20 +139,23 @@ for site_key in cfg['sites']:
                 left_indices=event_table['primary'][spt.IDX],
                 right_indices=event_table['pasttrigger'][spt.IDX])
 
-        primary_incident_vecs = irf.query.primary_incident_vector(
-            event_table['primary'])
+        prm = event_table['primary']
+        prm_dirs = np.zeros((prm.shape[0], 3))
+        prm_dirs[:, 0] = np.sin(prm['zenith_rad'])*np.cos(prm['azimuth_rad'])
+        prm_dirs[:, 1] = np.sin(prm['zenith_rad'])*np.sin(prm['azimuth_rad'])
+        prm_dirs[:, 2] = np.cos(prm['zenith_rad'])
 
-        plenoscope_az = np.deg2rad(cfg['plenoscope_pointing']['azimuth_deg'])
-        plenoscope_zd = np.deg2rad(cfg['plenoscope_pointing']['zenith_deg'])
-        plcx = np.cos(plenoscope_az)*plenoscope_zd
-        plcy = np.sin(plenoscope_az)*plenoscope_zd
-        plenoscope_pointing_vec = irf.grid._make_bunch_direction(
-            np.array([plcx]),
-            np.array([plcy]))[0]
+        ple_az = np.deg2rad(cfg['plenoscope_pointing']['azimuth_deg'])
+        ple_zd = np.deg2rad(cfg['plenoscope_pointing']['zenith_deg'])
+        plenoscope_dir = np.zeros(3)
+        plenoscope_dir[0] = np.sin(ple_zd)*np.cos(ple_az)
+        plenoscope_dir[1] = np.sin(ple_zd)*np.sin(ple_az)
+        plenoscope_dir[2] = np.cos(ple_zd)
+
 
         offaxis = irf.grid._make_angle_between(
-            directions=primary_incident_vecs,
-            direction=plenoscope_pointing_vec)
+            directions=prm_dirs,
+            direction=plenoscope_dir)
 
         offaxis_deg = np.rad2deg(offaxis)
         offaxis2_deg2 = offaxis_deg**2

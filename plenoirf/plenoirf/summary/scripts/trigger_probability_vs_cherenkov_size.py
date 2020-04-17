@@ -49,7 +49,10 @@ for site_key in irf_config['config']['sites']:
             weights=pasttrigger_mask)[0]
 
         trigger_probability = num_pasttrigger/num_thrown
-        trigger_probability_relunc = np.sqrt(num_pasttrigger)/num_pasttrigger
+        trigger_probability_relunc = np.nan*np.ones(num_pasttrigger.shape[0])
+        _v = num_pasttrigger > 0
+        trigger_probability_relunc[_v] = np.sqrt(
+            num_pasttrigger[_v])/num_pasttrigger[_v]
         trigger_probability_absunc = (
             trigger_probability_relunc*trigger_probability)
 

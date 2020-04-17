@@ -136,7 +136,9 @@ for site_key in irf_config['config']['sites']:
         tprs = np.array(tprs)
         ppvs = np.array(ppvs)
         num_events = np.array(num_events)
-        num_events_relunc = np.sqrt(num_events)/num_events
+        num_events_relunc = np.nan*np.ones(num_events.shape[0])
+        _v = num_events > 0
+        num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
         pp = os.path.join(
             summary_dir,
@@ -200,7 +202,9 @@ for site_key in irf_config['config']['sites']:
             num_events.append(np.sum(e_mask))
         true_over_reco_ratios = np.array(true_over_reco_ratios)
         num_events = np.array(num_events)
-        num_events_relunc = np.sqrt(num_events)/num_events
+        num_events_relunc = np.nan*np.ones(num_events.shape[0])
+        _v = num_events > 0
+        num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
         pp = os.path.join(
             summary_dir,
@@ -253,7 +257,9 @@ for site_key in irf_config['config']['sites']:
             num_events.append(np.sum(pe_mask))
         num_ratios = np.array(num_ratios)
         num_events = np.array(num_events)
-        num_events_relunc = np.sqrt(num_events)/num_events
+        num_events_relunc = np.nan*np.ones(num_events.shape[0])
+        _v = num_events > 0
+        num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
         pp = os.path.join(
             summary_dir,
