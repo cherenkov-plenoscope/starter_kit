@@ -31,7 +31,7 @@ def test_angles_scalars():
                 cx=cx,
                 cy=cy)
 
-            dist_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
+            dist_deg = mdfl.discovery._angle_between_az_zd_deg(
                 az1_deg=az_deg,
                 zd1_deg=zd_deg,
                 az2_deg=az_deg_back,
@@ -54,7 +54,7 @@ def test_angles_arrays():
         cx=cx,
         cy=cy)
 
-    dist_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
+    dist_deg = mdfl.discovery._angle_between_az_zd_deg(
         az1_deg=az_deg,
         zd1_deg=zd_deg,
         az2_deg=az_deg_back,
