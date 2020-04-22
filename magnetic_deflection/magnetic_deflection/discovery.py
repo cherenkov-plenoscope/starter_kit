@@ -108,8 +108,8 @@ def estimate_cherenkov_pool(
                 cps[CXS_MEDIAN] = np.median(photon_bunches[:, cpw.ICX])
                 cps[CYS_MEDIAN] = np.median(photon_bunches[:, cpw.ICY])
                 ceh = corsika_event_header
-                cps[PARTICLE_ZENITH_RAD] = cpw._evth_zenith_rad(ceh)
-                cps[PARTICLE_AZIMUTH_RAD] = cpw._evth_azimuth_rad(ceh)
+                cps[PARTICLE_ZENITH_RAD] = ceh[cpw.I_EVTH_ZENITH_RAD]
+                cps[PARTICLE_AZIMUTH_RAD] = ceh[cpw.I_EVTH_AZIMUTH_RAD]
                 cps[NUM_PHOTONS] = np.sum(photon_bunches[:, cpw.IBSIZE])
                 cherenkov_pool_summaries.append(cps)
         return cherenkov_pool_summaries
@@ -142,7 +142,7 @@ def _make_steering(
             "zenith_rad": np.deg2rad(zd_deg),
             "azimuth_rad": np.deg2rad(az_deg),
             "depth_g_per_cm2": 0.0,
-            "random_seed": cpw._simple_seed(event_id + run_id*num_events),
+            "random_seed": cpw.simple_seed(event_id + run_id*num_events),
         }
         steering["primaries"].append(prm)
     return steering
@@ -373,7 +373,7 @@ def direct_discovery(
             "zenith_rad": zd,
             "azimuth_rad": az,
             "depth_g_per_cm2": 0.0,
-            "random_seed": cpw._simple_seed(event_id + run_id*num_events),
+            "random_seed": cpw.simple_seed(event_id + run_id*num_events),
         }
         steering["primaries"].append(prm)
 

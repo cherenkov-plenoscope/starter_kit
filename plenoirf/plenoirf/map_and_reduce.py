@@ -360,7 +360,7 @@ def draw_corsika_primary_steering(
         primary["zenith_rad"] = zd
         primary["azimuth_rad"] = az
         primary["depth_g_per_cm2"] = 0.0
-        primary["random_seed"] = cpw._simple_seed(
+        primary["random_seed"] = cpw.simple_seed(
             table.random_seed_based_on(run_id=run_id, airshower_id=event_id))
 
         steering["primaries"].append(primary)
@@ -520,10 +520,10 @@ def run_job(job=EXAMPLE_JOB):
             event_header, cherenkov_bunches = event
 
             # assert match
-            run_id = int(cpw._evth_run_number(event_header))
+            run_id = int(event_header[cpw.I_EVTH_RUN_NUMBER])
             assert (run_id == corsika_primary_steering["run"]["run_id"])
             event_id = event_idx + 1
-            assert (event_id == cpw._evth_event_number(event_header))
+            assert (event_id == event_header[cpw.I_EVTH_EVENT_NUMBER])
             primary = corsika_primary_steering["primaries"][event_idx]
             event_seed = primary["random_seed"][0]["SEED"]
             ide = {spt.IDX: event_seed}
@@ -549,20 +549,16 @@ def run_job(job=EXAMPLE_JOB):
                 prim["max_scatter_rad"]))
             prim["depth_g_per_cm2"] = float(primary["depth_g_per_cm2"])
             prim["momentum_x_GeV_per_c"] = float(
-                cpw._evth_px_momentum_in_x_direction_GeV_per_c(
-                    event_header))
+                event_header[cpw.I_EVTH_PX_MOMENTUM_GEV_PER_C])
             prim["momentum_y_GeV_per_c"] = float(
-                cpw._evth_py_momentum_in_y_direction_GeV_per_c(
-                    event_header))
+                event_header[cpw.I_EVTH_PY_MOMENTUM_GEV_PER_C])
             prim["momentum_z_GeV_per_c"] = float(
-                -1.0*cpw._evth_pz_momentum_in_z_direction_GeV_per_c(
-                    event_header))
+                -1.0*event_header[cpw.I_EVTH_PZ_MOMENTUM_GEV_PER_C])
             prim["first_interaction_height_asl_m"] = float(
-                -1.0*cpw.CM2M *
-                cpw._evth_z_coordinate_of_first_interaction_cm(
-                    event_header))
+                -1.0*cpw.CM2M*event_header[
+                    cpw.I_EVTH_Z_FIRST_INTERACTION_CM])
             prim["starting_height_asl_m"] = float(
-                cpw.CM2M*cpw._evth_starting_height_cm(event_header))
+                cpw.CM2M*event_header[cpw.I_EVTH_STARTING_HEIGHT_CM])
             obs_lvl_intersection = ray_plane_x_y_intersection(
                 support=[0, 0, prim["starting_height_asl_m"]],
                 direction=[
@@ -649,13 +645,14 @@ def run_job(job=EXAMPLE_JOB):
 
             reuse_event = grid_result["random_choice"]
             if reuse_event is not None:
-                IEVTH_NUM_REUSES = 98-1
-                IEVTH_CORE_X = IEVTH_NUM_REUSES + 1
-                IEVTH_CORE_Y = IEVTH_NUM_REUSES + 11
                 reuse_evth = event_header.copy()
-                reuse_evth[IEVTH_NUM_REUSES] = 1.0
-                reuse_evth[IEVTH_CORE_X] = cpw.M2CM*reuse_event["core_x_m"]
-                reuse_evth[IEVTH_CORE_Y] = cpw.M2CM*reuse_event["core_y_m"]
+                reuse_evth[cpw.I_EVTH_NUM_REUSES_OF_CHERENKOV_EVENT] = 1.0
+                reuse_evth[
+                    cpw.I_EVTH_X_CORE_CM(reuse=1)] = cpw.M2CM*reuse_event[
+                        "core_x_m"]
+                reuse_evth[
+                    cpw.I_EVTH_Y_CORE_CM(reuse=1)] = cpw.M2CM*reuse_event[
+                        "core_y_m"]
                 tar_append(
                     tarout=tarout,
                     file_name=cpw.TARIO_EVTH_FILENAME.format(event_id),
@@ -729,8 +726,8 @@ def run_job(job=EXAMPLE_JOB):
         # id
         # --
         cevth = event.simulation_truth.event.corsika_event_header.raw
-        run_id = int(cpw._evth_run_number(cevth))
-        airshower_id = int(cpw._evth_event_number(cevth))
+        run_id = int(cevth[cpw.I_EVTH_RUN_NUMBER])
+        airshower_id = int(cevth[cpw.I_EVTH_EVENT_NUMBER])
         ide = {
             spt.IDX: table.random_seed_based_on(
                 run_id=run_id,
