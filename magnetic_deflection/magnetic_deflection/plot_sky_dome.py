@@ -112,7 +112,7 @@ def add_ticklabels_in_half_dome(
     ax,
     azimuths_deg,
     rfov=1.0,
-    fmt="{:1.0f}$^\circ$",
+    fmt=r"{:1.0f}$^\circ$",
 ):
     xshift = -0.1*rfov
     yshift = -0.05*rfov

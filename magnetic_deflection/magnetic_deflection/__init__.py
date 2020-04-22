@@ -9,7 +9,7 @@ import json
 import pandas
 import numpy as np
 import scipy
-from scipy.optimize import curve_fit as  scipy_optimize_curve_fit
+from scipy.optimize import curve_fit as scipy_optimize_curve_fit
 import shutil
 import corsika_primary_wrapper as cpw
 import pkg_resources
@@ -33,10 +33,15 @@ def A_init_work_dir(
     with open(os.path.join(work_dir, 'particles.json'), 'wt') as f:
         f.write(json.dumps(particles, indent=4))
     with open(os.path.join(work_dir, 'config.json'), 'wt') as f:
-        f.write(json.dumps({
-                'max_energy_GeV': float(max_energy),
-                'num_energy_supports': int(num_energy_supports)
-            }, indent=4))
+        f.write(
+            json.dumps(
+                {
+                    'max_energy_GeV': float(max_energy),
+                    'num_energy_supports': int(num_energy_supports)
+                },
+                indent=4
+            )
+        )
 
 
 def B_make_jobs_from_work_dir(work_dir):
@@ -92,7 +97,7 @@ def D_summarize_raw_deflection(
         out_path=os.path.join(work_dir, 'raw_valid_add_clean_high'))
     sites2 = {}
     for site_key in sites:
-        if not 'Off' in site_key:
+        if 'Off' not in site_key:
             sites2[site_key] = sites[site_key]
     _fit_power_law(
         particles=particles,
@@ -113,8 +118,10 @@ def D_summarize_raw_deflection(
 
 
 def read_json(path):
-    with open(path, "rt") as f: out = json.loads(f.read())
+    with open(path, "rt") as f:
+        out = json.loads(f.read())
     return out
+
 
 def _cut_invalid(
     in_path,
@@ -144,7 +151,6 @@ def _add_density_fields(
     map_and_reduce.write_deflection_table(
         deflection_table=deflection_table,
         path=out_path)
-
 
 
 FIT_KEYS = {

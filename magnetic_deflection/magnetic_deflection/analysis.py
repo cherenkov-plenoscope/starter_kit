@@ -8,6 +8,7 @@ prepare deflection_table
 ========================
 """
 
+
 def add_density_fields_to_deflection_table(deflection_table):
     out = {}
     for site_key in deflection_table:
@@ -17,21 +18,21 @@ def add_density_fields_to_deflection_table(deflection_table):
             dicout = pd.DataFrame(t).to_dict(orient="list")
 
             dicout['num_cherenkov_photons_per_shower'] = (
-                t['char_total_num_photons']/
+                t['char_total_num_photons'] /
                 t['char_total_num_airshowers'])
 
             dicout['spread_area_m2'] = (
-                np.pi*
-                t['char_position_std_major_m']*
+                np.pi *
+                t['char_position_std_major_m'] *
                 t['char_position_std_minor_m'])
 
             dicout['spread_solid_angle_deg2'] = (
-                np.pi*
-                np.rad2deg(t['char_direction_std_major_rad'])*
+                np.pi *
+                np.rad2deg(t['char_direction_std_major_rad']) *
                 np.rad2deg(t['char_direction_std_minor_rad']))
 
             dicout['light_field_outer_density'] = (
-                dicout['num_cherenkov_photons_per_shower']/
+                dicout['num_cherenkov_photons_per_shower'] /
                 (dicout['spread_solid_angle_deg2']*dicout['spread_area_m2']))
             out[site_key][particle_key] = pd.DataFrame(dicout).to_records(
                 index=False)
@@ -62,6 +63,7 @@ def cut_invalid_from_deflection_table(
 Reject outliers, smooth
 =======================
 """
+
 
 def percentile_indices(values, target_value, percentile=90):
     values = np.array(values)
@@ -115,6 +117,7 @@ def smooth(energies, values):
 Fitting power-laws
 ==================
 """
+
 
 def power_law(energy, scale, index):
     return scale*energy**(index)

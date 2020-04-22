@@ -73,7 +73,7 @@ def run_job(job):
         instrument_zenith_deg=job['instrument_zenith_deg'],
         max_off_axis_deg=job['max_off_axis_deg'],
         initial_num_events_per_iteration=job[
-        'initial_num_events_per_iteration'],
+            'initial_num_events_per_iteration'],
         max_total_num_events=job['max_total_num_events'],
         corsika_primary_path=job['corsika_primary_path'],
         iteration_speed=job['iteration_speed'],
@@ -110,6 +110,7 @@ KEEP_KEYS = [
     "num_thrown_Cherenkov_pools",
     "total_num_events",
 ]
+
 
 def structure_combined_results(
     combined_results,
@@ -160,7 +161,7 @@ def read_deflection_table(path):
         split_name = name.split('_')
         assert len(split_name) == 2
         site_key, particle_key = split_name
-        if not site_key in deflection_table:
+        if site_key not in deflection_table:
             deflection_table[site_key] = {}
         deflection_table[site_key][particle_key] = read_csv_to_recarray(pa)
     return deflection_table

@@ -408,7 +408,6 @@ def direct_discovery(
         weights=weights)
     average_off_axis_deg = np.average(delta_c_deg, weights=weights)
 
-
     out["valid"] = True
     out["primary_azimuth_deg"] = float(np.rad2deg(prm_az))
     out["primary_zenith_deg"] = float(np.rad2deg(prm_zd))
@@ -542,4 +541,3 @@ def estimate_deflection(
         return indirect_guess
     else:
         return direct_guess
-
