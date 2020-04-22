@@ -106,7 +106,7 @@ for site_key in irf_config['config']['sites']:
         cut_idxs_grid = event_table['grid'][spt.IDX]
         cut_idxs_features = event_table['features'][spt.IDX]
 
-        _off_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
+        _off_deg = mdfl.discovery._angle_between_az_zd_deg(
             az1_deg=np.rad2deg(event_table['primary']['azimuth_rad']),
             zd1_deg=np.rad2deg(event_table['primary']['zenith_rad']),
             az2_deg=irf_config['config']['plenoscope_pointing']['azimuth_deg'],
@@ -123,7 +123,7 @@ for site_key in irf_config['config']['sites']:
             level_key='primary',
             indices=spt.dict_to_recarray({spt.IDX: cut_idxs_features}))
         rec_az, rec_zd = mdfl.discovery._cx_cy_to_az_zd_deg(rec_cx, rec_cy)
-        _source_off_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
+        _source_off_deg = mdfl.discovery._angle_between_az_zd_deg(
             az1_deg=np.rad2deg(_prm_mrg_feat['azimuth_rad']),
             zd1_deg=np.rad2deg(_prm_mrg_feat['zenith_rad']),
             az2_deg=rec_az,
@@ -156,20 +156,12 @@ for site_key in irf_config['config']['sites']:
                     'max_between_pointing_primary_deg'],
                 primary_table=mrg_pri_grd['primary'],)
 
-            primary_inside_cone_indices = irf.table.mask_to_indices(
-                level=mrg_pri_grd['primary'],
-                mask=primary_inside_cone_mask)
-
-            mrg_pri_grd_con = {
-                'primary': irf.table.by_indices(
-                    event_table=mrg_pri_grd,
-                    level_key='primary',
-                    indices=primary_inside_cone_indices),
-                'grid': irf.table.by_indices(
-                    event_table=mrg_pri_grd,
-                    level_key='grid',
-                    indices=primary_inside_cone_indices),
-            }
+            mrg_pri_grd_con = spt.cut_table_on_indices(
+                table=mrg_pri_grd,
+                structure=irf.table.STRUCTURE,
+                common_indices={spt.IDX: mrg_pri_grd['primary'][spt.IDX]},
+                level_keys=['primary', 'grid'],
+            )
 
             if scenario == 'point':
                 max_scatter = mrg_pri_grd_con['grid']['area_thrown_m2']
