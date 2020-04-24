@@ -68,8 +68,13 @@ def _make_bunch_direction(cx, cy):
     return d
 
 
+def _normalize_rows_in_matrix(mat):
+    return mat/np.sqrt(np.sum(mat**2, axis=1, keepdims=1))
+
+
 def _make_angle_between(directions, direction):
-    # expect normalized
+    direction = direction/np.linalg.norm(direction)
+    directions = _normalize_rows_in_matrix(mat=directions)
     return np.arccos(np.dot(directions, direction))
 
 
