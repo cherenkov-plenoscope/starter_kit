@@ -600,9 +600,10 @@ def run_job(job=EXAMPLE_JOB):
                 threshold_num_photons=job["grid"]["threshold_num_photons"])
             tar_append(
                 tarout=imgtar,
-                file_name="{:06d}{:06d}.f4.gz".format(run_id, event_id),
-                file_bytes=grid.histogram_to_bytes(
-                    grid_result["histogram"]))
+                file_name=table.SEED_TEMPLATE_STR.format(
+                    seed=event_seed)+".f4.gz",
+                file_bytes=grid.histogram_to_bytes(grid_result["histogram"])
+            )
 
             # grid statistics
             # ---------------
