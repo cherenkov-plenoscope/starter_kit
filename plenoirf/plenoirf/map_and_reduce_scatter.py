@@ -84,7 +84,7 @@ EXAMPLE_PLENOSCOPE_POINTING = {
 
 EXAMPLE_PARTICLE = {
     "particle_id": 3,
-    "energy_bin_edges_GeV": [ 0.5,    1,   10,  100, 1000],
+    "energy_bin_edges_GeV": [0.5,     1,   10,  100, 1000],
     "max_scatter_radius_m": [3000, 3000, 2000, 1200, 1200],
     "max_scatter_angle_deg": 6.5,
     "energy_power_law_slope": -2.0,
@@ -339,21 +339,25 @@ STRUCTURE = {}
 STRUCTURE['primary'] = {
     'particle_id': {'dtype': '<i8', 'comment': 'CORSIKA particle-id'},
     'energy_GeV': {'dtype': '<f8', 'comment': ''},
-    'azimuth_rad': {'dtype': '<f8', 'comment':
-        'Direction of the primary particle w.r.t. magnetic north.'},
-    'zenith_rad': {'dtype': '<f8', 'comment':
-        'Direction of the primary particle.'},
+    'azimuth_rad': {
+        'dtype': '<f8',
+        'comment': 'Direction of the primary particle w.r.t. magnetic north.'},
+    'zenith_rad': {
+        'dtype': '<f8',
+        'comment': 'Direction of the primary particle.'},
 
-    'magnet_azimuth_rad': {'dtype': '<f8', 'comment':
-        'The azimuth direction that the primary particle needs to have '
-        'in order to induce an air-shower that emits its Cherenkov-light '
-        'head on the pointing of the plenoscope.'},
-    'magnet_zenith_rad': {'dtype': '<f8', 'comment':
-        'The zenith direction that the primary particle needs to have '
-        'in order to induce an air-shower that emits its Cherenkov-light '
-        'head on the pointing of the plenoscope.'},
-    'magnet_cherenkov_pool_x_m': {'dtype': '<f8', 'comment':
-        'This offset must be added to the core-position, where '
+    'magnet_azimuth_rad': {
+        'dtype': '<f8',
+        'comment': 'The azimuth direction that the primary particle needs '
+        'to have in order to induce an air-shower that emits its '
+        'Cherenkov-light head on the pointing of the plenoscope.'},
+    'magnet_zenith_rad': {
+        'dtype': '<f8',
+        'comment': 'The zenith direction that the primary particle needs '
+        'to have. See magnet_azimuth_rad'},
+    'magnet_cherenkov_pool_x_m': {
+        'dtype': '<f8',
+        'comment': 'This offset must be added to the core-position, where '
         'the trajectory of the primary particle intersects the '
         'observation-level, in order for the plenoscope to stand in '
         'the typical center of the Cherenkov-pool.'},
@@ -656,7 +660,6 @@ def run_job(job=EXAMPLE_JOB):
         crst[spt.IDX] = airshower_seed
         crst = _append_bunch_statistics(crst, raw_cherenkov_bunches)
         tabrec["cherenkovpool"].append(crst)
-
 
         # reject cherenkov-bunches outside of fov
         # ---------------------------------------
