@@ -5,6 +5,7 @@ from . import merlict
 from . import logging
 from . import query
 from . import map_and_reduce
+from . import map_and_reduce_scatter
 from . import map_and_reduce_light_field_geometry
 from . import network_file_system
 
