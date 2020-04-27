@@ -194,3 +194,7 @@ def powerspace(start, stop, power_index, num, iterations=10000):
         return np.mean(full, axis=0)
     else:
         return np.array([start, stop])
+
+
+def read_csv_to_dict(path):
+    return pd.read_csv(path).to_dict(orient='list')
