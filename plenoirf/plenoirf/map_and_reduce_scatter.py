@@ -529,7 +529,7 @@ def run_job(job=EXAMPLE_JOB):
     # prepare output table
     # --------------------
     tabrec = {}
-    for level_key in table.STRUCTURE:
+    for level_key in STRUCTURE:
         tabrec[level_key] = []
 
     # run corsika
@@ -931,11 +931,11 @@ def run_job(job=EXAMPLE_JOB):
     table_filename = run_id_str+"_event_table.tar"
     event_table = spt.table_of_records_to_sparse_table(
         table_records=tabrec,
-        structure=table.STRUCTURE)
+        structure=STRUCTURE)
     spt.write(
         path=op.join(tmp_dir, table_filename),
         table=event_table,
-        structure=table.STRUCTURE)
+        structure=STRUCTURE)
     nfs.copy(
         src=op.join(tmp_dir, table_filename),
         dst=op.join(job["feature_dir"], table_filename))
