@@ -300,7 +300,7 @@ def draw_corsika_primary_steering(
     _assert_site(site)
     _assert_particle(particle)
     _assert_deflection(site_particle_deflection)
-    assert(num_events <= table.MAX_NUM_EVENTS_IN_RUN)
+    assert(num_events <= table.NUM_AIRSHOWER_IDS_IN_RUN)
 
     max_scatter_rad = np.deg2rad(particle["max_scatter_angle_deg"])
 
