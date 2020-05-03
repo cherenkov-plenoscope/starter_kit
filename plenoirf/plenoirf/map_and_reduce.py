@@ -14,12 +14,8 @@ import json
 import tarfile
 import io
 import datetime
-import subprocess
-import PIL
-import pandas as pd
 import corsika_primary_wrapper as cpw
 import plenopy as pl
-import gzip
 import sparse_table as spt
 
 
