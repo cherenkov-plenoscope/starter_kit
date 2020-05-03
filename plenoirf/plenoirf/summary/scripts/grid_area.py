@@ -57,28 +57,14 @@ for site_key in irf_config['config']['sites']:
             ]
         )
 
-        os.makedirs(opj(summary_dir, 'cache'), exist_ok=True)
-        _grid_pasttrigger_path = opj(
-            summary_dir,
-            'cache',
-            '{:s}_{:s}_grid_pasttrigger.tar'.format(
+        grid_histograms_pasttrigger = irf.grid.read_histograms(
+            path=opj(
+                run_dir,
+                'event_table',
                 site_key,
-                particle_key))
-        if os.path.exists(_grid_pasttrigger_path):
-            grid_histograms_pasttrigger = irf.grid.read_histograms(
-                path=_grid_pasttrigger_path)
-        else:
-            grid_histograms_pasttrigger = irf.grid.read_histograms(
-                path=opj(
-                    run_dir,
-                    'event_table',
-                    site_key,
-                    particle_key,
-                    'grid.tar'),
-                indices=mrg_table['pasttrigger'][spt.IDX])
-            irf.grid.write_histograms(
-                path=_grid_pasttrigger_path,
-                grid_histograms=grid_histograms_pasttrigger)
+                particle_key,
+                'grid.tar'),
+            indices=mrg_table['pasttrigger'][spt.IDX])
 
         # summarize
         # ---------
