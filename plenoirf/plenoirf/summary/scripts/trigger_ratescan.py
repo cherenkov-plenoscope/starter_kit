@@ -64,7 +64,7 @@ for p in cosmic_rays:
 
 EXPOSURE_TIME_PER_EVENT = NUM_TIME_SLICES_PER_EVENT*TIME_SLICE_DURATION
 
-trigger_thresholds_pe = np.arange(start=80, stop=500, step=5)
+trigger_thresholds_pe = np.arange(start=80, stop=120, step=1)
 NUM_THRESHOLDS = trigger_thresholds_pe.shape[0]
 
 NUM_GRID_BINS = irf_config['grid_geometry']['num_bins_diameter']**2
@@ -198,7 +198,7 @@ for site_key in irf_config['config']['sites']:
     gamma_inan = np.isnan(gamma_q_effective)
     gamma_q_effective[gamma_inan] = 0.0
 
-    fig = plt.figure(figsize=(16, 9), dpi=400)
+    fig = plt.figure(figsize=(16, 9), dpi=100)
     ax = fig.add_axes((.1, .1, .8, .8))
     ax.plot(
         energy_bin_edges[:-1],
@@ -240,7 +240,7 @@ for site_key in irf_config['config']['sites']:
     g_area_effective = (g_area_detected/g_area_thrown)*(g_area_thrown/g_num_thrown)
 
 
-    fig = plt.figure(figsize=(16, 9), dpi=400)
+    fig = plt.figure(figsize=(16, 9), dpi=100)
     ax = fig.add_axes((.1, .1, .8, .8))
     ax.plot(
         energy_bin_edges[:-1],
@@ -339,7 +339,7 @@ for site_key in irf_config['config']['sites']:
                     trg_ratio*cell_ratio*1e6
                 )
 
-                fig = plt.figure(figsize=(16, 9), dpi=400)
+                fig = plt.figure(figsize=(16, 9), dpi=100)
                 ax = fig.add_axes((.1, .1, .8, .8))
                 ax.plot(
                     energy_bin_edges[:-1],
@@ -358,7 +358,7 @@ for site_key in irf_config['config']['sites']:
         channels[p]['rate'] = integrated_rates
 
 
-    fig = plt.figure(figsize=(16, 9), dpi=400)
+    fig = plt.figure(figsize=(16, 9), dpi=100)
     ax = fig.add_axes((.1, .1, .8, .8))
     ax.plot(
         trigger_thresholds_pe,
