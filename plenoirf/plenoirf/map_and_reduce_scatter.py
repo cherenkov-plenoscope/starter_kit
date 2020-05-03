@@ -15,14 +15,15 @@ import tarfile
 import io
 import datetime
 import subprocess
-import PIL
 import pandas as pd
 import corsika_primary_wrapper as cpw
 import magnetic_deflection as mdfl
 import plenopy as pl
-import gzip
 import sparse_table as spt
+import glob
 
+import matplotlib.pyplot as plt
+PLOT = True
 
 def absjoin(*args):
     return op.abspath(op.join(*args))
@@ -57,7 +58,7 @@ EXAMPLE_SITE_PARTICLE_DEFLECTION_PATH = absjoin(
         "2020-04-08_run",
         "magnetic_deflection",
         "result",
-        "chile_electron.csv")
+        "chile_proton.csv")
 
 EXAMPLE_PLENOSCOPE_SCENERY_PATH = absjoin(
         "resources",
@@ -77,6 +78,13 @@ EXAMPLE_SITE = {
     "atmosphere_id": 26,
 }
 
+EXAMPLE_SITE_MAGNET_OFF = {
+    "observation_level_asl_m": 5000,
+    "earth_magnetic_field_x_muT": 1e-2,
+    "earth_magnetic_field_z_muT": 1e-2,
+    "atmosphere_id": 26,
+}
+
 EXAMPLE_PLENOSCOPE_POINTING = {
     "azimuth_deg": 0.,
     "zenith_deg": 0.
@@ -84,10 +92,18 @@ EXAMPLE_PLENOSCOPE_POINTING = {
 
 EXAMPLE_PARTICLE = {
     "particle_id": 3,
-    "energy_bin_edges_GeV": [0.5,     1,   10,  100, 1000],
-    "max_scatter_radius_m": [3000, 3000, 2000, 1200, 1200],
+    "energy_bin_edges_GeV": [0.5,   1,  10,  100, 1000],
+    "max_scatter_radius_m": [400, 400, 600, 1200, 2400],
     "max_scatter_angle_deg": 6.5,
-    "energy_power_law_slope": -2.0,
+    "energy_power_law_slope": -2.7,
+}
+
+EXAMPLE_PROTON = {
+    "particle_id": 14,
+    "energy_bin_edges_GeV": [9,   11],
+    "max_scatter_radius_m": [235, 235],
+    "max_scatter_angle_deg": 6.5,
+    "energy_power_law_slope": -1,
 }
 
 EXAMPLE_SITE_PARTICLE_DEFLECTION = {
@@ -120,9 +136,10 @@ EXAMPLE_FEATURE_DIRECTORY = op.join(".", "_features")
 EXAMPLE_WORK_DIR = op.join(".", "_work")
 
 EXAMPLE_JOB = {
-    "run_id": 2,
+    "run_id": 8,
     "num_air_showers": 999,
-    "particle": EXAMPLE_PARTICLE,
+    "center_cherenkovpool": False,
+    "particle": EXAMPLE_PROTON,
     "site_particle_deflection": EXAMPLE_SITE_PARTICLE_DEFLECTION,
     "plenoscope_pointing": EXAMPLE_PLENOSCOPE_POINTING,
     "site": EXAMPLE_SITE,
@@ -142,6 +159,114 @@ EXAMPLE_JOB = {
     "date": date_dict_now(),
 }
 
+
+def estimate_one_energy_bin(
+    out_dir,
+    template_job=EXAMPLE_JOB,
+    start_run_id=1,
+    min_num_events_past_trigger=100,
+):
+    job = template_job.copy()
+    os.makedirs(out_dir, exist_ok=True)
+    job['log_dir'] = os.path.join(out_dir, "log")
+    job['past_trigger_dir'] = os.path.join(out_dir, "past_trigger")
+    job['feature_dir'] = os.path.join(out_dir, "features")
+    job['tmp_dir'] = os.path.join(out_dir, "tmp")
+
+    os.makedirs(job['log_dir'], exist_ok=True)
+    os.makedirs(job['past_trigger_dir'], exist_ok=True)
+    os.makedirs(job['feature_dir'], exist_ok=True)
+    os.makedirs(job['tmp_dir'], exist_ok=True)
+
+    with open(os.path.join(out_dir, "template_job.json"), "wt") as fout:
+        fout.write(json.dumps(job, indent=4))
+
+    def num_files_in_path(path):
+        return len(glob.glob(os.path.join(path, "*")))
+
+    num_events = num_files_in_path(job['past_trigger_dir'])
+
+    run_id = start_run_id
+    while num_events < min_num_events_past_trigger:
+        print(run_id, "num_events:", num_events)
+        job_i = job.copy()
+        job_i["run_id"] = run_id
+        #try:
+        run_job(job=job_i)
+        #except Exception as e:
+        #    print(e)
+        run_id += 1
+        num_events = num_files_in_path(job['past_trigger_dir'])
+
+    event_table = spt.concatenate_files(
+        glob.glob(os.path.join(job['feature_dir'], '*_event_table.tar')),
+        structure=STRUCTURE)
+    spt.write(
+        os.path.join(out_dir, 'features.tar'),
+        table=event_table,
+        structure=STRUCTURE)
+
+
+
+def effective_acceptance(
+    table,
+    energy_bin_edges=[5, 20],
+    trigger_threshold=EXAMPLE_SUM_TRIGGER['patch_threshold']
+):
+    t = table
+
+    _past_trigger_mask = (
+        (t['trigger']['response_pe'] >= trigger_threshold).astype(np.int)
+    ).astype(np.bool)
+    indices_past_trigger = t['trigger'][spt.IDX][_past_trigger_mask]
+    primary_past_trigger_mask = spt.make_mask_of_right_in_left(
+        left_indices=t['primary'][spt.IDX],
+        right_indices=indices_past_trigger,
+    )
+
+    area_thrown = np.sum(t['primary']['area_thrown_m2'])
+    solid_angle_thrown = np.sum(t['primary']['solid_angle_thrown_sr'])
+    quantity_thrown = np.sum(
+        t['primary']['area_thrown_m2']*t['primary']['solid_angle_thrown_sr']
+    )
+
+    area_detected = np.sum(
+        t['primary']['area_thrown_m2']*
+        primary_past_trigger_mask)
+    solid_angle_detected = np.sum(
+        t['primary']['solid_angle_thrown_sr']*
+        primary_past_trigger_mask)
+    quantity_detected = np.sum(
+        t['primary']['solid_angle_thrown_sr']*
+        t['primary']['area_thrown_m2']*
+        primary_past_trigger_mask
+    )
+    num_thrown = primary_past_trigger_mask.shape[0]
+
+    effective_quantity = (
+        (quantity_detected/quantity_thrown)*(quantity_thrown/num_thrown)
+    )
+
+    return {
+        "area_thrown": area_thrown,
+        "solid_angle_thrown": solid_angle_thrown,
+        "quantity_thrown": quantity_thrown,
+        "area_detected": area_detected,
+        "solid_angle_detected": solid_angle_detected,
+        "quantity_detected": quantity_detected,
+        "num_thrown": num_thrown,
+        "effective_quantity": effective_quantity,
+    }
+
+
+# protons
+#   corsika 0.093s - 0.108s
+#   grid    0.022s - 0.025s
+
+#   merlict 1.140s
+#   trigger 0.830s
+
+# target is 60s per event past the trigger.
 
 def _cone_solid_angle(cone_radial_opening_angle_rad):
     cap_hight = (1.0 - np.cos(cone_radial_opening_angle_rad))
@@ -653,7 +778,10 @@ def run_job(job=EXAMPLE_JOB):
         tabrec["cherenkovsize"].append(crsz)
         print("full", crsz['num_bunches'])
 
-        if crsz['num_bunches'] < 50:
+        if (
+            np.sum(raw_cherenkov_bunches[:, cpw.IBSIZE]) <
+            job['grid']['threshold_num_photons']
+        ):
             continue
 
         crst = {}
@@ -679,21 +807,40 @@ def run_job(job=EXAMPLE_JOB):
         )
         bunches_fov = raw_cherenkov_bunches[mask_inside_field_of_view, :]
 
-        if bunches_fov.shape[0] < 50:
+        if (
+            np.sum(bunches_fov[:, cpw.IBSIZE]) <
+            job['grid']['threshold_num_photons']
+        ):
             continue
 
         # translate cherenkov-pool to x=0, y=0 wrt. obs.-level
         # ----------------------------------------------------
         bunches_fov_x_median_cm = np.median(bunches_fov[:, cpw.IX])
         bunches_fov_y_median_cm = np.median(bunches_fov[:, cpw.IY])
-        bunches_fov[:, cpw.IX] -= bunches_fov_x_median_cm
-        bunches_fov[:, cpw.IY] -= bunches_fov_y_median_cm
+
+        if job['center_cherenkovpool']:
+            bunches_fov[:, cpw.IX] -= bunches_fov_x_median_cm
+            bunches_fov[:, cpw.IY] -= bunches_fov_y_median_cm
 
         cercore = {}
         cercore[spt.IDX] = airshower_seed
         cercore["x_m"] = 1e-2*bunches_fov_x_median_cm
         cercore["y_m"] = 1e-2*bunches_fov_y_median_cm
         tabrec["cherenkovpoolcore"].append(cercore)
+
+        if PLOT:
+            R_FRAC = 0.68
+            bunches_fov_r_cm = np.hypot(
+                bunches_fov[:, cpw.IX],
+                bunches_fov[:, cpw.IY])
+            bunches_fov_r_m = 1e-2*bunches_fov_r_cm
+
+            num_bunches = bunches_fov_r_m.shape[0]
+            r_idx = int(num_bunches*R_FRAC)
+
+            aarsort = np.argsort(bunches_fov_r_m)
+            bunches_fov_r_m_sorted = bunches_fov_r_m[aarsort]
+            r_containment_m = bunches_fov_r_m_sorted[r_idx]
 
         # intensity histogram on observation-level
         # ----------------------------------------
@@ -711,6 +858,45 @@ def run_job(job=EXAMPLE_JOB):
                 seed=airshower_seed)+".f4.gz",
             file_bytes=grid.histogram_to_bytes(intensity_histogram)
         )
+
+        if PLOT:
+            fig = plt.figure(figsize=(8, 8), dpi=100)
+            ax = fig.add_axes([0.05, 0.05, 0.9, 0.9])
+            __I = intensity_histogram.copy()
+            __I[__I > 0] = np.log10(__I[__I > 0])
+            ax.pcolormesh(
+                grid_geometry['xy_bin_edges'],
+                grid_geometry['xy_bin_edges'],
+                __I,
+                vmax=np.log10(job['grid']['threshold_num_photons'])
+            )
+            __R = 100*primary['max_scatter_radius_wrt_cherenkov_pool_m']
+            ax.set_xlim([-__R, __R])
+            ax.set_ylim([-__R, __R])
+            ax.set_xlabel('x/m')
+            ax.set_ylabel('y/m')
+            ax.plot(
+                primary['scatter_wrt_cherenkov_pool_x_m'],
+                primary['scatter_wrt_cherenkov_pool_y_m'],
+                "xr")
+            __phi = np.linspace(0, np.pi*2, 1000)
+            ax.plot(
+                primary['max_scatter_radius_wrt_cherenkov_pool_m']*np.cos(__phi),
+                primary['max_scatter_radius_wrt_cherenkov_pool_m']*np.sin(__phi),
+                "r")
+
+            ax.plot(
+                r_containment_m*np.cos(__phi),
+                r_containment_m*np.sin(__phi),
+                color="yellow")
+
+            fig.savefig(
+                op.join(
+                    tmp_dir,
+                    table.SEED_TEMPLATE_STR.format(seed=airshower_seed)+'.png'
+                )
+            )
+            plt.close(fig)
 
         # add scatter
         # -----------
