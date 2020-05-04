@@ -24,6 +24,19 @@ def argv_since_py(sys_argv):
     return argv
 
 
+def paths_from_argv(argv):
+    assert len(argv) == 2
+    run_dir = argv[1]
+    summary_dir = os.path.join(run_dir, 'summary')
+    script_name = str.split(os.path.basename(argv[0]), ".")[0]
+    return {
+        "run_dir": run_dir,
+        "script_name": script_name,
+        "summary_dir": summary_dir,
+        "out_dir": os.path.join(summary_dir, script_name),
+    }
+
+
 def read_summary_config(summary_dir):
     with open(opj(summary_dir, 'summary_config.json'), 'rt') as fin:
         config = json.loads(fin.read())
