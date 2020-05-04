@@ -12,12 +12,10 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as plt_colors
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 fc16by9 = sum_config['figure_16_9']
 fc1by1 = fc16by9.copy()
@@ -25,13 +23,15 @@ fc1by1['rows'] = fc16by9['rows']*(16/9)
 
 CHCL = 'cherenkovclassification'
 
+os.makedirs(pa['out_dir'], exist_ok=True)
+
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
 
         event_table = spt.read(
             path=os.path.join(
-                run_dir,
+                pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
@@ -46,7 +46,7 @@ for site_key in irf_config['config']['sites']:
             level_keys=[
                 'primary',
                 'trigger',
-                'cherenkovclassification',
+                CHCL,
                 'features'
             ]
         )
@@ -104,7 +104,7 @@ for site_key in irf_config['config']['sites']:
             linestyle='k-')
         plt.savefig(
             os.path.join(
-                summary_dir,
+                pa['out_dir'],
                 '{:s}_{:s}_size_confusion.{:s}'.format(
                     prefix_str,
                     CHCL,
@@ -141,7 +141,7 @@ for site_key in irf_config['config']['sites']:
         num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
         pp = os.path.join(
-            summary_dir,
+            pa['out_dir'],
             '{:s}_{:s}_sensitivity_vs_true_energy'.format(
                 prefix_str,
                 CHCL))
@@ -207,7 +207,7 @@ for site_key in irf_config['config']['sites']:
         num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
         pp = os.path.join(
-            summary_dir,
+            pa['out_dir'],
             '{:s}_{:s}_true_size_over_extracted_size_vs_true_energy'.format(
                 prefix_str,
                 CHCL))
@@ -262,7 +262,7 @@ for site_key in irf_config['config']['sites']:
         num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
         pp = os.path.join(
-            summary_dir,
+            pa['out_dir'],
             '{:s}_{:s}_true_size_over_extracted_size_vs_true_size'.format(
                 prefix_str,
                 CHCL))
