@@ -206,7 +206,7 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=sum_config['energy_bin_edges_GeV_coarse'],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='grid_direction/{site_key:s}_{particle_key:s}_'
     'grid_direction_pasttrigger_{energy_bin_index:06d}.jpg')
 
 doc += h('Cherenkov-intensity on observation-level, past trigger', level=2)
@@ -221,7 +221,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=sum_config['energy_bin_edges_GeV_coarse'],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='grid_area/'
+    '{site_key:s}_{particle_key:s}_'
     'grid_area_pasttrigger_{energy_bin_index:06d}.jpg')
 
 
@@ -230,7 +231,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='trigger_probability_vs_cherenkov_size/'
+    '{site_key:s}_{particle_key:s}_'
     'trigger_probability_vs_cherenkov_size.jpg')
 
 
@@ -239,7 +241,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='trigger_probability_vs_offaxis/'
+    '{site_key:s}_{particle_key:s}_'
     'trigger_probability_vs_offaxis.jpg')
 
 
@@ -248,7 +251,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1, 2, 3, 4],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='trigger_probability_vs_offaxis/'
+    '{site_key:s}_{particle_key:s}_'
     'trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg')
 
 
@@ -257,21 +261,24 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='cherenkov_photon_classification/'
+    '{site_key:s}_{particle_key:s}_'
     'cherenkovclassification_size_confusion.jpg')
 
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='cherenkov_photon_classification/'
+    '{site_key:s}_{particle_key:s}_'
     'cherenkovclassification_sensitivity_vs_true_energy.jpg')
 
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='cherenkov_photon_classification/'
+    '{site_key:s}_{particle_key:s}_'
     'cherenkovclassification_'
     'true_size_over_extracted_size_vs_true_energy.jpg')
 
@@ -279,7 +286,8 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_'
+    wild_card='cherenkov_photon_classification/'
+    '{site_key:s}_{particle_key:s}_'
     'cherenkovclassification_'
     'true_size_over_extracted_size_vs_true_size.jpg')
 
