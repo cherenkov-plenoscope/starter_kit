@@ -17,14 +17,10 @@ import matplotlib.colors as plt_colors
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
-
-cfg = irf_config['config']
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 
 def histogram(
@@ -112,6 +108,10 @@ def write_figure(
     fig.savefig(path)
     plt.close(fig)
 
+cfg = irf_config['config']
+os.makedirs(pa['out_dir'], exist_ok=True)
+
+GLOBAL_YLIM = [1e-4, 1.5e0]
 
 for site_key in cfg['sites']:
     for particle_key in cfg['particles']:
@@ -121,7 +121,7 @@ for site_key in cfg['sites']:
         # ----
         event_table = spt.read(
             path=os.path.join(
-                run_dir,
+                pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
@@ -182,16 +182,17 @@ for site_key in cfg['sites']:
 
         write_figure(
             path=opj(
-                summary_dir,
+                pa['out_dir'],
                 '{:s}_trigger_probability_vs_offaxis.{:s}'.format(
                     prefix_str,
                     sum_config['figure_16_9']['format'])),
             cradial2_bin_edges_deg2=cradial2_bin_edges_deg2,
             trgprb=res['trgprb'],
             trgprb_absunc=res['trgprb_absunc'],
-            ylim=res['ylim'],
+            ylim=GLOBAL_YLIM,
             figure_config=sum_config['figure_16_9'],
-            title='')
+            title=''
+        )
 
         # versus energy
         # -------------
@@ -215,30 +216,24 @@ for site_key in cfg['sites']:
                 pasttrigger_mask=pasttrigger_mask)
             energy_hists.append(res)
 
-        ylims = []
-        for ex in range(num_energy_bins):
-            if energy_hists[ex]['ylim'] is not None:
-                ylims.append(energy_hists[ex]['ylim'])
-        if len(ylims) == 0:
-            global_ylim = None
-        else:
-            ylims = np.array(ylims)
-            global_ylim = [np.min(ylims[:, 0]), np.max(ylims[:, 1])]
-
         for ex in range(num_energy_bins):
             write_figure(
                 path=opj(
-                    summary_dir,
+                    pa['out_dir'],
                     '{:s}_trigger_probability_vs_offaxis_{:06d}.{:s}'.format(
                         prefix_str,
                         ex,
-                        sum_config['figure_16_9']['format'])),
+                        sum_config['figure_16_9']['format']
+                    )
+                ),
                 cradial2_bin_edges_deg2=coarse_cradial2_bin_edges_deg2,
                 trgprb=energy_hists[ex]['trgprb'],
                 trgprb_absunc=energy_hists[ex]['trgprb_absunc'],
-                ylim=global_ylim,
+                ylim=GLOBAL_YLIM,
                 figure_config=sum_config['figure_16_9'],
                 title='energy {:.1f} - {:.1f} GeV, num. events {:d}'.format(
                     energy_bin_edges[ex],
                     energy_bin_edges[ex+1],
-                    energy_hists[ex]['num_energy_bin_pasttrigger']))
+                    energy_hists[ex]['num_energy_bin_pasttrigger']
+                )
+            )
