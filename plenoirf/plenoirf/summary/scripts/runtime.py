@@ -15,12 +15,10 @@ import matplotlib.pyplot as plt
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 
 def read(path):
@@ -178,25 +176,26 @@ def write_speed(table, out_path, figure_config):
     os.rename(out_path+'.json'+'.tmp', out_path+'.json')
 
 
+os.makedirs(pa['out_dir'], exist_ok=True)
+
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
 
-        extended_runtime_path = opj(summary_dir, prefix_str+'_runtime.csv')
+        extended_runtime_path = opj(pa['out_dir'], prefix_str+'_runtime.csv')
         if os.path.exists(extended_runtime_path):
-            extended_runtime_table = read(
-                extended_runtime_path)
+            extended_runtime_table = read(extended_runtime_path)
         else:
             event_table = spt.read(
                 path=os.path.join(
-                    run_dir,
+                    pa['run_dir'],
                     'event_table',
                     site_key,
                     particle_key,
                     'event_table.tar'),
                 structure=irf.table.STRUCTURE)
             runtime_table = read(opj(
-                run_dir,
+                pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
@@ -204,16 +203,14 @@ for site_key in irf_config['config']['sites']:
             extended_runtime_table = merge_event_table(
                 runtime_table=runtime_table,
                 event_table=event_table)
-            write(
-                path=opj(summary_dir, prefix_str+'_runtime.csv'),
-                table=extended_runtime_table,)
+            write(path=extended_runtime_path, table=extended_runtime_table)
 
         write_relative_runtime(
             table=extended_runtime_table,
-            out_path=opj(summary_dir, prefix_str+'_relative_runtime'),
+            out_path=opj(pa['out_dir'], prefix_str+'_relative_runtime'),
             figure_config=sum_config['figure_16_9'])
 
         write_speed(
             table=extended_runtime_table,
-            out_path=opj(summary_dir, prefix_str+'_speed_runtime'),
+            out_path=opj(pa['out_dir'], prefix_str+'_speed_runtime'),
             figure_config=sum_config['figure_16_9'])
