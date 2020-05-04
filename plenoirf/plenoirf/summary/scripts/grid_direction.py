@@ -17,12 +17,12 @@ import matplotlib.colors as plt_colors
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
+
+os.makedirs(pa['out_dir'], exist_ok=True)
 
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
@@ -32,7 +32,7 @@ for site_key in irf_config['config']['sites']:
         # ----
         event_table = spt.read(
             path=os.path.join(
-                run_dir,
+                pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
@@ -137,7 +137,7 @@ for site_key in irf_config['config']['sites']:
                             y_bin_edges=c_bin_edges_deg)
             plt.savefig(
                 opj(
-                    summary_dir,
+                    pa['out_dir'],
                     '{:s}_{:s}_{:06d}.{:s}'.format(
                         prefix_str,
                         'grid_direction_pasttrigger',
