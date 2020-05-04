@@ -110,7 +110,7 @@ def write_relative_runtime(table, out_path, figure_config):
             [0, x, x, 0],
             [_y[ikey]-.5, _y[ikey]-.5, _y[ikey]+.5, _y[ikey]+.5],
             "k")
-    ax.set_xlabel('rel. runtime')
+    ax.set_xlabel('relative runtime / 1')
     ax.set_yticks(_y)
     ax.set_yticklabels(labels, rotation=0)
     ax.set_xlim([0, 1])
@@ -161,7 +161,7 @@ def write_speed(table, out_path, figure_config):
             "k")
     sizes = np.array(sizes)
     valid = np.logical_not(np.logical_or(np.isinf(sizes), np.isnan(sizes)))
-    ax.set_xlabel('speed / events s$^{-1}$')
+    ax.set_xlabel('processing-rate / events s$^{-1}$')
     ax.set_yticks(_y)
     ax.set_yticklabels(labels, rotation=0)
     ax.set_xlim([0, np.max(sizes[valid])*1.1])
