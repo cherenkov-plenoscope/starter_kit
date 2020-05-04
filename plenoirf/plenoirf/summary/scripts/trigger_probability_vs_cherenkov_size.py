@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
+
+os.makedirs(pa['out_dir'], exist_ok=True)
 
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
@@ -25,7 +25,7 @@ for site_key in irf_config['config']['sites']:
 
         event_table = spt.read(
             path=os.path.join(
-                run_dir,
+                pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
@@ -72,6 +72,7 @@ for site_key in irf_config['config']['sites']:
             face_alpha=.3)
         ax.semilogx()
         ax.semilogy()
+        ax.set_ylim([1e-6, 1e-0])
         ax.set_xlabel('Cherenkov-size / p.e.')
         ax.set_ylabel('trigger probability / 1')
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
@@ -79,7 +80,7 @@ for site_key in irf_config['config']['sites']:
         ax.spines['right'].set_color('none')
         fig.savefig(
             opj(
-                summary_dir,
+                pa['out_dir'],
                 '{:s}_trigger_probability_vs_cherenkov_size.{:s}'.format(
                     prefix_str,
                     sum_config['figure_16_9']['format'])))
