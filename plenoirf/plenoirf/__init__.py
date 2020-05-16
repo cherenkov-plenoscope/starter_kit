@@ -134,10 +134,15 @@ EXAMPLE_CONFIG = {
     },
 
     "sum_trigger": {
-        "patch_threshold": 103,
-        "integration_time_in_slices": 10,
-        "min_num_neighbors": 3,
-        "object_distances": [10e3, 15e3, 20e3],
+        "object_distances_m": [10e3, 15e3, 20e3],
+        "threshold_pe": 115,
+        "integration_time_slices": 10,
+        "image": {
+            "image_outer_radius_deg": 3.25 - 0.033335,
+            "pixel_spacing_deg": 0.06667,
+            "pixel_radius_deg": 0.146674,
+            "max_number_nearest_lixel_in_pixel": 7,
+        }
     },
 
     "num_runs": {
@@ -279,6 +284,37 @@ def _estimate_light_field_geometry_of_plenoscope(
                 '--output', opj(out_absdir, 'light_field_geometry')])
 
 
+def _estimate_trigger_geometry_of_plenoscope(
+    cfg,
+    out_absdir,
+):
+    sge._print("Estimating trigger-geometry.")
+
+    light_field_geometry = pl.LightFieldGeometry(
+        path=opj(out_absdir, 'light_field_geometry')
+    )
+
+    img = cfg['sum_trigger']['image']
+    trigger_image = pl.simple_trigger.prepare.generate_trigger_image(
+        image_outer_radius_rad=np.deg2rad(img['image_outer_radius_deg']),
+        pixel_spacing_rad=np.deg2rad(img['pixel_spacing_deg']),
+        pixel_radius_rad=np.deg2rad(img['pixel_radius_deg']),
+        max_number_nearest_lixel_in_pixel=img[
+        'max_number_nearest_lixel_in_pixel'],
+    )
+
+    trigger_geometry = pl.simple_trigger.prepare.prepare_trigger_geometry(
+        light_field_geometry=light_field_geometry,
+        trigger_image=trigger_image,
+        object_distances=cfg['object_distances_m'],
+    )
+
+    pl.simple_trigger.io.write_trigger_geometry_to_path(
+        trigger_geometry=trigger_geometry,
+        path=opj(out_absdir, 'trigger_geometry')
+    )
+
+
 def _populate_table_of_thrown_air_showers(
     cfg,
     out_absdir,
@@ -338,6 +374,8 @@ def _populate_table_of_thrown_air_showers(
                         "merlict_plenoscope_propagator_path"],
                     "light_field_geometry_path":
                         opj(out_absdir, 'light_field_geometry'),
+                    "trigger_geometry_path":
+                        opj(out_absdir, 'trigger_geometry'),
                     "merlict_plenoscope_propagator_config_path": opj(
                         out_absdir,
                         'input',
@@ -451,6 +489,10 @@ def run(
         out_absdir=out_absdir,
         pool=pool,
         executables=executables)
+
+    _estimate_trigger_geometry_of_plenoscope(
+        cfg=cfg,
+        out_dir=out_absdir)
 
     _populate_table_of_thrown_air_showers(
         cfg=cfg,

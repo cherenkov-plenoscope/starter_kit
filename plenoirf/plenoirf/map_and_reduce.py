@@ -162,6 +162,10 @@ LIGHT_FIELD_GEOMETRY_PATH = absjoin(
         "run",
         "light_field_geometry")
 
+TRIGGER_GEOMETRY_PATH = absjoin(
+        "run",
+        "trigger_geometry")
+
 EXAMPLE_PLENOSCOPE_SCENERY_PATH = absjoin(
         "resources",
         "acp",
@@ -229,6 +233,7 @@ EXAMPLE_JOB = {
     "plenoscope_scenery_path": EXAMPLE_PLENOSCOPE_SCENERY_PATH,
     "merlict_plenoscope_propagator_path": MERLICT_PLENOSCOPE_PROPAGATOR_PATH,
     "light_field_geometry_path": LIGHT_FIELD_GEOMETRY_PATH,
+    "trigger_geometry_path": TRIGGER_GEOMETRY_PATH,
     "merlict_plenoscope_propagator_config_path":
         MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH,
     "log_dir": EXAMPLE_LOG_DIRECTORY,
@@ -437,6 +442,7 @@ def run_job(job=EXAMPLE_JOB):
     assert op.exists(job["merlict_plenoscope_propagator_config_path"])
     assert op.exists(job["plenoscope_scenery_path"])
     assert op.exists(job["light_field_geometry_path"])
+    assert op.exists(job["trigger_geometry_path"])
     logger.log("assert_resource_paths_exist.")
 
     # set up plenoscope grid
@@ -707,14 +713,18 @@ def run_job(job=EXAMPLE_JOB):
 
     # prepare trigger
     # ---------------
-    merlict_run = pl.Run(merlict_run_path)
-    trigger_preparation = pl.trigger.prepare_refocus_sum_trigger(
-        light_field_geometry=merlict_run.light_field_geometry,
-        object_distances=job["sum_trigger"]["object_distances"])
+    light_field_geometry = pl.LightFieldGeometry(
+        path=light_field_geometry_path
+    )
+    trigger_geometry = pl.simple_trigger.io.read_trigger_geometry_from_path(
+        path=trigger_geometry_path
+    )
     logger.log("prepare_trigger")
+
 
     # loop over sensor responses
     # --------------------------
+    merlict_run = pl.Run(merlict_run_path)
     table_past_trigger = []
     tmp_past_trigger_dir = op.join(tmp_dir, "past_trigger")
     os.makedirs(tmp_past_trigger_dir, exist_ok=True)
@@ -732,12 +742,14 @@ def run_job(job=EXAMPLE_JOB):
 
         # apply trigger
         # -------------
-        trigger_responses = pl.trigger.apply_refocus_sum_trigger(
-            event=event,
-            trigger_preparation=trigger_preparation,
-            min_number_neighbors=job["sum_trigger"]["min_num_neighbors"],
+        trigger_responses = pl.simple_trigger.estimate_response_first_stage(
+            raw_sensor_response=event.raw_sensor_response,
+            light_field_geometry=light_field_geometry,
+            trigger_geometry=trigger_geometry,
             integration_time_in_slices=(
-                job["sum_trigger"]["integration_time_in_slices"]))
+                job["sum_trigger"]["integration_time_in_slices"]),
+        )
+
         trg_resp_path = op.join(event._path, "refocus_sum_trigger.json")
         with open(trg_resp_path, "wt") as f:
             f.write(json.dumps(trigger_responses, indent=4))
@@ -771,7 +783,8 @@ def run_job(job=EXAMPLE_JOB):
     for pt in table_past_trigger:
         event = pl.Event(
             path=pt["tmp_path"],
-            light_field_geometry=merlict_run.light_field_geometry)
+            light_field_geometry=light_field_geometry
+        )
         roi = pl.classify.center_for_region_of_interest(event)
         photons = pl.classify.RawPhotons.from_event(event)
         (
