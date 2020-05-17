@@ -210,10 +210,15 @@ EXAMPLE_GRID = {
 }
 
 EXAMPLE_SUM_TRIGGER = {
-    "patch_threshold": 103,
-    "integration_time_in_slices": 10,
-    "min_num_neighbors": 3,
-    "object_distances": [10e3, 15e3, 20e3],
+    "object_distances_m": [10e3, 15e3, 20e3],
+    "threshold_pe": 115,
+    "integration_time_slices": 10,
+    "image": {
+        "image_outer_radius_deg": 3.25 - 0.033335,
+        "pixel_spacing_deg": 0.06667,
+        "pixel_radius_deg": 0.146674,
+        "max_number_nearest_lixel_in_pixel": 7,
+    }
 }
 
 EXAMPLE_LOG_DIRECTORY = op.join(".", "_log3")
@@ -374,23 +379,6 @@ def tar_append(tarout, file_name, file_bytes):
         info.size = buff.write(file_bytes)
         buff.seek(0)
         tarout.addfile(info, buff)
-
-
-def _append_trigger_truth(
-    trigger_dict,
-    trigger_responses,
-    detector_truth,
-):
-    tr = trigger_dict
-    tr["num_cherenkov_pe"] = int(detector_truth.number_air_shower_pulses())
-    tr["response_pe"] = int(np.max(
-        [layer['patch_threshold'] for layer in trigger_responses]))
-    for o in range(len(trigger_responses)):
-        tr["refocus_{:d}_object_distance_m".format(o)] = float(
-            trigger_responses[o]['object_distance'])
-        tr["refocus_{:d}_respnse_pe".format(o)] = int(
-            trigger_responses[o]['patch_threshold'])
-    return tr
 
 
 def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):
@@ -714,10 +702,10 @@ def run_job(job=EXAMPLE_JOB):
     # prepare trigger
     # ---------------
     light_field_geometry = pl.LightFieldGeometry(
-        path=light_field_geometry_path
+        path=job["light_field_geometry_path"]
     )
     trigger_geometry = pl.simple_trigger.io.read_trigger_geometry_from_path(
-        path=trigger_geometry_path
+        path=job["trigger_geometry_path"]
     )
     logger.log("prepare_trigger")
 
@@ -742,12 +730,13 @@ def run_job(job=EXAMPLE_JOB):
 
         # apply trigger
         # -------------
-        trigger_responses = pl.simple_trigger.estimate_response_first_stage(
+        trigger_responses = pl.simple_trigger.estimate.first_stage(
             raw_sensor_response=event.raw_sensor_response,
             light_field_geometry=light_field_geometry,
             trigger_geometry=trigger_geometry,
-            integration_time_in_slices=(
-                job["sum_trigger"]["integration_time_in_slices"]),
+            integration_time_slices=(
+                job["sum_trigger"]["integration_time_slices"]
+            ),
         )
 
         trg_resp_path = op.join(event._path, "refocus_sum_trigger.json")
@@ -757,15 +746,23 @@ def run_job(job=EXAMPLE_JOB):
         # export trigger-truth
         # --------------------
         trgtru = ide.copy()
-        trgtru = _append_trigger_truth(
-            trigger_dict=trgtru,
-            trigger_responses=trigger_responses,
-            detector_truth=event.simulation_truth.detector)
+        trgtru["num_cherenkov_pe"] = int(
+            event.simulation_truth.detector.number_air_shower_pulses()
+        )
+        trgtru["response_pe"] = int(
+            np.max(
+                [focus['response_pe'] for focus in trigger_responses]
+            )
+        )
+        for o in range(len(trigger_responses)):
+            trgtru["focus_{:d}_respnse_pe".format(o)] = int(
+                trigger_responses[o]['response_pe']
+            )
         tabrec["trigger"].append(trgtru)
 
         # passing trigger
         # ---------------
-        if (trgtru["response_pe"] >= job["sum_trigger"]["patch_threshold"]):
+        if (trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]):
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
             ptp["unique_id_str"] = table.SEED_TEMPLATE_STR.format(
@@ -785,7 +782,14 @@ def run_job(job=EXAMPLE_JOB):
             path=pt["tmp_path"],
             light_field_geometry=light_field_geometry
         )
-        roi = pl.classify.center_for_region_of_interest(event)
+        trigger_responses = pl.simple_trigger.io.read_trigger_response_from_path(
+            path=os.path.join(event._path, 'refocus_sum_trigger.json')
+        )
+        roi =pl.simple_trigger.region_of_interest.from_trigger_response(
+            trigger_response=trigger_responses,
+            trigger_geometry=trigger_geometry,
+            time_slice_duration=event.raw_sensor_response.time_slice_duration,
+        )
         photons = pl.classify.RawPhotons.from_event(event)
         (
             cherenkov_photons,

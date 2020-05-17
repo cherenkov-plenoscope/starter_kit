@@ -151,12 +151,12 @@ STRUCTURE['core'] = {
 STRUCTURE['trigger'] = {
     'num_cherenkov_pe': {'dtype': '<i8', 'comment': ''},
     'response_pe': {'dtype': '<i8', 'comment': ''},
-    'refocus_0_object_distance_m': {'dtype': '<f8', 'comment': ''},
-    'refocus_0_respnse_pe': {'dtype': '<i8', 'comment': ''},
-    'refocus_1_object_distance_m': {'dtype': '<f8', 'comment': ''},
-    'refocus_1_respnse_pe': {'dtype': '<i8', 'comment': ''},
-    'refocus_2_object_distance_m': {'dtype': '<f8', 'comment': ''},
-    'refocus_2_respnse_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_0_respnse_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_1_respnse_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_2_respnse_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_3_respnse_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_4_respnse_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_5_respnse_pe': {'dtype': '<i8', 'comment': ''},
 }
 
 STRUCTURE['pasttrigger'] = {}

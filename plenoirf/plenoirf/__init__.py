@@ -22,6 +22,7 @@ import glob
 import tempfile
 import pandas as pd
 
+import plenopy as pl
 import sparse_table as spt
 import sun_grid_engine_map as sge
 import magnetic_deflection as mdfl
@@ -290,29 +291,35 @@ def _estimate_trigger_geometry_of_plenoscope(
 ):
     sge._print("Estimating trigger-geometry.")
 
-    light_field_geometry = pl.LightFieldGeometry(
-        path=opj(out_absdir, 'light_field_geometry')
-    )
-
-    img = cfg['sum_trigger']['image']
-    trigger_image = pl.simple_trigger.prepare.generate_trigger_image(
-        image_outer_radius_rad=np.deg2rad(img['image_outer_radius_deg']),
-        pixel_spacing_rad=np.deg2rad(img['pixel_spacing_deg']),
-        pixel_radius_rad=np.deg2rad(img['pixel_radius_deg']),
-        max_number_nearest_lixel_in_pixel=img[
-        'max_number_nearest_lixel_in_pixel'],
-    )
-
-    trigger_geometry = pl.simple_trigger.prepare.prepare_trigger_geometry(
-        light_field_geometry=light_field_geometry,
-        trigger_image=trigger_image,
-        object_distances=cfg['object_distances_m'],
-    )
-
-    pl.simple_trigger.io.write_trigger_geometry_to_path(
-        trigger_geometry=trigger_geometry,
-        path=opj(out_absdir, 'trigger_geometry')
-    )
+    if not op.exists(opj(out_absdir, 'trigger_geometry')):
+        light_field_geometry = pl.LightFieldGeometry(
+            path=opj(out_absdir, 'light_field_geometry')
+        )
+        img = cfg['sum_trigger']['image']
+        trigger_image = pl.simple_trigger.prepare.generate_trigger_image(
+            image_outer_radius_rad=np.deg2rad(img['image_outer_radius_deg']),
+            pixel_spacing_rad=np.deg2rad(img['pixel_spacing_deg']),
+            pixel_radius_rad=np.deg2rad(img['pixel_radius_deg']),
+            max_number_nearest_lixel_in_pixel=img[
+            'max_number_nearest_lixel_in_pixel'],
+        )
+        trigger_geometry = pl.simple_trigger.prepare.prepare_trigger_geometry(
+            light_field_geometry=light_field_geometry,
+            trigger_image=trigger_image,
+            object_distances=cfg['sum_trigger']['object_distances_m'],
+        )
+        pl.simple_trigger.io.write_trigger_geometry_to_path(
+            trigger_geometry=trigger_geometry,
+            path=opj(out_absdir, 'trigger_geometry')
+        )
+        tss = pl.simple_trigger.statistics.gather_summation_statistics(
+            trigger_geometry=trigger_geometry
+        )
+        pl.plot.trigger_geometry.write_figures_to_directory(
+            trigger_geometry=trigger_geometry,
+            trigger_summation_statistics=tss,
+            out_dir=opj(out_absdir, 'trigger_geometry', 'plot'),
+        )
 
 
 def _populate_table_of_thrown_air_showers(
@@ -492,7 +499,7 @@ def run(
 
     _estimate_trigger_geometry_of_plenoscope(
         cfg=cfg,
-        out_dir=out_absdir)
+        out_absdir=out_absdir)
 
     _populate_table_of_thrown_air_showers(
         cfg=cfg,
