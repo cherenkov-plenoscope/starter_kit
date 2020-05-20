@@ -97,7 +97,7 @@ EXAMPLE_CONFIG = {
     "particles": {
         "gamma": {
             "particle_id": 1,
-            "energy_bin_edges_GeV": [0.5, 1000],
+            "energy_bin_edges_GeV": [0.25, 500],
             "max_scatter_angle_deg": 3.25,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": 0.,
@@ -105,7 +105,7 @@ EXAMPLE_CONFIG = {
         },
         "electron": {
             "particle_id": 3,
-            "energy_bin_edges_GeV": [0.5, 1000],
+            "energy_bin_edges_GeV": [0.25, 1000],
             "max_scatter_angle_deg": 6.5,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": -1.,
@@ -135,7 +135,20 @@ EXAMPLE_CONFIG = {
     },
 
     "sum_trigger": {
-        "object_distances_m": [10e3, 15e3, 20e3],
+        "object_distances_m": [
+            5000.,
+            6164.,
+            7600.,
+            9369.,
+            11551.,
+            14240.,
+            17556.,
+            21644.,
+            26683.,
+            32897.,
+            40557.,
+            50000.
+        ],
         "threshold_pe": 115,
         "integration_time_slices": 10,
         "image": {

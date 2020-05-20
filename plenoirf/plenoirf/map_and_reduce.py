@@ -730,7 +730,10 @@ def run_job(job=EXAMPLE_JOB):
 
         # apply trigger
         # -------------
-        trigger_responses = pl.simple_trigger.estimate.first_stage(
+        (
+            trigger_responses,
+            max_response_in_focus_vs_timeslices
+        ) = pl.simple_trigger.estimate.first_stage(
             raw_sensor_response=event.raw_sensor_response,
             light_field_geometry=light_field_geometry,
             trigger_geometry=trigger_geometry,
@@ -742,6 +745,13 @@ def run_job(job=EXAMPLE_JOB):
         trg_resp_path = op.join(event._path, "refocus_sum_trigger.json")
         with open(trg_resp_path, "wt") as f:
             f.write(json.dumps(trigger_responses, indent=4))
+
+        trg_maxr_path = op.join(
+            event._path,
+            "refocus_sum_trigger.focii_x_time_slices.uint32"
+        )
+        with open(trg_maxr_path, "wb") as f:
+            f.write(max_response_in_focus_vs_timeslices.tobytes())
 
         # export trigger-truth
         # --------------------
@@ -755,7 +765,7 @@ def run_job(job=EXAMPLE_JOB):
             )
         )
         for o in range(len(trigger_responses)):
-            trgtru["focus_{:d}_respnse_pe".format(o)] = int(
+            trgtru["focus_{:02d}_response_pe".format(o)] = int(
                 trigger_responses[o]['response_pe']
             )
         tabrec["trigger"].append(trgtru)

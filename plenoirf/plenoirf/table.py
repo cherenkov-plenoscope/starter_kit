@@ -151,12 +151,18 @@ STRUCTURE['core'] = {
 STRUCTURE['trigger'] = {
     'num_cherenkov_pe': {'dtype': '<i8', 'comment': ''},
     'response_pe': {'dtype': '<i8', 'comment': ''},
-    'focus_0_respnse_pe': {'dtype': '<i8', 'comment': ''},
-    'focus_1_respnse_pe': {'dtype': '<i8', 'comment': ''},
-    'focus_2_respnse_pe': {'dtype': '<i8', 'comment': ''},
-    'focus_3_respnse_pe': {'dtype': '<i8', 'comment': ''},
-    'focus_4_respnse_pe': {'dtype': '<i8', 'comment': ''},
-    'focus_5_respnse_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_00_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_01_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_02_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_03_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_04_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_05_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_06_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_07_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_08_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_09_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_10_response_pe': {'dtype': '<i8', 'comment': ''},
+    'focus_11_response_pe': {'dtype': '<i8', 'comment': ''},
 }
 
 STRUCTURE['pasttrigger'] = {}
