@@ -787,6 +787,9 @@ def run_job(job=EXAMPLE_JOB):
 
     # Cherenkov classification
     # ------------------------
+    roi_cfg = job['cherenkov_classification']['region_of_interest']
+    dbscan_cfg = job['cherenkov_classification']
+
     for pt in table_past_trigger:
         event = pl.Event(
             path=pt["tmp_path"],
@@ -795,7 +798,7 @@ def run_job(job=EXAMPLE_JOB):
         trigger_responses = pl.simple_trigger.io.read_trigger_response_from_path(
             path=os.path.join(event._path, 'refocus_sum_trigger.json')
         )
-        roi =pl.simple_trigger.region_of_interest.from_trigger_response(
+        roi = pl.simple_trigger.region_of_interest.from_trigger_response(
             trigger_response=trigger_responses,
             trigger_geometry=trigger_geometry,
             time_slice_duration=event.raw_sensor_response.time_slice_duration,
@@ -806,7 +809,17 @@ def run_job(job=EXAMPLE_JOB):
             roi_settings
         ) = pl.classify.cherenkov_photons_in_roi_in_image(
             roi=roi,
-            photons=photons)
+            photons=photons,
+            roi_time_offset_start=roi_cfg['time_offset_start_s'],
+            roi_time_offset_stop=roi_cfg['time_offset_stop_s'],
+            roi_cx_cy_radius=np.deg2rad(
+                roi_cfg['direction_radius_deg']),
+            roi_object_distance_offsets=roi_cfg['object_distance_offsets_m'],
+            dbscan_epsilon_cx_cy_radius=np.deg2rad(
+                dbscan_cfg['neighborhood_radius_deg']),
+            dbscan_min_number_photons=dbscan_cfg['min_num_photons'],
+            dbscan_deg_over_s=dbscan_cfg['direction_to_time_mixing_deg_per_s']
+        )
         pl.classify.write_dense_photon_ids_to_event(
             event_path=op.abspath(event._path),
             photon_ids=cherenkov_photons.photon_ids,

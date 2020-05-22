@@ -159,6 +159,23 @@ EXAMPLE_CONFIG = {
         }
     },
 
+    "cherenkov_classification": {
+        "region_of_interest": {
+            "time_offset_start_s": -10e-9,
+            "time_offset_stop_s": 10e-9,
+            "direction_radius_deg": 2.0,
+            "object_distance_offsets_m": [
+                4000.,
+                2000.,
+                0.,
+                -2000.,
+            ],
+        },
+        "min_num_photons": 17,
+        "neighborhood_radius_deg": 0.075,
+        "direction_to_time_mixing_deg_per_s": 0.375e9
+    },
+
     "num_runs": {
         "gamma": 64,
         "electron": 64,
@@ -384,6 +401,7 @@ def _populate_table_of_thrown_air_showers(
                     "site_particle_deflection": site_particle_deflection,
                     "grid": cfg["grid"],
                     "sum_trigger": cfg["sum_trigger"],
+                    "cherenkov_classification": cfg["cherenkov_classification"],
                     "corsika_primary_path": executables[
                         "corsika_primary_path"],
                     "plenoscope_scenery_path": opj(
