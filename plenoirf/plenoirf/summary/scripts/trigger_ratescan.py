@@ -18,11 +18,14 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
+out_dir = os.path.join(pa['summary_dir'], 'trigger_rate_scan')
+os.makedirs(out_dir, exist_ok=True)
+
 MAX_CHERENKOV_IN_NSB_PE = 10
 TIME_SLICE_DURATION = 0.5e-9
 NUM_TIME_SLICES_PER_EVENT = 100
 
-NUM_ENERGY_BINS = 11
+NUM_ENERGY_BINS = 13
 energy_bin_edges = np.geomspace(0.5, 1000, NUM_ENERGY_BINS + 1)
 energy_bin_width = np.gradient(energy_bin_edges)
 
@@ -31,8 +34,6 @@ cosmic_rays = {
     "helium": {},
     "electron": {}
 }
-
-TRIGGER_CHANNEL = 'response_pe'  # 'refocus_2_respnse_pe' 'response_pe'
 
 _cosmic_ray_raw_fluxes = {}
 with open(os.path.join(pa['summary_dir'], "proton_flux.json"), "rt") as f:
@@ -45,64 +46,20 @@ for p in cosmic_rays:
     cosmic_rays[p]['differential_flux'] = np.interp(
         x=energy_bin_edges,
         xp=_cosmic_ray_raw_fluxes[p]['energy']['values'],
-        fp=_cosmic_ray_raw_fluxes[p]['differential_flux']['values'])
+        fp=_cosmic_ray_raw_fluxes[p]['differential_flux']['values']
+    )
 
-with open(os.path.join(pa['summary_dir'], "gamma_sources.json"), "rt") as f:
-    gamma_sources = json.loads(f.read())
-
-for source in gamma_sources:
-    if source['source_name'] == '3FGL J2254.0+1608':
-        reference_gamma_source = source
-differential_flux_gamma_source_per_m2_per_GeV = cosmic_fluxes.flux_of_fermi_source(
-    fermi_source=reference_gamma_source,
-    energy=energy_bin_edges)
-
-
-def make_trigger_mask(trigger_table, threshold):
-    TRIGGER_THRESHOLD_2OVER0_RATIO = 1.06
-    tt = trigger_table
-
-    t2_high = tt['refocus_2_respnse_pe'] >= threshold
-    t0_low = tt['refocus_0_respnse_pe'] < (tt['refocus_2_respnse_pe']/TRIGGER_THRESHOLD_2OVER0_RATIO)
-    return np.logical_and(t2_high, t0_low)
-    #return t2_high
-
-
-geomagnetic_cutoff_fraction = 0.05
 # geomagnetic cutoff
 # ------------------
+geomagnetic_cutoff_fraction = 0.05
+below_cutoff = energy_bin_edges < 10.0
 airshower_rates = {}
 for p in cosmic_rays:
     airshower_rates[p] = cosmic_rays[p]
-    below_cutoff = energy_bin_edges < 10.0
     airshower_rates[p]['differential_flux'][below_cutoff] = (
         geomagnetic_cutoff_fraction*
         airshower_rates[p]['differential_flux'][below_cutoff]
     )
-
-
-EXPOSURE_TIME_PER_EVENT = NUM_TIME_SLICES_PER_EVENT*TIME_SLICE_DURATION
-
-
-NUM_GRID_BINS = irf_config['grid_geometry']['num_bins_diameter']**2
-
-# TRIGGER_THRESHOLD_2 = irf_config['config']['sum_trigger']['patch_threshold']
-TRIGGER_THRESHOLD = 103
-ONREGION_RADIUS_DEG = 0.8
-
-ONREGION_SOLID_ANGLE_SR = irf.map_and_reduce._cone_solid_angle(
-    cone_radial_opening_angle_rad=np.deg2rad(ONREGION_RADIUS_DEG))
-FIELD_OF_VIEW_SOLID_ANGLE_SR = irf.map_and_reduce._cone_solid_angle(
-    cone_radial_opening_angle_rad=np.deg2rad(3.25))
-solid_angle_ratio_on_region = ONREGION_SOLID_ANGLE_SR/FIELD_OF_VIEW_SOLID_ANGLE_SR
-
-
-trigger_thresholds_pe = np.arange(
-    start=85,
-    stop=TRIGGER_THRESHOLD+20,
-    step=1)
-NUM_THRESHOLDS = trigger_thresholds_pe.shape[0]
-
 
 fig = plt.figure(figsize=(16, 9), dpi=100)
 ax = fig.add_axes((.1, .1, .8, .8))
@@ -117,16 +74,98 @@ ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
 ax.loglog()
 fig.savefig(
     os.path.join(
-        pa['summary_dir'],
+        out_dir,
         'airshower_differential_flux.png'
     )
 )
 plt.close(fig)
 
+
+with open(os.path.join(pa['summary_dir'], "gamma_sources.json"), "rt") as f:
+    gamma_sources = json.loads(f.read())
+
+for source in gamma_sources:
+    if source['source_name'] == '3FGL J2254.0+1608':
+        reference_gamma_source = source
+
+gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
+    fermi_source=reference_gamma_source,
+    energy=energy_bin_edges
+)
+
+fig = plt.figure(figsize=(16, 9), dpi=100)
+ax = fig.add_axes((.1, .1, .8, .8))
+ax.plot(
+    energy_bin_edges,
+    gamma_dF_per_m2_per_s_per_GeV,
+    'k'
+)
+ax.set_xlabel('energy / GeV')
+ax.set_ylabel('differential flux of gamma-rays / m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$')
+ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+ax.loglog()
+fig.savefig(
+    os.path.join(
+        out_dir,
+        'gamma_ray_flux.png'
+    )
+)
+plt.close(fig)
+
+
+def make_trigger_mask(trigger_table, threshold):
+    FOCUS_RATIO = 1.06
+    tt = trigger_table
+
+    on_level = 7
+    veto_level = 4
+
+    KEY = 'focus_{:02d}_response_pe'
+    on_key = KEY.format(on_level)
+    veto_key = KEY.format(veto_level)
+
+    on_mask = tt[on_key] >= threshold
+    veto_mask = tt[veto_key] < (tt[on_key]/FOCUS_RATIO)
+
+    return veto_mask*on_mask
+
+
+trigger_config = {
+    "chile": {"threshold": 120, "on_focus": 5, "veto_focus": 3},
+    "namibia": {"threshold": 120, "on_focus": 5, "veto_focus": 3},
+}
+
+EXPOSURE_TIME_PER_EVENT = NUM_TIME_SLICES_PER_EVENT*TIME_SLICE_DURATION
+
+NUM_GRID_BINS = irf_config['grid_geometry']['num_bins_diameter']**2
+
+ONREGION_RADIUS_DEG = 0.8
+
+ONREGION_SOLID_ANGLE_SR = irf.map_and_reduce._cone_solid_angle(
+    cone_radial_opening_angle_rad=np.deg2rad(ONREGION_RADIUS_DEG)
+)
+FIELD_OF_VIEW_SOLID_ANGLE_SR = irf.map_and_reduce._cone_solid_angle(
+    cone_radial_opening_angle_rad=np.deg2rad(3.25)
+)
+SOLID_ANGLE_RATIO_ON_REGION = (
+    ONREGION_SOLID_ANGLE_SR/
+    FIELD_OF_VIEW_SOLID_ANGLE_SR
+)
+
+trigger_thresholds_pe = np.arange(
+    start=90,
+    stop=140,
+    step=1
+)
+
 channels = {}
 
 for site_key in irf_config['config']['sites']:
 
+    NUM_THRESHOLDS = trigger_thresholds_pe.shape[0]
+
+    print('site', site_key)
+    print('-----------------')
     # read all tables
     # ----------------
     tables = {}
@@ -185,6 +224,8 @@ for site_key in irf_config['config']['sites']:
     channels['nsb']['rate'] = num_nsb_triggers/nsb_exposure_time
 
 
+    channels['gamma'] = {}
+    channels['gamma']['rate'] = []
     # trigger area eff gamma
     # ----------------------
     cut_idxs_primary = cosmic_table['gamma']['primary'][spt.IDX]
@@ -198,7 +239,7 @@ for site_key in irf_config['config']['sites']:
         zd2_deg=irf_config['config']['plenoscope_pointing']['zenith_deg'])
     _off_mask = (_off_deg <= 3.25 - 1.0)
 
-    cut_idxs_in_possible_on_region = (
+    cut_idxs_comming_from_possible_on_region = (
         cosmic_table['gamma']['primary'][spt.IDX][_off_mask]
     )
 
@@ -206,76 +247,100 @@ for site_key in irf_config['config']['sites']:
         cut_idxs_primary,
         cut_idxs_grid,
         cut_idxs_trigger,
-        cut_idxs_in_possible_on_region])
+        cut_idxs_comming_from_possible_on_region
+    ])
 
     gamma_table = mrg_pri_grd = spt.cut_table_on_indices(
-            table=cosmic_table['gamma'],
-            structure=irf.table.STRUCTURE,
-            common_indices=spt.dict_to_recarray({spt.IDX: cut_idx_detected}),
-            level_keys=['primary', 'grid', 'trigger'])
+        table=cosmic_table['gamma'],
+        structure=irf.table.STRUCTURE,
+        common_indices=spt.dict_to_recarray({spt.IDX: cut_idx_detected}),
+        level_keys=['primary', 'grid', 'trigger']
+    )
 
-    gamma_f_detected = make_trigger_mask(
-        trigger_table=gamma_table['trigger'],
-        threshold=TRIGGER_THRESHOLD
-    ).astype(np.int)
+    for t in range(NUM_THRESHOLDS):
 
-    gamma_energies = gamma_table['primary']['energy_GeV']
+        gamma_f_detected = make_trigger_mask(
+            trigger_table=gamma_table['trigger'],
+            threshold=trigger_thresholds_pe[t]
+        ).astype(np.int)
 
-    gamma_q_max = gamma_table['grid']['area_thrown_m2']
-    gamma_w_grid_trials = np.ones(gamma_energies.shape[0])*NUM_GRID_BINS
-    gamma_w_grid_intense = gamma_table['grid']['num_bins_above_threshold']
+        gamma_energies = gamma_table['primary']['energy_GeV']
 
-    gamma_q_detected = np.histogram(
-        gamma_energies,
-        weights=gamma_q_max*gamma_f_detected*gamma_w_grid_intense,
-        bins=energy_bin_edges)[0]
+        gamma_q_max = gamma_table['grid']['area_thrown_m2']
+        gamma_w_grid_trials = np.ones(gamma_energies.shape[0])*NUM_GRID_BINS
+        gamma_w_grid_intense = gamma_table['grid']['num_bins_above_threshold']
 
-    gamma_c_thrown = np.histogram(
-        gamma_energies,
-        weights=gamma_w_grid_trials,
-        bins=energy_bin_edges)[0]
+        gamma_q_detected = np.histogram(
+            gamma_energies,
+            weights=gamma_q_max*gamma_f_detected*gamma_w_grid_intense,
+            bins=energy_bin_edges)[0]
 
-    gamma_q_effective = gamma_q_detected/gamma_c_thrown
-    gamma_inan = np.isnan(gamma_q_effective)
-    gamma_q_effective[gamma_inan] = 0.0
+        gamma_c_thrown = np.histogram(
+            gamma_energies,
+            weights=gamma_w_grid_trials,
+            bins=energy_bin_edges)[0]
 
-    fig = plt.figure(figsize=(16, 9), dpi=100)
-    ax = fig.add_axes((.1, .1, .8, .8))
-    ax.plot(
-        energy_bin_edges[:-1],
-        gamma_q_effective)
-    ax.set_xlabel('energy / GeV')
-    ax.set_ylabel('area / m^2')
-    ax.set_ylim([2e2, 2e6])
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    ax.loglog()
-    fig.savefig(
-        os.path.join(
-            pa['summary_dir'],
-            '{:s}_gamma_area.png'.format(site_key)))
-    plt.close(fig)
+        gamma_c_thrown_valid = gamma_c_thrown > 0
+        gamma_effective_area_m2 = np.zeros(NUM_ENERGY_BINS)
+        gamma_effective_area_m2[gamma_c_thrown_valid] = (
+            gamma_q_detected[gamma_c_thrown_valid]/
+            gamma_c_thrown[gamma_c_thrown_valid]
+        )
 
-    diff_trigger_rates = differential_flux_gamma_source_per_m2_per_GeV[:-1]*gamma_q_effective
-    ON_REGION_CONTAINMENT = 0.68
-    diff_trigger_rates *= ON_REGION_CONTAINMENT
-    print('gamma-on: ', np.sum(diff_trigger_rates))
-    fig = plt.figure(figsize=(16, 9), dpi=100)
-    ax = fig.add_axes((.1, .1, .8, .8))
-    ax.plot(
-        energy_bin_edges[:-1],
-        diff_trigger_rates)
-    ax.set_xlabel('energy / GeV')
-    ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
-    ax.set_ylim([1e-6, 1e3])
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    ax.loglog()
-    fig.savefig(
-        os.path.join(
-            pa['summary_dir'],
-            '{:s}_{:s}_differential_trigger_rate.png'.format(
-                site_key,
-                'gamma')))
-    plt.close(fig)
+        gamma_dT_per_s_per_GeV = (
+            gamma_dF_per_m2_per_s_per_GeV[:-1]*
+            gamma_effective_area_m2
+        )
+        ON_REGION_CONTAINMENT = 0.68
+        gamma_dT_onregion_per_s_per_GeV = (
+            gamma_dT_per_s_per_GeV*
+            ON_REGION_CONTAINMENT
+        )
+
+        gamma_T_onregion_per_s = (
+            gamma_dT_onregion_per_s_per_GeV*
+            energy_bin_width[:-1]
+        )
+
+        channels['gamma']['rate'].append(np.sum(gamma_T_onregion_per_s))
+
+        if trigger_thresholds_pe[t] == trigger_config[site_key]['threshold']:
+            fig = plt.figure(figsize=(16, 9), dpi=100)
+            ax = fig.add_axes((.1, .1, .8, .8))
+            ax.plot(
+                energy_bin_edges[:-1],
+                gamma_effective_area_m2)
+            ax.set_xlabel('energy / GeV')
+            ax.set_ylabel('area / m^2')
+            ax.set_ylim([2e2, 2e6])
+            ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+            ax.loglog()
+            fig.savefig(
+                os.path.join(
+                    out_dir,
+                    '{:s}_gamma_area.png'.format(site_key)))
+            plt.close(fig)
+
+            print('gamma-on: ', np.sum(gamma_T_onregion_per_s))
+            fig = plt.figure(figsize=(16, 9), dpi=100)
+            ax = fig.add_axes((.1, .1, .8, .8))
+            ax.plot(
+                energy_bin_edges[:-1],
+                gamma_dT_onregion_per_s_per_GeV)
+            ax.set_xlabel('energy / GeV')
+            ax.set_ylabel('on-region differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
+            ax.set_ylim([1e-6, 1e3])
+            ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+            ax.loglog()
+            fig.savefig(
+                os.path.join(
+                    out_dir,
+                    '{:s}_{:s}_differential_trigger_rate.png'.format(
+                        site_key,
+                        'gamma')))
+            plt.close(fig)
+
+    channels['gamma']['rate'] = np.array(channels['gamma']['rate'])
 
 
 
@@ -314,37 +379,34 @@ for site_key in irf_config['config']['sites']:
                 weights=w_grid_trials,
                 bins=energy_bin_edges)[0]
 
-            q_effective = q_detected/c_thrown
-            inan = np.isnan(q_effective)
-            q_effective[inan] = 0.0
+            c_thrown_valid = c_thrown > 0
+            cosmic_effective_acceptance_m2_sr = np.zeros(shape=c_thrown.shape)
+            cosmic_effective_acceptance_m2_sr[c_thrown_valid] = (
+                q_detected[c_thrown_valid]/c_thrown[c_thrown_valid]
+            )
 
-            diff_trigger_rates = (
-                q_effective*
+            cosmic_dT_per_s_per_GeV = (
+                cosmic_effective_acceptance_m2_sr*
                 airshower_rates[particle_key]['differential_flux'][:-1]
             )
 
-            trigger_rates = diff_trigger_rates*energy_bin_width[:-1]
+            cosmic_dT_onregion_per_s_per_GeV = (
+                SOLID_ANGLE_RATIO_ON_REGION*
+                cosmic_dT_per_s_per_GeV
+            )
 
-            integrated_rates[t] = np.sum(trigger_rates)
+            cosmic_T_per_s = cosmic_dT_per_s_per_GeV*energy_bin_width[:-1]
 
-            if trigger_thresholds_pe[t] == TRIGGER_THRESHOLD:
-                emask = np.logical_and(energies >= 5., energies < 10.)
-                cell_ratio = np.sum(w_grid_intense[emask])/np.sum(w_grid_trials[emask])
-                trg_ratio = np.sum(f_detected[emask])/f_detected[emask].shape[0]
-                print(
-                    site_key,
-                    particle_key,
-                    "thr", trigger_thresholds_pe[t],
-                    "cell. ratio {:.3f}u".format(1e6*cell_ratio),
-                    "trg. ratio {:.3f}".format(trg_ratio),
-                    trg_ratio*cell_ratio*1e6
-                )
+            integrated_rates[t] = np.sum(cosmic_T_per_s)
+
+            if trigger_thresholds_pe[t] == trigger_config[site_key]['threshold']:
 
                 fig = plt.figure(figsize=(16, 9), dpi=100)
                 ax = fig.add_axes((.1, .1, .8, .8))
                 ax.plot(
                     energy_bin_edges[:-1],
-                    q_effective)
+                    cosmic_effective_acceptance_m2_sr
+                )
                 ax.set_xlabel('energy / GeV')
                 ax.set_ylabel('acceptance / m$^2$ sr')
                 ax.set_ylim([1e0, 1e5])
@@ -352,32 +414,40 @@ for site_key in irf_config['config']['sites']:
                 ax.loglog()
                 fig.savefig(
                     os.path.join(
-                        pa['summary_dir'],
+                        out_dir,
                         '{:s}_{:s}_acceptance.png'.format(
                             site_key,
-                            particle_key)))
+                            particle_key
+                        )
+                    )
+                )
                 plt.close(fig)
 
                 print(
                     '{:s}-on: '.format(particle_key),
-                    np.sum(diff_trigger_rates*solid_angle_ratio_on_region)
+                    integrated_rates[t]*SOLID_ANGLE_RATIO_ON_REGION
                 )
                 fig = plt.figure(figsize=(16, 9), dpi=100)
                 ax = fig.add_axes((.1, .1, .8, .8))
                 ax.plot(
                     energy_bin_edges[:-1],
-                    diff_trigger_rates*solid_angle_ratio_on_region)
+                    cosmic_dT_onregion_per_s_per_GeV,
+                    'k'
+                )
                 ax.set_xlabel('energy / GeV')
-                ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
+                ax.set_ylabel('on-region differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
                 ax.set_ylim([1e-6, 1e3])
                 ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
                 ax.loglog()
                 fig.savefig(
                     os.path.join(
-                        pa['summary_dir'],
+                        out_dir,
                         '{:s}_{:s}_differential_trigger_rate.png'.format(
                             site_key,
-                            particle_key)))
+                            particle_key
+                        )
+                    )
+                )
                 plt.close(fig)
 
         channels[particle_key] = {}
@@ -424,11 +494,51 @@ for site_key in irf_config['config']['sites']:
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.legend(loc='best', fontsize=10)
     ax.axvline(
-        x=TRIGGER_THRESHOLD,
+        x=trigger_config[site_key]['threshold'],
         color='k',
         linestyle='-',
         alpha=0.25)
+    ax.set_ylim([1e2, 1e7])
     fig.savefig(
-        os.path.join(pa['summary_dir'], 'ratescan_{:s}.png'.format(site_key))
+        os.path.join(
+            out_dir,
+            'ratescan_{:s}.png'.format(site_key)
+        )
+    )
+    plt.close(fig)
+
+
+    fig = plt.figure(figsize=(16, 9), dpi=100)
+    ax = fig.add_axes((.1, .1, .8, .8))
+    signal_vs_threshold = channels['gamma']['rate']
+    background_vs_threshold = SOLID_ANGLE_RATIO_ON_REGION*(
+        channels['nsb']['rate'] +
+        channels['electron']['rate'] +
+        channels['proton']['rate'] +
+        channels['helium']['rate']
+    )
+    ax.plot(
+        trigger_thresholds_pe,
+        signal_vs_threshold/background_vs_threshold,
+        'k',
+    )
+    ax.semilogy()
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.set_xlabel('trigger-threshold / photo-electrons')
+    ax.set_ylabel(r'gamma/background / 1')
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    ax.axvline(
+        x=trigger_config[site_key]['threshold'],
+        color='k',
+        linestyle='-',
+        alpha=0.25
+    )
+    ax.set_ylim([1e-4, 1e-1])
+    fig.savefig(
+        os.path.join(
+            out_dir,
+            'gamma_over_background_{:s}.png'.format(site_key)
+        )
     )
     plt.close(fig)
