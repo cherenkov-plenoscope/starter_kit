@@ -360,6 +360,7 @@ def _populate_table_of_thrown_air_showers(
     tmp_absdir,
     date_dict_now,
     KEEP_TMP,
+    LAZY_REDUCTION=False
 ):
     sge._print("Estimating instrument-response.")
     table_absdir = opj(out_absdir, "event_table")
@@ -539,6 +540,7 @@ def run(
         executables=executables,
         tmp_absdir=tmp_absdir,
         KEEP_TMP=KEEP_TMP,
-        date_dict_now=date_dict_now)
+        date_dict_now=date_dict_now,
+        LAZY_REDUCTION=LAZY_REDUCTION)
 
     sge._print("End main().")
