@@ -26,8 +26,15 @@ TIME_SLICE_DURATION = 0.5e-9
 NUM_TIME_SLICES_PER_EVENT = 100
 
 NUM_ENERGY_BINS = 13
-energy_bin_edges = np.geomspace(0.5, 1000, NUM_ENERGY_BINS + 1)
+energy_bin_edges = np.geomspace(3, 1000, NUM_ENERGY_BINS + 1)
 energy_bin_width = np.gradient(energy_bin_edges)
+
+_weight_lower_edge = 0.5
+_weight_upper_edge = 1 - _weight_lower_edge
+energy_bin_centers = (
+    _weight_lower_edge*energy_bin_edges[:-1] +
+    _weight_upper_edge*energy_bin_edges[1:]
+    )
 
 cosmic_rays = {
     "proton": {},
@@ -44,7 +51,7 @@ with open(os.path.join(pa['summary_dir'], "electron_positron_flux.json"), "rt") 
     _cosmic_ray_raw_fluxes["electron"] = json.loads(f.read())
 for p in cosmic_rays:
     cosmic_rays[p]['differential_flux'] = np.interp(
-        x=energy_bin_edges,
+        x=energy_bin_centers,
         xp=_cosmic_ray_raw_fluxes[p]['energy']['values'],
         fp=_cosmic_ray_raw_fluxes[p]['differential_flux']['values']
     )
@@ -52,7 +59,7 @@ for p in cosmic_rays:
 # geomagnetic cutoff
 # ------------------
 geomagnetic_cutoff_fraction = 0.05
-below_cutoff = energy_bin_edges < 10.0
+below_cutoff = energy_bin_centers < 10.0
 airshower_rates = {}
 for p in cosmic_rays:
     airshower_rates[p] = cosmic_rays[p]
@@ -65,7 +72,7 @@ fig = plt.figure(figsize=(16, 9), dpi=100)
 ax = fig.add_axes((.1, .1, .8, .8))
 for particle_key in airshower_rates:
     ax.plot(
-        energy_bin_edges,
+        energy_bin_centers,
         airshower_rates[particle_key]['differential_flux'],
         label=particle_key)
 ax.set_xlabel('energy / GeV')
@@ -90,13 +97,13 @@ for source in gamma_sources:
 
 gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
     fermi_source=reference_gamma_source,
-    energy=energy_bin_edges
+    energy=energy_bin_centers
 )
 
 fig = plt.figure(figsize=(16, 9), dpi=100)
 ax = fig.add_axes((.1, .1, .8, .8))
 ax.plot(
-    energy_bin_edges,
+    energy_bin_centers,
     gamma_dF_per_m2_per_s_per_GeV,
     'k'
 )
@@ -113,7 +120,14 @@ fig.savefig(
 plt.close(fig)
 
 
-def make_trigger_mask(trigger_table, threshold):
+def make_trigger_mask_telescope(trigger_table, threshold):
+    on_level = 7
+    KEY = 'focus_{:02d}_response_pe'
+    on_key = KEY.format(on_level)
+    on_mask = trigger_table[on_key] >= threshold
+    return on_mask
+
+def make_trigger_mask_plenoscope(trigger_table, threshold):
     FOCUS_RATIO = 1.06
     tt = trigger_table
 
@@ -130,9 +144,12 @@ def make_trigger_mask(trigger_table, threshold):
     return veto_mask*on_mask
 
 
+make_trigger_mask = make_trigger_mask_telescope
+
+
 trigger_config = {
-    "chile": {"threshold": 120, "on_focus": 5, "veto_focus": 3},
-    "namibia": {"threshold": 120, "on_focus": 5, "veto_focus": 3},
+    "chile": {"threshold": 60, "on_focus": 5, "veto_focus": 3},
+    "namibia": {"threshold": 60, "on_focus": 5, "veto_focus": 3},
 }
 
 EXPOSURE_TIME_PER_EVENT = NUM_TIME_SLICES_PER_EVENT*TIME_SLICE_DURATION
@@ -153,7 +170,7 @@ SOLID_ANGLE_RATIO_ON_REGION = (
 )
 
 trigger_thresholds_pe = np.arange(
-    start=90,
+    start=20,
     stop=140,
     step=1
 )
@@ -237,7 +254,9 @@ for site_key in irf_config['config']['sites']:
         zd1_deg=np.rad2deg(cosmic_table['gamma']['primary']['zenith_rad']),
         az2_deg=irf_config['config']['plenoscope_pointing']['azimuth_deg'],
         zd2_deg=irf_config['config']['plenoscope_pointing']['zenith_deg'])
-    _off_mask = (_off_deg <= 3.25 - 1.0)
+    _fov_radius_deg = 0.5*irf_config[
+        'light_field_sensor_geometry']['max_FoV_diameter_deg']
+    _off_mask = (_off_deg <= _fov_radius_deg - 1.0)
 
     cut_idxs_comming_from_possible_on_region = (
         cosmic_table['gamma']['primary'][spt.IDX][_off_mask]
@@ -288,7 +307,7 @@ for site_key in irf_config['config']['sites']:
         )
 
         gamma_dT_per_s_per_GeV = (
-            gamma_dF_per_m2_per_s_per_GeV[:-1]*
+            gamma_dF_per_m2_per_s_per_GeV*
             gamma_effective_area_m2
         )
         ON_REGION_CONTAINMENT = 0.68
@@ -299,7 +318,7 @@ for site_key in irf_config['config']['sites']:
 
         gamma_T_onregion_per_s = (
             gamma_dT_onregion_per_s_per_GeV*
-            energy_bin_width[:-1]
+            energy_bin_centers
         )
 
         channels['gamma']['rate'].append(np.sum(gamma_T_onregion_per_s))
@@ -342,11 +361,8 @@ for site_key in irf_config['config']['sites']:
 
     channels['gamma']['rate'] = np.array(channels['gamma']['rate'])
 
-
-
     # cosmic-ray-channels
     # -------------------
-
     for particle_key in airshower_rates:
 
         num_airshower = cosmic_table[particle_key]['primary'].shape[0]
@@ -387,7 +403,7 @@ for site_key in irf_config['config']['sites']:
 
             cosmic_dT_per_s_per_GeV = (
                 cosmic_effective_acceptance_m2_sr*
-                airshower_rates[particle_key]['differential_flux'][:-1]
+                airshower_rates[particle_key]['differential_flux']
             )
 
             cosmic_dT_onregion_per_s_per_GeV = (
@@ -395,7 +411,7 @@ for site_key in irf_config['config']['sites']:
                 cosmic_dT_per_s_per_GeV
             )
 
-            cosmic_T_per_s = cosmic_dT_per_s_per_GeV*energy_bin_width[:-1]
+            cosmic_T_per_s = cosmic_dT_per_s_per_GeV*energy_bin_centers
 
             integrated_rates[t] = np.sum(cosmic_T_per_s)
 
@@ -404,7 +420,7 @@ for site_key in irf_config['config']['sites']:
                 fig = plt.figure(figsize=(16, 9), dpi=100)
                 ax = fig.add_axes((.1, .1, .8, .8))
                 ax.plot(
-                    energy_bin_edges[:-1],
+                    energy_bin_centers,
                     cosmic_effective_acceptance_m2_sr
                 )
                 ax.set_xlabel('energy / GeV')
@@ -430,7 +446,7 @@ for site_key in irf_config['config']['sites']:
                 fig = plt.figure(figsize=(16, 9), dpi=100)
                 ax = fig.add_axes((.1, .1, .8, .8))
                 ax.plot(
-                    energy_bin_edges[:-1],
+                    energy_bin_centers,
                     cosmic_dT_onregion_per_s_per_GeV,
                     'k'
                 )
