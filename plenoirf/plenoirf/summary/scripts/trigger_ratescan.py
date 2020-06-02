@@ -11,6 +11,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+PLOT_FIGSIZE = (16/2, 9/2)
+PLOT_DPI = 200
+PLOT_ENERGY_MIN = 1e-0
+PLOT_ENERGY_MAX = 1e3
+
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -21,25 +26,47 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 out_dir = os.path.join(pa['summary_dir'], 'trigger_rate_scan')
 os.makedirs(out_dir, exist_ok=True)
 
-MAX_CHERENKOV_IN_NSB_PE = 10
+ON_REGION_CONTAINMENT = 0.68
+
+MAX_CHERENKOV_IN_NSB_PE = 0
 TIME_SLICE_DURATION = 0.5e-9
-NUM_TIME_SLICES_PER_EVENT = 100
+NUM_TIME_SLICES_PER_EVENT = (
+    100 -
+    irf_config['config']['sum_trigger']['integration_time_slices'])
 
-NUM_ENERGY_BINS = 13
-energy_bin_edges = np.geomspace(3, 1000, NUM_ENERGY_BINS + 1)
-energy_bin_width = np.gradient(energy_bin_edges)
+ANALYSIS_ENERGY_MIN = PLOT_ENERGY_MIN
+ANALYSIS_ENERGY_MAX = PLOT_ENERGY_MAX
 
-_weight_lower_edge = 0.5
-_weight_upper_edge = 1 - _weight_lower_edge
-energy_bin_centers = (
-    _weight_lower_edge*energy_bin_edges[:-1] +
-    _weight_upper_edge*energy_bin_edges[1:]
-    )
+_weight_lower_edge = 1.0
+_weight_upper_edge = 1.0 - _weight_lower_edge
+
+NUM_COARSE_ENERGY_BINS = 17
+coarse_energy_bin_edges = np.geomspace(
+    ANALYSIS_ENERGY_MIN,
+    ANALYSIS_ENERGY_MAX,
+    NUM_COARSE_ENERGY_BINS + 1)
+coarse_energy_bin_width = coarse_energy_bin_edges[1:] - coarse_energy_bin_edges[:-1]
+coarse_energy_bin_centers = (
+    _weight_lower_edge*coarse_energy_bin_edges[:-1] +
+    _weight_upper_edge*coarse_energy_bin_edges[1:]
+)
+
+NUM_FINE_ENERGY_BINS = 1337
+fine_energy_bin_edges = np.geomspace(
+    ANALYSIS_ENERGY_MIN,
+    ANALYSIS_ENERGY_MAX,
+    NUM_FINE_ENERGY_BINS + 1)
+
+fine_energy_bin_width = fine_energy_bin_edges[1:] - fine_energy_bin_edges[:-1]
+fine_energy_bin_centers = (
+    _weight_lower_edge*fine_energy_bin_edges[:-1] +
+    _weight_upper_edge*fine_energy_bin_edges[1:]
+)
 
 cosmic_rays = {
-    "proton": {},
-    "helium": {},
-    "electron": {}
+    "proton": {"color": "red"},
+    "helium": {"color": "orange"},
+    "electron": {"color": "blue"}
 }
 
 _cosmic_ray_raw_fluxes = {}
@@ -51,7 +78,7 @@ with open(os.path.join(pa['summary_dir'], "electron_positron_flux.json"), "rt") 
     _cosmic_ray_raw_fluxes["electron"] = json.loads(f.read())
 for p in cosmic_rays:
     cosmic_rays[p]['differential_flux'] = np.interp(
-        x=energy_bin_centers,
+        x=fine_energy_bin_centers,
         xp=_cosmic_ray_raw_fluxes[p]['energy']['values'],
         fp=_cosmic_ray_raw_fluxes[p]['differential_flux']['values']
     )
@@ -59,7 +86,7 @@ for p in cosmic_rays:
 # geomagnetic cutoff
 # ------------------
 geomagnetic_cutoff_fraction = 0.05
-below_cutoff = energy_bin_centers < 10.0
+below_cutoff = fine_energy_bin_centers < 10.0
 airshower_rates = {}
 for p in cosmic_rays:
     airshower_rates[p] = cosmic_rays[p]
@@ -68,17 +95,21 @@ for p in cosmic_rays:
         airshower_rates[p]['differential_flux'][below_cutoff]
     )
 
-fig = plt.figure(figsize=(16, 9), dpi=100)
+fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
 ax = fig.add_axes((.1, .1, .8, .8))
 for particle_key in airshower_rates:
     ax.plot(
-        energy_bin_centers,
+        fine_energy_bin_centers,
         airshower_rates[particle_key]['differential_flux'],
-        label=particle_key)
+        label=particle_key,
+        color=cosmic_rays[particle_key]['color'],
+    )
 ax.set_xlabel('energy / GeV')
 ax.set_ylabel('differential flux of airshowers / m$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$')
 ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
 ax.loglog()
+ax.set_xlim([PLOT_ENERGY_MIN, PLOT_ENERGY_MAX])
+ax.legend()
 fig.savefig(
     os.path.join(
         out_dir,
@@ -97,13 +128,13 @@ for source in gamma_sources:
 
 gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
     fermi_source=reference_gamma_source,
-    energy=energy_bin_centers
+    energy=fine_energy_bin_centers
 )
 
-fig = plt.figure(figsize=(16, 9), dpi=100)
+fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
 ax = fig.add_axes((.1, .1, .8, .8))
 ax.plot(
-    energy_bin_centers,
+    fine_energy_bin_centers,
     gamma_dF_per_m2_per_s_per_GeV,
     'k'
 )
@@ -111,6 +142,7 @@ ax.set_xlabel('energy / GeV')
 ax.set_ylabel('differential flux of gamma-rays / m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$')
 ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
 ax.loglog()
+ax.set_xlim([PLOT_ENERGY_MIN, PLOT_ENERGY_MAX])
 fig.savefig(
     os.path.join(
         out_dir,
@@ -292,25 +324,31 @@ for site_key in irf_config['config']['sites']:
         gamma_q_detected = np.histogram(
             gamma_energies,
             weights=gamma_q_max*gamma_f_detected*gamma_w_grid_intense,
-            bins=energy_bin_edges)[0]
+            bins=coarse_energy_bin_edges)[0]
 
         gamma_c_thrown = np.histogram(
             gamma_energies,
             weights=gamma_w_grid_trials,
-            bins=energy_bin_edges)[0]
+            bins=coarse_energy_bin_edges)[0]
 
         gamma_c_thrown_valid = gamma_c_thrown > 0
-        gamma_effective_area_m2 = np.zeros(NUM_ENERGY_BINS)
-        gamma_effective_area_m2[gamma_c_thrown_valid] = (
+        coarse_gamma_effective_area_m2 = np.zeros(NUM_COARSE_ENERGY_BINS)
+        coarse_gamma_effective_area_m2[gamma_c_thrown_valid] = (
             gamma_q_detected[gamma_c_thrown_valid]/
             gamma_c_thrown[gamma_c_thrown_valid]
+        )
+
+        gamma_effective_area_m2 = np.interp(
+            x=fine_energy_bin_centers,
+            xp=coarse_energy_bin_centers,
+            fp=coarse_gamma_effective_area_m2
         )
 
         gamma_dT_per_s_per_GeV = (
             gamma_dF_per_m2_per_s_per_GeV*
             gamma_effective_area_m2
         )
-        ON_REGION_CONTAINMENT = 0.68
+
         gamma_dT_onregion_per_s_per_GeV = (
             gamma_dT_per_s_per_GeV*
             ON_REGION_CONTAINMENT
@@ -318,22 +356,25 @@ for site_key in irf_config['config']['sites']:
 
         gamma_T_onregion_per_s = (
             gamma_dT_onregion_per_s_per_GeV*
-            energy_bin_centers
+            fine_energy_bin_width
         )
 
         channels['gamma']['rate'].append(np.sum(gamma_T_onregion_per_s))
 
         if trigger_thresholds_pe[t] == trigger_config[site_key]['threshold']:
-            fig = plt.figure(figsize=(16, 9), dpi=100)
+            fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
             ax = fig.add_axes((.1, .1, .8, .8))
             ax.plot(
-                energy_bin_edges[:-1],
-                gamma_effective_area_m2)
+                fine_energy_bin_centers,
+                gamma_effective_area_m2,
+                color='k',
+            )
             ax.set_xlabel('energy / GeV')
             ax.set_ylabel('area / m^2')
             ax.set_ylim([2e2, 2e6])
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
             ax.loglog()
+            ax.set_xlim([PLOT_ENERGY_MIN, PLOT_ENERGY_MAX])
             fig.savefig(
                 os.path.join(
                     out_dir,
@@ -341,16 +382,19 @@ for site_key in irf_config['config']['sites']:
             plt.close(fig)
 
             print('gamma-on: ', np.sum(gamma_T_onregion_per_s))
-            fig = plt.figure(figsize=(16, 9), dpi=100)
+            fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
             ax = fig.add_axes((.1, .1, .8, .8))
             ax.plot(
-                energy_bin_edges[:-1],
-                gamma_dT_onregion_per_s_per_GeV)
+                fine_energy_bin_centers,
+                gamma_dT_onregion_per_s_per_GeV,
+                color='k',
+            )
             ax.set_xlabel('energy / GeV')
             ax.set_ylabel('on-region differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
             ax.set_ylim([1e-6, 1e3])
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
             ax.loglog()
+            ax.set_xlim([PLOT_ENERGY_MIN, PLOT_ENERGY_MAX])
             fig.savefig(
                 os.path.join(
                     out_dir,
@@ -388,17 +432,23 @@ for site_key in irf_config['config']['sites']:
             q_detected = np.histogram(
                 energies,
                 weights=q_max*f_detected*w_grid_intense,
-                bins=energy_bin_edges)[0]
+                bins=coarse_energy_bin_edges)[0]
 
             c_thrown = np.histogram(
                 energies,
                 weights=w_grid_trials,
-                bins=energy_bin_edges)[0]
+                bins=coarse_energy_bin_edges)[0]
 
             c_thrown_valid = c_thrown > 0
-            cosmic_effective_acceptance_m2_sr = np.zeros(shape=c_thrown.shape)
-            cosmic_effective_acceptance_m2_sr[c_thrown_valid] = (
+            coarse_cosmic_effective_acceptance_m2_sr = np.zeros(shape=c_thrown.shape)
+            coarse_cosmic_effective_acceptance_m2_sr[c_thrown_valid] = (
                 q_detected[c_thrown_valid]/c_thrown[c_thrown_valid]
+            )
+
+            cosmic_effective_acceptance_m2_sr = np.interp(
+                x=fine_energy_bin_centers,
+                xp=coarse_energy_bin_centers,
+                fp=coarse_cosmic_effective_acceptance_m2_sr
             )
 
             cosmic_dT_per_s_per_GeV = (
@@ -411,23 +461,25 @@ for site_key in irf_config['config']['sites']:
                 cosmic_dT_per_s_per_GeV
             )
 
-            cosmic_T_per_s = cosmic_dT_per_s_per_GeV*energy_bin_centers
+            cosmic_T_per_s = cosmic_dT_per_s_per_GeV*fine_energy_bin_width
 
             integrated_rates[t] = np.sum(cosmic_T_per_s)
 
             if trigger_thresholds_pe[t] == trigger_config[site_key]['threshold']:
 
-                fig = plt.figure(figsize=(16, 9), dpi=100)
+                fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
                 ax = fig.add_axes((.1, .1, .8, .8))
                 ax.plot(
-                    energy_bin_centers,
-                    cosmic_effective_acceptance_m2_sr
+                    fine_energy_bin_centers,
+                    cosmic_effective_acceptance_m2_sr,
+                    color='k',
                 )
                 ax.set_xlabel('energy / GeV')
                 ax.set_ylabel('acceptance / m$^2$ sr')
                 ax.set_ylim([1e0, 1e5])
                 ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
                 ax.loglog()
+                ax.set_xlim([PLOT_ENERGY_MIN, PLOT_ENERGY_MAX])
                 fig.savefig(
                     os.path.join(
                         out_dir,
@@ -443,18 +495,19 @@ for site_key in irf_config['config']['sites']:
                     '{:s}-on: '.format(particle_key),
                     integrated_rates[t]*SOLID_ANGLE_RATIO_ON_REGION
                 )
-                fig = plt.figure(figsize=(16, 9), dpi=100)
+                fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
                 ax = fig.add_axes((.1, .1, .8, .8))
                 ax.plot(
-                    energy_bin_centers,
+                    fine_energy_bin_centers,
                     cosmic_dT_onregion_per_s_per_GeV,
-                    'k'
+                    color='k',
                 )
                 ax.set_xlabel('energy / GeV')
                 ax.set_ylabel('on-region differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
                 ax.set_ylim([1e-6, 1e3])
                 ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
                 ax.loglog()
+                ax.set_xlim([PLOT_ENERGY_MIN, PLOT_ENERGY_MAX])
                 fig.savefig(
                     os.path.join(
                         out_dir,
@@ -470,7 +523,7 @@ for site_key in irf_config['config']['sites']:
         channels[particle_key]['rate'] = integrated_rates
 
 
-    fig = plt.figure(figsize=(16, 9), dpi=100)
+    fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
     ax = fig.add_axes((.1, .1, .8, .8))
     ax.plot(
         trigger_thresholds_pe,
@@ -486,21 +539,12 @@ for site_key in irf_config['config']['sites']:
         'k:',
         label='night-sky')
 
-    ax.plot(
-        trigger_thresholds_pe,
-        channels['proton']['rate'],
-        color='r',
-        label='proton')
-    ax.plot(
-        trigger_thresholds_pe,
-        channels['electron']['rate'],
-        color='b',
-        label='electron')
-    ax.plot(
-        trigger_thresholds_pe,
-        channels['helium']['rate'],
-        color='orange',
-        label='helium')
+    for particle_key in cosmic_rays:
+        ax.plot(
+            trigger_thresholds_pe,
+            channels[particle_key]['rate'],
+            color=cosmic_rays[particle_key]['color'],
+            label=particle_key)
 
     ax.semilogy()
     ax.spines['right'].set_visible(False)
@@ -524,7 +568,7 @@ for site_key in irf_config['config']['sites']:
     plt.close(fig)
 
 
-    fig = plt.figure(figsize=(16, 9), dpi=100)
+    fig = plt.figure(figsize=PLOT_FIGSIZE, dpi=PLOT_DPI)
     ax = fig.add_axes((.1, .1, .8, .8))
     signal_vs_threshold = channels['gamma']['rate']
     background_vs_threshold = SOLID_ANGLE_RATIO_ON_REGION*(
