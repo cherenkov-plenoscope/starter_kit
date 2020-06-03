@@ -1,6 +1,0 @@
-{
-    "primary_particle": "gamma",
-    "max_scatter_angle_deg": 3.25,
-    "energy":             [0.23, 0.8, 3.0, 35,   81,   432,  1000],
-    "max_scatter_radius": [150,  150, 460, 1100, 1235, 1410, 1660]
-}
