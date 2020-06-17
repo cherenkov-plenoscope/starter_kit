@@ -4,6 +4,7 @@ from . import merlict
 from . import logging
 from . import network_file_system as nfs
 
+import sys
 import numpy as np
 import os
 from os import path as op
