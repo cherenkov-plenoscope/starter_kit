@@ -8,6 +8,7 @@ from . import map_and_reduce
 # from . import map_and_reduce_scatter
 from . import map_and_reduce_light_field_geometry
 from . import network_file_system
+from . import bundle
 
 import os
 import numpy as np
@@ -433,7 +434,17 @@ def _populate_table_of_thrown_air_showers(
                 irf_jobs.append(irf_job)
 
     random.shuffle(irf_jobs)
-    _ = pool.map(map_and_reduce.run_job, irf_jobs)
+
+    irf_bundles = bundle.bundle_jobs(
+        jobs=irf_jobs,
+        desired_num_bunbles=360
+    )
+
+    _ = pool.map(
+        map_and_reduce.run_bundle,
+        irf_bundles
+    )
+
     sge._print("Reduce instrument-response.")
 
     for site_key in cfg["sites"]:

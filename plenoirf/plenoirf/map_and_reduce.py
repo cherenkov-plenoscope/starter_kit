@@ -914,3 +914,18 @@ def run_job(job=EXAMPLE_JOB):
 
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
+
+
+def run_bundle(bundle):
+    results = []
+    for j, job in enumerate(bundle):
+        msg = '\n# job {:d} of {:d}\n'.format(j, len(bundle))
+        print(msg, file=sys.stdout)
+        print(msg, file=sys.stderr)
+        try:
+            result = run_job(job=job)
+        except Exception as exception_msg:
+            print(exception_msg, file=sys.stderr)
+            result = None
+        results.append(result)
+    return results
