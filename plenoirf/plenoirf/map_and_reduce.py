@@ -920,13 +920,13 @@ def run_job(job=EXAMPLE_JOB):
 def run_bundle(bundle):
     results = []
     for j, job in enumerate(bundle):
-        msg = '\n# job {:d} of {:d}\n'.format(j, len(bundle))
+        msg = '\n#bundle {:d} of {:d}\n'.format((j+1), len(bundle))
         print(msg, file=sys.stdout)
         print(msg, file=sys.stderr)
         try:
             result = run_job(job=job)
         except Exception as exception_msg:
             print(exception_msg, file=sys.stderr)
-            result = None
+            result = 0
         results.append(result)
     return results
