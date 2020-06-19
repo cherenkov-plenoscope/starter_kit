@@ -11,7 +11,6 @@ from .. import table
 from .. import merlict
 from .. import grid
 from . import figure
-from . import effective
 
 
 def argv_since_py(sys_argv):
@@ -120,7 +119,6 @@ def run(run_dir):
         'grid_area.py',
         'grid_direction.py',
         'template.py',
-        'effective_acceptance.py',
         'make_summary.py',
     ]
     for script in scripts:
