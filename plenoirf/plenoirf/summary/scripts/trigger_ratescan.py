@@ -37,10 +37,10 @@ NUM_TIME_SLICES_PER_EVENT = (
 ANALYSIS_ENERGY_MIN = PLOT_ENERGY_MIN
 ANALYSIS_ENERGY_MAX = PLOT_ENERGY_MAX
 
-_weight_lower_edge = 1.0
+_weight_lower_edge = 0.0
 _weight_upper_edge = 1.0 - _weight_lower_edge
 
-NUM_COARSE_ENERGY_BINS = 17
+NUM_COARSE_ENERGY_BINS = 24
 coarse_energy_bin_edges = np.geomspace(
     ANALYSIS_ENERGY_MIN,
     ANALYSIS_ENERGY_MAX,
@@ -217,7 +217,7 @@ for site_key in irf_config['config']['sites']:
     print('-----------------')
     # read all tables
     # ----------------
-    tables = {}
+    cosmic_table = {}
     for particle_key in irf_config['config']['particles']:
         event_table = spt.read(
             path=os.path.join(
@@ -227,7 +227,7 @@ for site_key in irf_config['config']['sites']:
                 particle_key,
                 'event_table.tar'),
             structure=irf.table.STRUCTURE)
-        tables[particle_key] = spt.cut_table_on_indices(
+        cosmic_table[particle_key] = spt.cut_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
             common_indices=spt.dict_to_recarray(
@@ -237,20 +237,15 @@ for site_key in irf_config['config']['sites']:
     # split nsb and cosmic-rays
     # -------------------------
     nsb_table = {}
-    cosmic_table = {}
     for particle_key in irf_config['config']['particles']:
         mask_nsb = (
-            tables[particle_key]['trigger']['num_cherenkov_pe'] <=
+            cosmic_table[particle_key]['trigger']['num_cherenkov_pe'] <=
             MAX_CHERENKOV_IN_NSB_PE
         )
-        mask_cosmic_rays = np.logical_not(mask_nsb)
 
         nsb_table[particle_key] = {}
-        cosmic_table[particle_key] = {}
-        for level in tables[particle_key]:
-            nsb_table[particle_key][level] = tables[particle_key][level][mask_nsb]
-            cosmic_table[particle_key][level] = tables[particle_key][level][mask_cosmic_rays]
-
+        for level in cosmic_table[particle_key]:
+            nsb_table[particle_key][level] = cosmic_table[particle_key][level][mask_nsb]
 
     # nsb-channel
     # -----------
@@ -370,7 +365,7 @@ for site_key in irf_config['config']['sites']:
                 color='k',
             )
             ax.set_xlabel('energy / GeV')
-            ax.set_ylabel('area / m^2')
+            ax.set_ylabel('area / m${^2}$')
             ax.set_ylim([2e2, 2e6])
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
             ax.loglog()
