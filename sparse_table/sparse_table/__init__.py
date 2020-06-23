@@ -148,19 +148,23 @@ def cut_level_on_indices(
     del part_df
     common = common_df.to_records(index=False)
     del common_df
-    common_order_args = np.argsort(common[IDX])
-    common_sorted = common[common_order_args]
-    del common_order_args
-    indices_order_args = np.argsort(indices[IDX])
-    inverse_order = np.zeros(shape=indices_order_args.shape, dtype=np.int)
-    inverse_order[indices_order_args] = np.arange(len(indices))
-    del indices_order_args
-    common_same_order_as_indices = common_sorted[inverse_order]
-    del inverse_order
-    np.testing.assert_array_equal(
-        common_same_order_as_indices[IDX],
-        indices[IDX])
-    return common_same_order_as_indices
+
+    if common.shape[0] >= indices.shape[0]:
+        common_order_args = np.argsort(common[IDX])
+        common_sorted = common[common_order_args]
+        del common_order_args
+        indices_order_args = np.argsort(indices[IDX])
+        inverse_order = np.zeros(shape=indices_order_args.shape, dtype=np.int)
+        inverse_order[indices_order_args] = np.arange(len(indices))
+        del indices_order_args
+        common_same_order_as_indices = common_sorted[inverse_order]
+        del inverse_order
+        np.testing.assert_array_equal(
+            common_same_order_as_indices[IDX],
+            indices[IDX])
+        return common_same_order_as_indices
+    else:
+        return common
 
 
 def cut_table_on_indices(
