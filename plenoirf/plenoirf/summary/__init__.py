@@ -61,10 +61,21 @@ def init(
     c_bin_edges_deg = guess_c_bin_edges(
         num_events=num_events_past_trigger)
 
+    (thresholds, nominal_thresholds_idx) = guess_trigger_thresholds(
+        nominal_trigger_threshold=irf_config[
+            'config'][
+            'sum_trigger'][
+            'threshold_pe'],
+        num_thresholds=30,
+    )
+
     summary_config = {}
     summary_config['energy_bin_edges_GeV'] = energy_bin_edges.tolist()
     summary_config['energy_bin_edges_GeV_coarse'] = list(energy_bin_edges[::2])
     summary_config['c_bin_edges_deg'] = c_bin_edges_deg.tolist()
+    summary_config['trigger_thresholds_pe'] = thresholds.tolist()
+    summary_config['nominal_trigger_threshold_idx'] = int(
+        nominal_thresholds_idx)
     summary_config['figure_16_9'] = figure_config_16by9
     with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
         fout.write(json.dumps(summary_config, indent=4))
@@ -163,7 +174,7 @@ def guess_energy_bin_edges(irf_config, num_events):
     min_energy = np.min(min_energies)
     max_energy = np.max(max_energies)
 
-    num_energy_bins = int(np.sqrt(num_events)//2)
+    num_energy_bins = int(np.sqrt(num_events))
     num_energy_bins = 2*(num_energy_bins//2)
     num_energy_bins = np.max([np.min([num_energy_bins, 2**6]), 2**2])
     energy_bin_edges = np.geomspace(min_energy, max_energy, num_energy_bins+1)
@@ -175,3 +186,20 @@ def guess_c_bin_edges(num_events):
     num_bins = np.max([np.min([num_bins, 2**7]), 2**4])
     c_bin_edges = np.linspace(-35, 35, num_bins+1)
     return c_bin_edges
+
+
+def guess_trigger_thresholds(nominal_trigger_threshold, num_thresholds):
+    tt = np.geomspace(
+        int(nominal_trigger_threshold*0.5),
+        int(nominal_trigger_threshold*2.0),
+        num_thresholds,
+    )
+    tt = np.round(tt)
+    tt = tt.tolist()
+    tt = tt + [nominal_trigger_threshold]
+    tt = set(tt)
+    tt = list(tt)
+    tt = np.array(tt, dtype=np.int)
+    nominal_idx = np.where(tt == nominal_trigger_threshold)
+    assert len(nominal_idx) == 1
+    return tt, nominal_idx[0][0]
