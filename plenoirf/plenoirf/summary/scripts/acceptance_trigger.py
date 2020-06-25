@@ -32,26 +32,7 @@ FOV_RADIUS_DEG = (
 
 energy_bin_edges = np.array(sum_config['energy_bin_edges_GeV'])
 trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-
-
-def out_dir_filename(out_dir, site_key, particle_key, type_key):
-    fname = "{:s}_{:s}_{:s}.json".format(site_key, particle_key, type_key)
-    return os.path.join(out_dir, fname)
-
-
-def find_trigger_indices(trigger_table, threshold):
-    on_level = 7
-    KEY = 'focus_{:02d}_response_pe'
-    on_key = KEY.format(on_level)
-    on_mask = trigger_table[on_key] >= threshold
-    return trigger_table[spt.IDX][on_mask]
-
-trigger_modus = {
-    'accepting_focus': 7,
-    'rejecting_focus': -1,
-    'intensity_ratio_between_foci': 1.06,
-    'use_rejection_focus': False
-}
+trigger_modus = sum_config["trigger_modus"]
 
 cosmic_response = {}
 _tmp_nsb_response = {}

@@ -22,6 +22,10 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
+trigger_modus = sum_config["trigger_modus"]
+trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
+nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
+nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
 
 def histogram(
     cradial2_bin_edges_deg2,
@@ -126,18 +130,25 @@ for site_key in cfg['sites']:
                 site_key,
                 particle_key,
                 'event_table.tar'),
-            structure=irf.table.STRUCTURE)
+            structure=irf.table.STRUCTURE
+        )
 
         # summarize
         # ---------
         energy_bin_edges = np.geomspace(
             np.min(sum_config['energy_bin_edges_GeV']),
             np.max(sum_config['energy_bin_edges_GeV']),
-            5)
+            5
+        )
 
         pasttrigger_mask = spt.make_mask_of_right_in_left(
-                left_indices=event_table['primary'][spt.IDX],
-                right_indices=event_table['pasttrigger'][spt.IDX])
+            left_indices=event_table['primary'][spt.IDX],
+            right_indices=irf.analysis.light_field_trigger_modi.make_indices(
+                trigger_table=event_table['trigger'],
+                threshold=nominal_trigger_threshold,
+                modus=trigger_modus,
+            )
+        )
 
         prm = event_table['primary']
         prm_dirs = np.zeros((prm.shape[0], 3))

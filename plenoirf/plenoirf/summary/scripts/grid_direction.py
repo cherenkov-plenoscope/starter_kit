@@ -24,6 +24,11 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 os.makedirs(pa['out_dir'], exist_ok=True)
 
+trigger_modus = sum_config["trigger_modus"]
+trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
+nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
+nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
+
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
@@ -37,7 +42,8 @@ for site_key in irf_config['config']['sites']:
                 site_key,
                 particle_key,
                 'event_table.tar'),
-            structure=irf.table.STRUCTURE)
+            structure=irf.table.STRUCTURE
+        )
 
         # summarize
         # ---------
@@ -45,8 +51,14 @@ for site_key in irf_config['config']['sites']:
         c_bin_edges_deg = sum_config['c_bin_edges_deg']
 
         pasttrigger_mask = spt.make_mask_of_right_in_left(
-                left_indices=event_table['primary'][spt.IDX],
-                right_indices=event_table['pasttrigger'][spt.IDX])
+            left_indices=event_table['primary'][spt.IDX],
+            right_indices=irf.analysis.light_field_trigger_modi.make_indices(
+                trigger_table=event_table['trigger'],
+                threshold=nominal_trigger_threshold,
+                modus=trigger_modus,
+            )
+        )
+
         _in_vec = irf.query.primary_incident_vector(event_table['primary'])
         primary_cx = _in_vec[:, 0]
         primary_cy = _in_vec[:, 1]
