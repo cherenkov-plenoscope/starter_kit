@@ -70,6 +70,14 @@ def init(
     )
 
     summary_config = {}
+
+    summary_config["trigger_modus"] = {
+        'accepting_focus': 7,
+        'rejecting_focus': -1,
+        'intensity_ratio_between_foci': 1.06,
+        'use_rejection_focus': False
+    }
+
     summary_config['energy_bin_edges_GeV'] = energy_bin_edges.tolist()
     summary_config['energy_bin_edges_GeV_coarse'] = list(energy_bin_edges[::2])
     summary_config['c_bin_edges_deg'] = c_bin_edges_deg.tolist()
@@ -129,7 +137,6 @@ def run(run_dir):
         'cherenkov_photon_classification.py',
         'grid_area.py',
         'grid_direction.py',
-        'template.py',
         'make_summary.py',
     ]
     for script in scripts:
