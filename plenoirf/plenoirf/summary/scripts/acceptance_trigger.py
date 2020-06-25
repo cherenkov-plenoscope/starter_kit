@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+import numpy as np
 import plenoirf as irf
 import sparse_table as spt
 import os
@@ -169,9 +170,10 @@ for site_key in irf_config['config']['sites']:
 
         _tmp_nsb_response[site_key][particle_key] = []
         for threshold in trigger_thresholds:
-            nsb_triggered_in_thrown_indices = find_trigger_indices(
+            nsb_triggered_in_thrown_indices = irf.analysis.light_field_trigger_modi.make_indices(
                 trigger_table=nsb_thrown_trigger_table,
-                threshold=threshold
+                threshold=threshold,
+                modus=trigger_modus,
             )
             _tmp_nsb_response[site_key][particle_key].append({
                 'num_nsb_exposures': len(nsb_thrown_indices),

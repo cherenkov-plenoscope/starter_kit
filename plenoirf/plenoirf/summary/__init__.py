@@ -137,11 +137,19 @@ def run(run_dir):
         'cherenkov_photon_classification.py',
         'grid_area.py',
         'grid_direction.py',
+        'acceptance_trigger.py',
+        'acceptance_trigger_plot.py',
+        'ratescan.py',
         'make_summary.py',
     ]
     for script in scripts:
         script_path = _script_abspath(script)
-        subprocess.call(['python', script_path, run_dir])
+        script_name = str.split(script, '.')[0]
+        result_path = os.path.join(run_dir, 'summary', script_name)
+        if os.path.exists(result_path):
+            print(script_name, "already done")
+        else:
+            subprocess.call(['python', script_path, run_dir])
 
 
 def _script_abspath(filename):
@@ -197,7 +205,7 @@ def guess_c_bin_edges(num_events):
 
 def guess_trigger_thresholds(nominal_trigger_threshold, num_thresholds):
     tt = np.geomspace(
-        int(nominal_trigger_threshold*0.5),
+        int(nominal_trigger_threshold*0.8),
         int(nominal_trigger_threshold*2.0),
         num_thresholds,
     )
@@ -207,6 +215,7 @@ def guess_trigger_thresholds(nominal_trigger_threshold, num_thresholds):
     tt = set(tt)
     tt = list(tt)
     tt = np.array(tt, dtype=np.int)
+    tt = np.sort(tt)
     nominal_idx = np.where(tt == nominal_trigger_threshold)
     assert len(nominal_idx) == 1
     return tt, nominal_idx[0][0]
