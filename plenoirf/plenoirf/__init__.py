@@ -4,9 +4,7 @@ from . import table
 from . import grid
 from . import merlict
 from . import logging
-from . import query
 from . import map_and_reduce
-# from . import map_and_reduce_scatter
 from . import map_and_reduce_light_field_geometry
 from . import network_file_system
 from . import bundle
@@ -215,7 +213,6 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
         opj(out_absdir, 'input', 'max_seed.json'+'tmp'),
         opj(out_absdir, 'input', 'max_seed.json'))
 
-
     network_file_system.copy(
         src=cfg_files['plenoscope_scenery_path'],
         dst=opj(out_absdir, 'input', 'scenery'))
@@ -334,7 +331,7 @@ def _estimate_trigger_geometry_of_plenoscope(
             pixel_spacing_rad=np.deg2rad(img['pixel_spacing_deg']),
             pixel_radius_rad=np.deg2rad(img['pixel_radius_deg']),
             max_number_nearest_lixel_in_pixel=img[
-            'max_number_nearest_lixel_in_pixel'],
+                'max_number_nearest_lixel_in_pixel'],
         )
         trigger_geometry = pl.simple_trigger.prepare.prepare_trigger_geometry(
             light_field_geometry=light_field_geometry,
@@ -369,7 +366,6 @@ def _populate_table_of_thrown_air_showers(
     table_absdir = opj(out_absdir, "event_table")
     os.makedirs(table_absdir, exist_ok=True)
 
-
     irf_jobs = []
     run_id = 1
     for site_key in cfg["sites"]:
@@ -385,12 +381,14 @@ def _populate_table_of_thrown_air_showers(
             os.makedirs(site_particle_absdir, exist_ok=True)
 
             site_particle_deflection = pd.read_csv(
-                opj(out_absdir,
+                opj(
+                    out_absdir,
                     'magnetic_deflection',
                     'result',
                     '{:s}_{:s}.csv'.format(
                         site_key,
-                        particle_key)
+                        particle_key
+                    )
                 )
             ).to_dict(orient='list')
 
@@ -405,7 +403,8 @@ def _populate_table_of_thrown_air_showers(
                     "site_particle_deflection": site_particle_deflection,
                     "grid": cfg["grid"],
                     "sum_trigger": cfg["sum_trigger"],
-                    "cherenkov_classification": cfg["cherenkov_classification"],
+                    "cherenkov_classification": cfg[
+                        "cherenkov_classification"],
                     "corsika_primary_path": executables[
                         "corsika_primary_path"],
                     "plenoscope_scenery_path": opj(

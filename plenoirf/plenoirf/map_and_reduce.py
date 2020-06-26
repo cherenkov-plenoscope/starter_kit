@@ -710,7 +710,6 @@ def run_job(job=EXAMPLE_JOB):
     )
     logger.log("prepare_trigger")
 
-
     # loop over sensor responses
     # --------------------------
     merlict_run = pl.Run(merlict_run_path)
@@ -796,9 +795,10 @@ def run_job(job=EXAMPLE_JOB):
             path=pt["tmp_path"],
             light_field_geometry=light_field_geometry
         )
-        trigger_responses = pl.simple_trigger.io.read_trigger_response_from_path(
-            path=os.path.join(event._path, 'refocus_sum_trigger.json')
-        )
+        trigger_responses = pl.simple_trigger.io. \
+            read_trigger_response_from_path(
+                path=os.path.join(event._path, 'refocus_sum_trigger.json')
+            )
         roi = pl.simple_trigger.region_of_interest.from_trigger_response(
             trigger_response=trigger_responses,
             trigger_geometry=trigger_geometry,
