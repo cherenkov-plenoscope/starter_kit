@@ -7,6 +7,7 @@ import numpy as np
 import json
 import sparse_table as spt
 import plenoirf as irf
+import magnetic_deflection as mdfl
 
 import matplotlib
 matplotlib.use('Agg')
@@ -149,24 +150,12 @@ for site_key in cfg['sites']:
             )
         )
 
-        prm = event_table['primary']
-        prm_dirs = np.zeros((prm.shape[0], 3))
-        prm_dirs[:, 0] = np.sin(prm['zenith_rad'])*np.cos(prm['azimuth_rad'])
-        prm_dirs[:, 1] = np.sin(prm['zenith_rad'])*np.sin(prm['azimuth_rad'])
-        prm_dirs[:, 2] = np.cos(prm['zenith_rad'])
-
-        ple_az = np.deg2rad(cfg['plenoscope_pointing']['azimuth_deg'])
-        ple_zd = np.deg2rad(cfg['plenoscope_pointing']['zenith_deg'])
-        plenoscope_dir = np.zeros(3)
-        plenoscope_dir[0] = np.sin(ple_zd)*np.cos(ple_az)
-        plenoscope_dir[1] = np.sin(ple_zd)*np.sin(ple_az)
-        plenoscope_dir[2] = np.cos(ple_zd)
-
-        offaxis = irf.grid._make_angle_between(
-            directions=prm_dirs,
-            direction=plenoscope_dir)
-
-        offaxis_deg = np.rad2deg(offaxis)
+        offaxis_deg =  mdfl.discovery._angle_between_az_zd_deg(
+            az1_deg=np.rad2deg(event_table['primary']['azimuth_rad']),
+            zd1_deg=np.rad2deg(event_table['primary']['zenith_rad']),
+            az2_deg=cfg['plenoscope_pointing']['azimuth_deg'],
+            zd2_deg=cfg['plenoscope_pointing']['zenith_deg']
+        )
         offaxis2_deg2 = offaxis_deg**2
 
         num_cradial_bins = int(0.1*np.sqrt(offaxis_deg.shape[0]))
