@@ -27,7 +27,7 @@ NUM_TIME_SLICES_PER_EVENT = (
 EXPOSURE_TIME_PER_EVENT = NUM_TIME_SLICES_PER_EVENT*TIME_SLICE_DURATION
 NUM_GRID_BINS = irf_config['grid_geometry']['num_bins_diameter']**2
 FOV_RADIUS_DEG = (
-    0.5*
+    0.5 *
     irf_config['light_field_sensor_geometry']['max_FoV_diameter_deg']
 )
 
@@ -58,7 +58,7 @@ for site_key in irf_config['config']['sites']:
 
         # point source
         # ------------
-        idx_in_possible_onregion = irf.analysis.effective_quantity.cut_primary_direction_within_angle (
+        idx_in_possible_onregion = irf.analysis.effective_quantity.cut_primary_direction_within_angle(
             primary_table=diffuse_particle_table['primary'],
             radial_angle_deg=FOV_RADIUS_DEG - 0.5,
             azimuth_deg=irf_config[
@@ -115,7 +115,7 @@ for site_key in irf_config['config']['sites']:
         # --------------
         energy_GeV = diffuse_particle_table['primary']['energy_GeV']
         quantity_scatter = (
-            diffuse_particle_table['grid']['area_thrown_m2']*
+            diffuse_particle_table['grid']['area_thrown_m2'] *
             diffuse_particle_table['primary']['solid_angle_thrown_sr']
         )
         num_grid_cells_above_lose_threshold = diffuse_particle_table[
@@ -147,7 +147,7 @@ for site_key in irf_config['config']['sites']:
                 mask_detected=mask_detected,
                 quantity_scatter=quantity_scatter,
                 num_grid_cells_above_lose_threshold=
-                    num_grid_cells_above_lose_threshold,
+                    um_grid_cells_above_lose_threshold,
                 total_num_grid_cells=NUM_GRID_BINS,
             )
             _diffuse['value'].append(_q_eff.tolist())
@@ -201,11 +201,11 @@ for site_key in irf_config['config']['sites']:
                 'num_nsb_triggers']
 
     nsb_rate = (
-        num_nsb_triggers_vs_threshold/
+        num_nsb_triggers_vs_threshold /
         (num_nsb_exposures*EXPOSURE_TIME_PER_EVENT)
     )
     relative_uncertainty = (
-        np.sqrt(num_nsb_triggers_vs_threshold)/
+        np.sqrt(num_nsb_triggers_vs_threshold) /
         num_nsb_triggers_vs_threshold
     )
 

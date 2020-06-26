@@ -86,7 +86,7 @@ for site_key in irf_config['config']['sites']:
         )
     ax.set_xlabel('energy / GeV')
     ax.set_ylabel(
-        'differential flux of airshowers / '+
+        'differential flux of airshowers / ' +
         'm$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$'
     )
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
@@ -171,7 +171,7 @@ for site_key in irf_config['config']['sites']:
             fp=_gamma_effective_area_m2[tt, :]
         )
         gamma_dT_per_s_per_GeV = (
-            gamma_dF_per_m2_per_s_per_GeV*
+            gamma_dF_per_m2_per_s_per_GeV *
             gamma_effective_area_m2
         )
         gamma_T_per_s = np.sum(gamma_dT_per_s_per_GeV*fine_energy_bin_width)
@@ -208,7 +208,7 @@ for site_key in irf_config['config']['sites']:
                 fp=_cosmic_effective_acceptance_m2_sr[tt, :]
             )
             cosmic_dT_per_s_per_GeV = (
-                cosmic_effective_acceptance_m2_sr*
+                cosmic_effective_acceptance_m2_sr *
                 airshower_fluxes[site_key][cosmic_key]['differential_flux']
             )
             cosmic_T_per_s = cosmic_dT_per_s_per_GeV*fine_energy_bin_width

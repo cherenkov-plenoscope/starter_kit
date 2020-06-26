@@ -1,19 +1,16 @@
 #!/usr/bin/python
 import sys
-
 import os
 from os.path import join as opj
 import pandas as pd
 import numpy as np
 import json
 import sparse_table as spt
-
 import plenoirf as irf
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -26,6 +23,7 @@ trigger_modus = sum_config["trigger_modus"]
 trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
 nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
 nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
+
 
 def histogram(
     cradial2_bin_edges_deg2,
@@ -112,6 +110,7 @@ def write_figure(
     fig.savefig(path)
     plt.close(fig)
 
+
 cfg = irf_config['config']
 os.makedirs(pa['out_dir'], exist_ok=True)
 
@@ -162,7 +161,6 @@ for site_key in cfg['sites']:
         plenoscope_dir[0] = np.sin(ple_zd)*np.cos(ple_az)
         plenoscope_dir[1] = np.sin(ple_zd)*np.sin(ple_az)
         plenoscope_dir[2] = np.cos(ple_zd)
-
 
         offaxis = irf.grid._make_angle_between(
             directions=prm_dirs,
