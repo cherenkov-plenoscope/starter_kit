@@ -101,45 +101,6 @@ for site_key in irf_config['config']['sites']:
     )
     plt.close(fig)
 
-
-def write_differential_trigger_rate_figure(
-    energy_bin_centers,
-    dT_per_s_per_GeV,
-    site_key,
-    particle_key,
-    trigger_thresholds,
-    trigger_threshold_idx,
-    out_dir,
-    figsize,
-):
-    tt = trigger_threshold_idx
-    fig = irf.summary.figure.figure(figsize)
-    ax = fig.add_axes((.1, .1, .8, .8))
-    ax.plot(
-        energy_bin_centers,
-        dT_per_s_per_GeV,
-        color='k'
-    )
-    ax.set_title('trigger-threshold: {:d}p.e.'.format(trigger_thresholds[tt]))
-    ax.set_xlabel('energy / GeV')
-    ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    ax.loglog()
-    ax.set_xlim([energy_lower, energy_upper])
-    ax.set_ylim([1e-6, 1e2])
-    fig.savefig(
-        os.path.join(
-            out_dir,
-            '{:s}_{:s}_{:d}_differential_trigger_rate.jpg'.format(
-                site_key,
-                particle_key,
-                tt
-            )
-        )
-    )
-    plt.close(fig)
-
-
 trigger_rates = {}
 
 for site_key in irf_config['config']['sites']:
@@ -177,16 +138,31 @@ for site_key in irf_config['config']['sites']:
         gamma_T_per_s = np.sum(gamma_dT_per_s_per_GeV*fine_energy_bin_width)
         trigger_rates[site_key]['gamma'][tt] = gamma_T_per_s
 
-        write_differential_trigger_rate_figure(
-            energy_bin_centers=fine_energy_bin_centers,
-            dT_per_s_per_GeV=gamma_dT_per_s_per_GeV,
-            site_key=site_key,
-            particle_key='gamma',
-            trigger_thresholds=trigger_thresholds,
-            trigger_threshold_idx=tt,
-            figsize=sum_config['figure_16_9'],
-            out_dir=pa['out_dir'],
+        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
+        ax = fig.add_axes((.1, .1, .8, .8))
+        ax.plot(
+            fine_energy_bin_centers,
+            gamma_dT_per_s_per_GeV,
+            color='k'
         )
+        ax.set_title('trigger-threshold: {:d}p.e.'.format(trigger_thresholds[tt]))
+        ax.set_xlabel('energy / GeV')
+        ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        ax.loglog()
+        ax.set_xlim([energy_lower, energy_upper])
+        ax.set_ylim([1e-6, 1e2])
+        fig.savefig(
+            os.path.join(
+                pa['out_dir'],
+                '{:s}_{:s}_{:d}_differential_trigger_rate.jpg'.format(
+                    site_key,
+                    'gamma',
+                    tt
+                )
+            )
+        )
+        plt.close(fig)
 
     # cosmic-rays
     # -----------
