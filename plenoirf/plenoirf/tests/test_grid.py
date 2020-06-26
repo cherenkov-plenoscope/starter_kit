@@ -108,7 +108,6 @@ def test_grid_assign_head_on():
     )
 
 
-
 def test_shower_cx_moves_out_of_fov():
     np.random.seed(0)
     expectation = {
@@ -309,6 +308,3 @@ def test_shower_x_moves_but_counteracted():
 def toy_sim():
     A_TRUE = 1e3
     R_TRUE = np.sqrt(A_TRUE/np.pi)
-
-
-

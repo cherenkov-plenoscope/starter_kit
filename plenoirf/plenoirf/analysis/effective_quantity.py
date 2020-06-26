@@ -84,8 +84,8 @@ def effective_quantity_for_grid(
         energy_GeV,
         bins=energy_bin_edges_GeV,
         weights=(
-            mask_detected*
-            num_grid_cells_above_lose_threshold*
+            mask_detected *
+            num_grid_cells_above_lose_threshold *
             quantity_scatter
         )
     )[0]

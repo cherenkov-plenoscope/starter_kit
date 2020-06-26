@@ -123,7 +123,7 @@ def read_instrument_response_config(run_dir):
         num_bins_radius=config['grid']['num_bins_radius'])
     with open(opj(run_dir, 'input', 'scenery', 'scenery.json'), 'rt') as f:
         plenoscope_scenery = json.loads(f.read())
-    _prop_cfg_path = opj(run_dir, 'input','merlict_propagation_config.json')
+    _prop_cfg_path = opj(run_dir, 'input', 'merlict_propagation_config.json')
     with open(_prop_cfg_path, 'rt') as f:
         merlict_propagation_config = json.loads(f.read())
     bundle = {
@@ -200,6 +200,7 @@ def guess_energy_bins_lower_upper_number(irf_config, num_events):
     num_energy_bins = 2*(num_energy_bins//2)
     num_energy_bins = np.max([np.min([num_energy_bins, 2**6]), 2**2])
     return min_energy, max_energy, num_energy_bins
+
 
 def guess_c_bin_edges(num_events):
     num_bins = int(0.5*np.sqrt(num_events))

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def test_what_is_np_histogram2d_doing():
 
     num_bins_radius = 3
@@ -44,4 +45,3 @@ def test_what_is_np_histogram2d_doing():
 
     assert x_bin_idxs[0] - 1 == xidx
     assert y_bin_idxs[0] - 1 == yidx
-

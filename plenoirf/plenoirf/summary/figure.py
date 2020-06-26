@@ -1,5 +1,4 @@
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -88,7 +87,6 @@ def ax_add_hatches(ax, ix, iy, x_bin_edges, y_bin_edges, alpha=0.1):
     y0 = y_bin_edges[iy]
     y1 = y_bin_edges[iy + 1]
     ax.plot([x0, x1], [y0, y1], '-k', alpha=alpha)
-
 
 
 def radial_histogram(
