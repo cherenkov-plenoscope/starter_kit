@@ -12,6 +12,7 @@ from .. import table
 from .. import merlict
 from .. import grid
 from . import figure
+from .. import json_numpy
 
 
 def argv_since_py(sys_argv):
@@ -55,7 +56,7 @@ def init(
         run_dir=run_dir,
         irf_config=irf_config)
 
-    energy_bin_edges = guess_energy_bin_edges(
+    E_lower, E_upper, E_num_bins = guess_energy_bins_lower_upper_number(
         irf_config=irf_config,
         num_events=num_events_past_trigger)
 
@@ -70,24 +71,29 @@ def init(
         num_thresholds=32,
     )
 
-    summary_config = {}
-    summary_config['fraction_of_flux_below_geomagnetic_cutoff'] = 0.05
-    summary_config["trigger_modus"] = {
+    sc = {}
+    sc['fraction_of_flux_below_geomagnetic_cutoff'] = 0.05
+
+    sc["trigger_modus"] = {
         'accepting_focus': 7,
         'rejecting_focus': -1,
         'intensity_ratio_between_foci': 1.06,
         'use_rejection_focus': False
     }
+    sc['lower_energy_GeV'] = E_lower
+    sc['upper_energy_GeV'] = E_upper
+    sc['num_energy_bins'] = E_num_bins
 
-    summary_config['energy_bin_edges_GeV'] = energy_bin_edges.tolist()
-    summary_config['energy_bin_edges_GeV_coarse'] = list(energy_bin_edges[::2])
-    summary_config['c_bin_edges_deg'] = c_bin_edges_deg.tolist()
-    summary_config['trigger_thresholds_pe'] = thresholds.tolist()
-    summary_config['nominal_trigger_threshold_idx'] = int(
-        nominal_thresholds_idx)
-    summary_config['figure_16_9'] = figure_config_16by9
+    sc['energy_bin_edges_GeV'] = np.geomspace(E_lower, E_upper, E_num_bins)
+    sc['energy_bin_edges_GeV_coarse'] = sc['energy_bin_edges_GeV'][::2]
+
+    sc['c_bin_edges_deg'] = c_bin_edges_deg
+    sc['trigger_thresholds_pe'] = thresholds
+    sc['nominal_trigger_threshold_idx'] = nominal_thresholds_idx
+    sc['figure_16_9'] = figure_config_16by9
+
     with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
-        fout.write(json.dumps(summary_config, indent=4))
+        fout.write(json.dumps(sc, indent=4, cls=json_numpy.Encoder))
 
     proton_flux = cosmic_fluxes.read_cosmic_proton_flux_from_resources()
     with open(opj(summary_dir, 'proton_flux.json'), 'wt') as fout:
@@ -179,7 +185,7 @@ def estimate_num_events_past_trigger(run_dir, irf_config):
     return num_events_past_trigger
 
 
-def guess_energy_bin_edges(irf_config, num_events):
+def guess_energy_bins_lower_upper_number(irf_config, num_events):
     particles = irf_config['config']['particles']
     min_energies = []
     max_energies = []
@@ -193,9 +199,7 @@ def guess_energy_bin_edges(irf_config, num_events):
     num_energy_bins = int(np.sqrt(num_events))
     num_energy_bins = 2*(num_energy_bins//2)
     num_energy_bins = np.max([np.min([num_energy_bins, 2**6]), 2**2])
-    energy_bin_edges = np.geomspace(min_energy, max_energy, num_energy_bins+1)
-    return energy_bin_edges
-
+    return min_energy, max_energy, num_energy_bins
 
 def guess_c_bin_edges(num_events):
     num_bins = int(0.5*np.sqrt(num_events))
@@ -297,3 +301,13 @@ def read_airshower_differential_flux(
                 below_cutoff] *= geomagnetic_cutoff_fraction
 
     return airshowers
+
+
+def bin_centers(bin_edges, weight_lower_edge=0.5):
+    assert weight_lower_edge >= 0.0 and weight_lower_edge <= 1.0
+    weight_upper_edge = 1.0 - weight_lower_edge
+    return weight_lower_edge*bin_edges[:-1] + weight_upper_edge*bin_edges[1:]
+
+
+def bin_width(bin_edges):
+    return bin_edges[1:] - bin_edges[:-1]

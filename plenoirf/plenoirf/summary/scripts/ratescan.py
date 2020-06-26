@@ -33,31 +33,19 @@ nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
 nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
 num_trigger_thresholds = len(trigger_thresholds)
 
+energy_lower = sum_config['lower_energy_GeV']
+energy_upper = sum_config['upper_energy_GeV']
+
 energy_bin_edges = np.array(acceptance['energy_bin_edges']['value'])
-ENERGY_MIN = np.min(energy_bin_edges)
-ENERGY_MAX = np.max(energy_bin_edges)
+energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
-_weight_lower_edge = 0.5
-_weight_upper_edge = 1.0 - _weight_lower_edge
-
-energy_bin_width = energy_bin_edges[1:] - energy_bin_edges[:-1]
-energy_bin_centers = (
-    _weight_lower_edge*energy_bin_edges[:-1] +
-    _weight_upper_edge*energy_bin_edges[1:]
-)
-
-NUM_FINE_ENERGY_BINS = 1337
 fine_energy_bin_edges = np.geomspace(
-    ENERGY_MIN,
-    ENERGY_MAX,
-    NUM_FINE_ENERGY_BINS + 1
+    energy_lower,
+    energy_upper,
+    1337
 )
-
-fine_energy_bin_width = fine_energy_bin_edges[1:] - fine_energy_bin_edges[:-1]
-fine_energy_bin_centers = (
-    _weight_lower_edge*fine_energy_bin_edges[:-1] +
-    _weight_upper_edge*fine_energy_bin_edges[1:]
-)
+fine_energy_bin_width = irf.summary.bin_width(fine_energy_bin_edges)
+fine_energy_bin_centers = irf.summary.bin_centers(fine_energy_bin_edges)
 
 # cosmic-ray-flux
 # ----------------
@@ -103,7 +91,7 @@ for site_key in irf_config['config']['sites']:
     )
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.loglog()
-    ax.set_xlim([ENERGY_MIN, ENERGY_MAX])
+    ax.set_xlim([energy_lower, energy_upper])
     ax.legend()
     fig.savefig(
         os.path.join(
@@ -137,7 +125,7 @@ def write_differential_trigger_rate_figure(
     ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.loglog()
-    ax.set_xlim([ENERGY_MIN, ENERGY_MAX])
+    ax.set_xlim([energy_lower, energy_upper])
     ax.set_ylim([1e-6, 1e2])
     fig.savefig(
         os.path.join(
