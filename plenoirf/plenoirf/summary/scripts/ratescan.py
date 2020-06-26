@@ -31,14 +31,11 @@ with open(acceptance_trigger_path, 'rt') as f:
 trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
 nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
 nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
-NUM_THRESHOLDS = len(trigger_thresholds)
-
-ON_REGION_CONTAINMENT = 0.68
+num_trigger_thresholds = len(trigger_thresholds)
 
 energy_bin_edges = np.array(acceptance['energy_bin_edges']['value'])
 ENERGY_MIN = np.min(energy_bin_edges)
 ENERGY_MAX = np.max(energy_bin_edges)
-NUM_COARSE_ENERGY_BINS = energy_bin_edges.shape[0] - 1
 
 _weight_lower_edge = 0.5
 _weight_upper_edge = 1.0 - _weight_lower_edge
@@ -64,36 +61,18 @@ fine_energy_bin_centers = (
 
 # cosmic-ray-flux
 # ----------------
-cosmic_rays = {
-    "proton": {"color": "red"},
-    "helium": {"color": "orange"},
-    "electron": {"color": "blue"}
+airshower_fluxes = irf.summary.read_airshower_differential_flux(
+    summary_dir=pa['summary_dir'],
+    energy_bin_centers=fine_energy_bin_centers,
+    sites=irf_config['config']['sites'],
+    geomagnetic_cutoff_fraction=sum_config[
+        'fraction_of_flux_below_geomagnetic_cutoff'],
+)
+_cosmic_ray_colors = {
+    "proton": "red",
+    "helium": "orange",
+    "electron": "blue",
 }
-
-_cosmic_ray_raw_fluxes = {}
-with open(os.path.join(pa['summary_dir'], "proton_flux.json"), "rt") as f:
-    _cosmic_ray_raw_fluxes["proton"] = json.loads(f.read())
-with open(os.path.join(pa['summary_dir'], "helium_flux.json"), "rt") as f:
-    _cosmic_ray_raw_fluxes["helium"] = json.loads(f.read())
-with open(os.path.join(pa['summary_dir'], "electron_positron_flux.json"), "rt") as f:
-    _cosmic_ray_raw_fluxes["electron"] = json.loads(f.read())
-for p in cosmic_rays:
-    cosmic_rays[p]['differential_flux'] = np.interp(
-        x=fine_energy_bin_centers,
-        xp=_cosmic_ray_raw_fluxes[p]['energy']['values'],
-        fp=_cosmic_ray_raw_fluxes[p]['differential_flux']['values']
-    )
-
-# geomagnetic cutoff
-geomagnetic_cutoff_fraction = 0.05
-below_cutoff = fine_energy_bin_centers < 10.0
-airshower_rates = {}
-for p in cosmic_rays:
-    airshower_rates[p] = cosmic_rays[p]
-    airshower_rates[p]['differential_flux'][below_cutoff] = (
-        geomagnetic_cutoff_fraction*
-        airshower_rates[p]['differential_flux'][below_cutoff]
-    )
 
 # gamma-ray-flux
 # ---------------
@@ -107,32 +86,71 @@ gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
     energy=fine_energy_bin_centers
 )
 
+for site_key in irf_config['config']['sites']:
+    fig = irf.summary.figure.figure(sum_config['figure_16_9'])
+    ax = fig.add_axes((.1, .1, .8, .8))
+    for particle_key in airshower_fluxes[site_key]:
+        ax.plot(
+            fine_energy_bin_centers,
+            airshower_fluxes[site_key][particle_key]['differential_flux'],
+            label=particle_key,
+            color=_cosmic_ray_colors[particle_key],
+        )
+    ax.set_xlabel('energy / GeV')
+    ax.set_ylabel(
+        'differential flux of airshowers / '+
+        'm$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$'
+    )
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    ax.loglog()
+    ax.set_xlim([ENERGY_MIN, ENERGY_MAX])
+    ax.legend()
+    fig.savefig(
+        os.path.join(
+            pa['out_dir'],
+            '{:s}_airshower_differential_flux.jpg'.format(site_key)
+        )
+    )
+    plt.close(fig)
 
-fig = irf.summary.figure.figure(sum_config['figure_16_9'])
-ax = fig.add_axes((.1, .1, .8, .8))
-for particle_key in airshower_rates:
+
+def write_differential_trigger_rate_figure(
+    energy_bin_centers,
+    dT_per_s_per_GeV,
+    site_key,
+    particle_key,
+    trigger_thresholds,
+    trigger_threshold_idx,
+    out_dir,
+    figsize,
+):
+    tt = trigger_threshold_idx
+    fig = irf.summary.figure.figure(figsize)
+    ax = fig.add_axes((.1, .1, .8, .8))
     ax.plot(
-        fine_energy_bin_centers,
-        airshower_rates[particle_key]['differential_flux'],
-        label=particle_key,
-        color=cosmic_rays[particle_key]['color'],
+        energy_bin_centers,
+        dT_per_s_per_GeV,
+        color='k'
     )
-ax.set_xlabel('energy / GeV')
-ax.set_ylabel(
-    'differential flux of airshowers / '+
-    'm$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$'
-)
-ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-ax.loglog()
-ax.set_xlim([ENERGY_MIN, ENERGY_MAX])
-ax.legend()
-fig.savefig(
-    os.path.join(
-        pa['out_dir'],
-        'airshower_differential_flux.jpg'
+    ax.set_title('trigger-threshold: {:d}p.e.'.format(trigger_thresholds[tt]))
+    ax.set_xlabel('energy / GeV')
+    ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    ax.loglog()
+    ax.set_xlim([ENERGY_MIN, ENERGY_MAX])
+    ax.set_ylim([1e-6, 1e2])
+    fig.savefig(
+        os.path.join(
+            out_dir,
+            '{:s}_{:s}_{:d}_differential_trigger_rate.jpg'.format(
+                site_key,
+                particle_key,
+                tt
+            )
+        )
     )
-)
-plt.close(fig)
+    plt.close(fig)
+
 
 trigger_rates = {}
 
@@ -149,7 +167,7 @@ for site_key in irf_config['config']['sites']:
 
     # gamma-ray
     # ---------
-    trigger_rates[site_key]['gamma'] = np.zeros(NUM_THRESHOLDS)
+    trigger_rates[site_key]['gamma'] = np.zeros(num_trigger_thresholds)
 
     _gamma_effective_area_m2 = np.array(acceptance[
         'cosmic_response'][
@@ -158,7 +176,7 @@ for site_key in irf_config['config']['sites']:
         'point'][
         'value']
     )
-    for tt in range(NUM_THRESHOLDS):
+    for tt in range(num_trigger_thresholds):
         gamma_effective_area_m2 = np.interp(
             x=fine_energy_bin_centers,
             xp=energy_bin_centers,
@@ -171,36 +189,21 @@ for site_key in irf_config['config']['sites']:
         gamma_T_per_s = np.sum(gamma_dT_per_s_per_GeV*fine_energy_bin_width)
         trigger_rates[site_key]['gamma'][tt] = gamma_T_per_s
 
-
-        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
-        ax = fig.add_axes((.1, .1, .8, .8))
-        ax.plot(
-            fine_energy_bin_centers,
-            gamma_effective_area_m2,
-            'k'
+        write_differential_trigger_rate_figure(
+            energy_bin_centers=fine_energy_bin_centers,
+            dT_per_s_per_GeV=gamma_dT_per_s_per_GeV,
+            site_key=site_key,
+            particle_key='gamma',
+            trigger_thresholds=trigger_thresholds,
+            trigger_threshold_idx=tt,
+            figsize=sum_config['figure_16_9'],
+            out_dir=pa['out_dir'],
         )
-        ax.loglog()
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.set_xlabel('energy / GeV')
-        ax.set_ylabel('area / m2')
-        ax.set_ylim([1e2, 1e6])
-        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        fig.savefig(
-            os.path.join(
-                pa['out_dir'],
-                '{:s}_gamma_{:d}.jpg'.format(site_key, tt)
-            )
-        )
-        plt.close(fig)
-        print(tt, trigger_thresholds[tt])
-
-
 
     # cosmic-rays
     # -----------
-    for cosmic_key in cosmic_rays:
-        trigger_rates[site_key][cosmic_key] = np.zeros(NUM_THRESHOLDS)
+    for cosmic_key in airshower_fluxes[site_key]:
+        trigger_rates[site_key][cosmic_key] = np.zeros(num_trigger_thresholds)
 
         _cosmic_effective_acceptance_m2_sr = np.array(acceptance[
             'cosmic_response'][
@@ -209,7 +212,7 @@ for site_key in irf_config['config']['sites']:
             'diffuse'][
             'value']
         )
-        for tt in range(NUM_THRESHOLDS):
+        for tt in range(num_trigger_thresholds):
 
             cosmic_effective_acceptance_m2_sr = np.interp(
                 x=fine_energy_bin_centers,
@@ -218,48 +221,15 @@ for site_key in irf_config['config']['sites']:
             )
             cosmic_dT_per_s_per_GeV = (
                 cosmic_effective_acceptance_m2_sr*
-                airshower_rates[particle_key]['differential_flux']
+                airshower_fluxes[site_key][cosmic_key]['differential_flux']
             )
             cosmic_T_per_s = cosmic_dT_per_s_per_GeV*fine_energy_bin_width
             trigger_rates[site_key][cosmic_key][tt] = np.sum(cosmic_T_per_s)
 
-            fig = irf.summary.figure.figure(sum_config['figure_16_9'])
-            ax = fig.add_axes((.1, .1, .8, .8))
-            ax.plot(
-                fine_energy_bin_centers,
-                cosmic_effective_acceptance_m2_sr,
-                'k'
-            )
-            ax.loglog()
-            ax.spines['right'].set_visible(False)
-            ax.spines['top'].set_visible(False)
-            ax.set_xlabel('energy / GeV')
-            ax.set_ylabel('acceptance / m2 sr')
-            ax.set_ylim([1e-1, 1e5])
-            ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-            fig.savefig(
-                os.path.join(
-                    pa['out_dir'],
-                    '{:s}_{:s}_{:d}.jpg'.format(site_key, cosmic_key, tt)
-                )
-            )
-            plt.close(fig)
-            print(tt, trigger_thresholds[tt])
 
-
-
-for site_key in trigger_rates:
-    for particle_key in trigger_rates[site_key]:
-        trigger_rates[site_key][particle_key] = (
-            trigger_rates[site_key][particle_key].tolist()
-        )
 with open(os.path.join(pa['out_dir'], 'trigger_rates.json'), 'wt') as f:
-    f.write(json.dumps(trigger_rates))
-for site_key in trigger_rates:
-    for particle_key in trigger_rates[site_key]:
-        trigger_rates[site_key][particle_key] = np.array(
-            trigger_rates[site_key][particle_key]
-        )
+    f.write(json.dumps(trigger_rates, cls=irf.json_numpy.Encoder))
+
 
 for site_key in irf_config['config']['sites']:
     tr = trigger_rates[site_key]
@@ -280,11 +250,11 @@ for site_key in irf_config['config']['sites']:
         'k:',
         label='night-sky')
 
-    for cosmic_key in cosmic_rays:
+    for cosmic_key in airshower_fluxes[site_key]:
         ax.plot(
             trigger_thresholds,
             tr[cosmic_key],
-            color=cosmic_rays[cosmic_key]['color'],
+            color=_cosmic_ray_colors[cosmic_key],
             label=cosmic_key
         )
 

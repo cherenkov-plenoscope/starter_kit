@@ -1,4 +1,5 @@
 import os
+import copy
 from os.path import join as opj
 import pandas as pd
 import numpy as np
@@ -66,11 +67,11 @@ def init(
             'config'][
             'sum_trigger'][
             'threshold_pe'],
-        num_thresholds=30,
+        num_thresholds=32,
     )
 
     summary_config = {}
-
+    summary_config['fraction_of_flux_below_geomagnetic_cutoff'] = 0.05
     summary_config["trigger_modus"] = {
         'accepting_focus': 7,
         'rejecting_focus': -1,
@@ -205,7 +206,7 @@ def guess_c_bin_edges(num_events):
 
 def guess_trigger_thresholds(nominal_trigger_threshold, num_thresholds):
     tt = np.geomspace(
-        int(nominal_trigger_threshold*0.8),
+        int(nominal_trigger_threshold*0.5),
         int(nominal_trigger_threshold*2.0),
         num_thresholds,
     )
@@ -219,3 +220,80 @@ def guess_trigger_thresholds(nominal_trigger_threshold, num_thresholds):
     nominal_idx = np.where(tt == nominal_trigger_threshold)
     assert len(nominal_idx) == 1
     return tt, nominal_idx[0][0]
+
+
+def _read_raw_cosmic_ray_differential_fluxes(summary_dir):
+    cosmic_ray_raw_fluxes = {}
+    with open(opj(summary_dir, "proton_flux.json"), "rt") as f:
+        cosmic_ray_raw_fluxes["proton"] = json.loads(f.read())
+    with open(opj(summary_dir, "helium_flux.json"), "rt") as f:
+        cosmic_ray_raw_fluxes["helium"] = json.loads(f.read())
+    with open(opj(summary_dir, "electron_positron_flux.json"), "rt") as f:
+        cosmic_ray_raw_fluxes["electron"] = json.loads(f.read())
+    return cosmic_ray_raw_fluxes
+
+
+def _rigidity_to_kinetic_energy(rigidity_GV, charge_unit, mass_GeV_per_c2):
+    return (
+        np.sqrt(
+            (rigidity_GV*charge_unit)**2 + mass_GeV_per_c2**2
+        )
+        -
+        mass_GeV_per_c2
+    )
+
+
+def read_airshower_differential_flux(
+    summary_dir,
+    energy_bin_centers,
+    sites,
+    geomagnetic_cutoff_fraction,
+):
+    # read raw
+    _raw_cosmic_rays = _read_raw_cosmic_ray_differential_fluxes(summary_dir)
+
+    # interpolate
+    cosmic_rays = {}
+    for particle_key in _raw_cosmic_rays:
+        cosmic_rays[particle_key] = {}
+        cosmic_rays[particle_key]['differential_flux'] = np.interp(
+            x=energy_bin_centers,
+            xp=_raw_cosmic_rays[particle_key]['energy']['values'],
+            fp=_raw_cosmic_rays[particle_key]['differential_flux']['values']
+        )
+
+    mass_GeV = {
+        "proton": 0.938,
+        "helium": 3.754,
+        "electron": 511e-6,
+    }
+
+    charge_unit = {
+        "proton": 1,
+        "helium": 2,
+        "electron": -1,
+    }
+
+    # cutoff
+    airshowers = {}
+    for site_key in sites:
+        airshowers[site_key] = {}
+        for particle_key in cosmic_rays:
+
+            cutoff_energy = _rigidity_to_kinetic_energy(
+                rigidity_GV=sites[site_key]['geomagnetic_cutoff_rigidity_GV'],
+                charge_unit=charge_unit[particle_key],
+                mass_GeV_per_c2=mass_GeV[particle_key],
+            )
+
+            below_cutoff = energy_bin_centers < cutoff_energy
+            airshowers[
+                site_key][
+                particle_key] = copy.deepcopy(cosmic_rays[particle_key])
+            airshowers[
+                site_key][
+                particle_key][
+                'differential_flux'][
+                below_cutoff] *= geomagnetic_cutoff_fraction
+
+    return airshowers
