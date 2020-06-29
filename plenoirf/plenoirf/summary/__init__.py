@@ -248,6 +248,10 @@ def _rigidity_to_kinetic_energy(rigidity_GV, charge_unit, mass_GeV_per_c2):
     )
 
 
+def _rigidity_to_total_energy(rigidity_GV):
+    return rigidity_GV
+
+
 def read_airshower_differential_flux(
     summary_dir,
     energy_bin_centers,
@@ -285,7 +289,7 @@ def read_airshower_differential_flux(
         airshowers[site_key] = {}
         for particle_key in cosmic_rays:
 
-            cutoff_energy = _rigidity_to_kinetic_energy(
+            cutoff_energy = _rigidity_to_total_energy(
                 rigidity_GV=sites[site_key]['geomagnetic_cutoff_rigidity_GV'],
                 charge_unit=charge_unit[particle_key],
                 mass_GeV_per_c2=mass_GeV[particle_key],
