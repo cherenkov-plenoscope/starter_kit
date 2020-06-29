@@ -271,18 +271,6 @@ def read_airshower_differential_flux(
             fp=_raw_cosmic_rays[particle_key]['differential_flux']['values']
         )
 
-    mass_GeV = {
-        "proton": 0.938,
-        "helium": 3.754,
-        "electron": 511e-6,
-    }
-
-    charge_unit = {
-        "proton": 1,
-        "helium": 2,
-        "electron": -1,
-    }
-
     # cutoff
     airshowers = {}
     for site_key in sites:
@@ -290,9 +278,7 @@ def read_airshower_differential_flux(
         for particle_key in cosmic_rays:
 
             cutoff_energy = _rigidity_to_total_energy(
-                rigidity_GV=sites[site_key]['geomagnetic_cutoff_rigidity_GV'],
-                charge_unit=charge_unit[particle_key],
-                mass_GeV_per_c2=mass_GeV[particle_key],
+                rigidity_GV=sites[site_key]['geomagnetic_cutoff_rigidity_GV']
             )
 
             below_cutoff = energy_bin_centers < cutoff_energy
