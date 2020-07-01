@@ -104,8 +104,7 @@ def find_common_indices(table, structure, level_keys=None):
         level_key = level_keys[lidx]
         _uids = table[level_key][IDX]
         uids = np.intersect1d(uids, _uids)
-    df = pd.DataFrame({IDX: uids})
-    return df.to_records(index=False)
+    return uids
 
 
 def intersection(list_of_lists_of_indices):
@@ -142,7 +141,7 @@ def cut_level_on_indices(
     del _part
     common_df = pd.merge(
         part_df,
-        pd.DataFrame(indices),
+        pd.DataFrame(dict_to_recarray({IDX: indices})),
         on=IDX,
         how='inner')
     del part_df
@@ -153,7 +152,7 @@ def cut_level_on_indices(
         common_order_args = np.argsort(common[IDX])
         common_sorted = common[common_order_args]
         del common_order_args
-        indices_order_args = np.argsort(indices[IDX])
+        indices_order_args = np.argsort(indices)
         inverse_order = np.zeros(shape=indices_order_args.shape, dtype=np.int)
         inverse_order[indices_order_args] = np.arange(len(indices))
         del indices_order_args
@@ -161,7 +160,7 @@ def cut_level_on_indices(
         del inverse_order
         np.testing.assert_array_equal(
             common_same_order_as_indices[IDX],
-            indices[IDX])
+            indices)
         return common_same_order_as_indices
     else:
         return common

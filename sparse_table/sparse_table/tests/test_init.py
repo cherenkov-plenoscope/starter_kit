@@ -219,7 +219,6 @@ def test_merge_across_all_levels_random_order_indices():
     cut_indices = np.intersect1d(cut_indices, has_big_lunchpack)
     cut_indices = np.intersect1d(cut_indices, has_2best_friends)
     np.random.shuffle(cut_indices)
-    cut_indices = spt.dict_to_recarray({spt.IDX: cut_indices})
 
     cut_table = spt.cut_table_on_indices(
         table=my_table,
@@ -235,7 +234,7 @@ def test_merge_across_all_levels_random_order_indices():
         cut_table['university'][spt.IDX])
     np.testing.assert_array_equal(
         cut_table['elementary_school'][spt.IDX],
-        cut_indices[spt.IDX])
+        cut_indices)
 
 
 def test_merge_random_order_indices():
@@ -254,7 +253,6 @@ def test_merge_random_order_indices():
     cut_indices = np.intersect1d(cut_indices, has_big_lunchpack)
     cut_indices = np.intersect1d(cut_indices, has_2best_friends)
     np.random.shuffle(cut_indices)
-    cut_indices = spt.dict_to_recarray({spt.IDX: cut_indices})
 
     cut_table = spt.cut_table_on_indices(
         table=my_table,
@@ -271,7 +269,7 @@ def test_merge_random_order_indices():
         cut_table['high_school'][spt.IDX])
     np.testing.assert_array_equal(
         cut_table['elementary_school'][spt.IDX],
-        cut_indices[spt.IDX])
+        cut_indices)
 
 
 def test_concatenate_several_tables():
