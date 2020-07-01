@@ -29,8 +29,8 @@ with open(acceptance_trigger_path, 'rt') as f:
     acceptance = json.loads(f.read())
 
 trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
-nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
+analysis_trigger_threshold_idx = sum_config['analysis_trigger_threshold_idx']
+analysis_trigger_threshold = trigger_thresholds[analysis_trigger_threshold_idx]
 num_trigger_thresholds = len(trigger_thresholds)
 
 energy_lower = sum_config['lower_energy_GeV']
@@ -230,7 +230,7 @@ for site_key in irf_config['config']['sites']:
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.legend(loc='best', fontsize=10)
     ax.axvline(
-        x=nominal_trigger_threshold,
+        x=analysis_trigger_threshold,
         color='k',
         linestyle='-',
         alpha=0.25)

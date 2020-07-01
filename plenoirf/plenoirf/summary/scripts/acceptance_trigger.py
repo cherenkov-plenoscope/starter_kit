@@ -147,7 +147,7 @@ for site_key in irf_config['config']['sites']:
                 mask_detected=mask_detected,
                 quantity_scatter=quantity_scatter,
                 num_grid_cells_above_lose_threshold=
-                    um_grid_cells_above_lose_threshold,
+                    num_grid_cells_above_lose_threshold,
                 total_num_grid_cells=NUM_GRID_BINS,
             )
             _diffuse['value'].append(_q_eff.tolist())

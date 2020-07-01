@@ -15,6 +15,24 @@ from . import figure
 from .. import json_numpy
 
 
+summary_config = {
+    "lower_energy_GeV": 0.25,
+    "upper_energy_GeV": 1e3,
+    "num_energy_bins": 32,
+
+    "trigger_modus": {
+        'accepting_focus': 7,
+        'rejecting_focus': -1,
+        'intensity_ratio_between_foci': 1.06,
+        'use_rejection_focus': False
+    },
+    "trigger_threshold_pe": 128,
+    "num_trigger_thresholds_in_ratescan": 32,
+
+    "fraction_of_flux_below_geomagnetic_cutoff": 0.05,
+}
+
+
 def argv_since_py(sys_argv):
     argv = []
     for arg in sys_argv:
@@ -46,54 +64,15 @@ def read_summary_config(summary_dir):
 
 def init(
     run_dir,
+    summary_config=summary_config,
     figure_config_16by9=figure.CONFIG_16_9,
 ):
     summary_dir = os.path.join(run_dir, 'summary')
     os.makedirs(summary_dir, exist_ok=True)
-    irf_config = read_instrument_response_config(run_dir=run_dir)
-
-    num_events_past_trigger = estimate_num_events_past_trigger(
-        run_dir=run_dir,
-        irf_config=irf_config)
-
-    E_lower, E_upper, E_num_bins = guess_energy_bins_lower_upper_number(
-        irf_config=irf_config,
-        num_events=num_events_past_trigger)
-
-    c_bin_edges_deg = guess_c_bin_edges(
-        num_events=num_events_past_trigger)
-
-    (thresholds, nominal_thresholds_idx) = guess_trigger_thresholds(
-        nominal_trigger_threshold=irf_config[
-            'config'][
-            'sum_trigger'][
-            'threshold_pe'],
-        num_thresholds=32,
-    )
-
-    sc = {}
-    sc['fraction_of_flux_below_geomagnetic_cutoff'] = 0.05
-
-    sc["trigger_modus"] = {
-        'accepting_focus': 7,
-        'rejecting_focus': -1,
-        'intensity_ratio_between_foci': 1.06,
-        'use_rejection_focus': False
-    }
-    sc['lower_energy_GeV'] = E_lower
-    sc['upper_energy_GeV'] = E_upper
-    sc['num_energy_bins'] = E_num_bins
-
-    sc['energy_bin_edges_GeV'] = np.geomspace(E_lower, E_upper, E_num_bins)
-    sc['energy_bin_edges_GeV_coarse'] = sc['energy_bin_edges_GeV'][::2]
-
-    sc['c_bin_edges_deg'] = c_bin_edges_deg
-    sc['trigger_thresholds_pe'] = thresholds
-    sc['nominal_trigger_threshold_idx'] = nominal_thresholds_idx
-    sc['figure_16_9'] = figure_config_16by9
+    summary_config['figure_16_9'] = figure_config_16by9
 
     with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
-        fout.write(json.dumps(sc, indent=4, cls=json_numpy.Encoder))
+        fout.write(json.dumps(summary_config, indent=4, cls=json_numpy.Encoder))
 
     proton_flux = cosmic_fluxes.read_cosmic_proton_flux_from_resources()
     with open(opj(summary_dir, 'proton_flux.json'), 'wt') as fout:
@@ -137,6 +116,45 @@ def read_instrument_response_config(run_dir):
 
 
 def run(run_dir):
+    summary_dir = opj(run_dir, 'summary')
+    irf_config = read_instrument_response_config(run_dir=run_dir)
+    sum_config = read_summary_config(summary_dir=summary_dir)
+
+    num_events_past_trigger = estimate_num_events_past_trigger(
+        run_dir=run_dir,
+        irf_config=irf_config)
+
+    c_bin_edges_deg = guess_c_bin_edges(
+        num_events=num_events_past_trigger)
+
+    (
+        thresholds,
+        nominal_thresholds_idx,
+        analysis_trigger_threshold_idx
+    ) = guess_trigger_thresholds(
+        nominal_trigger_threshold=irf_config[
+            'config'][
+            'sum_trigger'][
+            'threshold_pe'],
+        analysis_trigger_threshold=sum_config['trigger_threshold_pe'],
+        num_thresholds=32,
+    )
+
+    sum_config['energy_bin_edges_GeV'] = np.geomspace(
+        sum_config['lower_energy_GeV'],
+        sum_config['upper_energy_GeV'],
+        sum_config['num_energy_bins'])
+    sum_config['energy_bin_edges_GeV_coarse'] = sum_config[
+        'energy_bin_edges_GeV'][::2]
+
+    sum_config['c_bin_edges_deg'] = c_bin_edges_deg
+    sum_config['trigger_thresholds_pe'] = thresholds
+    sum_config['nominal_trigger_threshold_idx'] = nominal_thresholds_idx
+    sum_config['analysis_trigger_threshold_idx'] = analysis_trigger_threshold_idx
+
+    with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
+        fout.write(json.dumps(sum_config, indent=4, cls=json_numpy.Encoder))
+
     scripts = [
         'runtime.py',
         'trigger_probability_vs_cherenkov_size.py',
@@ -209,7 +227,11 @@ def guess_c_bin_edges(num_events):
     return c_bin_edges
 
 
-def guess_trigger_thresholds(nominal_trigger_threshold, num_thresholds):
+def guess_trigger_thresholds(
+    nominal_trigger_threshold,
+    analysis_trigger_threshold,
+    num_thresholds
+):
     tt = np.geomspace(
         int(nominal_trigger_threshold*0.5),
         int(nominal_trigger_threshold*2.0),
@@ -218,13 +240,19 @@ def guess_trigger_thresholds(nominal_trigger_threshold, num_thresholds):
     tt = np.round(tt)
     tt = tt.tolist()
     tt = tt + [nominal_trigger_threshold]
+    tt = tt + [analysis_trigger_threshold]
     tt = set(tt)
     tt = list(tt)
     tt = np.array(tt, dtype=np.int)
     tt = np.sort(tt)
+
     nominal_idx = np.where(tt == nominal_trigger_threshold)
     assert len(nominal_idx) == 1
-    return tt, nominal_idx[0][0]
+
+    analysis_idx = np.where(tt == analysis_trigger_threshold)
+    assert len(analysis_idx) == 1
+
+    return tt, nominal_idx[0][0], analysis_idx[0][0]
 
 
 def _read_raw_cosmic_ray_differential_fluxes(summary_dir):

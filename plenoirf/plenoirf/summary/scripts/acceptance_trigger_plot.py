@@ -33,8 +33,8 @@ trigger_thresholds = np.array(A['trigger_thresholds']['value'])
 assert A['trigger_thresholds']['unit'] == "p.e."
 
 trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-nominal_trigger_threshold_idx = 7 + sum_config['nominal_trigger_threshold_idx']
-nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
+analysis_trigger_threshold_idx = sum_config['analysis_trigger_threshold_idx']
+analysis_trigger_threshold = trigger_thresholds[analysis_trigger_threshold_idx]
 
 sources = {
     'diffuse': {
