@@ -27,7 +27,7 @@ def _make_example_table(size, start_index=0):
     of those progress to university.
     At each point in their career statistics are collected that can be put to
     columns, while every child is represented by a line.
-    A typical example of a sparse table.
+    Unfortunately, a typical example of a sparse table.
     """
     t = {}
     t['elementary_school'] = spt.dict_to_recarray(
