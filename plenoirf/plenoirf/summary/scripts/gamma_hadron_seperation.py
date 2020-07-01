@@ -18,13 +18,19 @@ import matplotlib.pyplot as plt
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
+os.makedirs(pa['out_dir'], exist_ok=True)
+
+FOV_RADIUS_DEG = (
+    0.5 *
+    irf_config['light_field_sensor_geometry']['max_FoV_diameter_deg']
+)
+
+MAX_LEAKAGE_PE = 50
 
 def make_gh_features(gh_df):
 
@@ -64,7 +70,7 @@ def make_gh_features(gh_df):
         gh_df['features.light_front_cy'],
         gh_df['features.image_half_depth_shift_cx'],
         gh_df['features.image_half_depth_shift_cy'],
-        gh_df['features.image_infinity_num_photons_on_edge_field_of_view'],
+        # gh_df['features.image_infinity_num_photons_on_edge_field_of_view'],
 
         gh_df['features.image_half_depth_shift_cx'],
         gh_df['features.image_half_depth_shift_cy'],
@@ -79,7 +85,7 @@ for site_key in irf_config['config']['sites']:
     # ====================
     event_table = spt.read(
         path=os.path.join(
-            run_dir,
+            pa['run_dir'],
             'event_table',
             site_key,
             'gamma',
@@ -87,59 +93,102 @@ for site_key in irf_config['config']['sites']:
         structure=irf.table.STRUCTURE)
 
     # only with features
-    idxs_primary = event_table['primary'][spt.IDX]
     idxs_features = event_table['features'][spt.IDX]
 
-    _off_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
-        az1_deg=np.rad2deg(event_table['primary']['azimuth_rad']),
-        zd1_deg=np.rad2deg(event_table['primary']['zenith_rad']),
-        az2_deg=irf_config['config']['plenoscope_pointing']['azimuth_deg'],
-        zd2_deg=irf_config['config']['plenoscope_pointing']['zenith_deg'])
-    _off_mask= (_off_deg <= 3.25 - 1.0)
-    idxs_in_possible_on_region = event_table['primary'][spt.IDX][_off_mask]
+    idxs_in_possible_on_region = irf.analysis.effective_quantity.cut_primary_direction_within_angle(
+        primary_table=event_table['primary'],
+        radial_angle_deg=FOV_RADIUS_DEG - 0.25,
+        azimuth_deg=irf_config[
+            'config']['plenoscope_pointing']['azimuth_deg'],
+        zenith_deg=irf_config[
+            'config']['plenoscope_pointing']['zenith_deg'],
+    )
 
     idxs_in_energy_bin = event_table['primary'][spt.IDX][
         event_table['primary']['energy_GeV'] < gamma_max_energy]
 
+    _mask_no_leakage = event_table[
+        'features'][
+        'image_infinity_num_photons_on_edge_field_of_view'] < MAX_LEAKAGE_PE
+    idxs_no_leakage = event_table['features'][spt.IDX][_mask_no_leakage]
+
     cut_idxs = spt.intersection([
-        idxs_primary,
         idxs_features,
+        idxs_no_leakage,
         idxs_in_possible_on_region,
-        idxs_in_energy_bin])
+        idxs_in_energy_bin
+    ])
 
     gamma_table = spt.cut_table_on_indices(
         table=event_table,
         structure=irf.table.STRUCTURE,
-        common_indices=spt.dict_to_recarray({spt.IDX: cut_idxs})
+        common_indices=cut_idxs
+    )
+    gamma_table = spt.sort_table_on_common_indices(
+        table=gamma_table,
+        common_indices=cut_idxs
     )
 
-    gamma_df = spt.make_rectangular(gamma_table)
+    gamma_df = spt.make_rectangular_DataFrame(gamma_table)
     gamma_df['gammaness'] = np.ones(gamma_df.shape[0], dtype=np.float)
 
     # prepare hadron-sample
     # =====================
 
     # proton
-    _full_proton_table = irf.summary.read_event_table_cache(
-        summary_dir=summary_dir,
-        run_dir=run_dir,
-        site_key=site_key,
-        particle_key='proton')
-    proton_table = irf.table.cut(
-        event_table=_full_proton_table,
-        indices=irf.table.level_indices(_full_proton_table['features']))
-    proton_df = irf.table.combine_in_rectangular_dataframe(proton_table)
+    _full_proton_table = spt.read(
+        path=os.path.join(
+            pa['run_dir'],
+            'event_table',
+            site_key,
+            'proton',
+            'event_table.tar'
+        ),
+        structure=irf.table.STRUCTURE
+    )
+    _mask_no_leakage = _full_proton_table[
+        'features'][
+        'image_infinity_num_photons_on_edge_field_of_view'] < MAX_LEAKAGE_PE
+    idxs_no_leakage = _full_proton_table['features'][spt.IDX][_mask_no_leakage]
+    proton_table = spt.cut_table_on_indices(
+        table=_full_proton_table,
+        structure=irf.table.STRUCTURE,
+        common_indices=idxs_no_leakage
+    )
+    proton_table = spt.sort_table_on_common_indices(
+        table=proton_table,
+        common_indices=idxs_no_leakage
+    )
+    proton_df = spt.make_rectangular_DataFrame(proton_table)
 
     # helium
-    _full_helium_table = irf.summary.read_event_table_cache(
-        summary_dir=summary_dir,
-        run_dir=run_dir,
-        site_key=site_key,
-        particle_key='helium')
-    helium_table = irf.table.cut(
-        event_table=_full_helium_table,
-        indices=irf.table.level_indices(_full_helium_table['features']))
-    helium_df = irf.table.combine_in_rectangular_dataframe(helium_table)
+    _full_helium_table = spt.read(
+        path=os.path.join(
+            pa['run_dir'],
+            'event_table',
+            site_key,
+            'helium',
+            'event_table.tar'
+        ),
+        structure=irf.table.STRUCTURE
+    )
+    _mask_no_leakage = _full_helium_table[
+        'features'][
+        'image_infinity_num_photons_on_edge_field_of_view'] < MAX_LEAKAGE_PE
+    idxs_no_leakage = _full_helium_table['features'][spt.IDX][_mask_no_leakage]
+    helium_table = spt.cut_table_on_indices(
+        table=_full_helium_table,
+        structure=irf.table.STRUCTURE,
+        common_indices=idxs_no_leakage
+    )
+    helium_table = spt.sort_table_on_common_indices(
+        table=helium_table,
+        common_indices=idxs_no_leakage
+    )
+    helium_df = spt.make_rectangular_DataFrame(helium_table)
+
+    # hadron
+    # ------
     hadron_df = pd.concat([proton_df, helium_df])
     hadron_df['gammaness'] = np.zeros(hadron_df.shape[0], dtype=np.float)
 
@@ -174,7 +223,6 @@ for site_key in irf_config['config']['sites']:
 
     # learn
     # =====
-
     gh_mlp = sklearn.neural_network.MLPRegressor(
         solver='lbfgs',
         alpha=1e-2,
@@ -183,9 +231,6 @@ for site_key in irf_config['config']['sites']:
         verbose=False,
         max_iter=3000)
     gh_mlp.fit(x_gh_train_s, y_gh_train_s[:, 0])
-
-    gh_tree = tree.DecisionTreeRegressor()
-    gh_tree = gh_tree.fit(x_gh_train_s, y_gh_train_s)
 
     # benchmark
     # =========
@@ -200,30 +245,30 @@ for site_key in irf_config['config']['sites']:
             gh_mlp.predict(x_gh_test_s)))
 
     roc_gh = {
-        "false_positive_rate": fpr_gh.tolist(),
-        "true_positive_rate": tpr_gh.tolist(),
-        "gamma_hadron_threshold": thresholds_gh.tolist(),
-        "area_under_curve": float(auc_gh),
-        "num_events_for_training": int(x_gh_train.shape[0]),
-        "max_gamma_ray_energy": float(gamma_max_energy),
+        "false_positive_rate": fpr_gh,
+        "true_positive_rate": tpr_gh,
+        "gamma_hadron_threshold": thresholds_gh,
+        "area_under_curve": auc_gh,
+        "num_events_for_training": x_gh_train.shape[0],
+        "max_gamma_ray_energy": gamma_max_energy,
     }
     roc_gh_path = os.path.join(
-        summary_dir,
+        pa['out_dir'],
         "{:s}_roc_gamma_hadron".format(site_key))
     with open(roc_gh_path+".json", "wt") as fout:
-        fout.write(json.dumps(roc_gh, indent=4))
+        fout.write(json.dumps(roc_gh, indent=4, cls=irf.json_numpy.Encoder))
 
     print(site_key, 'auc.', auc_gh)
 
-    fig = plt.figure(figsize=(10, 10), dpi=200)
+    fig = irf.summary.figure.figure(sum_config['figure_16_9'])
     ax = fig.add_axes([.2, .2, .72, .72])
     ax.plot(fpr_gh, tpr_gh, 'k')
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.set_title('area under curve {:.2f}'.format(auc_gh))
-    ax.set_xlabel('false positive rate / 1\nproton acceptance')
-    ax.set_ylabel('true positive rate / 1\ngamma-ray acceptance')
-    ax.semilogx()
+    ax.set_xlabel('false positive rate / 1\nhadron-acceptance')
+    ax.set_ylabel('true positive rate / 1\ngamma-ray-acceptance')
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
+    ax.set_aspect('equal')
     plt.savefig(roc_gh_path+".jpg")
     plt.close('all')

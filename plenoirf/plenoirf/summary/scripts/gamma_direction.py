@@ -16,13 +16,12 @@ import matplotlib.pyplot as plt
 
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
+os.makedirs(pa['out_dir'], exist_ok=True)
 
 def one_sigma_68_containment(residual_angles):
     sorted_angles = np.sort(residual_angles)
@@ -52,7 +51,7 @@ for site_key in irf_config['config']['sites']:
 
         event_table = spt.read(
             path=os.path.join(
-                run_dir,
+                pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
@@ -66,30 +65,39 @@ for site_key in irf_config['config']['sites']:
         idxs_primary = event_table['primary'][spt.IDX]
         idxs_features = event_table['features'][spt.IDX]
 
-        _off_deg = mdfl.discovery._great_circle_distance_alt_zd_deg(
+        _off_deg = mdfl.discovery._angle_between_az_zd_deg(
             az1_deg=np.rad2deg(event_table['primary']['azimuth_rad']),
             zd1_deg=np.rad2deg(event_table['primary']['zenith_rad']),
             az2_deg=irf_config['config']['plenoscope_pointing']['azimuth_deg'],
             zd2_deg=irf_config['config']['plenoscope_pointing']['zenith_deg'])
-        _off_mask= (_off_deg <= 3.25 - 1.0)
+        _off_mask= (_off_deg <= 3.25 - 0.25)
         idxs_in_possible_on_region = event_table['primary'][spt.IDX][_off_mask]
 
         idxs_in_energy_bin = event_table['primary'][spt.IDX][
-            event_table['primary']['energy_GeV'] < 1.6]
+            event_table['primary']['energy_GeV'] < 2]
+
+        mask_no_leakage = event_table[
+            'features'][
+            'image_smallest_ellipse_num_photons_on_edge_field_of_view'] <= 0
+        idxs_no_leakage = event_table[
+            'features'][spt.IDX][mask_no_leakage]
 
         cut_idxs = spt.intersection([
             idxs_primary,
             idxs_features,
-            idxs_in_possible_on_region,
-            idxs_in_energy_bin])
+            idxs_in_energy_bin,
+            idxs_no_leakage])
 
         events = spt.cut_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
-            common_indices=spt.dict_to_recarray({spt.IDX: cut_idxs})
+            common_indices=cut_idxs,
         )
-
-        psf_events = spt.make_rectangular(events)
+        _psf_events = spt.sort_table_on_common_indices(
+            table=events,
+            common_indices=cut_idxs,
+        )
+        psf_events = spt.make_rectangular_DataFrame(_psf_events)
 
         # reconstruction
         # ==============
@@ -145,16 +153,15 @@ for site_key in irf_config['config']['sites']:
         primary_cx_reco = cxcy_reconstructed_mlp[:, 0]
         primary_cy_reco = cxcy_reconstructed_mlp[:, 1]
 
-        """
-        primary_cx_reco = ( - 0.5*(
-            psf_test['features.image_infinity_cx_mean'] +
-            psf_test['features.light_front_cx'])
+        w = 0.9
+        primary_cx_reco = (
+            -w*psf_test['features.image_infinity_cx_mean']
+            -(1-w)*psf_test['features.light_front_cx']
         )
-        primary_cy_reco = ( - 0.5*(
-            psf_test['features.image_infinity_cy_mean'] +
-            psf_test['features.light_front_cy'])
+        primary_cy_reco = (
+            -w*psf_test['features.image_infinity_cy_mean']
+            -(1-w)*psf_test['features.light_front_cy']
         )
-        """
 
         delta_cx = primary_cx - primary_cx_reco
         delta_cy = primary_cy - primary_cy_reco
@@ -170,7 +177,7 @@ for site_key in irf_config['config']['sites']:
         print(site_key, one_sigma_68_containment(np.rad2deg(delta_c)), "deg")
 
         num_bin_edges = 32
-        fig = plt.figure()
+        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
         ax = fig.add_axes([0.1, 0.1, 0.9, 0.9])
         ax.hist2d(
             np.rad2deg(primary_cx),
@@ -178,9 +185,9 @@ for site_key in irf_config['config']['sites']:
             bins=np.linspace(-4, 4, num_bin_edges))
         ax.set_aspect('equal')
         fig.savefig(
-            os.path.join(summary_dir, "{:s}_gamma_true.jpg".format(site_key)))
+            os.path.join(pa['out_dir'], "{:s}_gamma_true.jpg".format(site_key)))
 
-        fig = plt.figure()
+        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
         ax = fig.add_axes([0.1, 0.1, 0.9, 0.9])
         ax.hist2d(
             np.rad2deg(primary_cx_reco),
@@ -188,9 +195,9 @@ for site_key in irf_config['config']['sites']:
             bins=np.linspace(-4, 4, num_bin_edges))
         ax.set_aspect('equal')
         fig.savefig(
-            os.path.join(summary_dir, "{:s}_gamma_reco.jpg".format(site_key)))
+            os.path.join(pa['out_dir'], "{:s}_gamma_reco.jpg".format(site_key)))
 
-        fig = plt.figure()
+        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
         ax = fig.add_axes([0.1, 0.1, 0.9, 0.9])
         ax.hist2d(
             np.rad2deg(delta_cx),
@@ -198,9 +205,9 @@ for site_key in irf_config['config']['sites']:
             bins=np.linspace(-4, 4, num_bin_edges))
         ax.set_aspect('equal')
         fig.savefig(
-            os.path.join(summary_dir, "{:s}_gamma_psf.jpg".format(site_key)))
+            os.path.join(pa['out_dir'], "{:s}_gamma_psf.jpg".format(site_key)))
 
-        fig = plt.figure()
+        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
         ax = fig.add_axes([0.1, 0.1, 0.9, 0.9])
         ax.hist2d(
             np.rad2deg(primary_cx),
@@ -209,10 +216,10 @@ for site_key in irf_config['config']['sites']:
         ax.set_aspect('equal')
         fig.savefig(
             os.path.join(
-                summary_dir,
+                pa['out_dir'],
                 "{:s}_cx_true_vs_reco.jpg".format(site_key)))
 
-        fig = plt.figure()
+        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
         ax = fig.add_axes([0.1, 0.1, 0.9, 0.9])
         ax.hist2d(
             np.rad2deg(primary_cy),
@@ -221,5 +228,5 @@ for site_key in irf_config['config']['sites']:
         ax.set_aspect('equal')
         fig.savefig(
             os.path.join(
-                summary_dir,
+                pa['out_dir'],
                 "{:s}_cy_true_vs_reco.jpg".format(site_key)))

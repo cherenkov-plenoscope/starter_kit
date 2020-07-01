@@ -139,4 +139,4 @@ def cut_primary_direction_within_angle(
     )
     inside = (delta_deg <= radial_angle_deg)
     idxs_inside = primary_table[spt.IDX][inside]
-    return spt.dict_to_recarray({spt.IDX: idxs_inside})
+    return idxs_inside

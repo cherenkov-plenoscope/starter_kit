@@ -184,21 +184,29 @@ def test_merge_common():
     my_common_table = spt.cut_table_on_indices(
         table=my_table,
         structure=EXAMPLE_TABLE_STRUCTURE,
-        common_indices=common_indices)
+        common_indices=common_indices
+    )
+    my_sorted_common_table = spt.sort_table_on_common_indices(
+        table=my_common_table,
+        common_indices=common_indices
+    )
 
     np.testing.assert_array_equal(
-        my_common_table['elementary_school'][spt.IDX],
-        my_common_table['high_school'][spt.IDX])
+        my_sorted_common_table['elementary_school'][spt.IDX],
+        my_sorted_common_table['high_school'][spt.IDX]
+    )
 
     np.testing.assert_array_equal(
-        my_common_table['elementary_school'][spt.IDX],
-        my_common_table['university'][spt.IDX])
+        my_sorted_common_table['elementary_school'][spt.IDX],
+        my_sorted_common_table['university'][spt.IDX]
+    )
 
-    my_common_df = spt.make_rectangular_DataFrame(table=my_common_table)
+    my_common_df = spt.make_rectangular_DataFrame(table=my_sorted_common_table)
 
     np.testing.assert_array_equal(
-        my_common_table['elementary_school'][spt.IDX],
-        my_common_df[spt.IDX])
+        my_sorted_common_table['elementary_school'][spt.IDX],
+        my_common_df[spt.IDX]
+    )
 
 
 def test_merge_across_all_levels_random_order_indices():
@@ -225,16 +233,23 @@ def test_merge_across_all_levels_random_order_indices():
         structure=EXAMPLE_TABLE_STRUCTURE,
         common_indices=cut_indices,
         level_keys=['elementary_school', 'high_school', 'university'])
+    sorted_cut_table = spt.sort_table_on_common_indices(
+        table=cut_table,
+        common_indices=cut_indices
+    )
 
     np.testing.assert_array_equal(
-        cut_table['elementary_school'][spt.IDX],
-        cut_table['high_school'][spt.IDX])
+        sorted_cut_table['elementary_school'][spt.IDX],
+        sorted_cut_table['high_school'][spt.IDX]
+    )
     np.testing.assert_array_equal(
-        cut_table['elementary_school'][spt.IDX],
-        cut_table['university'][spt.IDX])
+        sorted_cut_table['elementary_school'][spt.IDX],
+        sorted_cut_table['university'][spt.IDX]
+    )
     np.testing.assert_array_equal(
-        cut_table['elementary_school'][spt.IDX],
-        cut_indices)
+        sorted_cut_table['elementary_school'][spt.IDX],
+        cut_indices
+    )
 
 
 def test_merge_random_order_indices():
@@ -258,18 +273,25 @@ def test_merge_random_order_indices():
         table=my_table,
         structure=EXAMPLE_TABLE_STRUCTURE,
         common_indices=cut_indices,
-        level_keys=['elementary_school', 'high_school'])
+        level_keys=['elementary_school', 'high_school']
+    )
+    sorted_cut_table = spt.sort_table_on_common_indices(
+        table=cut_table,
+        common_indices=cut_indices
+    )
 
-    assert 'university' not in cut_table
-    assert 'elementary_school' in cut_table
-    assert 'high_school' in cut_table
+    assert 'university' not in sorted_cut_table
+    assert 'elementary_school' in sorted_cut_table
+    assert 'high_school' in sorted_cut_table
 
     np.testing.assert_array_equal(
-        cut_table['elementary_school'][spt.IDX],
-        cut_table['high_school'][spt.IDX])
+        sorted_cut_table['elementary_school'][spt.IDX],
+        sorted_cut_table['high_school'][spt.IDX]
+    )
     np.testing.assert_array_equal(
-        cut_table['elementary_school'][spt.IDX],
-        cut_indices)
+        sorted_cut_table['elementary_school'][spt.IDX],
+        cut_indices
+    )
 
 
 def test_concatenate_several_tables():

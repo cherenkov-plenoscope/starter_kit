@@ -145,25 +145,7 @@ def cut_level_on_indices(
         on=IDX,
         how='inner')
     del part_df
-    common = common_df.to_records(index=False)
-    del common_df
-
-    if common.shape[0] >= indices.shape[0]:
-        common_order_args = np.argsort(common[IDX])
-        common_sorted = common[common_order_args]
-        del common_order_args
-        indices_order_args = np.argsort(indices)
-        inverse_order = np.zeros(shape=indices_order_args.shape, dtype=np.int)
-        inverse_order[indices_order_args] = np.arange(len(indices))
-        del indices_order_args
-        common_same_order_as_indices = common_sorted[inverse_order]
-        del inverse_order
-        np.testing.assert_array_equal(
-            common_same_order_as_indices[IDX],
-            indices)
-        return common_same_order_as_indices
-    else:
-        return common
+    return common_df.to_records(index=False)
 
 
 def cut_table_on_indices(
@@ -181,6 +163,26 @@ def cut_table_on_indices(
             structure=structure,
             level_key=level_key,
             indices=common_indices)
+    return out
+
+
+def sort_table_on_common_indices(
+    table,
+    common_indices,
+):
+    common_order_args = np.argsort(common_indices)
+    common_inv_order = np.zeros(shape=common_indices.shape, dtype=np.int)
+    common_inv_order[common_order_args] = np.arange(len(common_indices))
+    del common_order_args
+
+    out = {}
+    for level_key in table:
+        level = table[level_key]
+        level_order_args = np.argsort(level[IDX])
+        level_sorted = level[level_order_args]
+        del level_order_args
+        level_same_order_as_common = level_sorted[common_inv_order]
+        out[level_key] = level_same_order_as_common
     return out
 
 

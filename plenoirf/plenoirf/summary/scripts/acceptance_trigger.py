@@ -70,8 +70,7 @@ for site_key in irf_config['config']['sites']:
         point_particle_table = spt.cut_table_on_indices(
             table=diffuse_particle_table,
             structure=irf.table.STRUCTURE,
-            common_indices=idx_in_possible_onregion,
-            level_keys=None
+            common_indices=idx_in_possible_onregion
         )
 
         energy_GeV = point_particle_table['primary']['energy_GeV']
@@ -165,7 +164,7 @@ for site_key in irf_config['config']['sites']:
             table=diffuse_particle_table,
             structure=irf.table.STRUCTURE,
             level_key='trigger',
-            indices=spt.dict_to_recarray({spt.IDX: nsb_thrown_indices})
+            indices=nsb_thrown_indices
         )
 
         _tmp_nsb_response[site_key][particle_key] = []

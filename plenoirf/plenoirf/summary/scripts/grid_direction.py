@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import json
 
+import magnetic_deflection as mdfl
 import sparse_table as spt
 import plenoirf as irf
 
@@ -59,9 +60,9 @@ for site_key in irf_config['config']['sites']:
             )
         )
 
-        _in_vec = irf.query.primary_incident_vector(event_table['primary'])
-        primary_cx = _in_vec[:, 0]
-        primary_cy = _in_vec[:, 1]
+        (primary_cx, primary_cy) = mdfl.discovery._az_zd_to_cx_cy(
+            azimuth_deg=np.rad2deg(event_table['primary']['azimuth_rad']),
+            zenith_deg=np.rad2deg(event_table['primary']['zenith_rad']))
 
         intensity_cube = []
         exposure_cube = []

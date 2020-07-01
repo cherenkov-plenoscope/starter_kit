@@ -41,8 +41,7 @@ for site_key in irf_config['config']['sites']:
         mrg_chc_fts = spt.cut_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
-            common_indices=spt.dict_to_recarray({
-                spt.IDX: event_table['features'][spt.IDX]}),
+            common_indices=event_table['features'][spt.IDX],
             level_keys=[
                 'primary',
                 'trigger',
