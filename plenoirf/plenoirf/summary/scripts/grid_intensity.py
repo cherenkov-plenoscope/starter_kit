@@ -54,7 +54,7 @@ for site_key in irf_config['config']['sites']:
             u_energy = energy_bin_edges[energy_idx + 1]
 
             energy_mask = (
-                (table['primary']['energy_GeV'] >= l_energy)*
+                (table['primary']['energy_GeV'] >= l_energy) *
                 (table['primary']['energy_GeV'] < u_energy)
             ).astype(np.int64)
 
