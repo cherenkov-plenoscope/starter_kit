@@ -30,6 +30,7 @@ summary_config = {
     "num_trigger_thresholds_in_ratescan": 32,
 
     "fraction_of_flux_below_geomagnetic_cutoff": 0.05,
+    "max_num_true_cherenkov_photons_in_event_to_be_night_sky_background": 0,
 }
 
 

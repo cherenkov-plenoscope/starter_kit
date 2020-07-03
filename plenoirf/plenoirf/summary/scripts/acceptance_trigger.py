@@ -18,7 +18,8 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 os.makedirs(pa['out_dir'], exist_ok=True)
 
-MAX_CHERENKOV_IN_NSB_PE = 0
+MAX_CHERENKOV_IN_NSB_PE = sum_config[
+    'max_num_true_cherenkov_photons_in_event_to_be_night_sky_background']
 TIME_SLICE_DURATION = 0.5e-9
 NUM_TIME_SLICES_PER_EVENT = (
     100 -
