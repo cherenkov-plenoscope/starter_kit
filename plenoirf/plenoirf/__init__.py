@@ -360,7 +360,8 @@ def _populate_table_of_thrown_air_showers(
     tmp_absdir,
     date_dict_now,
     KEEP_TMP,
-    LAZY_REDUCTION=False
+    LAZY_REDUCTION=False,
+    num_parallel_jobs=2000,
 ):
     sge._print("Estimating instrument-response.")
     table_absdir = opj(out_absdir, "event_table")
@@ -438,7 +439,7 @@ def _populate_table_of_thrown_air_showers(
 
     irf_bundles = bundle.bundle_jobs(
         jobs=irf_jobs,
-        desired_num_bunbles=360
+        desired_num_bunbles=num_parallel_jobs
     )
 
     _ = pool.map(
@@ -497,6 +498,7 @@ def _populate_table_of_thrown_air_showers(
 def run(
     path,
     MULTIPROCESSING_POOL="sun_grid_engine",
+    num_parallel_jobs=2000,
     executables=EXAMPLE_EXECUTABLES,
     TMP_DIR_ON_WORKERNODE=True,
     KEEP_TMP=False,
@@ -553,6 +555,7 @@ def run(
         tmp_absdir=tmp_absdir,
         KEEP_TMP=KEEP_TMP,
         date_dict_now=date_dict_now,
-        LAZY_REDUCTION=LAZY_REDUCTION)
+        LAZY_REDUCTION=LAZY_REDUCTION,
+        num_parallel_jobs=num_parallel_jobs)
 
     sge._print("End main().")
