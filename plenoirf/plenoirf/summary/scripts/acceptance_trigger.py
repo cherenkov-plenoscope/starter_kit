@@ -19,7 +19,8 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 os.makedirs(pa['out_dir'], exist_ok=True)
 
 MAX_CHERENKOV_IN_NSB_PE = sum_config[
-    'max_num_true_cherenkov_photons_in_event_to_be_night_sky_background']
+    'night_sky_background'][
+    'max_num_true_cherenkov_photons']
 TIME_SLICE_DURATION = 0.5e-9
 NUM_TIME_SLICES_PER_EVENT = (
     100 -
@@ -27,14 +28,18 @@ NUM_TIME_SLICES_PER_EVENT = (
 )
 EXPOSURE_TIME_PER_EVENT = NUM_TIME_SLICES_PER_EVENT*TIME_SLICE_DURATION
 NUM_GRID_BINS = irf_config['grid_geometry']['num_bins_diameter']**2
-FOV_RADIUS_DEG = (
-    0.5 *
-    irf_config['light_field_sensor_geometry']['max_FoV_diameter_deg']
-)
 
-energy_bin_edges = np.array(sum_config['energy_bin_edges_GeV'])
-trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-trigger_modus = sum_config["trigger_modus"]
+MAX_SOURCE_ANGLE_DEG = sum_config[
+    'gamma_ray_source_direction'][
+    'max_angle_relative_to_pointing_deg']
+
+energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins']
+)
+trigger_thresholds = sum_config['trigger']['ratescan_thresholds_pe']
+trigger_modus = sum_config["trigger"]["modus"]
 
 cosmic_response = {}
 _tmp_nsb_response = {}
@@ -61,7 +66,7 @@ for site_key in irf_config['config']['sites']:
         # ------------
         idx_in_possible_onregion = irf.analysis.effective_quantity.cut_primary_direction_within_angle(
             primary_table=diffuse_particle_table['primary'],
-            radial_angle_deg=FOV_RADIUS_DEG - 0.5,
+            radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
             azimuth_deg=irf_config[
                 'config']['plenoscope_pointing']['azimuth_deg'],
             zenith_deg=irf_config[
@@ -107,8 +112,8 @@ for site_key in irf_config['config']['sites']:
                     num_grid_cells_above_lose_threshold,
                 total_num_grid_cells=NUM_GRID_BINS,
             )
-            _point['value'].append(_q_eff.tolist())
-            _point['relative_uncertainty'].append(_q_unc.tolist())
+            _point['value'].append(_q_eff)
+            _point['relative_uncertainty'].append(_q_unc)
         cosmic_response[site_key][particle_key]['point'] = _point
 
         # diffuse source
@@ -150,8 +155,8 @@ for site_key in irf_config['config']['sites']:
                     num_grid_cells_above_lose_threshold,
                 total_num_grid_cells=NUM_GRID_BINS,
             )
-            _diffuse['value'].append(_q_eff.tolist())
-            _diffuse['relative_uncertainty'].append(_q_unc.tolist())
+            _diffuse['value'].append(_q_eff)
+            _diffuse['relative_uncertainty'].append(_q_unc)
             cosmic_response[site_key][particle_key]['diffuse'] = _diffuse
 
         # acceidental triggers in night-sky-background
@@ -210,18 +215,18 @@ for site_key in irf_config['config']['sites']:
     )
 
     nsb_response[site_key] = {
-        "rate": nsb_rate.tolist(),
-        "rate_relative_uncertainty": relative_uncertainty.tolist(),
+        "rate": nsb_rate,
+        "rate_relative_uncertainty": relative_uncertainty,
         "unit": "s$^{-1}$",
     }
 
 Qout = {
     "energy_bin_edges": {
-        "value": energy_bin_edges.tolist(),
+        "value": energy_bin_edges,
         "unit": "GeV"
     },
     "trigger_thresholds": {
-        "value": trigger_thresholds.tolist(),
+        "value": trigger_thresholds,
         "unit": "p.e."
     },
     "cosmic_response": cosmic_response,
@@ -229,4 +234,4 @@ Qout = {
 }
 
 with open(os.path.join(pa['out_dir'], 'acceptance_trigger.json'), 'wt') as f:
-    f.write(json.dumps(Qout, indent=4))
+    f.write(json.dumps(Qout, indent=4, cls=irf.json_numpy.Encoder))

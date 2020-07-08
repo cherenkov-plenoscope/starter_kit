@@ -15,25 +15,6 @@ from . import figure
 from .. import json_numpy
 
 
-summary_config = {
-    "lower_energy_GeV": 0.25,
-    "upper_energy_GeV": 1e3,
-    "num_energy_bins": 32,
-
-    "trigger_modus": {
-        'accepting_focus': 7,
-        'rejecting_focus': -1,
-        'intensity_ratio_between_foci': 1.06,
-        'use_rejection_focus': False
-    },
-    "trigger_threshold_pe": 128,
-    "num_trigger_thresholds_in_ratescan": 32,
-
-    "fraction_of_flux_below_geomagnetic_cutoff": 0.05,
-    "max_num_true_cherenkov_photons_in_event_to_be_night_sky_background": 0,
-}
-
-
 def argv_since_py(sys_argv):
     argv = []
     for arg in sys_argv:
@@ -63,14 +44,11 @@ def read_summary_config(summary_dir):
     return config
 
 
-def init(
-    run_dir,
-    summary_config=summary_config,
-    figure_config_16by9=figure.CONFIG_16_9,
-):
+def init(run_dir):
+    summary_config = _guess_summary_config(run_dir)
+
     summary_dir = os.path.join(run_dir, 'summary')
     os.makedirs(summary_dir, exist_ok=True)
-    summary_config['figure_16_9'] = figure_config_16by9
 
     with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
         fout.write(json.dumps(summary_config, indent=4, cls=json_numpy.Encoder))
@@ -121,41 +99,6 @@ def run(run_dir):
     irf_config = read_instrument_response_config(run_dir=run_dir)
     sum_config = read_summary_config(summary_dir=summary_dir)
 
-    num_events_past_trigger = estimate_num_events_past_trigger(
-        run_dir=run_dir,
-        irf_config=irf_config)
-
-    c_bin_edges_deg = guess_c_bin_edges(
-        num_events=num_events_past_trigger)
-
-    (
-        thresholds,
-        nominal_thresholds_idx,
-        analysis_trigger_threshold_idx
-    ) = guess_trigger_thresholds(
-        nominal_trigger_threshold=irf_config[
-            'config'][
-            'sum_trigger'][
-            'threshold_pe'],
-        analysis_trigger_threshold=sum_config['trigger_threshold_pe'],
-        num_thresholds=32,
-    )
-
-    sum_config['energy_bin_edges_GeV'] = np.geomspace(
-        sum_config['lower_energy_GeV'],
-        sum_config['upper_energy_GeV'],
-        sum_config['num_energy_bins'])
-    sum_config['energy_bin_edges_GeV_coarse'] = sum_config[
-        'energy_bin_edges_GeV'][::2]
-
-    sum_config['c_bin_edges_deg'] = c_bin_edges_deg
-    sum_config['trigger_thresholds_pe'] = thresholds
-    sum_config['nominal_trigger_threshold_idx'] = nominal_thresholds_idx
-    sum_config['analysis_trigger_threshold_idx'] = analysis_trigger_threshold_idx
-
-    with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
-        fout.write(json.dumps(sum_config, indent=4, cls=json_numpy.Encoder))
-
     scripts = [
         'runtime.py',
         'trigger_probability_vs_cherenkov_size.py',
@@ -185,7 +128,7 @@ def _script_abspath(filename):
     return os.path.abspath(path)
 
 
-def estimate_num_events_past_trigger(run_dir, irf_config):
+def _estimate_num_events_past_trigger(run_dir, irf_config):
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
     num_events_past_trigger = 10*1000
@@ -204,7 +147,7 @@ def estimate_num_events_past_trigger(run_dir, irf_config):
     return num_events_past_trigger
 
 
-def guess_energy_bins_lower_upper_number(irf_config, num_events):
+def _guess_energy_bins_lower_upper_number(irf_config, num_events):
     particles = irf_config['config']['particles']
     min_energies = []
     max_energies = []
@@ -221,39 +164,38 @@ def guess_energy_bins_lower_upper_number(irf_config, num_events):
     return min_energy, max_energy, num_energy_bins
 
 
-def guess_c_bin_edges(num_events):
+def _guess_num_direction_bins(num_events):
     num_bins = int(0.5*np.sqrt(num_events))
     num_bins = np.max([np.min([num_bins, 2**7]), 2**4])
-    c_bin_edges = np.linspace(-35, 35, num_bins+1)
-    return c_bin_edges
+    return num_bins
 
-
-def guess_trigger_thresholds(
-    nominal_trigger_threshold,
+def make_ratescan_trigger_thresholds(
+    lower_threshold,
+    upper_threshold,
+    num_thresholds,
+    collection_trigger_threshold,
     analysis_trigger_threshold,
-    num_thresholds
 ):
+    assert lower_threshold <= collection_trigger_threshold
+    assert upper_threshold >= collection_trigger_threshold
+
+    assert lower_threshold <= analysis_trigger_threshold
+    assert upper_threshold >= analysis_trigger_threshold
+
     tt = np.geomspace(
-        int(nominal_trigger_threshold*0.5),
-        int(nominal_trigger_threshold*2.0),
+        lower_threshold,
+        upper_threshold,
         num_thresholds,
     )
     tt = np.round(tt)
     tt = tt.tolist()
-    tt = tt + [nominal_trigger_threshold]
+    tt = tt + [collection_trigger_threshold]
     tt = tt + [analysis_trigger_threshold]
+    tt = np.array(tt, dtype=np.int)
     tt = set(tt)
     tt = list(tt)
-    tt = np.array(tt, dtype=np.int)
     tt = np.sort(tt)
-
-    nominal_idx = np.where(tt == nominal_trigger_threshold)
-    assert len(nominal_idx) == 1
-
-    analysis_idx = np.where(tt == analysis_trigger_threshold)
-    assert len(analysis_idx) == 1
-
-    return tt, nominal_idx[0][0], analysis_idx[0][0]
+    return tt
 
 
 def _read_raw_cosmic_ray_differential_fluxes(summary_dir):
@@ -331,3 +273,86 @@ def bin_centers(bin_edges, weight_lower_edge=0.5):
 
 def bin_width(bin_edges):
     return bin_edges[1:] - bin_edges[:-1]
+
+
+def _guess_summary_config(run_dir):
+    irf_config = read_instrument_response_config(run_dir=run_dir)
+
+    num_events_past_collection_trigger = _estimate_num_events_past_trigger(
+        run_dir=run_dir,
+        irf_config=irf_config
+    )
+
+    lower_E, upper_E, num_E_bins = _guess_energy_bins_lower_upper_number(
+        irf_config=irf_config,
+        num_events=num_events_past_collection_trigger
+    )
+
+    collection_trigger_threshold_pe = irf_config[
+        'config'][
+        'sum_trigger'][
+        'threshold_pe']
+    analysis_trigger_threshold_pe = int(
+        np.round(1.11*collection_trigger_threshold_pe))
+
+    fov_radius_deg = 0.5*irf_config[
+        'light_field_sensor_geometry'][
+        'max_FoV_diameter_deg']
+
+    summary_config = {
+        "energy_binning": {
+            "lower_edge_GeV": lower_E,
+            "upper_edge_GeV": upper_E,
+            "num_bins": num_E_bins,
+            "num_bins_coarse": num_E_bins//8,
+            "num_bins_fine": 1337,
+        },
+
+        "direction_binning": {
+            "radial_angle_deg": 35.0,
+            "num_bins": _guess_num_direction_bins(
+                num_events_past_collection_trigger
+            ),
+        },
+
+        "trigger": {
+            "modus": {
+                'accepting_focus': 7,
+                'rejecting_focus': -1,
+                'intensity_ratio_between_foci': 1.06,
+                'use_rejection_focus': False,
+            },
+            "threshold_pe": analysis_trigger_threshold_pe,
+            "ratescan_thresholds_pe" : make_ratescan_trigger_thresholds(
+                lower_threshold=int(collection_trigger_threshold_pe*0.8),
+                upper_threshold=int(collection_trigger_threshold_pe*1.5),
+                num_thresholds=32,
+                collection_trigger_threshold=collection_trigger_threshold_pe,
+                analysis_trigger_threshold=analysis_trigger_threshold_pe,
+            )
+        },
+
+        "night_sky_background": {
+            "max_num_true_cherenkov_photons": 0,
+        },
+
+        "airshower_flux": {
+            "fraction_of_flux_below_geomagnetic_cutoff": 0.05,
+        },
+
+        "gamma_ray_source_direction": {
+            "max_angle_relative_to_pointing_deg": fov_radius_deg - 0.5,
+        },
+
+        "training_and_test": {
+            "fraction_training": 0.5
+        },
+
+        "gamma_hadron_seperation": {
+            "gammaness_threshold": 0.5
+        },
+    }
+
+    summary_config['figure_16_9'] = figure.CONFIG_16_9
+
+    return summary_config

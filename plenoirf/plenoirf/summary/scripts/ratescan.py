@@ -28,22 +28,23 @@ acceptance_trigger_path = os.path.join(
 with open(acceptance_trigger_path, 'rt') as f:
     acceptance = json.loads(f.read())
 
-trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-analysis_trigger_threshold_idx = sum_config['analysis_trigger_threshold_idx']
-analysis_trigger_threshold = trigger_thresholds[analysis_trigger_threshold_idx]
+trigger_thresholds = np.array(sum_config['trigger']['ratescan_thresholds_pe'])
+collection_trigger_threshold = irf_config['config']['sum_trigger']['threshold_pe']
+analysis_trigger_threshold = sum_config['trigger']['threshold_pe']
 num_trigger_thresholds = len(trigger_thresholds)
 
-energy_lower = sum_config['lower_energy_GeV']
-energy_upper = sum_config['upper_energy_GeV']
+energy_lower = sum_config['energy_binning']['lower_edge_GeV']
+energy_upper = sum_config['energy_binning']['upper_edge_GeV']
 
 energy_bin_edges = np.array(acceptance['energy_bin_edges']['value'])
 energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
-fine_energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    1337
+fine_energy_bin_edges = energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins_fine']
 )
+
 fine_energy_bin_width = irf.summary.bin_width(fine_energy_bin_edges)
 fine_energy_bin_centers = irf.summary.bin_centers(fine_energy_bin_edges)
 
@@ -54,6 +55,7 @@ airshower_fluxes = irf.summary.read_airshower_differential_flux(
     energy_bin_centers=fine_energy_bin_centers,
     sites=irf_config['config']['sites'],
     geomagnetic_cutoff_fraction=sum_config[
+        'airshower_flux'][
         'fraction_of_flux_below_geomagnetic_cutoff'],
 )
 _cosmic_ray_colors = {

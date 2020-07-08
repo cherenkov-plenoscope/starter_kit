@@ -32,10 +32,6 @@ assert A['energy_bin_edges']['unit'] == "GeV"
 trigger_thresholds = np.array(A['trigger_thresholds']['value'])
 assert A['trigger_thresholds']['unit'] == "p.e."
 
-trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-analysis_trigger_threshold_idx = sum_config['analysis_trigger_threshold_idx']
-analysis_trigger_threshold = trigger_thresholds[analysis_trigger_threshold_idx]
-
 sources = {
     'diffuse': {
         'label': 'area $\\times$ solid angle',
@@ -61,10 +57,20 @@ for site_key in irf_config['config']['sites']:
                 ax = fig.add_axes((.1, .1, .8, .8))
 
                 Q = np.array(
-                    cr[site_key][particle_key][source_key]['value'][tt]
+                    cr[
+                        site_key][
+                        particle_key][
+                        source_key][
+                        'value'][
+                        tt]
                 )
                 delta_Q = np.array(
-                    cr[site_key][particle_key][source_key]['relative_uncertainty'][tt]
+                    cr[
+                        site_key][
+                        particle_key][
+                        source_key][
+                        'relative_uncertainty'][
+                        tt]
                 )
                 Q_lower = (1 - delta_Q)*Q
                 Q_upper = (1 + delta_Q)*Q
@@ -98,7 +104,9 @@ for site_key in irf_config['config']['sites']:
                     face_alpha=0.25
                 )
 
-                ax.set_title('threshold: {:d}p.e.'.format(trigger_thresholds[tt]))
+                ax.set_title(
+                    'threshold: {:d}p.e.'.format(trigger_thresholds[tt])
+                )
                 ax.set_xlabel('energy / GeV')
                 ax.set_ylabel('{:s} / {:s}'.format(
                         sources[source_key]['label'],
