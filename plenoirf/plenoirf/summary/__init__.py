@@ -345,12 +345,14 @@ def _guess_summary_config(run_dir):
         },
 
         "training_and_test": {
-            "fraction_training": 0.5
+            "test_size": 0.5
         },
 
         "gamma_hadron_seperation": {
             "gammaness_threshold": 0.5
         },
+        "random_seed": 1,
+
     }
 
     summary_config['figure_16_9'] = figure.CONFIG_16_9
