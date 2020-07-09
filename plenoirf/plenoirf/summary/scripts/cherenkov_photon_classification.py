@@ -21,6 +21,13 @@ fc16by9 = sum_config['figure_16_9']
 fc1by1 = fc16by9.copy()
 fc1by1['rows'] = fc16by9['rows']*(16/9)
 
+energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins_coarse']
+)
+num_energy_bins = len(energy_bin_edges) - 1
+
 CHCL = 'cherenkovclassification'
 
 os.makedirs(pa['out_dir'], exist_ok=True)
@@ -112,8 +119,6 @@ for site_key in irf_config['config']['sites']:
 
         # sensitivity VS. energy
         # -----------------------
-        energy_bin_edges = np.array(sum_config['energy_bin_edges_GeV_coarse'])
-        num_energy_bins = len(energy_bin_edges) - 1
 
         tprs = []
         ppvs = []
