@@ -32,7 +32,14 @@ NUM_GRID_BINS = irf_config['grid_geometry']['num_bins_diameter']**2
 MAX_SOURCE_ANGLE_DEG = sum_config[
     'gamma_ray_source_direction'][
     'max_angle_relative_to_pointing_deg']
-
+pointing_azimuth_deg = irf_config[
+    'config'][
+    'plenoscope_pointing'][
+    'azimuth_deg']
+pointing_zenith_deg = irf_config[
+    'config'][
+    'plenoscope_pointing'][
+    'zenith_deg']
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
@@ -48,7 +55,6 @@ for site_key in irf_config['config']['sites']:
     cosmic_response[site_key] = {}
     _tmp_nsb_response[site_key] = {}
     for particle_key in irf_config['config']['particles']:
-        print(site_key, particle_key)
 
         cosmic_response[site_key][particle_key] = {}
 
@@ -64,19 +70,17 @@ for site_key in irf_config['config']['sites']:
 
         # point source
         # ------------
-        idx_in_possible_onregion = irf.analysis.effective_quantity.cut_primary_direction_within_angle(
+        idx_possible_onregion = irf.analysis.effective_quantity.cut_primary_direction_within_angle(
             primary_table=diffuse_particle_table['primary'],
             radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
-            azimuth_deg=irf_config[
-                'config']['plenoscope_pointing']['azimuth_deg'],
-            zenith_deg=irf_config[
-                'config']['plenoscope_pointing']['zenith_deg'],
+            azimuth_deg=pointing_azimuth_deg,
+            zenith_deg=pointing_zenith_deg,
         )
 
         point_particle_table = spt.cut_table_on_indices(
             table=diffuse_particle_table,
             structure=irf.table.STRUCTURE,
-            common_indices=idx_in_possible_onregion
+            common_indices=idx_possible_onregion
         )
 
         energy_GeV = point_particle_table['primary']['energy_GeV']
@@ -92,13 +96,14 @@ for site_key in irf_config['config']['sites']:
             "axis_1": "energy",
         }
         for threshold in trigger_thresholds:
+            idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
+                trigger_table=point_particle_table['trigger'],
+                threshold=threshold,
+                modus=trigger_modus,
+            )
             mask_detected = spt.make_mask_of_right_in_left(
                 left_indices=point_particle_table['primary'][spt.IDX],
-                right_indices=irf.analysis.light_field_trigger_modi.make_indices(
-                    trigger_table=point_particle_table['trigger'],
-                    threshold=threshold,
-                    modus=trigger_modus,
-                )
+                right_indices=idx_detected,
             )
             (
                 _q_eff,
@@ -135,13 +140,14 @@ for site_key in irf_config['config']['sites']:
             "axis_1": "energy",
         }
         for threshold in trigger_thresholds:
+            idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
+                trigger_table=diffuse_particle_table['trigger'],
+                threshold=threshold,
+                modus=trigger_modus,
+            )
             mask_detected = spt.make_mask_of_right_in_left(
                 left_indices=diffuse_particle_table['primary'][spt.IDX],
-                right_indices=irf.analysis.light_field_trigger_modi.make_indices(
-                    trigger_table=diffuse_particle_table['trigger'],
-                    threshold=threshold,
-                    modus=trigger_modus,
-                )
+                right_indices=idx_detected,
             )
             (
                 _q_eff,
@@ -161,28 +167,27 @@ for site_key in irf_config['config']['sites']:
 
         # acceidental triggers in night-sky-background
         # --------------------------------------------
-
-        nsb_thrown_indices = diffuse_particle_table['trigger'][spt.IDX][
+        idx_nsb = diffuse_particle_table['trigger'][spt.IDX][
             diffuse_particle_table['trigger']['num_cherenkov_pe'] <=
             MAX_CHERENKOV_IN_NSB_PE
         ]
-        nsb_thrown_trigger_table = spt.cut_level_on_indices(
+        nsb_table = spt.cut_level_on_indices(
             table=diffuse_particle_table,
             structure=irf.table.STRUCTURE,
             level_key='trigger',
-            indices=nsb_thrown_indices
+            indices=idx_nsb
         )
 
         _tmp_nsb_response[site_key][particle_key] = []
         for threshold in trigger_thresholds:
-            nsb_triggered_in_thrown_indices = irf.analysis.light_field_trigger_modi.make_indices(
-                trigger_table=nsb_thrown_trigger_table,
+            idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
+                trigger_table=nsb_table,
                 threshold=threshold,
                 modus=trigger_modus,
             )
             _tmp_nsb_response[site_key][particle_key].append({
-                'num_nsb_exposures': len(nsb_thrown_indices),
-                'num_nsb_triggers': len(nsb_triggered_in_thrown_indices)
+                'num_nsb_exposures': len(idx_nsb),
+                'num_nsb_triggers': len(idx_detected)
             })
 
 nsb_response = {}
@@ -209,9 +214,10 @@ for site_key in irf_config['config']['sites']:
         num_nsb_triggers_vs_threshold /
         (num_nsb_exposures*EXPOSURE_TIME_PER_EVENT)
     )
-    relative_uncertainty = (
-        np.sqrt(num_nsb_triggers_vs_threshold) /
-        num_nsb_triggers_vs_threshold
+    relative_uncertainty = irf.analysis.effective_quantity._divide_silent(
+        numerator=np.sqrt(num_nsb_triggers_vs_threshold),
+        denominator=num_nsb_triggers_vs_threshold,
+        default=np.nan
     )
 
     nsb_response[site_key] = {
