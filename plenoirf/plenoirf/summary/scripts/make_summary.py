@@ -7,6 +7,8 @@ from os.path import join as opj
 import json
 import weasyprint
 
+FIGURE_WIDTH_PIXEL = 80
+
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
@@ -16,14 +18,19 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins']
+    sum_config['energy_binning']['num_bins'] + 1
 )
 energy_bin_edges_coarse = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins_coarse']
+    sum_config['energy_binning']['num_bins_coarse'] + 1
 )
-
+trigger_thresholds = sum_config['trigger']['ratescan_thresholds_pe']
+trigger_threshold = sum_config['trigger']['threshold_pe']
+idx_trigger_threshold = np.where(
+    np.array(trigger_thresholds)==trigger_threshold,
+)[0][0]
+trigger_modus = sum_config["trigger"]["modus"]
 
 text_aligns = [
     'center',
@@ -31,7 +38,6 @@ text_aligns = [
     'right',
     'justify',
 ]
-
 
 def table(matrix, width=100, indent=4):
     off = ' '*indent
@@ -117,12 +123,42 @@ def page(title, text):
     return out
 
 
+def make_site_table(
+    sites,
+    energy_bin_edges,
+    wild_card='{site_key:s}_key_{energy_bin_index:06d}.jpg',
+    site_width=FIGURE_WIDTH_PIXEL*4,
+    header=True,
+):
+    table_width = len(sites)*site_width
+    matrix = []
+
+    if header:
+        side_head_row = []
+        for site_key in sites:
+            side_head_row.append(h(site_key, level=3, text_align='center'))
+        matrix.append(side_head_row)
+
+    for energy_bin_index in range(len(energy_bin_edges) - 1):
+        row = []
+        for site_key in sites:
+            sub_row = []
+            path = wild_card.format(
+                site_key=site_key,
+                energy_bin_index=energy_bin_index
+            )
+            img = image(path=path, width=particle_width)
+            sub_row.append(img)
+            row.append(table([sub_row], width=site_width))
+        matrix.append(row)
+
+
 def make_site_particle_index_table(
     sites,
     particles,
     energy_bin_edges,
     wild_card='{site_key:s}_{particle_key:s}_key_{energy_bin_index:06d}.jpg',
-    particle_width=480,
+    particle_width=FIGURE_WIDTH_PIXEL,
     header=True,
 ):
     site_width = len(particles)*particle_width
@@ -162,48 +198,31 @@ def make_site_particle_index_table(
 
 doc = ''
 doc += h('Cherenkov-plenoscope', level=1)
-
 doc += p(
-    "A summary of the Cherenkov-plenoscope's instrument-response-functions. "
-    "This is created automatically. ",
+    "Summarizing the Cherenkov-plenoscope's instrument-response-functions.",
     text_align='justify',
-    font_family='calibri')
-
-doc += h('Effective acceptance, diffuse source, past trigger', level=2)
-doc += p(
-    "Only events where the incident-direction is reconstructed to be within "
-    "a suitable field-of-view for on-regions, i.e. max. 2.5deg off axis.",
-    text_align='justify',
-    font_family='calibri')
+    font_family='calibri',
+)
+doc += h('Effective acceptance, diffuse source, trigger-level', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_diffuse_trigger.jpg')
-
-
-doc += h('Effective area, ponit source, past trigger', level=2)
-doc += p(
-    "Only events where both the reconstructed incident-direction < 2.5deg"
-    " off axis, "
-    "AND the primary's incident-direction < 2.5deg off axis."
-    "<br>Although technically applicable, this might be misleading for charged"
-    " cosmic-rays. "
-    "For low energetic cosmic-rays there is almost no intersection of the "
-    "two directional criteria due to deflection of the airshower in earth's "
-    "magnetig field. "
-    "This leads to an underestimation of the effective area at low energies. "
-    "However, this is not relevant for the estimation of the plenoscope's "
-    "performance to detect point-sources of gamma-rays.",
-    text_align='justify',
-    font_family='calibri')
+    wild_card=opj(
+        'acceptance_trigger_plot',
+        '{site_key:s}_{particle_key:s}_diffuse.jpg'
+    )
+)
+doc += h('Effective area, ponit source, trigger-level', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_point_trigger.jpg')
-
-
+    wild_card=opj(
+        'acceptance_trigger_plot',
+        '{site_key:s}_{particle_key:s}_point.jpg'
+    )
+)
 doc += h('Directions of primaries, past trigger', level=2)
 doc += p(
     "Primary particle's incidend direction color-coded "
@@ -215,119 +234,134 @@ doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=energy_bin_edges_coarse,
-    wild_card='grid_direction/{site_key:s}_{particle_key:s}_'
-    'grid_direction_pasttrigger_{energy_bin_index:06d}.jpg')
-
+    wild_card=opj(
+        'grid_direction',
+        '{site_key:s}_{particle_key:s}_'
+        'grid_direction_pasttrigger_{energy_bin_index:06d}.jpg'
+    )
+)
 doc += h('Cherenkov-intensity on observation-level, past trigger', level=2)
 doc += p(
     "Areal intensity of Cherenkov-photons on the observation-level. "
     "Only showing airshowers which passed the plenoscope's trigger. "
     "Color-coding shows the average intensity of a single airshower. ",
     text_align='justify',
-    font_family='calibri')
-
+    font_family='calibri'
+)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=energy_bin_edges_coarse,
-    wild_card='grid_area/'
-    '{site_key:s}_{particle_key:s}_'
-    'grid_area_pasttrigger_{energy_bin_index:06d}.jpg')
-
-
+    wild_card=opj(
+        'grid_area',
+        '{site_key:s}_{particle_key:s}_'
+        'grid_area_pasttrigger_{energy_bin_index:06d}.jpg'
+    )
+)
 doc += h('Trigger-probability vs. true Cherenkov-size / p.e.', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='trigger_probability_vs_cherenkov_size/'
-    '{site_key:s}_{particle_key:s}_'
-    'trigger_probability_vs_cherenkov_size.jpg')
-
-
+    wild_card=opj(
+        'trigger_probability_vs_cherenkov_size',
+        '{site_key:s}_{particle_key:s}_'
+        'trigger_probability_vs_cherenkov_size.jpg'
+    )
+)
 doc += h('Trigger-probability vs. offaxis-angle', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='trigger_probability_vs_offaxis/'
-    '{site_key:s}_{particle_key:s}_'
-    'trigger_probability_vs_offaxis.jpg')
-
-
+    wild_card=opj(
+        'trigger_probability_vs_offaxis',
+        '{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis.jpg'
+    )
+)
 doc += h('Trigger-probability vs. offaxis-angle vs. energy', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
-    energy_bin_edges=[0, 1, 2, 3, 4],
-    wild_card='trigger_probability_vs_offaxis/'
-    '{site_key:s}_{particle_key:s}_'
-    'trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg')
-
-
+    energy_bin_edges=energy_bin_edges_coarse,
+    wild_card=opj(
+        'trigger_probability_vs_offaxis',
+        '{site_key:s}_{particle_key:s}_'
+        'trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg'
+    )
+)
 doc += h('Cherenkov and night-sky-background classification', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='cherenkov_photon_classification/'
-    '{site_key:s}_{particle_key:s}_'
-    'cherenkovclassification_size_confusion.jpg')
-
+    wild_card=opj(
+        'cherenkov_photon_classification',
+        '{site_key:s}_{particle_key:s}_'
+        'cherenkovclassification_size_confusion.jpg'
+    )
+)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='cherenkov_photon_classification/'
-    '{site_key:s}_{particle_key:s}_'
-    'cherenkovclassification_sensitivity_vs_true_energy.jpg')
-
+    wild_card=opj(
+        'cherenkov_photon_classification',
+        '{site_key:s}_{particle_key:s}_'
+        'cherenkovclassification_sensitivity_vs_true_energy.jpg'
+    )
+)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='cherenkov_photon_classification/'
-    '{site_key:s}_{particle_key:s}_'
-    'cherenkovclassification_'
-    'true_size_over_extracted_size_vs_true_energy.jpg')
-
+    wild_card=opj(
+        'cherenkov_photon_classification',
+        '{site_key:s}_{particle_key:s}_'
+        'cherenkovclassification_'
+        'true_size_over_extracted_size_vs_true_energy.jpg'
+    )
+)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='cherenkov_photon_classification/'
-    '{site_key:s}_{particle_key:s}_'
-    'cherenkovclassification_'
-    'true_size_over_extracted_size_vs_true_size.jpg')
-
-
-doc += h('Configurations', level=2)
-
-doc += h('Plenoscope-scenery', level=3)
-doc += code(
-    json.dumps(irf_config['plenoscope_scenery'], indent=4),
-    font_size=50,
-    line_height=100)
-
-doc += h('Plenoscope read-out, and night-sky-background', level=3)
-doc += code(
-    json.dumps(irf_config['merlict_propagation_config'], indent=4),
-    font_size=50,
-    line_height=100)
-
-doc += h('Sites and particles', level=3)
-doc += code(
-    json.dumps(irf_config['config'], indent=4),
-    font_size=50,
-    line_height=100)
-
+    wild_card=opj(
+        'cherenkov_photon_classification',
+        '{site_key:s}_{particle_key:s}_'
+        'cherenkovclassification_'
+        'true_size_over_extracted_size_vs_true_size.jpg'
+    )
+)
 doc += h('Relative runtime', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
-    wild_card='{site_key:s}_{particle_key:s}_relative_runtime.jpg')
-
+    wild_card=opj(
+        'runtime',
+        '{site_key:s}_{particle_key:s}_relative_runtime.jpg'
+    )
+)
+doc += h('Configurations', level=2)
+doc += h('Plenoscope-scenery', level=3)
+doc += code(
+    json.dumps(irf_config['plenoscope_scenery'], indent=4),
+    font_size=50,
+    line_height=100
+)
+doc += h('Plenoscope read-out, and night-sky-background', level=3)
+doc += code(
+    json.dumps(irf_config['merlict_propagation_config'], indent=4),
+    font_size=50,
+    line_height=100
+)
+doc += h('Sites and particles', level=3)
+doc += code(
+    json.dumps(irf_config['config'], indent=4),
+    font_size=50,
+    line_height=100
+)
 html = page('summary', doc)
 
 with open(opj(pa['summary_dir'], 'index.html'), 'wt') as fout:

@@ -32,6 +32,11 @@ assert A['energy_bin_edges']['unit'] == "GeV"
 trigger_thresholds = np.array(A['trigger_thresholds']['value'])
 assert A['trigger_thresholds']['unit'] == "p.e."
 
+trigger_threshold = sum_config['trigger']['threshold_pe']
+idx_trigger_threshold = np.where(
+    np.array(trigger_thresholds)==trigger_threshold,
+)[0][0]
+
 sources = {
     'diffuse': {
         'label': 'area $\\times$ solid angle',
@@ -50,11 +55,7 @@ cr = A['cosmic_response']
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         for source_key in sources:
-
             for tt in range(len(trigger_thresholds)):
-
-                fig = irf.summary.figure.figure(sum_config['figure_16_9'])
-                ax = fig.add_axes((.1, .1, .8, .8))
 
                 Q = np.array(
                     cr[
@@ -74,6 +75,9 @@ for site_key in irf_config['config']['sites']:
                 )
                 Q_lower = (1 - delta_Q)*Q
                 Q_upper = (1 + delta_Q)*Q
+
+                fig = irf.summary.figure.figure(sum_config['figure_16_9'])
+                ax = fig.add_axes((.1, .1, .8, .8))
 
                 if (
                     site_key == 'namibia' and
@@ -104,9 +108,7 @@ for site_key in irf_config['config']['sites']:
                     face_alpha=0.25
                 )
 
-                ax.set_title(
-                    'threshold: {:d}p.e.'.format(trigger_thresholds[tt])
-                )
+
                 ax.set_xlabel('energy / GeV')
                 ax.set_ylabel('{:s} / {:s}'.format(
                         sources[source_key]['label'],
@@ -119,12 +121,32 @@ for site_key in irf_config['config']['sites']:
                 ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
                 ax.loglog()
                 ax.set_xlim([energy_bin_edges[0], energy_bin_edges[-1]])
+
+                if tt == idx_trigger_threshold:
+                    fig.savefig(
+                        os.path.join(
+                            pa['out_dir'],
+                            '{:s}_{:s}_{:s}.jpg'.format(
+                                site_key,
+                                particle_key,
+                                source_key,
+                            )
+                        )
+                    )
+
+                ax.set_title(
+                    'threshold: {:d}p.e.'.format(trigger_thresholds[tt])
+                )
                 fig.savefig(
                     os.path.join(
                         pa['out_dir'],
-                        '{:s}_{:s}_{:s}_{:d}.jpg'.format(
+                        '{:s}_{:s}_{:s}_{:06d}.jpg'.format(
                             site_key,
                             particle_key,
                             source_key,
-                            tt)))
+                            tt,
+                        )
+                    )
+                )
                 plt.close(fig)
+

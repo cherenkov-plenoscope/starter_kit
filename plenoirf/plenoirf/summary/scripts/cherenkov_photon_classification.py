@@ -24,7 +24,7 @@ fc1by1['rows'] = fc16by9['rows']*(16/9)
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins_coarse']
+    sum_config['energy_binning']['num_bins_coarse'] + 1
 )
 num_energy_bins = len(energy_bin_edges) - 1
 

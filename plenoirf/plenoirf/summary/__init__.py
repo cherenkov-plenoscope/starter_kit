@@ -101,14 +101,14 @@ def run(run_dir):
 
     scripts = [
         'runtime.py',
+        'acceptance_trigger.py',
+        'acceptance_trigger_plot.py',
+        'ratescan.py',
         'trigger_probability_vs_cherenkov_size.py',
         'trigger_probability_vs_offaxis.py',
         'cherenkov_photon_classification.py',
         'grid_area.py',
         'grid_direction.py',
-        'acceptance_trigger.py',
-        'acceptance_trigger_plot.py',
-        'ratescan.py',
         'make_summary.py',
     ]
     for script in scripts:

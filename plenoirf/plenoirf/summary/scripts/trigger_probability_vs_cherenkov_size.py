@@ -19,6 +19,10 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 os.makedirs(pa['out_dir'], exist_ok=True)
 
+num_bins = 12
+size_bin_edges = np.geomspace(1, 2**num_bins, (2*num_bins)+1)
+
+
 trigger_modus = sum_config["trigger"]["modus"]
 trigger_threshold = sum_config['trigger']['threshold_pe']
 
@@ -37,17 +41,15 @@ for site_key in irf_config['config']['sites']:
             structure=irf.table.STRUCTURE
         )
 
-        pasttrigger_mask = spt.make_mask_of_right_in_left(
-            left_indices=event_table['trigger'][spt.IDX],
-            right_indices=irf.analysis.light_field_trigger_modi.make_indices(
-                trigger_table=event_table['trigger'],
-                threshold=trigger_threshold,
-                modus=trigger_modus,
-            )
+        idx_pasttrigger = irf.analysis.light_field_trigger_modi.make_indices(
+            trigger_table=event_table['trigger'],
+            threshold=trigger_threshold,
+            modus=trigger_modus,
         )
-
-        num_bins = 12
-        size_bin_edges = np.geomspace(1, 2**num_bins, num_bins+1)
+        mask_pasttrigger = spt.make_mask_of_right_in_left(
+            left_indices=event_table['trigger'][spt.IDX],
+            right_indices=idx_pasttrigger
+        )
 
         num_thrown = np.histogram(
             event_table['trigger']['num_cherenkov_pe'],
@@ -57,7 +59,7 @@ for site_key in irf_config['config']['sites']:
         num_pasttrigger = np.histogram(
             event_table['trigger']['num_cherenkov_pe'],
             bins=size_bin_edges,
-            weights=pasttrigger_mask
+            weights=mask_pasttrigger
         )[0]
 
         trigger_probability = num_pasttrigger/num_thrown

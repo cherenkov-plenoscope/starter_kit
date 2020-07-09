@@ -26,7 +26,7 @@ trigger_threshold = sum_config['trigger']['threshold_pe']
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    5
+    sum_config['energy_binning']['num_bins_coarse'] + 1,
 )
 
 def histogram(

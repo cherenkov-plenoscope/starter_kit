@@ -22,6 +22,15 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
+trigger_threshold = sum_config['trigger']['threshold_pe']
+trigger_modus = sum_config["trigger"]["modus"]
+energy_bin_edges_GeV = energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins_coarse'] + 1
+)
+num_grid_bins_on_edge = irf_config['grid_geometry']['num_bins_diameter']
+
 os.makedirs(pa['out_dir'], exist_ok=True)
 
 for site_key in irf_config['config']['sites']:
@@ -36,14 +45,21 @@ for site_key in irf_config['config']['sites']:
                 'event_table',
                 site_key,
                 particle_key,
-                'event_table.tar'),
-            structure=irf.table.STRUCTURE)
+                'event_table.tar'
+            ),
+            structure=irf.table.STRUCTURE
+        )
 
-        mrg_table = spt.cut_table_on_indices(
+        idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
+            trigger_table=event_table['trigger'],
+            threshold=trigger_threshold,
+            modus=trigger_modus,
+        )
+
+        detected_events = spt.cut_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
-            common_indices=spt.dict_to_recarray(
-                {spt.IDX: event_table['pasttrigger'][spt.IDX]}),
+            common_indices=idx_detected,
             level_keys=[
                 'primary',
                 'grid',
@@ -53,45 +69,41 @@ for site_key in irf_config['config']['sites']:
                 'cherenkovsizepart',
                 'cherenkovpoolpart',
                 'trigger',
-                'pasttrigger'
             ]
         )
 
-        grid_histograms_pasttrigger = irf.grid.read_histograms(
+        detected_grid_histograms = irf.grid.read_histograms(
             path=opj(
                 pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
-                'grid.tar'),
-            indices=mrg_table['pasttrigger'][spt.IDX])
+                'grid.tar'
+            ),
+            indices=idx_detected
+        )
 
         # summarize
         # ---------
-        energy_bin_edges_GeV = sum_config['energy_bin_edges_GeV_coarse']
-        c_bin_edges_deg = sum_config['c_bin_edges_deg']
-
-        _primary_incidents = irf.query.primary_incident_vector(
-            mrg_table['primary'])
-        primary_cx = _primary_incidents[:, 0]
-        primary_cy = _primary_incidents[:, 1]
-
         grid_intensities = []
         num_airshowers = []
         for energy_idx in range(len(energy_bin_edges_GeV) - 1):
             energy_GeV_start = energy_bin_edges_GeV[energy_idx]
             energy_GeV_stop = energy_bin_edges_GeV[energy_idx + 1]
-            mask = np.logical_and(
-                mrg_table['primary']['energy_GeV'] > energy_GeV_start,
-                mrg_table['primary']['energy_GeV'] <= energy_GeV_stop)
-            primary_matches = mrg_table['primary'][mask]
+            energy_mask = np.logical_and(
+                detected_events['primary']['energy_GeV'] > energy_GeV_start,
+                detected_events['primary']['energy_GeV'] <= energy_GeV_stop
+            )
+            idx_energy_range = detected_events['primary'][energy_mask][spt.IDX]
             grid_intensity = np.zeros((
-                irf_config['grid_geometry']['num_bins_diameter'],
-                irf_config['grid_geometry']['num_bins_diameter']))
+                num_grid_bins_on_edge,
+                num_grid_bins_on_edge)
+            )
             num_airshower = 0
-            for mat in primary_matches:
+            for idx in idx_energy_range:
                 grid_intensity += irf.grid.bytes_to_histogram(
-                    grid_histograms_pasttrigger[mat[spt.IDX]])
+                    detected_grid_histograms[idx]
+                )
                 num_airshower += 1
             grid_intensities.append(grid_intensity)
             num_airshowers.append(num_airshower)
@@ -109,6 +121,10 @@ for site_key in irf_config['config']['sites']:
             grid_intensity = grid_intensities[energy_idx]
             num_airshower = num_airshowers[energy_idx]
 
+            normalized_grid_intensity = grid_intensity
+            if num_airshower > 0:
+                normalized_grid_intensity /= num_airshower
+
             fig = irf.summary.figure.figure(fc5by4)
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
             ax_cb = fig.add_axes([0.85, 0.1, 0.02, 0.8])
@@ -118,15 +134,18 @@ for site_key in irf_config['config']['sites']:
             _pcm_grid = ax.pcolormesh(
                 np.array(irf_config['grid_geometry']['xy_bin_edges'])*1e-3,
                 np.array(irf_config['grid_geometry']['xy_bin_edges'])*1e-3,
-                np.transpose(grid_intensity/num_airshower),
+                np.transpose(normalized_grid_intensity),
                 norm=plt_colors.PowerNorm(gamma=0.5),
                 cmap='Blues')
             plt.colorbar(_pcm_grid, cax=ax_cb, extend='max')
             ax.set_title(
-                'num. airshower {:d}, energy {:.1f} - {:.1f}GeV'.format(
+                'num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f}GeV'.format(
                     num_airshower,
                     energy_bin_edges_GeV[energy_idx],
-                    energy_bin_edges_GeV[energy_idx + 1]))
+                    energy_bin_edges_GeV[energy_idx + 1]
+                ),
+                family='monospace'
+            )
             ax.set_xlabel('x/km')
             ax.set_ylabel('y/km')
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)

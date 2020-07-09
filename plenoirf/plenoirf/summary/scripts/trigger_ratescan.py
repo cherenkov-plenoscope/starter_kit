@@ -39,10 +39,10 @@ energy_upper = sum_config['energy_binning']['upper_edge_GeV']
 energy_bin_edges = np.array(acceptance['energy_bin_edges']['value'])
 energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
-fine_energy_bin_edges = energy_bin_edges = np.geomspace(
+fine_energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins_fine']
+    sum_config['energy_binning']['num_bins_fine'] + 1
 )
 
 fine_energy_bin_width = irf.summary.bin_width(fine_energy_bin_edges)

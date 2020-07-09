@@ -43,7 +43,7 @@ pointing_zenith_deg = irf_config[
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins']
+    sum_config['energy_binning']['num_bins'] + 1
 )
 trigger_thresholds = sum_config['trigger']['ratescan_thresholds_pe']
 trigger_modus = sum_config["trigger"]["modus"]
