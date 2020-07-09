@@ -19,10 +19,8 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 os.makedirs(pa['out_dir'], exist_ok=True)
 
-trigger_modus = sum_config["trigger_modus"]
-trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
-nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
+trigger_modus = sum_config["trigger"]["modus"]
+trigger_threshold = sum_config['trigger']['threshold_pe']
 
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
@@ -34,7 +32,8 @@ for site_key in irf_config['config']['sites']:
                 'event_table',
                 site_key,
                 particle_key,
-                'event_table.tar'),
+                'event_table.tar'
+            ),
             structure=irf.table.STRUCTURE
         )
 
@@ -42,7 +41,7 @@ for site_key in irf_config['config']['sites']:
             left_indices=event_table['trigger'][spt.IDX],
             right_indices=irf.analysis.light_field_trigger_modi.make_indices(
                 trigger_table=event_table['trigger'],
-                threshold=nominal_trigger_threshold,
+                threshold=trigger_threshold,
                 modus=trigger_modus,
             )
         )

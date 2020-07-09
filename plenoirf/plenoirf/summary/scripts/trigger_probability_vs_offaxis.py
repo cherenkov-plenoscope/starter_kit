@@ -20,11 +20,14 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
-trigger_modus = sum_config["trigger_modus"]
-trigger_thresholds = np.array(sum_config['trigger_thresholds_pe'])
-nominal_trigger_threshold_idx = sum_config['nominal_trigger_threshold_idx']
-nominal_trigger_threshold = trigger_thresholds[nominal_trigger_threshold_idx]
+trigger_modus = sum_config["trigger"]["modus"]
+trigger_threshold = sum_config['trigger']['threshold_pe']
 
+energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    5
+)
 
 def histogram(
     cradial2_bin_edges_deg2,
@@ -99,7 +102,7 @@ def write_figure(
         bincounts_lower=trgprb - trgprb_absunc,
         face_color='k',
         face_alpha=.3)
-    ax.set_title(title)
+    ax.set_title(title, family='monospace')
     ax.semilogy()
     ax.set_xlabel('angle between(pointing, primary)$^2$ / deg$^2$')
     ax.set_ylabel('trigger-probability / 1')
@@ -129,25 +132,21 @@ for site_key in cfg['sites']:
                 'event_table',
                 site_key,
                 particle_key,
-                'event_table.tar'),
+                'event_table.tar'
+            ),
             structure=irf.table.STRUCTURE
         )
 
         # summarize
         # ---------
-        energy_bin_edges = np.geomspace(
-            np.min(sum_config['energy_bin_edges_GeV']),
-            np.max(sum_config['energy_bin_edges_GeV']),
-            5
+        idx_pasttrigger = irf.analysis.light_field_trigger_modi.make_indices(
+            trigger_table=event_table['trigger'],
+            threshold=trigger_threshold,
+            modus=trigger_modus,
         )
-
         pasttrigger_mask = spt.make_mask_of_right_in_left(
             left_indices=event_table['primary'][spt.IDX],
-            right_indices=irf.analysis.light_field_trigger_modi.make_indices(
-                trigger_table=event_table['trigger'],
-                threshold=nominal_trigger_threshold,
-                modus=trigger_modus,
-            )
+            right_indices=idx_pasttrigger,
         )
 
         offaxis_deg =  mdfl.discovery._angle_between_az_zd_deg(
@@ -229,7 +228,7 @@ for site_key in cfg['sites']:
                 trgprb_absunc=energy_hists[ex]['trgprb_absunc'],
                 ylim=GLOBAL_YLIM,
                 figure_config=sum_config['figure_16_9'],
-                title='energy {:.1f} - {:.1f} GeV, num. events {:d}'.format(
+                title='energy {: 7.1f} - {: 7.1f} GeV, num. events {: 6d}'.format(
                     energy_bin_edges[ex],
                     energy_bin_edges[ex+1],
                     energy_hists[ex]['num_energy_bin_pasttrigger']
