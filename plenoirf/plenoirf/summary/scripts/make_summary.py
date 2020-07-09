@@ -8,12 +8,21 @@ import json
 import weasyprint
 
 argv = irf.summary.argv_since_py(sys.argv)
-assert len(argv) == 2
-run_dir = argv[1]
-summary_dir = os.path.join(run_dir, 'summary')
+pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=run_dir)
-sum_config = irf.summary.read_summary_config(summary_dir=summary_dir)
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
+sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
+
+energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins']
+)
+energy_bin_edges_coarse = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins_coarse']
+)
 
 
 text_aligns = [
@@ -113,7 +122,7 @@ def make_site_particle_index_table(
     particles,
     energy_bin_edges,
     wild_card='{site_key:s}_{particle_key:s}_key_{energy_bin_index:06d}.jpg',
-    particle_width=100,
+    particle_width=480,
     header=True,
 ):
     site_width = len(particles)*particle_width
@@ -205,7 +214,7 @@ doc += p(
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
-    energy_bin_edges=sum_config['energy_bin_edges_GeV_coarse'],
+    energy_bin_edges=energy_bin_edges_coarse,
     wild_card='grid_direction/{site_key:s}_{particle_key:s}_'
     'grid_direction_pasttrigger_{energy_bin_index:06d}.jpg')
 
@@ -220,13 +229,13 @@ doc += p(
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
-    energy_bin_edges=sum_config['energy_bin_edges_GeV_coarse'],
+    energy_bin_edges=energy_bin_edges_coarse,
     wild_card='grid_area/'
     '{site_key:s}_{particle_key:s}_'
     'grid_area_pasttrigger_{energy_bin_index:06d}.jpg')
 
 
-doc += h('Trigger-probability vs. Cherenkov-photon-equivalent (p.e.)', level=2)
+doc += h('Trigger-probability vs. true Cherenkov-size / p.e.', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
@@ -321,8 +330,8 @@ doc += make_site_particle_index_table(
 
 html = page('summary', doc)
 
-with open(opj(summary_dir, 'index.html'), 'wt') as fout:
+with open(opj(pa['summary_dir'], 'index.html'), 'wt') as fout:
     fout.write(html)
 
-weasyprint.HTML(opj(summary_dir, 'index.html')).write_pdf(
-    opj(summary_dir, 'index.pdf'))
+weasyprint.HTML(opj(pa['summary_dir'], 'index.html')).write_pdf(
+    opj(pa['summary_dir'], 'index.pdf'))
