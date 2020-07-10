@@ -147,10 +147,12 @@ def make_site_table(
                 site_key=site_key,
                 energy_bin_index=energy_bin_index
             )
-            img = image(path=path, width=particle_width)
+            img = image(path=path, width=site_width)
             sub_row.append(img)
             row.append(table([sub_row], width=site_width))
         matrix.append(row)
+
+    return table(matrix, width=table_width)
 
 
 def make_site_particle_index_table(
@@ -203,26 +205,43 @@ doc += p(
     text_align='justify',
     font_family='calibri',
 )
-doc += h('Effective acceptance, diffuse source, trigger-level', level=2)
-doc += make_site_particle_index_table(
-    sites=irf_config['config']['sites'],
-    particles=irf_config['config']['particles'],
-    energy_bin_edges=[0, 1],
-    wild_card=opj(
-        'acceptance_trigger_plot',
-        '{site_key:s}_{particle_key:s}_diffuse.jpg'
-    )
-)
+
 doc += h('Effective area, ponit source, trigger-level', level=2)
-doc += make_site_particle_index_table(
+doc += make_site_table(
     sites=irf_config['config']['sites'],
-    particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
         'acceptance_trigger_plot',
-        '{site_key:s}_{particle_key:s}_point.jpg'
+        '{site_key:s}_point.jpg'
     )
 )
+doc += h('Effective acceptance, diffuse source, trigger-level', level=2)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'acceptance_trigger_plot',
+        '{site_key:s}_diffuse.jpg'
+    )
+)
+
+doc += h('Flux of airshowers', level=2)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'trigger_ratescan',
+        '{site_key:s}_airshower_differential_flux.jpg'
+    )
+)
+
+doc += h('Trigger-ratescan', level=2)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj('trigger_ratescan', '{site_key:s}_ratescan.jpg')
+)
+
 doc += h('Directions of primaries, past trigger', level=2)
 doc += p(
     "Primary particle's incidend direction color-coded "

@@ -69,12 +69,23 @@ _cosmic_ray_colors = {
 with open(os.path.join(pa['summary_dir'], "gamma_sources.json"), "rt") as f:
     gamma_sources = json.loads(f.read())
 for source in gamma_sources:
-    if source['source_name'] == '3FGL J2254.0+1608':
+    if source['source_name'] == '3FGL J0534.5+2201':
         reference_gamma_source = source
+
+
+'''
+gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes._power_law(
+    energy=fine_energy_bin_centers,
+    flux_density=1e-6,
+    spectral_index=-2.49,
+    pivot_energy=1.0,
+)
+'''
 gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
     fermi_source=reference_gamma_source,
     energy=fine_energy_bin_centers
 )
+
 
 for site_key in irf_config['config']['sites']:
     fig = irf.summary.figure.figure(sum_config['figure_16_9'])
@@ -147,7 +158,13 @@ for site_key in irf_config['config']['sites']:
             gamma_dT_per_s_per_GeV,
             color='k'
         )
-        ax.set_title('trigger-threshold: {:d}p.e.'.format(trigger_thresholds[tt]))
+        ax.set_title(
+            'source: {:s}, trigger-threshold: {: 4d}p.e.'.format(
+                reference_gamma_source['source_name'],
+                trigger_thresholds[tt]
+            ),
+            family='monospace'
+        )
         ax.set_xlabel('energy / GeV')
         ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)

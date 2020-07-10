@@ -36,6 +36,7 @@ trigger_threshold = sum_config['trigger']['threshold_pe']
 idx_trigger_threshold = np.where(
     np.array(trigger_thresholds)==trigger_threshold,
 )[0][0]
+assert trigger_threshold in trigger_thresholds
 
 sources = {
     'diffuse': {
@@ -52,10 +53,18 @@ sources = {
 
 cr = A['cosmic_response']
 
+fig_16_by_9 = sum_config['plot']['16_by_9']
+particle_colors = sum_config['plot']['particle_colors']
+
 for site_key in irf_config['config']['sites']:
-    for particle_key in irf_config['config']['particles']:
-        for source_key in sources:
-            for tt in range(len(trigger_thresholds)):
+    for source_key in sources:
+        for tt in range(len(trigger_thresholds)):
+
+            fig = irf.summary.figure.figure(fig_16_by_9)
+            ax = fig.add_axes((.1, .1, .8, .8))
+
+            text_y = 0
+            for particle_key in irf_config['config']['particles']:
 
                 Q = np.array(
                     cr[
@@ -76,77 +85,61 @@ for site_key in irf_config['config']['sites']:
                 Q_lower = (1 - delta_Q)*Q
                 Q_upper = (1 + delta_Q)*Q
 
-                fig = irf.summary.figure.figure(sum_config['figure_16_9'])
-                ax = fig.add_axes((.1, .1, .8, .8))
-
-                if (
-                    site_key == 'namibia' and
-                    particle_key == 'gamma' and
-                    source_key == 'point'
-                ):
-                    hess_ct5_area_path = os.path.join(
-                        pa['summary_dir'],
-                        'hess_ct5_gamma_area.json'
-                    )
-                    if os.path.exists(hess_ct5_area_path):
-                        with open(hess_ct5_area_path, 'rt') as f:
-                            hess_hess_ct5_area = json.loads(f.read())
-                        ax.plot(
-                            hess_hess_ct5_area["energy_GeV"],
-                            hess_hess_ct5_area["area_m2"],
-                            'r-',
-                        )
-
                 irf.summary.figure.ax_add_hist(
                     ax=ax,
                     bin_edges=energy_bin_edges,
                     bincounts=Q,
-                    linestyle='k-',
+                    linestyle=particle_colors[particle_key],
                     bincounts_upper=Q_upper,
                     bincounts_lower=Q_lower,
-                    face_color='k',
-                    face_alpha=0.25
+                    face_color=particle_colors[particle_key],
+                    face_alpha=0.25,
                 )
 
-
-                ax.set_xlabel('energy / GeV')
-                ax.set_ylabel('{:s} / {:s}'.format(
-                        sources[source_key]['label'],
-                        sources[source_key]['unit']
-                    )
+                ax.text(
+                    0.9,
+                    0.1 + text_y,
+                    particle_key,
+                    color=particle_colors[particle_key],
+                    transform=ax.transAxes
                 )
-                ax.spines['top'].set_color('none')
-                ax.spines['right'].set_color('none')
-                ax.set_ylim(sources[source_key]['limits'])
-                ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-                ax.loglog()
-                ax.set_xlim([energy_bin_edges[0], energy_bin_edges[-1]])
+                text_y += 0.06
 
-                if tt == idx_trigger_threshold:
-                    fig.savefig(
-                        os.path.join(
-                            pa['out_dir'],
-                            '{:s}_{:s}_{:s}.jpg'.format(
-                                site_key,
-                                particle_key,
-                                source_key,
-                            )
-                        )
-                    )
 
-                ax.set_title(
-                    'threshold: {:d}p.e.'.format(trigger_thresholds[tt])
+            ax.set_xlabel('energy / GeV')
+            ax.set_ylabel('{:s} / {:s}'.format(
+                    sources[source_key]['label'],
+                    sources[source_key]['unit']
                 )
+            )
+            ax.spines['top'].set_color('none')
+            ax.spines['right'].set_color('none')
+            ax.set_ylim(sources[source_key]['limits'])
+            ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+            ax.loglog()
+            ax.set_xlim([energy_bin_edges[0], energy_bin_edges[-1]])
+
+            if tt == idx_trigger_threshold:
                 fig.savefig(
                     os.path.join(
                         pa['out_dir'],
-                        '{:s}_{:s}_{:s}_{:06d}.jpg'.format(
+                        '{:s}_{:s}.jpg'.format(
                             site_key,
-                            particle_key,
                             source_key,
-                            tt,
                         )
                     )
                 )
-                plt.close(fig)
-
+            ax.set_title(
+                'threshold: {:d}p.e.'.format(trigger_thresholds[tt])
+            )
+            fig.savefig(
+                os.path.join(
+                    pa['out_dir'],
+                    '{:s}_{:s}_{:06d}.jpg'.format(
+                        site_key,
+                        source_key,
+                        tt,
+                    )
+                )
+            )
+            plt.close(fig)

@@ -355,6 +355,14 @@ def _guess_summary_config(run_dir):
 
     }
 
-    summary_config['figure_16_9'] = figure.CONFIG_16_9
+    summary_config['plot'] = {
+        "16_by_9": figure.CONFIG_16_9,
+        'particle_colors' : {
+            "gamma": "black",
+            "electron": "blue",
+            "proton": "red",
+            "helium": "orange",
+        }
+    }
 
     return summary_config
