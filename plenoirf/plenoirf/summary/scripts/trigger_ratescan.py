@@ -82,13 +82,13 @@ source_name = ''.join([
     '$F_0 \\left( \\frac{E}{E_0}\\right) ^{\\gamma}$, ',
     '$F_0$ = 10$^{-3}$ m$^{-2}$ (GeV)$^{-1}$ s$^{-1}$, ',
     '$E_0$ = 1GeV, ',
-    '$\\gamma = -2.7$',
+    '$\\gamma = -2.0$',
 ])
 
 gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes._power_law(
     energy=fine_energy_bin_centers,
     flux_density=1e-3,
-    spectral_index=-2.7,
+    spectral_index=-2.0,
     pivot_energy=1.0,
 )
 

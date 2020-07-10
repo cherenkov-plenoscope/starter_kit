@@ -353,6 +353,11 @@ def _guess_summary_config(run_dir):
         },
         "random_seed": 1,
 
+        "quality": {
+            "max_relative_leakage": 0.1,
+            "min_reconstructed_photons": 100,
+        }
+
     }
 
     summary_config['plot'] = {

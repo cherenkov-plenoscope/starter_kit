@@ -385,6 +385,18 @@ doc += make_site_particle_index_table(
         'true_size_over_extracted_size_vs_true_size.jpg'
     )
 )
+
+doc += h('Direction-reconstruction', level=2)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'gamma_direction_reconstruction',
+        '{site_key:s}_gamma_psf_radial.jpg'
+    )
+)
+
+
 doc += h('Runtime', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
