@@ -265,7 +265,7 @@ doc += make_site_table(
     wild_card=opj('trigger_ratescan', '{site_key:s}_ratescan.jpg')
 )
 
-doc += h('Energy-threshold', level=2)
+doc += h('Energy-threshold, trigger-level', level=2)
 doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
@@ -396,6 +396,15 @@ doc += make_site_table(
     )
 )
 
+doc += h('Effective area, gamma, reconstructed in on-region', level=2)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'gamma_detection_on_trigger_level_plot',
+        '{site_key:s}_gamma.jpg'
+    )
+)
 
 doc += h('Runtime', level=2)
 doc += make_site_particle_index_table(

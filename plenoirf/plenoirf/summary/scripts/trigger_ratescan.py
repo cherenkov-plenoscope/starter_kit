@@ -79,7 +79,7 @@ gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
 '''
 
 source_name = ''.join([
-    '$F_0 \\left( \\frac{E}{E_0}\\right) ^{\\gamma}$, ',
+    '$F = F_0 \\left( \\frac{E}{E_0}\\right) ^{\\gamma}$, ',
     '$F_0$ = 10$^{-3}$ m$^{-2}$ (GeV)$^{-1}$ s$^{-1}$, ',
     '$E_0$ = 1GeV, ',
     '$\\gamma = -2.0$',
@@ -108,6 +108,8 @@ for site_key in irf_config['config']['sites']:
         'differential flux of airshowers / ' +
         'm$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$'
     )
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.loglog()
     ax.set_xlim([energy_lower, energy_upper])
@@ -167,13 +169,15 @@ for site_key in irf_config['config']['sites']:
                 gamma_dT_per_s_per_GeV,
                 color='k'
             )
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
             ax.set_title(source_name)
             ax.set_xlabel('energy / GeV')
             ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
             ax.loglog()
             ax.set_xlim([energy_lower, energy_upper])
-            ax.set_ylim([1e-6, 1e2])
+            ax.set_ylim([1e-2, 1e2])
             fig.savefig(
                 os.path.join(
                     pa['out_dir'],
