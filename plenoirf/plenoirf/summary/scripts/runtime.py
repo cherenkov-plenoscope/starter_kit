@@ -20,6 +20,7 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
+fig_16_by_9 = sum_config['plot']['16_by_9']
 
 def read(path):
     return pd.read_csv(path).to_records(index=False)
@@ -208,9 +209,9 @@ for site_key in irf_config['config']['sites']:
         write_relative_runtime(
             table=extended_runtime_table,
             out_path=opj(pa['out_dir'], prefix_str+'_relative_runtime'),
-            figure_config=sum_config['figure_16_9'])
+            figure_config=fig_16_by_9)
 
         write_speed(
             table=extended_runtime_table,
             out_path=opj(pa['out_dir'], prefix_str+'_speed_runtime'),
-            figure_config=sum_config['figure_16_9'])
+            figure_config=fig_16_by_9)

@@ -38,6 +38,9 @@ c_bin_edges_deg = np.linspace(
     sum_config['direction_binning']['radial_angle_deg'],
     sum_config['direction_binning']['num_bins'] + 1,
 )
+fc16by9 = sum_config['plot']['16_by_9']
+fc5by4 = fc16by9.copy()
+fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
 
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
@@ -105,9 +108,6 @@ for site_key in irf_config['config']['sites']:
 
         # write
         # -----
-        fc16by9 = sum_config['figure_16_9']
-        fc5by4 = fc16by9.copy()
-        fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
         vmax = np.max(intensity_cube)
 
         for energy_idx in range(len(energy_bin_edges) - 1):

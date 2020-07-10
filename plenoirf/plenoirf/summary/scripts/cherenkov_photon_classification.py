@@ -17,9 +17,11 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
-fc16by9 = sum_config['figure_16_9']
-fc1by1 = fc16by9.copy()
-fc1by1['rows'] = fc16by9['rows']*(16/9)
+fig_16_by_9 = sum_config['plot']['16_by_9']
+particle_colors = sum_config['plot']['particle_colors']
+
+fig_1_by_1 = fig_16_by_9.copy()
+fig_1_by_1['rows'] = fig_16_by_9['rows']*(16/9)
 
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
@@ -27,6 +29,7 @@ energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['num_bins_coarse'] + 1
 )
 num_energy_bins = len(energy_bin_edges) - 1
+
 
 CHCL = 'cherenkovclassification'
 
@@ -78,7 +81,7 @@ for site_key in irf_config['config']['sites']:
             if np_exposure_bins[true_bin] > 0:
                 np_bins_normalized[true_bin, :] /= np_exposure_bins[true_bin]
 
-        fig = irf.summary.figure.figure(fc1by1)
+        fig = irf.summary.figure.figure(fig_1_by_1)
         ax = fig.add_axes([0.1, 0.23, 0.7, 0.7])
         ax_h = fig.add_axes([0.1, 0.08, 0.7, 0.1])
         ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
@@ -114,7 +117,7 @@ for site_key in irf_config['config']['sites']:
                 '{:s}_{:s}_size_confusion.{:s}'.format(
                     prefix_str,
                     CHCL,
-                    fc1by1['format'])))
+                    fig_1_by_1['format'])))
         plt.close('all')
 
         # sensitivity VS. energy
@@ -149,7 +152,7 @@ for site_key in irf_config['config']['sites']:
             '{:s}_{:s}_sensitivity_vs_true_energy'.format(
                 prefix_str,
                 CHCL))
-        fig = irf.summary.figure.figure(fc16by9)
+        fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([.12, .12, .85, .85])
         ax.spines['top'].set_color('none')
         ax.spines['right'].set_color('none')
@@ -177,7 +180,7 @@ for site_key in irf_config['config']['sites']:
         ax.set_ylim([0, 1])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(pp+'.'+fc16by9['format'])
+        plt.savefig(pp+'.'+fig_16_by_9['format'])
         plt.close(fig)
         with open(pp+'.json', 'wt') as f:
             out = {
@@ -215,7 +218,7 @@ for site_key in irf_config['config']['sites']:
             '{:s}_{:s}_true_size_over_extracted_size_vs_true_energy'.format(
                 prefix_str,
                 CHCL))
-        fig = irf.summary.figure.figure(fc16by9)
+        fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([.12, .12, .85, .85])
         irf.summary.figure.ax_add_hist(
             ax=ax,
@@ -234,7 +237,7 @@ for site_key in irf_config['config']['sites']:
         ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(pp+'.'+fc16by9['format'])
+        plt.savefig(pp+'.'+fig_16_by_9['format'])
         plt.close('all')
         with open(pp+'.json', 'wt') as f:
             out = {
@@ -270,7 +273,7 @@ for site_key in irf_config['config']['sites']:
             '{:s}_{:s}_true_size_over_extracted_size_vs_true_size'.format(
                 prefix_str,
                 CHCL))
-        fig = irf.summary.figure.figure(fc16by9)
+        fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([.12, .12, .85, .85])
         irf.summary.figure.ax_add_hist(
             ax=ax,
@@ -289,7 +292,7 @@ for site_key in irf_config['config']['sites']:
         ax.set_xlim([np.min(size_bin_edges), np.max(size_bin_edges)])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(pp+'.'+fc16by9['format'])
+        plt.savefig(pp+'.'+fig_16_by_9['format'])
         plt.close('all')
         with open(pp+'.json', 'wt') as f:
             out = {

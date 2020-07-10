@@ -20,11 +20,12 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 os.makedirs(pa['out_dir'], exist_ok=True)
 
 num_bins = 12
-size_bin_edges = np.geomspace(1, 2**num_bins, (2*num_bins)+1)
-
+size_bin_edges = np.geomspace(1, 2**num_bins, (3*num_bins)+1)
 
 trigger_modus = sum_config["trigger"]["modus"]
 trigger_threshold = sum_config['trigger']['threshold_pe']
+
+fig_16_by_9 = sum_config['plot']['16_by_9']
 
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
@@ -73,7 +74,7 @@ for site_key in irf_config['config']['sites']:
         trgprb = trigger_probability
         trgprb_absunc = trigger_probability_absunc
 
-        fig = irf.summary.figure.figure(sum_config['figure_16_9'])
+        fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         irf.summary.figure.ax_add_hist(
             ax=ax,
@@ -97,5 +98,5 @@ for site_key in irf_config['config']['sites']:
                 pa['out_dir'],
                 '{:s}_trigger_probability_vs_cherenkov_size.{:s}'.format(
                     prefix_str,
-                    sum_config['figure_16_9']['format'])))
+                    fig_16_by_9['format'])))
         plt.close(fig)

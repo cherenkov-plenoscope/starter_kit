@@ -28,6 +28,7 @@ energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['upper_edge_GeV'],
     sum_config['energy_binning']['num_bins_coarse'] + 1,
 )
+fig_16_by_9 = sum_config['plot']['16_by_9']
 
 def histogram(
     cradial2_bin_edges_deg2,
@@ -91,7 +92,7 @@ def write_figure(
     figure_config,
     title,
 ):
-    fig = irf.summary.figure.figure(sum_config['figure_16_9'])
+    fig = irf.summary.figure.figure(fig_16_by_9)
     ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
     irf.summary.figure.ax_add_hist(
         ax=ax,
@@ -182,12 +183,12 @@ for site_key in cfg['sites']:
                 pa['out_dir'],
                 '{:s}_trigger_probability_vs_offaxis.{:s}'.format(
                     prefix_str,
-                    sum_config['figure_16_9']['format'])),
+                    fig_16_by_9['format'])),
             cradial2_bin_edges_deg2=cradial2_bin_edges_deg2,
             trgprb=res['trgprb'],
             trgprb_absunc=res['trgprb_absunc'],
             ylim=GLOBAL_YLIM,
-            figure_config=sum_config['figure_16_9'],
+            figure_config=fig_16_by_9,
             title=''
         )
 
@@ -220,14 +221,14 @@ for site_key in cfg['sites']:
                     '{:s}_trigger_probability_vs_offaxis_{:06d}.{:s}'.format(
                         prefix_str,
                         ex,
-                        sum_config['figure_16_9']['format']
+                        fig_16_by_9['format']
                     )
                 ),
                 cradial2_bin_edges_deg2=coarse_cradial2_bin_edges_deg2,
                 trgprb=energy_hists[ex]['trgprb'],
                 trgprb_absunc=energy_hists[ex]['trgprb_absunc'],
                 ylim=GLOBAL_YLIM,
-                figure_config=sum_config['figure_16_9'],
+                figure_config=fig_16_by_9,
                 title='energy {: 7.1f} - {: 7.1f} GeV, num. events {: 6d}'.format(
                     energy_bin_edges[ex],
                     energy_bin_edges[ex+1],

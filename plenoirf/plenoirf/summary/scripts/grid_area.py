@@ -31,6 +31,10 @@ energy_bin_edges_GeV = energy_bin_edges = np.geomspace(
 )
 num_grid_bins_on_edge = irf_config['grid_geometry']['num_bins_diameter']
 
+fc16by9 = sum_config['plot']['16_by_9']
+fc5by4 = fc16by9.copy()
+fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
+
 os.makedirs(pa['out_dir'], exist_ok=True)
 
 for site_key in irf_config['config']['sites']:
@@ -113,18 +117,18 @@ for site_key in irf_config['config']['sites']:
 
         # write
         # -----
-        fc16by9 = sum_config['figure_16_9']
-        fc5by4 = fc16by9.copy()
-        fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
-
         for energy_idx in range(len(energy_bin_edges_GeV) - 1):
             grid_intensity = grid_intensities[energy_idx]
             num_airshower = num_airshowers[energy_idx]
 
+            vmin = None
+            vmax = None
             normalized_grid_intensity = grid_intensity
             if num_airshower > 0:
                 normalized_grid_intensity /= num_airshower
-
+            else:
+                vmin = 0
+                vmax = 1
             fig = irf.summary.figure.figure(fc5by4)
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
             ax_cb = fig.add_axes([0.85, 0.1, 0.02, 0.8])
@@ -136,7 +140,10 @@ for site_key in irf_config['config']['sites']:
                 np.array(irf_config['grid_geometry']['xy_bin_edges'])*1e-3,
                 np.transpose(normalized_grid_intensity),
                 norm=plt_colors.PowerNorm(gamma=0.5),
-                cmap='Blues')
+                cmap='Blues',
+                vmin=vmin,
+                vmax=vmax
+            )
             plt.colorbar(_pcm_grid, cax=ax_cb, extend='max')
             ax.set_title(
                 'num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f}GeV'.format(

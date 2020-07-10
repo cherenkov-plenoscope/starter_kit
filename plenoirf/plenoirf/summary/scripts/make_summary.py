@@ -27,9 +27,6 @@ energy_bin_edges_coarse = np.geomspace(
 )
 trigger_thresholds = sum_config['trigger']['ratescan_thresholds_pe']
 trigger_threshold = sum_config['trigger']['threshold_pe']
-idx_trigger_threshold = np.where(
-    np.array(trigger_thresholds)==trigger_threshold,
-)[0][0]
 trigger_modus = sum_config["trigger"]["modus"]
 
 text_aligns = [
@@ -91,14 +88,16 @@ def code(
     font_size=100,
     line_height=100,
     margin_px=0,
-    padding_px=0
+    padding_px=0,
+    text_align='left'
 ):
     out = ''
     out += '<pre style="'
-    out += 'font-size:{:.1f}%;font-family:{:s};line-height:{:.1f}%;'.format(
+    out += 'font-size:{:.1f}%;font-family:{:s};line-height:{:.1f}%;text-align:{:s};'.format(
         font_size,
         font_family,
-        line_height)
+        line_height,
+        text_align)
     out += 'margin:{:.1f}px;padding:{:.1f}px">'.format(
         margin_px,
         padding_px)
@@ -206,6 +205,30 @@ doc += p(
     font_family='calibri',
 )
 
+
+site_matrix = []
+_row = []
+for site_key in irf_config['config']['sites']:
+    _row.append(
+        h(site_key, level=3, text_align='center')
+    )
+site_matrix.append(_row)
+_row = []
+for site_key in irf_config['config']['sites']:
+    _row.append(
+        code(
+            json.dumps(irf_config['config']['sites'][site_key], indent=4),
+            font_size=50,
+            line_height=100,
+        ),
+    )
+site_matrix.append(_row)
+
+doc += table(
+    site_matrix,
+    width=FIGURE_WIDTH_PIXEL*8
+)
+
 doc += h('Effective area, ponit source, trigger-level', level=2)
 doc += make_site_table(
     sites=irf_config['config']['sites'],
@@ -240,6 +263,16 @@ doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj('trigger_ratescan', '{site_key:s}_ratescan.jpg')
+)
+
+doc += h('Energy-threshold', level=2)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'trigger_ratescan',
+        '{site_key:s}_gamma_differential_trigger_rate.jpg'
+    )
 )
 
 doc += h('Directions of primaries, past trigger', level=2)
@@ -352,7 +385,7 @@ doc += make_site_particle_index_table(
         'true_size_over_extracted_size_vs_true_size.jpg'
     )
 )
-doc += h('Relative runtime', level=2)
+doc += h('Runtime', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
@@ -362,6 +395,17 @@ doc += make_site_particle_index_table(
         '{site_key:s}_{particle_key:s}_relative_runtime.jpg'
     )
 )
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'runtime',
+        '{site_key:s}_{particle_key:s}_speed_runtime.jpg'
+    )
+)
+
+"""
 doc += h('Configurations', level=2)
 doc += h('Plenoscope-scenery', level=3)
 doc += code(
@@ -381,6 +425,8 @@ doc += code(
     font_size=50,
     line_height=100
 )
+"""
+
 html = page('summary', doc)
 
 with open(opj(pa['summary_dir'], 'index.html'), 'wt') as fout:
