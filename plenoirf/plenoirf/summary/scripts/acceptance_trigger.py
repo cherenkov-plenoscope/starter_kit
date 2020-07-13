@@ -70,7 +70,7 @@ for site_key in irf_config['config']['sites']:
 
         # point source
         # ------------
-        idx_possible_onregion = irf.analysis.effective_quantity.cut_primary_direction_within_angle(
+        idx_possible_onregion = irf.analysis.cuts.cut_primary_direction_within_angle(
             primary_table=diffuse_particle_table['primary'],
             radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
             azimuth_deg=pointing_azimuth_deg,
