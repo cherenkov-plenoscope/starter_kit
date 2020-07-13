@@ -356,6 +356,11 @@ def _guess_summary_config(run_dir):
         "quality": {
             "max_relative_leakage": 0.1,
             "min_reconstructed_photons": 100,
+        },
+
+        "on_off_measuremnent": {
+            "on_over_off_ratio": 1/5,
+            "detection_threshold_std": 5.0,
         }
 
     }

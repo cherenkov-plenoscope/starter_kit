@@ -396,13 +396,30 @@ doc += make_site_table(
     )
 )
 
-doc += h('Effective area, gamma, reconstructed in on-region', level=2)
-doc += make_site_table(
+doc += h('Effective area, trigger, reconstructed in on-region', level=2)
+doc += p(
+    "Fade lines show acceptance on trigger-level "
+    "without direction-cut in on-region.",
+    text_align='justify',
+    font_family='calibri')
+doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'gamma_detection_on_trigger_level_plot',
-        '{site_key:s}_gamma.jpg'
+        'acceptance_trigger_in_onregion_plot',
+        '{site_key:s}_{particle_key:s}_point_onregion.jpg'
+    )
+)
+
+doc += h('Effective acceptance, trigger, reconstructed in on-region', level=2)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'acceptance_trigger_in_onregion_plot',
+        '{site_key:s}_{particle_key:s}_diffuse_onregion.jpg'
     )
 )
 

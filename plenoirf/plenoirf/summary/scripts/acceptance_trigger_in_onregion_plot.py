@@ -41,7 +41,7 @@ assert A['energy_bin_edges']['unit'] == "GeV"
 # -----------------
 acceptance_trigger_in_onregion_path = os.path.join(
     pa['summary_dir'],
-    "gamma_detection_on_trigger_level",
+    "acceptance_trigger_in_onregion",
     "acceptance_trigger_in_onregion.json"
 )
 with open(acceptance_trigger_in_onregion_path, 'rt') as f:
@@ -53,13 +53,6 @@ ylim = [1e1, 1e6]
 
 fig_16_by_9 = sum_config['plot']['16_by_9']
 particle_colors = sum_config['plot']['particle_colors']
-
-source = {
-    "gamma": 'point',
-    "proton": 'diffuse',
-    "helium": 'diffuse',
-    "electron": 'diffuse',
-}
 
 sources = {
     'diffuse': {
@@ -76,79 +69,80 @@ sources = {
 
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
+        for source_key in sources:
 
-        acceptance_trigger = np.array(A[
-            'cosmic_response'][
-            site_key][
-            particle_key][
-            source[particle_key]][
-            'value'][
-            idx_trigger_threshold])
-        acceptance_trigger_unc = np.array(A[
-            'cosmic_response'][
-            site_key][
-            particle_key][
-            source[particle_key]][
-            'relative_uncertainty'][
-            idx_trigger_threshold])
+            acceptance_trigger = np.array(A[
+                'cosmic_response'][
+                site_key][
+                particle_key][
+                source_key][
+                'value'][
+                idx_trigger_threshold])
+            acceptance_trigger_unc = np.array(A[
+                'cosmic_response'][
+                site_key][
+                particle_key][
+                source_key][
+                'relative_uncertainty'][
+                idx_trigger_threshold])
 
-        acceptance_trigger_onregion = np.array(G[
-            'cosmic_response'][
-            site_key][
-            particle_key][
-            source[particle_key]][
-            'value'])
-        acceptance_trigger_onregion_unc = np.array(G[
-            'cosmic_response'][
-            site_key][
-            particle_key][
-            source[particle_key]][
-            'relative_uncertainty'])
+            acceptance_trigger_onregion = np.array(G[
+                'cosmic_response'][
+                site_key][
+                particle_key][
+                source_key][
+                'value'])
+            acceptance_trigger_onregion_unc = np.array(G[
+                'cosmic_response'][
+                site_key][
+                particle_key][
+                source_key][
+                'relative_uncertainty'])
 
-        fig = irf.summary.figure.figure(fig_16_by_9)
-        ax = fig.add_axes((.1, .1, .8, .8))
+            fig = irf.summary.figure.figure(fig_16_by_9)
+            ax = fig.add_axes((.1, .1, .8, .8))
 
-        irf.summary.figure.ax_add_hist(
-            ax=ax,
-            bin_edges=A_energy_bin_edges,
-            bincounts=acceptance_trigger,
-            linestyle='gray',
-            bincounts_upper=acceptance_trigger*(1 + acceptance_trigger_unc),
-            bincounts_lower=acceptance_trigger*(1 - acceptance_trigger_unc),
-            face_color=particle_colors[particle_key],
-            face_alpha=0.05,
-        )
-        irf.summary.figure.ax_add_hist(
-            ax=ax,
-            bin_edges=G_energy_bin_edges,
-            bincounts=acceptance_trigger_onregion,
-            linestyle=particle_colors[particle_key],
-            bincounts_upper=acceptance_trigger_onregion*(1 + acceptance_trigger_onregion_unc),
-            bincounts_lower=acceptance_trigger_onregion*(1 - acceptance_trigger_onregion_unc),
-            face_color=particle_colors[particle_key],
-            face_alpha=0.25,
-        )
+            irf.summary.figure.ax_add_hist(
+                ax=ax,
+                bin_edges=A_energy_bin_edges,
+                bincounts=acceptance_trigger,
+                linestyle='gray',
+                bincounts_upper=acceptance_trigger*(1 + acceptance_trigger_unc),
+                bincounts_lower=acceptance_trigger*(1 - acceptance_trigger_unc),
+                face_color=particle_colors[particle_key],
+                face_alpha=0.05,
+            )
+            irf.summary.figure.ax_add_hist(
+                ax=ax,
+                bin_edges=G_energy_bin_edges,
+                bincounts=acceptance_trigger_onregion,
+                linestyle=particle_colors[particle_key],
+                bincounts_upper=acceptance_trigger_onregion*(1 + acceptance_trigger_onregion_unc),
+                bincounts_lower=acceptance_trigger_onregion*(1 - acceptance_trigger_onregion_unc),
+                face_color=particle_colors[particle_key],
+                face_alpha=0.25,
+            )
 
-        ax.set_xlabel('energy / GeV')
-        ax.set_ylabel(
-            sources[source[particle_key]]['label']
-            + ' / ' +
-            sources[source[particle_key]]['unit']
-        )
-        ax.spines['top'].set_color('none')
-        ax.spines['right'].set_color('none')
-        ax.set_ylim(sources[source[particle_key]]['limits'])
-        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        ax.loglog()
-        ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
-        fig.savefig(
-            os.path.join(
-                pa['out_dir'],
-                '{:s}_{:s}_{:s}_onregion.jpg'.format(
-                    site_key,
-                    particle_key,
-                    source[particle_key],
+            ax.set_xlabel('energy / GeV')
+            ax.set_ylabel(
+                sources[source_key]['label']
+                + ' / ' +
+                sources[source_key]['unit']
+            )
+            ax.spines['top'].set_color('none')
+            ax.spines['right'].set_color('none')
+            ax.set_ylim(sources[source_key]['limits'])
+            ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+            ax.loglog()
+            ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
+            fig.savefig(
+                os.path.join(
+                    pa['out_dir'],
+                    '{:s}_{:s}_{:s}_onregion.jpg'.format(
+                        site_key,
+                        particle_key,
+                        source_key,
+                    )
                 )
             )
-        )
-        plt.close(fig)
+            plt.close(fig)
