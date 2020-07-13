@@ -74,6 +74,53 @@ def read_cosmic_helium_flux_from_resources():
     }
 
 
+def read_crab_nebula_flux_from_resources():
+    res_path = pkg_resources.resource_filename(
+        'cosmic_fluxes',
+        os.path.join(
+            'resources',
+            'crab_nebula_spectral_energy_distribution_'
+            'fermi_lat_and_magic_ct.csv'
+        )
+    )
+    # # E / GeV
+    # E^2*dF/DE / TeV cm^-2 s^-1
+    _raw = np.genfromtxt(res_path, delimiter=' ')
+
+    _energy_GeV = _raw[:, 0]
+    _energy_TeV = 1e-3*_energy_GeV.copy()
+
+    _differential_flux_TeV_per_cm2_per_s = _raw[:, 1].copy()
+
+    _differential_flux_TeV_per_m2_per_s = (
+        _differential_flux_TeV_per_cm2_per_s *
+        1e4
+    )
+
+    _differential_flux_per_TeV_per_m2_per_s = (
+        _differential_flux_TeV_per_m2_per_s /
+        _energy_TeV**2
+    )
+
+    _differential_flux_per_GeV_per_m2_per_s = 1e-3*(
+        _differential_flux_per_TeV_per_m2_per_s
+    )
+
+    return {
+        "energy": {
+            "values": _energy_GeV.tolist(),
+            "unit_tex": "GeV",
+            "unit": "GeV",
+        },
+        "differential_flux": {
+            "values": _differential_flux_per_GeV_per_m2_per_s.tolist(),
+            "unit_tex": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
+            "unit": "per_m2_per_s_per_GeV"
+        },
+        "title": "Crab-nebula, Fermi-LAT and MAGIC. ",
+    }
+
+
 '''
 According to:
 
