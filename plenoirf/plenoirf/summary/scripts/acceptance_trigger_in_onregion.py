@@ -44,7 +44,29 @@ energy_bin_edges = np.geomspace(
 )
 max_relative_leakage = sum_config['quality']['max_relative_leakage']
 min_reconstructed_photons = sum_config['quality']['min_reconstructed_photons']
-psf_68_deg = 0.8
+
+onregion68 = {}
+psf_path = os.path.join(
+    pa['summary_dir'],
+    'gamma_direction_reconstruction',
+    "{site_key:s}_gamma_psf_radial.json"
+)
+PSF_ENERGY_GEV = 2.0
+for site_key in irf_config['config']['sites']:
+    with open(psf_path.format(site_key=site_key), 'rt') as f:
+        _site_psf = json.loads(f.read())
+    _energy_bin_centers = irf.summary.bin_centers(
+        bin_edges=np.array(_site_psf['energy_bin_edges_GeV'])
+    )
+    pivot_psf68_deg = np.interp(
+        x=PSF_ENERGY_GEV,
+        xp=_energy_bin_centers,
+        fp=_site_psf['delta_deg']
+    )
+    onregion68[site_key] = {
+        "pivot_energy_GeV": PSF_ENERGY_GEV,
+        "opening_angle_deg": pivot_psf68_deg
+    }
 
 fc16by9 = sum_config['plot']['16_by_9']
 fc5by4 = fc16by9.copy()
@@ -123,7 +145,7 @@ for site_key in irf_config['config']['sites']:
 
         idx_detected_in_onregion = irf.analysis.cuts.cut_reconstructed_source_in_true_onregion(
             table=candidate_table,
-            radial_angle_onregion_deg=psf_68_deg,
+            radial_angle_onregion_deg=onregion68[site_key]['opening_angle_deg'],
         )
 
         mask_detected = spt.make_mask_of_right_in_left(
@@ -187,7 +209,7 @@ for site_key in irf_config['config']['sites']:
         idx_in_onregion = irf.analysis.cuts.cut_reconstructed_source_in_random_possible_onregion(
             feature_table=table_candidates['features'],
             radial_angle_to_put_possible_onregion_deg=MAX_SOURCE_ANGLE_DEG,
-            radial_angle_onregion_deg=psf_68_deg
+            radial_angle_onregion_deg=onregion68[site_key]['opening_angle_deg']
         )
 
         mask_detected = spt.make_mask_of_right_in_left(
@@ -215,7 +237,6 @@ for site_key in irf_config['config']['sites']:
         }
 
 
-
 with open(os.path.join(pa['out_dir'], 'acceptance_trigger_in_onregion.json'), 'wt') as f:
     f.write(
         json.dumps(
@@ -224,7 +245,8 @@ with open(os.path.join(pa['out_dir'], 'acceptance_trigger_in_onregion.json'), 'w
                     "value": energy_bin_edges,
                     "unit": "GeV"
                 },
-                "cosmic_response": response
+                "cosmic_response": response,
+                "onregion": onregion68,
             },
             indent=4,
             cls=irf.json_numpy.Encoder

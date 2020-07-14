@@ -224,3 +224,7 @@ for site_key in irf_config['config']['sites']:
         )
     )
     plt.close(fig)
+
+opath = os.path.join(pa['out_dir'], "background_rates_in_onregion.json")
+with open(opath, 'wt') as f:
+    f.write(json.dumps(onregion_rates, indent=4, cls=irf.json_numpy.Encoder))

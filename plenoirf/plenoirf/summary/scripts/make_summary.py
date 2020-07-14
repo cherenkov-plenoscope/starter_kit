@@ -135,7 +135,7 @@ def make_site_table(
     if header:
         side_head_row = []
         for site_key in sites:
-            side_head_row.append(h(site_key, level=3, text_align='center'))
+            side_head_row.append(h(site_key, level=5, text_align='center'))
         matrix.append(side_head_row)
 
     for energy_bin_index in range(len(energy_bin_edges) - 1):
@@ -169,14 +169,14 @@ def make_site_particle_index_table(
     if header:
         side_head_row = []
         for site_key in sites:
-            side_head_row.append(h(site_key, level=3, text_align='center'))
+            side_head_row.append(h(site_key, level=5, text_align='center'))
         matrix.append(side_head_row)
 
         row = []
         for site_key in sites:
             sub_row = []
             for particle_key in particles:
-                sub_row.append(h(particle_key, level=4, text_align='center'))
+                sub_row.append(h(particle_key, level=6, text_align='center'))
             row.append(table([sub_row], width=site_width))
         matrix.append(row)
 
@@ -210,7 +210,7 @@ site_matrix = []
 _row = []
 for site_key in irf_config['config']['sites']:
     _row.append(
-        h(site_key, level=3, text_align='center')
+        h(site_key, level=5, text_align='center')
     )
 site_matrix.append(_row)
 _row = []
@@ -396,6 +396,38 @@ doc += make_site_table(
     )
 )
 
+_onregion_path = os.path.join(
+    pa['summary_dir'],
+    'acceptance_trigger_in_onregion',
+    'acceptance_trigger_in_onregion.json')
+with open(_onregion_path, 'rt') as f:
+    acceptance_trigger_in_onregion = json.loads(f.read())
+_row = []
+for site_key in irf_config['config']['sites']:
+    _onregion = acceptance_trigger_in_onregion[
+        'onregion'][
+        site_key]
+    _row.append(
+            code(
+                json.dumps(_onregion, indent=4),
+                font_size=50,
+                line_height=100
+            )
+    )
+doc += table(
+    matrix=[_row],
+    width=FIGURE_WIDTH_PIXEL*8
+)
+
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=energy_bin_edges_coarse,
+    wild_card=opj(
+        'gamma_direction_reconstruction',
+        '{site_key:s}_gamma_{energy_bin_index:06d}_psf.jpg'
+    )
+)
+
 doc += h('Effective area, trigger, reconstructed in on-region', level=2)
 doc += p(
     "Fade lines show acceptance on trigger-level "
@@ -420,6 +452,27 @@ doc += make_site_particle_index_table(
     wild_card=opj(
         'acceptance_trigger_in_onregion_plot',
         '{site_key:s}_{particle_key:s}_diffuse_onregion.jpg'
+    )
+)
+
+doc += h('Braodband-sensitivity, trigger', level=2)
+doc += p(
+    "A.k.a integral spectral exclusion zone. Only on trigger-level.",
+    text_align='justify',
+    font_family='calibri')
+
+doc += code(
+    json.dumps(sum_config['on_off_measuremnent'], indent=4),
+    font_size=50,
+    line_height=100,
+)
+
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        'acceptance_trigger_in_onregion_rates',
+        '{site_key:s}_integral_spectral_exclusion_zone.jpg'
     )
 )
 
