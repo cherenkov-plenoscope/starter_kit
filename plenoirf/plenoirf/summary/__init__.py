@@ -100,15 +100,23 @@ def run(run_dir):
     sum_config = read_summary_config(summary_dir=summary_dir)
 
     scripts = [
-        'runtime.py',
         'acceptance_trigger.py',
         'acceptance_trigger_plot.py',
-        'ratescan.py',
+        'trigger_ratescan.py',
+
+        'gamma_direction_reconstruction.py',
+
+        'acceptance_trigger_in_onregion.py',
+        'acceptance_trigger_in_onregion_plot.py',
+        'acceptance_trigger_in_onregion_rates.py',
+
         'trigger_probability_vs_cherenkov_size.py',
         'trigger_probability_vs_offaxis.py',
         'cherenkov_photon_classification.py',
         'grid_area.py',
         'grid_direction.py',
+
+        'runtime.py',
         'make_summary.py',
     ]
     for script in scripts:
@@ -304,7 +312,7 @@ def _guess_summary_config(run_dir):
             "lower_edge_GeV": lower_E,
             "upper_edge_GeV": upper_E,
             "num_bins": num_E_bins,
-            "num_bins_coarse": num_E_bins//8,
+            "num_bins_coarse": 8,
             "num_bins_fine": 1337,
         },
 

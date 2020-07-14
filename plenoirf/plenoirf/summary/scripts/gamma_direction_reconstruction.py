@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+import numpy as np
 import magnetic_deflection as mdfl
 import plenoirf as irf
 import sparse_table as spt
@@ -69,14 +70,14 @@ for site_key in irf_config['config']['sites']:
         modus=trigger_modus,
     )
 
-    indices_onregion = irf.analysis.effective_quantity.cut_primary_direction_within_angle(
+    indices_onregion = irf.analysis.cuts.cut_primary_direction_within_angle(
         primary_table=diffuse_gamma_table['primary'],
         radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
         azimuth_deg=pointing_azimuth_deg,
         zenith_deg=pointing_zenith_deg,
     )
 
-    indices_quality = irf.analysis.effective_quantity.cut_quality(
+    indices_quality = irf.analysis.cuts.cut_quality(
         feature_table=diffuse_gamma_table['features'],
         max_relative_leakage=max_relative_leakage,
         min_reconstructed_photons=min_reconstructed_photons,
@@ -86,7 +87,7 @@ for site_key in irf_config['config']['sites']:
     psf_68_radius_deg_unc = []
 
     for energy_bin in range(num_energy_bins):
-        indices_energy_bin = irf.analysis.effective_quantity.cut_energy_bin(
+        indices_energy_bin = irf.analysis.cuts.cut_energy_bin(
             primary_table=diffuse_gamma_table['primary'],
             lower_energy_edge_GeV=energy_bin_edges[energy_bin],
             upper_energy_edge_GeV=energy_bin_edges[energy_bin + 1],
@@ -155,7 +156,11 @@ for site_key in irf_config['config']['sites']:
             containment=0.68
         )
         psf_68_radius_deg.append(np.sqrt(psf_r2_deg2))
-        psf_68_radius_deg_unc.append(np.sqrt(num_airshower)/num_airshower)
+        if num_airshower > 0:
+            _psf_68_radius_deg_unc = np.sqrt(num_airshower)/num_airshower
+        else:
+            _psf_68_radius_deg_unc = np.nan
+        psf_68_radius_deg_unc.append(_psf_68_radius_deg_unc)
 
         fig = irf.summary.figure.figure(fc16by9)
         ax = fig.add_axes((.1, .1, .8, .8))
@@ -201,8 +206,13 @@ for site_key in irf_config['config']['sites']:
         plt.close(fig)
 
         psf = np.rad2deg(psf)
-        psf_c_bin_edges = np.linspace(-3.5, 3.5, 51)
-        img = np.histogram2d(psf[:, 0], psf[:, 1], psf_c_bin_edges)[0]
+        num_c_bins = 50
+        psf_c_bin_edges = np.linspace(-3.5, 3.5, num_c_bins + 1)
+
+        if len(psf) > 0:
+            img = np.histogram2d(psf[:, 0], psf[:, 1], psf_c_bin_edges)[0]
+        else:
+            img = np.zeros(shape=(num_c_bins, num_c_bins))
 
         fig = irf.summary.figure.figure(fc5by4)
         ax = fig.add_axes((.1, .1, .8, .8))
