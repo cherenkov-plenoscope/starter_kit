@@ -229,6 +229,15 @@ doc += table(
     width=FIGURE_WIDTH_PIXEL*8
 )
 
+doc += h('Light-field-trigger', level=2)
+_trigger_config = sum_config['trigger'].copy()
+_trigger_config.pop('ratescan_thresholds_pe')
+doc += code(
+    json.dumps(_trigger_config, indent=4),
+    font_size=50,
+    line_height=100,
+)
+
 doc += h('Effective area, ponit source, trigger-level', level=2)
 doc += make_site_table(
     sites=irf_config['config']['sites'],
