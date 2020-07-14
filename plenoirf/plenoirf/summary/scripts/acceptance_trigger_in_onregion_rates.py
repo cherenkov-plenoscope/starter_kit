@@ -6,8 +6,6 @@ import sparse_table as spt
 import cosmic_fluxes
 import os
 import json
-import gamma_limits_sensitivity as gls
-import scipy
 
 import matplotlib
 matplotlib.use('Agg')
@@ -58,7 +56,7 @@ particle_colors = sum_config['plot']['particle_colors']
 
 observation_time_s = 50*3600
 
-n_points_to_plot = 27
+n_points_to_plot = 17
 
 crab_flux = cosmic_fluxes.read_crab_nebula_flux_from_resources()
 
@@ -138,44 +136,10 @@ for site_key in irf_config['config']['sites']:
 
         background_rate_in_onregion += onregion_rates[site_key][cosmic_key]
 
-
     # integral spectral exclusion zone
     # --------------------------------
-    log10_energy_bin_centers_GeV_TeV = np.log10(1e-3*energy_bin_centers_GeV)
-    _gamma_effective_area_cm2 = 1e2*1e2*_gamma_effective_area_m2
-
-    acp_aeff_scaled = scipy.interpolate.interpolate.interp1d(
-        x=log10_energy_bin_centers_GeV_TeV,
-        y=_gamma_effective_area_cm2,
-        bounds_error=False,
-        fill_value=0.
-    )
-
-    acp_sigma_bg = background_rate_in_onregion
-    acp_alpha = on_over_off_ratio
-
     fig = irf.summary.figure.figure(fig_16_by_9)
     ax = fig.add_axes((.1, .1, .8, .8))
-
-    waste_figure = plt.figure()
-
-    acp_energy_range = gls.get_energy_range(acp_aeff_scaled)
-    acp_energy_x, acp_dn_de_y = gls.plot_sens_spectrum_figure(
-        sigma_bg=acp_sigma_bg,
-        alpha=acp_alpha,
-        t_obs=observation_time_s,
-        a_eff_interpol=acp_aeff_scaled,
-        e_0=acp_energy_range[0]*5.,
-        n_points_to_plot=n_points_to_plot,
-        fmt='r',
-        label=''
-    )
-    ax.plot(
-        acp_energy_x*1e3,
-        acp_dn_de_y*1e-3*1e4,
-        'r',
-        label='Portal {:2.0f}h'.format(observation_time_s/3600.)
-    )
 
     # Crab reference fluxes
     for i in range(4):
@@ -193,6 +157,57 @@ for site_key in irf_config['config']['sites']:
             label='{:.3f} Crab'.format(scale_factor),
             alpha=1./(1.+i)
         )
+
+    fermi_broadband = irf.analysis.fermi_lat_integral_spectral_exclusion_zone()
+    assert fermi_broadband[
+        'energy']['unit_tex'] == "GeV"
+    assert fermi_broadband[
+        'differential_flux']['unit_tex'] == "m$^{-2}$ s$^{-1}$ GeV$^{-1}$"
+    ax.plot(
+        fermi_broadband['energy']['values'],
+        fermi_broadband['differential_flux']['values'],
+        'k',
+        label='Fermi-LAT 10y'
+    )
+
+    # plenoscope
+    (
+        isez_energy_GeV,
+        isez_differential_flux_per_GeV_per_m2_per_s
+    ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
+        gamma_effective_area_m2=_gamma_effective_area_m2,
+        energy_bin_centers_GeV=energy_bin_centers_GeV,
+        background_rate_in_onregion_per_s=background_rate_in_onregion,
+        onregion_over_offregion_ratio=on_over_off_ratio,
+        observation_time_s=observation_time_s,
+        num_points=n_points_to_plot
+    )
+    ax.plot(
+        isez_energy_GeV,
+        isez_differential_flux_per_GeV_per_m2_per_s,
+        'r',
+        label='Portal {:2.0f}h, trigger'.format(observation_time_s/3600.)
+    )
+
+    # plenoscope rejecting all hadrons
+    (
+        e_isez_energy_GeV,
+        e_isez_differential_flux_per_GeV_per_m2_per_s
+    ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
+        gamma_effective_area_m2=_gamma_effective_area_m2,
+        energy_bin_centers_GeV=energy_bin_centers_GeV,
+        background_rate_in_onregion_per_s=onregion_rates[site_key]['electron'],
+        onregion_over_offregion_ratio=on_over_off_ratio,
+        observation_time_s=observation_time_s,
+        num_points=n_points_to_plot
+    )
+    ax.plot(
+        e_isez_energy_GeV,
+        e_isez_differential_flux_per_GeV_per_m2_per_s,
+        'r:',
+        label='Portal {:2.0f}h, trigger, rejecting all hadrons'.format(observation_time_s/3600.)
+    )
+
     ax.set_xlim([1e-1, 1e4])
     ax.set_ylim([1e-16, 1e-0])
     ax.loglog()
