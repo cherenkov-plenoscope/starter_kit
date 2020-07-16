@@ -372,7 +372,7 @@ def _guess_summary_config(run_dir):
         "on_off_measuremnent": {
             "on_over_off_ratio": 1/5,
             "detection_threshold_std": 5.0,
-        }
+        },
 
         "gamma_ray_reference_source": {
             "type": "3fgl",
@@ -381,8 +381,8 @@ def _guess_summary_config(run_dir):
                 "flux_density_per_m2_per_s_per_GeV": 1e-3,
                 "spectral_index": -2.0,
                 "pivot_energy_GeV": 1.0,
-            }
-        }
+            },
+        },
     }
 
     summary_config['plot'] = {
