@@ -485,6 +485,57 @@ doc += make_site_table(
     )
 )
 
+doc += h('Magnetic deflection in atmosphere', level=2)
+doc += h('primary azimuth', level=4)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '..',
+        'magnetic_deflection',
+        'control_figures',
+        '{site_key:s}_{particle_key:s}_primary_azimuth_deg.jpg'
+    )
+)
+doc += h('primary zenith', level=4)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '..',
+        'magnetic_deflection',
+        'control_figures',
+        '{site_key:s}_{particle_key:s}_primary_zenith_deg.jpg'
+    )
+)
+doc += h('cherenkov-pool x', level=4)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '..',
+        'magnetic_deflection',
+        'control_figures',
+        '{site_key:s}_{particle_key:s}_cherenkov_pool_x_m.jpg'
+    )
+)
+doc += h('cherenkov-pool y', level=4)
+doc += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '..',
+        'magnetic_deflection',
+        'control_figures',
+        '{site_key:s}_{particle_key:s}_cherenkov_pool_y_m.jpg'
+    )
+)
+
+
 doc += h('Runtime', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
@@ -505,7 +556,6 @@ doc += make_site_particle_index_table(
     )
 )
 
-"""
 doc += h('Configurations', level=2)
 doc += h('Plenoscope-scenery', level=3)
 doc += code(
@@ -525,12 +575,15 @@ doc += code(
     font_size=50,
     line_height=100
 )
-"""
 
 html = page('summary', doc)
 
 with open(opj(pa['summary_dir'], 'index.html'), 'wt') as fout:
     fout.write(html)
 
+production_name = pa['run_dir']
+if production_name[-1] == '/':
+    production_name = os.path.dirname(production_name)
+
 weasyprint.HTML(opj(pa['summary_dir'], 'index.html')).write_pdf(
-    opj(pa['summary_dir'], 'index.pdf'))
+    opj(pa['summary_dir'], '{:s}.pdf'.format(production_name)))
