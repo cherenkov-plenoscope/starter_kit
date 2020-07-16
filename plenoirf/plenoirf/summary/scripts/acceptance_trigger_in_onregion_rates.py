@@ -31,17 +31,13 @@ with open(acceptance_trigger_in_onregion_path, 'rt') as f:
 energy_lower_GeV = sum_config['energy_binning']['lower_edge_GeV']
 energy_upper_GeV = sum_config['energy_binning']['upper_edge_GeV']
 
-energy_lower_TeV = 1e-3*energy_lower_GeV
-energy_upper_TeV = 1e-3*energy_upper_GeV
-
-
 energy_bin_edges_GeV = np.array(acceptance['energy_bin_edges']['value'])
 assert acceptance['energy_bin_edges']['unit'] == "GeV"
 energy_bin_centers_GeV = irf.summary.bin_centers(energy_bin_edges_GeV)
 
 fine_energy_bin_edges_GeV = np.geomspace(
-    sum_config['energy_binning']['lower_edge_GeV'],
-    sum_config['energy_binning']['upper_edge_GeV'],
+    energy_lower_GeV,
+    energy_upper_GeV,
     sum_config['energy_binning']['num_bins_fine'] + 1
 )
 
@@ -86,9 +82,15 @@ gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
 )
 
 onregion_rates = {}
+differential_trigger_rates = {}
+differential_trigger_rates['energy_bin_edges'] = {
+    "value": fine_energy_bin_edges_GeV,
+    "unit": "GeV"
+}
 
 for site_key in irf_config['config']['sites']:
     onregion_rates[site_key] = {}
+    differential_trigger_rates[site_key] = {}
 
     # gamma-ray
     # ---------
@@ -108,13 +110,14 @@ for site_key in irf_config['config']['sites']:
         gamma_dF_per_m2_per_s_per_GeV *
         gamma_effective_area_m2
     )
+    differential_trigger_rates[site_key]['gamma'] = gamma_dT_per_s_per_GeV
+
     gamma_T_per_s = np.sum(gamma_dT_per_s_per_GeV*fine_energy_bin_width)
     onregion_rates[site_key]['gamma'] = gamma_T_per_s
 
-    background_rate_in_onregion = 0
-
     # cosmic-rays
     # -----------
+    background_rate_in_onregion = 0
     for cosmic_key in airshower_fluxes[site_key]:
         _cosmic_effective_acceptance_m2_sr = np.array(acceptance[
             'cosmic_response'][
@@ -133,6 +136,10 @@ for site_key in irf_config['config']['sites']:
             cosmic_effective_acceptance_m2_sr *
             airshower_fluxes[site_key][cosmic_key]['differential_flux']
         )
+        differential_trigger_rates[
+            site_key][
+            cosmic_key] = cosmic_dT_per_s_per_GeV
+
         cosmic_T_per_s = cosmic_dT_per_s_per_GeV*fine_energy_bin_width
         onregion_rates[site_key][cosmic_key] = np.sum(cosmic_T_per_s)
 
@@ -172,6 +179,7 @@ for site_key in irf_config['config']['sites']:
         label='Fermi-LAT 10y'
     )
 
+    """
     # plenoscope
     (
         isez_energy_GeV,
@@ -209,6 +217,7 @@ for site_key in irf_config['config']['sites']:
         'r:',
         label='Portal {:2.0f}h, trigger, rejecting all hadrons'.format(observation_time_s/3600.)
     )
+    """
 
     ax.set_xlim([1e-1, 1e4])
     ax.set_ylim([1e-16, 1e-0])
@@ -227,6 +236,60 @@ for site_key in irf_config['config']['sites']:
     )
     plt.close(fig)
 
+
+
 opath = os.path.join(pa['out_dir'], "background_rates_in_onregion.json")
 with open(opath, 'wt') as f:
     f.write(json.dumps(onregion_rates, indent=4, cls=irf.json_numpy.Encoder))
+
+
+opath = os.path.join(
+    pa['out_dir'],
+    'differential_trigger_rates_in_onregion.json'.format(site_key)
+)
+with open(opath, 'wt') as f:
+    f.write(json.dumps(differential_trigger_rates, indent=4, cls=irf.json_numpy.Encoder))
+
+
+
+for site_key in irf_config['config']['sites']:
+
+    # differential trigger-rates
+    # --------------------------
+    fig = irf.summary.figure.figure(fig_16_by_9)
+    ax = fig.add_axes((.1, .1, .8, .8))
+
+    text_y = 0.7
+    for particle_key in irf_config['config']['particles']:
+        ax.plot(
+            irf.summary.bin_centers(
+                differential_trigger_rates["energy_bin_edges"]["value"]
+            ),
+            differential_trigger_rates[site_key][particle_key],
+            color=sum_config['plot']['particle_colors'][particle_key]
+        )
+        ax.text(
+            0.9,
+            0.1 + text_y,
+            particle_key,
+            color=particle_colors[particle_key],
+            transform=ax.transAxes
+        )
+        text_y += 0.06
+
+
+    ax.set_xlim([energy_lower_GeV, energy_upper_GeV])
+    ax.set_ylim([1e-3, 1e4])
+    ax.loglog()
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+    ax.set_xlabel('Energy / GeV')
+    ax.set_ylabel('Differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
+    fig.savefig(
+        os.path.join(
+            pa['out_dir'],
+            '{:s}_differential_trigger_rates_in_onregion.jpg'.format(site_key)
+        )
+    )
+    plt.close(fig)
