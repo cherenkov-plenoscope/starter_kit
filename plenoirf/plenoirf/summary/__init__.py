@@ -283,6 +283,9 @@ def bin_width(bin_edges):
     return bin_edges[1:] - bin_edges[:-1]
 
 
+FERMI_3FGL_CRAB_NEBULA_NAME = '3FGL J0534.5+2201'
+FERMI_3FGL_PHD_THESIS_REFERENCE_SOURCE_NAME = '3FGL J2254.0+1608'
+
 def _guess_summary_config(run_dir):
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
@@ -371,6 +374,15 @@ def _guess_summary_config(run_dir):
             "detection_threshold_std": 5.0,
         }
 
+        "gamma_ray_reference_source": {
+            "type": "3fgl",
+            "name_3fgl": FERMI_3FGL_CRAB_NEBULA_NAME,
+            "generic_power_law": {
+                "flux_density_per_m2_per_s_per_GeV": 1e-3,
+                "spectral_index": -2.0,
+                "pivot_energy_GeV": 1.0,
+            }
+        }
     }
 
     summary_config['plot'] = {
