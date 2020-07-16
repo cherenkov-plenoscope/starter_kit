@@ -71,12 +71,14 @@ airshower_fluxes = irf.summary.read_airshower_differential_flux(
         'fraction_of_flux_below_geomagnetic_cutoff'],
 )
 
+_crab_nebula = '3FGL J0534.5+2201'
+_phd_thesis_reference_source = '3FGL J2254.0+1608'
 # gamma-ray-flux
 # ---------------
 with open(os.path.join(pa['summary_dir'], "gamma_sources.json"), "rt") as f:
     gamma_sources = json.loads(f.read())
 for source in gamma_sources:
-    if source['source_name'] == '3FGL J0534.5+2201':
+    if source['source_name'] == _phd_thesis_reference_source:
         reference_gamma_source = source
 gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
     fermi_source=reference_gamma_source,
