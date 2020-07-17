@@ -54,12 +54,13 @@ for site_key in irf_config['config']['sites']:
 
         # point source
         # ------------
-        idx_possible_onregion = irf.analysis.cuts.cut_primary_direction_within_angle(
-            primary_table=diffuse_particle_table['primary'],
-            radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
-            azimuth_deg=pointing_azimuth_deg,
-            zenith_deg=pointing_zenith_deg,
-        )
+        idx_possible_onregion = \
+            irf.analysis.cuts.cut_primary_direction_within_angle(
+                primary_table=diffuse_particle_table['primary'],
+                radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
+                azimuth_deg=pointing_azimuth_deg,
+                zenith_deg=pointing_zenith_deg,
+            )
 
         point_particle_table = spt.cut_table_on_indices(
             table=diffuse_particle_table,
@@ -92,8 +93,8 @@ for site_key in irf_config['config']['sites']:
                 energy_GeV=energy_GeV,
                 mask_detected=mask_detected,
                 quantity_scatter=quantity_scatter,
-                num_grid_cells_above_lose_threshold=
-                    num_grid_cells_above_lose_threshold,
+                num_grid_cells_above_lose_threshold=(
+                    num_grid_cells_above_lose_threshold),
                 total_num_grid_cells=NUM_GRID_BINS,
             )
             value.append(_q_eff)
@@ -102,8 +103,9 @@ for site_key in irf_config['config']['sites']:
         irf.json_numpy.write(
             os.path.join(site_particle_dir, "point.json"),
             {
-                "comment": "Effective area for a point source. "
-                    "VS trigger-ratescan-thresholds VS energy-bins",
+                "comment": (
+                    "Effective area for a point source. "
+                    "VS trigger-ratescan-thresholds VS energy-bins"),
                 "energy_bin_edges_GeV": energy_bin_edges,
                 "trigger": sum_config['trigger'],
                 "unit": "m$^{2}$",
@@ -143,8 +145,8 @@ for site_key in irf_config['config']['sites']:
                 energy_GeV=energy_GeV,
                 mask_detected=mask_detected,
                 quantity_scatter=quantity_scatter,
-                num_grid_cells_above_lose_threshold=
-                    num_grid_cells_above_lose_threshold,
+                num_grid_cells_above_lose_threshold=(
+                    num_grid_cells_above_lose_threshold),
                 total_num_grid_cells=NUM_GRID_BINS,
             )
             value.append(_q_eff)
@@ -153,9 +155,10 @@ for site_key in irf_config['config']['sites']:
         irf.json_numpy.write(
             os.path.join(site_particle_dir, "diffuse.json"),
             {
-                "comment": "Effective acceptance (area x solid angle) "
+                "comment": (
+                    "Effective acceptance (area x solid angle) "
                     "for a diffuse source. "
-                    "VS trigger-ratescan-thresholds VS energy-bins",
+                    "VS trigger-ratescan-thresholds VS energy-bins"),
                 "energy_bin_edges_GeV": energy_bin_edges,
                 "trigger": sum_config['trigger'],
                 "unit": "m$^{2}$ sr",
