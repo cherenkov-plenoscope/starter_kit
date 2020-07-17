@@ -358,6 +358,7 @@ def _guess_summary_config(run_dir):
                 "trigger_acceptance": 48,
                 "trigger_acceptance_onregion": 12,
                 "interpolation": 1337,
+                "point_spread_function": 8
             }
         },
 
@@ -408,7 +409,15 @@ def _guess_summary_config(run_dir):
 
         "quality": {
             "max_relative_leakage": 0.1,
-            "min_reconstructed_photons": 100,
+            "min_reconstructed_photons": 50,
+        },
+
+        "point_spread_function": {
+            "theta_square": {
+                "max_angle_deg": 3.25,
+                "num_bins": 17,
+            },
+            "containment_factor": 0.68
         },
 
         "on_off_measuremnent": {
