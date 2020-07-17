@@ -2,9 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
-import sparse_table as spt
 import os
-import json
 from os.path import join as opj
 
 import matplotlib
@@ -48,8 +46,6 @@ G_energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['num_bins']['trigger_acceptance_onregion'] + 1
 )
 
-ylim = [1e1, 1e6]
-
 fig_16_by_9 = sum_config['plot']['16_by_9']
 particle_colors = sum_config['plot']['particle_colors']
 
@@ -70,25 +66,25 @@ for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
         for source_key in sources:
 
-            acceptance_trigger = np.array(A[
+            acc_trg = np.array(A[
                 site_key][
                 particle_key][
                 source_key][
                 'mean'][
                 idx_trigger_threshold])
-            acceptance_trigger_unc = np.array(A[
+            acc_trg_unc = np.array(A[
                 site_key][
                 particle_key][
                 source_key][
                 'relative_uncertainty'][
                 idx_trigger_threshold])
 
-            acceptance_trigger_onregion = np.array(G[
+            acc_trg_onregion = np.array(G[
                 site_key][
                 particle_key][
                 source_key][
                 'mean'])
-            acceptance_trigger_onregion_unc = np.array(G[
+            acc_trg_onregion_unc = np.array(G[
                 site_key][
                 particle_key][
                 source_key][
@@ -100,20 +96,20 @@ for site_key in irf_config['config']['sites']:
             irf.summary.figure.ax_add_hist(
                 ax=ax,
                 bin_edges=A_energy_bin_edges,
-                bincounts=acceptance_trigger,
+                bincounts=acc_trg,
                 linestyle='gray',
-                bincounts_upper=acceptance_trigger*(1 + acceptance_trigger_unc),
-                bincounts_lower=acceptance_trigger*(1 - acceptance_trigger_unc),
+                bincounts_upper=acc_trg*(1 + acc_trg_unc),
+                bincounts_lower=acc_trg*(1 - acc_trg_unc),
                 face_color=particle_colors[particle_key],
                 face_alpha=0.05,
             )
             irf.summary.figure.ax_add_hist(
                 ax=ax,
                 bin_edges=G_energy_bin_edges,
-                bincounts=acceptance_trigger_onregion,
+                bincounts=acc_trg_onregion,
                 linestyle=particle_colors[particle_key],
-                bincounts_upper=acceptance_trigger_onregion*(1 + acceptance_trigger_onregion_unc),
-                bincounts_lower=acceptance_trigger_onregion*(1 - acceptance_trigger_onregion_unc),
+                bincounts_upper=acc_trg_onregion*(1 + acc_trg_onregion_unc),
+                bincounts_lower=acc_trg_onregion*(1 - acc_trg_onregion_unc),
                 face_color=particle_colors[particle_key],
                 face_alpha=0.25,
             )
@@ -133,7 +129,7 @@ for site_key in irf_config['config']['sites']:
             fig.savefig(
                 opj(
                     pa['out_dir'],
-                    '{:s}_{:s}_{:s}_onregion.jpg'.format(
+                    '{:s}_{:s}_{:s}_fix_onregion.jpg'.format(
                         site_key,
                         particle_key,
                         source_key,
