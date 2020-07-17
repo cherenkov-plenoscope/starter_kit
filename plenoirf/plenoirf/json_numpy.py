@@ -1,5 +1,7 @@
 import numpy as np
 import json
+import os
+import glob
 
 
 class Encoder(json.JSONEncoder):
@@ -29,3 +31,16 @@ def read(path):
     with open(path, "rt") as f:
         out_dict = json.loads(f.read())
     return out_dict
+
+
+def read_tree(path):
+    out = {}
+    _paths = glob.glob(os.path.join(path, "*"))
+    for _path in _paths:
+        file_path, file_extension = os.path.splitext(_path)
+        file_basename = os.path.basename(file_path)
+        if str.lower(file_extension) == ".json":
+            out[file_basename] = read(_path)
+        if os.path.isdir(_path):
+            out[file_basename] = read_tree(_path)
+    return out
