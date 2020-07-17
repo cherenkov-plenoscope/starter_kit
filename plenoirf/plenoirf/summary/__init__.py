@@ -356,7 +356,7 @@ def _guess_summary_config(run_dir):
             "upper_edge_GeV": upper_E,
             "num_bins": {
                 "trigger_acceptance": 48,
-                "trigger_acceptance_on_region": 12,
+                "trigger_acceptance_onregion": 12,
                 "interpolation": 1337,
             }
         },

@@ -37,11 +37,11 @@ pointing_zenith_deg = irf_config[
     'zenith_deg']
 analysis_trigger_threshold = sum_config['trigger']['threshold_pe']
 trigger_modus = sum_config["trigger"]["modus"]
-num_energy_bins = sum_config['energy_binning']['num_bins']//2
+
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    num_energy_bins + 1
+    sum_config['energy_binning']['num_bins']['trigger_acceptance_onregion'] + 1
 )
 max_relative_leakage = sum_config['quality']['max_relative_leakage']
 min_reconstructed_photons = sum_config['quality']['min_reconstructed_photons']
