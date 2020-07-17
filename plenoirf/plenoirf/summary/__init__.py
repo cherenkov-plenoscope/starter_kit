@@ -8,6 +8,7 @@ import cosmic_fluxes
 import pkg_resources
 import subprocess
 import sparse_table as spt
+import glob
 from .. import table
 from .. import merlict
 from .. import grid
@@ -99,41 +100,36 @@ def run(run_dir):
     irf_config = read_instrument_response_config(run_dir=run_dir)
     sum_config = read_summary_config(summary_dir=summary_dir)
 
-    scripts = [
-        'acceptance_trigger.py',
-        'acceptance_trigger_plot.py',
-        'trigger_ratescan.py',
+    script_abspaths = _make_script_abspaths()
 
-        'gamma_direction_reconstruction.py',
-
-        'acceptance_trigger_in_onregion.py',
-        'acceptance_trigger_in_onregion_plot.py',
-        'acceptance_trigger_in_onregion_rates.py',
-
-        'trigger_probability_vs_cherenkov_size.py',
-        'trigger_probability_vs_offaxis.py',
-        'cherenkov_photon_classification.py',
-        'grid_area.py',
-        'grid_direction.py',
-
-        'runtime.py',
-        'make_summary.py',
-    ]
-    for script in scripts:
-        script_path = _script_abspath(script)
-        script_name = str.split(script, '.')[0]
+    for script_abspath in script_abspaths:
+        script_basename = os.path.basename(script_abspath)
+        script_name = str.split(script_basename, '.')[0]
         result_path = os.path.join(run_dir, 'summary', script_name)
         if os.path.exists(result_path):
-            print(script_name, "already done")
+            print('[skip] ', script_name)
         else:
-            subprocess.call(['python', script_path, run_dir])
+            print('[run ] ', script_name)
+            subprocess.call(['python', script_abspath, run_dir])
 
 
-def _script_abspath(filename):
-    path = pkg_resources.resource_filename(
+def _make_script_abspaths():
+    script_absdir = pkg_resources.resource_filename(
         'plenoirf',
-        os.path.join('summary', 'scripts', filename))
-    return os.path.abspath(path)
+        os.path.join('summary', 'scripts')
+    )
+    _paths = glob.glob(os.path.join(script_absdir, "*"))
+    out = []
+    order = []
+    for _path in _paths:
+        basename = os.path.basename(_path)
+        if str.isdigit(basename[0:4]):
+            order.append(int(basename[0:4]))
+            out.append(_path)
+    order = np.array(order)
+    argorder = np.argsort(order)
+    out_order = [out[arg] for arg in argorder]
+    return out_order
 
 
 def _estimate_num_events_past_trigger(run_dir, irf_config):
@@ -250,7 +246,7 @@ def read_airshower_differential_flux(
             fp=_raw_cosmic_rays[particle_key]['differential_flux']['values']
         )
 
-    # cutoff
+    # earth's geomagnetic cutoff
     airshowers = {}
     for site_key in sites:
         airshowers[site_key] = {}
@@ -271,6 +267,50 @@ def read_airshower_differential_flux(
                 below_cutoff] *= geomagnetic_cutoff_fraction
 
     return airshowers
+
+
+def make_gamma_ray_reference_flux(
+    summary_dir,
+    gamma_ray_reference_source,
+    energy_supports_GeV,
+):
+    _grrs = gamma_ray_reference_source
+    if _grrs["type"] == "3fgl":
+        with open(os.path.join(summary_dir, "gamma_sources.json"), "rt") as f:
+            _gamma_sources = json.loads(f.read())
+        for _source in _gamma_sources:
+            if _source['source_name'] == _grrs["name_3fgl"]:
+                _reference_gamma_source = _source
+        gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
+            fermi_source=_reference_gamma_source,
+            energy=energy_supports_GeV
+        )
+        source_name = _grrs["name_3fgl"]
+
+        return gamma_dF_per_m2_per_s_per_GeV, source_name
+
+    elif _grrs["type"] == "generic_power_law":
+        _gpl = _grrs["generic_power_law"]
+        gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes._power_law(
+            energy=energy_supports_GeV,
+            flux_density=_gpl['flux_density_per_m2_per_s_per_GeV'],
+            spectral_index=_gpl['spectral_index'],
+            pivot_energy=_gpl['pivot_energy_GeV'],
+        )
+        source_name = ''.join([
+            '$F = F_0 \\left( \\frac{E}{E_0}\\right) ^{\\gamma}$, ',
+            '$F_0$ = {:1.2f} m$^{-2}$ (GeV)$^{-1}$ s$^{-1}$, '.format(
+                _gpl['flux_density_per_m2_per_s_per_GeV']
+            ),
+            '$E_0$ = {:1.2f} GeV, '.format(_gpl['pivot_energy_GeV']),
+            '$\\gamma = {:1.2f}$'.format(_gpl['spectral_index']),
+        ])
+        return gamma_dF_per_m2_per_s_per_GeV, source_name
+
+    else:
+        raise KeyError("'type' must either be '3fgl', or 'generic_power_law'.")
+
+
 
 
 def bin_centers(bin_edges, weight_lower_edge=0.5):
@@ -314,9 +354,11 @@ def _guess_summary_config(run_dir):
         "energy_binning": {
             "lower_edge_GeV": lower_E,
             "upper_edge_GeV": upper_E,
-            "num_bins": num_E_bins,
-            "num_bins_coarse": 8,
-            "num_bins_fine": 1337,
+            "num_bins": {
+                "trigger_acceptance": 48,
+                "trigger_acceptance_on_region": 12,
+                "interpolation": 1337,
+            }
         },
 
         "direction_binning": {
