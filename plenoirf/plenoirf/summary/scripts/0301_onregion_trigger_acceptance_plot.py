@@ -5,6 +5,7 @@ import plenoirf as irf
 import sparse_table as spt
 import os
 import json
+from os.path import join as opj
 
 import matplotlib
 matplotlib.use('Agg')
@@ -27,27 +28,25 @@ assert trigger_threshold in trigger_thresholds
 
 # trigger
 # -------
-acceptance_trigger_path = os.path.join(
-    pa['summary_dir'],
-    "acceptance_trigger",
-    "acceptance_trigger.json"
+A = irf.json_numpy.read_tree(
+    opj(pa['summary_dir'], "0100_trigger_acceptance_for_cosmic_particles")
 )
-with open(acceptance_trigger_path, 'rt') as f:
-    A = json.loads(f.read())
-A_energy_bin_edges = np.array(A['energy_bin_edges']['value'])
-assert A['energy_bin_edges']['unit'] == "GeV"
-
-# trigger detection
-# -----------------
-acceptance_trigger_in_onregion_path = os.path.join(
-    pa['summary_dir'],
-    "acceptance_trigger_in_onregion",
-    "acceptance_trigger_in_onregion.json"
+A_energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins']['trigger_acceptance'] + 1
 )
-with open(acceptance_trigger_in_onregion_path, 'rt') as f:
-    G = json.loads(f.read())
-G_energy_bin_edges =  np.array(G['energy_bin_edges']['value'])
 
+# trigger fix onregion
+# --------------------
+G = irf.json_numpy.read_tree(
+    opj(pa['summary_dir'], "0300_onregion_trigger_acceptance")
+)
+G_energy_bin_edges = np.geomspace(
+    sum_config['energy_binning']['lower_edge_GeV'],
+    sum_config['energy_binning']['upper_edge_GeV'],
+    sum_config['energy_binning']['num_bins']['trigger_acceptance_onregion'] + 1
+)
 
 ylim = [1e1, 1e6]
 
@@ -72,14 +71,12 @@ for site_key in irf_config['config']['sites']:
         for source_key in sources:
 
             acceptance_trigger = np.array(A[
-                'cosmic_response'][
                 site_key][
                 particle_key][
                 source_key][
-                'value'][
+                'mean'][
                 idx_trigger_threshold])
             acceptance_trigger_unc = np.array(A[
-                'cosmic_response'][
                 site_key][
                 particle_key][
                 source_key][
@@ -87,13 +84,11 @@ for site_key in irf_config['config']['sites']:
                 idx_trigger_threshold])
 
             acceptance_trigger_onregion = np.array(G[
-                'cosmic_response'][
                 site_key][
                 particle_key][
                 source_key][
-                'value'])
+                'mean'])
             acceptance_trigger_onregion_unc = np.array(G[
-                'cosmic_response'][
                 site_key][
                 particle_key][
                 source_key][
@@ -136,7 +131,7 @@ for site_key in irf_config['config']['sites']:
             ax.loglog()
             ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
             fig.savefig(
-                os.path.join(
+                opj(
                     pa['out_dir'],
                     '{:s}_{:s}_{:s}_onregion.jpg'.format(
                         site_key,
