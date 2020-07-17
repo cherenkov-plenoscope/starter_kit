@@ -4,7 +4,6 @@ import numpy as np
 import plenoirf as irf
 import sparse_table as spt
 import os
-import json
 
 import matplotlib
 matplotlib.use('Agg')
