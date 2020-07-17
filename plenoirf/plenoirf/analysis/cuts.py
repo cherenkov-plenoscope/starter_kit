@@ -167,36 +167,6 @@ def cut_reconstructed_source_in_true_onregion(
     return np.array(idx)
 
 
-def cut_reconstructed_source_in_random_possible_onregion(
-    feature_table,
-    radial_angle_to_put_possible_onregion_deg,
-    radial_angle_onregion_deg,
-):
-    idx = []
-    for evt in range(feature_table.shape[0]):
-        true_cx, true_cy = cpw.random_distributions.draw_x_y_in_disc(
-            radius=np.deg2rad(radial_angle_to_put_possible_onregion_deg)
-        )
-
-        (rec_cx, rec_cy) = gamma_direction.estimate(
-            light_front_cx=feature_table['light_front_cx'][evt],
-            light_front_cy=feature_table['light_front_cy'][evt],
-            image_infinity_cx_mean=feature_table['image_infinity_cx_mean'][evt],
-            image_infinity_cy_mean=feature_table['image_infinity_cy_mean'][evt],
-        )
-
-        delta_cx = true_cx - rec_cx
-        delta_cy = true_cy - rec_cy
-
-        delta_c = np.hypot(delta_cx, delta_cy)
-        delta_c_deg = np.rad2deg(delta_c)
-
-        if delta_c_deg <= radial_angle_onregion_deg:
-            idx.append(feature_table[spt.IDX][evt])
-
-    return np.array(idx)
-
-
 def cut_reconstructed_source_in_possible_onregion(
     feature_table,
     radial_angle_to_put_possible_onregion_deg,
