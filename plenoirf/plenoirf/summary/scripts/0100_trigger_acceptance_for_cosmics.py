@@ -8,7 +8,6 @@ import json
 
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -39,13 +38,10 @@ energy_bin_edges = np.geomspace(
 trigger_thresholds = sum_config['trigger']['ratescan_thresholds_pe']
 trigger_modus = sum_config["trigger"]["modus"]
 
-cosmic_response = {}
-
 for site_key in irf_config['config']['sites']:
-    cosmic_response[site_key] = {}
     for particle_key in irf_config['config']['particles']:
-
-        cosmic_response[site_key][particle_key] = {}
+        site_particle_dir = os.path.join(pa['out_dir'], site_key, particle_key)
+        os.makedirs(site_particle_dir, exist_ok=True)
 
         diffuse_particle_table = spt.read(
             path=os.path.join(
@@ -77,13 +73,8 @@ for site_key in irf_config['config']['sites']:
         num_grid_cells_above_lose_threshold = point_particle_table[
             'grid']['num_bins_above_threshold']
 
-        _point = {
-            "value": [],
-            "relative_uncertainty": [],
-            "unit": "m$^{2}$",
-            "axis_0": "trigger_thresholds",
-            "axis_1": "energy",
-        }
+        value = []
+        relative_uncertainty = []
         for threshold in trigger_thresholds:
             idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
                 trigger_table=point_particle_table['trigger'],
@@ -106,9 +97,21 @@ for site_key in irf_config['config']['sites']:
                     num_grid_cells_above_lose_threshold,
                 total_num_grid_cells=NUM_GRID_BINS,
             )
-            _point['value'].append(_q_eff)
-            _point['relative_uncertainty'].append(_q_unc)
-        cosmic_response[site_key][particle_key]['point'] = _point
+            value.append(_q_eff)
+            relative_uncertainty.append(_q_unc)
+
+        irf.json_numpy.write(
+            os.path.join(site_particle_dir, "point.json"),
+            {
+                "comment": "Effective area for a point source. "
+                    "VS trigger-ratescan-thresholds VS energy-bins",
+                "energy_bin_edges_GeV": energy_bin_edges,
+                "trigger": sum_config['trigger'],
+                "unit": "m$^{2}$",
+                "mean": value,
+                "relative_uncertainty": relative_uncertainty,
+            }
+        )
 
         # diffuse source
         # --------------
@@ -121,13 +124,8 @@ for site_key in irf_config['config']['sites']:
             'grid'][
             'num_bins_above_threshold']
 
-        _diffuse = {
-            "value": [],
-            "relative_uncertainty": [],
-            "unit": "m$^{2}$ sr",
-            "axis_0": "trigger_thresholds",
-            "axis_1": "energy",
-        }
+        value = []
+        relative_uncertainty = []
         for threshold in trigger_thresholds:
             idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
                 trigger_table=diffuse_particle_table['trigger'],
@@ -150,22 +148,19 @@ for site_key in irf_config['config']['sites']:
                     num_grid_cells_above_lose_threshold,
                 total_num_grid_cells=NUM_GRID_BINS,
             )
-            _diffuse['value'].append(_q_eff)
-            _diffuse['relative_uncertainty'].append(_q_unc)
-            cosmic_response[site_key][particle_key]['diffuse'] = _diffuse
+            value.append(_q_eff)
+            relative_uncertainty.append(_q_unc)
 
-Qout = {
-    "energy_bin_edges": {
-        "value": energy_bin_edges,
-        "unit": "GeV"
-    },
-    "trigger_thresholds": {
-        "value": trigger_thresholds,
-        "unit": "p.e."
-    },
-    "trigger_modus": trigger_modus,
-    "cosmic_response": cosmic_response,
-}
-
-with open(os.path.join(pa['out_dir'], 'acceptance_trigger.json'), 'wt') as f:
-    f.write(json.dumps(Qout, indent=4, cls=irf.json_numpy.Encoder))
+        irf.json_numpy.write(
+            os.path.join(site_particle_dir, "diffuse.json"),
+            {
+                "comment": "Effective acceptance (area x solid angle) "
+                    "for a diffuse source. "
+                    "VS trigger-ratescan-thresholds VS energy-bins",
+                "energy_bin_edges_GeV": energy_bin_edges,
+                "trigger": sum_config['trigger'],
+                "unit": "m$^{2}$ sr",
+                "mean": value,
+                "relative_uncertainty": relative_uncertainty,
+            }
+        )
