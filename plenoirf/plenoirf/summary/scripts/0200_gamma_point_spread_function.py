@@ -5,6 +5,7 @@ import magnetic_deflection as mdfl
 import plenoirf as irf
 import sparse_table as spt
 import os
+from os.path import join as opj
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -35,6 +36,8 @@ energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['upper_edge_GeV'],
     num_energy_bins + 1
 )
+energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
+
 max_relative_leakage = sum_config['quality']['max_relative_leakage']
 min_reconstructed_photons = sum_config['quality']['min_reconstructed_photons']
 
@@ -46,13 +49,16 @@ theta_square_bin_edges_deg2 = np.linspace(
 psf_containment_factor = sum_config[
     'point_spread_function'][
     'containment_factor']
+pivot_energy_GeV = sum_config[
+    'point_spread_function'][
+    'pivot_energy_GeV']
 
 for site_key in irf_config['config']['sites']:
-    site_dir = os.path.join(pa['out_dir'], site_key)
-    os.makedirs(site_dir, exist_ok=True)
+    site_particle_dir = opj(pa['out_dir'], site_key, 'gamma')
+    os.makedirs(site_particle_dir, exist_ok=True)
 
     diffuse_gamma_table = spt.read(
-        path=os.path.join(
+        path=opj(
             pa['run_dir'],
             'event_table',
             site_key,
@@ -135,7 +141,7 @@ for site_key in irf_config['config']['sites']:
         psf_vs_energy.append(psf_deg)
 
     irf.json_numpy.write(
-        os.path.join(site_dir, "point_spread_distribution_vs_energy.json"),
+        opj(site_particle_dir, "point_spread_distribution_vs_energy.json"),
         {
             "comment": (
                 "The deviation (delta) between true and "
@@ -187,7 +193,7 @@ for site_key in irf_config['config']['sites']:
         containment_rel_unc_vs_energy.append(_unc)
 
     irf.json_numpy.write(
-        os.path.join(site_dir, "theta_square_histogram_vs_energy.json"),
+        opj(site_particle_dir, "theta_square_histogram_vs_energy.json"),
         {
             "comment": (
                 "Theta-square-histogram VS energy"),
@@ -200,7 +206,7 @@ for site_key in irf_config['config']['sites']:
     )
 
     irf.json_numpy.write(
-        os.path.join(site_dir, "containment_angle_vs_energy.json"),
+        opj(site_particle_dir, "containment_angle_vs_energy.json"),
         {
             "comment": (
                 "Containment-angle, true gamma-rays, VS energy"),
@@ -208,5 +214,36 @@ for site_key in irf_config['config']['sites']:
             "unit": "deg",
             "mean": containment_vs_energy,
             "relative_uncertainty": containment_rel_unc_vs_energy,
+        },
+    )
+
+    # estimate fix opening angle for onregion
+    # ---------------------------------------
+    num_rise = 8
+    smooth_kernel_energy = np.geomspace(
+        pivot_energy_GeV/2,
+        pivot_energy_GeV*2,
+        num_rise*2
+    )
+    triangle_kernel_weight = np.hstack([
+        np.cumsum(np.ones(num_rise)),
+        np.flip(np.cumsum(np.ones(num_rise)))
+    ])
+    triangle_kernel_weight /= np.sum(triangle_kernel_weight)
+    pivot_containtment_deg = np.interp(
+        x=smooth_kernel_energy,
+        xp=energy_bin_centers,
+        fp=containment_vs_energy
+    )
+    fix_onregion_radius_deg = np.sum(
+        pivot_containtment_deg*triangle_kernel_weight)
+
+    irf.json_numpy.write(
+        opj(site_particle_dir, "containment_angle_for_fix_onregion.json"),
+        {
+            "comment": (
+                "Containment-angle, for the fix onregion"),
+            "containment_angle": fix_onregion_radius_deg,
+            "unit": "deg",
         },
     )

@@ -47,12 +47,7 @@ max_relative_leakage = sum_config['quality']['max_relative_leakage']
 min_reconstructed_photons = sum_config['quality']['min_reconstructed_photons']
 
 onregion68 = {}
-psf_path = os.path.join(
-    pa['summary_dir'],
-    'gamma_direction_reconstruction',
-    "{site_key:s}_gamma_psf_radial.json"
-)
-PSF_ENERGY_GEV = 2.0
+
 for site_key in irf_config['config']['sites']:
     with open(psf_path.format(site_key=site_key), 'rt') as f:
         _site_psf = json.loads(f.read())

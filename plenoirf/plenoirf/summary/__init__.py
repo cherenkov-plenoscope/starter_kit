@@ -417,7 +417,8 @@ def _guess_summary_config(run_dir):
                 "max_angle_deg": 3.25,
                 "num_bins": 17,
             },
-            "containment_factor": 0.68
+            "containment_factor": 0.68,
+            "pivot_energy_GeV": 2.0,
         },
 
         "on_off_measuremnent": {
