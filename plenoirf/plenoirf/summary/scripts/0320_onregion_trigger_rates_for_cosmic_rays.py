@@ -2,7 +2,6 @@
 import sys
 import numpy as np
 import plenoirf as irf
-import sparse_table as spt
 import cosmic_fluxes
 import os
 import json
@@ -44,7 +43,6 @@ fine_energy_bin_edges_GeV = np.geomspace(
 fine_energy_bin_width = irf.summary.bin_width(fine_energy_bin_edges_GeV)
 fine_energy_bin_centers_GeV = irf.summary.bin_centers(fine_energy_bin_edges_GeV)
 
-on_over_off_ratio = sum_config['on_off_measuremnent']['on_over_off_ratio']
 detection_threshold_std = sum_config['on_off_measuremnent']['detection_threshold_std']
 
 fig_16_by_9 = sum_config['plot']['16_by_9']
@@ -153,7 +151,6 @@ for site_key in irf_config['config']['sites']:
     # Crab reference fluxes
     for i in range(4):
         scale_factor = np.power(10., (-1)*i)
-        log_resolution = 0.2
 
         _energy = np.array(crab_flux['energy']['values'])
         _flux = np.array(crab_flux['differential_flux']['values'])
@@ -179,7 +176,7 @@ for site_key in irf_config['config']['sites']:
         label='Fermi-LAT 10y'
     )
 
-    """
+
     # plenoscope
     (
         isez_energy_GeV,
@@ -217,7 +214,6 @@ for site_key in irf_config['config']['sites']:
         'r:',
         label='Portal {:2.0f}h, trigger, rejecting all hadrons'.format(observation_time_s/3600.)
     )
-    """
 
     ax.set_xlim([1e-1, 1e4])
     ax.set_ylim([1e-16, 1e-0])
