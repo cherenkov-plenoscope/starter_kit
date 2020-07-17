@@ -2,9 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
-import sparse_table as spt
 import os
-import json
 
 import matplotlib
 matplotlib.use('Agg')
@@ -18,25 +16,23 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 os.makedirs(pa['out_dir'], exist_ok=True)
 
-acceptance_trigger_path = os.path.join(
-    pa['summary_dir'],
-    "acceptance_trigger",
-    "acceptance_trigger.json"
+cr = irf.json_numpy.read_tree(
+    os.path.join(
+        pa['summary_dir'],
+        "0100_trigger_acceptance_for_cosmic_particles"
+    )
 )
-with open(acceptance_trigger_path, 'rt') as f:
-    A = json.loads(f.read())
 
-energy_bin_edges = np.array(A['energy_bin_edges']['value'])
-assert A['energy_bin_edges']['unit'] == "GeV"
+energy_lower = sum_config['energy_binning']['lower_edge_GeV']
+energy_upper = sum_config['energy_binning']['upper_edge_GeV']
+energy_bin_edges = np.geomspace(
+    energy_lower,
+    energy_upper,
+    sum_config['energy_binning']['num_bins']['trigger_acceptance'] + 1
+)
 
-trigger_thresholds = np.array(A['trigger_thresholds']['value'])
-assert A['trigger_thresholds']['unit'] == "p.e."
-
-trigger_threshold = sum_config['trigger']['threshold_pe']
-idx_trigger_threshold = np.where(
-    np.array(trigger_thresholds)==trigger_threshold,
-)[0][0]
-assert trigger_threshold in trigger_thresholds
+trigger_thresholds = np.array(sum_config['trigger']['ratescan_thresholds_pe'])
+analysis_trigger_threshold = sum_config['trigger']['threshold_pe']
 
 sources = {
     'diffuse': {
@@ -50,8 +46,6 @@ sources = {
         'limits': [1e1, 1e6],
     }
 }
-
-cr = A['cosmic_response']
 
 fig_16_by_9 = sum_config['plot']['16_by_9']
 particle_colors = sum_config['plot']['particle_colors']
@@ -71,7 +65,7 @@ for site_key in irf_config['config']['sites']:
                         site_key][
                         particle_key][
                         source_key][
-                        'value'][
+                        'mean'][
                         tt]
                 )
                 delta_Q = np.array(
@@ -105,7 +99,6 @@ for site_key in irf_config['config']['sites']:
                 )
                 text_y += 0.06
 
-
             ax.set_xlabel('energy / GeV')
             ax.set_ylabel('{:s} / {:s}'.format(
                     sources[source_key]['label'],
@@ -119,7 +112,7 @@ for site_key in irf_config['config']['sites']:
             ax.loglog()
             ax.set_xlim([energy_bin_edges[0], energy_bin_edges[-1]])
 
-            if tt == idx_trigger_threshold:
+            if trigger_thresholds[tt] == analysis_trigger_threshold:
                 fig.savefig(
                     os.path.join(
                         pa['out_dir'],
