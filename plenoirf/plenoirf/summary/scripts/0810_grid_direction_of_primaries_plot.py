@@ -1,12 +1,8 @@
 #!/usr/bin/python
 import sys
-
 import os
 from os.path import join as opj
-import pandas as pd
 import numpy as np
-import json
-
 import magnetic_deflection as mdfl
 import sparse_table as spt
 import plenoirf as irf
