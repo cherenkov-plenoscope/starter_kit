@@ -15,19 +15,11 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
-energy_bin_edges = np.geomspace(
-    sum_config['energy_binning']['lower_edge_GeV'],
-    sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins'] + 1
-)
 energy_bin_edges_coarse = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins_coarse'] + 1
+    sum_config['energy_binning']['num_bins']['point_spread_function'] + 1
 )
-trigger_thresholds = sum_config['trigger']['ratescan_thresholds_pe']
-trigger_threshold = sum_config['trigger']['threshold_pe']
-trigger_modus = sum_config["trigger"]["modus"]
 
 text_aligns = [
     'center',
@@ -35,6 +27,7 @@ text_aligns = [
     'right',
     'justify',
 ]
+
 
 def table(matrix, width=100, indent=4):
     off = ' '*indent
@@ -93,11 +86,10 @@ def code(
 ):
     out = ''
     out += '<pre style="'
-    out += 'font-size:{:.1f}%;font-family:{:s};line-height:{:.1f}%;text-align:{:s};'.format(
-        font_size,
-        font_family,
-        line_height,
-        text_align)
+    out += 'font-size:{:.1f}%;'.format(font_size)
+    out += 'font-family:{:s};'.format(font_family)
+    out += 'line-height:{:.1f}%;'.format(line_height)
+    out += 'text-align:{:s};'.format(text_align)
     out += 'margin:{:.1f}px;padding:{:.1f}px">'.format(
         margin_px,
         padding_px)
@@ -243,7 +235,7 @@ doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'acceptance_trigger_plot',
+        '0101_trigger_acceptance_for_cosmic_particles_plot',
         '{site_key:s}_point.jpg'
     )
 )
@@ -252,7 +244,7 @@ doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'acceptance_trigger_plot',
+        '0101_trigger_acceptance_for_cosmic_particles_plot',
         '{site_key:s}_diffuse.jpg'
     )
 )
@@ -262,7 +254,7 @@ doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'trigger_ratescan',
+        '0050_flux_of_airshowers_plot',
         '{site_key:s}_airshower_differential_flux.jpg'
     )
 )
@@ -271,16 +263,19 @@ doc += h('Trigger-ratescan', level=2)
 doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
-    wild_card=opj('trigger_ratescan', '{site_key:s}_ratescan.jpg')
+    wild_card=opj(
+        '0130_trigger_ratescan_plot',
+        '{site_key:s}_ratescan.jpg'
+    )
 )
 
-doc += h('Energy-threshold, trigger-level', level=2)
+doc += h('Differential trigger-rates, entire field-of-view', level=2)
 doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'trigger_ratescan',
-        '{site_key:s}_gamma_differential_trigger_rate.jpg'
+        '0106_trigger_rates_for_cosmic_particles_plot',
+        '{site_key:s}_differential_trigger_rate.jpg'
     )
 )
 
@@ -296,7 +291,7 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=energy_bin_edges_coarse,
     wild_card=opj(
-        'grid_direction',
+        '0810_grid_direction_of_primaries_plot',
         '{site_key:s}_{particle_key:s}_'
         'grid_direction_pasttrigger_{energy_bin_index:06d}.jpg'
     )
@@ -314,7 +309,7 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=energy_bin_edges_coarse,
     wild_card=opj(
-        'grid_area',
+        '0815_grid_illumination_plot',
         '{site_key:s}_{particle_key:s}_'
         'grid_area_pasttrigger_{energy_bin_index:06d}.jpg'
     )
@@ -325,7 +320,7 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'trigger_probability_vs_cherenkov_size',
+        '0070_trigger_probability_vs_cherenkov_size',
         '{site_key:s}_{particle_key:s}_'
         'trigger_probability_vs_cherenkov_size.jpg'
     )
@@ -405,17 +400,14 @@ doc += make_site_table(
     )
 )
 
-_onregion_path = os.path.join(
+acceptance_trigger_in_onregion = irf.json_numpy.read_tree(opj(
     pa['summary_dir'],
-    'acceptance_trigger_in_onregion',
-    'acceptance_trigger_in_onregion.json')
-with open(_onregion_path, 'rt') as f:
-    acceptance_trigger_in_onregion = json.loads(f.read())
+    "0300_onregion_trigger_acceptance"
+))
+
 _row = []
 for site_key in irf_config['config']['sites']:
-    _onregion = acceptance_trigger_in_onregion[
-        'onregion'][
-        site_key]
+    _onregion = acceptance_trigger_in_onregion[site_key]
     _row.append(
             code(
                 json.dumps(_onregion, indent=4),
