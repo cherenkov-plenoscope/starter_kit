@@ -19,8 +19,8 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 os.makedirs(pa['out_dir'], exist_ok=True)
 
-num_bins = 12
-size_bin_edges = np.geomspace(1, 2**num_bins, (3*num_bins)+1)
+num_size_bins = 12
+size_bin_edges = np.geomspace(1, 2**num_size_bins, (3*num_size_bins)+1)
 
 trigger_modus = sum_config["trigger"]["modus"]
 trigger_threshold = sum_config['trigger']['threshold_pe']
@@ -29,7 +29,9 @@ fig_16_by_9 = sum_config['plot']['16_by_9']
 
 for site_key in irf_config['config']['sites']:
     for particle_key in irf_config['config']['particles']:
-        prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
+        site_particle_dir = opj(pa['out_dir'], site_key ,particle_key)
+        os.makedirs(site_particle_dir, exist_ok=True)
+        site_particle_prefix = '{:s}_{:s}'.format(site_key, particle_key)
 
         event_table = spt.read(
             path=os.path.join(
@@ -41,6 +43,8 @@ for site_key in irf_config['config']['sites']:
             ),
             structure=irf.table.STRUCTURE
         )
+
+        key = "trigger_probability_vs_cherenkov_size"
 
         idx_pasttrigger = irf.analysis.light_field_trigger_modi.make_indices(
             trigger_table=event_table['trigger'],
@@ -63,26 +67,28 @@ for site_key in irf_config['config']['sites']:
             weights=mask_pasttrigger
         )[0]
 
-        trigger_probability = num_pasttrigger/num_thrown
-        trigger_probability_relunc = np.nan*np.ones(num_pasttrigger.shape[0])
-        _v = num_pasttrigger > 0
-        trigger_probability_relunc[_v] = np.sqrt(
-            num_pasttrigger[_v])/num_pasttrigger[_v]
-        trigger_probability_absunc = (
-            trigger_probability_relunc*trigger_probability)
+        trigger_probability = irf.analysis.effective_quantity._divide_silent(
+            numerator=num_pasttrigger,
+            denominator=num_thrown,
+            default=np.nan
+        )
 
-        trgprb = trigger_probability
-        trgprb_absunc = trigger_probability_absunc
+        trigger_probability_unc = \
+            irf.analysis.effective_quantity._divide_silent(
+                numerator=np.sqrt(num_pasttrigger),
+                denominator=num_pasttrigger,
+                default=np.nan
+            )
 
         fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         irf.summary.figure.ax_add_hist(
             ax=ax,
             bin_edges=size_bin_edges,
-            bincounts=trgprb,
+            bincounts=trigger_probability,
             linestyle='k-',
-            bincounts_upper=trgprb + trgprb_absunc,
-            bincounts_lower=trgprb - trgprb_absunc,
+            bincounts_upper=trigger_probability*(1+trigger_probability_unc),
+            bincounts_lower=trigger_probability*(1-trigger_probability_unc),
             face_color='k',
             face_alpha=.3)
         ax.semilogx()
@@ -93,10 +99,15 @@ for site_key in irf_config['config']['sites']:
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
         ax.spines['top'].set_color('none')
         ax.spines['right'].set_color('none')
-        fig.savefig(
-            opj(
-                pa['out_dir'],
-                '{:s}_trigger_probability_vs_cherenkov_size.{:s}'.format(
-                    prefix_str,
-                    fig_16_by_9['format'])))
+        fig.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+".jpg"))
         plt.close(fig)
+
+        irf.json_numpy.write(
+            os.path.join(site_particle_dir, key+".json"),
+            {
+                "true_Cherenkov_size_bin_edges_pe": size_bin_edges,
+                "unit": "1",
+                "mean": trigger_probability,
+                "relative_uncertainty": trigger_probability_unc,
+            }
+        )
