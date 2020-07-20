@@ -2,9 +2,7 @@
 import sys
 import os
 from os.path import join as opj
-import pandas as pd
 import numpy as np
-import json
 import sparse_table as spt
 import plenoirf as irf
 import magnetic_deflection as mdfl
@@ -26,9 +24,10 @@ trigger_threshold = sum_config['trigger']['threshold_pe']
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins_coarse'] + 1,
+    sum_config['energy_binning']['num_bins']['point_spread_function'] + 1,
 )
 fig_16_by_9 = sum_config['plot']['16_by_9']
+
 
 def histogram(
     cradial2_bin_edges_deg2,
@@ -92,7 +91,7 @@ def write_figure(
     figure_config,
     title,
 ):
-    fig = irf.summary.figure.figure(fig_16_by_9)
+    fig = irf.summary.figure.figure(figure_config)
     ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
     irf.summary.figure.ax_add_hist(
         ax=ax,
@@ -116,13 +115,21 @@ def write_figure(
     plt.close(fig)
 
 
-cfg = irf_config['config']
 os.makedirs(pa['out_dir'], exist_ok=True)
 
 GLOBAL_YLIM = [1e-4, 1.5e0]
 
-for site_key in cfg['sites']:
-    for particle_key in cfg['particles']:
+pointing_azimuth_deg = irf_config[
+    'config'][
+    'plenoscope_pointing'][
+    'azimuth_deg']
+pointing_zenith_deg = irf_config[
+    'config'][
+    'plenoscope_pointing'][
+    'zenith_deg']
+
+for site_key in irf_config['config']['sites']:
+    for particle_key in irf_config['config']['particles']:
         prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
 
         # read
@@ -150,11 +157,11 @@ for site_key in cfg['sites']:
             right_indices=idx_pasttrigger,
         )
 
-        offaxis_deg =  mdfl.discovery._angle_between_az_zd_deg(
+        offaxis_deg = mdfl.discovery._angle_between_az_zd_deg(
             az1_deg=np.rad2deg(event_table['primary']['azimuth_rad']),
             zd1_deg=np.rad2deg(event_table['primary']['zenith_rad']),
-            az2_deg=cfg['plenoscope_pointing']['azimuth_deg'],
-            zd2_deg=cfg['plenoscope_pointing']['zenith_deg']
+            az2_deg=pointing_azimuth_deg,
+            zd2_deg=pointing_zenith_deg
         )
         offaxis2_deg2 = offaxis_deg**2
 
@@ -162,13 +169,11 @@ for site_key in cfg['sites']:
         max_cradial_deg = np.max(offaxis_deg)
         max_cradial2_deg2 = np.ceil(max_cradial_deg**2)
 
-        plenoscope_fov_radius_deg = .5*irf_config[
-            'light_field_sensor_geometry']['max_FoV_diameter_deg']
-
         cradial2_bin_edges_deg2 = np.linspace(
             0,
             max_cradial2_deg2,
-            num_cradial_bins+1)
+            num_cradial_bins+1
+        )
 
         # all energy
         # ----------
@@ -229,9 +234,12 @@ for site_key in cfg['sites']:
                 trgprb_absunc=energy_hists[ex]['trgprb_absunc'],
                 ylim=GLOBAL_YLIM,
                 figure_config=fig_16_by_9,
-                title='energy {: 7.1f} - {: 7.1f} GeV, num. events {: 6d}'.format(
-                    energy_bin_edges[ex],
-                    energy_bin_edges[ex+1],
-                    energy_hists[ex]['num_energy_bin_pasttrigger']
-                )
+                title=(
+                    'energy {: 7.1f} - {: 7.1f} GeV, ' +
+                    'num. events {: 6d}'
+                    ).format(
+                        energy_bin_edges[ex],
+                        energy_bin_edges[ex+1],
+                        energy_hists[ex]['num_energy_bin_pasttrigger']
+                    )
             )
