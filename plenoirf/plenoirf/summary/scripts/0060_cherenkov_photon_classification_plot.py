@@ -120,10 +120,7 @@ for site_key in irf_config['config']['sites']:
             bin_edges=size_bin_edges,
             bincounts=np_exposure_bins,
             linestyle='k-')
-        plt.savefig(opj(
-            pa['out_dir'],
-            site_particle_prefix+"_"+CHCL+"_"+key+".jpg"
-        ))
+        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+".jpg"))
         plt.close('all')
 
         # ---------------------------------------------------------------------
@@ -180,7 +177,7 @@ for site_key in irf_config['config']['sites']:
         ax.set_ylim([0, 1])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+'.jpg'))
+        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+".jpg"))
         plt.close(fig)
 
         irf.json_numpy.write(
@@ -235,7 +232,7 @@ for site_key in irf_config['config']['sites']:
         ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+'.jpg'))
+        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+".jpg"))
         plt.close('all')
 
         irf.json_numpy.write(
@@ -288,7 +285,7 @@ for site_key in irf_config['config']['sites']:
         ax.set_xlim([np.min(size_bin_edges), np.max(size_bin_edges)])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+'.jpg'))
+        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+".jpg"))
         plt.close('all')
 
         irf.json_numpy.write(
