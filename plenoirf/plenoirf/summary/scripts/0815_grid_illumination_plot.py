@@ -1,12 +1,8 @@
 #!/usr/bin/python
 import sys
-
 import os
 from os.path import join as opj
-import pandas as pd
 import numpy as np
-import json
-
 import sparse_table as spt
 import plenoirf as irf
 
@@ -24,14 +20,14 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 trigger_threshold = sum_config['trigger']['threshold_pe']
 trigger_modus = sum_config["trigger"]["modus"]
-energy_bin_edges_GeV = energy_bin_edges = np.geomspace(
+energy_bin_edges_GeV = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
     sum_config['energy_binning']['num_bins']['point_spread_function'] + 1
 )
 num_grid_bins_on_edge = irf_config['grid_geometry']['num_bins_diameter']
 
-max_airshower_per_energy_bin = 100
+MAX_AIRSHOWER_PER_ENERGY_BIN = 100
 
 fc16by9 = sum_config['plot']['16_by_9']
 fc5by4 = fc16by9.copy()
@@ -111,7 +107,7 @@ for site_key in irf_config['config']['sites']:
                     detected_grid_histograms[idx]
                 )
                 num_airshower += 1
-                if num_airshower == max_airshower_per_energy_bin:
+                if num_airshower == MAX_AIRSHOWER_PER_ENERGY_BIN:
                     break
 
             grid_intensities.append(grid_intensity)
