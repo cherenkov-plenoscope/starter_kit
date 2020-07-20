@@ -55,6 +55,7 @@ for site_key in irf_config['config']['sites']:
     fig = irf.summary.figure.figure(fig_16_by_9)
     ax = fig.add_axes((.1, .1, .8, .8))
 
+    text_y = 0.7
     for particle_key in irf_config['config']['particles']:
 
         dT_dE_vs_threshold = np.array(cosmic_rates[
@@ -70,17 +71,38 @@ for site_key in irf_config['config']['sites']:
             color=particle_colors[particle_key],
             label=particle_key,
         )
+        ax.text(
+            0.8,
+            0.1 + text_y,
+            particle_key,
+            color=particle_colors[particle_key],
+            transform=ax.transAxes
+        )
+        ir = cosmic_rates[
+                site_key][
+                particle_key][
+                'integral_rate'][
+                'mean'][tt]
+        ax.text(
+            0.9,
+            0.1 + text_y,
+            "{: 12.1f}s$^{{-1}}$".format(ir),
+            color='k',
+            family='monospace',
+            transform=ax.transAxes
+        )
+        text_y += 0.06
+
 
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
-    ax.set_title('entire field-of-view, ' + gamma_name)
+    ax.set_title('trigger, entire field-of-view, ' + gamma_name)
     ax.set_xlabel('energy / GeV')
     ax.set_ylabel('differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$')
     ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
     ax.loglog()
-    ax.legend(loc='best', fontsize=10)
     ax.set_xlim([energy_lower, energy_upper])
-    ax.set_ylim([1e-3, 1e6])
+    ax.set_ylim([1e-3, 1e5])
     fig.savefig(
         os.path.join(
             pa['out_dir'],
