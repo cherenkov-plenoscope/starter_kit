@@ -40,13 +40,15 @@ min_reconstructed_photons = sum_config['quality']['min_reconstructed_photons']
 _psf = irf.json_numpy.read_tree(
     os.path.join(pa['summary_dir'], "0200_gamma_point_spread_function")
 )
-onregion68 = {}
+fix_onregion_radius_deg = {}
 for site_key in irf_config['config']['sites']:
-    onregion68[site_key] = _psf[
+    fix_onregion_radius_deg[site_key] = _psf[
         site_key][
         'gamma'][
         'containment_angle_for_fix_onregion'][
         'containment_angle']
+    assert 'deg' == _psf[
+        site_key]['gamma']['containment_angle_for_fix_onregion']['unit']
 
 cosmic_ray_keys = list(irf_config['config']['particles'].keys())
 cosmic_ray_keys.remove('gamma')
@@ -54,7 +56,7 @@ cosmic_ray_keys.remove('gamma')
 for site_key in irf_config['config']['sites']:
 
     actual_onregion_over_possible_onregion_factor = (
-        onregion68[site_key]**2 /
+        fix_onregion_radius_deg[site_key]**2 /
         MAX_SOURCE_ANGLE_DEG**2
     )
 
@@ -123,7 +125,7 @@ for site_key in irf_config['config']['sites']:
         idx_detected_in_onregion = \
             irf.analysis.cuts.cut_reconstructed_source_in_true_onregion(
                 table=candidate_table,
-                radial_angle_onregion_deg=onregion68[site_key],
+                radial_angle_onregion_deg=fix_onregion_radius_deg[site_key],
             )
 
         mask_detected = spt.make_mask_of_right_in_left(
