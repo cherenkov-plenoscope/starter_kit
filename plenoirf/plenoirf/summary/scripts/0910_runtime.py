@@ -5,7 +5,6 @@ import os
 import pandas as pd
 import numpy as np
 import json
-import shutil
 import plenoirf as irf
 import sparse_table as spt
 
@@ -22,11 +21,12 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 fig_16_by_9 = sum_config['plot']['16_by_9']
 
-def read(path):
+
+def read_csv_records(path):
     return pd.read_csv(path).to_records(index=False)
 
 
-def write(path, table):
+def write_csv_records(path, table):
     df = pd.DataFrame(table)
     with open(path+'.tmp', 'wt') as f:
         f.write(df.to_csv(index=False))
@@ -185,7 +185,7 @@ for site_key in irf_config['config']['sites']:
 
         extended_runtime_path = opj(pa['out_dir'], prefix_str+'_runtime.csv')
         if os.path.exists(extended_runtime_path):
-            extended_runtime_table = read(extended_runtime_path)
+            extended_runtime_table = read_csv_records(extended_runtime_path)
         else:
             event_table = spt.read(
                 path=os.path.join(
@@ -193,18 +193,23 @@ for site_key in irf_config['config']['sites']:
                     'event_table',
                     site_key,
                     particle_key,
-                    'event_table.tar'),
-                structure=irf.table.STRUCTURE)
-            runtime_table = read(opj(
+                    'event_table.tar'
+                ),
+                structure=irf.table.STRUCTURE
+            )
+            runtime_table = read_csv_records(opj(
                 pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
-                'runtime.csv'))
+                'runtime.csv'
+            ))
             extended_runtime_table = merge_event_table(
                 runtime_table=runtime_table,
                 event_table=event_table)
-            write(path=extended_runtime_path, table=extended_runtime_table)
+            write_csv_records(
+                path=extended_runtime_path,
+                table=extended_runtime_table)
 
         write_relative_runtime(
             table=extended_runtime_table,
