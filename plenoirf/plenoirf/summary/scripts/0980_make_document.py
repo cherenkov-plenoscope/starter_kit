@@ -331,7 +331,7 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'trigger_probability_vs_offaxis',
+        '0075_trigger_probability_vs_offaxis',
         '{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis.jpg'
     )
 )
@@ -341,7 +341,7 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=energy_bin_edges_coarse,
     wild_card=opj(
-        'trigger_probability_vs_offaxis',
+        '0075_trigger_probability_vs_offaxis',
         '{site_key:s}_{particle_key:s}_'
         'trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg'
     )
@@ -352,9 +352,8 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'cherenkov_photon_classification',
-        '{site_key:s}_{particle_key:s}_'
-        'cherenkovclassification_size_confusion.jpg'
+        '0060_cherenkov_photon_classification_plot',
+        '{site_key:s}_{particle_key:s}_confusion.jpg'
     )
 )
 doc += make_site_particle_index_table(
@@ -362,9 +361,9 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'cherenkov_photon_classification',
+        '0060_cherenkov_photon_classification_plot',
         '{site_key:s}_{particle_key:s}_'
-        'cherenkovclassification_sensitivity_vs_true_energy.jpg'
+        'sensitivity_vs_true_energy.jpg'
     )
 )
 doc += make_site_particle_index_table(
@@ -372,9 +371,8 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'cherenkov_photon_classification',
+        '0060_cherenkov_photon_classification_plot',
         '{site_key:s}_{particle_key:s}_'
-        'cherenkovclassification_'
         'true_size_over_extracted_size_vs_true_energy.jpg'
     )
 )
@@ -383,56 +381,39 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'cherenkov_photon_classification',
+        '0060_cherenkov_photon_classification_plot',
         '{site_key:s}_{particle_key:s}_'
-        'cherenkovclassification_'
         'true_size_over_extracted_size_vs_true_size.jpg'
     )
 )
 
 doc += h('Direction-reconstruction', level=2)
+doc += p(
+    "Plane angle for 68% containment. Dashed line shows fix onregion.",
+    text_align='justify',
+    font_family='calibri')
 doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'gamma_direction_reconstruction',
+        '0201_gamma_point_spread_function_plot',
         '{site_key:s}_gamma_psf_radial.jpg'
     )
-)
-
-acceptance_trigger_in_onregion = irf.json_numpy.read_tree(opj(
-    pa['summary_dir'],
-    "0300_onregion_trigger_acceptance"
-))
-
-_row = []
-for site_key in irf_config['config']['sites']:
-    _onregion = acceptance_trigger_in_onregion[site_key]
-    _row.append(
-            code(
-                json.dumps(_onregion, indent=4),
-                font_size=50,
-                line_height=100
-            )
-    )
-doc += table(
-    matrix=[_row],
-    width=FIGURE_WIDTH_PIXEL*8
 )
 
 doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=energy_bin_edges_coarse,
     wild_card=opj(
-        'gamma_direction_reconstruction',
+        '0201_gamma_point_spread_function_plot',
         '{site_key:s}_gamma_{energy_bin_index:06d}_psf.jpg'
     )
 )
 
-doc += h('Effective area, trigger, reconstructed in on-region', level=2)
+doc += h('Effective area, trigger, fix onregion', level=2)
 doc += p(
-    "Fade lines show acceptance on trigger-level "
-    "without direction-cut in on-region.",
+    "Direction reconstructed to be in an onregion of fixed solid angle. "
+    "Fade lines show entire field-of-view.",
     text_align='justify',
     font_family='calibri')
 doc += make_site_particle_index_table(
@@ -440,23 +421,33 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'acceptance_trigger_in_onregion_plot',
-        '{site_key:s}_{particle_key:s}_point_onregion.jpg'
+        '0301_onregion_trigger_acceptance_plot',
+        '{site_key:s}_{particle_key:s}_point_fix_onregion.jpg'
     )
 )
 
-doc += h('Effective acceptance, trigger, reconstructed in on-region', level=2)
+doc += h('Effective acceptance, trigger, fix onregion', level=2)
 doc += make_site_particle_index_table(
     sites=irf_config['config']['sites'],
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'acceptance_trigger_in_onregion_plot',
-        '{site_key:s}_{particle_key:s}_diffuse_onregion.jpg'
+        '0301_onregion_trigger_acceptance_plot',
+        '{site_key:s}_{particle_key:s}_diffuse_fix_onregion.jpg'
     )
 )
 
-doc += h('Braodband-sensitivity, trigger', level=2)
+doc += h('Differential trigger-rates, fix onregion', level=2)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '0325_onregion_trigger_rates_for_cosmic_rays_plot',
+        '{site_key:s}_differential_trigger_rates_in_onregion.jpg'
+    )
+)
+
+doc += h('Braodband-sensitivity, trigger, fix onregion', level=2)
 doc += p(
     "A.k.a integral spectral exclusion zone. Only on trigger-level.",
     text_align='justify',
@@ -472,7 +463,7 @@ doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'acceptance_trigger_in_onregion_rates',
+        '0325_onregion_trigger_rates_for_cosmic_rays_plot',
         '{site_key:s}_integral_spectral_exclusion_zone.jpg'
     )
 )
