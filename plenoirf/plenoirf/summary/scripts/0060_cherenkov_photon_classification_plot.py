@@ -3,8 +3,8 @@ import sys
 import numpy as np
 import os
 import plenoirf as irf
-import json
 import sparse_table as spt
+from os.path import join as opj
 
 import matplotlib
 matplotlib.use('Agg')
@@ -17,36 +17,42 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
 sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
-fig_16_by_9 = sum_config['plot']['16_by_9']
-particle_colors = sum_config['plot']['particle_colors']
+os.makedirs(pa['out_dir'], exist_ok=True)
 
-fig_1_by_1 = fig_16_by_9.copy()
-fig_1_by_1['rows'] = fig_16_by_9['rows']*(16/9)
-
+num_energy_bins = sum_config[
+    'energy_binning'][
+    'num_bins'][
+    'point_spread_function']
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins_coarse'] + 1
+    num_energy_bins + 1
 )
-num_energy_bins = len(energy_bin_edges) - 1
-
 
 CHCL = 'cherenkovclassification'
 
-os.makedirs(pa['out_dir'], exist_ok=True)
+fig_16_by_9 = sum_config['plot']['16_by_9']
+fig_1_by_1 = fig_16_by_9.copy()
+fig_1_by_1['rows'] = fig_16_by_9['rows']*(16/9)
 
 for site_key in irf_config['config']['sites']:
+    site_dir = opj(pa['out_dir'], site_key)
     for particle_key in irf_config['config']['particles']:
-        prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
+        site_particle_dir = opj(site_dir, particle_key)
+        os.makedirs(site_particle_dir, exist_ok=True)
+
+        site_particle_prefix = '{:s}_{:s}'.format(site_key, particle_key)
 
         event_table = spt.read(
-            path=os.path.join(
+            path=opj(
                 pa['run_dir'],
                 'event_table',
                 site_key,
                 particle_key,
-                'event_table.tar'),
-            structure=irf.table.STRUCTURE)
+                'event_table.tar'
+            ),
+            structure=irf.table.STRUCTURE
+        )
 
         mrg_chc_fts = spt.cut_table_on_indices(
             table=event_table,
@@ -60,21 +66,24 @@ for site_key in irf_config['config']['sites']:
             ]
         )
 
-        # confusion matrix
-        # ----------------
+        # ---------------------------------------------------------------------
+        key = "confusion"
         num_bins_size_confusion_matrix = int(
             0.2*np.sqrt(mrg_chc_fts['features'].shape[0]))
         size_bin_edges = np.geomspace(
             1e1,
             1e5,
-            num_bins_size_confusion_matrix+1)
+            num_bins_size_confusion_matrix+1
+        )
         np_bins = np.histogram2d(
             mrg_chc_fts['trigger']['num_cherenkov_pe'],
             mrg_chc_fts['features']['num_photons'],
-            bins=[size_bin_edges, size_bin_edges])[0]
+            bins=[size_bin_edges, size_bin_edges]
+        )[0]
         np_exposure_bins = np.histogram(
             mrg_chc_fts['trigger']['num_cherenkov_pe'],
-            bins=size_bin_edges)[0]
+            bins=size_bin_edges
+        )[0]
 
         np_bins_normalized = np_bins.copy()
         for true_bin in range(num_bins_size_confusion_matrix):
@@ -111,18 +120,14 @@ for site_key in irf_config['config']['sites']:
             bin_edges=size_bin_edges,
             bincounts=np_exposure_bins,
             linestyle='k-')
-        plt.savefig(
-            os.path.join(
-                pa['out_dir'],
-                '{:s}_{:s}_size_confusion.{:s}'.format(
-                    prefix_str,
-                    CHCL,
-                    fig_1_by_1['format'])))
+        plt.savefig(opj(
+            pa['out_dir'],
+            site_particle_prefix+"_"+CHCL+"_"+key+".jpg"
+        ))
         plt.close('all')
 
-        # sensitivity VS. energy
-        # -----------------------
-
+        # ---------------------------------------------------------------------
+        key = 'sensitivity_vs_true_energy'
         tprs = []
         ppvs = []
         num_events = []
@@ -147,11 +152,6 @@ for site_key in irf_config['config']['sites']:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
-        pp = os.path.join(
-            pa['out_dir'],
-            '{:s}_{:s}_sensitivity_vs_true_energy'.format(
-                prefix_str,
-                CHCL))
         fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([.12, .12, .85, .85])
         ax.spines['top'].set_color('none')
@@ -180,18 +180,21 @@ for site_key in irf_config['config']['sites']:
         ax.set_ylim([0, 1])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(pp+'.'+fig_16_by_9['format'])
+        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+'.jpg'))
         plt.close(fig)
-        with open(pp+'.json', 'wt') as f:
-            out = {
-                'energy_bin_edges_GeV': energy_bin_edges.tolist(),
-                'num_events': num_events.tolist(),
-                'true_positive_rate': tprs.tolist(),
-                'positive_predictive_value': ppvs.tolist()}
-            f.write(json.dumps(out, indent=4))
 
-        # p.e. true/extracted VS. energy
-        # -------------------------------
+        irf.json_numpy.write(
+            opj(site_particle_dir, key + ".json"),
+            {
+                'energy_bin_edges_GeV': energy_bin_edges,
+                'num_events': num_events,
+                'true_positive_rate': tprs,
+                'positive_predictive_value': ppvs
+            }
+        )
+
+        # ---------------------------------------------------------------------
+        key = 'true_size_over_extracted_size_vs_true_energy'
         true_over_reco_ratios = []
         num_events = []
         for i in range(num_energy_bins):
@@ -213,11 +216,6 @@ for site_key in irf_config['config']['sites']:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
-        pp = os.path.join(
-            pa['out_dir'],
-            '{:s}_{:s}_true_size_over_extracted_size_vs_true_energy'.format(
-                prefix_str,
-                CHCL))
         fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([.12, .12, .85, .85])
         irf.summary.figure.ax_add_hist(
@@ -237,17 +235,20 @@ for site_key in irf_config['config']['sites']:
         ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(pp+'.'+fig_16_by_9['format'])
+        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+'.jpg'))
         plt.close('all')
-        with open(pp+'.json', 'wt') as f:
-            out = {
-                'energy_bin_edges_GeV': energy_bin_edges.tolist(),
-                'num_events': num_events.tolist(),
-                'true_over_reco_ratios': true_over_reco_ratios.tolist()}
-            f.write(json.dumps(out, indent=4))
 
-        # p.e. true/extracted VS. true p.e.
-        # ---------------------------------
+        irf.json_numpy.write(
+            opj(site_particle_dir, key + ".json"),
+            {
+                'energy_bin_edges_GeV': energy_bin_edges,
+                'num_events': num_events,
+                'true_over_reco_ratios': true_over_reco_ratios
+            }
+        )
+
+        # ---------------------------------------------------------------------
+        key = 'true_size_over_extracted_size_vs_true_size'
         num_ratios = []
         num_events = []
         for i in range(num_bins_size_confusion_matrix):
@@ -268,11 +269,6 @@ for site_key in irf_config['config']['sites']:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v])/num_events[_v]
 
-        pp = os.path.join(
-            pa['out_dir'],
-            '{:s}_{:s}_true_size_over_extracted_size_vs_true_size'.format(
-                prefix_str,
-                CHCL))
         fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([.12, .12, .85, .85])
         irf.summary.figure.ax_add_hist(
@@ -292,11 +288,14 @@ for site_key in irf_config['config']['sites']:
         ax.set_xlim([np.min(size_bin_edges), np.max(size_bin_edges)])
         ax.semilogx()
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-        plt.savefig(pp+'.'+fig_16_by_9['format'])
+        plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+'.jpg'))
         plt.close('all')
-        with open(pp+'.json', 'wt') as f:
-            out = {
-                'size_bin_edges_pe': size_bin_edges.tolist(),
-                'num_events': num_events.tolist(),
-                'true_over_reco_ratios': num_ratios.tolist()}
-            f.write(json.dumps(out, indent=4))
+
+        irf.json_numpy.write(
+            opj(site_particle_dir, key + ".json"),
+            {
+                'size_bin_edges_pe': size_bin_edges,
+                'num_events': num_events,
+                'true_over_reco_ratios': num_ratios
+            }
+        )
