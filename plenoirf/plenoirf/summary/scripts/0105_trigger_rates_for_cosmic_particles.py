@@ -119,7 +119,6 @@ for site_key in irf_config['config']['sites']:
         }
     )
 
-
     # cosmic-rays
     # -----------
     for cosmic_key in airshower_fluxes[site_key]:
