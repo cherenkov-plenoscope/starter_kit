@@ -31,7 +31,7 @@ os.makedirs(pa['out_dir'], exist_ok=True)
 energy_bin_edges = np.geomspace(
     sum_config['energy_binning']['lower_edge_GeV'],
     sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins_coarse'] + 1
+    sum_config['energy_binning']['num_bins']['point_spread_function'] + 1
 )
 c_bin_edges_deg = np.linspace(
     sum_config['direction_binning']['radial_angle_deg']*(-1.0),
