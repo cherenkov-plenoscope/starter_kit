@@ -40,13 +40,6 @@ energy_bin_edges = np.geomspace(
 )
 energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
-fine_energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config['energy_binning']['num_bins']['interpolation'] + 1
-)
-fine_energy_bin_centers = irf.summary.bin_centers(fine_energy_bin_edges)
-
 detection_threshold_std = sum_config[
     'on_off_measuremnent'][
     'detection_threshold_std']
@@ -57,7 +50,6 @@ observation_time_s = 50*3600
 n_points_to_plot = 7
 
 fig_16_by_9 = sum_config['plot']['16_by_9']
-particle_colors = sum_config['plot']['particle_colors']
 
 cosmic_ray_keys = list(irf_config['config']['particles'].keys())
 cosmic_ray_keys.remove('gamma')
@@ -68,15 +60,17 @@ assert fermi_broadband[
 assert fermi_broadband[
     'differential_flux']['unit_tex'] == "m$^{-2}$ s$^{-1}$ GeV$^{-1}$"
 
-_, gamma_name = irf.summary.make_gamma_ray_reference_flux(
-    summary_dir=pa['summary_dir'],
-    gamma_ray_reference_source=sum_config['gamma_ray_reference_source'],
-    energy_supports_GeV=fine_energy_bin_centers,
-)
-
 # gamma-ray-flux of crab-nebula
 # -----------------------------
 crab_flux = cosmic_fluxes.read_crab_nebula_flux_from_resources()
+
+internal_sed_style = irf.analysis.spectral_energy_distribution.PLENOIRF_SED_STYLE
+
+output_sed_styles = {
+    'plenoirf': irf.analysis.spectral_energy_distribution.PLENOIRF_SED_STYLE,
+    'science': irf.analysis.spectral_energy_distribution.SCIENCE_SED_STYLE,
+    'fermi': irf.analysis.spectral_energy_distribution.FERMI_SED_STYLE,
+}
 
 # background rates
 # ----------------
@@ -98,44 +92,47 @@ for site_key in irf_config['config']['sites']:
             'integral_rate'][
             'mean']
 
+x_lim_GeV = np.array([1e-1, 1e4])
+y_lim_per_m2_per_s_per_GeV = np.array([1e-0, 1e-16])
+
 for site_key in irf_config['config']['sites']:
 
-    # integral spectral exclusion zone
-    # --------------------------------
-
-    fig = irf.summary.figure.figure(fig_16_by_9)
-    ax = fig.add_axes((.1, .1, .8, .8))
+    components = []
 
     # Crab reference fluxes
+    # ---------------------
     for i in range(4):
+        com = {}
         scale_factor = np.power(10., (-1)*i)
-        _energy_GeV = np.array(crab_flux['energy']['values'])
-        _flux_per_GeV_per_m2_per_s = np.array(
+        com['energy'] = np.array(crab_flux['energy']['values'])
+        com['differential_flux'] = scale_factor*np.array(
             crab_flux['differential_flux']['values']
         )
-        ax.plot(
-            _energy_GeV,
-            _flux_per_GeV_per_m2_per_s*scale_factor,
-            color='k',
-            linestyle='--',
-            label='{:.3f} Crab'.format(scale_factor),
-            alpha=1./(1.+i)
-        )
+        com['label'] = '{:.3f} Crab'.format(scale_factor)
+        com['color'] = 'k'
+        com['alpha'] = 1./(1.+i)
+        com['linestyle'] = '--'
+        components.append(com.copy())
 
-    ax.plot(
-        fermi_broadband['energy']['values'],
-        fermi_broadband['differential_flux']['values'],
-        'k',
-        label='Fermi-LAT 10 y'
-    )
+    # Fermi-LAT broadband
+    # -------------------
+    com = {}
+    com['energy'] = np.array(fermi_broadband['energy']['values'])
+    com['differential_flux'] = np.array(
+        fermi_broadband['differential_flux']['values'])
+    com['label'] = 'Fermi-LAT 10 y'
+    com['color'] = 'k'
+    com['alpha'] = 1.0
+    com['linestyle'] = '-'
+    components.append(com)
 
     # plenoscope
+    # ----------
     gamma_effective_area_m2 = np.array(onregion_acceptance[
         site_key][
         'gamma'][
         'point'][
         'mean'])
-
     (
         isez_energy_GeV,
         isez_differential_flux_per_GeV_per_m2_per_s
@@ -147,14 +144,17 @@ for site_key in irf_config['config']['sites']:
         observation_time_s=observation_time_s,
         num_points=n_points_to_plot
     )
-    ax.plot(
-        isez_energy_GeV,
-        isez_differential_flux_per_GeV_per_m2_per_s,
-        'r',
-        label='Portal {:2.0f} h, trigger'.format(observation_time_s/3600.)
-    )
+    com = {}
+    com['energy'] = isez_energy_GeV
+    com['differential_flux'] = isez_differential_flux_per_GeV_per_m2_per_s
+    com['label'] = 'Portal {:2.0f} h, trigger'.format(observation_time_s/3600.)
+    com['color'] = 'r'
+    com['alpha'] = 1.0
+    com['linestyle'] = '-'
+    components.append(com)
 
-    # plenoscope rejecting all hadrons
+    # plenoscope no hadrons
+    # ---------------------
     (
         e_isez_energy_GeV,
         e_isez_differential_flux_per_GeV_per_m2_per_s
@@ -166,28 +166,62 @@ for site_key in irf_config['config']['sites']:
         observation_time_s=observation_time_s,
         num_points=n_points_to_plot
     )
-    ax.plot(
-        e_isez_energy_GeV,
-        e_isez_differential_flux_per_GeV_per_m2_per_s,
-        'r:',
-        label='Portal {:2.0f} h, trigger, rejecting all hadrons'.format(
-            observation_time_s/3600.
-        )
-    )
+    com = {}
+    com['energy'] = e_isez_energy_GeV
+    com['differential_flux'] = e_isez_differential_flux_per_GeV_per_m2_per_s
+    com['label'] = 'Portal {:2.0f} h, trigger, rejecting all hadrons'.format(
+            observation_time_s/3600.)
+    com['color'] = 'r'
+    com['alpha'] = 0.5
+    com['linestyle'] = '--'
+    components.append(com)
 
-    ax.set_xlim([1e-1, 1e4])
-    ax.set_ylim([1e-16, 1e-0])
-    ax.loglog()
-    ax.legend(loc='best', fontsize=10)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    ax.set_xlabel('Energy / GeV')
-    ax.set_ylabel('Differential flux / m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$')
-    fig.savefig(
-        os.path.join(
-            pa['out_dir'],
-            '{:s}_integral_spectral_exclusion_zone.jpg'.format(site_key)
+    for sed_style_key in output_sed_styles:
+        sed_style = output_sed_styles[sed_style_key]
+
+        fig = irf.summary.figure.figure(fig_16_by_9)
+        ax = fig.add_axes((.1, .1, .8, .8))
+
+        for com in components:
+
+            _energy, _dFdE = irf.analysis.spectral_energy_distribution.convert_units_style(
+                x=com['energy'],
+                y=com['differential_flux'],
+                in_style=internal_sed_style,
+                out_style=sed_style,
+            )
+            ax.plot(
+                _energy,
+                _dFdE,
+                label=com['label'],
+                color=com['color'],
+                alpha=com['alpha'],
+                linestyle=com['linestyle'],
+            )
+
+        _x_lim, _y_lim = irf.analysis.spectral_energy_distribution.convert_units_style(
+            x=x_lim_GeV,
+            y=y_lim_per_m2_per_s_per_GeV,
+            in_style=internal_sed_style,
+            out_style=sed_style,
         )
-    )
-    plt.close(fig)
+
+        ax.set_xlim(np.sort(_x_lim))
+        ax.set_ylim(np.sort(_y_lim))
+        ax.loglog()
+        ax.legend(loc='best', fontsize=10)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+        ax.set_xlabel(sed_style['x_label']+" / "+sed_style['x_unit'])
+        ax.set_ylabel(sed_style['y_label']+" / "+sed_style['y_unit'])
+        fig.savefig(
+            os.path.join(
+                pa['out_dir'],
+                '{:s}_integral_spectral_exclusion_zone_style_{:s}.jpg'.format(
+                    site_key,
+                    sed_style_key
+                )
+            )
+        )
+        plt.close(fig)
