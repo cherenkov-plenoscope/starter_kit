@@ -147,15 +147,15 @@ for site_key in irf_config['config']['sites']:
             )
             plt.colorbar(_pcm_grid, cax=ax_cb, extend='max')
             ax.set_title(
-                'num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f}GeV'.format(
+                'num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f} GeV'.format(
                     num_airshower,
                     energy_bin_edges_GeV[energy_idx],
                     energy_bin_edges_GeV[energy_idx + 1]
                 ),
                 family='monospace'
             )
-            ax.set_xlabel('x/km')
-            ax.set_ylabel('y/km')
+            ax.set_xlabel('$x$ / km')
+            ax.set_ylabel('$y$ / km')
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
 
             plt.savefig(

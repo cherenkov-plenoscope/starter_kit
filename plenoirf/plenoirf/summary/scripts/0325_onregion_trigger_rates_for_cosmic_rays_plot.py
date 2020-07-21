@@ -124,7 +124,7 @@ for site_key in irf_config['config']['sites']:
         fermi_broadband['energy']['values'],
         fermi_broadband['differential_flux']['values'],
         'k',
-        label='Fermi-LAT 10y'
+        label='Fermi-LAT 10 y'
     )
 
     # plenoscope
@@ -149,7 +149,7 @@ for site_key in irf_config['config']['sites']:
         isez_energy_GeV,
         isez_differential_flux_per_GeV_per_m2_per_s,
         'r',
-        label='Portal {:2.0f}h, trigger'.format(observation_time_s/3600.)
+        label='Portal {:2.0f} h, trigger'.format(observation_time_s/3600.)
     )
 
     # plenoscope rejecting all hadrons
@@ -168,7 +168,7 @@ for site_key in irf_config['config']['sites']:
         e_isez_energy_GeV,
         e_isez_differential_flux_per_GeV_per_m2_per_s,
         'r:',
-        label='Portal {:2.0f}h, trigger, rejecting all hadrons'.format(
+        label='Portal {:2.0f} h, trigger, rejecting all hadrons'.format(
             observation_time_s/3600.
         )
     )
@@ -221,7 +221,7 @@ for site_key in irf_config['config']['sites']:
         ax.text(
             0.9,
             0.1 + text_y,
-            "{: 8.1f}s$^{{-1}}$".format(ir),
+            "{: 8.1f} s$^{{-1}}$".format(ir),
             color='k',
             family='monospace',
             transform=ax.transAxes

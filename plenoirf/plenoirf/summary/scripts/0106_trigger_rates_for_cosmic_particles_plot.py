@@ -86,7 +86,7 @@ for site_key in irf_config['config']['sites']:
         ax.text(
             0.9,
             0.1 + text_y,
-            "{: 12.1f}s$^{{-1}}$".format(ir),
+            "{: 12.1f} s$^{{-1}}$".format(ir),
             color='k',
             family='monospace',
             transform=ax.transAxes

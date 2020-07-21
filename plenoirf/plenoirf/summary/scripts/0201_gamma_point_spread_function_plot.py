@@ -89,11 +89,11 @@ for site_key in irf_config['config']['sites']:
         fig_title = "".join([
             'num. airshower {: 6d}, '.format(num_airshower),
             'energy {: 7.1f} - '.format(energy_bin_edges[energy_bin]),
-            '{: 7.1f}GeV'.format(energy_bin_edges[energy_bin + 1]),
+            '{: 7.1f} GeV'.format(energy_bin_edges[energy_bin + 1]),
         ])
 
         fig = irf.summary.figure.figure(fc16by9)
-        ax = fig.add_axes((.1, .1, .8, .8))
+        ax = fig.add_axes((.1, .12, .8, .8))
         irf.summary.figure.ax_add_hist(
             ax=ax,
             bin_edges=theta_square_bin_edges_deg2,
@@ -125,7 +125,7 @@ for site_key in irf_config['config']['sites']:
             alpha=0.1
         )
         ax.semilogy()
-        ax.set_xlabel('$\\theta^{2}$ / deg$^{2}$')
+        ax.set_xlabel('$(\\theta_{68\\%})^{2}$ / ($1^\\circ$)$^{2}$')
         ax.set_ylabel('relative intensity / 1')
         ax.spines['top'].set_color('none')
         ax.spines['right'].set_color('none')
@@ -173,8 +173,8 @@ for site_key in irf_config['config']['sites']:
             vmax=None
         )
         ax.set_title(fig_title, family='monospace')
-        ax.set_xlabel('cx / deg')
-        ax.set_ylabel('cy / deg')
+        ax.set_xlabel('cx / $1^\\circ$')
+        ax.set_ylabel('cy / $1^\\circ$')
         ax.spines['top'].set_color('none')
         ax.spines['right'].set_color('none')
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
@@ -221,7 +221,7 @@ for site_key in irf_config['config']['sites']:
     )
     ax.semilogx()
     ax.set_xlabel('energy / GeV')
-    ax.set_ylabel('$\\theta$ / deg')
+    ax.set_ylabel('$\\theta_{68\\%}$ / $1^\\circ$')
     ax.set_ylim([0, fov_radius_deg])
     ax.spines['top'].set_color('none')
     ax.spines['right'].set_color('none')

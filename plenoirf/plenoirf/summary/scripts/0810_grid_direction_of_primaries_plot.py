@@ -126,11 +126,11 @@ for site_key in irf_config['config']['sites']:
             ax.set_xlim([np.min(c_bin_edges_deg), np.max(c_bin_edges_deg)])
             ax.set_ylim([np.min(c_bin_edges_deg), np.max(c_bin_edges_deg)])
             plt.colorbar(_pcm_grid, cax=ax_cb, extend='max')
-            ax.set_xlabel('primary cx/deg')
-            ax.set_ylabel('primary cy/deg')
+            ax.set_xlabel('$c_x$ / $1^\\circ$')
+            ax.set_ylabel('$c_y$ / $1^\\circ$')
             ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
             ax.set_title(
-                'num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f}GeV'.format(
+                'num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f} GeV'.format(
                     num_events_stack[energy_idx],
                     energy_bin_edges[energy_idx],
                     energy_bin_edges[energy_idx + 1]

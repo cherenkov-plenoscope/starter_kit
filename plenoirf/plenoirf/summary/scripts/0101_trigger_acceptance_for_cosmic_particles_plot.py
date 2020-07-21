@@ -123,7 +123,7 @@ for site_key in irf_config['config']['sites']:
                     )
                 )
             ax.set_title(
-                'trigger-threshold: {:d}p.e.'.format(trigger_thresholds[tt])
+                'trigger-threshold: {:d} p.e.'.format(trigger_thresholds[tt])
             )
             fig.savefig(
                 os.path.join(
