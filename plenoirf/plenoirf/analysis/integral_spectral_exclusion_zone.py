@@ -2,6 +2,7 @@ import numpy as np
 import gamma_limits_sensitivity as gls
 import scipy
 import matplotlib.pyplot as plt
+from . import spectral_energy_distribution as sed
 
 
 def estimate_integral_spectral_exclusion_zone(
@@ -54,8 +55,8 @@ def fermi_lat_integral_spectral_exclusion_zone():
     '''
     # broadband_flux_sensitivity_p8r2_source_v6_all_10yr_zmax100_n10.0_e1.50_ts25_000_090
     # (l, b) = (0, 90)
-    # Column 0: Energy [MeV]
-    # Column 1: E^2 times Broadband Flux Sensitivity [erg cm^{-2} s^{-1}]
+    # Column 0: Energy / MeV
+    # Column 1: E^2 times Broadband Flux Sensitivity / erg cm^{-2} s^{-1}
 
     data = np.array([
         [31.623, 6.9842e-12],
@@ -160,6 +161,7 @@ def fermi_lat_integral_spectral_exclusion_zone():
         [1e+06, 7.4055e-12],
     ])
 
+    '''
     # 1 erg = 0.62415091 TeV
     ERG_OVER_GEV = 624.15091
 
@@ -181,15 +183,33 @@ def fermi_lat_integral_spectral_exclusion_zone():
 
     # convert energy axis to GeV scale
     data[:, 0] = data[:, 0]*base_energy_y_in_GeV
+    '''
+
+    fermi_lat_energy_MeV = data[:, 0]
+    fermi_lat_sed_erg_per_cm2_pers = data[:, 1]
+
+    assert sed.FERMI_SED_STYLE['x_energy_in_eV'] == 1e6
+    assert sed.FERMI_SED_STYLE['y_inverse_energy_in_eV'] == sed.one_erg_in_eV
+    assert sed.FERMI_SED_STYLE['y_inverse_area_in_m2'] == 1e-4
+    assert sed.FERMI_SED_STYLE['y_inverse_time_in_s'] == 1.0
+    assert sed.FERMI_SED_STYLE['y_scale_energy_in_eV'] == sed.one_erg_in_eV
+    assert sed.FERMI_SED_STYLE['y_scale_energy_power'] == 2.0
+
+    energy, dfdE = sed.convert_units_style(
+        x=fermi_lat_energy_MeV,
+        y=fermi_lat_sed_erg_per_cm2_pers,
+        in_style=sed.FERMI_SED_STYLE,
+        out_style=sed.PLENOIRF_SED_STYLE,
+    )
 
     return {
         "energy": {
-            "values": data[:, 0].tolist(),
+            "values": energy,
             "unit_tex": "GeV",
             "unit": "GeV",
         },
         "differential_flux": {
-            "values": data[:, 1].tolist(),
+            "values": dfdE,
             "unit_tex": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
             "unit": "per_m2_per_s_per_GeV"
         },

@@ -1,40 +1,127 @@
 import numpy as np
 
-ERG_GEV = 624.15091
 
+one_eV_in_J = 1.602176634e-19
+one_erg_in_J = 1e-7
+one_erg_in_eV = one_erg_in_J/one_eV_in_J
 
-def differential_flux_to_spectral_energy_distribution(
-    energy_GeV,
-    differential_flux_per_GeV_per_m2_per_s
+PLENOIRF_SED_STYLE = {
+    "x_energy_in_eV": 1e9,
+    "y_inverse_energy_in_eV": 1e9,
+    "y_inverse_area_in_m2": 1.0,
+    "y_inverse_time_in_s": 1.0,
+    "y_scale_energy_in_eV": 1e9,
+    "y_scale_energy_power": 0.0,
+}
+
+FERMI_SED_STYLE = {
+    "x_energy_in_eV": 1e6,
+    "y_inverse_energy_in_eV": one_erg_in_eV,
+    "y_inverse_area_in_m2": 1e-4,
+    "y_inverse_time_in_s": 1.0,
+    "y_scale_energy_in_eV": one_erg_in_eV,
+    "y_scale_energy_power": 2.0,
+}
+
+SCIENCE_SED_STYLE = {
+    "x_energy_in_eV": 1e6,
+    "y_inverse_energy_in_eV": 1e6,
+    "y_inverse_area_in_m2": 1e-4,
+    "y_inverse_time_in_s": 1.0,
+    "y_scale_energy_in_eV": 1e6,
+    "y_scale_energy_power": 2.0,
+}
+
+def convert_units_style(
+    x,
+    y,
+    in_style,
+    out_style,
 ):
-    return _differential_flux_to_spectral_energy_distribution(
-        energy=energy_GeV,
-        differential_flux=differential_flux_per_GeV_per_m2_per_s,
-        base_energy_MeV=1e3,    # was GeV
-        base_flux_area_cm2=1e4, # was m2
-        base_flux_time_s=1.0,   # was s
-        base_differential_energy_erg=ERG_GEV, # was (GeV)^{-1}
+    inp = in_style
+    out = out_style
+    return convert_units(
+        x=x,
+        y=y,
+        x_energy_in_eV=inp['x_energy_in_eV'],
+        y_inverse_energy_in_eV=inp['y_inverse_energy_in_eV'],
+        y_inverse_area_in_m2=inp['y_inverse_area_in_m2'],
+        y_inverse_time_in_s=inp['y_inverse_time_in_s'],
+        y_scale_energy_in_eV=inp['y_scale_energy_in_eV'],
+        y_scale_energy_power=inp['y_scale_energy_power'],
+
+        target_x_energy_in_eV=out['x_energy_in_eV'],
+        target_y_inverse_energy_in_eV=out['y_inverse_energy_in_eV'],
+        target_y_inverse_area_in_m2=out['y_inverse_area_in_m2'],
+        target_y_inverse_time_in_s=out['y_inverse_time_in_s'],
+        target_y_scale_energy_in_eV=out['y_scale_energy_in_eV'],
+        target_y_scale_energy_power=out['y_scale_energy_power'],
     )
 
+def convert_units(
+    x,
+    y,
 
-def _differential_flux_to_spectral_energy_distribution(
-    energy,
-    differential_flux,
-    base_energy_MeV=1e3,
-    base_flux_area_cm2=1e4,
-    base_flux_time_s=1.0,
-    base_differential_energy_erg=ERG_GEV,
+    x_energy_in_eV,
+    y_inverse_energy_in_eV,
+    y_inverse_area_in_m2,
+    y_inverse_time_in_s,
+    y_scale_energy_in_eV,
+    y_scale_energy_power,
+
+    target_x_energy_in_eV,
+    target_y_inverse_energy_in_eV,
+    target_y_inverse_area_in_m2,
+    target_y_inverse_time_in_s,
+    target_y_scale_energy_in_eV,
+    target_y_scale_energy_power,
 ):
     '''
-    x-axis: E / MeV
+    typical SED-units:
 
-    y-axis: E^{2} Flux / erg cm^{-2} s^{-1}
+    Fermi-LAT:
+        x: E / MeV
+        y: E$^{gamma}$ dFdE / erg$^{-1}$ cm$^{-2}$ s$^{-1}$ erg$^{gamma}$
+        gamma = 2
+
+    Science-Magazine:
+        x: E / MeV
+        y: E$^{gamma}$ dFdE / MeV$^{-1}$ cm$^{-2}$ s$^{-1}$ MeV$^{gamma}$
+        gamma = 2
+
+    E is energy, dFdE is differential flux explicit dF/dE.
+
     '''
+    assert len(x) == len(y)
 
+    # unscale power law from input y
+    _x_in_units_of_y_scale_energy = x*(x_energy_in_eV/y_scale_energy_in_eV)
+    _y = y / (_x_in_units_of_y_scale_energy**y_scale_energy_power)
 
-    energy_MeV = energy*base_energy_MeV
+    # convert energy axis to SI base units
+    x_eV = x*x_energy_in_eV
 
-    sed_E2_erg_per_cm2_per_s = 1
+    # convert diff. flux axis to SI base units
+    y_per_m2_per_s_per_eV = _y / (
+        y_inverse_energy_in_eV *
+        y_inverse_area_in_m2 *
+        y_inverse_time_in_s
+    )
 
+    # convert energy axis to target units
+    x_target = x_eV/target_x_energy_in_eV
 
-    return energy_MeV, sed_E2_erg_per_cm2_per_s
+    # convert diff. flux axis to target units
+    _y_target = y_per_m2_per_s_per_eV * (
+        target_y_inverse_energy_in_eV *
+        target_y_inverse_area_in_m2 *
+        target_y_inverse_time_in_s
+    )
+
+    _x_in_units_of_target_y_scale_energy = x_eV/target_y_scale_energy_in_eV
+
+    y_target = _y_target*(
+        _x_in_units_of_target_y_scale_energy**target_y_scale_energy_power
+    )
+
+    return x_target, y_target
