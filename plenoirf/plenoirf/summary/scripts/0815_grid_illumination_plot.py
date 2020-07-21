@@ -29,6 +29,11 @@ num_grid_bins_on_edge = irf_config['grid_geometry']['num_bins_diameter']
 
 MAX_AIRSHOWER_PER_ENERGY_BIN = 100
 
+MAX_CHERENKOV_INTENSITY = 10.0*irf_config[
+    'config'][
+    'grid'][
+    'threshold_num_photons']
+
 fc16by9 = sum_config['plot']['16_by_9']
 fc5by4 = fc16by9.copy()
 fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
@@ -122,14 +127,10 @@ for site_key in irf_config['config']['sites']:
             grid_intensity = grid_intensities[energy_idx]
             num_airshower = num_airshowers[energy_idx]
 
-            vmin = None
-            vmax = None
             normalized_grid_intensity = grid_intensity
             if num_airshower > 0:
                 normalized_grid_intensity /= num_airshower
-            else:
-                vmin = 0
-                vmax = 1
+
             fig = irf.summary.figure.figure(fc5by4)
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
             ax_cb = fig.add_axes([0.85, 0.1, 0.02, 0.8])
@@ -140,10 +141,10 @@ for site_key in irf_config['config']['sites']:
                 np.array(irf_config['grid_geometry']['xy_bin_edges'])*1e-3,
                 np.array(irf_config['grid_geometry']['xy_bin_edges'])*1e-3,
                 np.transpose(normalized_grid_intensity),
-                norm=plt_colors.PowerNorm(gamma=0.5),
+                norm=plt_colors.PowerNorm(gamma=1.0/4.0),
                 cmap='Blues',
-                vmin=vmin,
-                vmax=vmax
+                vmin=0,
+                vmax=MAX_CHERENKOV_INTENSITY
             )
             plt.colorbar(_pcm_grid, cax=ax_cb, extend='max')
             ax.set_title(
