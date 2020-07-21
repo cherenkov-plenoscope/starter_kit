@@ -525,7 +525,7 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'runtime',
+        '0910_runtime',
         '{site_key:s}_{particle_key:s}_relative_runtime.jpg'
     )
 )
@@ -534,7 +534,7 @@ doc += make_site_particle_index_table(
     particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        'runtime',
+        '0910_runtime',
         '{site_key:s}_{particle_key:s}_speed_runtime.jpg'
     )
 )
