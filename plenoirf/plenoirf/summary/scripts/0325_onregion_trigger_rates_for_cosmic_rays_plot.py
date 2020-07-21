@@ -109,11 +109,13 @@ for site_key in irf_config['config']['sites']:
     # Crab reference fluxes
     for i in range(4):
         scale_factor = np.power(10., (-1)*i)
-        _energy = np.array(crab_flux['energy']['values'])
-        _flux = np.array(crab_flux['differential_flux']['values'])
+        _energy_GeV = np.array(crab_flux['energy']['values'])
+        _flux_per_GeV_per_m2_per_s = np.array(
+            crab_flux['differential_flux']['values']
+        )
         ax.plot(
-            _energy,
-            _flux*scale_factor,
+            _energy_GeV,
+            _flux_per_GeV_per_m2_per_s*scale_factor,
             color='k',
             linestyle='--',
             label='{:.3f} Crab'.format(scale_factor),
