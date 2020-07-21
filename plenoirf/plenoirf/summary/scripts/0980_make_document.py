@@ -318,14 +318,12 @@ doc += make_site_particle_index_table(
     )
 )
 doc += h('Trigger-probability vs. true Cherenkov-size / p.e.', level=2)
-doc += make_site_particle_index_table(
+doc += make_site_table(
     sites=irf_config['config']['sites'],
-    particles=irf_config['config']['particles'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        '0070_trigger_probability_vs_cherenkov_size',
-        '{site_key:s}_{particle_key:s}_'
-        'trigger_probability_vs_cherenkov_size.jpg'
+        '0071_trigger_probability_vs_cherenkov_size_plot',
+        '{site_key:s}_trigger_probability_vs_cherenkov_size.jpg'
     )
 )
 doc += h('Trigger-probability vs. offaxis-angle', level=2)
