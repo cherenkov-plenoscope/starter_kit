@@ -33,36 +33,25 @@ def write_csv_records(path, table):
     os.rename(path+'.tmp', path)
 
 
-def _sum_energy_in_runs(event_table, run_ids):
-    _out = []
-    for run_id in run_ids:
-        _run_ids = irf.table.run_id_from_seed(event_table["primary"][spt.IDX])
-        mask = _run_ids == run_id
-        sum_energy = np.sum(event_table["primary"]["energy_GeV"][mask])
-        _out.append({
-            "run_id": int(run_id),
-            "energy_sum_GeV": float(sum_energy)})
-    out = pd.DataFrame(_out).to_records(index=False)
-    return out
-
-
 def _num_events_in_runs(event_table, level_key, run_ids, key):
-    _out = []
+    num_events_in_run = {}
     for run_id in run_ids:
-        _run_ids = irf.table.run_id_from_seed(event_table[level_key][spt.IDX])
-        mask = _run_ids == run_id
-        _out.append({
-            "run_id": int(run_id),
-            key: int(np.sum(mask))})
+        num_events_in_run[run_id] = 0
+    event_run_ids = irf.table.run_id_from_seed(event_table[level_key][spt.IDX])
+    for event_run_id in event_run_ids:
+        try:
+            num_events_in_run[event_run_id] += 1
+        except KeyError:
+            pass
+    _out = []
+    for run_id in num_events_in_run:
+        _out.append({"run_id": run_id, key: int(num_events_in_run[run_id])})
     out = pd.DataFrame(_out).to_records(index=False)
     return out
 
 
 def merge_event_table(runtime_table, event_table):
     runtime = runtime_table
-    sum_energies = _sum_energy_in_runs(
-        event_table=event_table,
-        run_ids=runtime["run_id"])
     num_events_corsika = _num_events_in_runs(
         event_table=event_table,
         level_key="primary",
@@ -79,7 +68,6 @@ def merge_event_table(runtime_table, event_table):
         run_ids=runtime["run_id"],
         key="num_events_pasttrigger")
     rta = pd.DataFrame(runtime)
-    rta = pd.merge(rta, pd.DataFrame(sum_energies), on=["run_id"])
     rta = pd.merge(rta, pd.DataFrame(num_events_corsika), on=["run_id"])
     rta = pd.merge(rta, pd.DataFrame(num_events_merlict), on=["run_id"])
     rta = pd.merge(rta, pd.DataFrame(num_events_past_trigger), on=["run_id"])
