@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
+from plenoirf.analysis import spectral_energy_distribution as sed
 import cosmic_fluxes
 import os
 
@@ -64,12 +65,12 @@ assert fermi_broadband[
 # -----------------------------
 crab_flux = cosmic_fluxes.read_crab_nebula_flux_from_resources()
 
-internal_sed_style = irf.analysis.spectral_energy_distribution.PLENOIRF_SED_STYLE
+internal_sed_style = sed.PLENOIRF_SED_STYLE
 
 output_sed_styles = {
-    'plenoirf': irf.analysis.spectral_energy_distribution.PLENOIRF_SED_STYLE,
-    'science': irf.analysis.spectral_energy_distribution.SCIENCE_SED_STYLE,
-    'fermi': irf.analysis.spectral_energy_distribution.FERMI_SED_STYLE,
+    'plenoirf': sed.PLENOIRF_SED_STYLE,
+    'science': sed.SCIENCE_SED_STYLE,
+    'fermi': sed.FERMI_SED_STYLE,
 }
 
 # background rates
@@ -184,7 +185,7 @@ for site_key in irf_config['config']['sites']:
 
         for com in components:
 
-            _energy, _dFdE = irf.analysis.spectral_energy_distribution.convert_units_style(
+            _energy, _dFdE = sed.convert_units_style(
                 x=com['energy'],
                 y=com['differential_flux'],
                 in_style=internal_sed_style,
@@ -199,7 +200,7 @@ for site_key in irf_config['config']['sites']:
                 linestyle=com['linestyle'],
             )
 
-        _x_lim, _y_lim = irf.analysis.spectral_energy_distribution.convert_units_style(
+        _x_lim, _y_lim = sed.convert_units_style(
             x=x_lim_GeV,
             y=y_lim_per_m2_per_s_per_GeV,
             in_style=internal_sed_style,
