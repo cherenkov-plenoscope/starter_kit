@@ -19,6 +19,9 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
 
 os.makedirs(pa['out_dir'], exist_ok=True)
 
+trigger_threshold = sum_config['trigger']['threshold_pe']
+trigger_modus = sum_config["trigger"]["modus"]
+
 num_energy_bins = sum_config[
     'energy_binning'][
     'num_bins'][
@@ -54,10 +57,17 @@ for site_key in irf_config['config']['sites']:
             structure=irf.table.STRUCTURE
         )
 
+        idx_triggered = irf.analysis.light_field_trigger_modi.make_indices(
+            trigger_table=event_table['trigger'],
+            threshold=trigger_threshold,
+            modus=trigger_modus,
+        )
+        idx_features = event_table['features'][spt.IDX]
+
         mrg_chc_fts = spt.cut_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
-            common_indices=event_table['features'][spt.IDX],
+            common_indices=spt.intersection([idx_triggered, idx_features]),
             level_keys=[
                 'primary',
                 'trigger',
