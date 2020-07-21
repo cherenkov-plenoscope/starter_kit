@@ -4,6 +4,8 @@ import numpy as np
 def integration_width_for_containment(bin_counts, bin_edges, containment):
     assert containment >= 0
     assert containment <= 1
+    if np.sum(bin_counts) == 0:
+        return np.nan
     integral = np.cumsum(bin_counts/np.sum(bin_counts))
     bin_centers = (bin_edges[0:-1] + bin_edges[1:])/2
     x = np.linspace(

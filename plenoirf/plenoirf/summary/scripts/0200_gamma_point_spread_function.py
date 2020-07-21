@@ -162,18 +162,29 @@ for site_key in irf_config['config']['sites']:
 
     for energy_bin in range(num_energy_bins):
         psf_deg = np.array(psf_vs_energy[energy_bin])
-        delta_c_deg = np.hypot(psf_deg[:, 0], psf_deg[:, 1])
-        num_airshower = len(delta_c_deg)
+        num_airshower = psf_deg.shape[0]
 
-        delta_hist = np.histogram(
-            delta_c_deg**2,
-            bins=theta_square_bin_edges_deg2
-        )[0]
-        delta_hist_unc = irf.analysis.effective_quantity._divide_silent(
-            np.sqrt(delta_hist),
-            delta_hist,
-            np.nan
-        )
+        if num_airshower > 0:
+            delta_c_deg = np.hypot(psf_deg[:, 0], psf_deg[:, 1])
+
+            delta_hist = np.histogram(
+                delta_c_deg**2,
+                bins=theta_square_bin_edges_deg2
+            )[0]
+            delta_hist_unc = irf.analysis.effective_quantity._divide_silent(
+                np.sqrt(delta_hist),
+                delta_hist,
+                np.nan
+            )
+        else:
+            delta_hist = np.zeros(
+                len(theta_square_bin_edges_deg2) - 1,
+                dtype=np.int64
+            )
+            delta_hist_unc = np.nan*np.ones(
+                len(theta_square_bin_edges_deg2) - 1,
+                dtype=np.float64
+            )
 
         theta_square_deg2 = \
             irf.analysis.gamma_direction.integration_width_for_containment(

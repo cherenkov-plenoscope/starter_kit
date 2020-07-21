@@ -23,9 +23,11 @@ psf = irf.json_numpy.read_tree(
 
 num_energy_bins = sum_config[
     'energy_binning']['num_bins']['point_spread_function']
+energy_lower_edge = sum_config['energy_binning']['lower_edge_GeV']
+energy_upper_edge = sum_config['energy_binning']['upper_edge_GeV']
 energy_bin_edges = np.geomspace(
-    sum_config['energy_binning']['lower_edge_GeV'],
-    sum_config['energy_binning']['upper_edge_GeV'],
+    energy_lower_edge,
+    energy_upper_edge,
     num_energy_bins + 1
 )
 
@@ -222,6 +224,7 @@ for site_key in irf_config['config']['sites']:
     ax.semilogx()
     ax.set_xlabel('energy / GeV')
     ax.set_ylabel('$\\theta_{68\\%}$ / $1^\\circ$')
+    ax.set_xlim([energy_lower_edge, energy_upper_edge])
     ax.set_ylim([0, fov_radius_deg])
     ax.spines['top'].set_color('none')
     ax.spines['right'].set_color('none')
