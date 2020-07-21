@@ -193,6 +193,7 @@ doc = ''
 doc += h('Cherenkov-plenoscope', level=1)
 doc += p(
     "Summarizing the Cherenkov-plenoscope's instrument-response-functions.",
+    font_size=75,
     text_align='justify',
     font_family='calibri',
 )
@@ -284,6 +285,7 @@ doc += p(
     "Primary particle's incidend direction color-coded "
     "with their probability to trigger the plenoscope. "
     "Hatched solid angles are unknown. ",
+    font_size=75,
     text_align='justify',
     font_family='calibri')
 doc += make_site_particle_index_table(
@@ -301,6 +303,7 @@ doc += p(
     "Areal intensity of Cherenkov-photons on the observation-level. "
     "Only showing airshowers which passed the plenoscope's trigger. "
     "Color-coding shows the average intensity of a single airshower. ",
+    font_size=75,
     text_align='justify',
     font_family='calibri'
 )
@@ -389,7 +392,8 @@ doc += make_site_particle_index_table(
 
 doc += h('Direction-reconstruction', level=2)
 doc += p(
-    "Plane angle for 68% containment. Dashed line shows fix onregion.",
+    "Opening angle for 68% containment. "
+    "Dashed line shows fix onregion openin angle.",
     text_align='justify',
     font_family='calibri')
 doc += make_site_table(
@@ -414,6 +418,7 @@ doc += h('Effective area, trigger, fix onregion', level=2)
 doc += p(
     "Direction reconstructed to be in an onregion of fixed solid angle. "
     "Fade lines show entire field-of-view.",
+    font_size=75,
     text_align='justify',
     font_family='calibri')
 doc += make_site_particle_index_table(
@@ -449,22 +454,39 @@ doc += make_site_table(
 
 doc += h('Braodband-sensitivity, trigger, fix onregion', level=2)
 doc += p(
-    "A.k.a integral spectral exclusion zone. Only on trigger-level.",
+    "A.k.a integral spectral exclusion zone. Only on trigger-level.\n"
+    "Figures have same information, "
+    "but different styles of Spectral-Energy-Distributions (SEDs). ",
+    font_size=75,
     text_align='justify',
     font_family='calibri')
-
 doc += code(
     json.dumps(sum_config['on_off_measuremnent'], indent=4),
     font_size=50,
     line_height=100,
 )
-
 doc += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        '0325_onregion_trigger_rates_for_cosmic_rays_plot',
-        '{site_key:s}_integral_spectral_exclusion_zone.jpg'
+        '0330_onregion_trigger_integral_spectral_exclusion_zone_plot',
+        '{site_key:s}_integral_spectral_exclusion_zone_style_plenoirf.jpg'
+    )
+)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '0330_onregion_trigger_integral_spectral_exclusion_zone_plot',
+        '{site_key:s}_integral_spectral_exclusion_zone_style_science.jpg'
+    )
+)
+doc += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '0330_onregion_trigger_integral_spectral_exclusion_zone_plot',
+        '{site_key:s}_integral_spectral_exclusion_zone_style_fermi.jpg'
     )
 )
 
