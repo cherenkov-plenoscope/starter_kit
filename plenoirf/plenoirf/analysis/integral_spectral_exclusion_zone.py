@@ -2,7 +2,9 @@ import numpy as np
 import gamma_limits_sensitivity as gls
 import scipy
 import matplotlib.pyplot as plt
-from . import spectral_energy_distribution as sed
+import spectral_energy_distribution_units as sed
+from . import spectral_energy_distribution as sed_styles
+
 
 
 def estimate_integral_spectral_exclusion_zone(
@@ -187,19 +189,19 @@ def fermi_lat_integral_spectral_exclusion_zone():
 
     fermi_lat_energy_MeV = data[:, 0]
     fermi_lat_sed_erg_per_cm2_pers = data[:, 1]
+    ss = sed_styles
+    assert ss.FERMI_SED_STYLE['x_energy_in_eV'] == 1e6
+    assert ss.FERMI_SED_STYLE['y_inverse_energy_in_eV'] == ss.one_erg_in_eV
+    assert ss.FERMI_SED_STYLE['y_inverse_area_in_m2'] == 1e-4
+    assert ss.FERMI_SED_STYLE['y_inverse_time_in_s'] == 1.0
+    assert ss.FERMI_SED_STYLE['y_scale_energy_in_eV'] == ss.one_erg_in_eV
+    assert ss.FERMI_SED_STYLE['y_scale_energy_power'] == 2.0
 
-    assert sed.FERMI_SED_STYLE['x_energy_in_eV'] == 1e6
-    assert sed.FERMI_SED_STYLE['y_inverse_energy_in_eV'] == sed.one_erg_in_eV
-    assert sed.FERMI_SED_STYLE['y_inverse_area_in_m2'] == 1e-4
-    assert sed.FERMI_SED_STYLE['y_inverse_time_in_s'] == 1.0
-    assert sed.FERMI_SED_STYLE['y_scale_energy_in_eV'] == sed.one_erg_in_eV
-    assert sed.FERMI_SED_STYLE['y_scale_energy_power'] == 2.0
-
-    energy, dfdE = sed.convert_units_style(
+    energy, dfdE = sed.convert_units_with_style(
         x=fermi_lat_energy_MeV,
         y=fermi_lat_sed_erg_per_cm2_pers,
-        in_style=sed.FERMI_SED_STYLE,
-        out_style=sed.PLENOIRF_SED_STYLE,
+        input_style=sed_styles.FERMI_SED_STYLE,
+        target_style=sed_styles.PLENOIRF_SED_STYLE,
     )
 
     return {
