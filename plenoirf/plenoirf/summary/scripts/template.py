@@ -23,5 +23,7 @@ for site_key in irf_config['config']['sites']:
                 'event_table',
                 site_key,
                 particle_key,
-                'event_table.tar'),
-            structure=irf.table.STRUCTURE)
+                'event_table.tar'
+            ),
+            structure=irf.table.STRUCTURE
+        )
