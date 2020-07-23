@@ -63,17 +63,22 @@ for site_key in irf_config['config']['sites']:
             modus=trigger_modus,
         )
         idx_features = event_table['features'][spt.IDX]
+        idx_common = spt.intersection([idx_triggered, idx_features])
 
         mrg_chc_fts = spt.cut_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
-            common_indices=spt.intersection([idx_triggered, idx_features]),
+            common_indices=idx_common,
             level_keys=[
                 'primary',
                 'trigger',
                 CHCL,
                 'features'
             ]
+        )
+        mrg_chc_fts = spt.sort_table_on_common_indices(
+            table=mrg_chc_fts,
+            common_indices=idx_common
         )
 
         # ---------------------------------------------------------------------
