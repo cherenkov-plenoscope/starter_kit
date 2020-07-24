@@ -22,3 +22,6 @@
 [submodule "spectral_energy_distribution_units"]
 	path = spectral_energy_distribution_units
 	url = https://github.com/cherenkov-plenoscope/spectral_energy_distribution_units
+[submodule "sparse_numeric_table"]
+	path = sparse_numeric_table
+	url = https://github.com/cherenkov-plenoscope/sparse_numeric_table
