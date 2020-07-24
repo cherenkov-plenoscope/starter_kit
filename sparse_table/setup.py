@@ -18,8 +18,6 @@ setuptools.setup(
     install_requires=[
        'numpy',
        'pandas',
-       'tarfile',
-       'tempfile',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
