@@ -19,3 +19,6 @@
 [submodule "corsika_wrapper"]
 	path = corsika_wrapper
 	url = git@github.com:fact-project/corsika_wrapper
+[submodule "spectral_energy_distribution_units"]
+	path = spectral_energy_distribution_units
+	url = https://github.com/cherenkov-plenoscope/spectral_energy_distribution_units
