@@ -54,14 +54,18 @@ def main():
 
         # Tools
         # -----
-        call(['pip', 'install', '-e', join('.', 'cosmic_fluxes')])
-        call(['pip', 'install', '-e', join('.', 'plenopy')])
-        call(['pip', 'install', '-e', join('.', 'corsika_wrapper')])
-        call(['pip', 'install', '-e', join('.', 'cable_robo_mount')])
-        call(['pip', 'install', '-e', join('.', 'plenoscope_map_reduce')])
-        call(['pip', 'install', '-e', join('.', 'simpleio')])
-        call(['pip', 'install', '-e', join('.', 'plenoirf')])
-        call(['pip', 'install', '-e', join('.', 'sparse_table')])
+        tools = [
+            'cosmic_fluxes',
+            'plenopy',
+            'corsika_wrapper',
+            'cable_robo_mount',
+            'simpleio',
+            'plenoirf',
+            'sparse_table',
+            'spectral_energy_distribution_units',
+        ]
+        for tool in tools:
+            call(['pip', 'install', '-e', join('.', tool)])
 
     except docopt.DocoptExit as e:
         print(e)

@@ -2,13 +2,18 @@
 import os
 from subprocess import call
 
-call(['pip', 'uninstall', 'corsika_primary_wrapper'])
-call(['pip', 'uninstall', 'corsika_wrapper'])
-call(['pip', 'uninstall', 'plenopy'])
-call(['pip', 'uninstall', 'reflector_study'])
-call(['pip', 'uninstall', 'plenoscope_map_reduce'])
-call(['pip', 'uninstall', 'simpleio'])
-call(['pip', 'uninstall', 'cosmic_fluxes'])
-call(['pip', 'uninstall', 'plenoirf'])
-call(['pip', 'uninstall', 'sparse_table'])
+tools = [
+    'corsika_primary_wrapper',
+    'cosmic_fluxes',
+    'plenopy',
+    'corsika_wrapper',
+    'cable_robo_mount',
+    'simpleio',
+    'plenoirf',
+    'sparse_table',
+    'spectral_energy_distribution_units',
+]
+for tool in tools:
+    call(['pip', 'uninstall', tool])
+
 call(['rm', '-rf', 'build'])
