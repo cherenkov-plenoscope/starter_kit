@@ -17,7 +17,7 @@ import io
 import datetime
 import corsika_primary_wrapper as cpw
 import plenopy as pl
-import sparse_table as spt
+import sparse_numeric_table as spt
 
 
 """
@@ -880,7 +880,7 @@ def run_job(job=EXAMPLE_JOB):
     # export event-table
     # ------------------
     table_filename = run_id_str+"_event_table.tar"
-    event_table = spt.table_of_records_to_sparse_table(
+    event_table = spt.table_of_records_to_sparse_numeric_table(
         table_records=tabrec,
         structure=table.STRUCTURE)
     spt.write(

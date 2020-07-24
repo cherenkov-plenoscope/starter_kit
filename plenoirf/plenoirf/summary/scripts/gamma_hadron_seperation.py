@@ -8,7 +8,7 @@ from sklearn import neural_network
 from sklearn import gaussian_process
 from sklearn import tree
 import pandas as pd
-import sparse_table as spt
+import sparse_numeric_table as spt
 import json
 
 

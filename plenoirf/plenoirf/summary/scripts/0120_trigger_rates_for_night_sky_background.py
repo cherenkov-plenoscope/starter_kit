@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
-import sparse_table as spt
+import sparse_numeric_table as spt
 import os
 
 argv = irf.summary.argv_since_py(sys.argv)

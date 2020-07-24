@@ -7,7 +7,7 @@ import json
 import cosmic_fluxes
 import pkg_resources
 import subprocess
-import sparse_table as spt
+import sparse_numeric_table as spt
 import glob
 from .. import table
 from .. import merlict

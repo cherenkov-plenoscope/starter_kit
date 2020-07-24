@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import json
 import plenoirf as irf
-import sparse_table as spt
+import sparse_numeric_table as spt
 
 import matplotlib
 matplotlib.use('Agg')

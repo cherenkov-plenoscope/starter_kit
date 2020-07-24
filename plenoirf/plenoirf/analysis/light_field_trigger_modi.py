@@ -1,5 +1,5 @@
 import numpy as np
-import sparse_table as spt
+import sparse_numeric_table as spt
 
 
 def make_mask(

@@ -24,7 +24,7 @@ import tempfile
 import pandas as pd
 
 import plenopy as pl
-import sparse_table as spt
+import sparse_numeric_table as spt
 import sun_grid_engine_map as sge
 import magnetic_deflection as mdfl
 

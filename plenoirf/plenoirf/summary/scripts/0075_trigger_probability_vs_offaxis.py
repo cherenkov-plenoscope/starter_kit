@@ -3,7 +3,7 @@ import sys
 import os
 from os.path import join as opj
 import numpy as np
-import sparse_table as spt
+import sparse_numeric_table as spt
 import plenoirf as irf
 import magnetic_deflection as mdfl
 

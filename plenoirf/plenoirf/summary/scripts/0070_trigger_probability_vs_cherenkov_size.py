@@ -4,7 +4,7 @@ import plenoirf as irf
 import os
 import numpy as np
 from os.path import join as opj
-import sparse_table as spt
+import sparse_numeric_table as spt
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)

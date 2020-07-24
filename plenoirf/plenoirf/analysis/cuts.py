@@ -1,4 +1,4 @@
-import sparse_table as spt
+import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
 import numpy as np
 from . import gamma_direction
