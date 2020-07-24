@@ -4,7 +4,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name='sparse_table',
+    name='sparse_numeric_table',
     version='0.0.1',
     description='Read, write, and manipulate sparse tables',
     long_description=long_description,
@@ -13,7 +13,7 @@ setuptools.setup(
     author_email='sebastian-achim.mueller@mpi-hd.mpg.de',
     license='mit',
     packages=[
-        'sparse_table',
+        'sparse_numeric_table',
     ],
     install_requires=[
        'numpy',

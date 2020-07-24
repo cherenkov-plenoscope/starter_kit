@@ -1,4 +1,4 @@
-import sparse_table as spt
+import sparse_numeric_table as spt
 import numpy as np
 import pandas as pd
 import tempfile
