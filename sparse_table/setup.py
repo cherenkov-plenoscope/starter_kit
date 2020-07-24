@@ -15,6 +15,12 @@ setuptools.setup(
     packages=[
         'sparse_table',
     ],
+    install_requires=[
+       'numpy',
+       'pandas',
+       'tarfile',
+       'tempfile',
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
