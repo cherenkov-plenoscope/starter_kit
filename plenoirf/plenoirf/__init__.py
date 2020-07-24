@@ -98,9 +98,9 @@ EXAMPLE_CONFIG = {
     "particles": {
         "gamma": {
             "particle_id": 1,
-            "energy_bin_edges_GeV": [0.25, 500],
+            "energy_bin_edges_GeV": [0.25, 1000],
             "max_scatter_angle_deg": 3.25,
-            "energy_power_law_slope": -1.5,
+            "energy_power_law_slope": -1.7,
             "electric_charge_qe": 0.,
             "magnetic_deflection_max_off_axis_deg": 0.25,
         },
