@@ -10,7 +10,7 @@ tools = [
     'cable_robo_mount',
     'simpleio',
     'plenoirf',
-    'sparse_table',
+    'sparse_numeric_table',
     'spectral_energy_distribution_units',
 ]
 for tool in tools:
