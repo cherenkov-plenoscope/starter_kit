@@ -1,12 +1,11 @@
 import setuptools
-import os
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
     name='sparse_table',
-    version='0.0.0',
+    version='0.0.1',
     description='Read, write, and manipulate sparse tables',
     long_description=long_description,
     url='https://github.com/cherenkov-plenoscope',
