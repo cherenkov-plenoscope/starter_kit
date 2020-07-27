@@ -373,7 +373,7 @@ def _guess_summary_config(run_dir):
             "modus": {
                 'accepting_focus': 7,
                 'rejecting_focus': -1,
-                'intensity_ratio_between_foci': 1.06,
+                'intensity_ratio_between_foci': 1.0,
                 'use_rejection_focus': False,
             },
             "threshold_pe": analysis_trigger_threshold_pe,
