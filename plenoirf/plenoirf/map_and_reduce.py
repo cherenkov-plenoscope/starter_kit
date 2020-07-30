@@ -11,11 +11,13 @@ from os import path as op
 import shutil
 
 import tempfile
+import pandas
 import json
 import tarfile
 import io
 import datetime
 import corsika_primary_wrapper as cpw
+import magnetic_deflection
 import plenopy as pl
 import sparse_numeric_table as spt
 
@@ -159,25 +161,6 @@ MERLICT_PLENOSCOPE_PROPAGATOR_PATH = absjoin(
         "merlict",
         "merlict-plenoscope-propagation")
 
-LIGHT_FIELD_GEOMETRY_PATH = absjoin(
-        "run",
-        "light_field_geometry")
-
-TRIGGER_GEOMETRY_PATH = absjoin(
-        "run",
-        "trigger_geometry")
-
-EXAMPLE_PLENOSCOPE_SCENERY_PATH = absjoin(
-        "resources",
-        "acp",
-        "71m",
-        "scenery")
-
-MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH = absjoin(
-        "resources",
-        "acp",
-        "merlict_propagation_config.json")
-
 EXAMPLE_SITE = {
     "observation_level_asl_m": 5000,
     "earth_magnetic_field_x_muT": 20.815,
@@ -192,9 +175,9 @@ EXAMPLE_PLENOSCOPE_POINTING = {
 
 EXAMPLE_PARTICLE = {
     "particle_id": 14,
-    "energy_bin_edges_GeV": [5, 100],
-    "max_scatter_angle_deg": 30,
-    "energy_power_law_slope": -2.0,
+    "energy_bin_edges_GeV": [20, 200],
+    "max_scatter_angle_deg": 13,
+    "energy_power_law_slope": -1.0,
 }
 
 EXAMPLE_SITE_PARTICLE_DEFLECTION = {
@@ -211,44 +194,105 @@ EXAMPLE_GRID = {
 }
 
 EXAMPLE_SUM_TRIGGER = {
-    "object_distances_m": [10e3, 15e3, 20e3],
-    "threshold_pe": 115,
+    "object_distances_m": [
+        5000.0,
+        6164.0,
+        7600.0,
+        9369.0,
+        11551.0,
+        14240.0,
+        17556.0,
+        21644.0,
+        26683.0,
+        32897.0,
+        40557.0,
+        50000.0
+    ],
+    "threshold_pe": 107,
     "integration_time_slices": 10,
     "image": {
-        "image_outer_radius_deg": 3.25 - 0.033335,
+        "image_outer_radius_deg": 3.216665,
         "pixel_spacing_deg": 0.06667,
         "pixel_radius_deg": 0.146674,
-        "max_number_nearest_lixel_in_pixel": 7,
+        "max_number_nearest_lixel_in_pixel": 7
     }
 }
 
-EXAMPLE_LOG_DIRECTORY = op.join(".", "_log3")
-EXAMPLE_PAST_TRIGGER_DIRECTORY = op.join(".", "_past_trigger3")
-EXAMPLE_FEATURE_DIRECTORY = op.join(".", "_features3")
-EXAMPLE_WORK_DIR = op.join(".", "_work3")
-
-EXAMPLE_JOB = {
-    "run_id": 1,
-    "num_air_showers": 100,
-    "particle": EXAMPLE_PARTICLE,
-    "plenoscope_pointing": EXAMPLE_PLENOSCOPE_POINTING,
-    "site": EXAMPLE_SITE,
-    "grid": EXAMPLE_GRID,
-    "sum_trigger": EXAMPLE_SUM_TRIGGER,
-    "corsika_primary_path": CORSIKA_PRIMARY_PATH,
-    "plenoscope_scenery_path": EXAMPLE_PLENOSCOPE_SCENERY_PATH,
-    "merlict_plenoscope_propagator_path": MERLICT_PLENOSCOPE_PROPAGATOR_PATH,
-    "light_field_geometry_path": LIGHT_FIELD_GEOMETRY_PATH,
-    "trigger_geometry_path": TRIGGER_GEOMETRY_PATH,
-    "merlict_plenoscope_propagator_config_path":
-        MERLICT_PLENOSCOPE_PROPAGATOR_CONFIG_PATH,
-    "log_dir": EXAMPLE_LOG_DIRECTORY,
-    "past_trigger_dir": EXAMPLE_PAST_TRIGGER_DIRECTORY,
-    "feature_dir": EXAMPLE_FEATURE_DIRECTORY,
-    "keep_tmp": True,
-    "tmp_dir": EXAMPLE_WORK_DIR,
-    "date": date_dict_now(),
+EXAMPLE_CHERENKOV_CLASSIFICATION = {
+    "region_of_interest": {
+        "time_offset_start_s": -10e-9,
+        "time_offset_stop_s": 10e-9,
+        "direction_radius_deg": 2.0,
+        "object_distance_offsets_m": [
+            4000.,
+            2000.,
+            0.,
+            -2000.,
+        ],
+    },
+    "min_num_photons": 17,
+    "neighborhood_radius_deg": 0.075,
+    "direction_to_time_mixing_deg_per_s": 0.375e9
 }
+
+def make_example_job(run_dir, num_air_showers=25):
+    particle_key = "proton"
+    site_key = "namibia"
+
+    deflection_table = magnetic_deflection.read(
+        work_dir=op.join(run_dir, "magnetic_deflection")
+    )
+    site_particle_deflection = pandas.DataFrame(
+        deflection_table[site_key][particle_key]
+    ).to_dict(orient='list')
+
+    job = {
+        "run_id": 1,
+        "num_air_showers": num_air_showers,
+        "particle": EXAMPLE_PARTICLE,
+        "plenoscope_pointing": EXAMPLE_PLENOSCOPE_POINTING,
+        "site": EXAMPLE_SITE,
+        "grid": EXAMPLE_GRID,
+        "sum_trigger": EXAMPLE_SUM_TRIGGER,
+        "corsika_primary_path": CORSIKA_PRIMARY_PATH,
+        "plenoscope_scenery_path": op.join(
+            run_dir,
+            'light_field_geometry',
+            'input',
+            'scenery'),
+        "merlict_plenoscope_propagator_path": MERLICT_PLENOSCOPE_PROPAGATOR_PATH,
+        "light_field_geometry_path": op.join(
+            run_dir,
+            'light_field_geometry'),
+        "trigger_geometry_path": op.join(
+            run_dir,
+            'trigger_geometry'),
+        "merlict_plenoscope_propagator_config_path": op.join(
+            run_dir,
+            'input',
+            'merlict_propagation_config.json'),
+        "site_particle_deflection": site_particle_deflection,
+        "cherenkov_classification": EXAMPLE_CHERENKOV_CLASSIFICATION,
+        "log_dir": op.join(
+            run_dir,
+            "_testing",
+            "log"),
+        "past_trigger_dir": op.join(
+            run_dir,
+            "_testing",
+            "past_trigger"),
+        "feature_dir": op.join(
+            run_dir,
+            "_testing",
+            "features"),
+        "keep_tmp": True,
+        "tmp_dir": op.join(
+            run_dir,
+            "_testing",
+            "tmp"),
+        "date": date_dict_now(),
+    }
+    return job
 
 
 def contains_same_bytes(path_a, path_b):
@@ -411,7 +455,7 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
         tarfout.add(event_dir, arcname=".")
 
 
-def run_job(job=EXAMPLE_JOB):
+def run_job(job):
     os.makedirs(job["log_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
