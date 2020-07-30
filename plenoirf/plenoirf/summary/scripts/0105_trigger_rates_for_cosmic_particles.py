@@ -43,7 +43,8 @@ num_trigger_thresholds = len(trigger_thresholds)
 
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = irf.summary.read_airshower_differential_flux(
+airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
+    run_dir=pa['run_dir'],
     summary_dir=pa['summary_dir'],
     energy_bin_centers=fine_energy_bin_centers,
     sites=irf_config['config']['sites'],

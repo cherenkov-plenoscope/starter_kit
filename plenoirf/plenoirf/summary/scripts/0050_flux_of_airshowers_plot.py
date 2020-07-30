@@ -32,7 +32,8 @@ particle_colors = sum_config['plot']['particle_colors']
 
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = irf.summary.read_airshower_differential_flux(
+airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
+    run_dir=pa['run_dir'],
     summary_dir=pa['summary_dir'],
     energy_bin_centers=fine_energy_bin_centers,
     sites=irf_config['config']['sites'],
@@ -63,6 +64,7 @@ for site_key in irf_config['config']['sites']:
     ax.loglog()
     ax.set_xlim([energy_lower, energy_upper])
     ax.legend()
+    ax.set_title('compensated for zenith-distance w.r.t. observation-plane')
     fig.savefig(
         os.path.join(
             pa['out_dir'],

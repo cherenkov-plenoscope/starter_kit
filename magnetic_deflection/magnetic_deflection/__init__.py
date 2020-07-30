@@ -316,3 +316,23 @@ def _export_table(
             with open(out_filepath+'.csv.tmp', 'wt') as fout:
                 fout.write(csv)
             shutil.move(out_filepath+'.csv.tmp', out_filepath+'.csv')
+
+
+def read(work_dir):
+    """
+    Reads work_dir/result/{site:s}_{particle:s}.csv into dict[site][particle].
+    """
+    sites = read_json(os.path.join(work_dir, "sites.json"))
+    particles = read_json(os.path.join(work_dir, "particles.json"))
+    mag = {}
+    for site_key in sites:
+        mag[site_key] = {}
+        for particle_key in particles:
+            path = os.path.join(
+                work_dir,
+                "result",
+                "{:s}_{:s}.csv".format(site_key, particle_key)
+            )
+            df = pandas.read_csv(path)
+            mag[site_key][particle_key] = df.to_records()
+    return mag

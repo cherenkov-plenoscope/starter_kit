@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import json
 import cosmic_fluxes
+import magnetic_deflection
 import pkg_resources
 import subprocess
 import sparse_numeric_table as spt
@@ -173,6 +174,7 @@ def _guess_num_direction_bins(num_events):
     num_bins = np.max([np.min([num_bins, 2**7]), 2**4])
     return num_bins
 
+
 def make_ratescan_trigger_thresholds(
     lower_threshold,
     upper_threshold,
@@ -267,6 +269,63 @@ def read_airshower_differential_flux(
                 below_cutoff] *= geomagnetic_cutoff_fraction
 
     return airshowers
+
+
+def read_airshower_differential_flux_zenith_compensated(
+    run_dir,
+    summary_dir,
+    energy_bin_centers,
+    sites,
+    geomagnetic_cutoff_fraction,
+):
+    airshower_fluxes = read_airshower_differential_flux(
+        summary_dir=summary_dir,
+        energy_bin_centers=energy_bin_centers,
+        sites=sites,
+        geomagnetic_cutoff_fraction=geomagnetic_cutoff_fraction
+    )
+
+    particles = []
+    for site_key in sites:
+        for particle_key in airshower_fluxes[site_key]:
+            particles.append(particle_key)
+    particles = list(set(particles))
+
+    deflection_table = magnetic_deflection.read(
+        work_dir=os.path.join(run_dir, 'magnetic_deflection'),
+    )
+
+    zenith_compensated_airshower_fluxes = {}
+    for site_key in sites:
+        zenith_compensated_airshower_fluxes[site_key] = {}
+        for particle_key in particles:
+            zenith_compensated_airshower_fluxes[site_key][particle_key] = {}
+
+            flux = airshower_fluxes[
+                site_key][
+                particle_key][
+                'differential_flux']
+
+            zenith_deg = np.interp(
+                x=energy_bin_centers,
+                xp=deflection_table[
+                    site_key][
+                    particle_key][
+                    'energy_GeV'],
+                fp=deflection_table[
+                    site_key][
+                    particle_key][
+                    'primary_zenith_deg'],
+            )
+
+            scaling = np.cos(np.deg2rad(zenith_deg))
+            comp_flux = scaling*flux
+            zenith_compensated_airshower_fluxes[
+                site_key][
+                particle_key][
+                'differential_flux'] = comp_flux
+
+    return zenith_compensated_airshower_fluxes
 
 
 def make_gamma_ray_reference_flux(
