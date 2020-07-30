@@ -134,7 +134,9 @@ for site_key in irf_config['config']['sites']:
             ax=ax_h,
             bin_edges=size_bin_edges,
             bincounts=np_exposure_bins,
-            linestyle='k-')
+            linestyle='-',
+            linecolor='k',
+        )
         plt.savefig(opj(pa['out_dir'], site_particle_prefix+"_"+key+".jpg"))
         plt.close('all')
 
@@ -172,7 +174,8 @@ for site_key in irf_config['config']['sites']:
             ax=ax,
             bin_edges=energy_bin_edges,
             bincounts=tprs,
-            linestyle='k-',
+            linestyle='-',
+            linecolor='k',
             bincounts_upper=tprs*(1 + num_events_relunc),
             bincounts_lower=tprs*(1 - num_events_relunc),
             face_color='k',
@@ -181,7 +184,8 @@ for site_key in irf_config['config']['sites']:
             ax=ax,
             bin_edges=energy_bin_edges,
             bincounts=ppvs,
-            linestyle='k:',
+            linestyle=':',
+            linecolor='k',
             bincounts_upper=ppvs*(1 + num_events_relunc),
             bincounts_lower=ppvs*(1 - num_events_relunc),
             face_color='k',
@@ -234,7 +238,8 @@ for site_key in irf_config['config']['sites']:
             ax=ax,
             bin_edges=energy_bin_edges,
             bincounts=true_over_reco_ratios,
-            linestyle='k-',
+            linestyle='-',
+            linecolor='k',
             bincounts_upper=true_over_reco_ratios*(1 + num_events_relunc),
             bincounts_lower=true_over_reco_ratios*(1 - num_events_relunc),
             face_color='k',
@@ -287,7 +292,8 @@ for site_key in irf_config['config']['sites']:
             ax=ax,
             bin_edges=size_bin_edges,
             bincounts=num_ratios,
-            linestyle='k-',
+            linestyle='-',
+            linecolor='k',
             bincounts_upper=num_ratios*(1 + num_events_relunc),
             bincounts_lower=num_ratios*(1 - num_events_relunc),
             face_color='k',
