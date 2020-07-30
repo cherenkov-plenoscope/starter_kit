@@ -59,7 +59,9 @@ def ax_add_hist(
     ax,
     bin_edges,
     bincounts,
-    linestyle,
+    linestyle='-',
+    linecolor='k',
+    linealpha=1.0,
     bincounts_upper=None,
     bincounts_lower=None,
     face_color=None,
@@ -70,7 +72,10 @@ def ax_add_hist(
         ax.plot(
             [bin_edges[i], bin_edges[i + 1]],
             [bincount, bincount],
-            linestyle)
+            linestyle=linestyle,
+            color=linecolor,
+            alpha=linealpha
+        )
         if bincounts_upper is not None and bincounts_lower is not None:
             ax.fill_between(
                 x=[bin_edges[i], bin_edges[i + 1]],
@@ -78,7 +83,8 @@ def ax_add_hist(
                 y2=[bincounts_upper[i], bincounts_upper[i]],
                 color=face_color,
                 alpha=face_alpha,
-                edgecolor='none')
+                edgecolor='none'
+            )
 
 
 def ax_add_hatches(ax, ix, iy, x_bin_edges, y_bin_edges, alpha=0.1):
