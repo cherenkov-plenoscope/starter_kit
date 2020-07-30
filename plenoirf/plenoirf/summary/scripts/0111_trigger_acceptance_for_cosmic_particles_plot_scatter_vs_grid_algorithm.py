@@ -55,11 +55,6 @@ sources = {
     }
 }
 
-algorithm_styles = {
-    "grid": {"alpha": 0.1},
-    "scatter": {"alpha": 0.5}
-}
-
 fig_16_by_9 = sum_config['plot']['16_by_9']
 particle_colors = sum_config['plot']['particle_colors']
 
@@ -93,18 +88,30 @@ for site_key in irf_config['config']['sites']:
                 Q_lower = (1 - delta_Q)*Q
                 Q_upper = (1 + delta_Q)*Q
 
-                color = particle_colors[particle_key]
                 if algorithm_key == 'grid':
-                    color = 'k'
+                    linestyle='--'
+                    linecolor='k'
+                    linealpha=0.3
+                    face_color = 'k'
+                    face_alpha = 0.2
+                else:
+                    linestyle='-'
+                    linecolor=particle_colors[particle_key]
+                    linealpha=1.0
+                    face_color = particle_colors[particle_key]
+                    face_alpha = 0.66
+
                 irf.summary.figure.ax_add_hist(
                     ax=ax,
                     bin_edges=energy_bin_edges,
                     bincounts=Q,
-                    linestyle=color,
+                    linestyle=linestyle,
+                    linecolor=linecolor,
+                    linealpha=linealpha,
                     bincounts_upper=Q_upper,
                     bincounts_lower=Q_lower,
-                    face_color=color,
-                    face_alpha=algorithm_styles[algorithm_key]['alpha'],
+                    face_color=face_color,
+                    face_alpha=face_alpha,
                 )
 
             ax.set_xlabel('energy / GeV')
