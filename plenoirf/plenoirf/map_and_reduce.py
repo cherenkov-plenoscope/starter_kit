@@ -478,25 +478,6 @@ def run_job(job):
     assert op.exists(job["trigger_geometry_path"])
     logger.log("assert_resource_paths_exist.")
 
-    # set up plenoscope grid
-    # ----------------------
-    assert job["plenoscope_pointing"]["zenith_deg"] == 0.
-    assert job["plenoscope_pointing"]["azimuth_deg"] == 0.
-    plenoscope_pointing_direction = np.array([0, 0, 1])  # For now this is fix.
-
-    _scenery_path = op.join(job["plenoscope_scenery_path"], "scenery.json")
-    _light_field_sensor_geometry = merlict.read_plenoscope_geometry(
-        merlict_scenery_path=_scenery_path)
-    plenoscope_diameter = 2.0*_light_field_sensor_geometry[
-        "expected_imaging_system_aperture_radius"]
-    plenoscope_radius = .5*plenoscope_diameter
-    plenoscope_field_of_view_radius_deg = 0.5*_light_field_sensor_geometry[
-        "max_FoV_diameter_deg"]
-    plenoscope_grid_geometry = grid.init(
-        plenoscope_diameter=plenoscope_diameter,
-        num_bins_radius=job["grid"]["num_bins_radius"])
-    logger.log("init_plenoscope_grid")
-
     # draw primaries
     # --------------
     corsika_primary_steering = draw_corsika_primary_steering(
@@ -538,6 +519,25 @@ def run_job(job):
     logger.log("assert_corsika_ok")
     corsika_run_size = os.stat(corsika_run_path).st_size
     logger.log("corsika_run_size:{:d}".format(corsika_run_size))
+
+    # set up plenoscope grid
+    # ----------------------
+    assert job["plenoscope_pointing"]["zenith_deg"] == 0.
+    assert job["plenoscope_pointing"]["azimuth_deg"] == 0.
+    plenoscope_pointing_direction = np.array([0, 0, 1])  # For now this is fix.
+
+    _scenery_path = op.join(job["plenoscope_scenery_path"], "scenery.json")
+    _light_field_sensor_geometry = merlict.read_plenoscope_geometry(
+        merlict_scenery_path=_scenery_path)
+    plenoscope_diameter = 2.0*_light_field_sensor_geometry[
+        "expected_imaging_system_aperture_radius"]
+    plenoscope_radius = .5*plenoscope_diameter
+    plenoscope_field_of_view_radius_deg = 0.5*_light_field_sensor_geometry[
+        "max_FoV_diameter_deg"]
+    plenoscope_grid_geometry = grid.init(
+        plenoscope_diameter=plenoscope_diameter,
+        num_bins_radius=job["grid"]["num_bins_radius"])
+    logger.log("init_plenoscope_grid")
 
     # loop over air-showers
     # ---------------------
