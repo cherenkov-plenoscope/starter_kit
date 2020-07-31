@@ -51,16 +51,6 @@ def init(
     return g
 
 
-def _power2_bin_edges(power):
-    be = np.geomspace(1, 2**power, power+1)
-    beiz = np.zeros(shape=(be.shape[0] + 1))
-    beiz[1:] = be
-    return beiz
-
-
-PH_BIN_EDGES = _power2_bin_edges(16)
-
-
 def _make_bunch_direction(cx, cy):
     d = np.zeros(shape=(cx.shape[0], 3))
     d[:, 0] = cx
@@ -183,9 +173,6 @@ def assign(
     out["underflow_x"] = np.sum(grid_histogram_flow[0, :])
     out["overflow_y"] = np.sum(grid_histogram_flow[:, -1])
     out["underflow_y"] = np.sum(grid_histogram_flow[:, 0])
-    out["intensity_histogram"] = np.histogram(
-        grid_histogram.flatten(),
-        bins=PH_BIN_EDGES)[0]
     out["num_bins_above_threshold"] = num_bins_above_threshold
     return out
 

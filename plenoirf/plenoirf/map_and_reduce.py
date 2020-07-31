@@ -657,9 +657,6 @@ def run_job(job):
                 plenoscope_pointing_direction[2])
             grhi["random_shift_x_m"] = grid_random_shift_x
             grhi["random_shift_y_m"] = grid_random_shift_y
-            for i in range(len(grid_result["intensity_histogram"])):
-                grhi["hist_{:02d}".format(i)] = int(
-                    grid_result["intensity_histogram"][i])
             grhi["num_bins_above_threshold"] = int(
                 grid_result["num_bins_above_threshold"])
             grhi["overflow_x"] = int(grid_result["overflow_x"])
