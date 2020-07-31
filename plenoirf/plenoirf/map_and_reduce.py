@@ -643,8 +643,8 @@ def run_job(job):
             # grid statistics
             # ---------------
             grhi = ide.copy()
-            grhi["num_bins_radius"] = int(
-                plenoscope_grid_geometry["num_bins_radius"])
+            grhi["num_bins_thrown"] = int(
+                plenoscope_grid_geometry["num_bins_radius"]*2)**2
             grhi["plenoscope_diameter_m"] = float(
                 plenoscope_grid_geometry["plenoscope_diameter"])
             grhi["plenoscope_field_of_view_radius_deg"] = float(
