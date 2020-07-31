@@ -42,8 +42,9 @@ def effective_quantity_for_grid(
                                             threshold of the grid for each
                                             airshower.
 
-    total_num_grid_cells            Int
-                                    The total number of grid-cells.
+    total_num_grid_cells            Array(num. thrown airshower)
+                                    The total number of grid-cells thrown for
+                                    each airshower.
 
 
     Formula
@@ -90,8 +91,9 @@ def effective_quantity_for_grid(
         )
     )[0]
 
-    count_thrown = total_num_grid_cells*np.histogram(
+    count_thrown = np.histogram(
         energy_GeV,
+        weights=total_num_grid_cells,
         bins=energy_bin_edges_GeV
     )[0]
 
