@@ -37,13 +37,14 @@ def init(
     """
     assert num_bins_radius > 0
     assert plenoscope_diameter > 0.0
-    g = {
-        "plenoscope_diameter": plenoscope_diameter,
-        "num_bins_radius": num_bins_radius}
+    g = {}
+    g["plenoscope_diameter"] = plenoscope_diameter
+    g["num_bins_radius"] = num_bins_radius
     g["xy_bin_edges"] = np.linspace(
         -g["plenoscope_diameter"]*g["num_bins_radius"],
         g["plenoscope_diameter"]*g["num_bins_radius"],
-        2*g["num_bins_radius"] + 1)
+        2*g["num_bins_radius"] + 1
+    )
     g["num_bins_diameter"] = len(g["xy_bin_edges"]) - 1
     g["xy_bin_centers"] = .5*(g["xy_bin_edges"][:-1] + g["xy_bin_edges"][1:])
     g["total_area"] = (g["num_bins_diameter"]*g["plenoscope_diameter"])**2
