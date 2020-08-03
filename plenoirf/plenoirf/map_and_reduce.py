@@ -374,8 +374,8 @@ def draw_corsika_primary_steering(
     for e in range(energies.shape[0]):
         event_id = e + 1
         primary = {}
-        primary["particle_id"] = int(particle["particle_id"])
-        primary["energy_GeV"] = float(energies[e])
+        primary["particle_id"] = particle["particle_id"]
+        primary["energy_GeV"] = energies[e]
 
         primary["magnet_azimuth_rad"] = np.deg2rad(np.interp(
             x=primary["energy_GeV"],
@@ -422,8 +422,8 @@ def tar_append(tarout, file_name, file_bytes):
 def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = cherenkovsise_dict
-    ase["num_bunches"] = int(cb.shape[0])
-    ase["num_photons"] = float(np.sum(cb[:, cpw.IBSIZE]))
+    ase["num_bunches"] = cb.shape[0]
+    ase["num_photons"] = np.sum(cb[:, cpw.IBSIZE])
     return ase
 
 
@@ -431,13 +431,13 @@ def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = airshower_dict
     assert cb.shape[0] > 0
-    ase["maximum_asl_m"] = float(cpw.CM2M*np.median(cb[:, cpw.IZEM]))
-    ase["wavelength_median_nm"] = float(np.abs(np.median(cb[:, cpw.IWVL])))
-    ase["cx_median_rad"] = float(np.median(cb[:, cpw.ICX]))
-    ase["cy_median_rad"] = float(np.median(cb[:, cpw.ICY]))
-    ase["x_median_m"] = float(cpw.CM2M*np.median(cb[:, cpw.IX]))
-    ase["y_median_m"] = float(cpw.CM2M*np.median(cb[:, cpw.IY]))
-    ase["bunch_size_median"] = float(np.median(cb[:, cpw.IBSIZE]))
+    ase["maximum_asl_m"] = cpw.CM2M*np.median(cb[:, cpw.IZEM])
+    ase["wavelength_median_nm"] = np.abs(np.median(cb[:, cpw.IWVL]))
+    ase["cx_median_rad"] = np.median(cb[:, cpw.ICX])
+    ase["cy_median_rad"] = np.median(cb[:, cpw.ICY])
+    ase["x_median_m"] = cpw.CM2M*np.median(cb[:, cpw.IX])
+    ase["y_median_m"] = cpw.CM2M*np.median(cb[:, cpw.IY])
+    ase["bunch_size_median"] = np.median(cb[:, cpw.IBSIZE])
     return ase
 
 
@@ -573,40 +573,40 @@ def run_job(job):
             # export primary table
             # --------------------
             prim = ide.copy()
-            prim["particle_id"] = int(primary["particle_id"])
-            prim["energy_GeV"] = float(primary["energy_GeV"])
-            prim["azimuth_rad"] = float(primary["azimuth_rad"])
-            prim["zenith_rad"] = float(primary["zenith_rad"])
-            prim["max_scatter_rad"] = float(primary["max_scatter_rad"])
-            prim["solid_angle_thrown_sr"] = float(_cone_solid_angle(
-                prim["max_scatter_rad"]))
-            prim["depth_g_per_cm2"] = float(primary["depth_g_per_cm2"])
-            prim["momentum_x_GeV_per_c"] = float(
-                event_header[cpw.I_EVTH_PX_MOMENTUM_GEV_PER_C])
-            prim["momentum_y_GeV_per_c"] = float(
-                event_header[cpw.I_EVTH_PY_MOMENTUM_GEV_PER_C])
-            prim["momentum_z_GeV_per_c"] = float(
-                -1.0*event_header[cpw.I_EVTH_PZ_MOMENTUM_GEV_PER_C])
-            prim["first_interaction_height_asl_m"] = float(
-                -1.0*cpw.CM2M*event_header[
-                    cpw.I_EVTH_Z_FIRST_INTERACTION_CM])
-            prim["starting_height_asl_m"] = float(
-                cpw.CM2M*event_header[cpw.I_EVTH_STARTING_HEIGHT_CM])
+            prim["particle_id"] = primary["particle_id"]
+            prim["energy_GeV"] = primary["energy_GeV"]
+            prim["azimuth_rad"] = primary["azimuth_rad"]
+            prim["zenith_rad"] = primary["zenith_rad"]
+            prim["max_scatter_rad"] = primary["max_scatter_rad"]
+            prim["solid_angle_thrown_sr"] = _cone_solid_angle(
+                prim["max_scatter_rad"])
+            prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]
+            prim["momentum_x_GeV_per_c"] = event_header[
+                cpw.I_EVTH_PX_MOMENTUM_GEV_PER_C]
+            prim["momentum_y_GeV_per_c"] = event_header[
+                cpw.I_EVTH_PY_MOMENTUM_GEV_PER_C]
+            prim["momentum_z_GeV_per_c"] = -1.*event_header[
+                cpw.I_EVTH_PZ_MOMENTUM_GEV_PER_C]
+            prim["first_interaction_height_asl_m"] = -1.*cpw.CM2M*event_header[
+                cpw.I_EVTH_Z_FIRST_INTERACTION_CM]
+            prim["starting_height_asl_m"] = cpw.CM2M*event_header[
+                cpw.I_EVTH_STARTING_HEIGHT_CM]
             obs_lvl_intersection = ray_plane_x_y_intersection(
                 support=[0, 0, prim["starting_height_asl_m"]],
                 direction=[
                     prim["momentum_x_GeV_per_c"],
                     prim["momentum_y_GeV_per_c"],
                     prim["momentum_z_GeV_per_c"]],
-                plane_z=job["site"]["observation_level_asl_m"])
-            prim["starting_x_m"] = -float(obs_lvl_intersection[0])
-            prim["starting_y_m"] = -float(obs_lvl_intersection[1])
-            prim["magnet_azimuth_rad"] = float(primary["magnet_azimuth_rad"])
-            prim["magnet_zenith_rad"] = float(primary["magnet_zenith_rad"])
-            prim["magnet_cherenkov_pool_x_m"] = float(
-                primary["magnet_cherenkov_pool_x_m"])
-            prim["magnet_cherenkov_pool_y_m"] = float(
-                primary["magnet_cherenkov_pool_y_m"])
+                plane_z=job["site"]["observation_level_asl_m"]
+            )
+            prim["starting_x_m"] = -1.*obs_lvl_intersection[0]
+            prim["starting_y_m"] = -1.*obs_lvl_intersection[1]
+            prim["magnet_azimuth_rad"] = primary["magnet_azimuth_rad"]
+            prim["magnet_zenith_rad"] = primary["magnet_zenith_rad"]
+            prim["magnet_cherenkov_pool_x_m"] = primary[
+                "magnet_cherenkov_pool_x_m"]
+            prim["magnet_cherenkov_pool_y_m"] = primary[
+                "magnet_cherenkov_pool_y_m"]
             tabrec["primary"].append(prim)
 
             # cherenkov size
@@ -706,10 +706,10 @@ def run_job(job):
                     cherenkov_bunches=reuse_event["cherenkov_bunches"])
                 tabrec["cherenkovpoolpart"].append(rase)
                 rcor = ide.copy()
-                rcor["bin_idx_x"] = int(reuse_event["bin_idx_x"])
-                rcor["bin_idx_y"] = int(reuse_event["bin_idx_y"])
-                rcor["core_x_m"] = float(reuse_event["core_x_m"])
-                rcor["core_y_m"] = float(reuse_event["core_y_m"])
+                rcor["bin_idx_x"] = reuse_event["bin_idx_x"]
+                rcor["bin_idx_y"] = reuse_event["bin_idx_y"]
+                rcor["core_x_m"] = reuse_event["core_x_m"]
+                rcor["core_y_m"] = reuse_event["core_y_m"]
                 tabrec["core"].append(rcor)
     logger.log("grid")
 
