@@ -253,6 +253,9 @@ ARTIFICIAL_CORE_LIMITATION = {
         "max_scatter_radius_m": [200, 350, 700, 1250],
     }
 }
+ARTIFICIAL_CORE_LIMITATION['helium'] = ARTIFICIAL_CORE_LIMITATION[
+    'proton'].copy()
+
 # ARTIFICIAL_CORE_LIMITATION = None
 
 
@@ -301,7 +304,7 @@ def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
         "keep_tmp": True,
         "tmp_dir": op.join(test_dir, "tmp"),
         "date": date_dict_now(),
-        "artificial_core_limitation": ARTIFICIAL_CORE_LIMITATION
+        "artificial_core_limitation": ARTIFICIAL_CORE_LIMITATION[particle_key]
     }
     return job
 
@@ -642,8 +645,30 @@ def run_job(job):
             )
 
             grhi = ide.copy()
-            grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
-            grhi["area_thrown_m2"] = grid_geometry["total_area"]
+            if job['artificial_core_limitation']:
+                _max_core_scatter_radius = np.interp(
+                    x=primary['energy_GeV'],
+                    xp=job['artificial_core_limitation']['energy_GeV'],
+                    fp=job['artificial_core_limitation']['max_scatter_radius_m']
+                )
+                grid_bin_idxs_limitation = grid.where_grid_idxs_within_radius(
+                    grid_geometry=grid_geometry,
+                    radius=_max_core_scatter_radius
+                )
+                grhi["artificial_core_limitation"] = 1
+                grhi["artificial_core_limitation_radius_m"] = (
+                    _max_core_scatter_radius)
+                grhi["num_bins_thrown"] = len(grid_bin_idxs_limitation[0])
+                grhi["area_thrown_m2"] = grhi["num_bins_thrown"]*grid_geometry[
+                    "bin_area"]
+                logger.log("artificial core limitation is ON")
+            else:
+                grid_bin_idxs_limitation = None
+                grhi["artificial_core_limitation"] = 0
+                grhi["artificial_core_limitation_radius_m"] = -1.0
+                grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
+                grhi["area_thrown_m2"] = grid_geometry["total_area"]
+
             grhi["bin_width_m"] = grid_geometry["bin_width"]
             grhi["field_of_view_radius_deg"] = grid_geometry[
                 "field_of_view_radius_deg"]
@@ -669,7 +694,8 @@ def run_job(job):
                 grid_geometry=grid_geometry,
                 shift_x=grhi["total_shift_x_m"],
                 shift_y=grhi["total_shift_y_m"],
-                threshold_num_photons=job["grid"]["threshold_num_photons"]
+                threshold_num_photons=job["grid"]["threshold_num_photons"],
+                bin_idxs_limitation=grid_bin_idxs_limitation,
             )
             tar_append(
                 tarout=imgtar,

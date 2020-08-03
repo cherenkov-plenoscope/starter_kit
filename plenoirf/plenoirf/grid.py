@@ -4,8 +4,10 @@ import os
 import io
 import tarfile
 import shutil
+import json
 import corsika_primary_wrapper as cpw
 from . import table
+from . import json_numpy
 
 
 def init_geometry(
@@ -154,6 +156,7 @@ def assign(
     shift_x,
     shift_y,
     threshold_num_photons,
+    bin_idxs_limitation=None,
 ):
     pgg = grid_geometry
 
@@ -182,6 +185,13 @@ def assign(
     )
 
     bin_idxs_above_threshold = np.where(grid_histogram > threshold_num_photons)
+
+    if bin_idxs_limitation:
+        bin_idxs_above_threshold = apply_bin_limitation_and_warn(
+            bin_idxs_above_threshold=bin_idxs_above_threshold,
+            bin_idxs_limitation=bin_idxs_limitation,
+        )
+
     num_bins_above_threshold = bin_idxs_above_threshold[0].shape[0]
 
     if num_bins_above_threshold == 0:
@@ -337,3 +347,45 @@ def where_grid_idxs_within_radius(
             grid_idxs_y.append(y_bin)
 
     return np.array(grid_idxs_x), np.array(grid_idxs_y)
+
+
+def intersection_of_bin_idxs(a_bin_idxs, b_bin_idxs):
+    """
+    Returns only bin-idxs which are both in a_bins and b_bins.
+    """
+    a = a_bin_idxs
+    b = b_bin_idxs
+    assert len(a[0]) == len(a[1])
+    assert len(b[0]) == len(b[1])
+    a_set = set()
+    for ia in range(len(a[0])):
+        a_set.add((a[0][ia], a[1][ia]))
+    b_set = set()
+    for ib in range(len(b[0])):
+        b_set.add((b[0][ib], b[1][ib]))
+    ab_set = a_set.intersection(b_set)
+    ab = list(ab_set)
+    x_idxs = np.array([idx[0] for idx in ab])
+    y_idxs = np.array([idx[1] for idx in ab])
+    return (x_idxs, y_idxs)
+
+
+def apply_bin_limitation_and_warn(
+    bin_idxs_above_threshold,
+    bin_idxs_limitation
+):
+    bin_idxs_above_threshold_and_in_limits = intersection_of_bin_idxs(
+        a_bin_idxs=bin_idxs_above_threshold,
+        b_bin_idxs=bin_idxs_limitation
+    )
+    msg = {}
+    msg["artificial_core_limitation"] = {
+        "num_grid_bins_in_limits": len(bin_idxs_limitation[0]),
+        "num_grid_bins_above_threshold": len(bin_idxs_above_threshold[0]),
+        "num_grid_bins_above_threshold_and_in_limits": len(
+            bin_idxs_above_threshold_and_in_limits[0]
+        )
+    }
+    print(json.dumps(msg, cls=json_numpy.Encoder))
+
+    return bin_idxs_above_threshold_and_in_limits

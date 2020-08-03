@@ -129,6 +129,8 @@ STRUCTURE['grid'] = {
     'underflow_x': {'dtype': '<i8', 'comment': ''},
     'underflow_y': {'dtype': '<i8', 'comment': ''},
     'area_thrown_m2': {'dtype': '<f8', 'comment': ''},
+    'artificial_core_limitation': {'dtype': '<i8', 'comment': 'Flag'},
+    'artificial_core_limitation_radius_m': {'dtype': '<f8', 'comment': ''},
 }
 
 STRUCTURE['cherenkovpool'] = {
