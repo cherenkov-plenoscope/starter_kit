@@ -294,3 +294,46 @@ def reduce(list_of_grid_paths, out_path):
                         tarinfo=tarinfo,
                         fileobj=tarfin.extractfile(tarinfo))
     shutil.move(out_path+".tmp", out_path)
+
+
+# artificial core limitation
+# --------------------------
+
+def where_grid_idxs_within_radius(
+    grid_geometry,
+    radius,
+):
+    """
+    Returns the idxs in x, and y of the grid where the bin is within an
+    artificial radius from the center of the grid.
+    Same format as np.where()
+    """
+    pgg = grid_geometry
+    radius_bins = int(np.round(radius/pgg['bin_width']))
+
+    x_bin_range = pgg['num_bins_radius'] + np.arange(
+        -radius_bins,
+        radius_bins+1
+    )
+    y_bin_range = pgg['num_bins_radius'] + np.arange(
+        -radius_bins,
+        radius_bins+1
+    )
+
+    num_bins_thrown = 0
+    grid_idxs_x = []
+    grid_idxs_y = []
+    for x_bin in x_bin_range:
+        for y_bin in y_bin_range:
+            if x_bin < 0 or x_bin >= pgg['num_bins_diameter']:
+                continue
+            if y_bin < 0 or y_bin >= pgg['num_bins_diameter']:
+                continue
+            rel_x_bin = x_bin - pgg['num_bins_radius']
+            rel_y_bin = y_bin - pgg['num_bins_radius']
+            if rel_x_bin**2 + rel_y_bin**2 >= radius_bins**2:
+                continue
+            grid_idxs_x.append(x_bin)
+            grid_idxs_y.append(y_bin)
+
+    return np.array(grid_idxs_x), np.array(grid_idxs_y)
