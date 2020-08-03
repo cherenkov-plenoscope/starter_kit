@@ -239,6 +239,23 @@ EXAMPLE_CHERENKOV_CLASSIFICATION = {
     "direction_to_time_mixing_deg_per_s": 0.375e9
 }
 
+ARTIFICIAL_CORE_LIMITATION = {
+    "gamma": {
+        "energy_GeV":           [0.23, 0.8, 3.0, 35,   81,   432,  1000],
+        "max_scatter_radius_m": [150,  150, 460, 1100, 1235, 1410, 1660],
+    },
+    "electron": {
+        "energy_GeV":           [0.23, 1.0,  10,  100,  1000],
+        "max_scatter_radius_m": [150,  150,  500, 1100, 2600],
+    },
+    "proton": {
+        "energy_GeV":           [5.0, 25, 250, 1000],
+        "max_scatter_radius_m": [200, 350, 700, 1250],
+    }
+}
+# ARTIFICIAL_CORE_LIMITATION = None
+
+
 def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
     particle_key = "proton"
     site_key = "namibia"
@@ -284,6 +301,7 @@ def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
         "keep_tmp": True,
         "tmp_dir": op.join(test_dir, "tmp"),
         "date": date_dict_now(),
+        "artificial_core_limitation": ARTIFICIAL_CORE_LIMITATION
     }
     return job
 
