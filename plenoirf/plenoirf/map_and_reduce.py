@@ -190,7 +190,9 @@ EXAMPLE_SITE_PARTICLE_DEFLECTION = {
 
 EXAMPLE_GRID = {
     "num_bins_radius": 512,
-    "threshold_num_photons": 50
+    "threshold_num_photons": 50,
+    "field_of_view_overhead": 1.1,
+    "bin_width_overhead": 1.1,
 }
 
 EXAMPLE_SUM_TRIGGER = {
@@ -520,8 +522,8 @@ def run_job(job):
     corsika_run_size = os.stat(corsika_run_path).st_size
     logger.log("corsika_run_size:{:d}".format(corsika_run_size))
 
-    # set up plenoscope grid
-    # ----------------------
+    # set up grid geometry
+    # --------------------
     assert job["plenoscope_pointing"]["zenith_deg"] == 0.
     assert job["plenoscope_pointing"]["azimuth_deg"] == 0.
     plenoscope_pointing_direction = np.array([0, 0, 1])  # For now this is fix.
@@ -534,10 +536,17 @@ def run_job(job):
     plenoscope_radius = .5*plenoscope_diameter
     plenoscope_field_of_view_radius_deg = 0.5*_light_field_sensor_geometry[
         "max_FoV_diameter_deg"]
-    plenoscope_grid_geometry = grid.init(
-        plenoscope_diameter=plenoscope_diameter,
-        num_bins_radius=job["grid"]["num_bins_radius"])
-    logger.log("init_plenoscope_grid")
+
+    grid_geometry = grid.init_geometry(
+        instrument_aperture_outer_diameter=plenoscope_diameter,
+        bin_width_overhead=job["grid"]["bin_width_overhead"],
+        instrument_field_of_view_outer_radius_deg=(
+            plenoscope_field_of_view_radius_deg),
+        instrument_pointing_direction=plenoscope_pointing_direction,
+        field_of_view_overhead=job["grid"]["field_of_view_overhead"],
+        num_bins_radius=job["grid"]["num_bins_radius"],
+    )
+    logger.log("init_grid_geometry")
 
     # loop over air-showers
     # ---------------------
@@ -619,15 +628,9 @@ def run_job(job):
 
             # assign grid
             # -----------
-            grid_fov_overhead = 1.1
-            grid_fov_radius_deg = (
-                plenoscope_field_of_view_radius_deg * grid_fov_overhead
-            )
             grid_result = grid.assign(
                 cherenkov_bunches=cherenkov_bunches,
-                field_of_view_radius_deg=grid_fov_radius_deg,
-                pointing_direction=plenoscope_pointing_direction,
-                grid_geometry=plenoscope_grid_geometry,
+                grid_geometry=grid_geometry,
                 grid_random_shift_x=grid_random_shift_x,
                 grid_random_shift_y=grid_random_shift_y,
                 grid_magnetic_deflection_shift_x=primary[
@@ -646,14 +649,12 @@ def run_job(job):
             # grid statistics
             # ---------------
             grhi = ide.copy()
-            grhi["num_bins_thrown"] = int(
-                plenoscope_grid_geometry["num_bins_radius"]*2)**2
-            grhi["bin_width_m"] = float(
-                plenoscope_grid_geometry["bin_width"])
-            grhi["field_of_view_radius_deg"] = grid_fov_radius_deg
-            grhi["pointing_direction_x"] = plenoscope_pointing_direction[0]
-            grhi["pointing_direction_y"] = plenoscope_pointing_direction[1]
-            grhi["pointing_direction_z"] = plenoscope_pointing_direction[2]
+            grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
+            grhi["bin_width_m"] = grid_geometry["bin_width"]
+            grhi["field_of_view_radius_deg"] = grid_geometry["field_of_view_radius_deg"]
+            grhi["pointing_direction_x"] = grid_geometry["pointing_direction"][0]
+            grhi["pointing_direction_y"] = grid_geometry["pointing_direction"][1]
+            grhi["pointing_direction_z"] = grid_geometry["pointing_direction"][2]
             grhi["random_shift_x_m"] = grid_random_shift_x
             grhi["random_shift_y_m"] = grid_random_shift_y
             grhi["num_bins_above_threshold"] = int(
@@ -662,7 +663,7 @@ def run_job(job):
             grhi["underflow_x"] = int(grid_result["underflow_x"])
             grhi["overflow_y"] = int(grid_result["overflow_y"])
             grhi["underflow_y"] = int(grid_result["underflow_y"])
-            grhi["area_thrown_m2"] = float(plenoscope_grid_geometry[
+            grhi["area_thrown_m2"] = float(grid_geometry[
                 "total_area"])
             tabrec["grid"].append(grhi)
 

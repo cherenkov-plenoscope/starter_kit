@@ -8,9 +8,13 @@ import corsika_primary_wrapper as cpw
 from . import table
 
 
-def init(
-    plenoscope_diameter=36,
-    num_bins_radius=512,
+def init_geometry(
+    instrument_aperture_outer_diameter,
+    bin_width_overhead,
+    instrument_field_of_view_outer_radius_deg,
+    instrument_pointing_direction,
+    field_of_view_overhead,
+    num_bins_radius,
 ):
     """
      num_bins_radius = 2
@@ -36,18 +40,39 @@ def init(
 
     """
     assert num_bins_radius > 0
-    assert plenoscope_diameter > 0.0
+
+    assert instrument_aperture_outer_diameter > 0.0
+    assert bin_width_overhead >= 1.0
+
+    assert instrument_field_of_view_outer_radius_deg > 0.0
+    assert field_of_view_overhead >= 1.0
+
+    assert len(instrument_pointing_direction) == 3
+    assert np.abs(np.linalg.norm(instrument_pointing_direction) - 1.0) < 1e-6
+
     g = {}
-    g["bin_width"] = plenoscope_diameter
     g["num_bins_radius"] = num_bins_radius
+    g["num_bins_diameter"] = 2*g["num_bins_radius"]
+
+    g["bin_width"] = instrument_aperture_outer_diameter*bin_width_overhead
+    g["bin_area"] = g["bin_width"]**2
+
     g["xy_bin_edges"] = np.linspace(
         start=-g["bin_width"]*g["num_bins_radius"],
         stop=g["bin_width"]*g["num_bins_radius"],
         num=2*g["num_bins_radius"] + 1
     )
-    g["num_bins_diameter"] = len(g["xy_bin_edges"]) - 1
     g["xy_bin_centers"] = .5*(g["xy_bin_edges"][:-1] + g["xy_bin_edges"][1:])
-    g["total_area"] = (g["num_bins_diameter"]*g["bin_width"])**2
+    assert g["num_bins_diameter"] == len(g["xy_bin_edges"]) - 1
+
+    g["total_num_bins"] = g["num_bins_diameter"]**2
+    g["total_area"] = g["total_num_bins"]*g["bin_area"]
+
+    g['field_of_view_radius_deg'] = (
+        instrument_field_of_view_outer_radius_deg * field_of_view_overhead
+    )
+    g['pointing_direction'] = instrument_pointing_direction
+
     return g
 
 
@@ -125,8 +150,6 @@ def histogram2d_overflow_and_bin_idxs(
 
 def assign(
     cherenkov_bunches,
-    field_of_view_radius_deg,
-    pointing_direction,
     grid_geometry,
     grid_random_shift_x,
     grid_random_shift_y,
@@ -138,8 +161,8 @@ def assign(
 
     bunches_in_fov = cut_cherenkov_bunches_in_field_of_view(
         cherenkov_bunches=cherenkov_bunches,
-        field_of_view_radius_deg=field_of_view_radius_deg,
-        pointing_direction=pointing_direction,
+        field_of_view_radius_deg=pgg["field_of_view_radius_deg"],
+        pointing_direction=pgg["pointing_direction"],
     )
 
     # Supports
@@ -174,12 +197,10 @@ def assign(
         bin_idx_y = bin_idxs_above_threshold[1][_choice_bin]
         num_photons_in_bin = grid_histogram[bin_idx_x, bin_idx_y]
         choice = {}
-        choice["bin_idx_x"] = int(bin_idx_x)
-        choice["bin_idx_y"] = int(bin_idx_y)
-        choice["core_x_m"] = float(
-            pgg["xy_bin_centers"][bin_idx_x] - grid_shift_x)
-        choice["core_y_m"] = float(
-            pgg["xy_bin_centers"][bin_idx_y] - grid_shift_y)
+        choice["bin_idx_x"] = bin_idx_x
+        choice["bin_idx_y"] = bin_idx_y
+        choice["core_x_m"] = pgg["xy_bin_centers"][bin_idx_x] - grid_shift_x
+        choice["core_y_m"] = pgg["xy_bin_centers"][bin_idx_y] - grid_shift_y
         match_bin_idx_x = bunch_x_bin_idxs - 1 == bin_idx_x
         match_bin_idx_y = bunch_y_bin_idxs - 1 == bin_idx_y
         match_bin = np.logical_and(match_bin_idx_x, match_bin_idx_y)

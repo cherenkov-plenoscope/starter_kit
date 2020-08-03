@@ -130,10 +130,7 @@ EXAMPLE_CONFIG = {
         },
     },
 
-    "grid": {
-        "num_bins_radius": 512,
-        "threshold_num_photons": 50
-    },
+    "grid": map_and_reduce.EXAMPLE_GRID,
 
     "sum_trigger": {
         "object_distances_m": [
