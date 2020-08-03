@@ -187,6 +187,13 @@ EXAMPLE_CONFIG = {
     },
 
     "num_airshowers_per_run": 100,
+
+    "artificial_core_limitation": {
+        "gamma": None,
+        "electron": None,
+        "proton": None,
+        "helium": None
+    },
 }
 
 
@@ -428,6 +435,9 @@ def _populate_table_of_thrown_air_showers(
                     "keep_tmp": KEEP_TMP,
                     "tmp_dir": tmp_absdir,
                     "date": date_dict_now,
+                    "artificial_core_limitation": cfg[
+                        "artificial_core_limitation"][
+                        particle_key]
                 }
                 run_id += 1
                 irf_jobs.append(irf_job)
