@@ -151,10 +151,8 @@ def histogram2d_overflow_and_bin_idxs(
 def assign(
     cherenkov_bunches,
     grid_geometry,
-    grid_random_shift_x,
-    grid_random_shift_y,
-    grid_magnetic_deflection_shift_x,
-    grid_magnetic_deflection_shift_y,
+    shift_x,
+    shift_y,
     threshold_num_photons,
 ):
     pgg = grid_geometry
@@ -167,11 +165,8 @@ def assign(
 
     # Supports
     # --------
-    grid_shift_x = grid_random_shift_x - grid_magnetic_deflection_shift_x
-    grid_shift_y = grid_random_shift_y - grid_magnetic_deflection_shift_y
-
-    bunch_x_wrt_grid_m = cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x
-    bunch_y_wrt_grid_m = cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y
+    bunch_x_wrt_grid_m = cpw.CM2M*bunches_in_fov[:, cpw.IX] + shift_x
+    bunch_y_wrt_grid_m = cpw.CM2M*bunches_in_fov[:, cpw.IY] + shift_y
     bunch_weight = bunches_in_fov[:, cpw.IBSIZE]
 
     (
@@ -199,8 +194,8 @@ def assign(
         choice = {}
         choice["bin_idx_x"] = bin_idx_x
         choice["bin_idx_y"] = bin_idx_y
-        choice["core_x_m"] = pgg["xy_bin_centers"][bin_idx_x] - grid_shift_x
-        choice["core_y_m"] = pgg["xy_bin_centers"][bin_idx_y] - grid_shift_y
+        choice["core_x_m"] = pgg["xy_bin_centers"][bin_idx_x] - shift_x
+        choice["core_y_m"] = pgg["xy_bin_centers"][bin_idx_y] - shift_y
         match_bin_idx_x = bunch_x_bin_idxs - 1 == bin_idx_x
         match_bin_idx_y = bunch_y_bin_idxs - 1 == bin_idx_y
         match_bin = np.logical_and(match_bin_idx_x, match_bin_idx_y)

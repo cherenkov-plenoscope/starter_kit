@@ -575,11 +575,9 @@ def run_job(job):
                 run_id=run_id,
                 airshower_id=event_id))
 
+            # random seed
+            # -----------
             np.random.seed(event_seed)
-            grid_random_shift_x, grid_random_shift_y = np.random.uniform(
-                low=-plenoscope_radius,
-                high=plenoscope_radius,
-                size=2)
 
             # export primary table
             # --------------------
@@ -628,15 +626,40 @@ def run_job(job):
 
             # assign grid
             # -----------
+            grid_random_shift_x, grid_random_shift_y = np.random.uniform(
+                low=-0.5*grid_geometry["bin_width"],
+                high=0.5*grid_geometry["bin_width"],
+                size=2
+            )
+
+            grhi = ide.copy()
+            grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
+            grhi["area_thrown_m2"] = grid_geometry["total_area"]
+            grhi["bin_width_m"] = grid_geometry["bin_width"]
+            grhi["field_of_view_radius_deg"] = grid_geometry[
+                "field_of_view_radius_deg"]
+            grhi["pointing_direction_x"] = grid_geometry[
+                "pointing_direction"][0]
+            grhi["pointing_direction_y"] = grid_geometry[
+                "pointing_direction"][1]
+            grhi["pointing_direction_z"] = grid_geometry[
+                "pointing_direction"][2]
+            grhi["random_shift_x_m"] = grid_random_shift_x
+            grhi["random_shift_y_m"] = grid_random_shift_y
+            grhi["magnet_shift_x_m"] = -1.*primary["magnet_cherenkov_pool_x_m"]
+            grhi["magnet_shift_y_m"] = -1.*primary["magnet_cherenkov_pool_x_m"]
+            grhi["total_shift_x_m"] = (
+                grhi["random_shift_x_m"] + grhi["magnet_shift_x_m"]
+            )
+            grhi["total_shift_y_m"] = (
+                grhi["random_shift_y_m"] + grhi["magnet_shift_y_m"]
+            )
+
             grid_result = grid.assign(
                 cherenkov_bunches=cherenkov_bunches,
                 grid_geometry=grid_geometry,
-                grid_random_shift_x=grid_random_shift_x,
-                grid_random_shift_y=grid_random_shift_y,
-                grid_magnetic_deflection_shift_x=primary[
-                    "magnet_cherenkov_pool_x_m"],
-                grid_magnetic_deflection_shift_y=primary[
-                    "magnet_cherenkov_pool_y_m"],
+                shift_x=grhi["total_shift_x_m"],
+                shift_y=grhi["total_shift_y_m"],
                 threshold_num_photons=job["grid"]["threshold_num_photons"]
             )
             tar_append(
@@ -648,16 +671,6 @@ def run_job(job):
 
             # grid statistics
             # ---------------
-            grhi = ide.copy()
-            grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
-            grhi["area_thrown_m2"] = grid_geometry["total_area"]
-            grhi["bin_width_m"] = grid_geometry["bin_width"]
-            grhi["field_of_view_radius_deg"] = grid_geometry["field_of_view_radius_deg"]
-            grhi["pointing_direction_x"] = grid_geometry["pointing_direction"][0]
-            grhi["pointing_direction_y"] = grid_geometry["pointing_direction"][1]
-            grhi["pointing_direction_z"] = grid_geometry["pointing_direction"][2]
-            grhi["random_shift_x_m"] = grid_random_shift_x
-            grhi["random_shift_y_m"] = grid_random_shift_y
             grhi["num_bins_above_threshold"] = grid_result[
                 "num_bins_above_threshold"]
             grhi["overflow_x"] = grid_result["overflow_x"]
