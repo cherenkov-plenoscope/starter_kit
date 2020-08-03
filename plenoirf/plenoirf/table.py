@@ -112,7 +112,7 @@ STRUCTURE['grid'] = {
         'comment':
             'The number of all grid-bins which can collect Cherenkov-photons.'
     },
-    'plenoscope_diameter_m': {'dtype': '<f8', 'comment': ''},
+    'bin_width_m': {'dtype': '<f8', 'comment': ''},
     'plenoscope_field_of_view_radius_deg': {'dtype': '<f8', 'comment': ''},
     'plenoscope_pointing_direction_x': {'dtype': '<f8', 'comment': ''},
     'plenoscope_pointing_direction_y': {'dtype': '<f8', 'comment': ''},

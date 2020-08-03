@@ -645,8 +645,8 @@ def run_job(job):
             grhi = ide.copy()
             grhi["num_bins_thrown"] = int(
                 plenoscope_grid_geometry["num_bins_radius"]*2)**2
-            grhi["plenoscope_diameter_m"] = float(
-                plenoscope_grid_geometry["plenoscope_diameter"])
+            grhi["bin_width_m"] = float(
+                plenoscope_grid_geometry["bin_width"])
             grhi["plenoscope_field_of_view_radius_deg"] = float(
                 plenoscope_field_of_view_radius_deg)
             grhi["plenoscope_pointing_direction_x"] = float(
