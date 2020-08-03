@@ -619,9 +619,13 @@ def run_job(job):
 
             # assign grid
             # -----------
+            grid_fov_overhead = 1.1
+            grid_fov_radius_deg = (
+                plenoscope_field_of_view_radius_deg * grid_fov_overhead
+            )
             grid_result = grid.assign(
                 cherenkov_bunches=cherenkov_bunches,
-                field_of_view_radius_deg=plenoscope_field_of_view_radius_deg,
+                field_of_view_radius_deg=grid_fov_radius_deg,
                 pointing_direction=plenoscope_pointing_direction,
                 grid_geometry=plenoscope_grid_geometry,
                 grid_random_shift_x=grid_random_shift_x,
@@ -630,7 +634,8 @@ def run_job(job):
                     "magnet_cherenkov_pool_x_m"],
                 grid_magnetic_deflection_shift_y=primary[
                     "magnet_cherenkov_pool_y_m"],
-                threshold_num_photons=job["grid"]["threshold_num_photons"])
+                threshold_num_photons=job["grid"]["threshold_num_photons"]
+            )
             tar_append(
                 tarout=imgtar,
                 file_name=table.SEED_TEMPLATE_STR.format(
@@ -645,14 +650,10 @@ def run_job(job):
                 plenoscope_grid_geometry["num_bins_radius"]*2)**2
             grhi["bin_width_m"] = float(
                 plenoscope_grid_geometry["bin_width"])
-            grhi["plenoscope_field_of_view_radius_deg"] = float(
-                plenoscope_field_of_view_radius_deg)
-            grhi["plenoscope_pointing_direction_x"] = float(
-                plenoscope_pointing_direction[0])
-            grhi["plenoscope_pointing_direction_y"] = float(
-                plenoscope_pointing_direction[1])
-            grhi["plenoscope_pointing_direction_z"] = float(
-                plenoscope_pointing_direction[2])
+            grhi["field_of_view_radius_deg"] = grid_fov_radius_deg
+            grhi["pointing_direction_x"] = plenoscope_pointing_direction[0]
+            grhi["pointing_direction_y"] = plenoscope_pointing_direction[1]
+            grhi["pointing_direction_z"] = plenoscope_pointing_direction[2]
             grhi["random_shift_x_m"] = grid_random_shift_x
             grhi["random_shift_y_m"] = grid_random_shift_y
             grhi["num_bins_above_threshold"] = int(

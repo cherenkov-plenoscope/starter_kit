@@ -73,7 +73,6 @@ def cut_cherenkov_bunches_in_field_of_view(
     cherenkov_bunches,
     field_of_view_radius_deg,
     pointing_direction,
-    field_of_view_overhead,
 ):
     bunch_directions = _make_bunch_direction(
         cx=cherenkov_bunches[:, cpw.ICX],
@@ -85,7 +84,7 @@ def cut_cherenkov_bunches_in_field_of_view(
         direction=pointing_direction
     )
     mask_inside_field_of_view = angle_bunch_pointing < np.deg2rad(
-        field_of_view_radius_deg*field_of_view_overhead
+        field_of_view_radius_deg
     )
     return cherenkov_bunches[mask_inside_field_of_view, :]
 
@@ -134,7 +133,6 @@ def assign(
     grid_magnetic_deflection_shift_x,
     grid_magnetic_deflection_shift_y,
     threshold_num_photons,
-    field_of_view_overhead=1.1,
 ):
     pgg = grid_geometry
 
@@ -142,7 +140,6 @@ def assign(
         cherenkov_bunches=cherenkov_bunches,
         field_of_view_radius_deg=field_of_view_radius_deg,
         pointing_direction=pointing_direction,
-        field_of_view_overhead=field_of_view_overhead,
     )
 
     # Supports
