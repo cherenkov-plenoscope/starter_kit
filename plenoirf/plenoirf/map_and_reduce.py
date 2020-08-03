@@ -149,17 +149,19 @@ def date_dict_now():
 
 
 CORSIKA_PRIMARY_PATH = absjoin(
-        "build",
-        "corsika",
-        "modified",
-        "corsika-75600",
-        "run",
-        "corsika75600Linux_QGSII_urqmd")
+    "build",
+    "corsika",
+    "modified",
+    "corsika-75600",
+    "run",
+    "corsika75600Linux_QGSII_urqmd"
+)
 
 MERLICT_PLENOSCOPE_PROPAGATOR_PATH = absjoin(
-        "build",
-        "merlict",
-        "merlict-plenoscope-propagation")
+    "build",
+    "merlict",
+    "merlict-plenoscope-propagation"
+)
 
 EXAMPLE_SITE = {
     "observation_level_asl_m": 5000,
