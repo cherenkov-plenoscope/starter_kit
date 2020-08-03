@@ -69,68 +69,102 @@ def _make_angle_between(directions, direction):
     return np.arccos(np.dot(directions, direction))
 
 
-def assign(
+def cut_cherenkov_bunches_in_field_of_view(
     cherenkov_bunches,
-    plenoscope_field_of_view_radius_deg,
-    plenoscope_pointing_direction,
-    plenoscope_grid_geometry,
-    grid_random_shift_x,
-    grid_random_shift_y,
-    grid_magnetic_deflection_shift_x,
-    grid_magnetic_deflection_shift_y,
-    threshold_num_photons,
-    FIELD_OF_VIEW_OVERHEAD=1.1,
+    field_of_view_radius_deg,
+    pointing_direction,
+    field_of_view_overhead,
 ):
-    pgg = plenoscope_grid_geometry
-
-    # Directions
-    # ----------
     bunch_directions = _make_bunch_direction(
         cx=cherenkov_bunches[:, cpw.ICX],
         cy=cherenkov_bunches[:, cpw.ICY]
     )
     bunch_incidents = -1.0*bunch_directions
-
     angle_bunch_pointing = _make_angle_between(
         directions=bunch_incidents,
-        direction=plenoscope_pointing_direction
+        direction=pointing_direction
     )
-
     mask_inside_field_of_view = angle_bunch_pointing < np.deg2rad(
-        plenoscope_field_of_view_radius_deg*FIELD_OF_VIEW_OVERHEAD
+        field_of_view_radius_deg*field_of_view_overhead
     )
+    return cherenkov_bunches[mask_inside_field_of_view, :]
 
-    bunches_in_fov = cherenkov_bunches[mask_inside_field_of_view, :]
+
+def histogram2d_overflow_and_bin_idxs(
+    x,
+    y,
+    weights,
+    xy_bin_edges
+):
+    _xy_bin_edges = [-np.inf] + xy_bin_edges.tolist() + [np.inf]
+
+    # histogram num photons, i.e. use bunchsize weights.
+    grid_histogram_flow = np.histogram2d(
+        x=x,
+        y=y,
+        bins=(_xy_bin_edges, _xy_bin_edges),
+        weights=weights
+    )[0]
+
+    # cut out the inner grid, use outer rim to estimate under-, and overflow
+    grid_histogram = grid_histogram_flow[1:-1, 1:-1]
+    assert grid_histogram.shape[0] == len(xy_bin_edges) - 1
+    assert grid_histogram.shape[1] == len(xy_bin_edges) - 1
+
+    overflow = {}
+    overflow["overflow_x"] = np.sum(grid_histogram_flow[-1, :])
+    overflow["underflow_x"] = np.sum(grid_histogram_flow[0, :])
+    overflow["overflow_y"] = np.sum(grid_histogram_flow[:, -1])
+    overflow["underflow_y"] = np.sum(grid_histogram_flow[:, 0])
+
+    # assignment
+    x_bin_idxs = np.digitize(x, bins=xy_bin_edges)
+    y_bin_idxs = np.digitize(y, bins=xy_bin_edges)
+
+    return grid_histogram, overflow, x_bin_idxs, y_bin_idxs
+
+
+def assign(
+    cherenkov_bunches,
+    field_of_view_radius_deg,
+    pointing_direction,
+    grid_geometry,
+    grid_random_shift_x,
+    grid_random_shift_y,
+    grid_magnetic_deflection_shift_x,
+    grid_magnetic_deflection_shift_y,
+    threshold_num_photons,
+    field_of_view_overhead=1.1,
+):
+    pgg = grid_geometry
+
+    bunches_in_fov = cut_cherenkov_bunches_in_field_of_view(
+        cherenkov_bunches=cherenkov_bunches,
+        field_of_view_radius_deg=field_of_view_radius_deg,
+        pointing_direction=pointing_direction,
+        field_of_view_overhead=field_of_view_overhead,
+    )
 
     # Supports
     # --------
     grid_shift_x = grid_random_shift_x - grid_magnetic_deflection_shift_x
     grid_shift_y = grid_random_shift_y - grid_magnetic_deflection_shift_y
 
-    bunch_x_bin_idxs = np.digitize(
-        cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x,
-        bins=pgg["xy_bin_edges"]
+    bunch_x_wrt_grid_m = cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x
+    bunch_y_wrt_grid_m = cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y
+    bunch_weight = bunches_in_fov[:, cpw.IBSIZE]
+
+    (
+        grid_histogram,
+        grid_overflow,
+        bunch_x_bin_idxs,
+        bunch_y_bin_idxs
+    ) = histogram2d_overflow_and_bin_idxs(
+        x=bunch_x_wrt_grid_m,
+        y=bunch_y_wrt_grid_m,
+        xy_bin_edges=pgg["xy_bin_edges"],
+        weights=bunch_weight
     )
-    bunch_y_bin_idxs = np.digitize(
-        cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y,
-        bins=pgg["xy_bin_edges"]
-    )
-
-    # Add under-, and overflow bin-edges
-    _xy_bin_edges = [-np.inf] + pgg["xy_bin_edges"].tolist() + [np.inf]
-
-    # histogram num photons, i.e. use bunchsize weights.
-    grid_histogram_flow = np.histogram2d(
-        x=cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x,
-        y=cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y,
-        bins=(_xy_bin_edges, _xy_bin_edges),
-        weights=bunches_in_fov[:, cpw.IBSIZE]
-    )[0]
-
-    # cut out the inner grid, use outer rim to estimate under-, and overflow
-    grid_histogram = grid_histogram_flow[1:-1, 1:-1]
-    assert grid_histogram.shape[0] == pgg["num_bins_diameter"]
-    assert grid_histogram.shape[1] == pgg["num_bins_diameter"]
 
     bin_idxs_above_threshold = np.where(grid_histogram > threshold_num_photons)
     num_bins_above_threshold = bin_idxs_above_threshold[0].shape[0]
@@ -175,10 +209,8 @@ def assign(
     out = {}
     out["random_choice"] = choice
     out["histogram"] = grid_histogram
-    out["overflow_x"] = np.sum(grid_histogram_flow[-1, :])
-    out["underflow_x"] = np.sum(grid_histogram_flow[0, :])
-    out["overflow_y"] = np.sum(grid_histogram_flow[:, -1])
-    out["underflow_y"] = np.sum(grid_histogram_flow[:, 0])
+    for overflow_key in grid_overflow:
+        out[overflow_key] = grid_overflow[overflow_key]
     out["num_bins_above_threshold"] = num_bins_above_threshold
     return out
 

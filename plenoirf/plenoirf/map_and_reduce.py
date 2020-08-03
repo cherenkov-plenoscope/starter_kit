@@ -621,11 +621,9 @@ def run_job(job):
             # -----------
             grid_result = grid.assign(
                 cherenkov_bunches=cherenkov_bunches,
-                plenoscope_field_of_view_radius_deg=(
-                    plenoscope_field_of_view_radius_deg),
-                plenoscope_pointing_direction=(
-                    plenoscope_pointing_direction),
-                plenoscope_grid_geometry=plenoscope_grid_geometry,
+                field_of_view_radius_deg=plenoscope_field_of_view_radius_deg,
+                pointing_direction=plenoscope_pointing_direction,
+                grid_geometry=plenoscope_grid_geometry,
                 grid_random_shift_x=grid_random_shift_x,
                 grid_random_shift_y=grid_random_shift_y,
                 grid_magnetic_deflection_shift_x=primary[
