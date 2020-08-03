@@ -41,9 +41,9 @@ def init(
     g["bin_width"] = plenoscope_diameter
     g["num_bins_radius"] = num_bins_radius
     g["xy_bin_edges"] = np.linspace(
-        -g["bin_width"]*g["num_bins_radius"],
-        g["bin_width"]*g["num_bins_radius"],
-        2*g["num_bins_radius"] + 1
+        start=-g["bin_width"]*g["num_bins_radius"],
+        stop=g["bin_width"]*g["num_bins_radius"],
+        num=2*g["num_bins_radius"] + 1
     )
     g["num_bins_diameter"] = len(g["xy_bin_edges"]) - 1
     g["xy_bin_centers"] = .5*(g["xy_bin_edges"][:-1] + g["xy_bin_edges"][1:])
@@ -87,15 +87,18 @@ def assign(
     # ----------
     bunch_directions = _make_bunch_direction(
         cx=cherenkov_bunches[:, cpw.ICX],
-        cy=cherenkov_bunches[:, cpw.ICY])
+        cy=cherenkov_bunches[:, cpw.ICY]
+    )
     bunch_incidents = -1.0*bunch_directions
 
     angle_bunch_pointing = _make_angle_between(
         directions=bunch_incidents,
-        direction=plenoscope_pointing_direction)
+        direction=plenoscope_pointing_direction
+    )
 
     mask_inside_field_of_view = angle_bunch_pointing < np.deg2rad(
-        plenoscope_field_of_view_radius_deg*FIELD_OF_VIEW_OVERHEAD)
+        plenoscope_field_of_view_radius_deg*FIELD_OF_VIEW_OVERHEAD
+    )
 
     bunches_in_fov = cherenkov_bunches[mask_inside_field_of_view, :]
 
@@ -106,10 +109,12 @@ def assign(
 
     bunch_x_bin_idxs = np.digitize(
         cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x,
-        bins=pgg["xy_bin_edges"])
+        bins=pgg["xy_bin_edges"]
+    )
     bunch_y_bin_idxs = np.digitize(
         cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y,
-        bins=pgg["xy_bin_edges"])
+        bins=pgg["xy_bin_edges"]
+    )
 
     # Add under-, and overflow bin-edges
     _xy_bin_edges = [-np.inf] + pgg["xy_bin_edges"].tolist() + [np.inf]
@@ -119,7 +124,8 @@ def assign(
         x=cpw.CM2M*bunches_in_fov[:, cpw.IX] + grid_shift_x,
         y=cpw.CM2M*bunches_in_fov[:, cpw.IY] + grid_shift_y,
         bins=(_xy_bin_edges, _xy_bin_edges),
-        weights=bunches_in_fov[:, cpw.IBSIZE])[0]
+        weights=bunches_in_fov[:, cpw.IBSIZE]
+    )[0]
 
     # cut out the inner grid, use outer rim to estimate under-, and overflow
     grid_histogram = grid_histogram_flow[1:-1, 1:-1]
