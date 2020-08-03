@@ -239,7 +239,7 @@ EXAMPLE_CHERENKOV_CLASSIFICATION = {
     "direction_to_time_mixing_deg_per_s": 0.375e9
 }
 
-def make_example_job(run_dir, num_air_showers=25):
+def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
     particle_key = "proton"
     site_key = "namibia"
 
@@ -249,6 +249,7 @@ def make_example_job(run_dir, num_air_showers=25):
     site_particle_deflection = pandas.DataFrame(
         deflection_table[site_key][particle_key]
     ).to_dict(orient='list')
+    test_dir = op.join(run_dir, example_dirname)
 
     job = {
         "run_id": 1,
@@ -277,23 +278,11 @@ def make_example_job(run_dir, num_air_showers=25):
             'merlict_propagation_config.json'),
         "site_particle_deflection": site_particle_deflection,
         "cherenkov_classification": EXAMPLE_CHERENKOV_CLASSIFICATION,
-        "log_dir": op.join(
-            run_dir,
-            "_testing",
-            "log"),
-        "past_trigger_dir": op.join(
-            run_dir,
-            "_testing",
-            "past_trigger"),
-        "feature_dir": op.join(
-            run_dir,
-            "_testing",
-            "features"),
+        "log_dir": op.join(test_dir, "log"),
+        "past_trigger_dir": op.join(test_dir, "past_trigger"),
+        "feature_dir": op.join(test_dir, "features"),
         "keep_tmp": True,
-        "tmp_dir": op.join(
-            run_dir,
-            "_testing",
-            "tmp"),
+        "tmp_dir": op.join(test_dir, "tmp"),
         "date": date_dict_now(),
     }
     return job
