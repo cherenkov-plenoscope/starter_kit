@@ -650,6 +650,7 @@ def run_job(job):
             # ---------------
             grhi = ide.copy()
             grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
+            grhi["area_thrown_m2"] = grid_geometry["total_area"]
             grhi["bin_width_m"] = grid_geometry["bin_width"]
             grhi["field_of_view_radius_deg"] = grid_geometry["field_of_view_radius_deg"]
             grhi["pointing_direction_x"] = grid_geometry["pointing_direction"][0]
@@ -657,14 +658,12 @@ def run_job(job):
             grhi["pointing_direction_z"] = grid_geometry["pointing_direction"][2]
             grhi["random_shift_x_m"] = grid_random_shift_x
             grhi["random_shift_y_m"] = grid_random_shift_y
-            grhi["num_bins_above_threshold"] = int(
-                grid_result["num_bins_above_threshold"])
-            grhi["overflow_x"] = int(grid_result["overflow_x"])
-            grhi["underflow_x"] = int(grid_result["underflow_x"])
-            grhi["overflow_y"] = int(grid_result["overflow_y"])
-            grhi["underflow_y"] = int(grid_result["underflow_y"])
-            grhi["area_thrown_m2"] = float(grid_geometry[
-                "total_area"])
+            grhi["num_bins_above_threshold"] = grid_result[
+                "num_bins_above_threshold"]
+            grhi["overflow_x"] = grid_result["overflow_x"]
+            grhi["underflow_x"] = grid_result["underflow_x"]
+            grhi["overflow_y"] = grid_result["overflow_y"]
+            grhi["underflow_y"] = grid_result["underflow_y"]
             tabrec["grid"].append(grhi)
 
             # cherenkov statistics
