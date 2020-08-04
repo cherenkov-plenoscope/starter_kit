@@ -653,7 +653,9 @@ def run_job(job):
                 )
                 grid_bin_idxs_limitation = grid.where_grid_idxs_within_radius(
                     grid_geometry=grid_geometry,
-                    radius=_max_core_scatter_radius
+                    radius=_max_core_scatter_radius,
+                    center_x=-1.0*grid_random_shift_x,
+                    center_y=-1.0*grid_random_shift_y
                 )
                 grhi["artificial_core_limitation"] = 1
                 grhi["artificial_core_limitation_radius_m"] = (

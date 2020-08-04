@@ -10,6 +10,7 @@ from . import table
 from . import json_numpy
 
 
+
 def init_geometry(
     instrument_aperture_outer_diameter,
     bin_width_overhead,
@@ -312,20 +313,24 @@ def reduce(list_of_grid_paths, out_path):
 def where_grid_idxs_within_radius(
     grid_geometry,
     radius,
+    center_x,
+    center_y
 ):
     """
-    Returns the idxs in x, and y of the grid where the bin is within an
-    artificial radius from the center of the grid.
+    Returns the idxs in x, and y of the grid where the bin is within a circle
+    of radius and center_x/y.
     Same format as np.where()
     """
     pgg = grid_geometry
-    radius_bins = int(np.round(radius/pgg['bin_width']))
+    radius_bins = int(np.ceil(1.1*radius/pgg['bin_width']))
 
-    x_bin_range = pgg['num_bins_radius'] + np.arange(
+    x_bin_center = int(np.round(center_x/pgg['bin_width']))
+    x_bin_range = x_bin_center + pgg['num_bins_radius'] + np.arange(
         -radius_bins,
         radius_bins+1
     )
-    y_bin_range = pgg['num_bins_radius'] + np.arange(
+    y_bin_center = int(np.round(center_y/pgg['bin_width']))
+    y_bin_range = y_bin_center + pgg['num_bins_radius'] + np.arange(
         -radius_bins,
         radius_bins+1
     )
@@ -339,9 +344,9 @@ def where_grid_idxs_within_radius(
                 continue
             if y_bin < 0 or y_bin >= pgg['num_bins_diameter']:
                 continue
-            rel_x_bin = x_bin - pgg['num_bins_radius']
-            rel_y_bin = y_bin - pgg['num_bins_radius']
-            if rel_x_bin**2 + rel_y_bin**2 >= radius_bins**2:
+            delta_x = pgg['xy_bin_centers'][x_bin] - center_x
+            delta_y = pgg['xy_bin_centers'][y_bin] - center_y
+            if delta_x**2 + delta_y**2 > radius**2:
                 continue
             grid_idxs_x.append(x_bin)
             grid_idxs_y.append(y_bin)
