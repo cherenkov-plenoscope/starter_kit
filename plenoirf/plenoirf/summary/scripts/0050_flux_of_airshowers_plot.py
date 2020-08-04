@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
+import pandas as pd
 
 import matplotlib
 matplotlib.use('Agg')
@@ -72,3 +73,43 @@ for site_key in irf_config['config']['sites']:
         )
     )
     plt.close(fig)
+
+    for particle_key in airshower_fluxes[site_key]:
+        out_df = pd.DataFrame({
+            "energy / GeV": fine_energy_bin_centers,
+            "differential flux / m$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$": (
+                    airshower_fluxes[
+                        site_key][
+                        particle_key][
+                        'differential_flux']
+            )
+        })
+        out_path = os.path.join(
+            pa['out_dir'],
+            site_key+"_"+particle_key+".csv"
+        )
+        with open(out_path, "wt") as f:
+            f.write(out_df.to_csv(index=False))
+
+# gamma-ray-flux of reference source
+# ----------------------------------
+(
+    gamma_differential_flux_per_m2_per_s_per_GeV,
+    gamma_name
+) = irf.summary.make_gamma_ray_reference_flux(
+    summary_dir=pa['summary_dir'],
+    gamma_ray_reference_source=sum_config['gamma_ray_reference_source'],
+    energy_supports_GeV=fine_energy_bin_centers,
+)
+out_df = pd.DataFrame({
+    "energy / GeV": fine_energy_bin_centers,
+    "differential flux / m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$": (
+            gamma_differential_flux_per_m2_per_s_per_GeV
+    )
+})
+out_path = os.path.join(
+    pa['out_dir'],
+    "{:s}.csv".format(gamma_name)
+)
+with open(out_path, "wt") as f:
+    f.write(out_df.to_csv(index=False))
