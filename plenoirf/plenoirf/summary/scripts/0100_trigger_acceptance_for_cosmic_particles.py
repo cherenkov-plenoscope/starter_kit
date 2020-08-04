@@ -72,9 +72,7 @@ for site_key in irf_config['config']['sites']:
         quantity_scatter = point_particle_table['grid']['area_thrown_m2']
         num_grid_cells_above_lose_threshold = point_particle_table[
             'grid']['num_bins_above_threshold']
-        total_num_grid_cells = (
-            (2*point_particle_table['grid']['num_bins_radius'])**2
-        )
+        total_num_grid_cells = point_particle_table['grid']['num_bins_thrown']
 
         value = []
         relative_uncertainty = []
@@ -127,9 +125,7 @@ for site_key in irf_config['config']['sites']:
         num_grid_cells_above_lose_threshold = diffuse_particle_table[
             'grid'][
             'num_bins_above_threshold']
-        total_num_grid_cells = (
-            (2*diffuse_particle_table['grid']['num_bins_radius'])**2
-        )
+        total_num_grid_cells = diffuse_particle_table['grid']['num_bins_thrown']
 
         value = []
         relative_uncertainty = []

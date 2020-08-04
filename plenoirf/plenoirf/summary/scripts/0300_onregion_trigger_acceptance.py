@@ -132,9 +132,7 @@ for site_key in irf_config['config']['sites']:
             left_indices=table_point['primary'][spt.IDX],
             right_indices=idx_detected_in_onregion,
         )
-        total_num_grid_cells = (
-            (2*table_point['grid']['num_bins_radius'])**2
-        )
+
         (
             _q_eff,
             _q_unc
@@ -146,7 +144,7 @@ for site_key in irf_config['config']['sites']:
             num_grid_cells_above_lose_threshold=table_point[
                 'grid'][
                 'num_bins_above_threshold'],
-            total_num_grid_cells=total_num_grid_cells,
+            total_num_grid_cells=table_point['grid']['num_bins_thrown'],
         )
 
         irf.json_numpy.write(
@@ -206,9 +204,7 @@ for site_key in irf_config['config']['sites']:
             left_indices=table_diffuse['primary'][spt.IDX],
             right_indices=idx_in_possible_onregion,
         )
-        total_num_grid_cells = (
-            (2*table_diffuse['grid']['num_bins_radius'])**2
-        )
+
         (
             _q_eff_all_possible_onregion,
             _q_unc
@@ -223,7 +219,7 @@ for site_key in irf_config['config']['sites']:
             num_grid_cells_above_lose_threshold=table_diffuse[
                 'grid'][
                 'num_bins_above_threshold'],
-            total_num_grid_cells=total_num_grid_cells,
+            total_num_grid_cells=table_diffuse['grid']['num_bins_thrown'],
         )
         _q_eff = (
             _q_eff_all_possible_onregion *

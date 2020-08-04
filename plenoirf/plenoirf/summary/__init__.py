@@ -78,10 +78,21 @@ def read_instrument_response_config(run_dir):
         config = json.loads(f.read())
     light_field_sensor_geometry = merlict.read_plenoscope_geometry(
         opj(run_dir, 'input', 'scenery', 'scenery.json'))
-    grid_geometry = grid.init(
-        plenoscope_diameter=2*light_field_sensor_geometry[
-            'expected_imaging_system_aperture_radius'],
-        num_bins_radius=config['grid']['num_bins_radius'])
+
+    grid_geometry = grid.init_geometry(
+        instrument_aperture_outer_diameter=(
+            2.0*light_field_sensor_geometry[
+                'expected_imaging_system_aperture_radius']
+        ),
+        bin_width_overhead=config['grid']['bin_width_overhead'],
+        instrument_field_of_view_outer_radius_deg=(
+            0.5*light_field_sensor_geometry['max_FoV_diameter_deg']
+        ),
+        instrument_pointing_direction=[0,0,1],
+        field_of_view_overhead=config['grid']['field_of_view_overhead'],
+        num_bins_radius=config['grid']['num_bins_radius'],
+    )
+
     with open(opj(run_dir, 'input', 'scenery', 'scenery.json'), 'rt') as f:
         plenoscope_scenery = json.loads(f.read())
     _prop_cfg_path = opj(run_dir, 'input', 'merlict_propagation_config.json')
