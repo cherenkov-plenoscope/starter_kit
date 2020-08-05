@@ -49,7 +49,7 @@ on_over_off_ratio = sum_config[
     'on_off_measuremnent'][
     'on_over_off_ratio']
 observation_time_s = 50*3600
-n_points_to_plot = 7
+num_isez_energy_supports = 7
 
 fig_16_by_9 = sum_config['plot']['16_by_9']
 
@@ -144,7 +144,7 @@ for site_key in irf_config['config']['sites']:
         background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
         onregion_over_offregion_ratio=on_over_off_ratio,
         observation_time_s=observation_time_s,
-        num_points=n_points_to_plot
+        num_points=num_isez_energy_supports
     )
     com = {}
     com['energy'] = isez_energy_GeV
@@ -166,7 +166,7 @@ for site_key in irf_config['config']['sites']:
         background_rate_in_onregion_per_s=electron_rate_onregion[site_key],
         onregion_over_offregion_ratio=on_over_off_ratio,
         observation_time_s=observation_time_s,
-        num_points=n_points_to_plot
+        num_points=num_isez_energy_supports
     )
     com = {}
     com['energy'] = e_isez_energy_GeV
