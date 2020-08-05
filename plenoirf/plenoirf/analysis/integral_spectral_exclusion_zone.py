@@ -19,10 +19,10 @@ def estimate_integral_spectral_exclusion_zone(
     assert observation_time_s >= 0.0
     assert background_rate_in_onregion_per_s >= 0.0
 
-    log10_energy_bin_centers_GeV_TeV = np.log10(1e-3*energy_bin_centers_GeV)
+    log10_energy_bin_centers_TeV = np.log10(1e-3*energy_bin_centers_GeV)
     gamma_effective_area_cm2 = 1e2*1e2*gamma_effective_area_m2
     _aeff = scipy.interpolate.interpolate.interp1d(
-        x=log10_energy_bin_centers_GeV_TeV,
+        x=log10_energy_bin_centers_TeV,
         y=gamma_effective_area_cm2,
         bounds_error=False,
         fill_value=0.
