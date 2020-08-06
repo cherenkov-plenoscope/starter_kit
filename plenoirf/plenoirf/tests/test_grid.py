@@ -7,8 +7,12 @@ import pytest
 PLENOSCOPE_DIAMETER = 71.0
 NUM_BINS_RADIUS = 512
 
-PLENOSCOPE_GRID_GEOMETRY = plenoirf.grid.init(
-    plenoscope_diameter=PLENOSCOPE_DIAMETER,
+PLENOSCOPE_GRID_GEOMETRY = plenoirf.grid.init_geometry(
+    instrument_aperture_outer_diameter=PLENOSCOPE_DIAMETER,
+    bin_width_overhead=1.0,
+    instrument_field_of_view_outer_radius_deg=3.25,
+    instrument_pointing_direction=[0, 0, 1],
+    field_of_view_overhead=1.1,
     num_bins_radius=NUM_BINS_RADIUS,
 )
 
@@ -84,15 +88,11 @@ def test_grid_assign_head_on():
     )
     result = plenoirf.grid.assign(
         cherenkov_bunches=cherenkov_bunches,
-        plenoscope_field_of_view_radius_deg=3.25,
-        plenoscope_pointing_direction=np.array([0, 0, 1]),
-        plenoscope_grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
-        grid_random_shift_x=0.0,
-        grid_random_shift_y=0.0,
-        grid_magnetic_deflection_shift_x=0.0,
-        grid_magnetic_deflection_shift_y=0.0,
+        grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
+        shift_x=0.0,
+        shift_y=0.0,
         threshold_num_photons=50,
-        FIELD_OF_VIEW_OVERHEAD=1.1,
+        bin_idxs_limitation=None,
     )
     assert result['random_choice'] is not None
     assert result['num_bins_above_threshold'] > 30
@@ -125,15 +125,11 @@ def test_shower_cx_moves_out_of_fov():
         )
         result = plenoirf.grid.assign(
             cherenkov_bunches=cherenkov_bunches,
-            plenoscope_field_of_view_radius_deg=3.25,
-            plenoscope_pointing_direction=np.array([0, 0, 1]),
-            plenoscope_grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
-            grid_random_shift_x=0.0,
-            grid_random_shift_y=0.0,
-            grid_magnetic_deflection_shift_x=0.0,
-            grid_magnetic_deflection_shift_y=0.0,
+            grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
+            shift_x=0.0,
+            shift_y=0.0,
             threshold_num_photons=50,
-            FIELD_OF_VIEW_OVERHEAD=1.1,
+            bin_idxs_limitation=None,
         )
         assert result['num_bins_above_threshold'] >= expectation[shower_cx_deg]
 
@@ -155,15 +151,11 @@ def test_shower_size_increases():
         )
         result = plenoirf.grid.assign(
             cherenkov_bunches=cherenkov_bunches,
-            plenoscope_field_of_view_radius_deg=3.25,
-            plenoscope_pointing_direction=np.array([0, 0, 1]),
-            plenoscope_grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
-            grid_random_shift_x=0.0,
-            grid_random_shift_y=0.0,
-            grid_magnetic_deflection_shift_x=0.0,
-            grid_magnetic_deflection_shift_y=0.0,
+            grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
+            shift_x=0.0,
+            shift_y=0.0,
             threshold_num_photons=50,
-            FIELD_OF_VIEW_OVERHEAD=1.1,
+            bin_idxs_limitation=None,
         )
         assert result['num_bins_above_threshold'] >= expectation[shower_size]
 
@@ -201,15 +193,11 @@ def test_shower_x_moves_not_counteracted():
         )
         result = plenoirf.grid.assign(
             cherenkov_bunches=cherenkov_bunches,
-            plenoscope_field_of_view_radius_deg=3.25,
-            plenoscope_pointing_direction=np.array([0, 0, 1]),
-            plenoscope_grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
-            grid_random_shift_x=0.0,
-            grid_random_shift_y=0.0,
-            grid_magnetic_deflection_shift_x=0.0,
-            grid_magnetic_deflection_shift_y=0.0,
+            grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
+            shift_x=0.0,
+            shift_y=0.0,
             threshold_num_photons=50,
-            FIELD_OF_VIEW_OVERHEAD=1.1,
+            bin_idxs_limitation=None,
         )
         assert (
             result['num_bins_above_threshold'] >=
@@ -271,15 +259,12 @@ def test_shower_x_moves_but_counteracted():
         )
         result = plenoirf.grid.assign(
             cherenkov_bunches=cherenkov_bunches,
-            plenoscope_field_of_view_radius_deg=3.25,
-            plenoscope_pointing_direction=np.array([0, 0, 1]),
-            plenoscope_grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
-            grid_random_shift_x=0.0,
-            grid_random_shift_y=0.0,
-            grid_magnetic_deflection_shift_x=scenarios[s]['core_wrt_obslvl'],
-            grid_magnetic_deflection_shift_y=0.0,
+            grid_geometry=PLENOSCOPE_GRID_GEOMETRY,
+            shift_x= -1.0 * scenarios[s]['core_wrt_obslvl'],
+            shift_y=0.0,
             threshold_num_photons=50,
-            FIELD_OF_VIEW_OVERHEAD=1.1,
+            bin_idxs_limitation=None,
+
         )
         assert (
             result['num_bins_above_threshold'] >=
@@ -303,8 +288,3 @@ def test_shower_x_moves_but_counteracted():
 
         assert 510 < result['random_choice']['bin_idx_x'] < 514
         assert 510 < result['random_choice']['bin_idx_y'] < 514
-
-
-def toy_sim():
-    A_TRUE = 1e3
-    R_TRUE = np.sqrt(A_TRUE/np.pi)
