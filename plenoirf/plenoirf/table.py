@@ -1,12 +1,4 @@
-import pandas as pd
 import numpy as np
-import shutil
-import tarfile
-import io
-import glob
-import os
-import msgpack
-from os import path as op
 
 NUM_DIGITS_RUN_ID = 6
 NUM_DIGITS_AIRSHOWER_ID = 3
