@@ -1,6 +1,7 @@
 from . import summary
 from . import analysis
 from . import table
+from . import random_seed
 from . import grid
 from . import merlict
 from . import logging
@@ -210,8 +211,8 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
 
     with open(opj(out_absdir, 'input', 'max_seed.json'+'tmp'), "wt") as fout:
         fout.write(json.dumps({
-            "NUM_DIGITS_RUN_ID": int(table.NUM_DIGITS_RUN_ID),
-            "NUM_DIGITS_AIRSHOWER_ID": int(table.NUM_DIGITS_AIRSHOWER_ID),
+            "NUM_DIGITS_RUN_ID": random_seed.NUM_DIGITS_RUN_ID,
+            "NUM_DIGITS_AIRSHOWER_ID": random_seed.NUM_DIGITS_AIRSHOWER_ID,
             }, indent=4))
     shutil.move(
         opj(out_absdir, 'input', 'max_seed.json'+'tmp'),
@@ -391,7 +392,7 @@ def _populate_table_of_thrown_air_showers(
 
             run_id = cfg["runs"][particle_key]["first_run_id"]
             for job_idx in np.arange(cfg["runs"][particle_key]["num"]):
-                assert table.is_valid_run_id(run_id)
+                assert random_seed.is_valid_run_id(run_id)
 
                 irf_job = {
                     "run_id": run_id,

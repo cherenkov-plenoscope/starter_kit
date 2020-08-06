@@ -1,4 +1,5 @@
 from . import table
+from . import random_seed
 from . import grid
 from . import merlict
 from . import logging
@@ -367,7 +368,7 @@ def draw_corsika_primary_steering(
     _assert_site(site)
     _assert_particle(particle)
     _assert_deflection(site_particle_deflection)
-    assert(num_events <= table.NUM_AIRSHOWER_IDS_IN_RUN)
+    assert(num_events <= random_seed.NUM_AIRSHOWER_IDS_IN_RUN)
 
     max_scatter_rad = np.deg2rad(particle["max_scatter_angle_deg"])
 
@@ -424,7 +425,10 @@ def draw_corsika_primary_steering(
         primary["azimuth_rad"] = az
         primary["depth_g_per_cm2"] = 0.0
         primary["random_seed"] = cpw.simple_seed(
-            table.random_seed_based_on(run_id=run_id, airshower_id=event_id))
+            random_seed.random_seed_based_on(
+                run_id=run_id,
+                airshower_id=event_id)
+        )
 
         steering["primaries"].append(primary)
     return steering
@@ -581,9 +585,10 @@ def run_job(job):
             primary = corsika_primary_steering["primaries"][event_idx]
             event_seed = primary["random_seed"][0]["SEED"]
             ide = {spt.IDX: event_seed}
-            assert (event_seed == table.random_seed_based_on(
+            assert (event_seed == random_seed.random_seed_based_on(
                 run_id=run_id,
-                airshower_id=event_id))
+                airshower_id=event_id)
+            )
 
             # random seed
             # -----------
@@ -699,7 +704,7 @@ def run_job(job):
             )
             tar_append(
                 tarout=imgtar,
-                file_name=table.SEED_TEMPLATE_STR.format(
+                file_name=random_seed.SEED_TEMPLATE_STR.format(
                     seed=event_seed)+".f4.gz",
                 file_bytes=grid.histogram_to_bytes(grid_result["histogram"])
             )
@@ -812,7 +817,7 @@ def run_job(job):
         run_id = int(cevth[cpw.I_EVTH_RUN_NUMBER])
         airshower_id = int(cevth[cpw.I_EVTH_EVENT_NUMBER])
         ide = {
-            spt.IDX: table.random_seed_based_on(
+            spt.IDX: random_seed.random_seed_based_on(
                 run_id=run_id,
                 airshower_id=airshower_id)}
 
@@ -863,7 +868,7 @@ def run_job(job):
         if (trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]):
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp["unique_id_str"] = table.SEED_TEMPLATE_STR.format(
+            ptp["unique_id_str"] = random_seed.SEED_TEMPLATE_STR.format(
                 seed=ptp[spt.IDX])
             table_past_trigger.append(ptp)
 
