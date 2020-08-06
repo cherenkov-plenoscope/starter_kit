@@ -311,7 +311,7 @@ def _estimate_light_field_geometry_of_plenoscope(
                 num_blocks=cfg[
                     'light_field_geometry']['num_blocks'],
                 random_seed=0)
-            rc = pool.map(
+            _ = pool.map(
                 map_and_reduce_light_field_geometry.run_job,
                 lfg_jobs)
             subprocess.call([
