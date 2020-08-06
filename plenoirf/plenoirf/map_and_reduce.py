@@ -264,11 +264,9 @@ def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
     site_key = "namibia"
 
     deflection_table = magnetic_deflection.read(
-        work_dir=op.join(run_dir, "magnetic_deflection")
+        work_dir=op.join(run_dir, "magnetic_deflection"),
+        style="dict",
     )
-    site_particle_deflection = pandas.DataFrame(
-        deflection_table[site_key][particle_key]
-    ).to_dict(orient='list')
     test_dir = op.join(run_dir, example_dirname)
 
     job = {
@@ -296,7 +294,7 @@ def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
             run_dir,
             'input',
             'merlict_propagation_config.json'),
-        "site_particle_deflection": site_particle_deflection,
+        "site_particle_deflection": deflection_table[site_key][particle_key],
         "cherenkov_classification": EXAMPLE_CHERENKOV_CLASSIFICATION,
         "log_dir": op.join(test_dir, "log"),
         "past_trigger_dir": op.join(test_dir, "past_trigger"),

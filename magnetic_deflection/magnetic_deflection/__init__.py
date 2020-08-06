@@ -318,7 +318,7 @@ def _export_table(
             shutil.move(out_filepath+'.csv.tmp', out_filepath+'.csv')
 
 
-def read(work_dir):
+def read(work_dir, style="dict"):
     """
     Reads work_dir/result/{site:s}_{particle:s}.csv into dict[site][particle].
     """
@@ -334,5 +334,10 @@ def read(work_dir):
                 "{:s}_{:s}.csv".format(site_key, particle_key)
             )
             df = pandas.read_csv(path)
-            mag[site_key][particle_key] = df.to_records()
+            if style == "record":
+                mag[site_key][particle_key] = df.to_records()
+            elif style == "dict":
+                mag[site_key][particle_key] = df.to_dict("list")
+            else:
+                raise KeyError("Unknown style: '{:s}'.".format(style))
     return mag
