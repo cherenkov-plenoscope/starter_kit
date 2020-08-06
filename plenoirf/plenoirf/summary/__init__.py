@@ -25,7 +25,9 @@ def init(run_dir):
     os.makedirs(summary_dir, exist_ok=True)
 
     with open(opj(summary_dir, 'summary_config.json'), 'wt') as fout:
-        fout.write(json.dumps(summary_config, indent=4, cls=json_numpy.Encoder))
+        fout.write(
+            json.dumps(summary_config, indent=4, cls=json_numpy.Encoder)
+        )
 
     proton_flux = cosmic_fluxes.read_cosmic_proton_flux_from_resources()
     with open(opj(summary_dir, 'proton_flux.json'), 'wt') as fout:
@@ -88,7 +90,7 @@ def read_instrument_response_config(run_dir):
         instrument_field_of_view_outer_radius_deg=(
             0.5*light_field_sensor_geometry['max_FoV_diameter_deg']
         ),
-        instrument_pointing_direction=[0,0,1],
+        instrument_pointing_direction=[0, 0, 1],
         field_of_view_overhead=config['grid']['field_of_view_overhead'],
         num_bins_radius=config['grid']['num_bins_radius'],
     )
@@ -229,6 +231,7 @@ def bin_width(bin_edges):
 FERMI_3FGL_CRAB_NEBULA_NAME = '3FGL J0534.5+2201'
 FERMI_3FGL_PHD_THESIS_REFERENCE_SOURCE_NAME = '3FGL J2254.0+1608'
 
+
 def _guess_summary_config(run_dir):
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
@@ -280,7 +283,7 @@ def _guess_summary_config(run_dir):
                 'use_rejection_focus': False,
             },
             "threshold_pe": analysis_trigger_threshold_pe,
-            "ratescan_thresholds_pe" : make_ratescan_trigger_thresholds(
+            "ratescan_thresholds_pe": make_ratescan_trigger_thresholds(
                 lower_threshold=int(collection_trigger_threshold_pe*0.8),
                 upper_threshold=int(collection_trigger_threshold_pe*1.5),
                 num_thresholds=32,
@@ -342,7 +345,7 @@ def _guess_summary_config(run_dir):
 
     summary_config['plot'] = {
         "16_by_9": figure.CONFIG_16_9,
-        'particle_colors' : {
+        'particle_colors': {
             "gamma": "black",
             "electron": "blue",
             "proton": "red",
