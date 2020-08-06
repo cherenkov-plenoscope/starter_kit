@@ -174,11 +174,11 @@ EXAMPLE_CONFIG = {
         "direction_to_time_mixing_deg_per_s": 0.375e9
     },
 
-    "num_runs": {
-        "gamma": 64,
-        "electron": 64,
-        "proton": 64,
-        "helium": 64
+    "runs": {
+        "gamma": {"num": 64, "first_run_id": 1},
+        "electron": {"num": 64, "first_run_id": 1},
+        "proton": {"num": 64, "first_run_id": 1},
+        "helium": {"num": 64, "first_run_id": 1},
     },
 
     "magnetic_deflection": {
@@ -372,7 +372,6 @@ def _populate_table_of_thrown_air_showers(
     os.makedirs(table_absdir, exist_ok=True)
 
     irf_jobs = []
-    run_id = 1
     for site_key in cfg["sites"]:
         site_absdir = opj(table_absdir, site_key)
         if op.exists(site_absdir):
@@ -397,7 +396,9 @@ def _populate_table_of_thrown_air_showers(
                 )
             ).to_dict(orient='list')
 
-            for job_idx in np.arange(cfg["num_runs"][particle_key]):
+            run_id = cfg["runs"][particle_key]["first_run_id"]
+            for job_idx in np.arange(cfg["runs"][particle_key]["num"]):
+                assert table.is_valid_run_id(run_id)
 
                 irf_job = {
                     "run_id": run_id,
