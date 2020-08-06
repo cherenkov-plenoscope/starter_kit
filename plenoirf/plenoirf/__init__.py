@@ -371,6 +371,8 @@ def _populate_table_of_thrown_air_showers(
     table_absdir = opj(out_absdir, "event_table")
     os.makedirs(table_absdir, exist_ok=True)
 
+    deflection = mdfl.read(work_dir=opj(out_absdir, 'magnetic_deflection'))
+
     irf_jobs = []
     for site_key in cfg["sites"]:
         site_absdir = opj(table_absdir, site_key)
@@ -384,18 +386,6 @@ def _populate_table_of_thrown_air_showers(
                 continue
             os.makedirs(site_particle_absdir, exist_ok=True)
 
-            site_particle_deflection = pd.read_csv(
-                opj(
-                    out_absdir,
-                    'magnetic_deflection',
-                    'result',
-                    '{:s}_{:s}.csv'.format(
-                        site_key,
-                        particle_key
-                    )
-                )
-            ).to_dict(orient='list')
-
             run_id = cfg["runs"][particle_key]["first_run_id"]
             for job_idx in np.arange(cfg["runs"][particle_key]["num"]):
                 assert table.is_valid_run_id(run_id)
@@ -406,7 +396,9 @@ def _populate_table_of_thrown_air_showers(
                     "plenoscope_pointing": cfg["plenoscope_pointing"],
                     "particle": cfg["particles"][particle_key],
                     "site": cfg["sites"][site_key],
-                    "site_particle_deflection": site_particle_deflection,
+                    "site_particle_deflection": deflection[
+                        site_key][
+                        particle_key],
                     "grid": cfg["grid"],
                     "sum_trigger": cfg["sum_trigger"],
                     "cherenkov_classification": cfg[
