@@ -26,6 +26,14 @@ energy_bin_edges_coarse = np.geomspace(
 )
 
 
+def get_value_by_key_but_forgive(dic, key):
+    try:
+        return dic[key]
+    except KeyError:
+        print("WARNING key '{:s}' does not exist!".format(key))
+        return {}
+
+
 def make_site_table(
     sites,
     energy_bin_edges,
@@ -154,6 +162,20 @@ _trigger_config = sum_config['trigger'].copy()
 _trigger_config.pop('ratescan_thresholds_pe')
 _bd += sam.code(
     json.dumps(_trigger_config, indent=4),
+    font_size=50,
+    line_height=100,
+)
+
+_bd += sam.h('Random-seed', level=2)
+_bd += sam.p(
+    "The run-id and airshower-id form the random-seed for an airshower.",
+    font_size=75,
+    text_align='justify',
+    font_family='calibri'
+)
+_runs_config = get_value_by_key_but_forgive(irf_config, 'runs').copy()
+_bd += sam.code(
+    json.dumps(_runs_config, indent=4),
     font_size=50,
     line_height=100,
 )
@@ -394,6 +416,7 @@ _bd += sam.code(
     font_size=50,
     line_height=100,
 )
+'''
 _bd += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
@@ -402,6 +425,7 @@ _bd += make_site_table(
         '{site_key:s}_integral_spectral_exclusion_zone_style_plenoirf.jpg'
     )
 )
+'''
 _bd += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
@@ -410,12 +434,35 @@ _bd += make_site_table(
         '{site_key:s}_integral_spectral_exclusion_zone_style_science.jpg'
     )
 )
+'''
 _bd += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=[0, 1],
     wild_card=opj(
         '0330_onregion_trigger_integral_spectral_exclusion_zone_plot',
         '{site_key:s}_integral_spectral_exclusion_zone_style_fermi.jpg'
+    )
+)
+'''
+
+_bd += sam.h('Braodband-sensitivity, (phd-thesis)', level=2)
+_bd += sam.p(
+    "Gamma acceptance off all field-of-view multiplied by 0.68. "
+    "Cosmic-rays are only leptons and proton. "
+    "Cosmic-ray acceptance is taken from all field-of-view and scaled by "
+    "the ratio "
+    "of solid angles between all field-of-view and onregion. "
+    "Onregion opening angle is 0.31 deg.",
+    font_size=75,
+    text_align='justify',
+    font_family='calibri'
+)
+_bd += make_site_table(
+    sites=irf_config['config']['sites'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '0340_trigger_integral_spectral_exclusion_zone_as_in_phd',
+        '{site_key:s}_integral_spectral_exclusion_zone_style_science.jpg'
     )
 )
 
