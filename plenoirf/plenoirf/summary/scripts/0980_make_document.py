@@ -6,6 +6,7 @@ import numpy as np
 from os.path import join as opj
 import json
 import dominate
+import warnings
 
 from plenoirf.summary import samtex as sam
 
@@ -25,13 +26,23 @@ energy_bin_edges_coarse = np.geomspace(
     sum_config['energy_binning']['num_bins']['point_spread_function'] + 1
 )
 
-
 def get_value_by_key_but_forgive(dic, key):
     try:
         return dic[key]
     except KeyError:
         print("WARNING key '{:s}' does not exist!".format(key))
         return {}
+
+
+def read_json_but_forgive(path, default={}):
+    try:
+        with open(path, 'rt') as f:
+            out = json.loads(f.read())
+    except Exception as e:
+        print(e)
+        warnings.warn("Failed to load '{:s}'".format(path))
+        out = default
+    return out
 
 
 def make_site_table(
@@ -123,6 +134,13 @@ def make_site_particle_index_table(
     )
 
 
+evt_provenance = read_json_but_forgive(
+    path=opj(pa['run_dir'], 'event_table', 'provenance.json')
+)
+ana_provenance = read_json_but_forgive(
+    path=opj(pa['summary_dir'], 'provenance.json')
+)
+
 _html = dominate.tags.html()
 _bd = _html.add(dominate.tags.body())
 
@@ -133,6 +151,22 @@ _bd += sam.p(
     text_align='justify',
     font_family='calibri',
 )
+
+_bd += sam.h('git-commit', level=4)
+_bd += sam.code(
+    get_value_by_key_but_forgive(
+        dic=get_value_by_key_but_forgive(
+            dic=get_value_by_key_but_forgive(
+                dic=evt_provenance,
+                key='starter_kit'
+            ),
+            key='git'
+        ),
+        key='commit'
+    ),
+    font_size=100,
+    line_height=100,
+),
 
 site_matrix = []
 _row = []
@@ -567,6 +601,21 @@ _bd += sam.code(
 _bd += sam.h('Sites and particles', level=3)
 _bd += sam.code(
     json.dumps(irf_config['config'], indent=4),
+    font_size=50,
+    line_height=100
+)
+
+_bd += sam.h('Provenance', level=2)
+_bd += sam.h('Populating event-tables', level=3)
+_bd += sam.code(
+    json.dumps(evt_provenance, indent=4),
+    font_size=50,
+    line_height=100
+)
+
+_bd += sam.h('Running analysis', level=3)
+_bd += sam.code(
+    json.dumps(ana_provenance, indent=4),
     font_size=50,
     line_height=100
 )
