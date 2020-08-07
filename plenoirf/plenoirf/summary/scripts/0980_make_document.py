@@ -354,13 +354,27 @@ _bd += make_site_table(
         '{site_key:s}_gamma_psf_radial.jpg'
     )
 )
-
 _bd += make_site_table(
     sites=irf_config['config']['sites'],
     energy_bin_edges=energy_bin_edges_coarse,
     wild_card=opj(
         '0201_gamma_point_spread_function_plot',
         '{site_key:s}_gamma_{energy_bin_index:06d}_psf.jpg'
+    )
+)
+
+_bd += sam.p(
+    "Reconstructed directions in field-of-view:",
+    text_align='justify',
+    font_family='calibri'
+)
+_bd += make_site_particle_index_table(
+    sites=irf_config['config']['sites'],
+    particles=irf_config['config']['particles'],
+    energy_bin_edges=[0, 1],
+    wild_card=opj(
+        '0205_reconstructed_directions_in_field_of_view',
+        '{site_key:s}_{particle_key:s}.jpg'
     )
 )
 
