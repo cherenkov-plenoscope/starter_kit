@@ -10,6 +10,7 @@ import subprocess
 import sparse_numeric_table as spt
 import glob
 from .. import table
+from .. import provenance
 from .. import merlict
 from .. import grid
 from . import figure
@@ -112,6 +113,12 @@ def read_instrument_response_config(run_dir):
 
 
 def run(run_dir):
+
+    json_numpy.write(
+        path=opj(run_dir, 'summary', 'provenance.json'),
+        out_dict=provenance.make_provenance()
+    )
+
     summary_dir = opj(run_dir, 'summary')
     irf_config = read_instrument_response_config(run_dir=run_dir)
     sum_config = read_summary_config(summary_dir=summary_dir)

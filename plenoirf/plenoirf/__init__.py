@@ -373,6 +373,12 @@ def _populate_table_of_thrown_air_showers(
     table_absdir = opj(out_absdir, "event_table")
     os.makedirs(table_absdir, exist_ok=True)
 
+    sge._print("Write provenance.")
+    json_numpy.write(
+        path=opj(table_absdir, 'provenance.json'),
+        out_dict=provenance.make_provenance()
+    )
+
     deflection = mdfl.read(
         work_dir=opj(out_absdir, 'magnetic_deflection'),
         style="dict",
