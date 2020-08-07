@@ -53,8 +53,6 @@ for site_key in irf_config['config']['sites']:
             structure=irf.table.STRUCTURE
         )
 
-
-
         # thrown
         # ======
         delta_deg = magnetic_deflection.discovery._angle_between_az_zd_deg(
@@ -63,12 +61,13 @@ for site_key in irf_config['config']['sites']:
             az2_deg=pointing_azimuth_deg,
             zd2_deg=pointing_zenith_deg
         )
-        bin_counts_thrown = np.histogram(
+        counts_thrown = np.histogram(
             delta_deg**2,
             bins=cradial2_bin_edges_deg2
         )[0]
-        bin_counts_thrown_rel = bin_counts_thrown/np.sum(bin_counts_thrown)
-        bin_counts_thrown_unc = np.sqrt(bin_counts_thrown)/bin_counts_thrown
+        with np.errstate(invalid='ignore'):
+            counts_thrown_rel = counts_thrown/np.sum(counts_thrown)
+            counts_thrown_unc = np.sqrt(counts_thrown)/counts_thrown
 
         # reconstructed
         # =============
@@ -92,13 +91,14 @@ for site_key in irf_config['config']['sites']:
         offaxis_deg = np.rad2deg(offaxis)
         offaxis2_deg2 = offaxis_deg**2.0
 
-        bin_counts = np.histogram(
+        counts_reco = np.histogram(
             offaxis2_deg2,
             bins=cradial2_bin_edges_deg2
         )[0]
 
-        bin_counts_rel = bin_counts/np.sum(bin_counts)
-        bin_counts_unc = np.sqrt(bin_counts)/bin_counts
+        with np.errstate(invalid='ignore'):
+            counts_reco_rel = counts_reco/np.sum(counts_reco)
+            counts_reco_unc = np.sqrt(counts_reco)/counts_reco
 
         ymax = 0.2
         fig = irf.summary.figure.figure(fig_16_by_9)
@@ -106,23 +106,22 @@ for site_key in irf_config['config']['sites']:
         irf.summary.figure.ax_add_hist(
             ax=ax,
             bin_edges=cradial2_bin_edges_deg2,
-            bincounts=bin_counts_thrown_rel,
+            bincounts=counts_thrown_rel,
             linestyle=':',
             linecolor='k',
-            bincounts_upper=bin_counts_thrown_rel * (1 + bin_counts_thrown_unc),
-            bincounts_lower=bin_counts_thrown_rel * (1 - bin_counts_thrown_unc),
+            bincounts_upper=counts_thrown_rel * (1 + counts_thrown_unc),
+            bincounts_lower=counts_thrown_rel * (1 - counts_thrown_unc),
             face_color='k',
             face_alpha=.3
         )
-
         irf.summary.figure.ax_add_hist(
             ax=ax,
             bin_edges=cradial2_bin_edges_deg2,
-            bincounts=bin_counts_rel,
+            bincounts=counts_reco_rel,
             linestyle='-',
             linecolor='k',
-            bincounts_upper=bin_counts_rel * (1 + bin_counts_unc),
-            bincounts_lower=bin_counts_rel * (1 - bin_counts_unc),
+            bincounts_upper=counts_reco_rel * (1 + counts_reco_unc),
+            bincounts_lower=counts_reco_rel * (1 - counts_reco_unc),
             face_color='k',
             face_alpha=.3
         )
@@ -131,20 +130,21 @@ for site_key in irf_config['config']['sites']:
             y=0.8,
             s=": thrown",
             color='k',
-            transform=ax.transAxes)
+            transform=ax.transAxes
+        )
         ax.text(
             x=0.8,
             y=0.85,
             s="- reconstructed",
             color='k',
-            transform=ax.transAxes)
+            transform=ax.transAxes
+        )
         ax.text(
             x=1.05*fov_radius_deg**2,
             y=0.95*ymax,
             s="field-of-view's radius",
             color='k'
         )
-
         ax.set_xlabel('(offaxis angle)$^2$ / (1$^{\\circ}$)$^2$')
         ax.set_ylabel('relative intensity / 1')
         ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
