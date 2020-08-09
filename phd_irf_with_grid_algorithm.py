@@ -388,13 +388,14 @@ merlict_cfg_files = {
         tmp_cfg_dir, "merlict_config.json"
     ),
     "plenoscope_scenery_path": os.path.join(
-        tmp_cfg_dir, "plenoscope_scenery.json"
+        tmp_cfg_dir, "scenery", "scenery.json"
     )
 }
 plenoirf.json_numpy.write(
     merlict_cfg_files['merlict_plenoscope_propagator_config_path'],
     MERLICT_PROPAGATION_CONFIG
 )
+os.makedirs(os.path.dirname(merlict_cfg_files['plenoscope_scenery_path']), exist_ok=True)
 plenoirf.json_numpy.write(
     merlict_cfg_files['plenoscope_scenery_path'],
     SCENERY
