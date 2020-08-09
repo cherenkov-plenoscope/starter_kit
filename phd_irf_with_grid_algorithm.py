@@ -143,10 +143,10 @@ CONFIG = {
         "direction_to_time_mixing_deg_per_s": 375000000.0
     },
     "runs": {
-        "gamma": {"num": NUM_RUNS, "first_run_id": 1},
-        "electron": {"num": NUM_RUNS, "first_run_id": 1},
-        "proton": {"num": NUM_RUNS, "first_run_id": 1},
-        "helium": {"num": NUM_RUNS, "first_run_id": 1},
+        "gamma": {"num": 64, "first_run_id": 1},
+        "electron": {"num": 64, "first_run_id": 1},
+        "proton": {"num": 64, "first_run_id": 1},
+        "helium": {"num": 64, "first_run_id": 1},
     },
     "magnetic_deflection": {
         "num_energy_supports": 512,
@@ -382,7 +382,7 @@ scenarios = {
 }
 
 tmp_cfg_dir = os.path.join(storage_dir, production_date_str+"_tmp")
-os.makedirs(out_absdir, exist_ok=True)
+os.makedirs(tmp_cfg_dir, exist_ok=True)
 merlict_cfg_files = {
     "merlict_plenoscope_propagator_config_path": os.path.join(
         tmp_cfg_dir, "merlict_config.json"
@@ -417,7 +417,7 @@ for scenario_key in scenarios:
 
     plenoirf.init(
         out_dir=scenario_path,
-        config=EXAMPLE_CONFIG,
+        config=config,
         cfg_files=merlict_cfg_files
     )
 
