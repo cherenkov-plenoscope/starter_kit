@@ -123,7 +123,7 @@ def make_provenance():
         _o, _ = get_ascii_stdout_stderr(
             command=[prg, IMPORTANT_PROGRAMS[prg]['version']]
         )
-        p['version'][prg] = _o.splitlines()[0]
+        p['version'][prg] = _o
 
     p["starter_kit"] = {}
     p["starter_kit"]["path"] = starter_kit_abspath()
