@@ -12,6 +12,8 @@ from . import bundle
 from . import json_numpy
 from . import provenance
 
+from . import create_test_tables
+
 import os
 import numpy as np
 from os import path as op

@@ -4,6 +4,7 @@ from . import grid
 from . import merlict
 from . import logging
 from . import network_file_system as nfs
+from . import utils
 
 import sys
 import numpy as np
@@ -315,11 +316,6 @@ def contains_same_bytes(path_a, path_b):
         return a_bytes == b_bytes
 
 
-def _cone_solid_angle(cone_radial_opening_angle_rad):
-    cap_hight = (1.0 - np.cos(cone_radial_opening_angle_rad))
-    return 2.0*np.pi*cap_hight
-
-
 def ray_plane_x_y_intersection(support, direction, plane_z):
     direction = np.array(direction)
     support = np.array(support)
@@ -602,7 +598,7 @@ def run_job(job):
             prim["azimuth_rad"] = primary["azimuth_rad"]
             prim["zenith_rad"] = primary["zenith_rad"]
             prim["max_scatter_rad"] = primary["max_scatter_rad"]
-            prim["solid_angle_thrown_sr"] = _cone_solid_angle(
+            prim["solid_angle_thrown_sr"] = utils.cone_solid_angle(
                 prim["max_scatter_rad"])
             prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]
             prim["momentum_x_GeV_per_c"] = event_header[
