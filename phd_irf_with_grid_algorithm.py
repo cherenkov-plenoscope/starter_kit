@@ -388,20 +388,18 @@ merlict_cfg_files = {
         tmp_cfg_dir, "merlict_config.json"
     ),
     "plenoscope_scenery_path": os.path.join(
-        tmp_cfg_dir, "scenery", "scenery.json"
+        tmp_cfg_dir, "scenery"
     )
 }
 plenoirf.json_numpy.write(
     merlict_cfg_files['merlict_plenoscope_propagator_config_path'],
     MERLICT_PROPAGATION_CONFIG
 )
-os.makedirs(os.path.dirname(merlict_cfg_files['plenoscope_scenery_path']), exist_ok=True)
-plenoirf.json_numpy.write(
-    merlict_cfg_files['plenoscope_scenery_path'],
-    SCENERY
-)
-
-LIGHT_FIELD_GEOMETRY_PATH = None
+if not os.path.exists(merlict_cfg_files['plenoscope_scenery_path']):
+    plenoirf.network_file_system.copy(
+        src=os.path.join(tmp_cfg_dir, "light_field_geometry", "input", "scenery"),
+        dst=merlict_cfg_files['plenoscope_scenery_path']
+    )
 
 for scenario_key in scenarios:
 
