@@ -4,6 +4,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import magnetic_deflection
+import numpy as np
 
 import matplotlib
 matplotlib.use('Agg')
