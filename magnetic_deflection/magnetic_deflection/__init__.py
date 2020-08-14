@@ -267,11 +267,17 @@ def _fit_power_law(
                     sig = -1
                 else:
                     sig = 1
-                expy, _ = scipy_optimize_curve_fit(
-                    analysis.power_law,
-                    t['energy_GeV'],
-                    t[key] - key_start,
-                    p0=(sig*charge_signs[particle_key], 1.))
+
+                try:
+                    expy, _ = scipy_optimize_curve_fit(
+                        analysis.power_law,
+                        t['energy_GeV'],
+                        t[key] - key_start,
+                        p0=(sig*charge_signs[particle_key], 1.))
+                except RuntimeError as err:
+                    print(err)
+                    expy = [0.0 , 0.0]
+
                 fits[key] = {
                     "formula": "f(energy) = scale*energy**index + offset",
                     "scale": float(expy[0]),
