@@ -81,6 +81,11 @@ def D_summarize_raw_deflection(
     sites = read_json(os.path.join(work_dir, "sites.json"))
     particles = read_json(os.path.join(work_dir, "particles.json"))
     pointing = read_json(os.path.join(work_dir, "pointing.json"))
+    min_particle_energy = np.min(
+        [np.min(particles[p]['energy_bin_edges_GeV']) for p in particles]
+    )
+    if min_particle_energy > min_fit_energy:
+        min_fit_energy = 1.1*min_particle_energy
     _cut_invalid(
         in_path=os.path.join(work_dir, 'raw'),
         out_path=os.path.join(work_dir, 'raw_valid'),
