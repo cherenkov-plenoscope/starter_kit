@@ -235,7 +235,7 @@ def _estimate_magnetic_deflection_of_air_showers(
     out_absdir,
     pool
 ):
-    sge._print("Estimating magnetic deflection.")
+    sge._log("Estimating magnetic deflection.")
     mdfl_absdir = opj(out_absdir, 'magnetic_deflection')
 
     if op.exists(mdfl_absdir):
@@ -284,7 +284,7 @@ def _estimate_light_field_geometry_of_plenoscope(
     pool,
     executables
 ):
-    sge._print("Estimating light-field-geometry.")
+    sge._log("Estimating light-field-geometry.")
 
     if op.exists(opj(out_absdir, 'light_field_geometry')):
         assert map_and_reduce.contains_same_bytes(
@@ -327,7 +327,7 @@ def _estimate_trigger_geometry_of_plenoscope(
     cfg,
     out_absdir,
 ):
-    sge._print("Estimating trigger-geometry.")
+    sge._log("Estimating trigger-geometry.")
 
     if not op.exists(opj(out_absdir, 'trigger_geometry')):
         light_field_geometry = pl.LightFieldGeometry(
@@ -371,11 +371,11 @@ def _populate_table_of_thrown_air_showers(
     LAZY_REDUCTION=False,
     num_parallel_jobs=2000,
 ):
-    sge._print("Estimating instrument-response.")
+    sge._log("Estimating instrument-response.")
     table_absdir = opj(out_absdir, "event_table")
     os.makedirs(table_absdir, exist_ok=True)
 
-    sge._print("Write provenance.")
+    sge._log("Write provenance.")
     json_numpy.write(
         path=opj(table_absdir, 'provenance.json'),
         out_dict=provenance.make_provenance()
@@ -460,7 +460,7 @@ def _populate_table_of_thrown_air_showers(
         irf_bundles
     )
 
-    sge._print("Reduce instrument-response.")
+    sge._log("Reduce instrument-response.")
 
     for site_key in cfg["sites"]:
         site_absdir = opj(table_absdir, site_key)
@@ -477,7 +477,7 @@ def _populate_table_of_thrown_air_showers(
                 logging.reduce(
                     list_of_log_paths=_lop_paths,
                     out_path=log_abspath)
-            sge._print(
+            sge._log(
                 "Reduce {:s} {:s} run-time.".format(site_key, particle_key))
 
             # event table
@@ -493,7 +493,7 @@ def _populate_table_of_thrown_air_showers(
                     path=event_table_abspath,
                     table=event_table,
                     structure=table.STRUCTURE)
-            sge._print(
+            sge._log(
                 "Reduce {:s} {:s} event_table.".format(site_key, particle_key))
 
             # grid images
@@ -504,7 +504,7 @@ def _populate_table_of_thrown_air_showers(
                 grid.reduce(
                     list_of_grid_paths=_grid_paths,
                     out_path=grid_abspath)
-            sge._print(
+            sge._log(
                 "Reduce {:s} {:s} grid.".format(site_key, particle_key))
 
 
@@ -518,7 +518,7 @@ def run(
     LAZY_REDUCTION=False,
 ):
     date_dict_now = map_and_reduce.date_dict_now()
-    sge._print("Start run()")
+    sge._log("Start run()")
 
     out_absdir = op.abspath(path)
     for exe_path in executables:
@@ -526,23 +526,23 @@ def run(
 
     if TMP_DIR_ON_WORKERNODE:
         tmp_absdir = None
-        sge._print("Use tmp_dir on workernodes.")
+        sge._log("Use tmp_dir on workernodes.")
     else:
         tmp_absdir = opj(out_absdir, "tmp")
         os.makedirs(tmp_absdir, exist_ok=True)
-        sge._print("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
+        sge._log("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
 
     if MULTIPROCESSING_POOL == "sun_grid_engine":
         pool = sge
-        sge._print("Use sun-grid-engine multiprocessing-pool.")
+        sge._log("Use sun-grid-engine multiprocessing-pool.")
     elif MULTIPROCESSING_POOL == "local":
         pool = multiprocessing.Pool(8)
-        sge._print("Use local multiprocessing-pool.")
+        sge._log("Use local multiprocessing-pool.")
     else:
         raise KeyError(
             "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL))
 
-    sge._print("Read config")
+    sge._log("Read config")
     cfg = mdfl.read_json(opj(out_absdir, 'input', 'config.json'))
 
     _estimate_magnetic_deflection_of_air_showers(
@@ -571,4 +571,4 @@ def run(
         LAZY_REDUCTION=LAZY_REDUCTION,
         num_parallel_jobs=num_parallel_jobs)
 
-    sge._print("End main().")
+    sge._log("End main().")
