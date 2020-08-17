@@ -14,6 +14,7 @@ IMPORTANT_PROGRAMS = {
     "gcc": {"version": "--version"},
     "g++": {"version": "--version"},
     "f77": {"version": "--version"},
+    "gfortran": {"version": "--version"},
 }
 
 
