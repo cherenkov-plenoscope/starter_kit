@@ -5,23 +5,17 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name='plenoirf',
-    version='0.0.0',
-    description='Explore magnetic deflection of cosmic-rays below 10GeV.',
+    name="plenoirf",
+    version="0.0.0",
+    description="Explore magnetic deflection of cosmic-rays below 10GeV.",
     long_description=long_description,
-    url='https://github.com/cherenkov-plenoscope',
-    author='Sebastian Achim Mueller',
-    author_email='sebastian-achim.mueller@mpi-hd.mpg.de',
-    license='GPL v3',
-    packages=[
-        'plenoirf',
-    ],
-    install_requires=[
-        'cosmic_fluxes',
-        'corsika_primary_wrapper',
-    ],
-    package_data={
-        'plenoirf': [os.path.join('summary', 'scripts', '*')]},
+    url="https://github.com/cherenkov-plenoscope",
+    author="Sebastian Achim Mueller",
+    author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
+    license="GPL v3",
+    packages=["plenoirf",],
+    install_requires=["cosmic_fluxes", "corsika_primary_wrapper",],
+    package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

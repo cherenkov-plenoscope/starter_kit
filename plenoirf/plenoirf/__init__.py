@@ -40,48 +40,32 @@ EXAMPLE_EXECUTABLES = {
         "modified",
         "corsika-75600",
         "run",
-        "corsika75600Linux_QGSII_urqmd"),
-
+        "corsika75600Linux_QGSII_urqmd",
+    ),
     "merlict_plenoscope_propagator_path": opj(
-        "build",
-        "merlict",
-        "merlict-plenoscope-propagation"),
-
+        "build", "merlict", "merlict-plenoscope-propagation"
+    ),
     "merlict_plenoscope_calibration_map_path": opj(
-        "build",
-        "merlict",
-        "merlict-plenoscope-calibration-map"),
-
+        "build", "merlict", "merlict-plenoscope-calibration-map"
+    ),
     "merlict_plenoscope_calibration_reduce_path": opj(
-        "build",
-        "merlict",
-        "merlict-plenoscope-calibration-reduce"),
+        "build", "merlict", "merlict-plenoscope-calibration-reduce"
+    ),
 }
 
 EXAMPLE_CONFIG_FILES = {
     "merlict_plenoscope_propagator_config_path": opj(
-        "resources",
-        "acp",
-        "merlict_propagation_config.json"),
-
-    "plenoscope_scenery_path": opj(
-        "resources",
-        "acp",
-        "71m",
-        "scenery"),
+        "resources", "acp", "merlict_propagation_config.json"
+    ),
+    "plenoscope_scenery_path": opj("resources", "acp", "71m", "scenery"),
 }
 
 EXAMPLE_CONFIG = {
     "light_field_geometry": {
-        "num_photons_per_block": 4*1000*1000,
+        "num_photons_per_block": 4 * 1000 * 1000,
         "num_blocks": 360,
     },
-
-    "plenoscope_pointing": {
-        "azimuth_deg": 0.,
-        "zenith_deg": 0.
-    },
-
+    "plenoscope_pointing": {"azimuth_deg": 0.0, "zenith_deg": 0.0},
     "sites": {
         "namibia": {
             "observation_level_asl_m": 2300,
@@ -98,14 +82,13 @@ EXAMPLE_CONFIG = {
             "geomagnetic_cutoff_rigidity_GV": 10.0,
         },
     },
-
     "particles": {
         "gamma": {
             "particle_id": 1,
             "energy_bin_edges_GeV": [0.25, 1000],
             "max_scatter_angle_deg": 3.25,
             "energy_power_law_slope": -1.7,
-            "electric_charge_qe": 0.,
+            "electric_charge_qe": 0.0,
             "magnetic_deflection_max_off_axis_deg": 0.25,
         },
         "electron": {
@@ -113,7 +96,7 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [0.25, 1000],
             "max_scatter_angle_deg": 6.5,
             "energy_power_law_slope": -1.5,
-            "electric_charge_qe": -1.,
+            "electric_charge_qe": -1.0,
             "magnetic_deflection_max_off_axis_deg": 0.5,
         },
         "proton": {
@@ -121,7 +104,7 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [5, 1000],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
-            "electric_charge_qe": +1.,
+            "electric_charge_qe": +1.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
         },
         "helium": {
@@ -129,27 +112,25 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [10, 1000],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
-            "electric_charge_qe": +2.,
+            "electric_charge_qe": +2.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
         },
     },
-
     "grid": map_and_reduce.EXAMPLE_GRID,
-
     "sum_trigger": {
         "object_distances_m": [
-            5000.,
-            6164.,
-            7600.,
-            9369.,
-            11551.,
-            14240.,
-            17556.,
-            21644.,
-            26683.,
-            32897.,
-            40557.,
-            50000.
+            5000.0,
+            6164.0,
+            7600.0,
+            9369.0,
+            11551.0,
+            14240.0,
+            17556.0,
+            21644.0,
+            26683.0,
+            32897.0,
+            40557.0,
+            50000.0,
         ],
         "threshold_pe": 115,
         "integration_time_slices": 10,
@@ -158,45 +139,32 @@ EXAMPLE_CONFIG = {
             "pixel_spacing_deg": 0.06667,
             "pixel_radius_deg": 0.146674,
             "max_number_nearest_lixel_in_pixel": 7,
-        }
+        },
     },
-
     "cherenkov_classification": {
         "region_of_interest": {
             "time_offset_start_s": -10e-9,
             "time_offset_stop_s": 10e-9,
             "direction_radius_deg": 2.0,
-            "object_distance_offsets_m": [
-                4000.,
-                2000.,
-                0.,
-                -2000.,
-            ],
+            "object_distance_offsets_m": [4000.0, 2000.0, 0.0, -2000.0,],
         },
         "min_num_photons": 17,
         "neighborhood_radius_deg": 0.075,
-        "direction_to_time_mixing_deg_per_s": 0.375e9
+        "direction_to_time_mixing_deg_per_s": 0.375e9,
     },
-
     "runs": {
         "gamma": {"num": 64, "first_run_id": 1},
         "electron": {"num": 64, "first_run_id": 1},
         "proton": {"num": 64, "first_run_id": 1},
         "helium": {"num": 64, "first_run_id": 1},
     },
-
-    "magnetic_deflection": {
-        "num_energy_supports": 512,
-        "max_energy_GeV": 64
-    },
-
+    "magnetic_deflection": {"num_energy_supports": 512, "max_energy_GeV": 64},
     "num_airshowers_per_run": 100,
-
     "artificial_core_limitation": {
         "gamma": None,
         "electron": None,
         "proton": None,
-        "helium": None
+        "helium": None,
     },
 }
 
@@ -204,151 +172,157 @@ EXAMPLE_CONFIG = {
 def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
     out_absdir = op.abspath(out_dir)
     os.makedirs(out_absdir)
-    os.makedirs(opj(out_absdir, 'input'))
+    os.makedirs(opj(out_absdir, "input"))
 
-    with open(opj(out_absdir, 'input', 'config.json'+'tmp'), "wt") as fout:
+    with open(opj(out_absdir, "input", "config.json" + "tmp"), "wt") as fout:
         fout.write(json.dumps(config, indent=4))
     shutil.move(
-        opj(out_absdir, 'input', 'config.json'+'tmp'),
-        opj(out_absdir, 'input', 'config.json'))
+        opj(out_absdir, "input", "config.json" + "tmp"),
+        opj(out_absdir, "input", "config.json"),
+    )
 
-    with open(opj(out_absdir, 'input', 'max_seed.json'+'tmp'), "wt") as fout:
-        fout.write(json.dumps({
-            "NUM_DIGITS_RUN_ID": random_seed.NUM_DIGITS_RUN_ID,
-            "NUM_DIGITS_AIRSHOWER_ID": random_seed.NUM_DIGITS_AIRSHOWER_ID,
-            }, indent=4))
+    with open(opj(out_absdir, "input", "max_seed.json" + "tmp"), "wt") as fout:
+        fout.write(
+            json.dumps(
+                {
+                    "NUM_DIGITS_RUN_ID": random_seed.NUM_DIGITS_RUN_ID,
+                    "NUM_DIGITS_AIRSHOWER_ID": random_seed.NUM_DIGITS_AIRSHOWER_ID,
+                },
+                indent=4,
+            )
+        )
     shutil.move(
-        opj(out_absdir, 'input', 'max_seed.json'+'tmp'),
-        opj(out_absdir, 'input', 'max_seed.json'))
+        opj(out_absdir, "input", "max_seed.json" + "tmp"),
+        opj(out_absdir, "input", "max_seed.json"),
+    )
 
     network_file_system.copy(
-        src=cfg_files['plenoscope_scenery_path'],
-        dst=opj(out_absdir, 'input', 'scenery'))
+        src=cfg_files["plenoscope_scenery_path"],
+        dst=opj(out_absdir, "input", "scenery"),
+    )
 
     network_file_system.copy(
-        src=cfg_files['merlict_plenoscope_propagator_config_path'],
-        dst=opj(out_absdir, 'input', 'merlict_propagation_config.json'))
+        src=cfg_files["merlict_plenoscope_propagator_config_path"],
+        dst=opj(out_absdir, "input", "merlict_propagation_config.json"),
+    )
 
 
-def _estimate_magnetic_deflection_of_air_showers(
-    cfg,
-    out_absdir,
-    pool
-):
+def _estimate_magnetic_deflection_of_air_showers(cfg, out_absdir, pool):
     qmrlog("Estimating magnetic deflection.")
-    mdfl_absdir = opj(out_absdir, 'magnetic_deflection')
+    mdfl_absdir = opj(out_absdir, "magnetic_deflection")
 
     if op.exists(mdfl_absdir):
-        sites = mdfl.read_json(opj(mdfl_absdir, 'sites.json'))
-        particles = mdfl.read_json(opj(mdfl_absdir, 'particles.json'))
-        pointing = mdfl.read_json(opj(mdfl_absdir, 'pointing.json'))
+        sites = mdfl.read_json(opj(mdfl_absdir, "sites.json"))
+        particles = mdfl.read_json(opj(mdfl_absdir, "particles.json"))
+        pointing = mdfl.read_json(opj(mdfl_absdir, "pointing.json"))
 
-        for particle in cfg['particles']:
+        for particle in cfg["particles"]:
             assert particle in particles
-        for site in cfg['sites']:
+        for site in cfg["sites"]:
             assert site in sites
         np.testing.assert_almost_equal(
-            cfg['plenoscope_pointing']['azimuth_deg'],
-            pointing['azimuth_deg'],
-            decimal=2)
+            cfg["plenoscope_pointing"]["azimuth_deg"],
+            pointing["azimuth_deg"],
+            decimal=2,
+        )
         np.testing.assert_almost_equal(
-            cfg['plenoscope_pointing']['zenith_deg'],
-            pointing['zenith_deg'],
-            decimal=2)
+            cfg["plenoscope_pointing"]["zenith_deg"],
+            pointing["zenith_deg"],
+            decimal=2,
+        )
     else:
         mdfl.A_init_work_dir(
             particles=cfg["particles"],
             sites=cfg["sites"],
             plenoscope_pointing=cfg["plenoscope_pointing"],
             max_energy=cfg["magnetic_deflection"]["max_energy_GeV"],
-            num_energy_supports=cfg[
-                "magnetic_deflection"]["num_energy_supports"],
-            work_dir=mdfl_absdir)
+            num_energy_supports=cfg["magnetic_deflection"][
+                "num_energy_supports"
+            ],
+            work_dir=mdfl_absdir,
+        )
 
-        mdfl_jobs = mdfl.B_make_jobs_from_work_dir(
-            work_dir=mdfl_absdir)
+        mdfl_jobs = mdfl.B_make_jobs_from_work_dir(work_dir=mdfl_absdir)
 
         mdfl_job_results = pool.map(mdfl.map_and_reduce.run_job, mdfl_jobs)
 
         mdfl.C_reduce_job_results_in_work_dir(
-            job_results=mdfl_job_results,
-            work_dir=mdfl_absdir)
+            job_results=mdfl_job_results, work_dir=mdfl_absdir
+        )
 
-        mdfl.D_summarize_raw_deflection(
-            work_dir=mdfl_absdir)
+        mdfl.D_summarize_raw_deflection(work_dir=mdfl_absdir)
 
 
 def _estimate_light_field_geometry_of_plenoscope(
-    cfg,
-    out_absdir,
-    pool,
-    executables
+    cfg, out_absdir, pool, executables
 ):
     qmrlog("Estimating light-field-geometry.")
 
-    if op.exists(opj(out_absdir, 'light_field_geometry')):
+    if op.exists(opj(out_absdir, "light_field_geometry")):
         assert map_and_reduce.contains_same_bytes(
+            opj(out_absdir, "input", "scenery", "scenery.json"),
             opj(
                 out_absdir,
-                'input',
-                'scenery',
-                'scenery.json'),
-            opj(
-                out_absdir,
-                'light_field_geometry',
-                'input',
-                'scenery',
-                'scenery.json'))
+                "light_field_geometry",
+                "input",
+                "scenery",
+                "scenery.json",
+            ),
+        )
     else:
         with tempfile.TemporaryDirectory(
-            prefix='light_field_geometry_',
-            dir=out_absdir
+            prefix="light_field_geometry_", dir=out_absdir
         ) as tmp_dir:
             lfg_jobs = map_and_reduce_light_field_geometry.make_jobs(
                 merlict_map_path=executables[
-                    "merlict_plenoscope_calibration_map_path"],
-                scenery_path=opj(out_absdir, 'input', 'scenery'),
+                    "merlict_plenoscope_calibration_map_path"
+                ],
+                scenery_path=opj(out_absdir, "input", "scenery"),
                 out_dir=tmp_dir,
-                num_photons_per_block=cfg[
-                    'light_field_geometry']['num_photons_per_block'],
-                num_blocks=cfg[
-                    'light_field_geometry']['num_blocks'],
-                random_seed=0)
-            _ = pool.map(
-                map_and_reduce_light_field_geometry.run_job,
-                lfg_jobs)
-            subprocess.call([
-                executables["merlict_plenoscope_calibration_reduce_path"],
-                '--input', tmp_dir,
-                '--output', opj(out_absdir, 'light_field_geometry')])
+                num_photons_per_block=cfg["light_field_geometry"][
+                    "num_photons_per_block"
+                ],
+                num_blocks=cfg["light_field_geometry"]["num_blocks"],
+                random_seed=0,
+            )
+            _ = pool.map(map_and_reduce_light_field_geometry.run_job, lfg_jobs)
+            subprocess.call(
+                [
+                    executables["merlict_plenoscope_calibration_reduce_path"],
+                    "--input",
+                    tmp_dir,
+                    "--output",
+                    opj(out_absdir, "light_field_geometry"),
+                ]
+            )
 
 
 def _estimate_trigger_geometry_of_plenoscope(
-    cfg,
-    out_absdir,
+    cfg, out_absdir,
 ):
     qmrlog("Estimating trigger-geometry.")
 
-    if not op.exists(opj(out_absdir, 'trigger_geometry')):
+    if not op.exists(opj(out_absdir, "trigger_geometry")):
         light_field_geometry = pl.LightFieldGeometry(
-            path=opj(out_absdir, 'light_field_geometry')
+            path=opj(out_absdir, "light_field_geometry")
         )
-        img = cfg['sum_trigger']['image']
+        img = cfg["sum_trigger"]["image"]
         trigger_image = pl.simple_trigger.prepare.generate_trigger_image(
-            image_outer_radius_rad=np.deg2rad(img['image_outer_radius_deg']),
-            pixel_spacing_rad=np.deg2rad(img['pixel_spacing_deg']),
-            pixel_radius_rad=np.deg2rad(img['pixel_radius_deg']),
+            image_outer_radius_rad=np.deg2rad(img["image_outer_radius_deg"]),
+            pixel_spacing_rad=np.deg2rad(img["pixel_spacing_deg"]),
+            pixel_radius_rad=np.deg2rad(img["pixel_radius_deg"]),
             max_number_nearest_lixel_in_pixel=img[
-                'max_number_nearest_lixel_in_pixel'],
+                "max_number_nearest_lixel_in_pixel"
+            ],
         )
         trigger_geometry = pl.simple_trigger.prepare.prepare_trigger_geometry(
             light_field_geometry=light_field_geometry,
             trigger_image=trigger_image,
-            object_distances=cfg['sum_trigger']['object_distances_m'],
+            object_distances=cfg["sum_trigger"]["object_distances_m"],
         )
         pl.simple_trigger.io.write_trigger_geometry_to_path(
             trigger_geometry=trigger_geometry,
-            path=opj(out_absdir, 'trigger_geometry')
+            path=opj(out_absdir, "trigger_geometry"),
         )
         tss = pl.simple_trigger.statistics.gather_summation_statistics(
             trigger_geometry=trigger_geometry
@@ -356,7 +330,7 @@ def _estimate_trigger_geometry_of_plenoscope(
         pl.plot.trigger_geometry.write_figures_to_directory(
             trigger_geometry=trigger_geometry,
             trigger_summation_statistics=tss,
-            out_dir=opj(out_absdir, 'trigger_geometry', 'plot'),
+            out_dir=opj(out_absdir, "trigger_geometry", "plot"),
         )
 
 
@@ -377,13 +351,12 @@ def _populate_table_of_thrown_air_showers(
 
     qmrlog("Write provenance.")
     json_numpy.write(
-        path=opj(table_absdir, 'provenance.json'),
-        out_dict=provenance.make_provenance()
+        path=opj(table_absdir, "provenance.json"),
+        out_dict=provenance.make_provenance(),
     )
 
     deflection = mdfl.read(
-        work_dir=opj(out_absdir, 'magnetic_deflection'),
-        style="dict",
+        work_dir=opj(out_absdir, "magnetic_deflection"), style="dict",
     )
 
     irf_jobs = []
@@ -409,41 +382,43 @@ def _populate_table_of_thrown_air_showers(
                     "plenoscope_pointing": cfg["plenoscope_pointing"],
                     "particle": cfg["particles"][particle_key],
                     "site": cfg["sites"][site_key],
-                    "site_particle_deflection": deflection[
-                        site_key][
-                        particle_key],
+                    "site_particle_deflection": deflection[site_key][
+                        particle_key
+                    ],
                     "grid": cfg["grid"],
                     "sum_trigger": cfg["sum_trigger"],
                     "cherenkov_classification": cfg[
-                        "cherenkov_classification"],
+                        "cherenkov_classification"
+                    ],
                     "corsika_primary_path": executables[
-                        "corsika_primary_path"],
+                        "corsika_primary_path"
+                    ],
                     "plenoscope_scenery_path": opj(
-                        out_absdir,
-                        'input',
-                        'scenery'),
+                        out_absdir, "input", "scenery"
+                    ),
                     "merlict_plenoscope_propagator_path": executables[
-                        "merlict_plenoscope_propagator_path"],
-                    "light_field_geometry_path":
-                        opj(out_absdir, 'light_field_geometry'),
-                    "trigger_geometry_path":
-                        opj(out_absdir, 'trigger_geometry'),
+                        "merlict_plenoscope_propagator_path"
+                    ],
+                    "light_field_geometry_path": opj(
+                        out_absdir, "light_field_geometry"
+                    ),
+                    "trigger_geometry_path": opj(
+                        out_absdir, "trigger_geometry"
+                    ),
                     "merlict_plenoscope_propagator_config_path": opj(
-                        out_absdir,
-                        'input',
-                        'merlict_propagation_config.json'),
-                    "log_dir":
-                        opj(site_particle_absdir, "log.map"),
-                    "past_trigger_dir":
-                        opj(site_particle_absdir, "past_trigger.map"),
-                    "feature_dir":
-                        opj(site_particle_absdir, "features.map"),
+                        out_absdir, "input", "merlict_propagation_config.json"
+                    ),
+                    "log_dir": opj(site_particle_absdir, "log.map"),
+                    "past_trigger_dir": opj(
+                        site_particle_absdir, "past_trigger.map"
+                    ),
+                    "feature_dir": opj(site_particle_absdir, "features.map"),
                     "keep_tmp": KEEP_TMP,
                     "tmp_dir": tmp_absdir,
                     "date": date_dict_now,
                     "artificial_core_limitation": cfg[
-                        "artificial_core_limitation"][
-                        particle_key]
+                        "artificial_core_limitation"
+                    ][particle_key],
                 }
                 run_id += 1
                 irf_jobs.append(irf_job)
@@ -451,14 +426,10 @@ def _populate_table_of_thrown_air_showers(
     random.shuffle(irf_jobs)
 
     irf_bundles = bundle.bundle_jobs(
-        jobs=irf_jobs,
-        desired_num_bunbles=num_parallel_jobs
+        jobs=irf_jobs, desired_num_bunbles=num_parallel_jobs
     )
 
-    _ = pool.map(
-        map_and_reduce.run_bundle,
-        irf_bundles
-    )
+    _ = pool.map(map_and_reduce.run_bundle, irf_bundles)
 
     qmrlog("Reduce instrument-response.")
 
@@ -471,41 +442,43 @@ def _populate_table_of_thrown_air_showers(
 
             # run-time
             # ========
-            log_abspath = opj(site_particle_absdir, 'runtime.csv')
+            log_abspath = opj(site_particle_absdir, "runtime.csv")
             if not op.exists(log_abspath) or not LAZY_REDUCTION:
                 _lop_paths = glob.glob(opj(log_absdir, "*_runtime.jsonl"))
                 logging.reduce(
-                    list_of_log_paths=_lop_paths,
-                    out_path=log_abspath)
-            qmrlog(
-                "Reduce {:s} {:s} run-time.".format(site_key, particle_key))
+                    list_of_log_paths=_lop_paths, out_path=log_abspath
+                )
+            qmrlog("Reduce {:s} {:s} run-time.".format(site_key, particle_key))
 
             # event table
             # ===========
-            event_table_abspath = opj(site_particle_absdir, 'event_table.tar')
+            event_table_abspath = opj(site_particle_absdir, "event_table.tar")
             if not op.exists(event_table_abspath) or not LAZY_REDUCTION:
                 _feature_paths = glob.glob(
-                    opj(feature_absdir, "*_event_table.tar"))
+                    opj(feature_absdir, "*_event_table.tar")
+                )
                 event_table = spt.concatenate_files(
                     list_of_table_paths=_feature_paths,
-                    structure=table.STRUCTURE)
+                    structure=table.STRUCTURE,
+                )
                 spt.write(
                     path=event_table_abspath,
                     table=event_table,
-                    structure=table.STRUCTURE)
+                    structure=table.STRUCTURE,
+                )
             qmrlog(
-                "Reduce {:s} {:s} event_table.".format(site_key, particle_key))
+                "Reduce {:s} {:s} event_table.".format(site_key, particle_key)
+            )
 
             # grid images
             # ===========
-            grid_abspath = opj(site_particle_absdir, 'grid.tar')
+            grid_abspath = opj(site_particle_absdir, "grid.tar")
             if not op.exists(grid_abspath) or not LAZY_REDUCTION:
                 _grid_paths = glob.glob(opj(feature_absdir, "*_grid.tar"))
                 grid.reduce(
-                    list_of_grid_paths=_grid_paths,
-                    out_path=grid_abspath)
-            qmrlog(
-                "Reduce {:s} {:s} grid.".format(site_key, particle_key))
+                    list_of_grid_paths=_grid_paths, out_path=grid_abspath
+                )
+            qmrlog("Reduce {:s} {:s} grid.".format(site_key, particle_key))
 
 
 def run(
@@ -540,25 +513,21 @@ def run(
         qmrlog("Use local multiprocessing-pool.")
     else:
         raise KeyError(
-            "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL))
+            "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL)
+        )
 
     qmrlog("Read config")
-    cfg = mdfl.read_json(opj(out_absdir, 'input', 'config.json'))
+    cfg = mdfl.read_json(opj(out_absdir, "input", "config.json"))
 
     _estimate_magnetic_deflection_of_air_showers(
-        cfg=cfg,
-        out_absdir=out_absdir,
-        pool=pool)
+        cfg=cfg, out_absdir=out_absdir, pool=pool
+    )
 
     _estimate_light_field_geometry_of_plenoscope(
-        cfg=cfg,
-        out_absdir=out_absdir,
-        pool=pool,
-        executables=executables)
+        cfg=cfg, out_absdir=out_absdir, pool=pool, executables=executables
+    )
 
-    _estimate_trigger_geometry_of_plenoscope(
-        cfg=cfg,
-        out_absdir=out_absdir)
+    _estimate_trigger_geometry_of_plenoscope(cfg=cfg, out_absdir=out_absdir)
 
     _populate_table_of_thrown_air_showers(
         cfg=cfg,
@@ -569,6 +538,7 @@ def run(
         KEEP_TMP=KEEP_TMP,
         date_dict_now=date_dict_now,
         LAZY_REDUCTION=LAZY_REDUCTION,
-        num_parallel_jobs=num_parallel_jobs)
+        num_parallel_jobs=num_parallel_jobs,
+    )
 
     qmrlog("End main().")

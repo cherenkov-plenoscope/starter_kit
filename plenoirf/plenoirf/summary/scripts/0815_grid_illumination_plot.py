@@ -7,7 +7,8 @@ import sparse_numeric_table as spt
 import plenoirf as irf
 
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.colors as plt_colors
 
@@ -15,50 +16,49 @@ import matplotlib.colors as plt_colors
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
-sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
+sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-trigger_threshold = sum_config['trigger']['threshold_pe']
+trigger_threshold = sum_config["trigger"]["threshold_pe"]
 trigger_modus = sum_config["trigger"]["modus"]
 energy_bin_edges_GeV = np.geomspace(
-    sum_config['energy_binning']['lower_edge_GeV'],
-    sum_config['energy_binning']['upper_edge_GeV'],
-    sum_config['energy_binning']['num_bins']['point_spread_function'] + 1
+    sum_config["energy_binning"]["lower_edge_GeV"],
+    sum_config["energy_binning"]["upper_edge_GeV"],
+    sum_config["energy_binning"]["num_bins"]["point_spread_function"] + 1,
 )
-num_grid_bins_on_edge = irf_config['grid_geometry']['num_bins_diameter']
+num_grid_bins_on_edge = irf_config["grid_geometry"]["num_bins_diameter"]
 
 MAX_AIRSHOWER_PER_ENERGY_BIN = 100
 
-MAX_CHERENKOV_INTENSITY = 10.0*irf_config[
-    'config'][
-    'grid'][
-    'threshold_num_photons']
+MAX_CHERENKOV_INTENSITY = (
+    10.0 * irf_config["config"]["grid"]["threshold_num_photons"]
+)
 
-fc16by9 = sum_config['plot']['16_by_9']
+fc16by9 = sum_config["plot"]["16_by_9"]
 fc5by4 = fc16by9.copy()
-fc5by4['cols'] = fc16by9['cols']*(9/16)*(5/4)
+fc5by4["cols"] = fc16by9["cols"] * (9 / 16) * (5 / 4)
 
-os.makedirs(pa['out_dir'], exist_ok=True)
+os.makedirs(pa["out_dir"], exist_ok=True)
 
-for site_key in irf_config['config']['sites']:
-    for particle_key in irf_config['config']['particles']:
-        prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
+for site_key in irf_config["config"]["sites"]:
+    for particle_key in irf_config["config"]["particles"]:
+        prefix_str = "{:s}_{:s}".format(site_key, particle_key)
 
         # read
         # ----
         event_table = spt.read(
             path=os.path.join(
-                pa['run_dir'],
-                'event_table',
+                pa["run_dir"],
+                "event_table",
                 site_key,
                 particle_key,
-                'event_table.tar'
+                "event_table.tar",
             ),
-            structure=irf.table.STRUCTURE
+            structure=irf.table.STRUCTURE,
         )
 
         idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
-            trigger_table=event_table['trigger'],
+            trigger_table=event_table["trigger"],
             threshold=trigger_threshold,
             modus=trigger_modus,
         )
@@ -68,26 +68,26 @@ for site_key in irf_config['config']['sites']:
             structure=irf.table.STRUCTURE,
             common_indices=idx_detected,
             level_keys=[
-                'primary',
-                'grid',
-                'core',
-                'cherenkovsize',
-                'cherenkovpool',
-                'cherenkovsizepart',
-                'cherenkovpoolpart',
-                'trigger',
-            ]
+                "primary",
+                "grid",
+                "core",
+                "cherenkovsize",
+                "cherenkovpool",
+                "cherenkovsizepart",
+                "cherenkovpoolpart",
+                "trigger",
+            ],
         )
 
         detected_grid_histograms = irf.grid.read_histograms(
             path=opj(
-                pa['run_dir'],
-                'event_table',
+                pa["run_dir"],
+                "event_table",
                 site_key,
                 particle_key,
-                'grid.tar'
+                "grid.tar",
             ),
-            indices=idx_detected
+            indices=idx_detected,
         )
 
         # summarize
@@ -98,13 +98,12 @@ for site_key in irf_config['config']['sites']:
             energy_GeV_start = energy_bin_edges_GeV[energy_idx]
             energy_GeV_stop = energy_bin_edges_GeV[energy_idx + 1]
             energy_mask = np.logical_and(
-                detected_events['primary']['energy_GeV'] > energy_GeV_start,
-                detected_events['primary']['energy_GeV'] <= energy_GeV_stop
+                detected_events["primary"]["energy_GeV"] > energy_GeV_start,
+                detected_events["primary"]["energy_GeV"] <= energy_GeV_stop,
             )
-            idx_energy_range = detected_events['primary'][energy_mask][spt.IDX]
-            grid_intensity = np.zeros((
-                num_grid_bins_on_edge,
-                num_grid_bins_on_edge)
+            idx_energy_range = detected_events["primary"][energy_mask][spt.IDX]
+            grid_intensity = np.zeros(
+                (num_grid_bins_on_edge, num_grid_bins_on_edge)
             )
             num_airshower = 0
             for idx in idx_energy_range:
@@ -134,37 +133,40 @@ for site_key in irf_config['config']['sites']:
             fig = irf.summary.figure.figure(fc5by4)
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
             ax_cb = fig.add_axes([0.85, 0.1, 0.02, 0.8])
-            ax.spines['top'].set_color('none')
-            ax.spines['right'].set_color('none')
-            ax.set_aspect('equal')
+            ax.spines["top"].set_color("none")
+            ax.spines["right"].set_color("none")
+            ax.set_aspect("equal")
             _pcm_grid = ax.pcolormesh(
-                np.array(irf_config['grid_geometry']['xy_bin_edges'])*1e-3,
-                np.array(irf_config['grid_geometry']['xy_bin_edges'])*1e-3,
+                np.array(irf_config["grid_geometry"]["xy_bin_edges"]) * 1e-3,
+                np.array(irf_config["grid_geometry"]["xy_bin_edges"]) * 1e-3,
                 np.transpose(normalized_grid_intensity),
-                norm=plt_colors.PowerNorm(gamma=1.0/4.0),
-                cmap='Blues',
+                norm=plt_colors.PowerNorm(gamma=1.0 / 4.0),
+                cmap="Blues",
                 vmin=0,
-                vmax=MAX_CHERENKOV_INTENSITY
+                vmax=MAX_CHERENKOV_INTENSITY,
             )
-            plt.colorbar(_pcm_grid, cax=ax_cb, extend='max')
+            plt.colorbar(_pcm_grid, cax=ax_cb, extend="max")
             ax.set_title(
-                'num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f} GeV'.format(
+                "num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f} GeV".format(
                     num_airshower,
                     energy_bin_edges_GeV[energy_idx],
-                    energy_bin_edges_GeV[energy_idx + 1]
+                    energy_bin_edges_GeV[energy_idx + 1],
                 ),
-                family='monospace'
+                family="monospace",
             )
-            ax.set_xlabel('$x$ / km')
-            ax.set_ylabel('$y$ / km')
-            ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
+            ax.set_xlabel("$x$ / km")
+            ax.set_ylabel("$y$ / km")
+            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
 
             plt.savefig(
                 opj(
-                    pa['out_dir'],
-                    '{:s}_{:s}_{:06d}.{:s}'.format(
+                    pa["out_dir"],
+                    "{:s}_{:s}_{:06d}.{:s}".format(
                         prefix_str,
-                        'grid_area_pasttrigger',
+                        "grid_area_pasttrigger",
                         energy_idx,
-                        fc5by4['format'])))
+                        fc5by4["format"],
+                    ),
+                )
+            )
             plt.close(fig)

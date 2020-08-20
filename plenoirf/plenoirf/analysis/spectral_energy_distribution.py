@@ -2,7 +2,7 @@ import numpy as np
 
 one_eV_in_J = 1.602176634e-19
 one_erg_in_J = 1e-7
-one_erg_in_eV = one_erg_in_J/one_eV_in_J
+one_erg_in_eV = one_erg_in_J / one_eV_in_J
 
 PLENOIRF_SED_STYLE = {
     "x_energy_in_eV": 1e9,

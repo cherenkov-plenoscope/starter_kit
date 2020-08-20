@@ -3,9 +3,7 @@ import sparse_numeric_table as spt
 
 
 def make_mask(
-    trigger_table,
-    threshold,
-    modus,
+    trigger_table, threshold, modus,
 ):
     """
     The plenoscope's trigger has written its response into the trigger-table.
@@ -14,10 +12,10 @@ def make_mask(
     object-distances.
     Based on this response, different modi for the final trigger are possible.
     """
-    accepting_focus = modus['accepting_focus']
-    rejecting_focus = modus['rejecting_focus']
-    intensity_ratio_between_foci = modus['intensity_ratio_between_foci']
-    use_rejection_focus = modus['use_rejection_focus']
+    accepting_focus = modus["accepting_focus"]
+    rejecting_focus = modus["rejecting_focus"]
+    intensity_ratio_between_foci = modus["intensity_ratio_between_foci"]
+    use_rejection_focus = modus["use_rejection_focus"]
 
     assert threshold >= 0
     assert accepting_focus >= 0
@@ -27,7 +25,7 @@ def make_mask(
         assert rejecting_focus == -1
 
     tt = trigger_table
-    KEY = 'focus_{:02d}_response_pe'
+    KEY = "focus_{:02d}_response_pe"
     accepting_key = KEY.format(accepting_focus)
     accepting_mask = tt[accepting_key] >= threshold
 
@@ -35,9 +33,10 @@ def make_mask(
         rejecting_key = KEY.format(rejecting_focus)
 
         rejecting_mask = tt[rejecting_key] < (
-            tt[accepting_key]/intensity_ratio_between_foci)
+            tt[accepting_key] / intensity_ratio_between_foci
+        )
 
-        trigger_mask = accepting_mask*rejecting_mask
+        trigger_mask = accepting_mask * rejecting_mask
     else:
         trigger_mask = accepting_mask
 
@@ -45,15 +44,9 @@ def make_mask(
 
 
 def make_indices(
-    trigger_table,
-    threshold,
-    modus,
+    trigger_table, threshold, modus,
 ):
-    mask = make_mask(
-        trigger_table,
-        threshold,
-        modus,
-    )
+    mask = make_mask(trigger_table, threshold, modus,)
     return trigger_table[spt.IDX][mask]
 
 
@@ -79,7 +72,7 @@ def make_trigger_modi(
     if add_light_field_mode:
         focus_combinations = list_trigger_focus_combinations(
             lowest_accepting_focus=lowest_accepting_focus,
-            lowest_rejecting_focus=lowest_rejecting_focus
+            lowest_rejecting_focus=lowest_rejecting_focus,
         )
         for focus_combination in focus_combinations:
             for intensity_ratio in intensity_ratios_between_foci:

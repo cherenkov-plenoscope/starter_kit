@@ -12,6 +12,7 @@ class Encoder(json.JSONEncoder):
         stackoverflow-user: tsveti_iko
 
     """
+
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)

@@ -9,17 +9,18 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
-irf_config = irf.summary.read_instrument_response_config(run_dir=pa['run_dir'])
-sum_config = irf.summary.read_summary_config(summary_dir=pa['summary_dir'])
+irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
+sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-fig_16_by_9 = sum_config['plot']['16_by_9']
+fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
 
 def read_csv_records(path):
@@ -28,9 +29,9 @@ def read_csv_records(path):
 
 def write_csv_records(path, table):
     df = pd.DataFrame(table)
-    with open(path+'.tmp', 'wt') as f:
+    with open(path + ".tmp", "wt") as f:
         f.write(df.to_csv(index=False))
-    os.rename(path+'.tmp', path)
+    os.rename(path + ".tmp", path)
 
 
 def _num_events_in_runs(event_table, level_key, run_ids, key):
@@ -58,17 +59,20 @@ def merge_event_table(runtime_table, event_table):
         event_table=event_table,
         level_key="primary",
         run_ids=runtime["run_id"],
-        key="num_events_corsika")
+        key="num_events_corsika",
+    )
     num_events_merlict = _num_events_in_runs(
         event_table=event_table,
         level_key="trigger",
         run_ids=runtime["run_id"],
-        key="num_events_merlict")
+        key="num_events_merlict",
+    )
     num_events_past_trigger = _num_events_in_runs(
         event_table=event_table,
         level_key="pasttrigger",
         run_ids=runtime["run_id"],
-        key="num_events_pasttrigger")
+        key="num_events_pasttrigger",
+    )
     rta = pd.DataFrame(runtime)
     rta = pd.merge(rta, pd.DataFrame(num_events_corsika), on=["run_id"])
     rta = pd.merge(rta, pd.DataFrame(num_events_merlict), on=["run_id"])
@@ -86,7 +90,7 @@ def write_relative_runtime(table, out_path, figure_config):
 
     relative_times = {}
     for key in irf.logging.KEYS:
-        relative_times[key] = float(total_times[key]/total_time)
+        relative_times[key] = float(total_times[key] / total_time)
 
     fig = irf.summary.figure.figure(figure_config)
     ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])
@@ -99,23 +103,24 @@ def write_relative_runtime(table, out_path, figure_config):
         x = relative_times[key]
         ax.plot(
             [0, x, x, 0],
-            [_y[ikey]-.5, _y[ikey]-.5, _y[ikey]+.5, _y[ikey]+.5],
-            "k")
-    ax.set_xlabel('relative runtime / 1')
+            [_y[ikey] - 0.5, _y[ikey] - 0.5, _y[ikey] + 0.5, _y[ikey] + 0.5],
+            "k",
+        )
+    ax.set_xlabel("relative runtime / 1")
     ax.set_yticks(_y)
     ax.set_yticklabels(labels, rotation=0)
     ax.set_xlim([0, 1])
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    ax.spines['top'].set_color('none')
-    ax.spines['right'].set_color('none')
-    out_path_jpg = out_path+'.jpg'
-    fig.savefig(out_path_jpg+".tmp.jpg")
-    os.rename(out_path_jpg+".tmp.jpg", out_path_jpg)
+    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+    ax.spines["top"].set_color("none")
+    ax.spines["right"].set_color("none")
+    out_path_jpg = out_path + ".jpg"
+    fig.savefig(out_path_jpg + ".tmp.jpg")
+    os.rename(out_path_jpg + ".tmp.jpg", out_path_jpg)
     plt.close(fig)
-    out_path_json = out_path+'.json'
-    with open(out_path_json+'.tmp', "wt") as fout:
+    out_path_json = out_path + ".json"
+    with open(out_path_json + ".tmp", "wt") as fout:
         fout.write(json.dumps(relative_times))
-    os.rename(out_path_json+'.tmp', out_path_json)
+    os.rename(out_path_json + ".tmp", out_path_json)
 
 
 def write_speed(table, out_path, figure_config):
@@ -133,9 +138,9 @@ def write_speed(table, out_path, figure_config):
         num_events = ert[speed_keys[key]]
         mask = num_events > 0
         if np.sum(mask) == 0:
-            speeds[key] = 0.
+            speeds[key] = 0.0
         else:
-            speeds[key] = float(np.mean(num_events[mask]/ert[key][mask]))
+            speeds[key] = float(np.mean(num_events[mask] / ert[key][mask]))
 
     fig = irf.summary.figure.figure(figure_config)
     ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])
@@ -148,65 +153,70 @@ def write_speed(table, out_path, figure_config):
         x = speeds[key]
         ax.plot(
             [0, x, x, 0],
-            [_y[ikey]-.5, _y[ikey]-.5, _y[ikey]+.5, _y[ikey]+.5],
-            "k")
+            [_y[ikey] - 0.5, _y[ikey] - 0.5, _y[ikey] + 0.5, _y[ikey] + 0.5],
+            "k",
+        )
     sizes = np.array(sizes)
     valid = np.logical_not(np.logical_or(np.isinf(sizes), np.isnan(sizes)))
-    ax.set_xlabel('processing-rate / events s$^{-1}$')
+    ax.set_xlabel("processing-rate / events s$^{-1}$")
     ax.set_yticks(_y)
     ax.set_yticklabels(labels, rotation=0)
-    ax.set_xlim([0, np.max(sizes[valid])*1.1])
-    ax.grid(color='k', linestyle='-', linewidth=0.66, alpha=0.1)
-    ax.spines['top'].set_color('none')
-    ax.spines['right'].set_color('none')
-    fig.savefig(out_path+'.tmp'+'.jpg')
-    os.rename(out_path+'.tmp'+'.jpg', out_path+'.jpg')
+    ax.set_xlim([0, np.max(sizes[valid]) * 1.1])
+    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+    ax.spines["top"].set_color("none")
+    ax.spines["right"].set_color("none")
+    fig.savefig(out_path + ".tmp" + ".jpg")
+    os.rename(out_path + ".tmp" + ".jpg", out_path + ".jpg")
     plt.close(fig)
-    with open(out_path+'.json'+'.tmp', "wt") as fout:
+    with open(out_path + ".json" + ".tmp", "wt") as fout:
         fout.write(json.dumps(speeds))
-    os.rename(out_path+'.json'+'.tmp', out_path+'.json')
+    os.rename(out_path + ".json" + ".tmp", out_path + ".json")
 
 
-os.makedirs(pa['out_dir'], exist_ok=True)
+os.makedirs(pa["out_dir"], exist_ok=True)
 
-for site_key in irf_config['config']['sites']:
-    for particle_key in irf_config['config']['particles']:
-        prefix_str = '{:s}_{:s}'.format(site_key, particle_key)
+for site_key in irf_config["config"]["sites"]:
+    for particle_key in irf_config["config"]["particles"]:
+        prefix_str = "{:s}_{:s}".format(site_key, particle_key)
 
-        extended_runtime_path = opj(pa['out_dir'], prefix_str+'_runtime.csv')
+        extended_runtime_path = opj(pa["out_dir"], prefix_str + "_runtime.csv")
         if os.path.exists(extended_runtime_path):
             extended_runtime_table = read_csv_records(extended_runtime_path)
         else:
             event_table = spt.read(
                 path=os.path.join(
-                    pa['run_dir'],
-                    'event_table',
+                    pa["run_dir"],
+                    "event_table",
                     site_key,
                     particle_key,
-                    'event_table.tar'
+                    "event_table.tar",
                 ),
-                structure=irf.table.STRUCTURE
+                structure=irf.table.STRUCTURE,
             )
-            runtime_table = read_csv_records(opj(
-                pa['run_dir'],
-                'event_table',
-                site_key,
-                particle_key,
-                'runtime.csv'
-            ))
+            runtime_table = read_csv_records(
+                opj(
+                    pa["run_dir"],
+                    "event_table",
+                    site_key,
+                    particle_key,
+                    "runtime.csv",
+                )
+            )
             extended_runtime_table = merge_event_table(
-                runtime_table=runtime_table,
-                event_table=event_table)
+                runtime_table=runtime_table, event_table=event_table
+            )
             write_csv_records(
-                path=extended_runtime_path,
-                table=extended_runtime_table)
+                path=extended_runtime_path, table=extended_runtime_table
+            )
 
         write_relative_runtime(
             table=extended_runtime_table,
-            out_path=opj(pa['out_dir'], prefix_str+'_relative_runtime'),
-            figure_config=fig_16_by_9)
+            out_path=opj(pa["out_dir"], prefix_str + "_relative_runtime"),
+            figure_config=fig_16_by_9,
+        )
 
         write_speed(
             table=extended_runtime_table,
-            out_path=opj(pa['out_dir'], prefix_str+'_speed_runtime'),
-            figure_config=fig_16_by_9)
+            out_path=opj(pa["out_dir"], prefix_str + "_speed_runtime"),
+            figure_config=fig_16_by_9,
+        )

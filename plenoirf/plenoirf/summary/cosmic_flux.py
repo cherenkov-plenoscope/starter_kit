@@ -19,14 +19,11 @@ def _read_raw_cosmic_ray_differential_fluxes(summary_dir):
 
 
 def _rigidity_to_total_energy(rigidity_GV):
-    return rigidity_GV*1.0
+    return rigidity_GV * 1.0
 
 
 def _read_airshower_differential_flux(
-    summary_dir,
-    energy_bin_centers,
-    sites,
-    geomagnetic_cutoff_fraction,
+    summary_dir, energy_bin_centers, sites, geomagnetic_cutoff_fraction,
 ):
     # read raw
     _raw_cosmic_rays = _read_raw_cosmic_ray_differential_fluxes(summary_dir)
@@ -35,10 +32,10 @@ def _read_airshower_differential_flux(
     cosmic_rays = {}
     for particle_key in _raw_cosmic_rays:
         cosmic_rays[particle_key] = {}
-        cosmic_rays[particle_key]['differential_flux'] = np.interp(
+        cosmic_rays[particle_key]["differential_flux"] = np.interp(
             x=energy_bin_centers,
-            xp=_raw_cosmic_rays[particle_key]['energy']['values'],
-            fp=_raw_cosmic_rays[particle_key]['differential_flux']['values']
+            xp=_raw_cosmic_rays[particle_key]["energy"]["values"],
+            fp=_raw_cosmic_rays[particle_key]["differential_flux"]["values"],
         )
 
     # earth's geomagnetic cutoff
@@ -48,18 +45,16 @@ def _read_airshower_differential_flux(
         for particle_key in cosmic_rays:
 
             cutoff_energy = _rigidity_to_total_energy(
-                rigidity_GV=sites[site_key]['geomagnetic_cutoff_rigidity_GV']
+                rigidity_GV=sites[site_key]["geomagnetic_cutoff_rigidity_GV"]
             )
 
             below_cutoff = energy_bin_centers < cutoff_energy
-            airshowers[
-                site_key][
-                particle_key] = copy.deepcopy(cosmic_rays[particle_key])
-            airshowers[
-                site_key][
-                particle_key][
-                'differential_flux'][
-                below_cutoff] *= geomagnetic_cutoff_fraction
+            airshowers[site_key][particle_key] = copy.deepcopy(
+                cosmic_rays[particle_key]
+            )
+            airshowers[site_key][particle_key]["differential_flux"][
+                below_cutoff
+            ] *= geomagnetic_cutoff_fraction
 
     return airshowers
 
@@ -75,7 +70,7 @@ def read_airshower_differential_flux_zenith_compensated(
         summary_dir=summary_dir,
         energy_bin_centers=energy_bin_centers,
         sites=sites,
-        geomagnetic_cutoff_fraction=geomagnetic_cutoff_fraction
+        geomagnetic_cutoff_fraction=geomagnetic_cutoff_fraction,
     )
 
     particles = []
@@ -85,7 +80,7 @@ def read_airshower_differential_flux_zenith_compensated(
     particles = list(set(particles))
 
     deflection_table = magnetic_deflection.read(
-        work_dir=os.path.join(run_dir, 'magnetic_deflection'),
+        work_dir=os.path.join(run_dir, "magnetic_deflection"),
     )
 
     zenith_compensated_airshower_fluxes = {}
@@ -94,48 +89,39 @@ def read_airshower_differential_flux_zenith_compensated(
         for particle_key in particles:
             zenith_compensated_airshower_fluxes[site_key][particle_key] = {}
 
-            flux = airshower_fluxes[
-                site_key][
-                particle_key][
-                'differential_flux']
+            flux = airshower_fluxes[site_key][particle_key][
+                "differential_flux"
+            ]
 
             zenith_deg = np.interp(
                 x=energy_bin_centers,
-                xp=deflection_table[
-                    site_key][
-                    particle_key][
-                    'energy_GeV'],
-                fp=deflection_table[
-                    site_key][
-                    particle_key][
-                    'primary_zenith_deg'],
+                xp=deflection_table[site_key][particle_key]["energy_GeV"],
+                fp=deflection_table[site_key][particle_key][
+                    "primary_zenith_deg"
+                ],
             )
 
             scaling = np.cos(np.deg2rad(zenith_deg))
-            comp_flux = scaling*flux
-            zenith_compensated_airshower_fluxes[
-                site_key][
-                particle_key][
-                'differential_flux'] = comp_flux
+            comp_flux = scaling * flux
+            zenith_compensated_airshower_fluxes[site_key][particle_key][
+                "differential_flux"
+            ] = comp_flux
 
     return zenith_compensated_airshower_fluxes
 
 
 def make_gamma_ray_reference_flux(
-    summary_dir,
-    gamma_ray_reference_source,
-    energy_supports_GeV,
+    summary_dir, gamma_ray_reference_source, energy_supports_GeV,
 ):
     _grrs = gamma_ray_reference_source
     if _grrs["type"] == "3fgl":
         with open(os.path.join(summary_dir, "gamma_sources.json"), "rt") as f:
             _gamma_sources = json.loads(f.read())
         for _source in _gamma_sources:
-            if _source['source_name'] == _grrs["name_3fgl"]:
+            if _source["source_name"] == _grrs["name_3fgl"]:
                 _reference_gamma_source = _source
         gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes.flux_of_fermi_source(
-            fermi_source=_reference_gamma_source,
-            energy=energy_supports_GeV
+            fermi_source=_reference_gamma_source, energy=energy_supports_GeV
         )
         source_name = _grrs["name_3fgl"]
 
@@ -145,18 +131,20 @@ def make_gamma_ray_reference_flux(
         _gpl = _grrs["generic_power_law"]
         gamma_dF_per_m2_per_s_per_GeV = cosmic_fluxes._power_law(
             energy=energy_supports_GeV,
-            flux_density=_gpl['flux_density_per_m2_per_s_per_GeV'],
-            spectral_index=_gpl['spectral_index'],
-            pivot_energy=_gpl['pivot_energy_GeV'],
+            flux_density=_gpl["flux_density_per_m2_per_s_per_GeV"],
+            spectral_index=_gpl["spectral_index"],
+            pivot_energy=_gpl["pivot_energy_GeV"],
         )
-        source_name = ''.join([
-            '$F = F_0 \\left( \\frac{E}{E_0}\\right) ^{\\gamma}$, ',
-            '$F_0$ = {:1.2f} m$^{-2}$ (GeV)$^{-1}$ s$^{-1}$, '.format(
-                _gpl['flux_density_per_m2_per_s_per_GeV']
-            ),
-            '$E_0$ = {:1.2f} GeV, '.format(_gpl['pivot_energy_GeV']),
-            '$\\gamma = {:1.2f}$'.format(_gpl['spectral_index']),
-        ])
+        source_name = "".join(
+            [
+                "$F = F_0 \\left( \\frac{E}{E_0}\\right) ^{\\gamma}$, ",
+                "$F_0$ = {:1.2f} m$^{-2}$ (GeV)$^{-1}$ s$^{-1}$, ".format(
+                    _gpl["flux_density_per_m2_per_s_per_GeV"]
+                ),
+                "$E_0$ = {:1.2f} GeV, ".format(_gpl["pivot_energy_GeV"]),
+                "$\\gamma = {:1.2f}$".format(_gpl["spectral_index"]),
+            ]
+        )
         return gamma_dF_per_m2_per_s_per_GeV, source_name
 
     else:

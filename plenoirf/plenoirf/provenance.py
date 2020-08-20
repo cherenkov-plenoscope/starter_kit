@@ -18,18 +18,15 @@ IMPORTANT_PROGRAMS = {
 }
 
 
-def _get_ascii_stdout_stderr(command, cwd='.'):
+def _get_ascii_stdout_stderr(command, cwd="."):
     pp = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=cwd,
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd,
     )
     so, se = pp.communicate()
-    return so.decode('ascii'), se.decode('ascii')
+    return so.decode("ascii"), se.decode("ascii")
 
 
-def get_ascii_stdout_stderr(command, cwd='.'):
+def get_ascii_stdout_stderr(command, cwd="."):
     try:
         return _get_ascii_stdout_stderr(command=command, cwd=cwd)
     except Exception as e:
@@ -39,13 +36,10 @@ def get_ascii_stdout_stderr(command, cwd='.'):
 
 
 def _git_last_commit_hash(path):
-    o, _ = get_ascii_stdout_stderr(
-        command=['git', 'log', '-1'],
-        cwd=path,
-    )
+    o, _ = get_ascii_stdout_stderr(command=["git", "log", "-1"], cwd=path,)
     lines = o.splitlines()
     firstline = lines[0]
-    commit_hash = firstline.split(' ')[1]
+    commit_hash = firstline.split(" ")[1]
     assert len(commit_hash) > 0
     return commit_hash
 
@@ -70,6 +64,7 @@ def get_time_dict_now():
 def get_hostname():
     try:
         import socket
+
         return socket.gethostname()
     except Exception as e:
         print(e)
@@ -80,6 +75,7 @@ def get_hostname():
 def get_username():
     try:
         import getpass
+
         return getpass.getuser()
     except Exception as e:
         print(e)
@@ -104,27 +100,26 @@ def starter_kit_abspath():
     return _p
 
 
-
 def get_current_working_directory():
     return os.getcwd()
 
 
 def make_provenance():
     p = {}
-    p['time'] = get_time_dict_now()
-    p['hostname'] = get_hostname()
-    p['username'] = get_username()
-    p['current_working_directory'] = get_current_working_directory()
-    p['which'] = {}
+    p["time"] = get_time_dict_now()
+    p["hostname"] = get_hostname()
+    p["username"] = get_username()
+    p["current_working_directory"] = get_current_working_directory()
+    p["which"] = {}
     for prg in IMPORTANT_PROGRAMS:
-        p['which'][prg] = which(prg)
+        p["which"][prg] = which(prg)
 
-    p['version'] = {}
+    p["version"] = {}
     for prg in IMPORTANT_PROGRAMS:
         _o, _ = get_ascii_stdout_stderr(
-            command=[prg, IMPORTANT_PROGRAMS[prg]['version']]
+            command=[prg, IMPORTANT_PROGRAMS[prg]["version"]]
         )
-        p['version'][prg] = _o
+        p["version"][prg] = _o
 
     p["starter_kit"] = {}
     p["starter_kit"]["path"] = starter_kit_abspath()
@@ -134,15 +129,11 @@ def make_provenance():
         path=p["starter_kit"]["path"]
     )
     p["starter_kit"]["git"]["status"] = get_ascii_stdout_stderr(
-        command=['git', 'status'],
-        cwd=p["starter_kit"]["path"]
+        command=["git", "status"], cwd=p["starter_kit"]["path"]
     )[0]
     p["starter_kit"]["git"]["diff"] = get_ascii_stdout_stderr(
-        command=['git', 'diff', '--submodule=diff'],
-        cwd=p["starter_kit"]["path"]
+        command=["git", "diff", "--submodule=diff"],
+        cwd=p["starter_kit"]["path"],
     )[0]
-
-
-
 
     return p
