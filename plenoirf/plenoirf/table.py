@@ -129,41 +129,98 @@ STRUCTURE["cherenkovclassification"] = {
 }
 
 STRUCTURE["features"] = {
-    "num_photons": {"dtype": "<i8", "comment": ""},
-    "paxel_intensity_peakness_std_over_mean": {"dtype": "<f8", "comment": ""},
-    "paxel_intensity_peakness_max_over_mean": {"dtype": "<f8", "comment": ""},
-    "paxel_intensity_median_x": {"dtype": "<f8", "comment": ""},
-    "paxel_intensity_median_y": {"dtype": "<f8", "comment": ""},
+    "num_photons": {"dtype": "<i8", "comment": "", "func": "geomspace",},
+    "paxel_intensity_peakness_std_over_mean": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "paxel_intensity_peakness_max_over_mean": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "paxel_intensity_median_x": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "paxel_intensity_median_y": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
     "aperture_num_islands_watershed_rel_thr_2": {
         "dtype": "<i8",
         "comment": "",
+        "func": "geomspace",
     },
     "aperture_num_islands_watershed_rel_thr_4": {
         "dtype": "<i8",
         "comment": "",
+        "func": "geomspace",
     },
     "aperture_num_islands_watershed_rel_thr_8": {
         "dtype": "<i8",
         "comment": "",
+        "func": "geomspace",
     },
-    "light_front_cx": {"dtype": "<f8", "comment": ""},
-    "light_front_cy": {"dtype": "<f8", "comment": ""},
-    "image_infinity_cx_mean": {"dtype": "<f8", "comment": ""},
-    "image_infinity_cy_mean": {"dtype": "<f8", "comment": ""},
-    "image_infinity_cx_std": {"dtype": "<f8", "comment": ""},
-    "image_infinity_cy_std": {"dtype": "<f8", "comment": ""},
+    "light_front_cx": {"dtype": "<f8", "comment": "", "func": "geomspace",},
+    "light_front_cy": {"dtype": "<f8", "comment": "", "func": "geomspace",},
+    "image_infinity_cx_mean": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "image_infinity_cy_mean": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "image_infinity_cx_std": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "image_infinity_cy_std": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
     "image_infinity_num_photons_on_edge_field_of_view": {
         "dtype": "<i8",
         "comment": "",
+        "func": "geomspace",
     },
-    "image_smallest_ellipse_object_distance": {"dtype": "<f8", "comment": ""},
-    "image_smallest_ellipse_solid_angle": {"dtype": "<f8", "comment": ""},
-    "image_smallest_ellipse_half_depth": {"dtype": "<f8", "comment": ""},
-    "image_half_depth_shift_cx": {"dtype": "<f8", "comment": ""},
-    "image_half_depth_shift_cy": {"dtype": "<f8", "comment": ""},
+    "image_smallest_ellipse_object_distance": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "image_smallest_ellipse_solid_angle": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "image_smallest_ellipse_half_depth": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "image_half_depth_shift_cx": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
+    "image_half_depth_shift_cy": {
+        "dtype": "<f8",
+        "comment": "",
+        "func": "geomspace",
+    },
     "image_smallest_ellipse_num_photons_on_edge_field_of_view": {
         "dtype": "<i8",
         "comment": "",
+        "func": "geomspace",
     },
-    "image_num_islands": {"dtype": "<i8", "comment": ""},
+    "image_num_islands": {"dtype": "<i8", "comment": "", "func": "geomspace",},
 }
