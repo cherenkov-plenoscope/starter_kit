@@ -13,6 +13,7 @@ from plenoirf.summary import samtex as sam
 import weasyprint
 
 FIGURE_WIDTH_PIXEL = 80
+SITE_WIDTH = FIGURE_WIDTH_PIXEL*4
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -49,7 +50,7 @@ def make_site_table(
     sites,
     energy_bin_edges,
     wild_card='{site_key:s}_key_{energy_bin_index:06d}.jpg',
-    site_width_px=FIGURE_WIDTH_PIXEL*4,
+    site_width_px=SITE_WIDTH,
 ):
     """
     num columns = len(sites)
@@ -563,6 +564,38 @@ _bd += make_site_particle_index_table(
         '{site_key:s}_{particle_key:s}_cherenkov_pool_y_m.jpg'
     )
 )
+
+_bd += sam.h('Features', level=1)
+_bd += sam.p('Reweighted to energy-spectrum of airshowers.')
+matrix = []
+for feature_key in irf.table.STRUCTURE['features']:
+
+    row = []
+    for site_key in irf_config['config']['sites']:
+        sub_row = []
+        _block = dominate.tags.div()
+        _block += sam.h(feature_key, level=3)
+        _block += sam.img(
+            src=opj("0060_plot_features", site_key+"_"+feature_key+".jpg"),
+            width_px=SITE_WIDTH
+        )
+        _block += sam.p(
+            text=irf.table.STRUCTURE['features'][feature_key]["comment"],
+            width=SITE_WIDTH,
+            font_size=60,
+            text_align='justify',
+            font_family='calibri'
+        )
+        sub_row.append(_block)
+
+        row.append(sam.table([sub_row], width_px=SITE_WIDTH))
+    matrix.append(row)
+
+_bd += sam.table(
+    matrix=matrix,
+    width_px=len(irf_config['config']['sites'])*SITE_WIDTH
+)
+
 
 
 _bd += sam.h('Runtime', level=2)

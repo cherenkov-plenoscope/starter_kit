@@ -269,10 +269,6 @@ for fk in Sfeatures:
 
         ax.spines["right"].set_visible(False)
         ax.spines["top"].set_visible(False)
-        ax.set_title(
-            "Reweighted to energy-spectrum of airshowers. "
-            "Gamma-ray-source: {:s}".format(gamma_name)
-        )
         ax.set_xlabel("{:s} / {:s}".format(fk, Sfeatures[fk]["unit"]))
         ax.set_ylabel("relative intensity / 1")
         ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
@@ -282,6 +278,7 @@ for fk in Sfeatures:
                 lims[fk][sk][pk]["bin_edges"]["stop"],
             ]
         )
+        ax.set_ylim([1e-5, 1.0])
         fig.savefig(
             os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, fk))
         )
