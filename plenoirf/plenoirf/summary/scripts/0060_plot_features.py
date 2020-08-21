@@ -142,8 +142,6 @@ for fk in Sfeatures:
             if Sfeatures[fk]["histogram"] == "geomspace":
                 start = 10 ** np.floor(np.log10(np.min(features[fk])))
                 stop = 10 ** np.ceil(np.log10(np.max(features[fk])))
-                if start == 0.0:
-                    start = 1e-3 * stop
             elif Sfeatures[fk]["histogram"] == "linspace":
                 start = np.min(features[fk])
                 stop = np.max(features[fk])

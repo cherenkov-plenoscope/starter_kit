@@ -224,7 +224,7 @@ STRUCTURE["features"]["image_infinity_cy_std"] = {
 STRUCTURE["features"]["image_infinity_num_photons_on_edge_field_of_view"] = {
     "dtype": "<i8",
     "comment": "Number of photon-eqivalents on the edge of the field-of-view in an image focused on infinity.",
-    "histogram": "geomspace",
+    "histogram": "linspace",
     "unit": "p.e.",
 }
 STRUCTURE["features"]["image_smallest_ellipse_object_distance"] = {
