@@ -173,3 +173,11 @@ def write_radial_histogram_figure(
     ax.set_ylim(ylim)
     fig.savefig(path)
     plt.close(fig)
+
+
+def mark_ax_airshower_spectrum(ax, x=0.95, y=0.95):
+    ax.text(x=x, y=y, s="cosmic", color="k", transform=ax.transAxes)
+
+
+def mark_ax_thrown_spectrum(ax, x=0.95, y=0.95):
+    ax.text(x=x, y=y, s="thrown", color="k", transform=ax.transAxes)

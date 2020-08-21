@@ -21,23 +21,29 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+weights_thrown2expected = irf.json_numpy.read_tree(
+    os.path.join(
+        pa["summary_dir"],
+        "0040_weights_from_thrown_to_expected_energy_spectrum",
+    )
+)
+
 trigger_threshold = sum_config["trigger"]["threshold_pe"]
 trigger_modus = sum_config["trigger"]["modus"]
 
 num_energy_bins = 32
-min_number_samples = 25
+min_number_samples = 100
 
 max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
 min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
 
-distance_bin_edges = np.geomspace(5e3, 5e4, num_energy_bins + 1)
+distance_bin_edges = np.geomspace(3e3, 3e4, num_energy_bins + 1)
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 fig_1_by_1 = fig_16_by_9.copy()
 fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
 
 for site_key in irf_config["config"]["sites"]:
-    # for particle_key in irf_config['config']['particles']:
     particle_key = "gamma"
     site_particle_prefix = "{:s}_{:s}".format(site_key, particle_key)
 
@@ -87,17 +93,35 @@ for site_key in irf_config["config"]["sites"]:
     true_airshower_maximum_altitude = table["cherenkovpool"]["maximum_asl_m"]
     image_smallest_ellipse_object_distance = table["features"][fk]
 
+    event_weights = np.interp(
+        x=table["primary"]["energy_GeV"],
+        fp=weights_thrown2expected[site_key][particle_key][
+            "weights_vs_energy"
+        ]["mean"],
+        xp=weights_thrown2expected[site_key][particle_key][
+            "weights_vs_energy"
+        ]["energy_GeV"],
+    )
+
     confusion_bins = np.histogram2d(
         true_airshower_maximum_altitude,
         image_smallest_ellipse_object_distance,
+        weights=event_weights,
         bins=[distance_bin_edges, distance_bin_edges],
     )[0]
     confusion_bins_exposure_bins = np.histogram(
-        true_airshower_maximum_altitude, bins=distance_bin_edges
+        true_airshower_maximum_altitude,
+        bins=distance_bin_edges,
+        weights=event_weights,
     )[0]
+    confusion_bins_exposure_bins_no_weights = np.histogram(
+        true_airshower_maximum_altitude,
+        bins=distance_bin_edges,
+    )[0]
+
     confusion_bins_normalized = confusion_bins.copy()
     for true_bin in range(num_energy_bins):
-        if confusion_bins_exposure_bins[true_bin] > min_number_samples:
+        if confusion_bins_exposure_bins_no_weights[true_bin] > min_number_samples:
             confusion_bins_normalized[
                 true_bin, :
             ] /= confusion_bins_exposure_bins[true_bin]
@@ -116,6 +140,7 @@ for site_key in irf_config["config"]["sites"]:
         norm=plt_colors.PowerNorm(gamma=0.5),
     )
     plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
+    irf.summary.figure.mark_ax_airshower_spectrum(ax=ax)
     ax.set_aspect("equal")
     ax.set_title("normalized for each column")
     ax.spines["top"].set_color("none")
@@ -130,11 +155,12 @@ for site_key in irf_config["config"]["sites"]:
     ax_h.set_ylabel("num. events / 1")
     ax_h.spines["top"].set_color("none")
     ax_h.spines["right"].set_color("none")
+    irf.summary.figure.mark_ax_thrown_spectrum(ax_h)
     ax_h.axhline(min_number_samples, linestyle=":", color="k")
     irf.summary.figure.ax_add_hist(
         ax=ax_h,
         bin_edges=distance_bin_edges,
-        bincounts=confusion_bins_exposure_bins,
+        bincounts=confusion_bins_exposure_bins_no_weights,
         linestyle="-",
         linecolor="k",
     )
