@@ -32,23 +32,33 @@ energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["upper_edge_GeV"],
     num_energy_bins + 1,
 )
-fine_energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    sum_config["energy_binning"]["num_bins"]["interpolation"] + 1,
-)
-fine_energy_bin_centers = irf.summary.bin_centers(fine_energy_bin_edges)
 
+PARTICLES = irf_config["config"]["particles"]
+SITES = irf_config["config"]["sites"]
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
+# AIRSHOWER RATES
+# ===============
+
+airshower_rates = {}
+
+_fine_energy_bin_edges = np.geomspace(
+    sum_config["energy_binning"]["lower_edge_GeV"],
+    sum_config["energy_binning"]["upper_edge_GeV"],
+    sum_config["energy_binning"]["num_bins"]["interpolation"] + 1,
+)
+airshower_rates["energy_bin_centers"] = irf.summary.bin_centers(
+    _fine_energy_bin_edges
+)
+
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
+_airshower_differential_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
     run_dir=pa["run_dir"],
     summary_dir=pa["summary_dir"],
-    energy_bin_centers=fine_energy_bin_centers,
+    energy_bin_centers=airshower_rates["energy_bin_centers"],
     sites=irf_config["config"]["sites"],
     geomagnetic_cutoff_fraction=sum_config["airshower_flux"][
         "fraction_of_flux_below_geomagnetic_cutoff"
@@ -58,29 +68,49 @@ airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensat
 # gamma-ray-flux of reference source
 # ----------------------------------
 (
-    gamma_differential_flux_per_m2_per_s_per_GeV,
-    gamma_name,
+    _gamma_differential_flux_per_m2_per_s_per_GeV,
+    _gamma_name,
 ) = irf.summary.make_gamma_ray_reference_flux(
     summary_dir=pa["summary_dir"],
     gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
-    energy_supports_GeV=fine_energy_bin_centers,
+    energy_supports_GeV=airshower_rates["energy_bin_centers"],
 )
-
-PARTICLES = irf_config["config"]["particles"]
-SITES = irf_config["config"]["sites"]
-
 for sk in SITES:
-    airshower_fluxes[sk]["gamma"] = {
-        "differential_flux": gamma_differential_flux_per_m2_per_s_per_GeV,
+    _airshower_differential_fluxes[sk]["gamma"] = {
+        "differential_flux": _gamma_differential_flux_per_m2_per_s_per_GeV,
     }
 
+airshower_rates["rates"] = {}
+for sk in SITES:
+    airshower_rates["rates"][sk] = {}
+    for pk in PARTICLES:
+        airshower_rates["rates"][sk][pk] = (
+            airshower_rates["energy_bin_centers"]
+            * _airshower_differential_fluxes[sk][pk]["differential_flux"]
+        )
+
+# Read features
+# =============
+
 tables = {}
-reweight_spectrum = {}
+
+thrown_spectrum = {}
+thrown_spectrum["energy_bin_edges"] = energy_bin_edges
+thrown_spectrum["energy_bin_centers"] = irf.summary.bin_centers(
+    thrown_spectrum["energy_bin_edges"]
+)
+thrown_spectrum["rates"] = {}
+
+energy_ranges = {}
+
 for sk in SITES:
     tables[sk] = {}
-    reweight_spectrum[sk] = {}
+    thrown_spectrum["rates"][sk] = {}
+    energy_ranges[sk] = {}
     for pk in PARTICLES:
-        reweight_spectrum[sk][pk] = {}
+        thrown_spectrum["rates"][sk][pk] = {}
+        energy_ranges[sk][pk] = {}
+
         _table = spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
@@ -88,16 +118,12 @@ for sk in SITES:
             structure=irf.table.STRUCTURE,
         )
 
-        reweight_spectrum[sk][pk]["energy_bin_edges"] = energy_bin_edges
-        reweight_spectrum[sk][pk]["energy_min"] = np.min(
-            _table["primary"]["energy_GeV"]
-        )
-        reweight_spectrum[sk][pk]["energy_max"] = np.max(
-            _table["primary"]["energy_GeV"]
-        )
-        reweight_spectrum[sk][pk]["histogram_energy_thrown"] = np.histogram(
-            _table["primary"]["energy_GeV"], bins=energy_bin_edges,
+        thrown_spectrum["rates"][sk][pk] = np.histogram(
+            _table["primary"]["energy_GeV"],
+            bins=thrown_spectrum["energy_bin_edges"],
         )[0]
+        energy_ranges[sk][pk]["min"] = np.min(_table["primary"]["energy_GeV"])
+        energy_ranges[sk][pk]["max"] = np.max(_table["primary"]["energy_GeV"])
 
         idx_triggered = irf.analysis.light_field_trigger_modi.make_indices(
             trigger_table=_table["trigger"],
@@ -163,19 +189,15 @@ for fk in Sfeatures:
             lims[fk][sk][pk]["bin_edges"]["start"] = start
             lims[fk][sk][pk]["bin_edges"]["num"] = num
 
-
+reweight_spectrum = {}
 for sk in SITES:
+    reweight_spectrum[sk] = {}
     for pk in PARTICLES:
-        reweight_spectrum[sk][pk][
-            "weights"
-        ] = irf.analysis.reweight_energy_spectrum(
-            initial_energies=irf.summary.bin_centers(
-                reweight_spectrum[sk][pk]["energy_bin_edges"]
-            ),
-            initial_rates=reweight_spectrum[sk][pk]["histogram_energy_thrown"],
-            target_energies=fine_energy_bin_centers,
-            target_rates=airshower_fluxes[sk][pk]["differential_flux"]
-            * fine_energy_bin_centers,
+        reweight_spectrum[sk][pk] = irf.analysis.reweight_energy_spectrum(
+            initial_energies=thrown_spectrum["energy_bin_centers"],
+            initial_rates=thrown_spectrum["rates"][sk][pk],
+            target_energies=airshower_rates["energy_bin_centers"],
+            target_rates=airshower_rates["rates"][sk][pk],
             event_energies=tables[sk][pk]["primary"]["energy_GeV"],
         )
 
@@ -184,18 +206,13 @@ for sk in SITES:
 
     for pk in PARTICLES:
         w_energies = np.geomspace(
-            reweight_spectrum[sk][pk]["energy_min"],
-            reweight_spectrum[sk][pk]["energy_max"],
-            1024,
+            energy_ranges[sk][pk]["min"], energy_ranges[sk][pk]["max"], 1024,
         )
         w_weights = irf.analysis.reweight_energy_spectrum(
-            initial_energies=irf.summary.bin_centers(
-                reweight_spectrum[sk][pk]["energy_bin_edges"]
-            ),
-            initial_rates=reweight_spectrum[sk][pk]["histogram_energy_thrown"],
-            target_energies=fine_energy_bin_centers,
-            target_rates=airshower_fluxes[sk][pk]["differential_flux"]
-            * fine_energy_bin_centers,
+            initial_energies=thrown_spectrum["energy_bin_centers"],
+            initial_rates=thrown_spectrum["rates"][sk][pk],
+            target_energies=airshower_rates["energy_bin_centers"],
+            target_rates=airshower_rates["rates"][sk][pk],
             event_energies=w_energies,
         )
 
@@ -238,10 +255,10 @@ for fk in Sfeatures:
             )[0]
             bin_counts_weight_fk = np.histogram(
                 tables[sk][pk]["features"][fk],
-                weights=reweight_spectrum[sk][pk]["weights"],
+                weights=reweight_spectrum[sk][pk],
                 bins=bin_edges_fk,
             )[0]
-            with np.errstate(divide="warn"):
+            with np.errstate(divide="ignore"):
                 bin_counts_unc_fk = np.sqrt(bin_counts_fk) / bin_counts_fk
                 bin_counts_weight_norm_fk = bin_counts_weight_fk / np.sum(
                     bin_counts_weight_fk

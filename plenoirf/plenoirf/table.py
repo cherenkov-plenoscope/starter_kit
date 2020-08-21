@@ -264,7 +264,7 @@ STRUCTURE["features"][
 ] = {
     "dtype": "<i8",
     "comment": "Number of photon-eqivalents on the edge of the field-of-view in an image focused to the smallest Hillas-ellipse.",
-    "histogram": "geomspace",
+    "histogram": "linspace",
     "unit": "p.e.",
 }
 STRUCTURE["features"]["image_num_islands"] = {
