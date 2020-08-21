@@ -3,23 +3,22 @@ from .effective_quantity import _divide_silent
 
 
 def reweight_energy_spectrum(
-    initial_energy_bin_centers,
-    initial_rate,
-    target_energy_bin_centers,
-    target_rate,
-    energies_of_events,
+    initial_energies,
+    initial_rates,
+    target_energies,
+    target_rates,
+    event_energies,
 ):
-    relative_target_rate = target_rate / np.sum(target_rate)
-    relative_initial_rate = initial_rate / np.sum(initial_rate)
+    assert len(initial_energies) == len(initial_rates)
+    assert len(target_energies) == len(target_rates)
+
+    relative_target_rate = target_rates / np.sum(target_rates)
+    relative_initial_rate = initial_rates / np.sum(initial_rates)
     relative_initial_aban = np.interp(
-        x=energies_of_events,
-        xp=initial_energy_bin_centers,
-        fp=relative_initial_rate,
+        x=event_energies, xp=initial_energies, fp=relative_initial_rate,
     )
     relative_target_aban = np.interp(
-        x=energies_of_events,
-        xp=target_energy_bin_centers,
-        fp=relative_target_rate,
+        x=event_energies, xp=target_energies, fp=relative_target_rate,
     )
     weights = _divide_silent(
         numerator=relative_target_aban,

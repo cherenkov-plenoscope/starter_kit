@@ -171,13 +171,14 @@ for sk in SITES:
         reweight_spectrum[sk][pk][
             "weights"
         ] = irf.analysis.reweight_energy_spectrum(
-            initial_energy_bin_centers=irf.summary.bin_centers(
+            initial_energies=irf.summary.bin_centers(
                 reweight_spectrum[sk][pk]["energy_bin_edges"]
             ),
-            initial_rate=reweight_spectrum[sk][pk]["histogram_energy_thrown"],
-            target_energy_bin_centers=fine_energy_bin_centers,
-            target_rate=airshower_fluxes[sk][pk]["differential_flux"],
-            energies_of_events=tables[sk][pk]["primary"]["energy_GeV"],
+            initial_rates=reweight_spectrum[sk][pk]["histogram_energy_thrown"],
+            target_energies=fine_energy_bin_centers,
+            target_rates=airshower_fluxes[sk][pk]["differential_flux"]
+            * fine_energy_bin_centers,
+            event_energies=tables[sk][pk]["primary"]["energy_GeV"],
         )
 
     fig = irf.summary.figure.figure(fig_16_by_9)
@@ -190,13 +191,14 @@ for sk in SITES:
             1024,
         )
         w_weights = irf.analysis.reweight_energy_spectrum(
-            initial_energy_bin_centers=irf.summary.bin_centers(
+            initial_energies=irf.summary.bin_centers(
                 reweight_spectrum[sk][pk]["energy_bin_edges"]
             ),
-            initial_rate=reweight_spectrum[sk][pk]["histogram_energy_thrown"],
-            target_energy_bin_centers=fine_energy_bin_centers,
-            target_rate=airshower_fluxes[sk][pk]["differential_flux"],
-            energies_of_events=w_energies,
+            initial_rates=reweight_spectrum[sk][pk]["histogram_energy_thrown"],
+            target_energies=fine_energy_bin_centers,
+            target_rates=airshower_fluxes[sk][pk]["differential_flux"]
+            * fine_energy_bin_centers,
+            event_energies=w_energies,
         )
 
         ax.plot(
