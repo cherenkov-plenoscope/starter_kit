@@ -115,13 +115,15 @@ for site_key in irf_config["config"]["sites"]:
         weights=event_weights,
     )[0]
     confusion_bins_exposure_bins_no_weights = np.histogram(
-        true_airshower_maximum_altitude,
-        bins=distance_bin_edges,
+        true_airshower_maximum_altitude, bins=distance_bin_edges,
     )[0]
 
     confusion_bins_normalized = confusion_bins.copy()
     for true_bin in range(num_energy_bins):
-        if confusion_bins_exposure_bins_no_weights[true_bin] > min_number_samples:
+        if (
+            confusion_bins_exposure_bins_no_weights[true_bin]
+            > min_number_samples
+        ):
             confusion_bins_normalized[
                 true_bin, :
             ] /= confusion_bins_exposure_bins[true_bin]
@@ -130,7 +132,7 @@ for site_key in irf_config["config"]["sites"]:
 
     fig = irf.summary.figure.figure(fig_1_by_1)
     ax = fig.add_axes([0.1, 0.23, 0.7, 0.7])
-    ax_h = fig.add_axes([0.1, 0.08, 0.7, 0.1])
+    ax_h = fig.add_axes([0.1, 0.07, 0.7, 0.1])
     ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
     _pcm_confusion = ax.pcolormesh(
         distance_bin_edges,

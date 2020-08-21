@@ -175,9 +175,23 @@ def write_radial_histogram_figure(
     plt.close(fig)
 
 
-def mark_ax_airshower_spectrum(ax, x=0.95, y=0.95):
-    ax.text(x=x, y=y, s="cosmic", color="k", transform=ax.transAxes)
+def mark_ax_airshower_spectrum(ax, x=0.93, y=0.93, fontsize=42):
+    ax.text(
+        x=x,
+        y=y,
+        s=r"$\star$",
+        color="k",
+        transform=ax.transAxes,
+        fontsize=fontsize,
+    )
 
 
-def mark_ax_thrown_spectrum(ax, x=0.95, y=0.95):
-    ax.text(x=x, y=y, s="thrown", color="k", transform=ax.transAxes)
+def mark_ax_thrown_spectrum(ax, x=0.93, y=0.93, fontsize=42):
+    ax.text(
+        x=x,
+        y=y,
+        s=r"$\bullet$",
+        color="k",
+        transform=ax.transAxes,
+        fontsize=fontsize,
+    )
