@@ -550,7 +550,7 @@ for feature_key in irf.table.STRUCTURE["features"]:
         _block += sam.h(feature_key, level=3)
         _block += sam.img(
             src=opj(
-                "0060_plot_features", site_key + "_" + feature_key + ".jpg"
+                "0061_plot_features", site_key + "_" + feature_key + ".jpg"
             ),
             width_px=SITE_WIDTH,
         )
