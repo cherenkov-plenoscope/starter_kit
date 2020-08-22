@@ -302,7 +302,7 @@ def _guess_summary_config(run_dir):
         "gamma_ray_source_direction": {
             "max_angle_relative_to_pointing_deg": fov_radius_deg - 0.5,
         },
-        "training_and_test": {"test_size": 0.5},
+        "train_and_test": {"test_size": 0.5},
         "gamma_hadron_seperation": {"gammaness_threshold": 0.5},
         "random_seed": 1,
         "quality": {
