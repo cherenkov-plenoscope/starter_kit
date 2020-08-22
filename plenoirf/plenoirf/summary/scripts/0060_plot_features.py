@@ -101,12 +101,24 @@ for fk in Sfeatures:
             lims[fk][sk][pk]["bin_edges"] = {}
             lims[fk][sk][pk]["bin_edges"]["num"] = num_bin_edges
 
+            (
+                start,
+                stop,
+            ) = irf.analysis.machine_learning.range_of_values_within_containment(
+                values=features[fk], containment_factor=0.99
+            )
             if Sfeatures[fk]["histogram"] == "geomspace":
-                start = 10 ** np.floor(np.log10(np.min(features[fk])))
-                stop = 10 ** np.ceil(np.log10(np.max(features[fk])))
+                start = 10 ** np.floor(np.log10(start))
+                stop = 10 ** np.ceil(np.log10(stop))
             elif Sfeatures[fk]["histogram"] == "linspace":
-                start = np.min(features[fk])
-                stop = np.max(features[fk])
+                if start >= 0.0:
+                    start = 0.9 * start
+                else:
+                    start = 1.1 * start
+                if stop >= 0.0:
+                    stop = 1.1 * stop
+                else:
+                    stop = 0.9 * stop
 
             lims[fk][sk][pk]["bin_edges"]["start"] = start
             lims[fk][sk][pk]["bin_edges"]["stop"] = stop
