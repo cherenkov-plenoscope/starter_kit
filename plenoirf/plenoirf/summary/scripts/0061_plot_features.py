@@ -104,13 +104,13 @@ for fk in Sfeatures:
             (
                 start,
                 stop,
-            ) = irf.analysis.machine_learning.range_of_values_within_containment(
-                values=features[fk], containment_factor=0.99
+            ) = irf.analysis.machine_learning.range_of_values_in_quantile(
+                values=features[fk], quantile_range=[0.01, 0.99]
             )
-            if Sfeatures[fk]["histogram"] == "geomspace":
+            if "log(x)" in Sfeatures[fk]["transformation"]["function"]:
                 start = 10 ** np.floor(np.log10(start))
                 stop = 10 ** np.ceil(np.log10(stop))
-            elif Sfeatures[fk]["histogram"] == "linspace":
+            else:
                 if start >= 0.0:
                     start = 0.9 * start
                 else:
@@ -155,9 +155,9 @@ for fk in Sfeatures:
                 ],
             )
 
-            if Sfeatures[fk]["histogram"] == "geomspace":
+            if "log(x)" in Sfeatures[fk]["transformation"]["function"]:
                 myspace = np.geomspace
-            elif Sfeatures[fk]["histogram"] == "linspace":
+            else:
                 myspace = np.linspace
 
             bin_edges_fk = myspace(
@@ -194,9 +194,9 @@ for fk in Sfeatures:
                 face_alpha=0.3,
             )
 
-        if Sfeatures[fk]["histogram"] == "geomspace":
+        if "log(x)" in Sfeatures[fk]["transformation"]["function"]:
             ax.loglog()
-        elif Sfeatures[fk]["histogram"] == "linspace":
+        else:
             ax.semilogy()
 
         irf.summary.figure.mark_ax_airshower_spectrum(ax=ax)
