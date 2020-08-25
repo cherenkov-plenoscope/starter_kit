@@ -101,10 +101,7 @@ for fk in Sfeatures:
             lims[fk][sk][pk]["bin_edges"] = {}
             lims[fk][sk][pk]["bin_edges"]["num"] = num_bin_edges
 
-            (
-                start,
-                stop,
-            ) = irf.analysis.machine_learning.range_of_values_in_quantile(
+            start, stop = irf.features.find_values_quantile_range(
                 values=features[fk], quantile_range=[0.01, 0.99]
             )
             if "log(x)" in Sfeatures[fk]["transformation"]["function"]:
@@ -173,11 +170,17 @@ for fk in Sfeatures:
                 weights=reweight_spectrum,
                 bins=bin_edges_fk,
             )[0]
-            with np.errstate(divide="ignore"):
-                bin_counts_unc_fk = np.sqrt(bin_counts_fk) / bin_counts_fk
-                bin_counts_weight_norm_fk = bin_counts_weight_fk / np.sum(
-                    bin_counts_weight_fk
-                )
+
+            bin_counts_unc_fk = irf.analysis.effective_quantity._divide_silent(
+                numerator=np.sqrt(bin_counts_fk),
+                denominator=bin_counts_fk,
+                default=np.nan,
+            )
+            bin_counts_weight_norm_fk = irf.analysis.effective_quantity._divide_silent(
+                numerator=bin_counts_weight_fk,
+                denominator=np.sum(bin_counts_weight_fk),
+                default=0,
+            )
 
             irf.summary.figure.ax_add_hist(
                 ax=ax,

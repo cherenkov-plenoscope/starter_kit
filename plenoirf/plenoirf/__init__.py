@@ -1,5 +1,6 @@
 from . import summary
 from . import analysis
+from . import features
 from . import table
 from . import random_seed
 from . import grid

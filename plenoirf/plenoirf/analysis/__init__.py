@@ -2,7 +2,6 @@ from . import effective_quantity
 from . import light_field_trigger_modi
 from . import gamma_direction
 from . import cuts
-from . import machine_learning
 from . import spectral_energy_distribution
 from .integral_spectral_exclusion_zone import (
     estimate_integral_spectral_exclusion_zone,

@@ -29,135 +29,17 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
 ORIGINAL_FEATURES = irf.table.STRUCTURE["features"]
+COMBINED_FEATURES = irf.features.combined_features.COMBINED_FEATURES
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 
-def generate_diff_image_and_light_front(features):
-    f_raw = np.hypot(
-        features["image_infinity_cx_mean"] - features["light_front_cx"],
-        features["image_infinity_cy_mean"] - features["light_front_cy"],
-    )
-    return f_raw
-
-
-def generate_paxel_intensity_offset(features):
-    slope = np.hypot(
-        features["paxel_intensity_median_x"],
-        features["paxel_intensity_median_y"],
-    )
-    return np.sqrt(slope)
-
-
-def generate_image_infinity_std_density(features):
-    std = np.hypot(
-        features["image_infinity_cx_std"], features["image_infinity_cx_std"]
-    )
-    return np.log10(features["num_photons"]) / std ** 2.0
-
-
-def generate_A1(features):
-    shift = np.hypot(
-        features["image_half_depth_shift_cx"],
-        features["image_half_depth_shift_cy"],
-    )
-    return (
-        features["num_photons"]
-        * shift
-        / features["image_smallest_ellipse_half_depth"]
-    )
-
-
-def generate_A2(features):
-    return (
-        features["num_photons"]
-        / features["image_smallest_ellipse_object_distance"] ** 2.0
-    )
-
-
-def generate_A3(features):
-    return features["paxel_intensity_peakness_std_over_mean"] / np.log10(
-        features["image_smallest_ellipse_object_distance"]
-    )
-
-
-combined_features = {
-    "diff_image_and_light_front": {
-        "generator": generate_diff_image_and_light_front,
-        "dtype": "<f8",
-        "unit": "rad",
-        "transformation": {
-            "function": "log(x)",
-            "shift": "mean(x)",
-            "scale": "std(x)",
-            "quantile_range": [0.01, 0.99],
-        },
-    },
-    "paxel_intensity_offset": {
-        "generator": generate_paxel_intensity_offset,
-        "dtype": "<f8",
-        "unit": "$m^{1/2}$",
-        "transformation": {
-            "function": "log(x)",
-            "shift": "mean(x)",
-            "scale": "std(x)",
-            "quantile_range": [0.01, 0.99],
-        },
-    },
-    "image_infinity_std_density": {
-        "generator": generate_image_infinity_std_density,
-        "dtype": "<f8",
-        "unit": "$sr^{-1}$",
-        "transformation": {
-            "function": "log(x)",
-            "shift": "mean(x)",
-            "scale": "std(x)",
-            "quantile_range": [0.01, 0.99],
-        },
-    },
-    "A1": {
-        "generator": generate_A1,
-        "dtype": "<f8",
-        "unit": "$sr m^{-1}$",
-        "transformation": {
-            "function": "log(x)",
-            "shift": "mean(x)",
-            "scale": "std(x)",
-            "quantile_range": [0.01, 0.99],
-        },
-    },
-    "A2": {
-        "generator": generate_A2,
-        "dtype": "<f8",
-        "unit": "$m^{-2}$",
-        "transformation": {
-            "function": "log(x)",
-            "shift": "mean(x)",
-            "scale": "std(x)",
-            "quantile_range": [0.01, 0.99],
-        },
-    },
-    "A3": {
-        "generator": generate_A3,
-        "dtype": "<f8",
-        "unit": "$1$",
-        "transformation": {
-            "function": "x",
-            "shift": "mean(x)",
-            "scale": "std(x)",
-            "quantile_range": [0.01, 0.99],
-        },
-    },
-}
-
-
 FEATURES = {}
 for fk in ORIGINAL_FEATURES:
     FEATURES[fk] = dict(ORIGINAL_FEATURES[fk])
-for fk in combined_features:
-    FEATURES[fk] = dict(combined_features[fk])
-
+for fk in COMBINED_FEATURES:
+    FEATURES[fk] = dict(COMBINED_FEATURES[fk])
 
 sfs = {}
 for sk in SITES:
@@ -178,49 +60,11 @@ for sk in SITES:
             if fk in ORIGINAL_FEATURES:
                 f_raw = features[fk]
             else:
-                f_raw = combined_features[fk]["generator"](features)
+                f_raw = COMBINED_FEATURES[fk]["generator"](features)
 
-            # replace
-
-            # apply function
-            func = irf.analysis.machine_learning.function_from_string(
-                function_string=FEATURES[fk]["transformation"]["function"]
-            )
-            f_trans = func(f_raw)
-            sfs[sk][fk]["function"] = FEATURES[fk]["transformation"][
-                "function"
-            ]
-
-            # find quantile
-
-            (
-                start,
-                stop,
-            ) = irf.analysis.machine_learning.range_of_values_in_quantile(
-                values=f_trans,
-                quantile_range=FEATURES[fk]["transformation"][
-                    "quantile_range"
-                ],
-            )
-            mask_quanitle = np.logical_and(f_trans >= start, f_trans <= stop)
-            sfs[sk][fk]["quantile_range"] = [start, stop]
-
-            # scale
-
-            shift_func = irf.analysis.machine_learning.function_from_string(
-                function_string=FEATURES[fk]["transformation"]["shift"]
-            )
-            scale_func = irf.analysis.machine_learning.function_from_string(
-                function_string=FEATURES[fk]["transformation"]["scale"]
-            )
-
-            sfs[sk][fk]["shift"] = shift_func(f_trans[mask_quanitle])
-            sfs[sk][fk]["scale"] = scale_func(f_trans[mask_quanitle])
-
-            f_scaled = (f_trans - sfs[sk][fk]["shift"]) / sfs[sk][fk]["scale"]
-
-            print(
-                sk, pk, fk, np.min(f_raw), start, stop, np.max(f_raw),
+            sfs[sk][fk] = irf.features.find_transformation(
+                feature_raw=f_raw,
+                transformation_instruction=FEATURES[fk]["transformation"],
             )
 
 
@@ -242,17 +86,11 @@ for sk in SITES:
             if fk in ORIGINAL_FEATURES:
                 f_raw = features[fk]
             else:
-                f_raw = combined_features[fk]["generator"](features)
+                f_raw = COMBINED_FEATURES[fk]["generator"](features)
 
-            # replace
-            # apply function
-            func = irf.analysis.machine_learning.function_from_string(
-                function_string=FEATURES[fk]["transformation"]["function"]
+            transformed_features[sk][pk][fk] = irf.features.transform(
+                feature_raw=f_raw, transformation=sfs[sk][fk]
             )
-            f_trans = func(f_raw)
-            # scale
-            f_scaled = (f_trans - sfs[sk][fk]["shift"]) / sfs[sk][fk]["scale"]
-            transformed_features[sk][pk][fk] = f_scaled
 
 
 for sk in SITES:
@@ -273,9 +111,17 @@ for sk in SITES:
                 bin_counts_fk = np.histogram(
                     transformed_features[sk][pk][fk], bins=bin_edges_fk
                 )[0]
-                with np.errstate(divide="ignore"):
-                    bin_counts_unc_fk = np.sqrt(bin_counts_fk) / bin_counts_fk
-                    bin_counts_norm_fk = bin_counts_fk / np.sum(bin_counts_fk)
+
+                bin_counts_unc_fk = irf.analysis.effective_quantity._divide_silent(
+                    numerator=np.sqrt(bin_counts_fk),
+                    denominator=bin_counts_fk,
+                    default=np.nan,
+                )
+                bin_counts_norm_fk = irf.analysis.effective_quantity._divide_silent(
+                    numerator=bin_counts_fk,
+                    denominator=np.sum(bin_counts_fk),
+                    default=0,
+                )
 
                 irf.summary.figure.ax_add_hist(
                     ax=ax,
