@@ -3,14 +3,7 @@ import sys
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
-import sympy
-from sympy.parsing.sympy_parser import parse_expr
-from sympy.abc import x
-from sympy import lambdify
-
-import sklearn
-from sklearn import neural_network
-from sklearn import gaussian_process
+import pandas
 
 import matplotlib
 
@@ -41,9 +34,16 @@ for fk in ORIGINAL_FEATURES:
 for fk in COMBINED_FEATURES:
     FEATURES[fk] = dict(COMBINED_FEATURES[fk])
 
-sfs = {}
+TRANSFORMED_FEATURE_STRUCTURE = {"transformed_features": {}}
+for fk in FEATURES:
+    TRANSFORMED_FEATURE_STRUCTURE["transformed_features"][fk] = {
+        "dtype": "<f8"
+    }
+
+
+ft_trafo = {}
 for sk in SITES:
-    sfs[sk] = {}
+    ft_trafo[sk] = {}
     for pk in ["gamma"]:
 
         features = spt.read(
@@ -55,14 +55,13 @@ for sk in SITES:
 
         for fk in FEATURES:
             print(sk, pk, fk)
-            sfs[sk][fk] = {}
 
             if fk in ORIGINAL_FEATURES:
                 f_raw = features[fk]
             else:
                 f_raw = COMBINED_FEATURES[fk]["generator"](features)
 
-            sfs[sk][fk] = irf.features.find_transformation(
+            ft_trafo[sk][fk] = irf.features.find_transformation(
                 feature_raw=f_raw,
                 transformation_instruction=FEATURES[fk]["transformation"],
             )
@@ -80,6 +79,7 @@ for sk in SITES:
             ),
             structure=irf.table.STRUCTURE,
         )["features"]
+        transformed_features[sk][pk][spt.IDX] = np.array(features[spt.IDX])
 
         for fk in FEATURES:
 
@@ -89,12 +89,22 @@ for sk in SITES:
                 f_raw = COMBINED_FEATURES[fk]["generator"](features)
 
             transformed_features[sk][pk][fk] = irf.features.transform(
-                feature_raw=f_raw, transformation=sfs[sk][fk]
+                feature_raw=f_raw, transformation=ft_trafo[sk][fk]
             )
+
+        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
+        os.makedirs(site_particle_dir, exist_ok=True)
+
+        out_table = spt.dict_to_recarray(transformed_features[sk][pk])
+        spt.write(
+            path=os.path.join(site_particle_dir, "transformed_features.tar"),
+            table={"transformed_features": out_table},
+            structure=TRANSFORMED_FEATURE_STRUCTURE,
+        )
 
 
 for sk in SITES:
-    for fk in transformed_features[sk]["gamma"]:
+    for fk in FEATURES:
 
         fig_path = os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, fk))
 

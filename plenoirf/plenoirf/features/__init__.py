@@ -58,6 +58,8 @@ def find_transformation(feature_raw, transformation_instruction):
     start, stop = find_values_quantile_range(
         values=f_trans, quantile_range=ti["quantile_range"],
     )
+    transformation["quantile_range"] = ti["quantile_range"]
+    transformation["range"] = [start, stop]
     mask_quanitle = np.logical_and(f_trans >= start, f_trans <= stop)
 
     # scale
