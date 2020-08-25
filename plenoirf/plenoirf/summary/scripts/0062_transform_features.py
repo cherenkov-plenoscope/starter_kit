@@ -56,7 +56,9 @@ for sk in SITES:
                 function_string=FEATURES[fk]["transformation"]["function"]
             )
             f_trans = func(f_raw)
-            sfs[sk][pk][fk]["function"] = FEATURES[fk]["transformation"]["function"]
+            sfs[sk][pk][fk]["function"] = FEATURES[fk]["transformation"][
+                "function"
+            ]
 
             # find quantile
 
@@ -66,10 +68,7 @@ for sk in SITES:
             ) = irf.analysis.machine_learning.range_of_values_in_quantile(
                 values=f_trans, quantile_range=[0.01, 0.99]
             )
-            mask_quanitle = np.logical_and(
-                f_trans >= start,
-                f_trans <= stop
-            )
+            mask_quanitle = np.logical_and(f_trans >= start, f_trans <= stop)
             sfs[sk][pk][fk]["start"] = start
             sfs[sk][pk][fk]["stop"] = stop
 
@@ -81,7 +80,7 @@ for sk in SITES:
             sfs[sk][pk][fk]["mean"] = mean
             sfs[sk][pk][fk]["std"] = std
 
-            f_scaled = (f_trans - mean)/std
+            f_scaled = (f_trans - mean) / std
 
             print(
                 sk,
