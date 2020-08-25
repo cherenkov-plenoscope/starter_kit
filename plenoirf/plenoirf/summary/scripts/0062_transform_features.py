@@ -45,17 +45,16 @@ def generate_diff_image_and_light_front(features):
 def generate_paxel_intensity_offset(features):
     slope = np.hypot(
         features["paxel_intensity_median_x"],
-        features["paxel_intensity_median_y"]
+        features["paxel_intensity_median_y"],
     )
     return np.sqrt(slope)
 
 
 def generate_image_infinity_std_density(features):
     std = np.hypot(
-        features["image_infinity_cx_std"],
-        features["image_infinity_cx_std"]
+        features["image_infinity_cx_std"], features["image_infinity_cx_std"]
     )
-    return np.log10(features["num_photons"])/std**2.0
+    return np.log10(features["num_photons"]) / std ** 2.0
 
 
 def generate_A1(features):
@@ -64,25 +63,23 @@ def generate_A1(features):
         features["image_half_depth_shift_cy"],
     )
     return (
-        features["num_photons"] * shift /
-        features["image_smallest_ellipse_half_depth"]
+        features["num_photons"]
+        * shift
+        / features["image_smallest_ellipse_half_depth"]
     )
 
 
 def generate_A2(features):
     return (
-        features["num_photons"] /
-        features["image_smallest_ellipse_object_distance"]**2.0
+        features["num_photons"]
+        / features["image_smallest_ellipse_object_distance"] ** 2.0
     )
 
 
 def generate_A3(features):
-    return (
-        features["paxel_intensity_peakness_std_over_mean"] /
-        np.log10(features["image_smallest_ellipse_object_distance"])
+    return features["paxel_intensity_peakness_std_over_mean"] / np.log10(
+        features["image_smallest_ellipse_object_distance"]
     )
-
-
 
 
 combined_features = {
@@ -175,11 +172,7 @@ for sk in SITES:
         )["features"]
 
         for fk in FEATURES:
-            print(
-                sk,
-                pk,
-                fk
-            )
+            print(sk, pk, fk)
             sfs[sk][fk] = {}
 
             if fk in ORIGINAL_FEATURES:
@@ -194,7 +187,9 @@ for sk in SITES:
                 function_string=FEATURES[fk]["transformation"]["function"]
             )
             f_trans = func(f_raw)
-            sfs[sk][fk]["function"] = FEATURES[fk]["transformation"]["function"]
+            sfs[sk][fk]["function"] = FEATURES[fk]["transformation"][
+                "function"
+            ]
 
             # find quantile
 
@@ -203,12 +198,11 @@ for sk in SITES:
                 stop,
             ) = irf.analysis.machine_learning.range_of_values_in_quantile(
                 values=f_trans,
-                quantile_range=FEATURES[fk]["transformation"]["quantile_range"]
+                quantile_range=FEATURES[fk]["transformation"][
+                    "quantile_range"
+                ],
             )
-            mask_quanitle = np.logical_and(
-                f_trans >= start,
-                f_trans <= stop
-            )
+            mask_quanitle = np.logical_and(f_trans >= start, f_trans <= stop)
             sfs[sk][fk]["quantile_range"] = [start, stop]
 
             # scale
@@ -223,16 +217,10 @@ for sk in SITES:
             sfs[sk][fk]["shift"] = shift_func(f_trans[mask_quanitle])
             sfs[sk][fk]["scale"] = scale_func(f_trans[mask_quanitle])
 
-            f_scaled = (f_trans - sfs[sk][fk]["shift"])/sfs[sk][fk]["scale"]
+            f_scaled = (f_trans - sfs[sk][fk]["shift"]) / sfs[sk][fk]["scale"]
 
             print(
-                sk,
-                pk,
-                fk,
-                np.min(f_raw),
-                start,
-                stop,
-                np.max(f_raw),
+                sk, pk, fk, np.min(f_raw), start, stop, np.max(f_raw),
             )
 
 
@@ -263,7 +251,7 @@ for sk in SITES:
             )
             f_trans = func(f_raw)
             # scale
-            f_scaled = (f_trans - sfs[sk][fk]["shift"])/sfs[sk][fk]["scale"]
+            f_scaled = (f_trans - sfs[sk][fk]["shift"]) / sfs[sk][fk]["scale"]
             transformed_features[sk][pk][fk] = f_scaled
 
 
@@ -287,9 +275,7 @@ for sk in SITES:
                 )[0]
                 with np.errstate(divide="ignore"):
                     bin_counts_unc_fk = np.sqrt(bin_counts_fk) / bin_counts_fk
-                    bin_counts_norm_fk = bin_counts_fk / np.sum(
-                        bin_counts_fk
-                    )
+                    bin_counts_norm_fk = bin_counts_fk / np.sum(bin_counts_fk)
 
                 irf.summary.figure.ax_add_hist(
                     ax=ax,
