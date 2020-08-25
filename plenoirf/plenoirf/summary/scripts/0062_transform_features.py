@@ -21,25 +21,12 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
-ORIGINAL_FEATURES = irf.table.STRUCTURE["features"]
-COMBINED_FEATURES = irf.features.combined_features.COMBINED_FEATURES
+ORIGINAL_FEATURES = irf.features.ORIGINAL
+COMBINED_FEATURES = irf.features.COMBINED
+ALL_FEATURES = irf.features.ALL
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
-
-
-FEATURES = {}
-for fk in ORIGINAL_FEATURES:
-    FEATURES[fk] = dict(ORIGINAL_FEATURES[fk])
-for fk in COMBINED_FEATURES:
-    FEATURES[fk] = dict(COMBINED_FEATURES[fk])
-
-TRANSFORMED_FEATURE_STRUCTURE = {"transformed_features": {}}
-for fk in FEATURES:
-    TRANSFORMED_FEATURE_STRUCTURE["transformed_features"][fk] = {
-        "dtype": "<f8"
-    }
-
 
 ft_trafo = {}
 for sk in SITES:
@@ -53,7 +40,7 @@ for sk in SITES:
             structure=irf.table.STRUCTURE,
         )["features"]
 
-        for fk in FEATURES:
+        for fk in ALL_FEATURES:
             print(sk, pk, fk)
 
             if fk in ORIGINAL_FEATURES:
@@ -63,7 +50,7 @@ for sk in SITES:
 
             ft_trafo[sk][fk] = irf.features.find_transformation(
                 feature_raw=f_raw,
-                transformation_instruction=FEATURES[fk]["transformation"],
+                transformation_instruction=ALL_FEATURES[fk]["transformation"],
             )
 
 
@@ -81,7 +68,7 @@ for sk in SITES:
         )["features"]
         transformed_features[sk][pk][spt.IDX] = np.array(features[spt.IDX])
 
-        for fk in FEATURES:
+        for fk in ALL_FEATURES:
 
             if fk in ORIGINAL_FEATURES:
                 f_raw = features[fk]
@@ -99,12 +86,12 @@ for sk in SITES:
         spt.write(
             path=os.path.join(site_particle_dir, "transformed_features.tar"),
             table={"transformed_features": out_table},
-            structure=TRANSFORMED_FEATURE_STRUCTURE,
+            structure=irf.features.TRANSFORMED_FEATURE_STRUCTURE,
         )
 
 
 for sk in SITES:
-    for fk in FEATURES:
+    for fk in ALL_FEATURES:
 
         fig_path = os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, fk))
 

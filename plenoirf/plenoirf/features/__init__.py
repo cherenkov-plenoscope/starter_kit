@@ -1,4 +1,5 @@
 from . import combined_features
+from .. import table
 
 import numpy as np
 import sympy
@@ -70,3 +71,20 @@ def find_transformation(feature_raw, transformation_instruction):
     transformation["scale"] = scale_func(f_trans[mask_quanitle])
 
     return transformation
+
+
+ORIGINAL = table.STRUCTURE["features"]
+COMBINED = combined_features.COMBINED_FEATURES
+
+ALL = {}
+for fk in ORIGINAL:
+    ALL[fk] = dict(ORIGINAL[fk])
+for fk in COMBINED:
+    ALL[fk] = dict(COMBINED[fk])
+
+
+TRANSFORMED_FEATURE_STRUCTURE = {"transformed_features": {}}
+for fk in ALL:
+    TRANSFORMED_FEATURE_STRUCTURE["transformed_features"][fk] = {
+        "dtype": "<f8"
+    }
