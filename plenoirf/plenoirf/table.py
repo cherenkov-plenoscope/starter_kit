@@ -132,19 +132,34 @@ STRUCTURE["features"] = {}
 STRUCTURE["features"]["num_photons"] = {
     "dtype": "<i8",
     "comment": "The number of photon-eqivalents that are identified to be dense cluster(s) of Cherenkov-photons",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "1",
 }
 STRUCTURE["features"]["paxel_intensity_peakness_std_over_mean"] = {
     "dtype": "<f8",
     "comment": "A measure for the intensity distribution on the aperture-plane. The larger the value, the less evenly the intensity is distributed on the plane.",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "1",
 }
 STRUCTURE["features"]["paxel_intensity_peakness_max_over_mean"] = {
     "dtype": "<f8",
     "comment": "A measure for the intensity distribution on the aperture-plane. The larger the value, the more the intensity is concentrated in a small area on the aperture-plane.",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "1",
 }
 
@@ -152,13 +167,23 @@ paxel_intensity_median_str = "Median intersection-positions in {:s} of reconstru
 STRUCTURE["features"]["paxel_intensity_median_x"] = {
     "dtype": "<f8",
     "comment": paxel_intensity_median_str.format("x"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "m",
 }
 STRUCTURE["features"]["paxel_intensity_median_y"] = {
     "dtype": "<f8",
     "comment": paxel_intensity_median_str.format("y"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "m",
 }
 
@@ -166,19 +191,34 @@ _watershed_str = "A measure for the areal distribution of reconstructed Cherenko
 STRUCTURE["features"]["aperture_num_islands_watershed_rel_thr_2"] = {
     "dtype": "<i8",
     "comment": _watershed_str,
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "1",
 }
 STRUCTURE["features"]["aperture_num_islands_watershed_rel_thr_4"] = {
     "dtype": "<i8",
     "comment": _watershed_str,
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "1",
 }
 STRUCTURE["features"]["aperture_num_islands_watershed_rel_thr_8"] = {
     "dtype": "<i8",
     "comment": _watershed_str,
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "1",
 }
 
@@ -186,13 +226,23 @@ _light_front_c_str = "Incident-direction in {:s} of reconstructed Cherenkov-phot
 STRUCTURE["features"]["light_front_cx"] = {
     "dtype": "<f8",
     "comment": _light_front_c_str.format("x"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 STRUCTURE["features"]["light_front_cy"] = {
     "dtype": "<f8",
     "comment": _light_front_c_str.format("y"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 
@@ -200,49 +250,89 @@ _image_infinity_c_mean_str = "Mean incident-direction in {:s} of reconstructed C
 STRUCTURE["features"]["image_infinity_cx_mean"] = {
     "dtype": "<f8",
     "comment": _image_infinity_c_mean_str.format("x"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 STRUCTURE["features"]["image_infinity_cy_mean"] = {
     "dtype": "<f8",
     "comment": _image_infinity_c_mean_str.format("y"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 STRUCTURE["features"]["image_infinity_cx_std"] = {
     "dtype": "<f8",
     "comment": "",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 STRUCTURE["features"]["image_infinity_cy_std"] = {
     "dtype": "<f8",
     "comment": "",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 STRUCTURE["features"]["image_infinity_num_photons_on_edge_field_of_view"] = {
     "dtype": "<i8",
     "comment": "Number of photon-eqivalents on the edge of the field-of-view in an image focused on infinity.",
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "p.e.",
 }
 STRUCTURE["features"]["image_smallest_ellipse_object_distance"] = {
     "dtype": "<f8",
     "comment": "The object-distance in front of the aperture where the refocused image of the airshower yields the Hillas-ellipse with the smallest solid angle. See also 'image_smallest_ellipse_solid_angle'.",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "m",
 }
 STRUCTURE["features"]["image_smallest_ellipse_solid_angle"] = {
     "dtype": "<f8",
     "comment": "The solid angle of the smallest Hillas-ellipse in all refocused images. See also 'image_smallest_ellipse_object_distance'.",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "sr",
 }
 STRUCTURE["features"]["image_smallest_ellipse_half_depth"] = {
     "dtype": "<f8",
     "comment": "The range in object-distance for the Hillas-ellipse to double its solid angle when refocusing starts at the smallest ellipse.",
-    "transformation": {"function": "log(x)"},
+    "transformation": {
+        "function": "log(x)",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "m",
 }
 
@@ -250,13 +340,23 @@ image_half_depth_shift_c_str = "How much the mean intensity in the image shifts 
 STRUCTURE["features"]["image_half_depth_shift_cx"] = {
     "dtype": "<f8",
     "comment": image_half_depth_shift_c_str.format("cx"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 STRUCTURE["features"]["image_half_depth_shift_cy"] = {
     "dtype": "<f8",
     "comment": image_half_depth_shift_c_str.format("cy"),
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "rad",
 }
 STRUCTURE["features"][
@@ -264,12 +364,22 @@ STRUCTURE["features"][
 ] = {
     "dtype": "<i8",
     "comment": "Number of photon-eqivalents on the edge of the field-of-view in an image focused to the smallest Hillas-ellipse.",
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "p.e.",
 }
 STRUCTURE["features"]["image_num_islands"] = {
     "dtype": "<i8",
     "comment": "The number of individual dense clusters of reconstructed Cherenkov-photons in the image-space.",
-    "transformation": {"function": "x"},
+    "transformation": {
+        "function": "x",
+        "shift": "mean(x)",
+        "scale": "std(x)",
+        "quantile_range": [0.01, 0.99],
+    },
     "unit": "1",
 }
