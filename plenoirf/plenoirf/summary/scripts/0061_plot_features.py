@@ -28,9 +28,6 @@ weights_thrown2expected = irf.json_numpy.read_tree(
 trigger_threshold = sum_config["trigger"]["threshold_pe"]
 trigger_modus = sum_config["trigger"]["modus"]
 
-max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
-min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
-
 num_energy_bins = sum_config["energy_binning"]["num_bins"][
     "trigger_acceptance"
 ]
@@ -65,11 +62,6 @@ for sk in SITES:
             trigger_table=_table["trigger"],
             threshold=trigger_threshold,
             modus=trigger_modus,
-        )
-        idx_quality = irf.analysis.cuts.cut_quality(
-            feature_table=_table["features"],
-            max_relative_leakage=max_relative_leakage,
-            min_reconstructed_photons=min_reconstructed_photons,
         )
         idx_features = _table["features"][spt.IDX]
 
