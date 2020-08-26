@@ -155,6 +155,21 @@ for sk in SITES:
             y_true = 10 ** MA["test"]["y"][:, targets[tk]["idx"]]
             y_score = 10 ** _y_score[:, targets[tk]["idx"]]
 
+            out = {}
+            out["comment"] = "Reconstructed from the test-set."
+            out["learner"] = mk
+            out[tk] = y_score
+            out["unit"] = targets[tk]["unit"]
+            out["idx"] = np.array(gf["test"]["idx"])
+
+            site_particle_dir = os.path.join(pa["out_dir"], sk, "gamma")
+            os.makedirs(site_particle_dir, exist_ok=True)
+            irf.json_numpy.write(
+                os.path.join(site_particle_dir, tk + ".json"), out
+            )
+
+            # plot
+            # ====
             bin_edges = np.geomspace(
                 targets[tk]["start"],
                 targets[tk]["stop"],
