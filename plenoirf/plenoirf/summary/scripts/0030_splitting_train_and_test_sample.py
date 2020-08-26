@@ -36,7 +36,7 @@ for sk in SITES:
         )
 
         irf.json_numpy.write(
-            os.path.join(site_dir, pk+".json"),
+            os.path.join(site_dir, pk + ".json"),
             {
                 "comment": (
                     "Split into train-sample and test-sample to "
