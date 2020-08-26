@@ -13,6 +13,7 @@ from sklearn import svm
 from sklearn import ensemble
 from sklearn import model_selection
 from sklearn import feature_selection
+from sklearn import utils
 
 import matplotlib
 
@@ -39,6 +40,7 @@ transformed_features_dir = os.path.join(
 
 trigger_config = sum_config["trigger"]
 quality_config = sum_config["quality"]
+random_seed = sum_config["random_seed"]
 
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
@@ -118,61 +120,64 @@ for sk in SITES:
             ]
         ).T
 
-    print("gamma_hadron")
-    print("============")
-
     num_features = MA["train"]["x"].shape[1]
-    mlp_gh = sklearn.neural_network.MLPRegressor(
+    models = {}
+
+    models["MultiLayerPerceptron"] = sklearn.neural_network.MLPRegressor(
         solver="lbfgs",
         alpha=1e-2,
         hidden_layer_sizes=(num_features, num_features, num_features),
-        random_state=1,
+        random_state=random_seed,
         verbose=True,
         max_iter=5000,
         learning_rate_init=0.1,
     )
-    mlp_gh.fit(MA["train"]["x"], MA["train"]["y"])
-
-    model_gh_path = os.path.join(pa["out_dir"], "gamma_hadron_model")
-    with open(model_gh_path + ".pkl", "wb") as fout:
-        fout.write(pickle.dumps(mlp_gh))
-
-    print("receiver operating characteristic")
-    y_score = mlp_gh.predict(MA["test"]["x"])
-    y_gammaness_true = MA["test"]["y"][:, 0]
-    y_gammaness_score = y_score[:, 0]
-
-    fpr_gh, tpr_gh, thresholds_gh = sklearn.metrics.roc_curve(
-        y_true=y_gammaness_true, y_score=y_gammaness_score
+    models["RandomForest"] = sklearn.ensemble.RandomForestRegressor(
+        random_state=random_seed
     )
 
-    auc_gh = sklearn.metrics.roc_auc_score(
-        y_true=y_gammaness_true, y_score=y_gammaness_score
+    _X_shuffle, _y_shuffle = sklearn.utils.shuffle(
+        MA["train"]["x"], MA["train"]["y"], random_state=random_seed
     )
 
-    roc_gh = {
-        "false_positive_rate": fpr_gh.tolist(),
-        "true_positive_rate": tpr_gh.tolist(),
-        "gamma_hadron_threshold": thresholds_gh.tolist(),
-        "area_under_curve": float(auc_gh),
-        "num_events_for_training": int(MA["train"]["x"].shape[0]),
-    }
-    roc_gh_path = os.path.join(
-        pa["out_dir"],
-        "receiver_operating_characteristic_gamma_hadron_separation",
-    )
-    with open(roc_gh_path + ".json", "wt") as fout:
-        fout.write(json.dumps(roc_gh, indent=4))
+    for mk in models:
+        models[mk].fit(_X_shuffle, _y_shuffle)
 
-    fig = irf.summary.figure.figure(fig_1_by_1)
-    ax = irf.summary.figure.add_axes(fig, [0.2, 0.2, 0.72, 0.72])
-    ax.plot(fpr_gh, tpr_gh, "k")
-    ax.set_title("area under curve {:.2f}".format(auc_gh))
-    ax.set_xlabel("false positive rate / 1\nproton acceptance")
-    ax.set_ylabel("true positive rate / 1\ngamma-ray acceptance")
-    # ax.semilogx()
-    plt.savefig(roc_gh_path + ".png")
-    plt.close("all")
+        model_gh_path = os.path.join(pa["out_dir"], mk + "_gamma_hadron_model")
+        with open(model_gh_path + ".pkl", "wb") as fout:
+            fout.write(pickle.dumps(models[mk]))
+
+        y_score = models[mk].predict(MA["test"]["x"])
+        y_gammaness_true = MA["test"]["y"][:, 0]
+        y_gammaness_score = y_score[:, 0]
+
+        fpr_gh, tpr_gh, thresholds_gh = sklearn.metrics.roc_curve(
+            y_true=y_gammaness_true, y_score=y_gammaness_score
+        )
+
+        auc_gh = sklearn.metrics.roc_auc_score(
+            y_true=y_gammaness_true, y_score=y_gammaness_score
+        )
+
+        roc_gh = {
+            "false_positive_rate": fpr_gh.tolist(),
+            "true_positive_rate": tpr_gh.tolist(),
+            "gamma_hadron_threshold": thresholds_gh.tolist(),
+            "area_under_curve": float(auc_gh),
+            "num_events_for_training": int(MA["train"]["x"].shape[0]),
+        }
+        roc_gh_path = os.path.join(pa["out_dir"], sk + "_" + mk + "_roc")
+        with open(roc_gh_path + ".json", "wt") as fout:
+            fout.write(json.dumps(roc_gh, indent=4))
+
+        fig = irf.summary.figure.figure(fig_1_by_1)
+        ax = irf.summary.figure.add_axes(fig, [0.15, 0.15, 0.8, 0.8])
+        ax.plot(fpr_gh, tpr_gh, "k")
+        ax.set_title("area under curve {:.2f}".format(auc_gh))
+        ax.set_xlabel("false positive rate / 1\nproton acceptance")
+        ax.set_ylabel("true positive rate / 1\ngamma-ray acceptance")
+        plt.savefig(roc_gh_path + ".png")
+        plt.close("all")
 
     """
     y_energy_true = 10 ** MA["test"]["y"][:, 1]
