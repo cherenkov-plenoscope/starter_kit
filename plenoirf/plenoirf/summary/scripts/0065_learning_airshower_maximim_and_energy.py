@@ -130,12 +130,12 @@ for sk in SITES:
         alpha=1e-2,
         hidden_layer_sizes=(num_features, num_features, num_features),
         random_state=random_seed,
-        verbose=True,
+        verbose=False,
         max_iter=5000,
         learning_rate_init=0.1,
     )
     models["RandomForest"] = sklearn.ensemble.RandomForestRegressor(
-        random_state=random_seed
+        random_state=random_seed, n_estimators=10,
     )
 
     _X_shuffle, _y_shuffle = sklearn.utils.shuffle(
@@ -166,7 +166,7 @@ for sk in SITES:
                 y=y_score,
                 bin_edges=bin_edges,
                 min_exposure_x=min_number_samples,
-                default_low_exposure=np.nan,
+                default_low_exposure=0.0,
             )
 
             fig = irf.summary.figure.figure(fig_1_by_1)
