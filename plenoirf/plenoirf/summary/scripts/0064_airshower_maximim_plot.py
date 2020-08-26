@@ -103,41 +103,23 @@ for site_key in irf_config["config"]["sites"]:
         ]["energy_GeV"],
     )
 
-    confusion_bins = np.histogram2d(
-        true_airshower_maximum_altitude,
-        image_smallest_ellipse_object_distance,
-        weights=event_weights,
-        bins=[distance_bin_edges, distance_bin_edges],
-    )[0]
-    confusion_bins_exposure_bins = np.histogram(
-        true_airshower_maximum_altitude,
-        bins=distance_bin_edges,
-        weights=event_weights,
-    )[0]
-    confusion_bins_exposure_bins_no_weights = np.histogram(
-        true_airshower_maximum_altitude, bins=distance_bin_edges,
-    )[0]
-
-    confusion_bins_normalized = confusion_bins.copy()
-    for true_bin in range(num_energy_bins):
-        if (
-            confusion_bins_exposure_bins_no_weights[true_bin]
-            > min_number_samples
-        ):
-            confusion_bins_normalized[
-                true_bin, :
-            ] /= confusion_bins_exposure_bins[true_bin]
-        else:
-            confusion_bins_normalized[true_bin, :] = np.zeros(num_energy_bins)
+    cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
+        x=true_airshower_maximum_altitude,
+        y=image_smallest_ellipse_object_distance,
+        bin_edges=distance_bin_edges,
+        weights_x=event_weights,
+        min_exposure_x=min_number_samples,
+        default_low_exposure=np.nan,
+    )
 
     fig = irf.summary.figure.figure(fig_1_by_1)
-    ax = fig.add_axes([0.1, 0.23, 0.7, 0.7])
-    ax_h = fig.add_axes([0.1, 0.07, 0.7, 0.1])
+    ax = irf.summary.figure.add_axes(fig, [0.1, 0.23, 0.7, 0.7])
+    ax_h = irf.summary.figure.add_axes(fig, [0.1, 0.07, 0.7, 0.1])
     ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
     _pcm_confusion = ax.pcolormesh(
-        distance_bin_edges,
-        distance_bin_edges,
-        np.transpose(confusion_bins_normalized),
+        cm["bin_edges"],
+        cm["bin_edges"],
+        np.transpose(cm["confusion_bins_normalized_columns"]),
         cmap="Greys",
         norm=plt_colors.PowerNorm(gamma=0.5),
     )
@@ -145,24 +127,19 @@ for site_key in irf_config["config"]["sites"]:
     irf.summary.figure.mark_ax_airshower_spectrum(ax=ax)
     ax.set_aspect("equal")
     ax.set_title("normalized for each column")
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
     ax.set_ylabel(fk + " / " + irf.table.STRUCTURE["features"][fk]["unit"])
     ax.loglog()
     ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     ax_h.loglog()
-    ax_h.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax_h.set_xlim([np.min(distance_bin_edges), np.max(distance_bin_edges)])
+    ax_h.set_xlim([np.min(cm["bin_edges"]), np.max(cm["bin_edges"])])
     ax_h.set_xlabel("true maximum of airshower / m")
     ax_h.set_ylabel("num. events / 1")
-    ax_h.spines["top"].set_color("none")
-    ax_h.spines["right"].set_color("none")
     irf.summary.figure.mark_ax_thrown_spectrum(ax_h)
     ax_h.axhline(min_number_samples, linestyle=":", color="k")
     irf.summary.figure.ax_add_hist(
         ax=ax_h,
-        bin_edges=distance_bin_edges,
-        bincounts=confusion_bins_exposure_bins_no_weights,
+        bin_edges=cm["bin_edges"],
+        bincounts=cm["exposure_bins_x_no_weights"],
         linestyle="-",
         linecolor="k",
     )

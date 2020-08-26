@@ -13,6 +13,14 @@ def figure(config=CONFIG_16_9, dpi=120):
     return plt.figure(figsize=(width / sc, height / sc), dpi=dpi * sc)
 
 
+def add_axes(fig, span):
+    ax = fig.add_axes(span)
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+    return ax
+
+
 def ax_add_circle(
     ax,
     x,
@@ -195,3 +203,43 @@ def mark_ax_thrown_spectrum(ax, x=0.93, y=0.93, fontsize=42):
         transform=ax.transAxes,
         fontsize=fontsize,
     )
+
+
+def histogram_confusion_matrix_with_normalized_columns(
+    x,
+    y,
+    bin_edges,
+    weights_x=None,
+    min_exposure_x=100,
+    default_low_exposure=np.nan,
+):
+    assert len(x) == len(y)
+    if weights_x is not None:
+        assert len(x) == len(weights_x)
+
+    num_bins = len(bin_edges) - 1
+    assert num_bins >= 1
+
+    confusion_bins = np.histogram2d(
+        x, y, weights=weights_x, bins=[bin_edges, bin_edges],
+    )[0]
+
+    exposure_bins_x = np.histogram(x, bins=bin_edges, weights=weights_x)[0]
+    exposure_bins_x_no_weights = np.histogram(x, bins=bin_edges)[0]
+
+    confusion_bins_normalized_columns = confusion_bins.copy()
+    for col in range(num_bins):
+        if exposure_bins_x_no_weights[col] >= min_exposure_x:
+            confusion_bins_normalized_columns[col, :] /= exposure_bins_x[col]
+        else:
+            confusion_bins_normalized_columns[col, :] = (
+                np.ones(num_bins) * default_low_exposure
+            )
+
+    return {
+        "bin_edges": bin_edges,
+        "confusion_bins": confusion_bins,
+        "confusion_bins_normalized_columns": confusion_bins_normalized_columns,
+        "exposure_bins_x_no_weights": exposure_bins_x_no_weights,
+        "exposure_bins_x": exposure_bins_x,
+    }
