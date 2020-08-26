@@ -1,7 +1,7 @@
 import os
 import copy
 from os.path import join as opj
-import pandas as pd
+import pandas
 import numpy as np
 import json
 import cosmic_fluxes
@@ -9,6 +9,8 @@ import pkg_resources
 import subprocess
 import sparse_numeric_table as spt
 import glob
+from .. import features
+from .. import analysis
 from .. import table
 from .. import provenance
 from .. import merlict
@@ -340,3 +342,98 @@ def _guess_summary_config(run_dir):
     }
 
     return summary_config
+
+
+def _read_train_test_frames(
+    site_key,
+    particle_key,
+    level_keys,
+    run_dir,
+    transformed_features_dir,
+    trigger_config,
+    quality_config,
+    train_test,
+):
+    sk = site_key
+    pk = particle_key
+
+    airshower_table = spt.read(
+        path=os.path.join(run_dir, "event_table", sk, pk, "event_table.tar",),
+        structure=table.STRUCTURE,
+    )
+
+    airshower_table["transformed_features"] = spt.read(
+        path=os.path.join(
+            transformed_features_dir, sk, pk, "transformed_features.tar",
+        ),
+        structure=features.TRANSFORMED_FEATURE_STRUCTURE,
+    )["transformed_features"]
+
+    idxs_triggered = analysis.light_field_trigger_modi.make_indices(
+        trigger_table=airshower_table["trigger"],
+        threshold=trigger_config["threshold_pe"],
+        modus=trigger_config["modus"],
+    )
+    idxs_quality = analysis.cuts.cut_quality(
+        feature_table=airshower_table["features"],
+        max_relative_leakage=quality_config["max_relative_leakage"],
+        min_reconstructed_photons=quality_config["min_reconstructed_photons"],
+    )
+
+    EXT_STRUCTRURE = dict(table.STRUCTURE)
+    EXT_STRUCTRURE[
+        "transformed_features"
+    ] = features.TRANSFORMED_FEATURE_STRUCTURE["transformed_features"]
+
+    out = {}
+    for kk in ["test", "train"]:
+        idxs_valid_kk = spt.intersection(
+            [idxs_triggered, idxs_quality, train_test[sk][pk][kk],]
+        )
+        table_kk = spt.cut_table_on_indices(
+            table=airshower_table,
+            structure=EXT_STRUCTRURE,
+            common_indices=idxs_valid_kk,
+            level_keys=level_keys,
+        )
+        table_kk = spt.sort_table_on_common_indices(
+            table=table_kk, common_indices=idxs_valid_kk
+        )
+        out[kk] = spt.make_rectangular_DataFrame(table_kk)
+
+    return out
+
+
+def read_train_test_frames(
+    site_key,
+    particle_keys,
+    run_dir,
+    transformed_features_dir,
+    trigger_config,
+    quality_config,
+    train_test,
+    level_keys=[
+        "primary",
+        "cherenkovsize",
+        "cherenkovpool",
+        "core",
+        "transformed_features",
+    ],
+):
+    frames = {"test": [], "train": []}
+    for pk in particle_keys:
+        _frame = _read_train_test_frames(
+            site_key=site_key,
+            particle_key=pk,
+            run_dir=run_dir,
+            transformed_features_dir=transformed_features_dir,
+            trigger_config=trigger_config,
+            quality_config=quality_config,
+            train_test=train_test,
+            level_keys=level_keys,
+        )
+        for kk in ["test", "train"]:
+            frames[kk].append(_frame[kk])
+    for kk in ["test", "train"]:
+        frames[kk] = pandas.concat(frames[kk])
+    return frames
