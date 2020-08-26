@@ -17,6 +17,10 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
+train_test = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0030_splitting_train_and_test_sample",)
+)
+
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 PARTICLES = irf_config["config"]["particles"]
@@ -33,16 +37,21 @@ for sk in SITES:
     ft_trafo[sk] = {}
     for pk in ["gamma"]:
 
-        features = spt.read(
+        _table = spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
+        )
+
+        features = spt.cut_table_on_indices(
+            table=_table,
+            structure=irf.table.STRUCTURE,
+            common_indices=train_test[sk][pk]["train"],
+            level_keys=["features"],
         )["features"]
 
         for fk in ALL_FEATURES:
-            print(sk, pk, fk)
-
             if fk in ORIGINAL_FEATURES:
                 f_raw = features[fk]
             else:

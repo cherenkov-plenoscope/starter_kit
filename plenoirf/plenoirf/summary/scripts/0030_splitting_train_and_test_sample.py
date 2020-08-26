@@ -19,8 +19,8 @@ test_size = sum_config["train_and_test"]["test_size"]
 
 for sk in SITES:
     for pk in PARTICLES:
-        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
-        os.makedirs(site_particle_dir, exist_ok=True)
+        site_dir = os.path.join(pa["out_dir"], sk)
+        os.makedirs(site_dir, exist_ok=True)
 
         event_table = spt.read(
             path=os.path.join(
@@ -36,13 +36,13 @@ for sk in SITES:
         )
 
         irf.json_numpy.write(
-            os.path.join(site_particle_dir, "train_test_split.json"),
+            os.path.join(site_dir, pk+".json"),
             {
                 "comment": (
                     "Split into train-sample and test-sample to "
                     "validate machine-learning."
                 ),
-                "train_idxs": train_idxs,
-                "test_idxs": test_idxs,
+                "train": train_idxs,
+                "test": test_idxs,
             },
         )
