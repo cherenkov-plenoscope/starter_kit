@@ -126,7 +126,10 @@ for sk in SITES:
                 )
                 bin_counts_norm_fk = irf.analysis.effective_quantity._divide_silent(
                     numerator=bin_counts_fk,
-                    denominator=np.sum(bin_counts_fk),
+                    denominator=(
+                        np.ones(shape=bin_counts_fk.shape)
+                        * np.sum(bin_counts_fk)
+                    ),
                     default=0,
                 )
 
