@@ -109,7 +109,7 @@ for site_key in irf_config["config"]["sites"]:
         bin_edges=distance_bin_edges,
         weights_x=event_weights,
         min_exposure_x=min_number_samples,
-        default_low_exposure=np.nan,
+        default_low_exposure=0.0,
     )
 
     fig = irf.summary.figure.figure(fig_1_by_1)

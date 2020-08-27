@@ -4,6 +4,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import pandas
+import numpy as np
 import sklearn
 import pickle
 import json
@@ -69,17 +70,24 @@ targets = {
     },
 }
 
+level_keys = [
+    "primary",
+    "cherenkovpool",
+    "transformed_features",
+]
+
 min_number_samples = 100
 
 for sk in SITES:
-    gamma_frame = irf.summary.read_train_test_frames(
+    gamma_frame = irf.summary.read_train_test_frame(
         site_key=sk,
-        particle_keys=["gamma"],
+        particle_key="gamma",
         run_dir=pa["run_dir"],
         transformed_features_dir=transformed_features_dir,
         trigger_config=trigger_config,
         quality_config=quality_config,
         train_test=train_test,
+        level_keys=level_keys,
     )
     gf = gamma_frame
 

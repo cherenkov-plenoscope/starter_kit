@@ -4,6 +4,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import pandas
+import numpy as np
 import sklearn
 import pickle
 import json
@@ -55,74 +56,110 @@ fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
-for sk in SITES:
-    gamma_frame = irf.summary.read_train_test_frames(
-        site_key=sk,
-        particle_keys=["gamma"],
-        run_dir=pa["run_dir"],
-        transformed_features_dir=transformed_features_dir,
-        trigger_config=trigger_config,
-        quality_config=quality_config,
-        train_test=train_test,
-    )
+level_keys = [
+    "primary",
+    "cherenkovsize",
+    "cherenkovpool",
+    "core",
+    "transformed_features",
+]
 
-    hadron_frame = irf.summary.read_train_test_frames(
-        site_key=sk,
-        particle_keys=["proton", "helium"],
-        run_dir=pa["run_dir"],
-        transformed_features_dir=transformed_features_dir,
-        trigger_config=trigger_config,
-        quality_config=quality_config,
-        train_test=train_test,
-    )
+gamma_hadron_labels = {"gamma": 1, "proton": 0, "helium": 0, "electron": 0}
+other_labels = {"electron": 0}
 
-    ET = {}
-    GM = {}
+gamma_hadron_feature_keys = [
+    "transformed_features.num_photons",
+    "transformed_features.image_smallest_ellipse_object_distance",
+    "transformed_features.image_smallest_ellipse_solid_angle",
+    "transformed_features.image_smallest_ellipse_half_depth",
+    "transformed_features.combi_A",
+    "transformed_features.combi_B",
+    "transformed_features.combi_C",
+    "transformed_features.combi_image_infinity_std_density",
+    "transformed_features.combi_paxel_intensity_median_hypot",
+    "transformed_features.combi_diff_image_and_light_front",
+]
+
+
+def make_train_test_Xy_set_for_particle_classification(
+    particle_frames, particle_labels
+):
+    Xy = {}
     for kk in ["train", "test"]:
-        num_gammas = gamma_frame[kk].shape[0]
-        num_hadrons = hadron_frame[kk].shape[0]
-        ET[kk] = pandas.concat([gamma_frame[kk], hadron_frame[kk]])
-        GM[kk] = np.concatenate([np.ones(num_gammas), np.zeros(num_hadrons)])
+        Xy[kk] = {}
+        Xy[kk]["idx"] = []
+        Xy[kk]["x"] = []
+        Xy[kk]["y"] = []
+        for pk in particle_labels:
+            num_airshower = particle_frames[pk][kk].shape[0]
+            Xy[kk]["x"].append(particle_frames[pk][kk])
+            Xy[kk]["y"].append(particle_labels[pk] * np.ones(num_airshower))
+            Xy[kk]["idx"].append(
+                np.array(
+                    [
+                        particle_frames[pk][kk]["primary.particle_id"].values,
+                        particle_frames[pk][kk][spt.IDX].values,
+                    ],
+                    dtype=np.uint64,
+                )
+            )
+        Xy[kk]["x"] = pandas.concat(Xy[kk]["x"])
+        Xy[kk]["y"] = np.concatenate(Xy[kk]["y"])
+        Xy[kk]["idx"] = np.hstack(Xy[kk]["idx"])
+    return Xy
+
+
+def make_Xy_train_test_set_with_custom_features(Xy, x_feature_keys):
+    MA = {}
+    for kk in ["test", "train"]:
+        MA[kk] = {}
+
+        MA[kk]["idx"] = Xy[kk]["idx"]
+
+        MA[kk]["x"] = []
+        for fk in x_feature_keys:
+            MA[kk]["x"].append(Xy[kk]["x"][fk].values)
+        MA[kk]["x"] = np.array(MA[kk]["x"]).T
+
+        MA[kk]["y"] = np.array(
+            [
+                Xy[kk]["y"],
+                np.log10(Xy[kk]["x"]["primary.energy_GeV"].values),
+                np.log10(Xy[kk]["x"]["cherenkovpool.maximum_asl_m"].values),
+            ]
+        ).T
+    return MA
+
+
+for sk in SITES:
+    particle_frames = {}
+    for pk in PARTICLES:
+        particle_frames[pk] = irf.summary.read_train_test_frame(
+            site_key=sk,
+            particle_key=pk,
+            run_dir=pa["run_dir"],
+            transformed_features_dir=transformed_features_dir,
+            trigger_config=trigger_config,
+            quality_config=quality_config,
+            train_test=train_test,
+            level_keys=level_keys,
+        )
 
     # prepare sets
     # ------------
-    MA = {}
-    for mk in ["test", "train"]:
-        MA[mk] = {}
+    XyGamHad = make_train_test_Xy_set_for_particle_classification(
+        particle_frames=particle_frames, particle_labels=gamma_hadron_labels
+    )
+    XyOthers = make_train_test_Xy_set_for_particle_classification(
+        particle_frames=particle_frames, particle_labels=other_labels
+    )
 
-        MA[mk]["x"] = np.array(
-            [
-                ET[mk]["transformed_features.num_photons"].values,
-                ET[mk][
-                    "transformed_features.image_smallest_ellipse_object_distance"
-                ].values,
-                ET[mk][
-                    "transformed_features.image_smallest_ellipse_solid_angle"
-                ].values,
-                ET[mk][
-                    "transformed_features.image_smallest_ellipse_half_depth"
-                ].values,
-                ET[mk]["transformed_features.combi_A"].values,
-                ET[mk]["transformed_features.combi_B"].values,
-                ET[mk]["transformed_features.combi_C"].values,
-                ET[mk][
-                    "transformed_features.combi_image_infinity_std_density"
-                ].values,
-                ET[mk][
-                    "transformed_features.combi_paxel_intensity_median_hypot"
-                ].values,
-                ET[mk][
-                    "transformed_features.combi_diff_image_and_light_front"
-                ].values,
-            ]
-        ).T
-        MA[mk]["y"] = np.array(
-            [
-                GM[mk],
-                np.log10(ET[mk]["primary.energy_GeV"].values),
-                np.log10(ET[mk]["cherenkovpool.maximum_asl_m"].values),
-            ]
-        ).T
+    MA = make_Xy_train_test_set_with_custom_features(
+        Xy=XyGamHad, x_feature_keys=gamma_hadron_feature_keys
+    )
+    OT = make_Xy_train_test_set_with_custom_features(
+        Xy=XyOthers, x_feature_keys=gamma_hadron_feature_keys
+    )
 
     num_features = MA["train"]["x"].shape[1]
     models = {}
@@ -174,16 +211,22 @@ for sk in SITES:
             "num_events_for_training": int(MA["train"]["x"].shape[0]),
         }
 
-        for pk in PARTICLES:
+        for pk in gamma_hadron_labels:
             gammaness[mk][pk] = {}
             particle_mask = (
-                ET["test"]["primary.particle_id"].values
-                == PARTICLES[pk]["particle_id"]
+                MA["test"]["idx"][0, :] == PARTICLES[pk]["particle_id"]
             )
-            gammaness[mk][pk][spt.IDX] = (ET["test"][spt.IDX].values)[
-                particle_mask
-            ]
+            gammaness[mk][pk][spt.IDX] = MA["test"]["idx"][1, :][particle_mask]
             gammaness[mk][pk]["gammaness"] = y_gammaness_score[particle_mask]
+
+        other_y_score = models[mk].predict(OT["test"]["x"])[:, 0]
+        for pk in other_labels:
+            gammaness[mk][pk] = {}
+            particle_mask = (
+                OT["test"]["idx"][0, :] == PARTICLES[pk]["particle_id"]
+            )
+            gammaness[mk][pk][spt.IDX] = OT["test"]["idx"][1, :][particle_mask]
+            gammaness[mk][pk]["gammaness"] = other_y_score[particle_mask]
 
         roc_gh_path = os.path.join(pa["out_dir"], sk + "_" + mk + "_roc")
         with open(roc_gh_path + ".json", "wt") as fout:

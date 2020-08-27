@@ -14,6 +14,10 @@ np.random.seed(sum_config["random_seed"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+gammaness = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0063_gamma_hadron_separation",)
+)
+
 NUM_GRID_BINS = irf_config["grid_geometry"]["num_bins_diameter"] ** 2
 MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
     "max_angle_relative_to_pointing_deg"
@@ -51,6 +55,8 @@ for site_key in irf_config["config"]["sites"]:
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
+
+gamm = 0.80
 
 for site_key in irf_config["config"]["sites"]:
 
@@ -103,8 +109,16 @@ for site_key in irf_config["config"]["sites"]:
         )
         idx_has_features = table_point["features"][spt.IDX]
 
+        gamm_mask = (
+            np.array(gammaness[site_key][particle_key]["test"]["gammaness"])
+            >= gamm
+        )
+        idx_gamm = np.array(
+            gammaness[site_key][particle_key]["test"][spt.IDX]
+        )[gamm_mask]
+
         idx_candidates = spt.intersection(
-            [idx_trigger, idx_has_features, idx_quality,]
+            [idx_trigger, idx_has_features, idx_quality, idx_gamm]
         )
 
         candidate_table = spt.cut_table_on_indices(
@@ -174,8 +188,16 @@ for site_key in irf_config["config"]["sites"]:
         )
         idx_features = table_diffuse["features"][spt.IDX]
 
+        gamm_mask = (
+            np.array(gammaness[site_key][particle_key]["test"]["gammaness"])
+            >= gamm
+        )
+        idx_gamm = np.array(
+            gammaness[site_key][particle_key]["test"][spt.IDX]
+        )[gamm_mask]
+
         idx_candidates = spt.intersection(
-            [idx_trigger, idx_features, idx_quality,]
+            [idx_trigger, idx_features, idx_quality, idx_gamm]
         )
         table_candidates = spt.cut_table_on_indices(
             table=table_diffuse,

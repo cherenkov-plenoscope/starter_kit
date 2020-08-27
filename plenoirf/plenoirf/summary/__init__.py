@@ -344,15 +344,15 @@ def _guess_summary_config(run_dir):
     return summary_config
 
 
-def _read_train_test_frames(
+def read_train_test_frame(
     site_key,
     particle_key,
-    level_keys,
     run_dir,
     transformed_features_dir,
     trigger_config,
     quality_config,
     train_test,
+    level_keys,
 ):
     sk = site_key
     pk = particle_key
@@ -402,38 +402,3 @@ def _read_train_test_frames(
         out[kk] = spt.make_rectangular_DataFrame(table_kk)
 
     return out
-
-
-def read_train_test_frames(
-    site_key,
-    particle_keys,
-    run_dir,
-    transformed_features_dir,
-    trigger_config,
-    quality_config,
-    train_test,
-    level_keys=[
-        "primary",
-        "cherenkovsize",
-        "cherenkovpool",
-        "core",
-        "transformed_features",
-    ],
-):
-    frames = {"test": [], "train": []}
-    for pk in particle_keys:
-        _frame = _read_train_test_frames(
-            site_key=site_key,
-            particle_key=pk,
-            run_dir=run_dir,
-            transformed_features_dir=transformed_features_dir,
-            trigger_config=trigger_config,
-            quality_config=quality_config,
-            train_test=train_test,
-            level_keys=level_keys,
-        )
-        for kk in ["test", "train"]:
-            frames[kk].append(_frame[kk])
-    for kk in ["test", "train"]:
-        frames[kk] = pandas.concat(frames[kk])
-    return frames

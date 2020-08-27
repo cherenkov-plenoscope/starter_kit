@@ -3,6 +3,7 @@ import sys
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
+import numpy as np
 
 import matplotlib
 
