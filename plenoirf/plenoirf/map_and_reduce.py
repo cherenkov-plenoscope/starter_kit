@@ -503,32 +503,6 @@ def run_job(job):
         os.makedirs(tmp_dir, exist_ok=True)
     logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
 
-    # run corsika
-    # -----------
-    corsika_run_path = op.join(tmp_dir, run_id_str + "_corsika.tar")
-    if not op.exists(corsika_run_path):
-        cpw_rc = cpw.corsika_primary(
-            corsika_path=job["corsika_primary_path"],
-            steering_dict=corsika_primary_steering,
-            output_path=corsika_run_path,
-            stdout_postfix=".stdout",
-            stderr_postfix=".stderr",
-        )
-        nfs.copy(
-            corsika_run_path + ".stdout",
-            op.join(job["log_dir"], run_id_str + "_corsika.stdout"),
-        )
-        nfs.copy(
-            corsika_run_path + ".stderr",
-            op.join(job["log_dir"], run_id_str + "_corsika.stderr"),
-        )
-        logger.log("corsika")
-    with open(corsika_run_path + ".stdout", "rt") as f:
-        assert cpw.stdout_ends_with_end_of_run_marker(f.read())
-    logger.log("assert_corsika_ok")
-    corsika_run_size = os.stat(corsika_run_path).st_size
-    logger.log("corsika_run_size:{:d}".format(corsika_run_size))
-
     # set up grid geometry
     # --------------------
     assert job["plenoscope_pointing"]["zenith_deg"] == 0.0
@@ -567,16 +541,24 @@ def run_job(job):
     tabrec = {}
     for level_key in table.STRUCTURE:
         tabrec[level_key] = []
-    run = cpw.Tario(corsika_run_path)
     reuse_run_path = op.join(tmp_dir, run_id_str + "_reuse.tar")
     grid_histogram_filename = run_id_str + "_grid.tar"
     tmp_grid_histogram_path = op.join(tmp_dir, grid_histogram_filename)
     with tarfile.open(reuse_run_path, "w") as tarout, tarfile.open(
         tmp_grid_histogram_path, "w"
     ) as imgtar:
-        tar_append(tarout, cpw.TARIO_RUNH_FILENAME, run.runh.tobytes())
-        for event_idx, event in enumerate(run):
-            event_header, cherenkov_bunches = event
+
+        corsika_run = cpw.CorsikaPrimary(
+            corsika_path=job["corsika_primary_path"],
+            steering_dict=corsika_primary_steering,
+            stdout_path=op.join(tmp_dir, "corsika.stdout"),
+            stderr_path=op.join(tmp_dir, "corsika.stderr"),
+        )
+        logger.log("corskia_startup")
+
+        tar_append(tarout, cpw.TARIO_RUNH_FILENAME, corsika_run.runh.tobytes())
+        for event_idx, corsika_airshower in enumerate(corsika_run):
+            event_header, cherenkov_bunches = corsika_airshower
 
             # assert match
             run_id = int(event_header[cpw.I_EVTH_RUN_NUMBER])
@@ -788,6 +770,15 @@ def run_job(job):
                 rcor["core_y_m"] = reuse_event["core_y_m"]
                 tabrec["core"].append(rcor)
     logger.log("grid")
+
+    nfs.copy(
+        op.join(tmp_dir, "corsika.stdout"),
+        op.join(job["log_dir"], run_id_str + "_corsika.stdout"),
+    )
+    nfs.copy(
+        op.join(tmp_dir, "corsika.stderr"),
+        op.join(job["log_dir"], run_id_str + "_corsika.stderr"),
+    )
 
     if not job["keep_tmp"]:
         os.remove(corsika_run_path)
