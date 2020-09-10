@@ -347,7 +347,7 @@ def draw_corsika_primary_steering(
     _assert_site(site)
     _assert_particle(particle)
     _assert_deflection(site_particle_deflection)
-    assert num_events <= random_seed.NUM_AIRSHOWER_IDS_IN_RUN
+    assert num_events <= random_seed.STRUCTURE.NUM_AIRSHOWER_IDS_IN_RUN
 
     max_scatter_rad = np.deg2rad(particle["max_scatter_angle_deg"])
 
@@ -414,7 +414,7 @@ def draw_corsika_primary_steering(
         primary["azimuth_rad"] = az
         primary["depth_g_per_cm2"] = 0.0
         primary["random_seed"] = cpw.simple_seed(
-            random_seed.random_seed_based_on(
+            random_seed.STRUCTURE.random_seed_based_on(
                 run_id=run_id, airshower_id=event_id
             )
         )
@@ -568,7 +568,7 @@ def run_job(job):
             primary = corsika_primary_steering["primaries"][event_idx]
             event_seed = primary["random_seed"][0]["SEED"]
             ide = {spt.IDX: event_seed}
-            assert event_seed == random_seed.random_seed_based_on(
+            assert event_seed == random_seed.STRUCTURE.random_seed_based_on(
                 run_id=run_id, airshower_id=event_id
             )
 
@@ -709,7 +709,7 @@ def run_job(job):
             )
             tar_append(
                 tarout=imgtar,
-                file_name=random_seed.SEED_TEMPLATE_STR.format(seed=event_seed)
+                file_name=random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(seed=event_seed)
                 + ".f4.gz",
                 file_bytes=grid.histogram_to_bytes(grid_result["histogram"]),
             )
@@ -839,7 +839,7 @@ def run_job(job):
         run_id = int(cevth[cpw.I_EVTH_RUN_NUMBER])
         airshower_id = int(cevth[cpw.I_EVTH_EVENT_NUMBER])
         ide = {
-            spt.IDX: random_seed.random_seed_based_on(
+            spt.IDX: random_seed.STRUCTURE.random_seed_based_on(
                 run_id=run_id, airshower_id=airshower_id
             )
         }
@@ -888,7 +888,7 @@ def run_job(job):
         if trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]:
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp["unique_id_str"] = random_seed.SEED_TEMPLATE_STR.format(
+            ptp["unique_id_str"] = random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
                 seed=ptp[spt.IDX]
             )
             table_past_trigger.append(ptp)

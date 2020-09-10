@@ -186,8 +186,8 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
         fout.write(
             json.dumps(
                 {
-                    "NUM_DIGITS_RUN_ID": random_seed.NUM_DIGITS_RUN_ID,
-                    "NUM_DIGITS_AIRSHOWER_ID": random_seed.NUM_DIGITS_AIRSHOWER_ID,
+                    "NUM_DIGITS_RUN_ID": random_seed.STRUCTURE.NUM_DIGITS_RUN_ID,
+                    "NUM_DIGITS_AIRSHOWER_ID": random_seed.STRUCTURE.NUM_DIGITS_AIRSHOWER_ID,
                 },
                 indent=4,
             )
@@ -375,7 +375,7 @@ def _populate_table_of_thrown_air_showers(
 
             run_id = cfg["runs"][particle_key]["first_run_id"]
             for job_idx in np.arange(cfg["runs"][particle_key]["num"]):
-                assert random_seed.is_valid_run_id(run_id)
+                assert random_seed.STRUCTURE.is_valid_run_id(run_id)
 
                 irf_job = {
                     "run_id": run_id,
