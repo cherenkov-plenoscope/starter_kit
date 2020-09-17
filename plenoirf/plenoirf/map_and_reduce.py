@@ -252,10 +252,13 @@ ARTIFICIAL_CORE_LIMITATION["helium"] = ARTIFICIAL_CORE_LIMITATION[
 # ARTIFICIAL_CORE_LIMITATION = None
 
 
-def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
-    particle_key = "proton"
-    site_key = "namibia"
-
+def make_example_job(
+    run_dir,
+    num_air_showers=25,
+    example_dirname="_testing",
+    particle_key="proton",
+    site_key="namibia",
+):
     deflection_table = magnetic_deflection.read(
         work_dir=op.join(run_dir, "magnetic_deflection"), style="dict",
     )
@@ -283,6 +286,9 @@ def make_example_job(run_dir, num_air_showers=25, example_dirname="_testing"):
         "cherenkov_classification": EXAMPLE_CHERENKOV_CLASSIFICATION,
         "log_dir": op.join(test_dir, "log"),
         "past_trigger_dir": op.join(test_dir, "past_trigger"),
+        "past_trigger_reconstructed_cherenkov_dir": op.join(
+            test_dir, "past_trigger_reconstructed_cherenkov"
+        ),
         "feature_dir": op.join(test_dir, "features"),
         "keep_tmp": True,
         "tmp_dir": op.join(test_dir, "tmp"),
@@ -460,9 +466,25 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
         tarfout.add(event_dir, arcname=".")
 
 
+def export_reconstructed_Cherenkov_photons(
+    raw_sensor_response, cherenkov_photon_ids, filename, out_dir, tmp_dir,
+):
+    phs_loph = pl.photon_stream.loph.raw_sensor_response_to_photon_stream_in_loph_repr(
+        raw_sensor_response=raw_sensor_response,
+        cherenkov_photon_ids=cherenkov_photon_ids,
+    )
+    tmp_path = os.path.join(tmp_dir, filename)
+    with open(tmp_path, "wb") as fileobj:
+        pl.photon_stream.loph.write_photon_stream_to_file(
+            phs=phs_loph, fileobj=fileobj
+        )
+    nfs.move(tmp_path, os.path.join(out_dir, filename))
+
+
 def run_job(job):
     os.makedirs(job["log_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
+    os.makedirs(job["past_trigger_reconstructed_cherenkov_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
     run_id_str = "{:06d}".format(job["run_id"])
     time_log_path = op.join(job["log_dir"], run_id_str + "_runtime.jsonl")
@@ -709,7 +731,9 @@ def run_job(job):
             )
             tar_append(
                 tarout=imgtar,
-                file_name=random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(seed=event_seed)
+                file_name=random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
+                    seed=event_seed
+                )
                 + ".f4.gz",
                 file_bytes=grid.histogram_to_bytes(grid_result["histogram"]),
             )
@@ -888,7 +912,9 @@ def run_job(job):
         if trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]:
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp["unique_id_str"] = random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
+            ptp[
+                "unique_id_str"
+            ] = random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
                 seed=ptp[spt.IDX]
             )
             table_past_trigger.append(ptp)
@@ -904,9 +930,9 @@ def run_job(job):
     roi_cfg = job["cherenkov_classification"]["region_of_interest"]
     dbscan_cfg = job["cherenkov_classification"]
 
-    for pt in table_past_trigger:
+    for ptp in table_past_trigger:
         event = pl.Event(
-            path=pt["tmp_path"], light_field_geometry=light_field_geometry
+            path=ptp["tmp_path"], light_field_geometry=light_field_geometry
         )
         trigger_responses = pl.simple_trigger.io.read_trigger_response_from_path(
             path=os.path.join(event._path, "refocus_sum_trigger.json")
@@ -942,8 +968,19 @@ def run_job(job):
             pulse_origins=event.simulation_truth.detector.pulse_origins,
             photon_ids_cherenkov=cherenkov_photons.photon_ids,
         )
-        crcl[spt.IDX] = pt[spt.IDX]
+        crcl[spt.IDX] = ptp[spt.IDX]
         tabrec["cherenkovclassification"].append(crcl)
+
+        # export reconstructed Cherenkov photons
+        # --------------------------------------
+        export_reconstructed_Cherenkov_photons(
+            raw_sensor_response=event.raw_sensor_response,
+            cherenkov_photon_ids=cherenkov_photons.photon_ids,
+            filename=ptp["unique_id_str"] + ".phs.loph",
+            out_dir=job["past_trigger_reconstructed_cherenkov_dir"],
+            tmp_dir=tmp_dir,
+        )
+
     logger.log("cherenkov_classification")
 
     # extracting features
