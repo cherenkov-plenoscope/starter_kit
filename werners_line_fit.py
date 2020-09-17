@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 PORTAL_CXCY_SIGN = -1.0
 PORTAL_XY_SIGN = 1.0
 TRUE_CORE_XY_SIGN = -1.0
-TRUE_CXCY_SIGN = -1.0
+TRUE_CXCY_SIGN = 1.0
 
 def circle(radius):
     phi = np.linspace(0, 2.0 * np.pi, 1337)
@@ -144,8 +144,8 @@ for event_path in paths:
         ]
     )
     momentum = momentum / np.linalg.norm(momentum)
-    true_cx = TRUE_CXCY_SIGN * (-1.0) * momentum[0]
-    true_cy = TRUE_CXCY_SIGN * (-1.0) * momentum[1]
+    true_cx = TRUE_CXCY_SIGN * momentum[0]
+    true_cy = TRUE_CXCY_SIGN * momentum[1]
 
     true_x = TRUE_CORE_XY_SIGN * truth["core"]["core_x_m"][0]
     true_y = TRUE_CORE_XY_SIGN * truth["core"]["core_y_m"][0]
