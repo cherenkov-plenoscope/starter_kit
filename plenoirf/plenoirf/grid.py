@@ -274,7 +274,9 @@ def read_histograms(path, indices=None):
         grids = {}
         with tarfile.open(path, "r") as tarfin:
             for tarinfo in tarfin:
-                idx = int(tarinfo.name[0 : random_seed.STRUCTURE.NUM_DIGITS_SEED])
+                idx = int(
+                    tarinfo.name[0 : random_seed.STRUCTURE.NUM_DIGITS_SEED]
+                )
                 if idx in indices_set:
                     grids[idx] = tarfin.extractfile(tarinfo).read()
         return grids
@@ -284,7 +286,8 @@ def write_histograms(path, grid_histograms):
     with tarfile.open(path + ".tmp", "w") as tarfout:
         for idx in grid_histograms:
             filename = (
-                random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(seed=idx) + ".f4.gz"
+                random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(seed=idx)
+                + ".f4.gz"
             )
             with io.BytesIO() as buff:
                 info = tarfile.TarInfo(filename)
