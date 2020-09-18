@@ -413,6 +413,10 @@ def _populate_table_of_thrown_air_showers(
                     "past_trigger_dir": opj(
                         site_particle_absdir, "past_trigger.map"
                     ),
+                    "past_trigger_reconstructed_cherenkov_dir": opj(
+                        site_particle_absdir,
+                        "past_trigger_reconstructed_cherenkov_dir.map",
+                    ),
                     "feature_dir": opj(site_particle_absdir, "features.map"),
                     "keep_tmp": KEEP_TMP,
                     "tmp_dir": tmp_absdir,
