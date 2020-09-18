@@ -25,3 +25,6 @@
 [submodule "magnetic_deflection"]
 	path = magnetic_deflection
 	url = https://github.com/cherenkov-plenoscope/magnetic_deflection
+[submodule "airshower_template_generator"]
+	path = airshower_template_generator
+	url = https://github.com/cherenkov-plenoscope/airshower_template_generator
