@@ -22,3 +22,6 @@
 [submodule "sparse_numeric_table"]
 	path = sparse_numeric_table
 	url = https://github.com/cherenkov-plenoscope/sparse_numeric_table
+[submodule "magnetic_deflection"]
+	path = magnetic_deflection
+	url = https://github.com/cherenkov-plenoscope/magnetic_deflection
