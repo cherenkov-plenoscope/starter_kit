@@ -23,53 +23,80 @@ from subprocess import call
 def main():
     try:
         arguments = docopt.docopt(__doc__)
-        os.makedirs('build', exist_ok=True)
+        os.makedirs("build", exist_ok=True)
 
         # KIT-CORSIKA
         # -----------
-        call([
-            join('.', 'corsika_install', 'install.py'),
-            '--install_path', join('.', 'build', 'corsika'),
-            '--username', arguments['--username'],
-            '--password', arguments['--password'],
-            '--resource_path', join('.', 'corsika_install', 'resources')])
-        call(['pip', 'install', '-e',
-            join('.', 'corsika_install', 'corsika_primary_wrapper')])
+        call(
+            [
+                join(".", "corsika_install", "install.py"),
+                "--install_path",
+                join(".", "build", "corsika"),
+                "--username",
+                arguments["--username"],
+                "--password",
+                arguments["--password"],
+                "--resource_path",
+                join(".", "corsika_install", "resources"),
+            ]
+        )
+        call(
+            [
+                "pip",
+                "install",
+                "-e",
+                join(".", "corsika_install", "corsika_primary_wrapper"),
+            ]
+        )
 
         # Photon-propagator merlict
         # -------------------------
-        merlict_build_dir = join('.', 'build', 'merlict')
+        merlict_build_dir = join(".", "build", "merlict")
         os.makedirs(merlict_build_dir, exist_ok=True)
-        call([
-            'cmake',
-            '../../merlict_development_kit',
-            '-DCMAKE_C_COMPILER=gcc',
-            '-DCMAKE_CXX_COMPILER=g++'],
-            cwd=merlict_build_dir)
-        call(['make', '-j', '12'], cwd=merlict_build_dir)
-        call(['touch', join(
-            '.', '..', '..', 'merlict_development_kit', 'CMakeLists.txt')],
-            cwd=merlict_build_dir)
-        call(['make', '-j', '12'], cwd=merlict_build_dir)
+        call(
+            [
+                "cmake",
+                "../../merlict_development_kit",
+                "-DCMAKE_C_COMPILER=gcc",
+                "-DCMAKE_CXX_COMPILER=g++",
+            ],
+            cwd=merlict_build_dir,
+        )
+        call(["make", "-j", "12"], cwd=merlict_build_dir)
+        call(
+            [
+                "touch",
+                join(
+                    ".",
+                    "..",
+                    "..",
+                    "merlict_development_kit",
+                    "CMakeLists.txt",
+                ),
+            ],
+            cwd=merlict_build_dir,
+        )
+        call(["make", "-j", "12"], cwd=merlict_build_dir)
 
         # Tools
         # -----
         tools = [
-            'cosmic_fluxes',
-            'plenopy',
-            'corsika_wrapper',
-            'cable_robo_mount',
-            'simpleio',
-            'plenoirf',
-            'magnetic_deflection',
-            'sparse_numeric_table',
-            'spectral_energy_distribution_units',
+            "cosmic_fluxes",
+            "plenopy",
+            "corsika_wrapper",
+            "cable_robo_mount",
+            "simpleio",
+            "plenoirf",
+            "magnetic_deflection",
+            "sparse_numeric_table",
+            "spectral_energy_distribution_units",
         ]
         for tool in tools:
-            call(['pip', 'install', '-e', join('.', tool)])
+            call(["pip", "install", "-e", join(".", tool)])
 
     except docopt.DocoptExit as e:
         print(e)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
