@@ -61,6 +61,7 @@ def main():
             'cable_robo_mount',
             'simpleio',
             'plenoirf',
+            'magnetic_deflection',
             'sparse_numeric_table',
             'spectral_energy_distribution_units',
         ]
