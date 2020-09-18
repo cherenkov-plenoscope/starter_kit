@@ -804,9 +804,6 @@ def run_job(job):
         op.join(job["log_dir"], run_id_str + "_corsika.stderr"),
     )
 
-    if not job["keep_tmp"]:
-        os.remove(corsika_run_path)
-
     # run merlict
     # -----------
     merlict_run_path = op.join(tmp_dir, run_id_str + "_merlict.cp")
