@@ -94,7 +94,7 @@ EXAMPLE_CONFIG = {
         },
         "electron": {
             "particle_id": 3,
-            "energy_bin_edges_GeV": [0.25, 1000],
+            "energy_bin_edges_GeV": [0.5, 1000],
             "max_scatter_angle_deg": 6.5,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": -1.0,
