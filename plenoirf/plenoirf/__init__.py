@@ -340,14 +340,16 @@ def _estimate_trigger_geometry_of_plenoscope(
 def _reduce_lopf_photon_stream(input_template_path, out_path, num_digits=9):
     paths = glob.glob(input_template_path)
     paths.sort()
-    tmp_out_path = out_path + ".tmp"
-    with tarfile.open(tmp_out_path, "w") as tarout:
-        for inpath in paths:
-            with open(inpath, "rb") as fin, io.BytesIO() as buff:
-                info = tarfile.TarInfo(os.path.basename(inpath))
-                info.size = buff.write(fin.read())
-                buff.seek(0)
-                tarout.addfile(info, buff)
+
+    with tempfile.TemporaryDirectory(prefix="plenoirf_loph_to_tar") as tmp_dir:
+        tmp_out_path = os.path.join(tmp_dir, os.path.basename(out_path))
+        with tarfile.open(tmp_out_path, "w") as tarout:
+            for inpath in paths:
+                with open(inpath, "rb") as fin, io.BytesIO() as buff:
+                    info = tarfile.TarInfo(os.path.basename(inpath))
+                    info.size = buff.write(fin.read())
+                    buff.seek(0)
+                    tarout.addfile(info, buff)
     network_file_system.move(tmp_out_path, out_path)
 
 
