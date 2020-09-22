@@ -337,18 +337,18 @@ def _estimate_trigger_geometry_of_plenoscope(
         )
 
 
-def _reduce_lopf_photon_stream(input_template_path, outpath, num_digits=9):
+def _reduce_lopf_photon_stream(input_template_path, out_path, num_digits=9):
     paths = glob.glob(input_template_path)
     paths.sort()
-    tmp_outpath = outpath + ".tmp"
-    with tarfile.open(tmp_outpath, "w") as tarout:
+    tmp_out_path = out_path + ".tmp"
+    with tarfile.open(tmp_out_path, "w") as tarout:
         for inpath in paths:
             with open(inpath, "rb") as fin, io.BytesIO() as buff:
                 info = tarfile.TarInfo(os.path.basename(inpath))
                 info.size = buff.write(fin.read())
                 buff.seek(0)
                 tarout.addfile(info, buff)
-    network_file_system.move(tmp_outpath, outpath)
+    network_file_system.move(tmp_out_path, out_path)
 
 
 def _populate_table_of_thrown_air_showers(
@@ -500,6 +500,25 @@ def _populate_table_of_thrown_air_showers(
                     list_of_grid_paths=_grid_paths, out_path=grid_abspath
                 )
             qmrlog("Reduce {:s} {:s} grid.".format(site_key, particle_key))
+
+            # cherenkov-photon-stream
+            # =======================
+            loph_abspath = opj(site_particle_absdir, "cherenkov.phs.loph.tar")
+            qmrlog(
+                "Reduce {:s} {:s} cherenkov phs.".format(
+                    site_key, particle_key
+                )
+            )
+            if not op.exists(loph_abspath) or not LAZY_REDUCTION:
+                _reduce_lopf_photon_stream(
+                    input_template_path=opj(
+                        site_particle_absdir,
+                        "past_trigger_reconstructed_cherenkov_dir.map",
+                        "*.loph.phs",
+                    ),
+                    out_path=loph_abspath,
+                    num_digits=random_seed.STRUCTURE.NUM_DIGITS_SEED,
+                )
 
 
 def run(
