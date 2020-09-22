@@ -263,15 +263,17 @@ def make_example_job(
         work_dir=op.join(run_dir, "magnetic_deflection"), style="dict",
     )
     test_dir = op.join(run_dir, example_dirname)
+    with open(op.join(run_dir, "input", "config.json"), "rt") as fin:
+        config = json.loads(fin.read())
 
     job = {
         "run_id": 1,
         "num_air_showers": num_air_showers,
-        "particle": EXAMPLE_PARTICLE,
-        "plenoscope_pointing": EXAMPLE_PLENOSCOPE_POINTING,
-        "site": EXAMPLE_SITE,
-        "grid": EXAMPLE_GRID,
-        "sum_trigger": EXAMPLE_SUM_TRIGGER,
+        "particle": config["particles"][particle_key],
+        "plenoscope_pointing": config["plenoscope_pointing"],
+        "site": config["sites"][site_key],
+        "grid": config["grid"],
+        "sum_trigger": config["sum_trigger"],
         "corsika_primary_path": CORSIKA_PRIMARY_PATH,
         "plenoscope_scenery_path": op.join(
             run_dir, "light_field_geometry", "input", "scenery"
@@ -283,7 +285,7 @@ def make_example_job(
             run_dir, "input", "merlict_propagation_config.json"
         ),
         "site_particle_deflection": deflection_table[site_key][particle_key],
-        "cherenkov_classification": EXAMPLE_CHERENKOV_CLASSIFICATION,
+        "cherenkov_classification": config["cherenkov_classification"],
         "log_dir": op.join(test_dir, "log"),
         "past_trigger_dir": op.join(test_dir, "past_trigger"),
         "past_trigger_reconstructed_cherenkov_dir": op.join(
@@ -464,21 +466,6 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
         output_tar_path = event_dir + ".tar"
     with tarfile.open(output_tar_path, "w") as tarfout:
         tarfout.add(event_dir, arcname=".")
-
-
-def export_reconstructed_Cherenkov_photons(
-    raw_sensor_response, cherenkov_photon_ids, filename, out_dir, tmp_dir,
-):
-    phs_loph = pl.photon_stream.loph.raw_sensor_response_to_photon_stream_in_loph_repr(
-        raw_sensor_response=raw_sensor_response,
-        cherenkov_photon_ids=cherenkov_photon_ids,
-    )
-    tmp_path = os.path.join(tmp_dir, filename)
-    with open(tmp_path, "wb") as fileobj:
-        pl.photon_stream.loph.write_photon_stream_to_file(
-            phs=phs_loph, fileobj=fileobj
-        )
-    nfs.move(tmp_path, os.path.join(out_dir, filename))
 
 
 def run_job(job):
@@ -927,56 +914,63 @@ def run_job(job):
     roi_cfg = job["cherenkov_classification"]["region_of_interest"]
     dbscan_cfg = job["cherenkov_classification"]
 
-    for ptp in table_past_trigger:
-        event = pl.Event(
-            path=ptp["tmp_path"], light_field_geometry=light_field_geometry
-        )
-        trigger_responses = pl.simple_trigger.io.read_trigger_response_from_path(
-            path=os.path.join(event._path, "refocus_sum_trigger.json")
-        )
-        roi = pl.simple_trigger.region_of_interest.from_trigger_response(
-            trigger_response=trigger_responses,
-            trigger_geometry=trigger_geometry,
-            time_slice_duration=event.raw_sensor_response.time_slice_duration,
-        )
-        photons = pl.classify.RawPhotons.from_event(event)
-        (
-            cherenkov_photons,
-            roi_settings,
-        ) = pl.classify.cherenkov_photons_in_roi_in_image(
-            roi=roi,
-            photons=photons,
-            roi_time_offset_start=roi_cfg["time_offset_start_s"],
-            roi_time_offset_stop=roi_cfg["time_offset_stop_s"],
-            roi_cx_cy_radius=np.deg2rad(roi_cfg["direction_radius_deg"]),
-            roi_object_distance_offsets=roi_cfg["object_distance_offsets_m"],
-            dbscan_epsilon_cx_cy_radius=np.deg2rad(
-                dbscan_cfg["neighborhood_radius_deg"]
-            ),
-            dbscan_min_number_photons=dbscan_cfg["min_num_photons"],
-            dbscan_deg_over_s=dbscan_cfg["direction_to_time_mixing_deg_per_s"],
-        )
-        pl.classify.write_dense_photon_ids_to_event(
-            event_path=op.abspath(event._path),
-            photon_ids=cherenkov_photons.photon_ids,
-            settings=roi_settings,
-        )
-        crcl = pl.classify.benchmark(
-            pulse_origins=event.simulation_truth.detector.pulse_origins,
-            photon_ids_cherenkov=cherenkov_photons.photon_ids,
-        )
-        crcl[spt.IDX] = ptp[spt.IDX]
-        tabrec["cherenkovclassification"].append(crcl)
+    cer_phs_basename = run_id_str + "_reconstructed_cherenkov.tar"
+    with pl.photon_stream.loph.LopfTarWriter(
+        path=os.path.join(tmp_dir, cer_phs_basename),
+        id_num_digits=random_seed.STRUCTURE.NUM_DIGITS_SEED,
+    ) as cer_phs_run:
+        for ptp in table_past_trigger:
+            event = pl.Event(
+                path=ptp["tmp_path"], light_field_geometry=light_field_geometry
+            )
+            trigger_responses = pl.simple_trigger.io.read_trigger_response_from_path(
+                path=os.path.join(event._path, "refocus_sum_trigger.json")
+            )
+            roi = pl.simple_trigger.region_of_interest.from_trigger_response(
+                trigger_response=trigger_responses,
+                trigger_geometry=trigger_geometry,
+                time_slice_duration=event.raw_sensor_response.time_slice_duration,
+            )
+            photons = pl.classify.RawPhotons.from_event(event)
+            (
+                cherenkov_photons,
+                roi_settings,
+            ) = pl.classify.cherenkov_photons_in_roi_in_image(
+                roi=roi,
+                photons=photons,
+                roi_time_offset_start=roi_cfg["time_offset_start_s"],
+                roi_time_offset_stop=roi_cfg["time_offset_stop_s"],
+                roi_cx_cy_radius=np.deg2rad(roi_cfg["direction_radius_deg"]),
+                roi_object_distance_offsets=roi_cfg[
+                    "object_distance_offsets_m"
+                ],
+                dbscan_epsilon_cx_cy_radius=np.deg2rad(
+                    dbscan_cfg["neighborhood_radius_deg"]
+                ),
+                dbscan_min_number_photons=dbscan_cfg["min_num_photons"],
+                dbscan_deg_over_s=dbscan_cfg[
+                    "direction_to_time_mixing_deg_per_s"
+                ],
+            )
+            pl.classify.write_dense_photon_ids_to_event(
+                event_path=op.abspath(event._path),
+                photon_ids=cherenkov_photons.photon_ids,
+                settings=roi_settings,
+            )
+            crcl = pl.classify.benchmark(
+                pulse_origins=event.simulation_truth.detector.pulse_origins,
+                photon_ids_cherenkov=cherenkov_photons.photon_ids,
+            )
+            crcl[spt.IDX] = ptp[spt.IDX]
+            tabrec["cherenkovclassification"].append(crcl)
 
-        # export reconstructed Cherenkov photons
-        # --------------------------------------
-        export_reconstructed_Cherenkov_photons(
-            raw_sensor_response=event.raw_sensor_response,
-            cherenkov_photon_ids=cherenkov_photons.photon_ids,
-            filename=ptp["unique_id_str"] + ".phs.loph",
-            out_dir=job["past_trigger_reconstructed_cherenkov_dir"],
-            tmp_dir=tmp_dir,
-        )
+            # export reconstructed Cherenkov photons
+            # --------------------------------------
+            cer_phs = pl.photon_stream.loph.raw_sensor_response_to_photon_stream_in_loph_repr(
+                raw_sensor_response=event.raw_sensor_response,
+                cherenkov_photon_ids=cherenkov_photons.photon_ids,
+            )
+            cer_phs_run.add(identity=ptp[spt.IDX], phs=cer_phs)
 
     logger.log("cherenkov_classification")
 
@@ -1064,6 +1058,15 @@ def run_job(job):
             dst=op.join(job["past_trigger_dir"], final_tarname),
         )
     logger.log("export_past_trigger")
+
+    # export past_trigger reconstructed cherenkov
+    # -------------------------------------------
+    nfs.copy(
+        src=op.join(tmp_dir, cer_phs_basename),
+        dst=op.join(
+            job["past_trigger_reconstructed_cherenkov_dir"], cer_phs_basename
+        ),
+    )
 
     # end
     # ---
