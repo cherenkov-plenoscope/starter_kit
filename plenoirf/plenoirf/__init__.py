@@ -514,7 +514,7 @@ def _populate_table_of_thrown_air_showers(
                     input_template_path=opj(
                         site_particle_absdir,
                         "past_trigger_reconstructed_cherenkov_dir.map",
-                        "*.loph.phs",
+                        "*.phs.loph",
                     ),
                     out_path=loph_abspath,
                     num_digits=random_seed.STRUCTURE.NUM_DIGITS_SEED,
