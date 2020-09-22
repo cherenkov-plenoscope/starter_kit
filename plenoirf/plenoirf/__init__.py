@@ -26,6 +26,8 @@ import multiprocessing
 import glob
 import tempfile
 import pandas as pd
+import tarfile
+import io
 
 import plenopy as pl
 import sparse_numeric_table as spt
@@ -333,6 +335,20 @@ def _estimate_trigger_geometry_of_plenoscope(
             trigger_summation_statistics=tss,
             out_dir=opj(out_absdir, "trigger_geometry", "plot"),
         )
+
+
+def _reduce_lopf_photon_stream(input_template_path, outpath, num_digits=9):
+    paths = glob.glob(input_template_path)
+    paths.sort()
+    tmp_outpath = outpath + ".tmp"
+    with tarfile.open(tmp_outpath, "w") as tarout:
+        for inpath in paths:
+            with open(inpath, "rb") as fin, io.BytesIO() as buff:
+                info = tarfile.TarInfo(os.path.basename(inpath))
+                info.size = buff.write(fin.read())
+                buff.seek(0)
+                tarout.addfile(info, buff)
+    network_file_system.move(tmp_outpath, outpath)
 
 
 def _populate_table_of_thrown_air_showers(
