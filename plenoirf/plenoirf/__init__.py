@@ -510,6 +510,7 @@ def _populate_table_of_thrown_air_showers(
                 )
             )
             if not op.exists(loph_abspath) or not LAZY_REDUCTION:
+                qmrlog("compile ", loph_abspath)
                 _reduce_lopf_photon_stream(
                     input_template_path=opj(
                         site_particle_absdir,
