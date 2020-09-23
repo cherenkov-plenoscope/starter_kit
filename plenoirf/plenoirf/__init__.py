@@ -490,6 +490,7 @@ def _populate_table_of_thrown_air_showers(
             # cherenkov-photon-stream
             # =======================
             loph_abspath = opj(site_particle_absdir, "cherenkov.phs.loph.tar")
+            tmp_loph_abspath = loph_abspath + ".tmp"
             qmrlog(
                 "Reduce {:s} {:s} cherenkov phs.".format(
                     site_key, particle_key
@@ -507,8 +508,9 @@ def _populate_table_of_thrown_air_showers(
                 _cer_run_paths.sort()
                 pl.photon_stream.loph.concatenate_tars(
                     in_paths=_cer_run_paths,
-                    out_path=loph_abspath
+                    out_path=tmp_loph_abspath
                 )
+                network_file_system.move(tmp_loph_abspath, loph_abspath)
 
 
 def run(
