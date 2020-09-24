@@ -27,7 +27,6 @@ _passed_trigger_indices = irf.json_numpy.read_tree(
 )
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
-particle_colors = sum_config["plot"]["particle_colors"]
 
 theta_square_bin_edges_deg2 = np.linspace(
     0,

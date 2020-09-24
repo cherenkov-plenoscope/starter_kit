@@ -56,20 +56,18 @@ def gaussian_bell(mu, sigma, x):
     return norm * np.exp(-((x - mu) ** 2) / (2 * sigma ** 2))
 
 
+def lorentz_transversal(c_deg, peak_deg, width_deg):
+    return width_deg / (np.pi * (width_deg ** 2 + (c_deg - peak_deg) ** 2))
+
+
 def model_distance_to_main_axis(c_para, c_perp, perp_distance_threshold):
-    """
-    ^ w
-    |
-   1|-
-    | \
-    |  \
-    |   \
-    o----|-------> c_perp
-        thr
-    """
     num = len(c_perp)
-    weights = gaussian_bell(mu=0.0, sigma=perp_distance_threshold, x=c_perp)
-    perp_weight = np.sum(weights) / num
+
+    l_trans_max = lorentz_transversal(c_deg=0.0, peak_deg=0.0, width_deg=perp_distance_threshold)
+    l_trans = lorentz_transversal(c_deg=c_perp, peak_deg=0.0, width_deg=perp_distance_threshold)
+    l_trans /= l_trans_max
+
+    perp_weight = np.sum(l_trans) / num
 
     return perp_weight
 
@@ -96,7 +94,7 @@ def _f(
         primary_core_y_m=core_y,
     )
     w = model_distance_to_main_axis(
-        c_para=c_para, c_perp=c_perp, perp_distance_threshold=np.deg2rad(2.0)
+        c_para=c_para, c_perp=c_perp, perp_distance_threshold=np.deg2rad(1.0)
     )
 
     return 1.0 - w
@@ -161,7 +159,7 @@ class LightField:
         return w + reppelling_source + reppelling_core
 
 
-for sk in irf_config["config"]["sites"]:
+for sk in ["namibia"]: #irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
 
         run = pl.photon_stream.loph.LopfTarReader(

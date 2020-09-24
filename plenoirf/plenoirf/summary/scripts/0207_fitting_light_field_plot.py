@@ -66,6 +66,8 @@ fov_radius_deg = (
 c_bin_edges_deg = np.linspace(-fov_radius_deg, fov_radius_deg, 83)
 object_distances = np.geomspace(5e3, 35e3, 3)
 
+fig_16_by_9 = sum_config["plot"]["16_by_9"]
+
 # plot
 # ====
 def write_refocus_images(
@@ -83,6 +85,7 @@ def write_refocus_images(
     c_bin_edges_deg,
     fov_radius_deg,
     object_distances=np.geomspace(5e3, 35e3, 3),
+    fig_16_by_9=fig_16_by_9,
 ):
     imgs = []
     for obji, objd in enumerate(object_distances):
@@ -101,7 +104,7 @@ def write_refocus_images(
     vmax = np.max(imgs)
 
     for obji, objd in enumerate(object_distances):
-        fig = plt.figure()
+        fig = irf.summary.figure.figure(fig_16_by_9)
         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         ax.pcolor(
             c_bin_edges_deg,
@@ -223,9 +226,6 @@ for sk in reconstruction:
             lixel_ids = phs["photons"]["channels"]
 
             if airshower_id not in reco_by_index[sk][pk]:
-                continue
-
-            if len(lixel_ids) < 1e3:
                 continue
 
             write_refocus_images(
