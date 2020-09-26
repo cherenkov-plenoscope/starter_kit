@@ -90,16 +90,13 @@ for sk in reconstruction:
         true_x = -all_truth["core"]["core_x_m"]
         true_y = -all_truth["core"]["core_y_m"]
 
-
         delta_c_deg = np.rad2deg(
             np.hypot(all_reco["cx"] - true_cx, all_reco["cy"] - true_cy)
         )
 
         delta_hist = np.histogram(
-            delta_c_deg ** 2,
-            bins=theta_square_bin_edges_deg2
+            delta_c_deg ** 2, bins=theta_square_bin_edges_deg2
         )[0]
-
 
         theta_square_deg2 = irf.analysis.gamma_direction.integration_width_for_containment(
             bin_counts=delta_hist,

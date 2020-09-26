@@ -36,7 +36,7 @@ def momentum_to_cx_cy_wrt_aperture(
         [
             primary["momentum_x_GeV_per_c"],
             primary["momentum_y_GeV_per_c"],
-            primary["momentum_z_GeV_per_c"]
+            primary["momentum_z_GeV_per_c"],
         ]
     ).T
     momentum_norm = np.linalg.norm(momentum, axis=1)

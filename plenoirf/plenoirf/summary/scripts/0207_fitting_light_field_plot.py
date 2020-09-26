@@ -147,8 +147,8 @@ def write_refocus_images(
             fontsize=9,
         )
         ax.set_aspect("equal")
-        ax.set_xlim([-1.01*fov_radius_deg, 1.01*fov_radius_deg])
-        ax.set_ylim([-1.01*fov_radius_deg, 1.01*fov_radius_deg])
+        ax.set_xlim([-1.01 * fov_radius_deg, 1.01 * fov_radius_deg])
+        ax.set_ylim([-1.01 * fov_radius_deg, 1.01 * fov_radius_deg])
         ax.set_xlabel("cx / deg")
         ax.set_ylabel("cy / deg")
         ax.spines["top"].set_color("none")

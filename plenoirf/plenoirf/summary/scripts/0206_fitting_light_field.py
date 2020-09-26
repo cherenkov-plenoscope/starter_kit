@@ -64,8 +64,12 @@ def lorentz_transversal(c_deg, peak_deg, width_deg):
 def model_distance_to_main_axis(c_para, c_perp, perp_distance_threshold):
     num = len(c_perp)
 
-    l_trans_max = lorentz_transversal(c_deg=0.0, peak_deg=0.0, width_deg=perp_distance_threshold)
-    l_trans = lorentz_transversal(c_deg=c_perp, peak_deg=0.0, width_deg=perp_distance_threshold)
+    l_trans_max = lorentz_transversal(
+        c_deg=0.0, peak_deg=0.0, width_deg=perp_distance_threshold
+    )
+    l_trans = lorentz_transversal(
+        c_deg=c_perp, peak_deg=0.0, width_deg=perp_distance_threshold
+    )
     l_trans /= l_trans_max
 
     perp_weight = np.sum(l_trans) / num
@@ -160,7 +164,7 @@ class LightField:
         return w + reppelling_source + reppelling_core
 
 
-for sk in ["namibia"]: #irf_config["config"]["sites"]:
+for sk in ["namibia"]:  # irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
 
         run = pl.photon_stream.loph.LopfTarReader(
@@ -170,7 +174,11 @@ for sk in ["namibia"]: #irf_config["config"]["sites"]:
         )
 
         reco = []
-        for event in run:
+        for event_counter, event in enumerate(run):
+
+            if event_counter > 1000:
+                continue
+
             airshower_id, phs = event
             lixel_ids = phs["photons"]["channels"]
             num_reconstructed_photons = lixel_ids.shape[0]
@@ -227,7 +235,12 @@ for sk in ["namibia"]: #irf_config["config"]["sites"]:
                     "y": mm.values["core_y"],
                 }
             )
-            print(airshower_id, num_reconstructed_photons, mm.values["source_cx"], mm.values["source_cy"])
+            print(
+                airshower_id,
+                num_reconstructed_photons,
+                mm.values["source_cx"],
+                mm.values["source_cy"],
+            )
         reco_df = pandas.DataFrame(reco)
         reco_di = reco_df.to_dict(orient="list")
 
