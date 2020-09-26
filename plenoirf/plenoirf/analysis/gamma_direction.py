@@ -24,3 +24,22 @@ def estimate(
     rec_cx = -0.5 * (light_front_cx + image_infinity_cx_mean)
     rec_cy = -0.5 * (light_front_cy + image_infinity_cy_mean)
     return rec_cx, rec_cy
+
+
+def momentum_to_cx_cy_wrt_aperture(
+    primary, plenoscope_pointing,
+):
+    assert plenoscope_pointing["zenith_deg"] == 0.0
+    assert plenoscope_pointing["azimuth_deg"] == 0.0
+    WRT_APERTURE = -1.0
+    momentum = np.array(
+        [
+            primary["momentum_x_GeV_per_c"],
+            primary["momentum_y_GeV_per_c"],
+            primary["momentum_z_GeV_per_c"]
+        ]
+    ).T
+    momentum_norm = np.linalg.norm(momentum, axis=1)
+    for m in range(len(momentum_norm)):
+        momentum[m, :] /= momentum_norm[m]
+    return WRT_APERTURE * momentum[:, 0], WRT_APERTURE * momentum[:, 1]
