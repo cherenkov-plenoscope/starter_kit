@@ -152,40 +152,17 @@ for site_key in irf_config["config"]["sites"]:
 
     for energy_bin in range(num_energy_bins):
         psf_deg = np.array(psf_vs_energy[energy_bin])
-        num_airshower = psf_deg.shape[0]
 
-        if num_airshower > 0:
-            delta_c_deg = np.hypot(psf_deg[:, 0], psf_deg[:, 1])
-
-            delta_hist = np.histogram(
-                delta_c_deg ** 2, bins=theta_square_bin_edges_deg2
-            )[0]
-            delta_hist_unc = irf.analysis.effective_quantity._divide_silent(
-                np.sqrt(delta_hist), delta_hist, np.nan
-            )
-        else:
-            delta_hist = np.zeros(
-                len(theta_square_bin_edges_deg2) - 1, dtype=np.int64
-            )
-            delta_hist_unc = np.nan * np.ones(
-                len(theta_square_bin_edges_deg2) - 1, dtype=np.float64
-            )
-
-        theta_square_deg2 = irf.analysis.gamma_direction.integration_width_for_containment(
-            bin_counts=delta_hist,
-            bin_edges=theta_square_bin_edges_deg2,
-            containment=psf_containment_factor,
+        rrr = irf.analysis.gamma_direction.histogram_point_spread_function(
+            delta_c_deg=np.hypot(psf_deg[:, 0], psf_deg[:, 1]),
+            theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
+            psf_containment_factor=psf_containment_factor,
         )
+        t2hist.append(rrr["delta_hist"])
+        t2hist_rel_unc.append(rrr["delta_hist_relunc"])
+        containment_vs_energy.append(rrr["containment_angle_deg"])
+        containment_rel_unc_vs_energy.append(rrr["containment_angle_deg_relunc"])
 
-        t2hist.append(delta_hist)
-        t2hist_rel_unc.append(delta_hist_unc)
-
-        containment_vs_energy.append(np.sqrt(theta_square_deg2))
-        if num_airshower > 0:
-            _unc = np.sqrt(num_airshower) / num_airshower
-        else:
-            _unc = np.nan
-        containment_rel_unc_vs_energy.append(_unc)
 
     irf.json_numpy.write(
         opj(site_particle_dir, "theta_square_histogram_vs_energy.json"),

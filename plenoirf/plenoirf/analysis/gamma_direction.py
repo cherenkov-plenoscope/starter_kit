@@ -1,4 +1,5 @@
 import numpy as np
+from . import effective_quantity
 
 
 def integration_width_for_containment(bin_counts, bin_edges, containment):
@@ -27,19 +28,69 @@ def estimate(
 
 
 def momentum_to_cx_cy_wrt_aperture(
-    primary, plenoscope_pointing,
+    momentum_x_GeV_per_c,
+    momentum_y_GeV_per_c,
+    momentum_z_GeV_per_c,
+    plenoscope_pointing,
 ):
     assert plenoscope_pointing["zenith_deg"] == 0.0
     assert plenoscope_pointing["azimuth_deg"] == 0.0
     WRT_APERTURE = -1.0
     momentum = np.array(
         [
-            primary["momentum_x_GeV_per_c"],
-            primary["momentum_y_GeV_per_c"],
-            primary["momentum_z_GeV_per_c"],
+            momentum_x_GeV_per_c,
+            momentum_y_GeV_per_c,
+            momentum_z_GeV_per_c,
         ]
     ).T
     momentum_norm = np.linalg.norm(momentum, axis=1)
     for m in range(len(momentum_norm)):
         momentum[m, :] /= momentum_norm[m]
     return WRT_APERTURE * momentum[:, 0], WRT_APERTURE * momentum[:, 1]
+
+
+
+def histogram_point_spread_function(
+    delta_c_deg,
+    theta_square_bin_edges_deg2,
+    psf_containment_factor,
+):
+    """
+    angle between truth and reconstruction for each event.
+
+    psf_containment_factor e.g. 0.68
+    """
+    num_airshower = delta_c_deg.shape[0]
+
+    if num_airshower > 0:
+        delta_hist = np.histogram(
+            delta_c_deg ** 2, bins=theta_square_bin_edges_deg2
+        )[0]
+        delta_hist_unc = effective_quantity._divide_silent(
+            np.sqrt(delta_hist), delta_hist, np.nan
+        )
+    else:
+        delta_hist = np.zeros(
+            len(theta_square_bin_edges_deg2) - 1, dtype=np.int64
+        )
+        delta_hist_unc = np.nan * np.ones(
+            len(theta_square_bin_edges_deg2) - 1, dtype=np.float64
+        )
+
+    theta_square_deg2 = integration_width_for_containment(
+        bin_counts=delta_hist,
+        bin_edges=theta_square_bin_edges_deg2,
+        containment=psf_containment_factor,
+    )
+
+    if num_airshower > 0:
+        theta_square_deg2_relunc = np.sqrt(num_airshower) / num_airshower
+    else:
+        theta_square_deg2_relunc = np.nan
+
+    return {
+        "delta_hist": delta_hist,
+        "delta_hist_relunc": delta_hist_unc,
+        "containment_angle_deg": np.sqrt(theta_square_deg2),
+        "containment_angle_deg_relunc": theta_square_deg2_relunc,
+    }
