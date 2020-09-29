@@ -37,6 +37,7 @@ energy_upper_edge = sum_config["energy_binning"]["upper_edge_GeV"]
 energy_bin_edges = np.geomspace(
     energy_lower_edge, energy_upper_edge, num_energy_bins + 1
 )
+energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
 theta_square_bin_edges_deg2 = np.linspace(
     0,
@@ -46,6 +47,8 @@ theta_square_bin_edges_deg2 = np.linspace(
 psf_containment_factor = sum_config["point_spread_function"][
     "containment_factor"
 ]
+pivot_energy_GeV = sum_config["point_spread_function"]["pivot_energy_GeV"]
+
 
 # READ reconstruction
 # ===================
@@ -60,17 +63,17 @@ for sk in _rec:
         reconstruction[sk][pk] = _df.to_records(index=False)
 
 level_keys = [
-                "primary",
-                "cherenkovsize",
-                "grid",
-                "cherenkovpool",
-                "cherenkovsizepart",
-                "cherenkovpoolpart",
-                "core",
-                "trigger",
-                "pasttrigger",
-                "cherenkovclassification",
-            ]
+    "primary",
+    "cherenkovsize",
+    "grid",
+    "cherenkovpool",
+    "cherenkovsizepart",
+    "cherenkovpoolpart",
+    "core",
+    "trigger",
+    "pasttrigger",
+    "cherenkovclassification",
+]
 
 for sk in reconstruction:
     for pk in reconstruction[sk]:
@@ -131,7 +134,9 @@ for sk in reconstruction:
                 momentum_x_GeV_per_c=ebin["primary.momentum_x_GeV_per_c"],
                 momentum_y_GeV_per_c=ebin["primary.momentum_y_GeV_per_c"],
                 momentum_z_GeV_per_c=ebin["primary.momentum_z_GeV_per_c"],
-                plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+                plenoscope_pointing=irf_config["config"][
+                    "plenoscope_pointing"
+                ],
             )
             true_x = -ebin["core.core_x_m"]
             true_y = -ebin["core.core_y_m"]
@@ -147,10 +152,14 @@ for sk in reconstruction:
             t2hist.append(rrr["delta_hist"])
             t2hist_rel_unc.append(rrr["delta_hist_relunc"])
             containment_vs_energy.append(rrr["containment_angle_deg"])
-            containment_rel_unc_vs_energy.append(rrr["containment_angle_deg_relunc"])
+            containment_rel_unc_vs_energy.append(
+                rrr["containment_angle_deg_relunc"]
+            )
 
         irf.json_numpy.write(
-            os.path.join(site_particle_dir, "theta_square_histogram_vs_energy.json"),
+            os.path.join(
+                site_particle_dir, "theta_square_histogram_vs_energy.json"
+            ),
             {
                 "comment": ("Theta-square-histogram VS energy"),
                 "energy_bin_edges_GeV": energy_bin_edges,
@@ -162,12 +171,31 @@ for sk in reconstruction:
         )
 
         irf.json_numpy.write(
-            os.path.join(site_particle_dir, "containment_angle_vs_energy.json"),
+            os.path.join(
+                site_particle_dir, "containment_angle_vs_energy.json"
+            ),
             {
                 "comment": ("Containment-angle, true gamma-rays, VS energy"),
                 "energy_bin_edges_GeV": energy_bin_edges,
                 "unit": "deg",
                 "mean": containment_vs_energy,
                 "relative_uncertainty": containment_rel_unc_vs_energy,
+            },
+        )
+
+        fix_onregion_radius_deg = irf.analysis.gamma_direction.estimate_fix_opening_angle_for_onregion(
+            energy_bin_centers_GeV=energy_bin_centers,
+            point_spread_function_containment_opening_angle_deg=containment_vs_energy,
+            pivot_energy_GeV=pivot_energy_GeV,
+        )
+
+        irf.json_numpy.write(
+            os.path.join(
+                site_particle_dir, "containment_angle_for_fix_onregion.json"
+            ),
+            {
+                "comment": ("Containment-angle, for the fix onregion"),
+                "containment_angle": fix_onregion_radius_deg,
+                "unit": "deg",
             },
         )

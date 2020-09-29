@@ -37,11 +37,7 @@ def momentum_to_cx_cy_wrt_aperture(
     assert plenoscope_pointing["azimuth_deg"] == 0.0
     WRT_APERTURE = -1.0
     momentum = np.array(
-        [
-            momentum_x_GeV_per_c,
-            momentum_y_GeV_per_c,
-            momentum_z_GeV_per_c,
-        ]
+        [momentum_x_GeV_per_c, momentum_y_GeV_per_c, momentum_z_GeV_per_c,]
     ).T
     momentum_norm = np.linalg.norm(momentum, axis=1)
     for m in range(len(momentum_norm)):
@@ -49,11 +45,8 @@ def momentum_to_cx_cy_wrt_aperture(
     return WRT_APERTURE * momentum[:, 0], WRT_APERTURE * momentum[:, 1]
 
 
-
 def histogram_point_spread_function(
-    delta_c_deg,
-    theta_square_bin_edges_deg2,
-    psf_containment_factor,
+    delta_c_deg, theta_square_bin_edges_deg2, psf_containment_factor,
 ):
     """
     angle between truth and reconstruction for each event.
@@ -94,3 +87,32 @@ def histogram_point_spread_function(
         "containment_angle_deg": np.sqrt(theta_square_deg2),
         "containment_angle_deg_relunc": theta_square_deg2_relunc,
     }
+
+
+def estimate_fix_opening_angle_for_onregion(
+    energy_bin_centers_GeV,
+    point_spread_function_containment_opening_angle_deg,
+    pivot_energy_GeV,
+    num_rise=8,
+):
+    """
+    Estimates and returns the psf's opening angle at a given pivot_energy when
+    given psf's opening angle vs energy.
+    Uses weighted interpolation in the vicinity of the pivot_energy.
+    """
+    smooth_kernel_energy = np.geomspace(
+        pivot_energy_GeV / 2, pivot_energy_GeV * 2, num_rise * 2
+    )
+    triangle_kernel_weight = np.hstack(
+        [np.cumsum(np.ones(num_rise)), np.flip(np.cumsum(np.ones(num_rise)))]
+    )
+    triangle_kernel_weight /= np.sum(triangle_kernel_weight)
+    pivot_containtment_deg = np.interp(
+        x=smooth_kernel_energy,
+        xp=energy_bin_centers_GeV,
+        fp=point_spread_function_containment_opening_angle_deg,
+    )
+    fix_onregion_radius_deg = np.sum(
+        pivot_containtment_deg * triangle_kernel_weight
+    )
+    return fix_onregion_radius_deg

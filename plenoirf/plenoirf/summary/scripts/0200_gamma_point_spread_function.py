@@ -161,8 +161,9 @@ for site_key in irf_config["config"]["sites"]:
         t2hist.append(rrr["delta_hist"])
         t2hist_rel_unc.append(rrr["delta_hist_relunc"])
         containment_vs_energy.append(rrr["containment_angle_deg"])
-        containment_rel_unc_vs_energy.append(rrr["containment_angle_deg_relunc"])
-
+        containment_rel_unc_vs_energy.append(
+            rrr["containment_angle_deg_relunc"]
+        )
 
     irf.json_numpy.write(
         opj(site_particle_dir, "theta_square_histogram_vs_energy.json"),
@@ -187,21 +188,10 @@ for site_key in irf_config["config"]["sites"]:
         },
     )
 
-    # estimate fix opening angle for onregion
-    # ---------------------------------------
-    num_rise = 8
-    smooth_kernel_energy = np.geomspace(
-        pivot_energy_GeV / 2, pivot_energy_GeV * 2, num_rise * 2
-    )
-    triangle_kernel_weight = np.hstack(
-        [np.cumsum(np.ones(num_rise)), np.flip(np.cumsum(np.ones(num_rise)))]
-    )
-    triangle_kernel_weight /= np.sum(triangle_kernel_weight)
-    pivot_containtment_deg = np.interp(
-        x=smooth_kernel_energy, xp=energy_bin_centers, fp=containment_vs_energy
-    )
-    fix_onregion_radius_deg = np.sum(
-        pivot_containtment_deg * triangle_kernel_weight
+    fix_onregion_radius_deg = irf.analysis.gamma_direction.estimate_fix_opening_angle_for_onregion(
+        energy_bin_centers_GeV=energy_bin_centers,
+        point_spread_function_containment_opening_angle_deg=containment_vs_energy,
+        pivot_energy_GeV=pivot_energy_GeV,
     )
 
     irf.json_numpy.write(

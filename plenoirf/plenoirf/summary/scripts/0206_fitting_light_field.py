@@ -243,7 +243,7 @@ for sk in ["namibia"]:  # irf_config["config"]["sites"]:
             pl.photon_stream.loph.read_filter_write(
                 in_path=raw_loph_run,
                 out_path=loph_run_passed_trigger,
-                identity_set=passed_trigger_idx_sets[sk][pk]
+                identity_set=passed_trigger_idx_sets[sk][pk],
             )
 
         loph_chunk_dir = os.path.join(pa["out_dir"], sk, pk, "loph_chunks")
@@ -260,7 +260,7 @@ for sk in ["namibia"]:  # irf_config["config"]["sites"]:
             jobs = make_jobs(
                 loph_chunk_dir=loph_chunk_dir,
                 quality=sum_config["quality"],
-                limits=fit_limits
+                limits=fit_limits,
             )
 
             pool = multiprocessing.Pool(8)
@@ -274,8 +274,7 @@ for sk in ["namibia"]:  # irf_config["config"]["sites"]:
             reco_di = reco_df.to_dict(orient="list")
 
             irf.json_numpy.write(
-                path=result_path,
-                out_dict=reco_di,
+                path=result_path, out_dict=reco_di,
             )
         else:
             reco_di = irf.json_numpy.read(result_path)
