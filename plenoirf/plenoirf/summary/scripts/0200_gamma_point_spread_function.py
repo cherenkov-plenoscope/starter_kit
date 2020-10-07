@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import magnetic_deflection as mdfl
+import pandas
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
@@ -79,6 +80,7 @@ for site_key in irf_config["config"]["sites"]:
     )
 
     psf_vs_energy = []
+    reconstruction_table = []
     for energy_bin in range(num_energy_bins):
         idx_energy_bin = irf.analysis.cuts.cut_energy_bin(
             primary_table=diffuse_gamma_table["primary"],
@@ -127,7 +129,24 @@ for site_key in irf_config["config"]["sites"]:
             _delta_cy_deg = np.rad2deg(_delta_cy)
             psf_deg.append([_delta_cx_deg, _delta_cy_deg])
 
+            reconstruction_table.append(
+                {
+                    spt.IDX: gt["primary"][spt.IDX][evt],
+                    "cx": _rec_cx,
+                    "cy": _rec_cy,
+                    "x": float("nan"),
+                    "y": float("nan"),
+                }
+            )
+
         psf_vs_energy.append(psf_deg)
+
+    reco_df = pandas.DataFrame(reconstruction_table)
+    reco_di = reco_df.to_dict(orient="list")
+    irf.json_numpy.write(
+        path=opj(site_particle_dir, "reco.json"),
+        out_dict=reco_di,
+    )
 
     irf.json_numpy.write(
         opj(site_particle_dir, "point_spread_distribution_vs_energy.json"),
