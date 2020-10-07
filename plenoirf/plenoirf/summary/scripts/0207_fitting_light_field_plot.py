@@ -196,7 +196,9 @@ for sk in reconstruction:
             true_cx,
             true_cy,
         ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-            primary=all_truth["primary"],
+            momentum_x_GeV_per_c=all_truth["primary"]["momentum_x_GeV_per_c"],
+            momentum_y_GeV_per_c=all_truth["primary"]["momentum_y_GeV_per_c"],
+            momentum_z_GeV_per_c=all_truth["primary"]["momentum_z_GeV_per_c"],
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
