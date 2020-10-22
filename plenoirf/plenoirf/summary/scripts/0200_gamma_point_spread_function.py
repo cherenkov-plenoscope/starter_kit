@@ -144,8 +144,7 @@ for site_key in irf_config["config"]["sites"]:
     reco_df = pandas.DataFrame(reconstruction_table)
     reco_di = reco_df.to_dict(orient="list")
     irf.json_numpy.write(
-        path=opj(site_particle_dir, "reco.json"),
-        out_dict=reco_di,
+        path=opj(site_particle_dir, "reco.json"), out_dict=reco_di,
     )
 
     irf.json_numpy.write(

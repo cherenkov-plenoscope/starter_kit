@@ -18,12 +18,12 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 loph_chunk_base_dir = os.path.join(
-    pa["summary_dir"],
-    "0068_prepare_loph_passed_trigger_and_quality"
+    pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
 )
 
 
 bell_model_lut_path = "2020-09-26_gamma_lut/bell_model/bell_model.json"
+
 
 def read_energy_altitude_guess(
     site_key,
@@ -170,7 +170,14 @@ class LightField:
         return w + reppelling_source + reppelling_core
 
 
-def make_jobs(loph_chunk_dir, quality, limits, bell_model_lut_path, site_key, particle_key):
+def make_jobs(
+    loph_chunk_dir,
+    quality,
+    limits,
+    bell_model_lut_path,
+    site_key,
+    particle_key,
+):
     chunk_paths = glob.glob(os.path.join(loph_chunk_dir, "*.tar"))
     jobs = []
     for chunk_path in chunk_paths:
@@ -192,8 +199,7 @@ def run_job(job):
     bell_model_lut = atg.model.read_bell_model_lut(job["bell_model_lut_path"])
 
     guess_energy, guess_altitude = read_energy_altitude_guess(
-        site_key=job["site_key"],
-        particle_key=job["particle_key"]
+        site_key=job["site_key"], particle_key=job["particle_key"]
     )
     INSTRUMENT_RADIUS = 40.0
 
@@ -209,7 +215,7 @@ def run_job(job):
 
         try:
             print("guess_energy", guess_energy[airshower_id], "GeV")
-            print("guess_altitude", guess_altitude[airshower_id]*1e-3, "km")
+            print("guess_altitude", guess_altitude[airshower_id] * 1e-3, "km")
             print("num cherenkov ", slf.number_photons, "p.e.")
 
             bell_fit = atg.model.BellLightFieldFitter(
@@ -230,8 +236,8 @@ def run_job(job):
             scan_r = 0.7 * max_core_radius - INSTRUMENT_RADIUS
             scan_r = np.max([0.0, scan_r])
 
-            guess_x = 0.5*scan_r
-            guess_y = 0.5*scan_r
+            guess_x = 0.5 * scan_r
+            guess_y = 0.5 * scan_r
 
             print("max scan core radius ", scan_r, "m")
 

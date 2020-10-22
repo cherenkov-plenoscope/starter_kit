@@ -28,7 +28,7 @@ for sk in irf_config["config"]["sites"]:
         passed_trigger_and_quality = spt.intersection(
             [
                 _passed_trigger_indices[sk][pk]["passed_trigger"][spt.IDX],
-                _passed_quality_indices[sk][pk]["passed_quality"][spt.IDX]
+                _passed_quality_indices[sk][pk]["passed_quality"][spt.IDX],
             ]
         )
         passed_idx_sets[sk][pk] = set(passed_trigger_and_quality)

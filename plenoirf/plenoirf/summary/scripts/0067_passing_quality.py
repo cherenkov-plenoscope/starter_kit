@@ -35,7 +35,7 @@ for site_key in irf_config["config"]["sites"]:
         idx_pastquality = irf.analysis.cuts.cut_quality(
             feature_table=event_table["features"],
             max_relative_leakage=max_relative_leakage,
-            min_reconstructed_photons=min_reconstructed_photons
+            min_reconstructed_photons=min_reconstructed_photons,
         )
 
         irf.json_numpy.write(

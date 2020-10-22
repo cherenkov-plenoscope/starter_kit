@@ -23,6 +23,7 @@ _rec_params = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0200_gamma_point_spread_function")
 )
 
+
 def recordify_reconstructions(reco):
     reconstruction = {}
     for sk in reco:
@@ -42,6 +43,7 @@ def add_suffix_to_keys_in_dict(dic, suffix, except_keys=[spt.IDX]):
         else:
             out[key + suffix] = dic[key]
     return out
+
 
 SIGN_PROBABLY_WRONG_IN_GRID_ALGO = -1.0
 
@@ -82,9 +84,7 @@ for sk in rec_fitlut:
         momentum_x_GeV_per_c=event_df["primary.momentum_x_GeV_per_c"],
         momentum_y_GeV_per_c=event_df["primary.momentum_y_GeV_per_c"],
         momentum_z_GeV_per_c=event_df["primary.momentum_z_GeV_per_c"],
-        plenoscope_pointing=irf_config["config"][
-            "plenoscope_pointing"
-        ],
+        plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
     )
 
     true_cxyy = {}
@@ -93,13 +93,11 @@ for sk in rec_fitlut:
     true_cxyy["image_primary_cy_rad"] = true_cy
 
     pk_sk_rec_fitlut = add_suffix_to_keys_in_dict(
-        dic=rec_fitlut[sk][pk],
-        suffix="_reconstructed_probability_fit",
+        dic=rec_fitlut[sk][pk], suffix="_reconstructed_probability_fit",
     )
 
     pk_sk_rec_params = add_suffix_to_keys_in_dict(
-        dic=rec_params[sk][pk],
-        suffix="_reconstructed_bright_spot",
+        dic=rec_params[sk][pk], suffix="_reconstructed_bright_spot",
     )
 
     event_df = pandas.merge(
@@ -117,18 +115,17 @@ for sk in rec_fitlut:
             spt.IDX: event_df[spt.IDX],
             "true_cx_rad": event_df["image_primary_cx_rad"],
             "true_cy_rad": event_df["image_primary_cy_rad"],
-            "true_impact_x_m": SIGN_PROBABLY_WRONG_IN_GRID_ALGO * event_df["core.core_x_m"],
-            "true_impact_y_m": SIGN_PROBABLY_WRONG_IN_GRID_ALGO * event_df["core.core_y_m"],
+            "true_impact_x_m": SIGN_PROBABLY_WRONG_IN_GRID_ALGO
+            * event_df["core.core_x_m"],
+            "true_impact_y_m": SIGN_PROBABLY_WRONG_IN_GRID_ALGO
+            * event_df["core.core_y_m"],
             "true_energy_GeV": event_df["primary.energy_GeV"],
             "true_maximum_asl_m": event_df["cherenkovpool.maximum_asl_m"],
-
             "reco_cherenkov_pe": event_df["features.num_photons"],
-
             "reco_fit_cx_rad": event_df["cx_reconstructed_probability_fit"],
             "reco_fit_cy_rad": event_df["cy_reconstructed_probability_fit"],
             "reco_fit_impact_x_m": event_df["x_reconstructed_probability_fit"],
             "reco_fit_impact_y_m": event_df["y_reconstructed_probability_fit"],
-
             "reco_par_cx_rad": event_df["cx_reconstructed_bright_spot"],
             "reco_par_cy_rad": event_df["cy_reconstructed_bright_spot"],
             "reco_par_impact_x_m": event_df["x_reconstructed_bright_spot"],
@@ -138,7 +135,7 @@ for sk in rec_fitlut:
 
     minimal_df.to_csv(
         os.path.join(
-            pa["out_dir"], sk, pk, run_key + "_"+ sk + "_" + pk + ".csv"
+            pa["out_dir"], sk, pk, run_key + "_" + sk + "_" + pk + ".csv"
         ),
         index=False,
         float_format="%.6f",

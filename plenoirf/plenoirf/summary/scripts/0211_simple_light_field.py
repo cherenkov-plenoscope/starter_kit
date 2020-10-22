@@ -24,9 +24,9 @@ lfg = pl.LightFieldGeometry(
 )
 
 loph_chunk_base_dir = os.path.join(
-    pa["summary_dir"],
-    "0068_prepare_loph_passed_trigger_and_quality"
+    pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
 )
+
 
 def make_jobs(loph_chunk_dir, quality, site_key, particle_key):
     chunk_paths = glob.glob(os.path.join(loph_chunk_dir, "*.tar"))

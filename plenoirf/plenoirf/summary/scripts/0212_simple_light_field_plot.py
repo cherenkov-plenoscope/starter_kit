@@ -60,7 +60,7 @@ lfg = pl.LightFieldGeometry(
 )
 
 fov_radius_deg = np.rad2deg(
-    0.5*lfg.sensor_plane2imaging_system.max_FoV_diameter
+    0.5 * lfg.sensor_plane2imaging_system.max_FoV_diameter
 )
 
 ib = atg.model.IMAGE_BINNING
@@ -145,49 +145,41 @@ for sk in reconstruction:
             true_x = truth_by_index[sk][pk][airshower_id]["x"]
             true_y = truth_by_index[sk][pk][airshower_id]["y"]
 
-
             slf = atg.model.SplitLightField(
-                loph_record=loph,
-                light_field_geometry=lfg
+                loph_record=loph, light_field_geometry=lfg
             )
             img = atg.model.make_image(split_light_field=slf, image_binning=ib)
 
-            _cxcy_bin_edges = np.linspace(-ib["radius_deg"], ib["radius_deg"], ib["num_bins"])
-            _cxcy_bin_centers = 0.5 * (_cxcy_bin_edges[0:-1] + _cxcy_bin_edges[1:])
+            _cxcy_bin_edges = np.linspace(
+                -ib["radius_deg"], ib["radius_deg"], ib["num_bins"]
+            )
+            _cxcy_bin_centers = 0.5 * (
+                _cxcy_bin_edges[0:-1] + _cxcy_bin_edges[1:]
+            )
             _resp = np.unravel_index(np.argmax(img), img.shape)
             reco_cx_deg = _cxcy_bin_centers[_resp[1]]
             reco_cy_deg = _cxcy_bin_centers[_resp[0]]
 
             scale = 1.5
-            fig = plt.figure(figsize=(16/scale, 9/scale), dpi=100*scale)
+            fig = plt.figure(figsize=(16 / scale, 9 / scale), dpi=100 * scale)
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
             for pax in range(slf.number_paxel):
                 ax.plot(
                     np.rad2deg(slf.image_sequences[pax][:, 0]),
                     np.rad2deg(slf.image_sequences[pax][:, 1]),
                     "xb",
-                    alpha=0.03
+                    alpha=0.03,
                 )
 
             ax.pcolor(c_bin_edges, c_bin_edges, img, cmap="Reds")
-            phi = np.linspace(0, 2*np.pi, 1000)
+            phi = np.linspace(0, 2 * np.pi, 1000)
             ax.plot(
-                fov_radius_deg*np.cos(phi),
-                fov_radius_deg*np.sin(phi),
-                "k"
+                fov_radius_deg * np.cos(phi), fov_radius_deg * np.sin(phi), "k"
             )
 
-            ax.plot(
-                np.rad2deg(true_cx),
-                np.rad2deg(true_cy),
-                "xk"
-            )
+            ax.plot(np.rad2deg(true_cx), np.rad2deg(true_cy), "xk")
 
-            ax.plot(
-                reco_cx_deg,
-                reco_cy_deg,
-                "og"
-            )
+            ax.plot(reco_cx_deg, reco_cy_deg, "og")
 
             info_str = "reco. Cherenkov: {: 4d}p.e.".format(
                 loph["photons"]["channels"].shape[0],
@@ -197,9 +189,7 @@ for sk in reconstruction:
                 true_x, true_y, np.hypot(true_x, true_y)
             )
 
-            ax.set_title(
-                info_str
-            )
+            ax.set_title(info_str)
 
             ax.set_aspect("equal")
             ax.set_xlabel("cx / deg")
@@ -210,12 +200,8 @@ for sk in reconstruction:
             ax.spines["left"].set_color("none")
             ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
 
-
             path = os.path.join(
-                pa["out_dir"],
-                sk,
-                pk,
-                "{:09d}.jpg".format(airshower_id),
+                pa["out_dir"], sk, pk, "{:09d}.jpg".format(airshower_id),
             )
 
             fig.savefig(path)
