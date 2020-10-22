@@ -11,12 +11,17 @@ import pandas
 import multiprocessing
 import glob
 
-
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
+
+loph_chunk_base_dir = os.path.join(
+    pa["summary_dir"],
+    "0068_prepare_loph_passed_trigger_and_quality"
+)
+
 
 bell_model_lut_path = "2020-09-26_gamma_lut/bell_model/bell_model.json"
 
@@ -43,18 +48,6 @@ def read_energy_altitude_guess(
 
     return guess_energy, guess_altitude
 
-
-_passed_trigger_indices = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_passing_trigger")
-)
-
-passed_trigger_idx_sets = {}
-for sk in irf_config["config"]["sites"]:
-    passed_trigger_idx_sets[sk] = {}
-    for pk in irf_config["config"]["particles"]:
-        passed_trigger_idx_sets[sk][pk] = set(
-            _passed_trigger_indices[sk][pk]["passed_trigger"][spt.IDX]
-        )
 
 lfg = pl.LightFieldGeometry(
     os.path.join(pa["run_dir"], "light_field_geometry")
@@ -210,20 +203,9 @@ def run_job(job):
         print("airshower_id", airshower_id)
         num_reconstructed_photons = loph_record["photons"]["channels"].shape[0]
 
-        if (
-            num_reconstructed_photons
-            < job["quality"]["min_reconstructed_photons"]
-        ):
-            continue
-
         slf = atg.model.SplitLightField(
             loph_record=loph_record, light_field_geometry=lfg
         )
-
-        if slf.number_photons  < 200:
-            print("skip ", airshower_id)
-            continue
-
 
         try:
             print("guess_energy", guess_energy[airshower_id], "GeV")
@@ -331,72 +313,42 @@ def run_job(job):
         )
         mm.migrad()
         """
-
-
     return result
 
 
-for sk in ["namibia"]:  # irf_config["config"]["sites"]:
+for sk in irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
-        raw_loph_run = os.path.join(
-            pa["run_dir"], "event_table", sk, pk, "cherenkov.phs.loph.tar",
+        print("make jobs")
+        jobs = make_jobs(
+            loph_chunk_dir=os.path.join(loph_chunk_base_dir, sk, pk, "chunks"),
+            bell_model_lut_path=bell_model_lut_path,
+            quality=sum_config["quality"],
+            limits=fit_limits,
+            site_key=sk,
+            particle_key=pk,
         )
 
-        loph_run_passed_trigger = os.path.join(
-            pa["out_dir"], sk, pk, "passed_trigger_cherenkov.phs.loph.tar",
+        """
+        pool = multiprocessing.Pool(8)
+        _results = pool.map(run_job, jobs)
+        """
+        _results = []
+        for job in jobs:
+            print("job", job)
+            _results.append(run_job(job))
+
+        results = []
+        for chunk in _results:
+            for r in chunk:
+                results.append(r)
+
+        reco_df = pandas.DataFrame(results)
+        reco_di = reco_df.to_dict(orient="list")
+
+        irf.json_numpy.write(
+            path=os.path.join(site_particle_dir, "reco" + ".json"),
+            out_dict=reco_di,
         )
-
-        if not os.path.exists(loph_run_passed_trigger):
-            pl.photon_stream.loph.read_filter_write(
-                in_path=raw_loph_run,
-                out_path=loph_run_passed_trigger,
-                identity_set=passed_trigger_idx_sets[sk][pk],
-            )
-
-        loph_chunk_dir = os.path.join(pa["out_dir"], sk, pk, "loph_chunks")
-        if not os.path.exists(loph_chunk_dir):
-            pl.photon_stream.loph.split_into_chunks(
-                loph_path=loph_run_passed_trigger,
-                out_dir=loph_chunk_dir,
-                chunk_prefix="chunk_",
-                num_events_in_chunk=256,
-            )
-
-        result_path = os.path.join(site_particle_dir, "reco" + ".json")
-        if not os.path.exists(result_path):
-            print("make jobs")
-            jobs = make_jobs(
-                loph_chunk_dir=loph_chunk_dir,
-                bell_model_lut_path=bell_model_lut_path,
-                quality=sum_config["quality"],
-                limits=fit_limits,
-                site_key=sk,
-                particle_key=pk,
-            )
-            # limit jobs
-            jobs = jobs[0:1]
-            """
-            pool = multiprocessing.Pool(8)
-            _results = pool.map(run_job, jobs)
-            """
-            _results = []
-            for job in jobs:
-                print("job", job)
-                _results.append(run_job(job))
-
-            results = []
-            for chunk in _results:
-                for r in chunk:
-                    results.append(r)
-
-            reco_df = pandas.DataFrame(results)
-            reco_di = reco_df.to_dict(orient="list")
-
-            irf.json_numpy.write(
-                path=result_path, out_dict=reco_di,
-            )
-        else:
-            reco_di = irf.json_numpy.read(result_path)
