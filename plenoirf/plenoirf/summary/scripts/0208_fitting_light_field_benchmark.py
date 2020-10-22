@@ -7,12 +7,6 @@ import airshower_template_generator as atg
 import os
 import pandas
 import plenopy as pl
-from iminuit import Minuit
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 
 argv = irf.summary.argv_since_py(sys.argv)
