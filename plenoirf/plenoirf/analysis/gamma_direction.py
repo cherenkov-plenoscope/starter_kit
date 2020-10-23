@@ -70,15 +70,16 @@ def histogram_point_spread_function(
             len(theta_square_bin_edges_deg2) - 1, dtype=np.float64
         )
 
-    theta_square_deg2 = integration_width_for_containment(
-        bin_counts=delta_hist,
-        bin_edges=theta_square_bin_edges_deg2,
-        containment=psf_containment_factor,
-    )
-
     if num_airshower > 0:
+        argsort_delta_c_deg = np.argsort(delta_c_deg)
+        containment_idx = int(np.floor(num_airshower * psf_containment_factor))
+        theta_deg = delta_c_deg[argsort_delta_c_deg[containment_idx]]
+        theta_square_deg2 = theta_deg ** 2
+
         theta_square_deg2_relunc = np.sqrt(num_airshower) / num_airshower
     else:
+        theta_square_deg2 = np.nan
+
         theta_square_deg2_relunc = np.nan
 
     return {

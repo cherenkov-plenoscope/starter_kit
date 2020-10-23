@@ -101,6 +101,19 @@ def cut_energy_bin(
     return primary_table[spt.IDX][mask_energy_bin]
 
 
+def cut_core_radius_bin(
+    core_table,
+    lower_core_radius_edge_m,
+    upper_core_radius_edge_m,
+):
+    core_radius_m = np.hypot(core_table["core_x_m"], core_table["core_y_m"])
+    mask = (
+        (core_radius_m >= lower_core_radius_edge_m) *
+        (core_radius_m < upper_core_radius_edge_m)
+    )
+    return core_table[spt.IDX][mask]
+
+
 def cut_reconstructed_source_in_true_onregion(
     table, radial_angle_onregion_deg,
 ):

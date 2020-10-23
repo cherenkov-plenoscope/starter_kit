@@ -23,6 +23,8 @@ _passed_trigger_indices = irf.json_numpy.read_tree(
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
+# energy
+# ------
 num_energy_bins = sum_config["energy_binning"]["num_bins"][
     "point_spread_function"
 ]
@@ -33,11 +35,25 @@ energy_bin_edges = np.geomspace(
 )
 energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
+# theta
+# -----
 theta_square_bin_edges_deg2 = np.linspace(
     0,
     sum_config["point_spread_function"]["theta_square"]["max_angle_deg"] ** 2,
     sum_config["point_spread_function"]["theta_square"]["num_bins"],
 )
+
+# core-radius
+# -----------
+num_core_radius_bins = 8
+core_radius_lower_edge = 0.0
+core_radius_upper_edge = 2.0e3
+core_radius_bin_edges = np.linspace(
+    core_radius_lower_edge, core_radius_upper_edge, num_core_radius_bins + 1
+)
+core_radius_bin_centers = irf.summary.bin_centers(core_radius_bin_edges)
+
+
 psf_containment_factor = sum_config["point_spread_function"][
     "containment_factor"
 ]
@@ -149,6 +165,42 @@ for sk in reconstruction:
             containment_rel_unc_vs_energy.append(
                 rrr["containment_angle_deg_relunc"]
             )
+
+            # w.r.t. source
+            # -------------
+            c_para, c_perp = atg.projection.project_light_field_onto_source_image(
+                cer_cx_rad=ebin["cx"],
+                cer_cy_rad=ebin["cy"],
+                cer_x_m=0.0,
+                cer_y_m=0.0,
+                primary_cx_rad=true_cx,
+                primary_cy_rad=true_cy,
+                primary_core_x_m=true_x,
+                primary_core_y_m=true_y,
+            )
+            c_para_deg = np.abs(np.rad2deg(c_para))
+            c_perp_deg = np.abs(np.rad2deg(c_perp))
+            rrr_para = irf.analysis.gamma_direction.histogram_point_spread_function(
+                delta_c_deg=c_para_deg,
+                theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
+                psf_containment_factor=psf_containment_factor,
+            )
+            rrr_perp = irf.analysis.gamma_direction.histogram_point_spread_function(
+                delta_c_deg=c_perp_deg,
+                theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
+                psf_containment_factor=psf_containment_factor,
+            )
+
+            print("")
+            print(
+                "enrgy: {:.2f} GeV - {:.2f} GeV".format(
+                    energy_bin_edges[energy_bin],
+                    energy_bin_edges[energy_bin + 1],
+                )
+            )
+            print("delta_68               {:.3f} deg".format(rrr["containment_angle_deg"]))
+            print("delta_68_parallel      {:.3f} deg".format(rrr_para["containment_angle_deg"]))
+            print("delta_68_perpendicular {:.3f} deg".format(rrr_perp["containment_angle_deg"]))
 
         irf.json_numpy.write(
             os.path.join(
