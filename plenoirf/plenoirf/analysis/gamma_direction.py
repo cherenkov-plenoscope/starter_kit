@@ -2,20 +2,6 @@ import numpy as np
 from . import effective_quantity
 
 
-def integration_width_for_containment(bin_counts, bin_edges, containment):
-    assert containment >= 0
-    assert containment <= 1
-    if np.sum(bin_counts) == 0:
-        return np.nan
-    integral = np.cumsum(bin_counts / np.sum(bin_counts))
-    bin_centers = (bin_edges[0:-1] + bin_edges[1:]) / 2
-    x = np.linspace(
-        np.min(bin_centers), np.max(bin_centers), 100 * bin_centers.shape[0]
-    )
-    f = np.interp(x=x, fp=integral, xp=bin_centers)
-    return x[np.argmin(np.abs(f - containment))]
-
-
 def estimate(
     light_front_cx,
     light_front_cy,
@@ -71,9 +57,7 @@ def histogram_point_spread_function(
         )
 
     if num_airshower > 0:
-        argsort_delta_c_deg = np.argsort(delta_c_deg)
-        containment_idx = int(np.floor(num_airshower * psf_containment_factor))
-        theta_deg = delta_c_deg[argsort_delta_c_deg[containment_idx]]
+        theta_deg = np.quantile(delta_c_deg, q=psf_containment_factor)
         theta_square_deg2 = theta_deg ** 2
 
         theta_square_deg2_relunc = np.sqrt(num_airshower) / num_airshower
