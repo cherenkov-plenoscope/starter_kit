@@ -83,8 +83,8 @@ level_keys = [
 
 def _collector_init():
     return {
-        "delta_hist": [],
-        "delta_hist_relunc": [],
+        "theta_square_hist": [],
+        "theta_square_hist_relunc": [],
         "containment_angle_deg": [],
         "containment_angle_deg_relunc": [],
     }
@@ -160,11 +160,11 @@ for sk in reconstruction:
             true_x = -ebin["core.core_x_m"]
             true_y = -ebin["core.core_y_m"]
 
-            delta_c = np.hypot(ebin["cx"] - true_cx, ebin["cy"] - true_cy)
-            delta_c_deg = np.rad2deg(delta_c)
+            theta = np.hypot(ebin["cx"] - true_cx, ebin["cy"] - true_cy)
+            theta_deg = np.rad2deg(theta)
 
             rrr = irf.analysis.gamma_direction.histogram_point_spread_function(
-                delta_c_deg=delta_c_deg,
+                theta_deg=theta_deg,
                 theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
                 psf_containment_factor=psf_containment_factor,
             )
@@ -185,14 +185,14 @@ for sk in reconstruction:
             c_para_deg = np.abs(np.rad2deg(c_para))
             c_perp_deg = np.abs(np.rad2deg(c_perp))
             rrr_para = irf.analysis.gamma_direction.histogram_point_spread_function(
-                delta_c_deg=c_para_deg,
+                theta_deg=c_para_deg,
                 theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
                 psf_containment_factor=psf_containment_factor,
             )
             col_para = _collector_append(collector=col_para, rrr=rrr_para)
 
             rrr_perp = irf.analysis.gamma_direction.histogram_point_spread_function(
-                delta_c_deg=c_perp_deg,
+                theta_deg=c_perp_deg,
                 theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
                 psf_containment_factor=psf_containment_factor,
             )
@@ -218,8 +218,8 @@ for sk in reconstruction:
                 "energy_bin_edges_GeV": energy_bin_edges,
                 "theta_square_bin_edges_deg2": theta_square_bin_edges_deg2,
                 "unit": "1",
-                "mean": col_fov["delta_hist"],
-                "relative_uncertainty": col_fov["delta_hist_relunc"],
+                "mean": col_fov["theta_square_hist"],
+                "relative_uncertainty": col_fov["theta_square_hist_relunc"],
             },
         )
 

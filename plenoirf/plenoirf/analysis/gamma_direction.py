@@ -32,32 +32,32 @@ def momentum_to_cx_cy_wrt_aperture(
 
 
 def histogram_point_spread_function(
-    delta_c_deg, theta_square_bin_edges_deg2, psf_containment_factor,
+    theta_deg, theta_square_bin_edges_deg2, psf_containment_factor,
 ):
     """
     angle between truth and reconstruction for each event.
 
     psf_containment_factor e.g. 0.68
     """
-    num_airshower = delta_c_deg.shape[0]
+    num_airshower = theta_deg.shape[0]
 
     if num_airshower > 0:
-        delta_hist = np.histogram(
-            delta_c_deg ** 2, bins=theta_square_bin_edges_deg2
+        theta_square_hist = np.histogram(
+            theta_deg ** 2, bins=theta_square_bin_edges_deg2
         )[0]
-        delta_hist_unc = effective_quantity._divide_silent(
-            np.sqrt(delta_hist), delta_hist, np.nan
+        theta_square_hist_relunc = effective_quantity._divide_silent(
+            np.sqrt(theta_square_hist), theta_square_hist, np.nan
         )
     else:
-        delta_hist = np.zeros(
+        theta_square_hist = np.zeros(
             len(theta_square_bin_edges_deg2) - 1, dtype=np.int64
         )
-        delta_hist_unc = np.nan * np.ones(
+        theta_square_hist_relunc = np.nan * np.ones(
             len(theta_square_bin_edges_deg2) - 1, dtype=np.float64
         )
 
     if num_airshower > 0:
-        theta_deg = np.quantile(delta_c_deg, q=psf_containment_factor)
+        theta_deg = np.quantile(theta_deg, q=psf_containment_factor)
         theta_square_deg2 = theta_deg ** 2
 
         theta_square_deg2_relunc = np.sqrt(num_airshower) / num_airshower
@@ -67,8 +67,8 @@ def histogram_point_spread_function(
         theta_square_deg2_relunc = np.nan
 
     return {
-        "delta_hist": delta_hist,
-        "delta_hist_relunc": delta_hist_unc,
+        "theta_square_hist": theta_square_hist,
+        "theta_square_hist_relunc": theta_square_hist_relunc,
         "containment_angle_deg": np.sqrt(theta_square_deg2),
         "containment_angle_deg_relunc": theta_square_deg2_relunc,
     }
