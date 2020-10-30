@@ -17,10 +17,6 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-_passed_trigger_indices = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_passing_trigger")
-)
-
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
 # energy
@@ -85,6 +81,21 @@ level_keys = [
     "cherenkovclassification",
 ]
 
+def _collector_init():
+    return {
+        "delta_hist": [],
+        "delta_hist_relunc": [],
+        "containment_angle_deg": [],
+        "containment_angle_deg_relunc": [],
+    }
+
+
+def _collector_append(collector, rrr):
+    for key in rrr:
+        collector[key].append(rrr[key])
+    return collector
+
+
 for sk in reconstruction:
     for pk in reconstruction[sk]:
 
@@ -104,11 +115,9 @@ for sk in reconstruction:
             level_keys=level_keys,
         )
 
-        t2hist = []
-        t2hist_rel_unc = []
-
-        containment_vs_energy = []
-        containment_rel_unc_vs_energy = []
+        col_fov = _collector_init()
+        col_para = _collector_init()
+        col_perp = _collector_init()
 
         for energy_bin in range(num_energy_bins):
 
@@ -132,8 +141,8 @@ for sk in reconstruction:
             ebin_truth_df = spt.make_rectangular_DataFrame(ebin_truth)
 
             ebin = pandas.merge(
-                pandas.DataFrame(reconstruction[sk][pk]),
-                ebin_truth_df,
+                left=pandas.DataFrame(reconstruction[sk][pk]),
+                right=ebin_truth_df,
                 on=spt.IDX,
             ).to_records(index=False)
 
@@ -159,12 +168,7 @@ for sk in reconstruction:
                 theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
                 psf_containment_factor=psf_containment_factor,
             )
-            t2hist.append(rrr["delta_hist"])
-            t2hist_rel_unc.append(rrr["delta_hist_relunc"])
-            containment_vs_energy.append(rrr["containment_angle_deg"])
-            containment_rel_unc_vs_energy.append(
-                rrr["containment_angle_deg_relunc"]
-            )
+            col_fov = _collector_append(collector=col_fov, rrr=rrr)
 
             # w.r.t. source
             # -------------
@@ -185,11 +189,14 @@ for sk in reconstruction:
                 theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
                 psf_containment_factor=psf_containment_factor,
             )
+            col_para = _collector_append(collector=col_para, rrr=rrr_para)
+
             rrr_perp = irf.analysis.gamma_direction.histogram_point_spread_function(
                 delta_c_deg=c_perp_deg,
                 theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
                 psf_containment_factor=psf_containment_factor,
             )
+            col_perp = _collector_append(collector=col_perp, rrr=rrr_perp)
 
             print("")
             print(
@@ -211,8 +218,8 @@ for sk in reconstruction:
                 "energy_bin_edges_GeV": energy_bin_edges,
                 "theta_square_bin_edges_deg2": theta_square_bin_edges_deg2,
                 "unit": "1",
-                "mean": t2hist,
-                "relative_uncertainty": t2hist_rel_unc,
+                "mean": col_fov["delta_hist"],
+                "relative_uncertainty": col_fov["delta_hist_relunc"],
             },
         )
 
@@ -224,14 +231,14 @@ for sk in reconstruction:
                 "comment": ("Containment-angle, true gamma-rays, VS energy"),
                 "energy_bin_edges_GeV": energy_bin_edges,
                 "unit": "deg",
-                "mean": containment_vs_energy,
-                "relative_uncertainty": containment_rel_unc_vs_energy,
+                "mean": col_fov["containment_angle_deg"],
+                "relative_uncertainty": col_fov["containment_angle_deg_relunc"],
             },
         )
 
         fix_onregion_radius_deg = irf.analysis.gamma_direction.estimate_fix_opening_angle_for_onregion(
             energy_bin_centers_GeV=energy_bin_centers,
-            point_spread_function_containment_opening_angle_deg=containment_vs_energy,
+            point_spread_function_containment_opening_angle_deg=col_fov["containment_angle_deg"],
             pivot_energy_GeV=pivot_energy_GeV,
         )
 
