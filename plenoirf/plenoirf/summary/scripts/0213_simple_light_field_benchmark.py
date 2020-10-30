@@ -39,17 +39,6 @@ theta_square_bin_edges_deg2 = np.linspace(
     sum_config["point_spread_function"]["theta_square"]["num_bins"],
 )
 
-# core-radius
-# -----------
-num_core_radius_bins = 8
-core_radius_lower_edge = 0.0
-core_radius_upper_edge = 2.0e3
-core_radius_bin_edges = np.linspace(
-    core_radius_lower_edge, core_radius_upper_edge, num_core_radius_bins + 1
-)
-core_radius_bin_centers = irf.summary.bin_centers(core_radius_bin_edges)
-
-
 psf_containment_factor = sum_config["point_spread_function"][
     "containment_factor"
 ]
@@ -114,6 +103,10 @@ for sk in reconstruction:
             common_indices=reconstruction[sk][pk][spt.IDX],
             level_keys=level_keys,
         )
+
+
+        # Point-spread-function VS. Energy
+        # --------------------------------
 
         col_fov = _collector_init()
         col_para = _collector_init()
@@ -252,3 +245,104 @@ for sk in reconstruction:
                 "unit": "deg",
             },
         )
+
+
+        # Point-spread-function VS. Energy VS. core-radius
+        # ------------------------------------------------
+
+        num_coarse_energy_bins = np.max([1, num_energy_bins//2])
+        coarse_energy_bin_edges = np.geomspace(
+            energy_lower_edge, energy_upper_edge, num_coarse_energy_bins + 1
+        )
+
+        num_radius_bins = num_coarse_energy_bins
+        radius_bin_edges = np.linspace(0.0, 640, num_radius_bins + 1)
+
+        psf_vs_ene_vs_rad = {}
+
+        for ene in range(num_coarse_energy_bins):
+            psf_vs_ene_vs_rad[ene] = {}
+            for rad in range(num_radius_bins):
+                psf_vs_ene_vs_rad[ene][rad] = {}
+
+                idx_ene_bin = irf.analysis.cuts.cut_energy_bin(
+                    primary_table=event_table["primary"],
+                    lower_energy_edge_GeV=coarse_energy_bin_edges[ene],
+                    upper_energy_edge_GeV=coarse_energy_bin_edges[ene + 1],
+                )
+
+                idx_rad_bin = irf.analysis.cuts.cut_core_radius_bin(
+                    core_table=event_table["core"],
+                    lower_core_radius_edge_m=radius_bin_edges[rad],
+                    upper_core_radius_edge_m=radius_bin_edges[rad + 1],
+                )
+
+                idx_common = spt.intersection(
+                    [idx_ene_bin, idx_rad_bin, reconstruction[sk][pk][spt.IDX]]
+                )
+
+                er_bin_truth = spt.cut_table_on_indices(
+                    table=event_table,
+                    structure=irf.table.STRUCTURE,
+                    common_indices=idx_common,
+                    level_keys=level_keys,
+                )
+                er_bin_truth = spt.sort_table_on_common_indices(
+                    table=er_bin_truth, common_indices=idx_common
+                )
+                er_bin_truth_df = spt.make_rectangular_DataFrame(er_bin_truth)
+
+                er_bin = pandas.merge(
+                    left=pandas.DataFrame(reconstruction[sk][pk]),
+                    right=er_bin_truth_df,
+                    on=spt.IDX,
+                ).to_records(index=False)
+
+                (
+                    true_cx,
+                    true_cy,
+                ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
+                    momentum_x_GeV_per_c=er_bin["primary.momentum_x_GeV_per_c"],
+                    momentum_y_GeV_per_c=er_bin["primary.momentum_y_GeV_per_c"],
+                    momentum_z_GeV_per_c=er_bin["primary.momentum_z_GeV_per_c"],
+                    plenoscope_pointing=irf_config["config"][
+                        "plenoscope_pointing"
+                    ],
+                )
+                true_x = -er_bin["core.core_x_m"]
+                true_y = -er_bin["core.core_y_m"]
+
+                theta = np.hypot(er_bin["cx"] - true_cx, er_bin["cy"] - true_cy)
+                theta_deg = np.rad2deg(theta)
+
+                print("ene", ene, "rad", rad, "num", len(theta))
+
+                # w.r.t. source
+                # -------------
+                c_para, c_perp = atg.projection.project_light_field_onto_source_image(
+                    cer_cx_rad=er_bin["cx"],
+                    cer_cy_rad=er_bin["cy"],
+                    cer_x_m=0.0,
+                    cer_y_m=0.0,
+                    primary_cx_rad=true_cx,
+                    primary_cy_rad=true_cy,
+                    primary_core_x_m=true_x,
+                    primary_core_y_m=true_y,
+                )
+                c_para_deg = np.abs(np.rad2deg(c_para))
+                c_perp_deg = np.abs(np.rad2deg(c_perp))
+
+                rrr_para = irf.analysis.gamma_direction.histogram_point_spread_function(
+                    theta_deg=c_para_deg,
+                    theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
+                    psf_containment_factor=psf_containment_factor,
+                )
+
+                rrr_perp = irf.analysis.gamma_direction.histogram_point_spread_function(
+                    theta_deg=c_perp_deg,
+                    theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
+                    psf_containment_factor=psf_containment_factor,
+                )
+
+                psf_vs_ene_vs_rad[ene][rad]["para"] = rrr_para
+                psf_vs_ene_vs_rad[ene][rad]["perp"] = rrr_perp
