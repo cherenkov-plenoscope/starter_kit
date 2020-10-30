@@ -312,7 +312,7 @@ def _guess_summary_config(run_dir):
             "min_reconstructed_photons": 50,
         },
         "point_spread_function": {
-            "theta_square": {"max_angle_deg": 3.25, "num_bins": 17,},
+            "theta_square": {"max_angle_deg": 3.25, "num_bins": 256,},
             "containment_factor": 0.68,
             "pivot_energy_GeV": 2.0,
         },
