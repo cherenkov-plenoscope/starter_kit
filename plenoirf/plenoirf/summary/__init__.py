@@ -313,6 +313,7 @@ def _guess_summary_config(run_dir):
         },
         "point_spread_function": {
             "theta_square": {"max_angle_deg": 3.25, "num_bins": 256,},
+            "core_radius": {"max_radius_m": 640, "num_bins": 4},
             "containment_factor": 0.68,
             "pivot_energy_GeV": 2.0,
         },
