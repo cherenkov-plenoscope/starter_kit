@@ -8,6 +8,31 @@ import os
 import pandas
 import plenopy as pl
 
+"""
+Objective
+=========
+
+Quantify the angular resolution of the plenoscope.
+
+Input
+-----
+- List of reconstructed gamma-ray-directions
+- List of true gamma-ray-directions, energy, and more...
+
+Quantities
+----------
+- Containment theta 68%
+- theta parallel component
+- theta perpendicular component
+- Full width at half maximum
+
+histogram theta2
+----------------
+- in energy
+- in core radius
+
+"""
+
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -31,12 +56,26 @@ energy_bin_edges = np.geomspace(
 )
 energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
-# theta
-# -----
+num_coarse_energy_bins = np.max([1, num_energy_bins//2])
+coarse_energy_bin_edges = np.geomspace(
+    energy_lower_edge, energy_upper_edge, num_coarse_energy_bins + 1
+)
+
+# core radius bins
+# ----------------
+num_radius_bins = num_coarse_energy_bins
+radius_bin_edges = np.linspace(
+    0.0,
+    sum_config["point_spread_function"]["core_radius"]["max_radius_m"],
+    sum_config["point_spread_function"]["core_radius"]["num_bins"] + 1,
+)
+
+# theta square bins
+# -----------------
 theta_square_bin_edges_deg2 = np.linspace(
-    0,
+    0.0,
     sum_config["point_spread_function"]["theta_square"]["max_angle_deg"] ** 2,
-    sum_config["point_spread_function"]["theta_square"]["num_bins"],
+    sum_config["point_spread_function"]["theta_square"]["num_bins"] + 1,
 )
 
 psf_containment_factor = sum_config["point_spread_function"][
@@ -70,19 +109,74 @@ level_keys = [
     "cherenkovclassification",
 ]
 
-def _collector_init():
-    return {
-        "theta_square_hist": [],
-        "theta_square_hist_relunc": [],
-        "containment_angle_deg": [],
-        "containment_angle_deg_relunc": [],
-    }
 
+def make_rectangular_table(
+    event_table,
+    reconstruction_table,
+    plenoscope_pointing
+):
+    rec_evt_tab = spt.cut_table_on_indices(
+        table=event_table,
+        structure=irf.table.STRUCTURE,
+        common_indices=reconstruction_table[spt.IDX],
+        level_keys=level_keys,
+    )
+    rec_evt_tab = spt.sort_table_on_common_indices(
+        table=rec_evt_tab, common_indices=reconstruction_table[spt.IDX],
+    )
+    rec_evt_df = spt.make_rectangular_DataFrame(rec_evt_tab)
 
-def _collector_append(collector, rrr):
-    for key in rrr:
-        collector[key].append(rrr[key])
-    return collector
+    et_df = pandas.merge(
+        left=pandas.DataFrame(
+            {
+                spt.IDX: reconstruction_table[spt.IDX],
+                "reco_cx": reconstruction_table["cx"],
+                "reco_cy": reconstruction_table["cy"],
+                "reco_x": reconstruction_table["x"],
+                "reco_y": reconstruction_table["y"],
+            }
+        ),
+        right=rec_evt_df,
+        on=spt.IDX,
+    )
+
+    (
+        _true_cx,
+        _true_cy,
+    ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
+        momentum_x_GeV_per_c=et_df["primary.momentum_x_GeV_per_c"],
+        momentum_y_GeV_per_c=et_df["primary.momentum_y_GeV_per_c"],
+        momentum_z_GeV_per_c=et_df["primary.momentum_z_GeV_per_c"],
+        plenoscope_pointing=plenoscope_pointing,
+    )
+    et_df["true_cx"] = _true_cx
+    et_df["true_cy"] = _true_cy
+    et_df["true_x"] = -et_df["core.core_x_m"]
+    et_df["true_y"] = -et_df["core.core_y_m"]
+    et_df["true_r"] = np.hypot(et_df["true_x"], et_df["true_y"])
+
+    # w.r.t. source
+    # -------------
+    c_para, c_perp = atg.projection.project_light_field_onto_source_image(
+        cer_cx_rad=et_df["reco_cx"],
+        cer_cy_rad=et_df["reco_cy"],
+        cer_x_m=0.0,
+        cer_y_m=0.0,
+        primary_cx_rad=et_df["true_cx"],
+        primary_cy_rad=et_df["true_cy"],
+        primary_core_x_m=et_df["true_x"],
+        primary_core_y_m=et_df["true_y"],
+    )
+
+    et_df["theta_para"] = c_para
+    et_df["theta_perp"] = c_perp
+
+    et_df["theta"] = np.hypot(
+        et_df["reco_cx"] - et_df["true_cx"],
+        et_df["reco_cy"] - et_df["true_cy"]
+    )
+
+    return et_df.to_records(index=False)
 
 
 for sk in reconstruction:
@@ -97,252 +191,90 @@ for sk in reconstruction:
             ),
             structure=irf.table.STRUCTURE,
         )
-        event_table = spt.cut_table_on_indices(
-            event_table,
-            irf.table.STRUCTURE,
-            common_indices=reconstruction[sk][pk][spt.IDX],
-            level_keys=level_keys,
+
+        reconstructed_event_table = make_rectangular_table(
+            event_table=event_table,
+            reconstruction_table=reconstruction[sk][pk],
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
+        rectab = reconstructed_event_table
 
         # Point-spread-function VS. Energy
         # --------------------------------
 
-        col_fov = _collector_init()
-        col_para = _collector_init()
-        col_perp = _collector_init()
+        hist_ene_rad = {
+            "comment": ("Theta-square-histogram VS energy VS core-radius"),
+            "energy_bin_edges_GeV": energy_bin_edges,
+            "core_radius_bin_edges": radius_bin_edges,
+            "theta_square_bin_edges_deg2": theta_square_bin_edges_deg2,
+            "unit": "1",
+        }
 
-        for energy_bin in range(num_energy_bins):
+        for the in ["theta", "theta_para", "theta_perp"]:
+            hist_ene_rad[the] = {}
+            hist_ene_rad[the]["mean"] = []
+            hist_ene_rad[the]["relative_uncertainty"] = []
 
-            idx_energy_bin = irf.analysis.cuts.cut_energy_bin(
-                primary_table=event_table["primary"],
-                lower_energy_edge_GeV=energy_bin_edges[energy_bin],
-                upper_energy_edge_GeV=energy_bin_edges[energy_bin + 1],
-            )
-            common_indices = spt.intersection(
-                [idx_energy_bin, reconstruction[sk][pk][spt.IDX]]
-            )
-            ebin_truth = spt.cut_table_on_indices(
-                table=event_table,
-                structure=irf.table.STRUCTURE,
-                common_indices=common_indices,
-                level_keys=level_keys,
-            )
-            ebin_truth = spt.sort_table_on_common_indices(
-                table=ebin_truth, common_indices=common_indices
-            )
-            ebin_truth_df = spt.make_rectangular_DataFrame(ebin_truth)
-
-            ebin = pandas.merge(
-                left=pandas.DataFrame(reconstruction[sk][pk]),
-                right=ebin_truth_df,
-                on=spt.IDX,
-            ).to_records(index=False)
-
-            (
-                true_cx,
-                true_cy,
-            ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-                momentum_x_GeV_per_c=ebin["primary.momentum_x_GeV_per_c"],
-                momentum_y_GeV_per_c=ebin["primary.momentum_y_GeV_per_c"],
-                momentum_z_GeV_per_c=ebin["primary.momentum_z_GeV_per_c"],
-                plenoscope_pointing=irf_config["config"][
-                    "plenoscope_pointing"
-                ],
-            )
-            true_x = -ebin["core.core_x_m"]
-            true_y = -ebin["core.core_y_m"]
-
-            theta = np.hypot(ebin["cx"] - true_cx, ebin["cy"] - true_cy)
-            theta_deg = np.rad2deg(theta)
-
-            rrr = irf.analysis.gamma_direction.histogram_point_spread_function(
-                theta_deg=theta_deg,
-                theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
-                psf_containment_factor=psf_containment_factor,
-            )
-            col_fov = _collector_append(collector=col_fov, rrr=rrr)
-
-            # w.r.t. source
-            # -------------
-            c_para, c_perp = atg.projection.project_light_field_onto_source_image(
-                cer_cx_rad=ebin["cx"],
-                cer_cy_rad=ebin["cy"],
-                cer_x_m=0.0,
-                cer_y_m=0.0,
-                primary_cx_rad=true_cx,
-                primary_cy_rad=true_cy,
-                primary_core_x_m=true_x,
-                primary_core_y_m=true_y,
-            )
-            c_para_deg = np.abs(np.rad2deg(c_para))
-            c_perp_deg = np.abs(np.rad2deg(c_perp))
-            rrr_para = irf.analysis.gamma_direction.histogram_point_spread_function(
-                theta_deg=c_para_deg,
-                theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
-                psf_containment_factor=psf_containment_factor,
-            )
-            col_para = _collector_append(collector=col_para, rrr=rrr_para)
-
-            rrr_perp = irf.analysis.gamma_direction.histogram_point_spread_function(
-                theta_deg=c_perp_deg,
-                theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
-                psf_containment_factor=psf_containment_factor,
-            )
-            col_perp = _collector_append(collector=col_perp, rrr=rrr_perp)
-
-            print("")
-            print(
-                "enrgy: {:.2f} GeV - {:.2f} GeV".format(
-                    energy_bin_edges[energy_bin],
-                    energy_bin_edges[energy_bin + 1],
+            for ene in range(num_energy_bins):
+                ene_mask = np.logical_and(
+                    rectab["primary.energy_GeV"] >= energy_bin_edges[ene],
+                    rectab["primary.energy_GeV"] < energy_bin_edges[ene + 1],
                 )
-            )
-            print("delta_68               {:.3f} deg".format(rrr["containment_angle_deg"]))
-            print("delta_68_parallel      {:.3f} deg".format(rrr_para["containment_angle_deg"]))
-            print("delta_68_perpendicular {:.3f} deg".format(rrr_perp["containment_angle_deg"]))
+
+                hist_ene_rad[the]["mean"].append([])
+                hist_ene_rad[the]["relative_uncertainty"].append([])
+
+                for rad in range(num_radius_bins):
+                    rad_mask = np.logical_and(
+                        rectab["primary.energy_GeV"] >= radius_bin_edges[rad],
+                        rectab["primary.energy_GeV"] < radius_bin_edges[rad + 1],
+                    )
+
+                    ene_rad_mask = np.logical_and(ene_mask, rad_mask)
+
+                    theta_deg = np.rad2deg(rectab[the][ene_rad_mask])
+                    theta_deg = np.abs(theta_deg)
+                    hi = irf.analysis.gamma_direction.histogram_theta_square(
+                        theta_deg=theta_deg,
+                        theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
+                    )
+
+                    hist_ene_rad[the]["mean"][ene].append(hi[0])
+                    hist_ene_rad[the]["relative_uncertainty"][ene].append(hi[1])
 
         irf.json_numpy.write(
             os.path.join(
-                site_particle_dir, "theta_square_histogram_vs_energy.json"
+                site_particle_dir, "theta_square_histogram_vs_energy_vs_core_radius.json"
             ),
-            {
-                "comment": ("Theta-square-histogram VS energy"),
-                "energy_bin_edges_GeV": energy_bin_edges,
-                "theta_square_bin_edges_deg2": theta_square_bin_edges_deg2,
-                "unit": "1",
-                "mean": col_fov["theta_square_hist"],
-                "relative_uncertainty": col_fov["theta_square_hist_relunc"],
-            },
+            hist_ene_rad,
         )
 
+
+        # containment angle 68
+        # --------------------
+        cont_ene = {
+            "comment": ("Containment-angle 68percent VS energy"),
+            "energy_bin_edges_GeV": energy_bin_edges,
+            "unit": "deg",
+        }
+        for the in ["theta", "theta_para", "theta_perp"]:
+            cont_ene[the] = {"mean": [], "relative_uncertainty": []}
+            for ene in range(num_energy_bins):
+                ene_mask = np.logical_and(
+                    rectab["primary.energy_GeV"] >= energy_bin_edges[ene],
+                    rectab["primary.energy_GeV"] < energy_bin_edges[ene + 1],
+                )
+                theta_deg = np.rad2deg(rectab[the][ene_mask])
+                theta_deg = np.abs(theta_deg)
+                ca = irf.analysis.gamma_direction.estimate_containment_radius(
+                    theta_deg=theta_deg,
+                    psf_containment_factor=psf_containment_factor)
+                cont_ene[the]["mean"].append(ca[0])
+                cont_ene[the]["relative_uncertainty"].append(ca[1])
         irf.json_numpy.write(
             os.path.join(
                 site_particle_dir, "containment_angle_vs_energy.json"
             ),
-            {
-                "comment": ("Containment-angle, true gamma-rays, VS energy"),
-                "energy_bin_edges_GeV": energy_bin_edges,
-                "unit": "deg",
-                "mean": col_fov["containment_angle_deg"],
-                "relative_uncertainty": col_fov["containment_angle_deg_relunc"],
-            },
+            cont_ene,
         )
-
-        fix_onregion_radius_deg = irf.analysis.gamma_direction.estimate_fix_opening_angle_for_onregion(
-            energy_bin_centers_GeV=energy_bin_centers,
-            point_spread_function_containment_opening_angle_deg=col_fov["containment_angle_deg"],
-            pivot_energy_GeV=pivot_energy_GeV,
-        )
-
-        irf.json_numpy.write(
-            os.path.join(
-                site_particle_dir, "containment_angle_for_fix_onregion.json"
-            ),
-            {
-                "comment": ("Containment-angle, for the fix onregion"),
-                "containment_angle": fix_onregion_radius_deg,
-                "unit": "deg",
-            },
-        )
-
-
-        # Point-spread-function VS. Energy VS. core-radius
-        # ------------------------------------------------
-
-        num_coarse_energy_bins = np.max([1, num_energy_bins//2])
-        coarse_energy_bin_edges = np.geomspace(
-            energy_lower_edge, energy_upper_edge, num_coarse_energy_bins + 1
-        )
-
-        num_radius_bins = num_coarse_energy_bins
-        radius_bin_edges = np.linspace(0.0, 640, num_radius_bins + 1)
-
-        psf_vs_ene_vs_rad = {}
-
-        for ene in range(num_coarse_energy_bins):
-            psf_vs_ene_vs_rad[ene] = {}
-            for rad in range(num_radius_bins):
-                psf_vs_ene_vs_rad[ene][rad] = {}
-
-                idx_ene_bin = irf.analysis.cuts.cut_energy_bin(
-                    primary_table=event_table["primary"],
-                    lower_energy_edge_GeV=coarse_energy_bin_edges[ene],
-                    upper_energy_edge_GeV=coarse_energy_bin_edges[ene + 1],
-                )
-
-                idx_rad_bin = irf.analysis.cuts.cut_core_radius_bin(
-                    core_table=event_table["core"],
-                    lower_core_radius_edge_m=radius_bin_edges[rad],
-                    upper_core_radius_edge_m=radius_bin_edges[rad + 1],
-                )
-
-                idx_common = spt.intersection(
-                    [idx_ene_bin, idx_rad_bin, reconstruction[sk][pk][spt.IDX]]
-                )
-
-                er_bin_truth = spt.cut_table_on_indices(
-                    table=event_table,
-                    structure=irf.table.STRUCTURE,
-                    common_indices=idx_common,
-                    level_keys=level_keys,
-                )
-                er_bin_truth = spt.sort_table_on_common_indices(
-                    table=er_bin_truth, common_indices=idx_common
-                )
-                er_bin_truth_df = spt.make_rectangular_DataFrame(er_bin_truth)
-
-                er_bin = pandas.merge(
-                    left=pandas.DataFrame(reconstruction[sk][pk]),
-                    right=er_bin_truth_df,
-                    on=spt.IDX,
-                ).to_records(index=False)
-
-                (
-                    true_cx,
-                    true_cy,
-                ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-                    momentum_x_GeV_per_c=er_bin["primary.momentum_x_GeV_per_c"],
-                    momentum_y_GeV_per_c=er_bin["primary.momentum_y_GeV_per_c"],
-                    momentum_z_GeV_per_c=er_bin["primary.momentum_z_GeV_per_c"],
-                    plenoscope_pointing=irf_config["config"][
-                        "plenoscope_pointing"
-                    ],
-                )
-                true_x = -er_bin["core.core_x_m"]
-                true_y = -er_bin["core.core_y_m"]
-
-                theta = np.hypot(er_bin["cx"] - true_cx, er_bin["cy"] - true_cy)
-                theta_deg = np.rad2deg(theta)
-
-                print("ene", ene, "rad", rad, "num", len(theta))
-
-                # w.r.t. source
-                # -------------
-                c_para, c_perp = atg.projection.project_light_field_onto_source_image(
-                    cer_cx_rad=er_bin["cx"],
-                    cer_cy_rad=er_bin["cy"],
-                    cer_x_m=0.0,
-                    cer_y_m=0.0,
-                    primary_cx_rad=true_cx,
-                    primary_cy_rad=true_cy,
-                    primary_core_x_m=true_x,
-                    primary_core_y_m=true_y,
-                )
-                c_para_deg = np.abs(np.rad2deg(c_para))
-                c_perp_deg = np.abs(np.rad2deg(c_perp))
-
-                rrr_para = irf.analysis.gamma_direction.histogram_point_spread_function(
-                    theta_deg=c_para_deg,
-                    theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
-                    psf_containment_factor=psf_containment_factor,
-                )
-
-                rrr_perp = irf.analysis.gamma_direction.histogram_point_spread_function(
-                    theta_deg=c_perp_deg,
-                    theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
-                    psf_containment_factor=psf_containment_factor,
-                )
-
-                psf_vs_ene_vs_rad[ene][rad]["para"] = rrr_para
-                psf_vs_ene_vs_rad[ene][rad]["perp"] = rrr_perp
