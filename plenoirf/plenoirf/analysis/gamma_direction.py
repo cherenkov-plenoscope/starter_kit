@@ -31,16 +31,8 @@ def momentum_to_cx_cy_wrt_aperture(
     return WRT_APERTURE * momentum[:, 0], WRT_APERTURE * momentum[:, 1]
 
 
-def histogram_point_spread_function(
-    theta_deg, theta_square_bin_edges_deg2, psf_containment_factor,
-):
-    """
-    angle between truth and reconstruction for each event.
-
-    psf_containment_factor e.g. 0.68
-    """
+def histogram_theta_square(theta_deg, theta_square_bin_edges_deg2):
     num_airshower = theta_deg.shape[0]
-
     if num_airshower > 0:
         theta_square_hist = np.histogram(
             theta_deg ** 2, bins=theta_square_bin_edges_deg2
@@ -55,23 +47,18 @@ def histogram_point_spread_function(
         theta_square_hist_relunc = np.nan * np.ones(
             len(theta_square_bin_edges_deg2) - 1, dtype=np.float64
         )
+    return theta_square_hist, theta_square_hist_relunc
 
+
+def estimate_containment_radius(theta_deg, psf_containment_factor):
+    num_airshower = theta_deg.shape[0]
     if num_airshower > 0:
-        theta_deg = np.quantile(theta_deg, q=psf_containment_factor)
-        theta_square_deg2 = theta_deg ** 2
-
-        theta_square_deg2_relunc = np.sqrt(num_airshower) / num_airshower
+        theta_containment_deg = np.quantile(theta_deg, q=psf_containment_factor)
+        theta_containment_deg_relunc = np.sqrt(num_airshower) / num_airshower
     else:
-        theta_square_deg2 = np.nan
-
-        theta_square_deg2_relunc = np.nan
-
-    return {
-        "theta_square_hist": theta_square_hist,
-        "theta_square_hist_relunc": theta_square_hist_relunc,
-        "containment_angle_deg": np.sqrt(theta_square_deg2),
-        "containment_angle_deg_relunc": theta_square_deg2_relunc,
-    }
+        theta_containment_deg = np.nan
+        theta_containment_deg_relunc = np.nan
+    return theta_containment_deg, theta_containment_deg_relunc
 
 
 def estimate_fix_opening_angle_for_onregion(
