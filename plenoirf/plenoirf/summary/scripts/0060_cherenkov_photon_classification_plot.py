@@ -77,7 +77,6 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "confusion"
-        print(site_key, particle_key, key)
         num_bins_size_confusion_matrix = int(
             0.2 * np.sqrt(mrg_chc_fts["features"].shape[0])
         )
@@ -140,7 +139,6 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "sensitivity_vs_true_energy"
-        print(site_key, particle_key, key)
         tprs = []
         ppvs = []
         num_events = []
@@ -222,7 +220,6 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "true_size_over_extracted_size_vs_true_energy"
-        print(site_key, particle_key, key)
         true_over_reco_ratios = []
         num_events = []
         for i in range(num_energy_bins):
@@ -287,7 +284,6 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "true_size_over_extracted_size_vs_true_size"
-        print(site_key, particle_key, key)
         num_ratios = []
         num_events = []
         for i in range(num_bins_size_confusion_matrix):
