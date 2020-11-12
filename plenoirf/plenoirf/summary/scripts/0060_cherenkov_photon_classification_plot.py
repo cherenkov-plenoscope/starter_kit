@@ -77,6 +77,7 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "confusion"
+        print(site_key, particle_key, key)
         num_bins_size_confusion_matrix = int(
             0.2 * np.sqrt(mrg_chc_fts["features"].shape[0])
         )
@@ -116,13 +117,7 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_ylabel("reconstructed Cherenkov-size / p.e.")
         ax.loglog()
         ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-        ax_h.loglog()
-        ax_h.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-        ax_h.set_xlim([np.min(size_bin_edges), np.max(size_bin_edges)])
-        ax_h.set_xlabel("true Cherenkov-size / p.e.")
-        ax_h.set_ylabel("num. events")
-        ax_h.spines["top"].set_color("none")
-        ax_h.spines["right"].set_color("none")
+
         irf.summary.figure.ax_add_hist(
             ax=ax_h,
             bin_edges=size_bin_edges,
@@ -130,6 +125,14 @@ for site_key in irf_config["config"]["sites"]:
             linestyle="-",
             linecolor="k",
         )
+        ax_h.loglog()
+        ax_h.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+        ax_h.set_xlim([np.min(size_bin_edges), np.max(size_bin_edges)])
+        ax_h.set_xlabel("true Cherenkov-size / p.e.")
+        ax_h.set_ylabel("num. events")
+        ax_h.spines["top"].set_color("none")
+        ax_h.spines["right"].set_color("none")
+
         plt.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
@@ -137,6 +140,7 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "sensitivity_vs_true_energy"
+        print(site_key, particle_key, key)
         tprs = []
         ppvs = []
         num_events = []
@@ -147,14 +151,21 @@ for site_key in irf_config["config"]["sites"]:
                 mrg_chc_fts["primary"]["energy_GeV"] >= e_start,
                 mrg_chc_fts["primary"]["energy_GeV"] < e_stop,
             )
-            tp = mrg_chc_fts[CHCL]["num_true_positives"][e_mask]
-            fn = mrg_chc_fts[CHCL]["num_false_negatives"][e_mask]
-            fp = mrg_chc_fts[CHCL]["num_false_positives"][e_mask]
-            tpr = tp / (tp + fn)
-            ppv = tp / (tp + fp)
-            tprs.append(np.median(tpr))
-            ppvs.append(np.median(ppv))
-            num_events.append(np.sum(e_mask))
+            num_matches = np.sum(e_mask)
+            num_events.append(num_matches)
+
+            if num_matches == 0:
+                tprs.append(np.nan)
+                ppvs.append(np.nan)
+            else:
+                tp = mrg_chc_fts[CHCL]["num_true_positives"][e_mask]
+                fn = mrg_chc_fts[CHCL]["num_false_negatives"][e_mask]
+                fp = mrg_chc_fts[CHCL]["num_false_positives"][e_mask]
+                tpr = tp / (tp + fn)
+                ppv = tp / (tp + fp)
+                tprs.append(np.median(tpr))
+                ppvs.append(np.median(ppv))
+
         tprs = np.array(tprs)
         ppvs = np.array(ppvs)
         num_events = np.array(num_events)
@@ -211,6 +222,7 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "true_size_over_extracted_size_vs_true_energy"
+        print(site_key, particle_key, key)
         true_over_reco_ratios = []
         num_events = []
         for i in range(num_energy_bins):
@@ -220,14 +232,18 @@ for site_key in irf_config["config"]["sites"]:
                 mrg_chc_fts["primary"]["energy_GeV"] >= e_start,
                 mrg_chc_fts["primary"]["energy_GeV"] < e_stop,
             )
-            true_num_cherenkov_pe = mrg_chc_fts["trigger"]["num_cherenkov_pe"][
-                e_mask
-            ]
-            num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][e_mask]
+            num_matches = np.sum(e_mask)
+            num_events.append(num_matches)
 
-            true_over_reco_ratio = true_num_cherenkov_pe / num_cherenkov_pe
-            true_over_reco_ratios.append(np.median(true_over_reco_ratio))
-            num_events.append(np.sum(e_mask))
+            if num_matches == 0:
+                true_over_reco_ratios.append(np.nan)
+            else:
+                true_num_cherenkov_pe = mrg_chc_fts[
+                    "trigger"]["num_cherenkov_pe"][e_mask]
+                num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][e_mask]
+                true_over_reco_ratio = true_num_cherenkov_pe / num_cherenkov_pe
+                true_over_reco_ratios.append(np.median(true_over_reco_ratio))
+
         true_over_reco_ratios = np.array(true_over_reco_ratios)
         num_events = np.array(num_events)
         num_events_relunc = np.nan * np.ones(num_events.shape[0])
@@ -271,6 +287,7 @@ for site_key in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "true_size_over_extracted_size_vs_true_size"
+        print(site_key, particle_key, key)
         num_ratios = []
         num_events = []
         for i in range(num_bins_size_confusion_matrix):
@@ -280,13 +297,19 @@ for site_key in irf_config["config"]["sites"]:
                 mrg_chc_fts["trigger"]["num_cherenkov_pe"] >= pe_start,
                 mrg_chc_fts["trigger"]["num_cherenkov_pe"] < pe_stop,
             )
-            true_num_cherenkov_pe = mrg_chc_fts["trigger"]["num_cherenkov_pe"][
-                pe_mask
-            ]
-            num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][pe_mask]
-            num_ratio = true_num_cherenkov_pe / num_cherenkov_pe
-            num_ratios.append(np.median(num_ratio))
-            num_events.append(np.sum(pe_mask))
+            num_matches = np.sum(pe_mask)
+            num_events.append(num_matches)
+
+            if num_matches == 0:
+                num_ratios.append(np.nan)
+            else:
+                true_num_cherenkov_pe = mrg_chc_fts["trigger"]["num_cherenkov_pe"][
+                    pe_mask
+                ]
+                num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][pe_mask]
+                num_ratio = true_num_cherenkov_pe / num_cherenkov_pe
+                num_ratios.append(np.median(num_ratio))
+
         num_ratios = np.array(num_ratios)
         num_events = np.array(num_events)
         num_events_relunc = np.nan * np.ones(num_events.shape[0])
