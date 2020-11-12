@@ -19,8 +19,9 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-trigger_modus = sum_config["trigger"]["modus"]
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0066_passing_trigger")
+)
 
 energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["lower_edge_GeV"],
@@ -142,17 +143,15 @@ for site_key in irf_config["config"]["sites"]:
             ),
             structure=irf.table.STRUCTURE,
         )
+        passed_trigger = passing_trigger[site_key][particle_key][
+            "passed_trigger"
+        ]
 
         # summarize
         # ---------
-        idx_pasttrigger = irf.analysis.light_field_trigger_modi.make_indices(
-            trigger_table=event_table["trigger"],
-            threshold=trigger_threshold,
-            modus=trigger_modus,
-        )
         pasttrigger_mask = spt.make_mask_of_right_in_left(
             left_indices=event_table["primary"][spt.IDX],
-            right_indices=idx_pasttrigger,
+            right_indices=passed_trigger[spt.IDX],
         )
 
         offaxis_deg = mdfl.discovery._angle_between_az_zd_deg(

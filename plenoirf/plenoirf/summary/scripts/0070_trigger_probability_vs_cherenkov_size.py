@@ -17,8 +17,9 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 num_size_bins = 12
 size_bin_edges = np.geomspace(1, 2 ** num_size_bins, (3 * num_size_bins) + 1)
 
-trigger_modus = sum_config["trigger"]["modus"]
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0066_passing_trigger")
+)
 
 for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
@@ -35,17 +36,15 @@ for site_key in irf_config["config"]["sites"]:
             ),
             structure=irf.table.STRUCTURE,
         )
+        passed_trigger = passing_trigger[site_key][particle_key][
+            "passed_trigger"
+        ]
 
         key = "trigger_probability_vs_cherenkov_size"
 
-        idx_pasttrigger = irf.analysis.light_field_trigger_modi.make_indices(
-            trigger_table=event_table["trigger"],
-            threshold=trigger_threshold,
-            modus=trigger_modus,
-        )
         mask_pasttrigger = spt.make_mask_of_right_in_left(
             left_indices=event_table["trigger"][spt.IDX],
-            right_indices=idx_pasttrigger,
+            right_indices=passed_trigger[spt.IDX],
         )
 
         num_thrown = np.histogram(
