@@ -9,11 +9,8 @@ import sklearn
 import pickle
 import json
 from sklearn import neural_network
-from sklearn import gaussian_process
-from sklearn import svm
 from sklearn import ensemble
 from sklearn import model_selection
-from sklearn import feature_selection
 from sklearn import utils
 
 import matplotlib

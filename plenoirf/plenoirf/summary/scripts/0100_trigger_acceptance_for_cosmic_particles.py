@@ -17,8 +17,6 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-NUM_GRID_BINS = irf_config["grid_geometry"]["num_bins_diameter"] ** 2
-
 MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
     "max_angle_relative_to_pointing_deg"
 ]

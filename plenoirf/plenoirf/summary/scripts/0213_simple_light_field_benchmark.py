@@ -56,11 +56,6 @@ energy_bin_edges = np.geomspace(
 )
 energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
-num_coarse_energy_bins = np.max([1, num_energy_bins//2])
-coarse_energy_bin_edges = np.geomspace(
-    energy_lower_edge, energy_upper_edge, num_coarse_energy_bins + 1
-)
-
 # core radius bins
 # ----------------
 num_radius_bins = num_coarse_energy_bins
