@@ -7,8 +7,7 @@ import airshower_template_generator as atg
 import os
 import pandas
 import plenopy as pl
-from sklearn import cluster
-import sklearn
+import glob
 
 import matplotlib
 
@@ -26,32 +25,9 @@ _passed_trigger_indices = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_passing_trigger")
 )
 
-# READ reconstruction
-# ===================
-_rec = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0206_fitting_light_field")
+loph_chunk_base_dir = os.path.join(
+    pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
 )
-reconstruction = {}
-for sk in _rec:
-    reconstruction[sk] = {}
-    for pk in _rec[sk]:
-        _df = pandas.DataFrame(_rec[sk][pk]["reco"])
-        reconstruction[sk][pk] = _df.to_records(index=False)
-reco_by_index = {}
-for sk in _rec:
-    reco_by_index[sk] = {}
-    for pk in _rec[sk]:
-        reco_by_index[sk][pk] = {}
-        _rr = _rec[sk][pk]["reco"]
-        for ii in range(len(_rr[spt.IDX])):
-            airshower_id = _rr[spt.IDX][ii]
-            reco_by_index[sk][pk][airshower_id] = {
-                "cx": _rr["cx"][ii],
-                "cy": _rr["cy"][ii],
-                "x": _rr["x"][ii],
-                "y": _rr["y"][ii],
-            }
-
 
 # READ light-field-geometry
 # =========================
@@ -72,9 +48,9 @@ fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
 
 truth_by_index = {}
-for sk in reconstruction:
+for sk in irf_config["config"]["sites"]:
     truth_by_index[sk] = {}
-    for pk in reconstruction[sk]:
+    for pk in ["gamma"]:  # irf_config["config"]["particles"]:
         truth_by_index[sk][pk] = {}
 
         event_table = spt.read(
@@ -83,10 +59,14 @@ for sk in reconstruction:
             ),
             structure=irf.table.STRUCTURE,
         )
+        passed_trigger_idx = np.array(
+            _passed_trigger_indices[sk][pk]["passed_trigger"][spt.IDX]
+        )
+
         all_truth = spt.cut_table_on_indices(
             event_table,
             irf.table.STRUCTURE,
-            common_indices=reconstruction[sk][pk][spt.IDX],
+            common_indices=passed_trigger_idx,
             level_keys=[
                 "primary",
                 "cherenkovsize",
@@ -101,7 +81,7 @@ for sk in reconstruction:
             ],
         )
         all_truth = spt.sort_table_on_common_indices(
-            table=all_truth, common_indices=reconstruction[sk][pk][spt.IDX]
+            table=all_truth, common_indices=passed_trigger_idx
         )
         (
             true_cx,
@@ -123,12 +103,15 @@ for sk in reconstruction:
             }
 
 
-for sk in reconstruction:
-    for pk in reconstruction[sk]:
+for sk in irf_config["config"]["sites"]:
+    for pk in ["gamma"]:  # irf_config["config"]["particles"]:
+
+        loph_chunk_paths = glob.glob(
+            os.path.join(loph_chunk_base_dir, sk, pk, "chunks", "*.tar")
+        )
+
         run = pl.photon_stream.loph.LopfTarReader(
-            os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "cherenkov.phs.loph.tar",
-            )
+            loph_chunk_paths[0]
         )
 
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
@@ -137,8 +120,6 @@ for sk in reconstruction:
         reco = []
         for event in run:
             airshower_id, loph = event
-            if airshower_id not in reco_by_index[sk][pk]:
-                continue
 
             true_cx = truth_by_index[sk][pk][airshower_id]["cx"]
             true_cy = truth_by_index[sk][pk][airshower_id]["cy"]
@@ -149,16 +130,8 @@ for sk in reconstruction:
                 loph_record=loph, light_field_geometry=lfg
             )
             img = atg.model.make_image(split_light_field=slf, image_binning=ib)
-
-            _cxcy_bin_edges = np.linspace(
-                -ib["radius_deg"], ib["radius_deg"], ib["num_bins"]
-            )
-            _cxcy_bin_centers = 0.5 * (
-                _cxcy_bin_edges[0:-1] + _cxcy_bin_edges[1:]
-            )
-            _resp = np.unravel_index(np.argmax(img), img.shape)
-            reco_cx_deg = _cxcy_bin_centers[_resp[1]]
-            reco_cy_deg = _cxcy_bin_centers[_resp[0]]
+            reco_cx_deg, reco_cy_deg = atg.model.argmax_image_cx_cy_deg(
+                image=img, image_binning=ib)
 
             scale = 1.5
             fig = plt.figure(figsize=(16 / scale, 9 / scale), dpi=100 * scale)
