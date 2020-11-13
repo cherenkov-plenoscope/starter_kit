@@ -129,7 +129,11 @@ for sk in irf_config["config"]["sites"]:
             slf = atg.model.SplitLightField(
                 loph_record=loph, light_field_geometry=lfg
             )
-            img = atg.model.make_image(split_light_field=slf, image_binning=ib)
+            img = atg.model.make_image(
+                split_light_field=slf,
+                model_config=atg.model.MODEL_CONFIG,
+                image_binning=ib
+            )
             reco_cx_deg, reco_cy_deg = atg.model.argmax_image_cx_cy_deg(
                 image=img, image_binning=ib)
 
