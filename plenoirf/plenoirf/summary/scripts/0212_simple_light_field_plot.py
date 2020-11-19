@@ -117,7 +117,6 @@ for sk in irf_config["config"]["sites"]:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
-        reco = []
         for event in run:
             airshower_id, loph = event
 
@@ -129,13 +128,32 @@ for sk in irf_config["config"]["sites"]:
             slf = atg.model.SplitLightField(
                 loph_record=loph, light_field_geometry=lfg
             )
-            img = atg.model.make_image(
-                split_light_field=slf,
+            slf_model = atg.model.estimate_model_from_light_field(
+                split_light_field=slf, model_config=atg.model.MODEL_CONFIG
+            )
+            img = atg.model.make_image_from_model(
+                light_field_model=slf_model,
                 model_config=atg.model.MODEL_CONFIG,
                 image_binning=ib
             )
             reco_cx_deg, reco_cy_deg = atg.model.argmax_image_cx_cy_deg(
-                image=img, image_binning=ib)
+                image=img, image_binning=ib
+            )
+            med_cx_deg = np.rad2deg(slf.median_cx)
+            med_cy_deg = np.rad2deg(slf.median_cy)
+            azimuth_main_axis = np.arctan2(
+                (reco_cy_deg - med_cy_deg),
+                (reco_cx_deg - med_cx_deg),
+            )
+
+
+            model_pe = [m["num_photons_pe"] for m in slf_model]
+            model_az = [m["azimuth_rad"] for m in slf_model]
+            for ii in range(len(model_az)):
+                if model_az[ii] <= 0.0:
+                    model_az[ii] += np.pi
+                if model_az[ii] > np.pi:
+                    model_az[ii] -= np.pi
 
             scale = 1.5
             fig = plt.figure(figsize=(16 / scale, 9 / scale), dpi=100 * scale)
@@ -154,9 +172,14 @@ for sk in irf_config["config"]["sites"]:
                 fov_radius_deg * np.cos(phi), fov_radius_deg * np.sin(phi), "k"
             )
 
-            ax.plot(np.rad2deg(true_cx), np.rad2deg(true_cy), "xk")
+            ax.plot(
+                [med_cx_deg, med_cx_deg + 100*np.cos(azimuth_main_axis)],
+                [med_cy_deg, med_cx_deg + 100*np.sin(azimuth_main_axis)],
+                ":k"
+            )
 
             ax.plot(reco_cx_deg, reco_cy_deg, "og")
+            ax.plot(np.rad2deg(true_cx), np.rad2deg(true_cy), "xk")
 
             info_str = "reco. Cherenkov: {: 4d}p.e.".format(
                 loph["photons"]["channels"].shape[0],
@@ -168,6 +191,8 @@ for sk in irf_config["config"]["sites"]:
 
             ax.set_title(info_str)
 
+            ax.set_xlim([-1.05*fov_radius_deg, 1.05*fov_radius_deg])
+            ax.set_ylim([-1.05*fov_radius_deg, 1.05*fov_radius_deg])
             ax.set_aspect("equal")
             ax.set_xlabel("cx / deg")
             ax.set_ylabel("cy / deg")
