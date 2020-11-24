@@ -4,7 +4,6 @@ import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
-import pandas
 import plenopy as pl
 import glob
 import scipy
@@ -43,7 +42,7 @@ fuzzy_binning = pl.fuzzy.direction.EXAMPLE_IMAGE_BINNING
 fuzzy_c_bin_edges = np.linspace(
     -fuzzy_binning["radius_deg"],
     fuzzy_binning["radius_deg"],
-    fuzzy_binning["num_bins"] + 1
+    fuzzy_binning["num_bins"] + 1,
 )
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
@@ -107,8 +106,6 @@ for sk in irf_config["config"]["sites"]:
 fuzz_ring_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss1d(num_steps=61)
 fuzz_img_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss2d(num_steps=5)
 
-scale = 1.5
-
 fuzzy_model_config = pl.fuzzy.direction.EXAMPLE_MODEL_CONFIG
 
 for sk in irf_config["config"]["sites"]:
@@ -118,9 +115,7 @@ for sk in irf_config["config"]["sites"]:
             os.path.join(loph_chunk_base_dir, sk, pk, "chunks", "*.tar")
         )
 
-        run = pl.photon_stream.loph.LopfTarReader(
-            loph_chunk_paths[0]
-        )
+        run = pl.photon_stream.loph.LopfTarReader(loph_chunk_paths[0])
 
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
@@ -146,31 +141,28 @@ for sk in irf_config["config"]["sites"]:
             fuzz_img = pl.fuzzy.direction.make_image_from_model(
                 light_field_model=slf_model,
                 model_config=fuzzy_model_config,
-                image_binning=fuzzy_binning
+                image_binning=fuzzy_binning,
             )
 
             smooth_fuzz_img = scipy.signal.convolve2d(
-                in1=fuzz_img,
-                in2=fuzz_img_gaussian_kernel,
-                mode="same"
+                in1=fuzz_img, in2=fuzz_img_gaussian_kernel, mode="same"
             )
 
-            reco_cx_deg, reco_cy_deg = pl.fuzzy.direction.argmax_image_cx_cy_deg(
+            (
+                reco_cx_deg,
+                reco_cy_deg,
+            ) = pl.fuzzy.direction.argmax_image_cx_cy_deg(
                 image=smooth_fuzz_img, image_binning=fuzzy_binning,
             )
             med_cx_deg = np.rad2deg(slf.median_cx)
             med_cy_deg = np.rad2deg(slf.median_cy)
-            azimuth_main_axis = np.arctan2(
-                (reco_cy_deg - med_cy_deg),
-                (reco_cx_deg - med_cx_deg),
-            )
 
             ring = pl.fuzzy.direction.project_image_onto_ring(
                 image=smooth_fuzz_img,
                 image_binning=fuzzy_binning,
                 ring_cx_deg=med_cx_deg,
                 ring_cy_deg=med_cy_deg,
-                ring_radius_deg=1.5
+                ring_radius_deg=1.5,
             )
             smooth_ring = pl.fuzzy.direction.circular_convolve1d(
                 in1=ring, in2=fuzz_ring_gaussian_kernel
@@ -190,7 +182,7 @@ for sk in irf_config["config"]["sites"]:
                 "reco_cy_deg": reco_cy_deg,
             }
 
-            fig_ring = plt.figure(figsize=(16 / scale, 9 / scale), dpi=100 * scale)
+            fig_ring = irf.summary.figure.figure(fig_16_by_9)
             ax_ring = fig_ring.add_axes([0.1, 0.1, 0.8, 0.8])
             ax_ring.plot(smooth_ring, "k")
             for yy in range(len(azi_maxima)):
@@ -210,9 +202,7 @@ for sk in irf_config["config"]["sites"]:
             fig_ring.savefig(path_ring)
             plt.close(fig_ring)
 
-
-
-            fig = plt.figure(figsize=(16 / scale, 9 / scale), dpi=100 * scale)
+            fig = irf.summary.figure.figure(fig_16_by_9)
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
             for pax in range(slf.number_paxel):
                 ax.plot(
@@ -225,16 +215,16 @@ for sk in irf_config["config"]["sites"]:
                 fuzzy_c_bin_edges,
                 fuzzy_c_bin_edges,
                 smooth_fuzz_img,
-                cmap="Reds"
+                cmap="Reds",
             )
             phi = np.linspace(0, 2 * np.pi, 1000)
             ax.plot(
                 fov_radius_deg * np.cos(phi), fov_radius_deg * np.sin(phi), "k"
             )
             ax.plot(
-                [med_cx_deg, med_cx_deg + 100*np.cos(azimuth_main2_axis)],
-                [med_cy_deg, med_cy_deg + 100*np.sin(azimuth_main2_axis)],
-                ":b"
+                [med_cx_deg, med_cx_deg + 100 * np.cos(azimuth_main2_axis)],
+                [med_cy_deg, med_cy_deg + 100 * np.sin(azimuth_main2_axis)],
+                ":b",
             )
             ax.plot(reco_cx_deg, reco_cy_deg, "og")
             ax.plot(np.rad2deg(true_cx), np.rad2deg(true_cy), "xk")
@@ -249,8 +239,8 @@ for sk in irf_config["config"]["sites"]:
 
             ax.set_title(info_str)
 
-            ax.set_xlim([-1.05*fov_radius_deg, 1.05*fov_radius_deg])
-            ax.set_ylim([-1.05*fov_radius_deg, 1.05*fov_radius_deg])
+            ax.set_xlim([-1.05 * fov_radius_deg, 1.05 * fov_radius_deg])
+            ax.set_ylim([-1.05 * fov_radius_deg, 1.05 * fov_radius_deg])
             ax.set_aspect("equal")
             ax.set_xlabel("cx / deg")
             ax.set_ylabel("cy / deg")
