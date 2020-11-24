@@ -3,12 +3,12 @@ import sys
 import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
-import airshower_template_generator as atg
 import os
 import pandas
 import plenopy as pl
 import glob
 import multiprocessing
+import scipy
 
 
 PARALLEL = True
@@ -27,6 +27,22 @@ loph_chunk_base_dir = os.path.join(
     pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
 )
 
+fuzzy_model_config = {
+    "min_num_photons": 3,
+    "min_time_slope_ns_per_deg": 5.0,
+    "max_time_slope_ns_per_deg": 7.0,
+}
+
+plenoscope_fov_opening_angle_deg = 0.5 * np.rad2deg(
+    lfg.sensor_plane2imaging_system.max_FoV_diameter
+)
+
+fuzzy_binning = {
+    "radius_deg": 1.0 + plenoscope_fov_opening_angle_deg,
+    "num_bins": 128,
+}
+
+fuzz_img_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss2d(num_steps=5)
 
 def make_jobs(loph_chunk_dir, quality, site_key, particle_key):
     chunk_paths = glob.glob(os.path.join(loph_chunk_dir, "*.tar"))
@@ -49,12 +65,27 @@ def run_job(job):
         airshower_id, loph_record = event
         print("airshower_id", airshower_id)
 
-        slf = atg.model.SplitLightField(
+        slf = pl.fuzzy.direction.SplitLightField(
             loph_record=loph_record, light_field_geometry=lfg
         )
 
-        img = atg.model.make_image(split_light_field=slf)
-        reco_cx_deg, reco_cy_deg = atg.model.argmax_image_cx_cy_deg(image=img)
+        slf_model = pl.fuzzy.direction.estimate_model_from_light_field(
+            split_light_field=slf, model_config=fuzzy_model_config
+        )
+
+        fuzz_img = pl.fuzzy.direction.make_image_from_model(
+            light_field_model=slf_model,
+            model_config=fuzzy_model_config,
+            image_binning=fuzzy_binning,
+        )
+
+        smooth_fuzz_img = scipy.signal.convolve2d(
+            in1=fuzz_img, in2=fuzz_img_gaussian_kernel, mode="same"
+        )
+
+        reco_cx_deg, reco_cy_deg = pl.fuzzy.direction.argmax_image_cx_cy_deg(
+            image=smooth_fuzz_img, image_binning=fuzzy_binning,
+        )
 
         reco = {
             spt.IDX: airshower_id,
