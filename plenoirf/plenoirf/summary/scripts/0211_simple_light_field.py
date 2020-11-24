@@ -44,6 +44,7 @@ fuzzy_binning = {
 
 fuzz_img_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss2d(num_steps=5)
 
+
 def make_jobs(loph_chunk_dir, quality, site_key, particle_key):
     chunk_paths = glob.glob(os.path.join(loph_chunk_dir, "*.tar"))
     jobs = []
