@@ -240,27 +240,26 @@ for sk in irf_config["config"]["sites"]:
             med_cx_deg = np.rad2deg(slf.median_cx)
             med_cy_deg = np.rad2deg(slf.median_cy)
 
-            ring = pl.fuzzy.direction.project_image_onto_ring(
+            azimuth_ring = pl.fuzzy.direction.project_image_onto_ring(
                 image=smooth_fuzz_img,
                 image_binning=fuzzy_binning,
                 ring_cx_deg=med_cx_deg,
                 ring_cy_deg=med_cy_deg,
                 ring_radius_deg=1.5,
             )
-            smooth_ring = pl.fuzzy.direction.circular_convolve1d(
-                in1=ring, in2=fuzz_ring_gaussian_kernel
+            smooth_azimuth_ring = pl.fuzzy.direction.circular_convolve1d(
+                in1=azimuth_ring, in2=fuzz_ring_gaussian_kernel
             )
-            smooth_ring /= np.max(smooth_ring)
+            smooth_azimuth_ring /= np.max(smooth_azimuth_ring)
 
-            azi_maxima = pl.fuzzy.direction.circular_argmaxima(smooth_ring)
-            azi_maxima_weights = [smooth_ring[mm] for mm in azi_maxima]
-
-            azimuth_main2_axis = np.deg2rad(np.argmax(smooth_ring))
+            azi_maxima = pl.fuzzy.direction.circular_argmaxima(smooth_azimuth_ring)
+            azi_maxima_weights = [smooth_azimuth_ring[mm] for mm in azi_maxima]
+            main_axis_azimuth = np.deg2rad(np.argmax(smooth_azimuth_ring))
 
             fuzzy_result = {
                 "median_cx_deg": med_cx_deg,
                 "median_cy_deg": med_cy_deg,
-                "main_axis_azimuth_deg": np.rad2deg(azimuth_main2_axis),
+                "main_axis_azimuth_deg": np.rad2deg(main_axis_azimuth),
                 "reco_cx_deg": reco_cx_deg,
                 "reco_cy_deg": reco_cy_deg,
             }
@@ -361,7 +360,7 @@ for sk in irf_config["config"]["sites"]:
 
             fig_ring = irf.summary.figure.figure(fig_16_by_9)
             ax_ring = fig_ring.add_axes([0.1, 0.1, 0.8, 0.8])
-            ax_ring.plot(smooth_ring, "k")
+            ax_ring.plot(smooth_azimuth_ring, "k")
             for yy in range(len(azi_maxima)):
                 ax_ring.plot(azi_maxima[yy], azi_maxima_weights[yy], "or")
             ax_ring.set_xlim([0, 360])
@@ -400,8 +399,8 @@ for sk in irf_config["config"]["sites"]:
                 fov_radius_deg * np.cos(phi), fov_radius_deg * np.sin(phi), "k"
             )
             ax.plot(
-                [med_cx_deg, med_cx_deg + 100 * np.cos(azimuth_main2_axis)],
-                [med_cy_deg, med_cy_deg + 100 * np.sin(azimuth_main2_axis)],
+                [med_cx_deg, med_cx_deg + 100 * np.cos(main_axis_azimuth)],
+                [med_cy_deg, med_cy_deg + 100 * np.sin(main_axis_azimuth)],
                 ":b",
             )
             ax.plot(reco_cx_deg, reco_cy_deg, "og")
