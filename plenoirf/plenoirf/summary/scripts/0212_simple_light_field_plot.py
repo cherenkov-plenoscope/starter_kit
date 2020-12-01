@@ -111,6 +111,29 @@ kernel_3x3 = pl.fuzzy.discrete_kernel.gauss2d(num_steps=3)
 
 fuzzy_model_config = pl.fuzzy.direction.EXAMPLE_MODEL_CONFIG
 
+cer_perp_distance_threshold = np.deg2rad(0.05)
+
+def read_shower_maximum_object_distance(
+    site_key,
+    particle_key,
+    key="image_smallest_ellipse_object_distance"
+):
+    event_table = spt.read(
+        path=os.path.join(
+            pa["run_dir"],
+            "event_table",
+            site_key,
+            particle_key,
+            "event_table.tar",
+        ),
+        structure=irf.table.STRUCTURE,
+    )
+    features = event_table["features"]
+    out = {}
+    for ii in range(features.shape[0]):
+        out[features[spt.IDX][ii]] = features[key][ii]
+    return out
+
 
 class CoreRadiusFinder:
     def __init__(
@@ -179,6 +202,26 @@ class CoreRadiusFinder:
         return perp_weight
 
 
+def angle_between(v1, v2):
+
+    def unit_vector(vector):
+        """ Returns the unit vector of the vector.  """
+        return vector / np.linalg.norm(vector)
+
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
+
 def squarespace(start, stop, num):
     sqrt_space = np.linspace(
         np.sign(start) * np.sqrt(np.abs(start)),
@@ -193,6 +236,11 @@ def squarespace(start, stop, num):
 
 for sk in irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
+
+        reco_obj = read_shower_maximum_object_distance(
+            site_key=sk,
+            particle_key=pk
+        )
 
         loph_chunk_paths = glob.glob(
             os.path.join(loph_chunk_base_dir, sk, pk, "chunks", "*.tar")
@@ -279,14 +327,14 @@ for sk in irf_config["config"]["sites"]:
             )
 
 
-            num_c_supports = 64
+            num_c_supports = 128
             c_para_supports = squarespace(
                 np.deg2rad(-4.0),
                 np.deg2rad(4.0),
                 num_c_supports,
             )
 
-            num_r_supports = 48
+            num_r_supports = 96
             r_para_supports = squarespace(
                 -640,
                 640,
@@ -300,7 +348,7 @@ for sk in irf_config["config"]["sites"]:
                     response[ic, ir] = crf.response(
                         c_para=c_para,
                         r_para=r_para,
-                        cer_perp_distance_threshold=np.deg2rad(1.0),
+                        cer_perp_distance_threshold=cer_perp_distance_threshold,
                     )
 
             argmax_c_para, argmax_r_para = pl.fuzzy.direction.argmax2d(
@@ -308,6 +356,81 @@ for sk in irf_config["config"]["sites"]:
             )
             max_c_para = c_para_supports[argmax_c_para]
             max_r_para = r_para_supports[argmax_r_para]
+
+            # end longitudinal fit
+            # --------------------
+
+            # estimate shower-maximum-position w.r.t. aperture-plane
+            shower_max_z = reco_obj[airshower_id]
+            shower_median_direction_z = np.sqrt(
+                1.0 -
+                slf.median_cx ** 2 -
+                slf.median_cy ** 2
+            )
+            line_scale = shower_max_z / shower_median_direction_z
+            shower_max_x = slf.median_cx * line_scale
+            shower_max_y = slf.median_cy * line_scale
+            shower_max = [shower_max_x, shower_max_y, shower_max_z]
+
+
+            # estimate angle between shower median direction and core-axis on
+            # aperture-plane
+
+            shower_median_direction = [
+                slf.median_cx,
+                slf.median_cy,
+                shower_median_direction_z
+            ]
+
+            core_axis_direction = [
+                np.cos(main_axis_azimuth),
+                np.sin(main_axis_azimuth),
+                0.0
+            ]
+
+            epsilon = angle_between(shower_median_direction, core_axis_direction)
+
+            # find valid core-radii for given shower-maximum
+            # ----------------------------------------------
+
+            def matching_core_radius(c_para, epsilon, m):
+                rrr = c_para - 0.5 * np.pi + epsilon
+                return m * (np.cos(epsilon) + np.sin(epsilon) * np.tan(rrr) )
+
+            num_c_supports_fine = 640
+            c_para_supports_fine = squarespace(
+                np.deg2rad(-4.0),
+                np.deg2rad(4.0),
+                num_c_supports_fine,
+            )
+
+            matching_core_radii = np.zeros(num_c_supports_fine)
+            for ic, c_para in enumerate(c_para_supports_fine):
+                matching_core_radii[ic] = matching_core_radius(
+                    c_para=c_para,
+                    epsilon=epsilon,
+                    m=line_scale
+                )
+
+
+            response_on_max = np.zeros(num_c_supports_fine)
+            for ic, c_para in enumerate(c_para_supports_fine):
+
+                response_on_max[ic] = crf.response(
+                    c_para=c_para_supports_fine[ic],
+                    r_para=-1.0 * matching_core_radii[ic],
+                    cer_perp_distance_threshold=cer_perp_distance_threshold,
+                )
+
+            inte2 = response_on_max
+
+            _argmin = np.argmax(response_on_max)
+            max_c_para_2 = c_para_supports_fine[_argmin]
+            max_r_para_2 = -1.0 * matching_core_radii[_argmin]
+
+            print(shower_max, np.rad2deg(epsilon))
+
+            #####
 
             fig = irf.summary.figure.figure(fig_16_by_9)
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -318,7 +441,9 @@ for sk in irf_config["config"]["sites"]:
                 inte.T,
                 cmap="Blues",
             )
+            ax.plot(np.rad2deg(c_para_supports_fine), -matching_core_radii, "-r")
             ax.plot(np.rad2deg(max_c_para), max_r_para, "og")
+
             ax.set_xlabel("c_para / deg")
             ax.set_ylabel("r_para / m")
             ax.spines["top"].set_color("none")
@@ -334,8 +459,29 @@ for sk in irf_config["config"]["sites"]:
             fig.savefig(path)
             plt.close(fig)
 
-            # end longitudinal fit
-            # --------------------
+            #####
+
+            fig = irf.summary.figure.figure(fig_16_by_9)
+            ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+            ax.plot(
+                np.rad2deg(c_para_supports_fine),
+                inte2,
+                "-k"
+            )
+            ax.set_xlabel("c_para / deg")
+            ax.set_ylabel("response / 1")
+            ax.spines["top"].set_color("none")
+            ax.spines["right"].set_color("none")
+            ax.spines["bottom"].set_color("none")
+            ax.spines["left"].set_color("none")
+            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+            path = os.path.join(
+                pa["out_dir"], sk, pk, "{:09d}_resp_on_max.jpg".format(airshower_id),
+            )
+            fig.savefig(path)
+            plt.close(fig)
+
+            ###
 
             reco_fit_cx_deg = (
                 fuzzy_result["median_cx_deg"] +
@@ -357,6 +503,30 @@ for sk in irf_config["config"]["sites"]:
                 np.sin(np.deg2rad(fuzzy_result["main_axis_azimuth_deg"])) *
                 max_r_para
             )
+
+            # 2
+
+            reco2_fit_cx_deg = (
+                fuzzy_result["median_cx_deg"] +
+                np.cos(np.deg2rad(fuzzy_result["main_axis_azimuth_deg"])) *
+                np.rad2deg(max_c_para_2)
+            )
+            reco2_fit_cy_deg = (
+                fuzzy_result["median_cy_deg"] +
+                np.sin(np.deg2rad(fuzzy_result["main_axis_azimuth_deg"])) *
+                np.rad2deg(max_c_para_2)
+            )
+
+            reco2_fit_x = (
+                np.cos(np.deg2rad(fuzzy_result["main_axis_azimuth_deg"])) *
+                max_r_para_2
+            )
+
+            reco2_fit_y = (
+                np.sin(np.deg2rad(fuzzy_result["main_axis_azimuth_deg"])) *
+                max_r_para_2
+            )
+
 
             fig_ring = irf.summary.figure.figure(fig_16_by_9)
             ax_ring = fig_ring.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -406,6 +576,7 @@ for sk in irf_config["config"]["sites"]:
             ax.plot(reco_cx_deg, reco_cy_deg, "og")
 
             ax.plot(reco_fit_cx_deg, reco_fit_cy_deg, "oc")
+            ax.plot(reco2_fit_cx_deg, reco2_fit_cy_deg, "oy")
 
             ax.plot(np.rad2deg(true_cx), np.rad2deg(true_cy), "xk")
 
@@ -428,6 +599,7 @@ for sk in irf_config["config"]["sites"]:
 
             ax_core.plot(reco_fit_x, reco_fit_y, "oc")
             ax_core.plot([0, reco_fit_x], [0, reco_fit_y], "c", alpha=0.5)
+            ax_core.plot(reco2_fit_x, reco2_fit_y, "oy")
 
             ax_core.plot(true_x, true_y, "xk")
             ax_core.plot([0, true_x], [0, true_y], "k", alpha=0.5)
