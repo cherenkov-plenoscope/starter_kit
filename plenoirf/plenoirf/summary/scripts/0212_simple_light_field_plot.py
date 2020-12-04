@@ -108,6 +108,7 @@ for sk in irf_config["config"]["sites"]:
                 "cy": true_cy[ii],
                 "x": -all_truth["core"]["core_x_m"][ii],
                 "y": -all_truth["core"]["core_y_m"][ii],
+                "energy_GeV": all_truth["primary"]["energy_GeV"][ii],
             }
 
 
@@ -256,7 +257,7 @@ PLOT_C_PARA_R_PARA_RESPONSE = False
 PLOT_OVERVIEW = True
 
 
-def estimate_fuzzy_model(
+def estimate_main_axis_to_core_using_fuzzy_method(
     split_light_field,
     fuzzy_model_config,
     fuzzy_image_binning,
@@ -350,6 +351,160 @@ def add_axes_fuzzy_debug(ax, fuzzy_result, fuzzy_debug):
     ax.set_ylabel("probability density / deg$^{-1}$")
 
 
+def estimate_core_radius_using_shower_model(
+    main_axis_support_cx,
+    main_axis_support_cy,
+    main_axis_azimuth,
+    light_field_cx,
+    light_field_cy,
+    light_field_x,
+    light_field_y,
+    shower_maximum_cx,
+    shower_maximum_cy,
+    shower_maximum_object_distance,
+    config,
+):
+    core_radius_finder = CoreRadiusFinder(
+        main_axis_azimuth=main_axis_azimuth,
+        median_cx=main_axis_support_cx,
+        median_cy=main_axis_support_cy,
+        cx=light_field_cx,
+        cy=light_field_cy,
+        x=light_field_x,
+        y=light_field_y,
+    )
+
+    c_para_supports = squarespace(
+        start=config["c_para"]["start"],
+        stop=config["c_para"]["stop"],
+        num=config["c_para"]["num_supports"],
+    )
+
+    r_para_supports = squarespace(
+        start=config["r_para"]["start"],
+        stop=config["r_para"]["stop"],
+        num=config["r_para"]["num_supports"],
+    )
+
+    # mask c_para r_para
+    # ------------------
+
+    shower_median_direction_z = np.sqrt(
+        1.0 -
+        shower_maximum_cx ** 2 -
+        shower_maximum_cy ** 2
+    )
+    distance_aperture_center_to_shower_maximum = (
+        shower_maximum_object_distance / shower_median_direction_z
+    )
+
+    shower_maximum_direction = [
+        shower_maximum_cx,
+        shower_maximum_cy,
+        shower_median_direction_z
+    ]
+
+    core_axis_direction = [
+        np.cos(main_axis_azimuth),
+        np.sin(main_axis_azimuth),
+        0.0
+    ]
+
+    epsilon = angle_between(shower_maximum_direction, core_axis_direction)
+
+    c_para_r_para_mask = np.zeros(
+        shape=(
+            config["c_para"]["num_supports"],
+            config["r_para"]["num_supports"]
+        ),
+        dtype=np.int
+    )
+
+    for cbin, c_para in enumerate(c_para_supports):
+        matching_r_para = matching_core_radius(
+            c_para=c_para,
+            epsilon=epsilon,
+            m=distance_aperture_center_to_shower_maximum
+        )
+
+        closest_r_para_bin = np.argmin(
+            np.abs(r_para_supports - matching_r_para)
+        )
+
+        if (
+            closest_r_para_bin > 0 and
+            closest_r_para_bin < (config["r_para"]["num_supports"] - 1)
+        ):
+            rbin_range = np.arange(
+                closest_r_para_bin - config["r_para"]["num_bins_scan_radius"],
+                closest_r_para_bin + config["r_para"]["num_bins_scan_radius"]
+            )
+
+            for rbin in rbin_range:
+                if rbin >= 0 and rbin < config["r_para"]["num_supports"]:
+                    c_para_r_para_mask[cbin, rbin] = 1
+
+    # populate c_para r_para
+    # ----------------------
+
+    c_para_r_para_response = np.zeros(
+        shape=(
+            config["c_para"]["num_supports"],
+            config["r_para"]["num_supports"]
+        )
+    )
+    for cbin, c_para in enumerate(c_para_supports):
+        for rbin, r_para in enumerate(r_para_supports):
+
+            if c_para_r_para_mask[cbin, rbin]:
+                c_para_r_para_response[cbin, rbin] = core_radius_finder.response(
+                    c_para=c_para,
+                    r_para=r_para,
+                    cer_perp_distance_threshold=config["c_perp_width"],
+                )
+
+    # find highest response in c_para r_para
+    # --------------------------------------
+
+    argmax_c_para, argmax_r_para = pl.fuzzy.direction.argmax2d(
+        c_para_r_para_response
+    )
+    max_c_para = c_para_supports[argmax_c_para]
+    max_r_para = r_para_supports[argmax_r_para]
+    max_response = c_para_r_para_response[argmax_c_para, argmax_r_para]
+
+    # store finding
+    # -------------
+
+    reco_cx = main_axis_support_cx + np.cos(main_axis_azimuth) * max_c_para
+    reco_cy = main_axis_support_cy + np.sin(main_axis_azimuth) * max_c_para
+    reco_x = np.cos(main_axis_azimuth) * max_r_para
+    reco_y = np.sin(main_axis_azimuth) * max_r_para
+
+    result = {}
+
+    result["c_main_axis_parallel"] = float(max_c_para)
+    result["r_main_axis_parallel"] = float(max_r_para)
+    result["shower_model_response"] = float(max_response)
+
+    result["primary_particle_cx"] = float(reco_cx)
+    result["primary_particle_cy"] = float(reco_cy)
+    result["primary_particle_x"] = float(reco_x)
+    result["primary_particle_y"] = float(reco_y)
+
+    debug = {}
+    debug["c_para_supports"] = c_para_supports
+    debug["r_para_supports"] = r_para_supports
+    debug["c_para_r_para_mask"] = c_para_r_para_mask
+    debug["c_para_r_para_response"] = c_para_r_para_response
+    debug["shower_maximum_direction"] = shower_maximum_direction
+    debug["core_axis_direction"] = core_axis_direction
+    debug["epsilon"] = epsilon
+
+    return result, debug
+
+
+
 for sk in irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
 
@@ -370,19 +525,16 @@ for sk in irf_config["config"]["sites"]:
         for event in run:
             airshower_id, loph_record = event
 
-            true_cx = truth_by_index[sk][pk][airshower_id]["cx"]
-            true_cy = truth_by_index[sk][pk][airshower_id]["cy"]
-            true_x = truth_by_index[sk][pk][airshower_id]["x"]
-            true_y = truth_by_index[sk][pk][airshower_id]["y"]
+            truth = dict(truth_by_index[sk][pk][airshower_id])
 
             split_light_field = pl.fuzzy.direction.SplitLightField(
                 loph_record=loph_record, light_field_geometry=lfg
             )
 
-            if split_light_field.number_photons < 150:
+            if split_light_field.number_photons < 120:
                 continue
 
-            fuzzy_result, fuzzy_debug = estimate_fuzzy_model(
+            fuzzy_result, fuzzy_debug = estimate_main_axis_to_core_using_fuzzy_method(
                 split_light_field=split_light_field,
                 fuzzy_model_config=fuzzy_model_config,
                 fuzzy_image_binning=fuzzy_image_binning,
@@ -441,172 +593,42 @@ for sk in irf_config["config"]["sites"]:
             for i_azi in range(num_azi_scan):
                 for i_sup in range(num_sup_scan):
 
-                    longi_fit = {}
-                    longi_fit["main_axis_azimuth_deg"] = (
+                    fit = {}
+                    fit["main_axis_azimuth_deg"] = (
                         fuzzy_result["main_axis_azimuth_deg"] +
                         main_axis_azimuth_offsets_deg[i_azi]
                     )
-                    longi_fit["main_axis_support_cx_deg"] = (
+                    fit["main_axis_support_cx_deg"] = (
                         fuzzy_result["main_axis_support_cx_deg"]
                          + main_axis_perp_supports_deg[i_sup] *
-                         np.cos(np.deg2rad(90.0 + longi_fit["main_axis_azimuth_deg"]))
+                         np.cos(np.deg2rad(90.0 + fit["main_axis_azimuth_deg"]))
                     )
-                    longi_fit["main_axis_support_cy_deg"] = (
+                    fit["main_axis_support_cy_deg"] = (
                         fuzzy_result["main_axis_support_cy_deg"]
                          + main_axis_perp_supports_deg[i_sup] *
-                         np.sin(np.deg2rad(90.0 + longi_fit["main_axis_azimuth_deg"]))
-
-                    )# longitudinal fit
-                    # ================
+                         np.sin(np.deg2rad(90.0 + fit["main_axis_azimuth_deg"]))
+                    )
 
                     lixel_ids = loph_record["photons"]["channels"]
-                    crf = CoreRadiusFinder(
-                        main_axis_azimuth=np.deg2rad(longi_fit["main_axis_azimuth_deg"]),
-                        median_cx=np.deg2rad(longi_fit["main_axis_support_cx_deg"]),
-                        median_cy=np.deg2rad(longi_fit["main_axis_support_cy_deg"]),
-                        cx=lfg.cx_mean[lixel_ids],
-                        cy=lfg.cy_mean[lixel_ids],
-                        x=lfg.x_mean[lixel_ids],
-                        y=lfg.y_mean[lixel_ids],
+
+                    lresult, ldebug = estimate_core_radius_using_shower_model(
+                        main_axis_support_cx=np.deg2rad(fit["main_axis_support_cx_deg"]),
+                        main_axis_support_cy=np.deg2rad(fit["main_axis_support_cy_deg"]),
+                        main_axis_azimuth=np.deg2rad(fit["main_axis_azimuth_deg"]),
+                        light_field_cx=lfg.cx_mean[lixel_ids],
+                        light_field_cy=lfg.cy_mean[lixel_ids],
+                        light_field_x=lfg.x_mean[lixel_ids],
+                        light_field_y=lfg.y_mean[lixel_ids],
+                        shower_maximum_cx=split_light_field.median_cx,
+                        shower_maximum_cy=split_light_field.median_cy,
+                        shower_maximum_object_distance=reco_obj[airshower_id],
+                        config=long_fit_cfg,
                     )
 
-                    c_para_supports = squarespace(
-                        start=long_fit_cfg["c_para"]["start"],
-                        stop=long_fit_cfg["c_para"]["stop"],
-                        num=long_fit_cfg["c_para"]["num_supports"],
-                    )
+                    for key in lresult:
+                        fit[key] = lresult[key]
 
-                    r_para_supports = squarespace(
-                        start=long_fit_cfg["r_para"]["start"],
-                        stop=long_fit_cfg["r_para"]["stop"],
-                        num=long_fit_cfg["r_para"]["num_supports"],
-                    )
-
-                    # mask c_para r_para
-                    # ------------------
-
-                    shower_max_z = reco_obj[airshower_id]
-                    shower_median_direction_z = np.sqrt(
-                        1.0 -
-                        split_light_field.median_cx ** 2 -
-                        split_light_field.median_cy ** 2
-                    )
-                    distance_aperture_center_to_shower_maximum = (
-                        shower_max_z / shower_median_direction_z
-                    )
-
-                    shower_median_direction = [
-                        split_light_field.median_cx,
-                        split_light_field.median_cy,
-                        shower_median_direction_z
-                    ]
-
-                    core_axis_direction = [
-                        np.cos(np.deg2rad(longi_fit["main_axis_azimuth_deg"])),
-                        np.sin(np.deg2rad(longi_fit["main_axis_azimuth_deg"])),
-                        0.0
-                    ]
-
-                    epsilon = angle_between(
-                        shower_median_direction,
-                        core_axis_direction
-                    )
-
-                    c_para_r_para_mask = np.zeros(
-                        shape=(
-                            long_fit_cfg["c_para"]["num_supports"],
-                            long_fit_cfg["r_para"]["num_supports"]
-                        ),
-                        dtype=np.int
-                    )
-
-                    for cbin, c_para in enumerate(c_para_supports):
-                        matching_r_para = matching_core_radius(
-                            c_para=c_para,
-                            epsilon=epsilon,
-                            m=distance_aperture_center_to_shower_maximum
-                        )
-
-                        closest_r_para_bin = np.argmin(
-                            np.abs(r_para_supports - matching_r_para)
-                        )
-
-                        if (
-                            closest_r_para_bin > 0 and
-                            closest_r_para_bin < (long_fit_cfg["r_para"]["num_supports"] - 1)
-                        ):
-                            rbin_range = np.arange(
-                                closest_r_para_bin - long_fit_cfg["r_para"]["num_bins_scan_radius"],
-                                closest_r_para_bin + long_fit_cfg["r_para"]["num_bins_scan_radius"]
-                            )
-
-                            for rbin in rbin_range:
-                                if rbin >= 0 and rbin < long_fit_cfg["r_para"]["num_supports"]:
-                                    c_para_r_para_mask[cbin, rbin] = 1
-
-                    # populate c_para r_para
-                    # ----------------------
-
-                    c_para_r_para_response = np.zeros(
-                        shape=(
-                            long_fit_cfg["c_para"]["num_supports"],
-                            long_fit_cfg["r_para"]["num_supports"]
-                        )
-                    )
-                    for cbin, c_para in enumerate(c_para_supports):
-                        for rbin, r_para in enumerate(r_para_supports):
-
-                            if c_para_r_para_mask[cbin, rbin]:
-                                c_para_r_para_response[cbin, rbin] = crf.response(
-                                    c_para=c_para,
-                                    r_para=r_para,
-                                    cer_perp_distance_threshold=long_fit_cfg["c_perp_width"],
-                                )
-
-                    # find highest response in c_para r_para
-                    # --------------------------------------
-
-                    argmax_c_para, argmax_r_para = pl.fuzzy.direction.argmax2d(
-                        c_para_r_para_response
-                    )
-                    max_c_para = c_para_supports[argmax_c_para]
-                    max_r_para = r_para_supports[argmax_r_para]
-                    max_response = c_para_r_para_response[argmax_c_para, argmax_r_para]
-
-                    # store finding
-                    # -------------
-
-                    reco_fit_cx_deg = (
-                        longi_fit["main_axis_support_cx_deg"] +
-                        np.cos(np.deg2rad(longi_fit["main_axis_azimuth_deg"])) *
-                        np.rad2deg(max_c_para)
-                    )
-                    reco_fit_cy_deg = (
-                        longi_fit["main_axis_support_cy_deg"] +
-                        np.sin(np.deg2rad(longi_fit["main_axis_azimuth_deg"])) *
-                        np.rad2deg(max_c_para)
-                    )
-
-                    reco_fit_x = (
-                        np.cos(np.deg2rad(longi_fit["main_axis_azimuth_deg"])) *
-                        max_r_para
-                    )
-
-                    reco_fit_y = (
-                        np.sin(np.deg2rad(longi_fit["main_axis_azimuth_deg"])) *
-                        max_r_para
-                    )
-
-                    longi_fit["c_para"] = float(max_c_para)
-                    longi_fit["r_para"] = float(max_r_para)
-                    longi_fit["max_response"] = float(max_response)
-
-                    longi_fit["cx_deg"] = float(reco_fit_cx_deg)
-                    longi_fit["cy_deg"] = float(reco_fit_cy_deg)
-                    longi_fit["x_m"] = float(reco_fit_x)
-                    longi_fit["y_m"] = float(reco_fit_y)
-
-                    longi_fits[i_azi][i_sup] = longi_fit
+                    longi_fits[i_azi][i_sup] = fit
 
                     # end longitudinal fit
                     # --------------------
@@ -616,16 +638,26 @@ for sk in irf_config["config"]["sites"]:
                     if PLOT_C_PARA_R_PARA_RESPONSE:
                         fig = irf.summary.figure.figure(fig_16_by_9)
                         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-                        inte = np.log10(-1.0 * (c_para_r_para_response - np.max(c_para_r_para_response)))
+                        inte = np.log10(
+                            -1.0 * (
+                                ldebug["c_para_r_para_response"] - np.max(
+                                    ldebug["c_para_r_para_response"]
+                                )
+                            )
+                        )
                         ax.pcolor(
-                            np.rad2deg(c_para_supports),
-                            r_para_supports,
+                            np.rad2deg(ldebug["c_para_supports"]),
+                            ldebug["r_para_supports"],
                             inte.T,
                             cmap="Blues",
                         )
-                        ax.plot(np.rad2deg(max_c_para), max_r_para, "og")
-                        ax.set_xlabel("c_para / deg")
-                        ax.set_ylabel("r_para / m")
+                        ax.plot(
+                            np.rad2deg(lresult["c_main_axis_parallel"]),
+                            lresult["r_main_axis_parallel"],
+                            "og"
+                        )
+                        ax.set_xlabel("c main-axis parallel / deg")
+                        ax.set_ylabel("r main-axis parallel / m")
                         ax = my_axes_look(ax=ax)
                         path = os.path.join(
                             pa["out_dir"], sk, pk, "{:09d}_{:03d}_{:03d}_resp.jpg".format(
@@ -642,21 +674,21 @@ for sk in irf_config["config"]["sites"]:
                     print(i_azi, i_sup)
 
 
-            longi_fit = None
+            fit = None
             best_response = 0.0
             for i_azi in range(num_azi_scan):
                 for i_sup in range(num_sup_scan):
                     lo_fi = longi_fits[i_azi][i_sup]
-                    if lo_fi["max_response"] > best_response:
-                        best_response = lo_fi["max_response"]
-                        longi_fit = dict(lo_fi)
+                    if lo_fi["shower_model_response"] > best_response:
+                        best_response = lo_fi["shower_model_response"]
+                        fit = dict(lo_fi)
 
 
             if PLOT_OVERVIEW:
-                reco_fit_cx_deg = longi_fit["cx_deg"]
-                reco_fit_cy_deg = longi_fit["cy_deg"]
-                reco_fit_x = longi_fit["x_m"]
-                reco_fit_y = longi_fit["y_m"]
+                reco_fit_cx_deg = np.rad2deg(fit["primary_particle_cx"])
+                reco_fit_cy_deg = np.rad2deg(fit["primary_particle_cy"])
+                reco_fit_x = fit["primary_particle_x"]
+                reco_fit_y = fit["primary_particle_y"]
 
                 fig = irf.summary.figure.figure(fig_16_by_9)
                 ax = fig.add_axes([0.075, 0.1, 0.4, 0.8])
@@ -680,12 +712,12 @@ for sk in irf_config["config"]["sites"]:
                 )
                 ax.plot(
                     [
-                        longi_fit["main_axis_support_cx_deg"],
-                        longi_fit["main_axis_support_cx_deg"] + 100 * np.cos(np.deg2rad(longi_fit["main_axis_azimuth_deg"]))
+                        fit["main_axis_support_cx_deg"],
+                        fit["main_axis_support_cx_deg"] + 100 * np.cos(np.deg2rad(fit["main_axis_azimuth_deg"]))
                     ],
                     [
-                        longi_fit["main_axis_support_cy_deg"],
-                        longi_fit["main_axis_support_cy_deg"] + 100 * np.sin(np.deg2rad(longi_fit["main_axis_azimuth_deg"]))
+                        fit["main_axis_support_cy_deg"],
+                        fit["main_axis_support_cy_deg"] + 100 * np.sin(np.deg2rad(fit["main_axis_azimuth_deg"]))
                     ],
                     ":b",
                 )
@@ -696,11 +728,12 @@ for sk in irf_config["config"]["sites"]:
                 )
                 ax.plot(reco_fit_cx_deg, reco_fit_cy_deg, "oc")
 
-                ax.plot(np.rad2deg(true_cx), np.rad2deg(true_cy), "xk")
+                ax.plot(np.rad2deg(truth["cx"]), np.rad2deg(truth["cy"]), "xk")
 
-                info_str = "reco. Cherenkov: {: 4d}p.e.\n response: {:.4f}".format(
+                info_str = "Energy: {: .1f}GeV, reco. Cherenkov: {: 4d}p.e.\n response of shower-model: {:.4f}".format(
+                    truth["energy_GeV"],
                     loph_record["photons"]["channels"].shape[0],
-                    longi_fit["max_response"],
+                    fit["shower_model_response"],
                 )
 
                 ax.set_title(info_str)
@@ -714,8 +747,8 @@ for sk in irf_config["config"]["sites"]:
                 ax_core.plot(reco_fit_x, reco_fit_y, "oc")
                 ax_core.plot([0, reco_fit_x], [0, reco_fit_y], "c", alpha=0.5)
 
-                ax_core.plot(true_x, true_y, "xk")
-                ax_core.plot([0, true_x], [0, true_y], "k", alpha=0.5)
+                ax_core.plot(truth["x"], truth["y"], "xk")
+                ax_core.plot([0, truth["x"]], [0, truth["y"]], "k", alpha=0.5)
 
                 ax_core.set_xlim([-640, 640])
                 ax_core.set_ylim([-640, 640])
