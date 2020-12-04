@@ -8,6 +8,7 @@ import airshower_template_generator as atg
 import plenopy as pl
 import glob
 import scipy
+from iminuit import Minuit
 
 import matplotlib
 
@@ -125,13 +126,13 @@ long_fit_cfg = {
     "c_para": {
         "start": np.deg2rad(-4.0),
         "stop": np.deg2rad(4.0),
-        "num_supports": 128
+        "num_supports": 64
     },
     "r_para": {
         "start": -640,
         "stop": 640,
-        "num_supports": 96,
-        "num_bins_scan_radius": 5,
+        "num_supports": 48,
+        "num_bins_scan_radius": 2,
     },
     "c_perp_width": np.deg2rad(0.05)
 }
@@ -505,6 +506,82 @@ def estimate_core_radius_using_shower_model(
 
 
 
+class MainAxisToCoreFinder:
+    def __init__(
+        self,
+
+        light_field_cx,
+        light_field_cy,
+        light_field_x,
+        light_field_y,
+
+        shower_maximum_cx,
+        shower_maximum_cy,
+        shower_maximum_object_distance,
+        config,
+    ):
+        self.config = config
+        self.shower_maximum_cx = shower_maximum_cx
+        self.shower_maximum_cy = shower_maximum_cy
+        self.shower_maximum_object_distance = shower_maximum_object_distance
+        self.light_field_cx = light_field_cx
+        self.light_field_cy = light_field_cy
+        self.light_field_x = light_field_x
+        self.light_field_y = light_field_y
+        self.final_result = None
+
+    def _support(self, main_axis_azimuth, main_axis_support_perp_offset):
+        perp_azimuth_rad = main_axis_azimuth + 0.5 * np.pi
+        offset_rad = main_axis_support_perp_offset
+        cx = self.shower_maximum_cx + offset_rad * np.cos(perp_azimuth_rad)
+        cy = self.shower_maximum_cy + offset_rad * np.sin(perp_azimuth_rad)
+        return cx, cy
+
+    def evaluate_shower_model(
+        self,
+        main_axis_azimuth,
+        main_axis_support_perp_offset
+    ):
+        main_axis_support_cx, main_axis_support_cy = self._support(
+            main_axis_azimuth=main_axis_azimuth,
+            main_axis_support_perp_offset=main_axis_support_perp_offset,
+        )
+
+        result, _ = estimate_core_radius_using_shower_model(
+            main_axis_support_cx=main_axis_support_cx,
+            main_axis_support_cy=main_axis_support_cy,
+            main_axis_azimuth=main_axis_azimuth,
+            light_field_cx=self.light_field_cx,
+            light_field_cy=self.light_field_cy,
+            light_field_x=self.light_field_x,
+            light_field_y=self.light_field_y,
+            shower_maximum_cx=self.shower_maximum_cx,
+            shower_maximum_cy=self.shower_maximum_cy,
+            shower_maximum_object_distance=self.shower_maximum_object_distance,
+            config=self.config,
+        )
+        self.final_result = result
+
+        self.final_result["main_axis_azimuth_deg"] = np.rad2deg(
+            main_axis_azimuth
+        )
+        self.final_result["main_axis_support_cx_deg"] = np.rad2deg(
+            main_axis_support_cx
+        )
+        self.final_result["main_axis_support_cy_deg"] = np.rad2deg(
+            main_axis_support_cy
+        )
+        info = "sup. off, {:6f}, cx {:.6f}, cy {:.6f}, azi. {:.4f}, resp. {:.5f}".format(
+            np.rad2deg(main_axis_support_perp_offset),
+            self.final_result["main_axis_support_cx_deg"],
+            self.final_result["main_axis_support_cy_deg"],
+            self.final_result["main_axis_azimuth_deg"],
+            self.final_result["shower_model_response"],
+        )
+        print(info)
+        return 1.0 - self.final_result["shower_model_response"]
+
+
 for sk in irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
 
@@ -562,6 +639,7 @@ for sk in irf_config["config"]["sites"]:
                 fig.savefig(path)
                 plt.close(fig)
 
+            """
             num_azi_scan = 11
             num_sup_scan = 5
             azi_range_deg = 0.5 * fuzzy_result["main_axis_azimuth_uncertainty_deg"]
@@ -672,8 +750,67 @@ for sk in irf_config["config"]["sites"]:
                         # -------------
 
                     print(i_azi, i_sup)
+            """
 
+            # Minuit
+            lixel_ids = loph_record["photons"]["channels"]
 
+            main_axis_to_core_finder = MainAxisToCoreFinder(
+                light_field_cx=lfg.cx_mean[lixel_ids],
+                light_field_cy=lfg.cy_mean[lixel_ids],
+                light_field_x=lfg.x_mean[lixel_ids],
+                light_field_y=lfg.y_mean[lixel_ids],
+                shower_maximum_cx=split_light_field.median_cx,
+                shower_maximum_cy=split_light_field.median_cy,
+                shower_maximum_object_distance=reco_obj[airshower_id],
+                config=long_fit_cfg,
+            )
+
+            minimizer = Minuit(
+                fcn=main_axis_to_core_finder.evaluate_shower_model,
+
+                main_axis_azimuth=np.deg2rad(
+                    fuzzy_result["main_axis_azimuth_deg"]
+                ),
+                error_main_axis_azimuth=np.deg2rad(
+                    fuzzy_result["main_axis_azimuth_uncertainty_deg"]
+                ),
+                limit_main_axis_azimuth=(
+                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) - np.pi,
+                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) + np.pi
+                ),
+
+                main_axis_support_perp_offset=0.0,
+                error_main_axis_support_perp_offset=np.deg2rad(
+                    10.0 * fuzzy_result["main_axis_support_uncertainty_deg"]
+                ),
+                limit_main_axis_support_perp_offset=(
+                    -20.0 * np.deg2rad(
+                        fuzzy_result["main_axis_support_uncertainty_deg"]
+                    ),
+                    20.0 * np.deg2rad(
+                        fuzzy_result["main_axis_support_uncertainty_deg"]
+                    )
+                ),
+
+                print_level=0,
+                errordef=Minuit.LEAST_SQUARES,
+            )
+            minimizer.migrad()
+
+            min_res = {
+                "main_axis_azimuth_deg": np.rad2deg(
+                    minimizer.values["main_axis_azimuth"]
+                ),
+                "main_axis_support_perp_offset_deg": np.rad2deg(
+                    minimizer.values["main_axis_support_perp_offset"]
+                ),
+            }
+            print(min_res)
+
+            fit2 = main_axis_to_core_finder.final_result
+
+            """
             fit = None
             best_response = 0.0
             for i_azi in range(num_azi_scan):
@@ -682,13 +819,21 @@ for sk in irf_config["config"]["sites"]:
                     if lo_fi["shower_model_response"] > best_response:
                         best_response = lo_fi["shower_model_response"]
                         fit = dict(lo_fi)
+            """
 
 
             if PLOT_OVERVIEW:
-                reco_fit_cx_deg = np.rad2deg(fit["primary_particle_cx"])
-                reco_fit_cy_deg = np.rad2deg(fit["primary_particle_cy"])
-                reco_fit_x = fit["primary_particle_x"]
-                reco_fit_y = fit["primary_particle_y"]
+                """
+                fit_cx_deg = np.rad2deg(fit["primary_particle_cx"])
+                fit_cy_deg = np.rad2deg(fit["primary_particle_cy"])
+                fit_x = fit["primary_particle_x"]
+                fit_y = fit["primary_particle_y"]
+                """
+
+                fit2_cx_deg = np.rad2deg(fit2["primary_particle_cx"])
+                fit2_cy_deg = np.rad2deg(fit2["primary_particle_cy"])
+                fit2_x = fit2["primary_particle_x"]
+                fit2_y = fit2["primary_particle_y"]
 
                 fig = irf.summary.figure.figure(fig_16_by_9)
                 ax = fig.add_axes([0.075, 0.1, 0.4, 0.8])
@@ -710,6 +855,7 @@ for sk in irf_config["config"]["sites"]:
                 ax.plot(
                     fov_radius_deg * np.cos(phi), fov_radius_deg * np.sin(phi), "k"
                 )
+                """
                 ax.plot(
                     [
                         fit["main_axis_support_cx_deg"],
@@ -719,21 +865,36 @@ for sk in irf_config["config"]["sites"]:
                         fit["main_axis_support_cy_deg"],
                         fit["main_axis_support_cy_deg"] + 100 * np.sin(np.deg2rad(fit["main_axis_azimuth_deg"]))
                     ],
-                    ":b",
+                    ":y",
                 )
+                """
+                ax.plot(
+                    [
+                        fit2["main_axis_support_cx_deg"],
+                        fit2["main_axis_support_cx_deg"] + 100 * np.cos(np.deg2rad(fit2["main_axis_azimuth_deg"]))
+                    ],
+                    [
+                        fit2["main_axis_support_cy_deg"],
+                        fit2["main_axis_support_cy_deg"] + 100 * np.sin(np.deg2rad(fit2["main_axis_azimuth_deg"]))
+                    ],
+                    ":c",
+                )
+
                 ax.plot(
                     fuzzy_result["reco_cx_deg"],
                     fuzzy_result["reco_cy_deg"],
                     "og"
                 )
-                ax.plot(reco_fit_cx_deg, reco_fit_cy_deg, "oc")
-
+                """
+                ax.plot(fit_cx_deg, fit_cy_deg, "oy")
+                """
+                ax.plot(fit2_cx_deg, fit2_cy_deg, "oc")
                 ax.plot(np.rad2deg(truth["cx"]), np.rad2deg(truth["cy"]), "xk")
 
                 info_str = "Energy: {: .1f}GeV, reco. Cherenkov: {: 4d}p.e.\n response of shower-model: {:.4f}".format(
                     truth["energy_GeV"],
                     loph_record["photons"]["channels"].shape[0],
-                    fit["shower_model_response"],
+                    fit2["shower_model_response"],
                 )
 
                 ax.set_title(info_str)
@@ -744,8 +905,14 @@ for sk in irf_config["config"]["sites"]:
                 ax.set_xlabel("cx / deg")
                 ax.set_ylabel("cy / deg")
                 ax = my_axes_look(ax=ax)
-                ax_core.plot(reco_fit_x, reco_fit_y, "oc")
-                ax_core.plot([0, reco_fit_x], [0, reco_fit_y], "c", alpha=0.5)
+                """
+                ax_core.plot(fit_x, fit_y, "oy")
+                ax_core.plot([0, fit_x], [0, fit_y], "y", alpha=0.5)
+                """
+
+                ax_core.plot(fit2_x, fit2_y, "oc")
+                ax_core.plot([0, fit2_x], [0, fit2_y], "c", alpha=0.5)
+
 
                 ax_core.plot(truth["x"], truth["y"], "xk")
                 ax_core.plot([0, truth["x"]], [0, truth["y"]], "k", alpha=0.5)
