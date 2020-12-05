@@ -126,15 +126,15 @@ long_fit_cfg = {
     "c_para": {
         "start": np.deg2rad(-4.0),
         "stop": np.deg2rad(4.0),
-        "num_supports": 64
+        "num_supports": 128
     },
     "r_para": {
         "start": -640,
-        "stop": 640,
-        "num_supports": 48,
+        "stop": 640.0,
+        "num_supports": 96,
         "num_bins_scan_radius": 2,
     },
-    "c_perp_width": np.deg2rad(0.05)
+    "c_perp_width": np.deg2rad(0.1)
 }
 
 def read_shower_maximum_object_distance(
@@ -163,24 +163,24 @@ class CoreRadiusFinder:
     def __init__(
         self,
         main_axis_azimuth,
-        median_cx,
-        median_cy,
-        cx,
-        cy,
-        x,
-        y
+        main_axis_support_cx,
+        main_axis_support_cy,
+        light_field_cx,
+        light_field_cy,
+        light_field_x,
+        light_field_y
     ):
         self.main_axis_azimuth = main_axis_azimuth
-        self.cx = cx
-        self.cy = cy
-        self.x = x
-        self.y = y
-        self.median_cx = median_cx
-        self.median_cy = median_cy
+        self.cx = light_field_cx
+        self.cy = light_field_cy
+        self.x = light_field_x
+        self.y = light_field_y
+        self.main_axis_support_cx = main_axis_support_cx
+        self.main_axis_support_cy = main_axis_support_cy
 
     def _source_direction_cx_cy(self, c_para):
-        source_cx = self.median_cx + np.cos(self.main_axis_azimuth) * c_para
-        source_cy = self.median_cy + np.sin(self.main_axis_azimuth) * c_para
+        source_cx = self.main_axis_support_cx + np.cos(self.main_axis_azimuth) * c_para
+        source_cy = self.main_axis_support_cy + np.sin(self.main_axis_azimuth) * c_para
         return source_cx, source_cy
 
     def _core_position_x_y(self, r_para):
@@ -253,7 +253,7 @@ def matching_core_radius(c_para, epsilon, m):
     out =  m * (np.cos(epsilon) + np.sin(epsilon) * np.tan(rrr) )
     return -1.0 * out
 
-PLOT_RING = True
+PLOT_RING = False
 PLOT_C_PARA_R_PARA_RESPONSE = False
 PLOT_OVERVIEW = True
 
@@ -367,12 +367,12 @@ def estimate_core_radius_using_shower_model(
 ):
     core_radius_finder = CoreRadiusFinder(
         main_axis_azimuth=main_axis_azimuth,
-        median_cx=main_axis_support_cx,
-        median_cy=main_axis_support_cy,
-        cx=light_field_cx,
-        cy=light_field_cy,
-        x=light_field_x,
-        y=light_field_y,
+        main_axis_support_cx=main_axis_support_cx,
+        main_axis_support_cy=main_axis_support_cy,
+        light_field_cx=light_field_cx,
+        light_field_cy=light_field_cy,
+        light_field_x=light_field_x,
+        light_field_y=light_field_y,
     )
 
     c_para_supports = squarespace(
@@ -436,10 +436,13 @@ def estimate_core_radius_using_shower_model(
             closest_r_para_bin > 0 and
             closest_r_para_bin < (config["r_para"]["num_supports"] - 1)
         ):
-            rbin_range = np.arange(
-                closest_r_para_bin - config["r_para"]["num_bins_scan_radius"],
-                closest_r_para_bin + config["r_para"]["num_bins_scan_radius"]
-            )
+            if config["r_para"]["num_bins_scan_radius"] == 0:
+                rbin_range = [closest_r_para_bin]
+            else:
+                rbin_range = np.arange(
+                    closest_r_para_bin - config["r_para"]["num_bins_scan_radius"],
+                    closest_r_para_bin + config["r_para"]["num_bins_scan_radius"]
+                )
 
             for rbin in rbin_range:
                 if rbin >= 0 and rbin < config["r_para"]["num_supports"]:
@@ -578,7 +581,6 @@ class MainAxisToCoreFinder:
             self.final_result["main_axis_azimuth_deg"],
             self.final_result["shower_model_response"],
         )
-        print(info)
         return 1.0 - self.final_result["shower_model_response"]
 
 
@@ -594,7 +596,7 @@ for sk in irf_config["config"]["sites"]:
             os.path.join(loph_chunk_base_dir, sk, pk, "chunks", "*.tar")
         )
 
-        run = pl.photon_stream.loph.LopfTarReader(loph_chunk_paths[0])
+        run = pl.photon_stream.loph.LopfTarReader(loph_chunk_paths[1])
 
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
@@ -620,8 +622,6 @@ for sk in irf_config["config"]["sites"]:
                 fuzzy_ring_radius_deg=fuzzy_ring_radius_deg,
             )
 
-            print(fuzzy_result)
-
             if PLOT_RING:
                 fig = irf.summary.figure.figure(fig_16_by_9)
                 ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
@@ -638,119 +638,6 @@ for sk in irf_config["config"]["sites"]:
                 )
                 fig.savefig(path)
                 plt.close(fig)
-
-            """
-            num_azi_scan = 11
-            num_sup_scan = 5
-            azi_range_deg = 0.5 * fuzzy_result["main_axis_azimuth_uncertainty_deg"]
-
-            main_axis_azimuth_offsets_deg = np.linspace(
-                -azi_range_deg,
-                azi_range_deg,
-                num_azi_scan,
-            )
-
-            sup_range_deg = 2.0 * fuzzy_result["main_axis_support_uncertainty_deg"]
-            main_axis_perp_supports_deg = np.linspace(
-                -sup_range_deg,
-                sup_range_deg,
-                num_sup_scan
-            )
-
-            print(
-                "azi_range_deg: ", azi_range_deg,
-                "sup_range_deg: ", sup_range_deg
-            )
-
-            longi_fits = []
-            for i_azi in range(num_azi_scan):
-                longi_fits.append([])
-                for i_sup in range(num_sup_scan):
-                    longi_fits[i_azi].append(None)
-
-            for i_azi in range(num_azi_scan):
-                for i_sup in range(num_sup_scan):
-
-                    fit = {}
-                    fit["main_axis_azimuth_deg"] = (
-                        fuzzy_result["main_axis_azimuth_deg"] +
-                        main_axis_azimuth_offsets_deg[i_azi]
-                    )
-                    fit["main_axis_support_cx_deg"] = (
-                        fuzzy_result["main_axis_support_cx_deg"]
-                         + main_axis_perp_supports_deg[i_sup] *
-                         np.cos(np.deg2rad(90.0 + fit["main_axis_azimuth_deg"]))
-                    )
-                    fit["main_axis_support_cy_deg"] = (
-                        fuzzy_result["main_axis_support_cy_deg"]
-                         + main_axis_perp_supports_deg[i_sup] *
-                         np.sin(np.deg2rad(90.0 + fit["main_axis_azimuth_deg"]))
-                    )
-
-                    lixel_ids = loph_record["photons"]["channels"]
-
-                    lresult, ldebug = estimate_core_radius_using_shower_model(
-                        main_axis_support_cx=np.deg2rad(fit["main_axis_support_cx_deg"]),
-                        main_axis_support_cy=np.deg2rad(fit["main_axis_support_cy_deg"]),
-                        main_axis_azimuth=np.deg2rad(fit["main_axis_azimuth_deg"]),
-                        light_field_cx=lfg.cx_mean[lixel_ids],
-                        light_field_cy=lfg.cy_mean[lixel_ids],
-                        light_field_x=lfg.x_mean[lixel_ids],
-                        light_field_y=lfg.y_mean[lixel_ids],
-                        shower_maximum_cx=split_light_field.median_cx,
-                        shower_maximum_cy=split_light_field.median_cy,
-                        shower_maximum_object_distance=reco_obj[airshower_id],
-                        config=long_fit_cfg,
-                    )
-
-                    for key in lresult:
-                        fit[key] = lresult[key]
-
-                    longi_fits[i_azi][i_sup] = fit
-
-                    # end longitudinal fit
-                    # --------------------
-
-                    #####
-
-                    if PLOT_C_PARA_R_PARA_RESPONSE:
-                        fig = irf.summary.figure.figure(fig_16_by_9)
-                        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-                        inte = np.log10(
-                            -1.0 * (
-                                ldebug["c_para_r_para_response"] - np.max(
-                                    ldebug["c_para_r_para_response"]
-                                )
-                            )
-                        )
-                        ax.pcolor(
-                            np.rad2deg(ldebug["c_para_supports"]),
-                            ldebug["r_para_supports"],
-                            inte.T,
-                            cmap="Blues",
-                        )
-                        ax.plot(
-                            np.rad2deg(lresult["c_main_axis_parallel"]),
-                            lresult["r_main_axis_parallel"],
-                            "og"
-                        )
-                        ax.set_xlabel("c main-axis parallel / deg")
-                        ax.set_ylabel("r main-axis parallel / m")
-                        ax = my_axes_look(ax=ax)
-                        path = os.path.join(
-                            pa["out_dir"], sk, pk, "{:09d}_{:03d}_{:03d}_resp.jpg".format(
-                                airshower_id,
-                                i_azi,
-                                i_sup
-                            )
-                        )
-                        fig.savefig(path)
-                        plt.close(fig)
-
-                        # -------------
-
-                    print(i_azi, i_sup)
-            """
 
             # Minuit
             lixel_ids = loph_record["photons"]["channels"]
@@ -776,19 +663,19 @@ for sk in irf_config["config"]["sites"]:
                     fuzzy_result["main_axis_azimuth_uncertainty_deg"]
                 ),
                 limit_main_axis_azimuth=(
-                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) - np.pi,
-                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) + np.pi
+                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) - 2.0*np.pi,
+                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) + 2.0*np.pi
                 ),
 
                 main_axis_support_perp_offset=0.0,
                 error_main_axis_support_perp_offset=np.deg2rad(
-                    10.0 * fuzzy_result["main_axis_support_uncertainty_deg"]
+                    fuzzy_result["main_axis_support_uncertainty_deg"]
                 ),
                 limit_main_axis_support_perp_offset=(
-                    -20.0 * np.deg2rad(
+                    -5.0 * np.deg2rad(
                         fuzzy_result["main_axis_support_uncertainty_deg"]
                     ),
-                    20.0 * np.deg2rad(
+                    5.0 * np.deg2rad(
                         fuzzy_result["main_axis_support_uncertainty_deg"]
                     )
                 ),
@@ -806,30 +693,66 @@ for sk in irf_config["config"]["sites"]:
                     minimizer.values["main_axis_support_perp_offset"]
                 ),
             }
-            print(min_res)
+
+
+            # true response
+            # -------------
+
+            true_main_axis_azimuth = np.pi + np.arctan2(truth["y"], truth["x"])
+            true_r_para = np.hypot(truth["x"], truth["y"]) * np.sign(true_main_axis_azimuth - np.pi)
+            true_c_para = np.hypot(
+                split_light_field.median_cx - truth["cx"],
+                split_light_field.median_cy - truth["cy"]
+            )
+
+            truth_core_radius_finder = CoreRadiusFinder(
+                main_axis_azimuth=true_main_axis_azimuth,
+                main_axis_support_cx=split_light_field.median_cx,
+                main_axis_support_cy=split_light_field.median_cy,
+                light_field_cx=lfg.cx_mean[lixel_ids],
+                light_field_cy=lfg.cy_mean[lixel_ids],
+                light_field_x=lfg.x_mean[lixel_ids],
+                light_field_y=lfg.y_mean[lixel_ids],
+            )
+
+            true_response = truth_core_radius_finder.response(
+                c_para=true_c_para,
+                r_para=true_r_para,
+                cer_perp_distance_threshold=long_fit_cfg["c_perp_width"],
+            )
 
             fit2 = main_axis_to_core_finder.final_result
 
-            """
-            fit = None
-            best_response = 0.0
-            for i_azi in range(num_azi_scan):
-                for i_sup in range(num_sup_scan):
-                    lo_fi = longi_fits[i_azi][i_sup]
-                    if lo_fi["shower_model_response"] > best_response:
-                        best_response = lo_fi["shower_model_response"]
-                        fit = dict(lo_fi)
-            """
+            print("=========================")
+            print(truth)
+
+            print("main_axis_azimuth_deg")
+            print("reco ",
+                np.rad2deg(
+                    minimizer.values["main_axis_azimuth"]
+                )
+            )
+            print("true ",
+                np.rad2deg(
+                    true_main_axis_azimuth
+                )
+            )
+
+            print("r_para")
+            print("reco ", fit2["r_main_axis_parallel"])
+            print("true ", true_r_para)
+
+            print("c_para_deg")
+            print("reco ", np.rad2deg(fit2["c_main_axis_parallel"]))
+            print("true ", np.rad2deg(true_c_para))
+
+
+            print("response")
+            print("reco ", fit2["shower_model_response"])
+            print("true ", true_response)
 
 
             if PLOT_OVERVIEW:
-                """
-                fit_cx_deg = np.rad2deg(fit["primary_particle_cx"])
-                fit_cy_deg = np.rad2deg(fit["primary_particle_cy"])
-                fit_x = fit["primary_particle_x"]
-                fit_y = fit["primary_particle_y"]
-                """
-
                 fit2_cx_deg = np.rad2deg(fit2["primary_particle_cx"])
                 fit2_cy_deg = np.rad2deg(fit2["primary_particle_cy"])
                 fit2_x = fit2["primary_particle_x"]
@@ -855,19 +778,6 @@ for sk in irf_config["config"]["sites"]:
                 ax.plot(
                     fov_radius_deg * np.cos(phi), fov_radius_deg * np.sin(phi), "k"
                 )
-                """
-                ax.plot(
-                    [
-                        fit["main_axis_support_cx_deg"],
-                        fit["main_axis_support_cx_deg"] + 100 * np.cos(np.deg2rad(fit["main_axis_azimuth_deg"]))
-                    ],
-                    [
-                        fit["main_axis_support_cy_deg"],
-                        fit["main_axis_support_cy_deg"] + 100 * np.sin(np.deg2rad(fit["main_axis_azimuth_deg"]))
-                    ],
-                    ":y",
-                )
-                """
                 ax.plot(
                     [
                         fit2["main_axis_support_cx_deg"],
@@ -885,16 +795,14 @@ for sk in irf_config["config"]["sites"]:
                     fuzzy_result["reco_cy_deg"],
                     "og"
                 )
-                """
-                ax.plot(fit_cx_deg, fit_cy_deg, "oy")
-                """
                 ax.plot(fit2_cx_deg, fit2_cy_deg, "oc")
                 ax.plot(np.rad2deg(truth["cx"]), np.rad2deg(truth["cy"]), "xk")
 
-                info_str = "Energy: {: .1f}GeV, reco. Cherenkov: {: 4d}p.e.\n response of shower-model: {:.4f}".format(
+                info_str = "Energy: {: .1f}GeV, reco. Cherenkov: {: 4d}p.e.\n response of shower-model: {:.4f} ({:.4f})".format(
                     truth["energy_GeV"],
                     loph_record["photons"]["channels"].shape[0],
                     fit2["shower_model_response"],
+                    true_response,
                 )
 
                 ax.set_title(info_str)
@@ -905,14 +813,9 @@ for sk in irf_config["config"]["sites"]:
                 ax.set_xlabel("cx / deg")
                 ax.set_ylabel("cy / deg")
                 ax = my_axes_look(ax=ax)
-                """
-                ax_core.plot(fit_x, fit_y, "oy")
-                ax_core.plot([0, fit_x], [0, fit_y], "y", alpha=0.5)
-                """
 
                 ax_core.plot(fit2_x, fit2_y, "oc")
                 ax_core.plot([0, fit2_x], [0, fit2_y], "c", alpha=0.5)
-
 
                 ax_core.plot(truth["x"], truth["y"], "xk")
                 ax_core.plot([0, truth["x"]], [0, truth["y"]], "k", alpha=0.5)
