@@ -40,40 +40,6 @@ fov_radius_deg = np.rad2deg(
     0.5 * lfg.sensor_plane2imaging_system.max_FoV_diameter
 )
 
-user_fuzzy_config = {
-    "image": {
-        "radius_deg": fov_radius_deg + 1.0,
-        "num_bins": 128,
-        "smoothing_kernel_width_deg": 0.3125,
-    },
-    "azimuth_ring": {
-        "num_bins": 360,
-        "radius_deg": 1.,
-        "smoothing_kernel_width_deg": 41.0,
-    },
-    "ellipse_model": {
-        "min_num_photons": 3,
-    }
-}
-
-long_fit_user_config = {
-    "c_para": {
-        "start_deg": -4.0,
-        "stop_deg": 4.0,
-        "num_supports": 128,
-    },
-    "r_para": {
-        "start_m": -640,
-        "stop_m": 640.0,
-        "num_supports": 96,
-    },
-    "scan": {
-        "num_bins_radius": 2,
-    },
-    "shower_model": {
-        "c_perp_width_deg": 0.1,
-    },
-}
 
 def _fuzzy_compile_user_config(user_config):
     uc = user_config
@@ -131,9 +97,6 @@ def _fuzzy_compile_user_config(user_config):
     return cfg
 
 
-fuzzy_config = _fuzzy_compile_user_config(user_config=user_fuzzy_config)
-
-
 def squarespace(start, stop, num):
     sqrt_space = np.linspace(
         np.sign(start) * np.sqrt(np.abs(start)),
@@ -175,8 +138,13 @@ def _compile_user_config(user_config):
     return cfg
 
 
-long_fit_cfg = _compile_user_config(long_fit_user_config)
+fuzzy_config = _fuzzy_compile_user_config(
+    user_config=sum_config["reconstruction"]["trajectory"]["fuzzy_method"]
+)
 
+long_fit_cfg = _compile_user_config(
+    user_config=sum_config["reconstruction"]["trajectory"]["core_axis_fit"]
+)
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
