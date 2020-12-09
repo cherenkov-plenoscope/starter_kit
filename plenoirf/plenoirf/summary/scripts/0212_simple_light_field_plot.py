@@ -54,6 +54,22 @@ fuzzy_image_c_bin_edges = np.linspace(
 )
 fuzzy_ring_radius_deg = 1.5
 
+long_fit_cfg = {
+    "c_para": {
+        "start": np.deg2rad(-4.0),
+        "stop": np.deg2rad(4.0),
+        "num_supports": 128
+    },
+    "r_para": {
+        "start": -640,
+        "stop": 640.0,
+        "num_supports": 96,
+        "num_bins_scan_radius": 2,
+    },
+    "c_perp_width": np.deg2rad(0.1)
+}
+
+
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
 truth_by_index = {}
@@ -121,21 +137,6 @@ def my_axes_look(ax):
     ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     return ax
 
-
-long_fit_cfg = {
-    "c_para": {
-        "start": np.deg2rad(-4.0),
-        "stop": np.deg2rad(4.0),
-        "num_supports": 128
-    },
-    "r_para": {
-        "start": -640,
-        "stop": 640.0,
-        "num_supports": 96,
-        "num_bins_scan_radius": 2,
-    },
-    "c_perp_width": np.deg2rad(0.1)
-}
 
 def read_shower_maximum_object_distance(
     site_key,
