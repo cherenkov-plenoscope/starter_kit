@@ -264,7 +264,7 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     fuzzy_image_binning,
     fuzzy_image_gaussian_kernel,
     fuzzy_ring_gaussian_kernel,
-    fuzzy_ring_radius_deg=1.5,
+    fuzzy_ring_radius_deg,
 ):
     median_cx_deg = np.rad2deg(split_light_field.median_cx)
     median_cy_deg = np.rad2deg(split_light_field.median_cy)
