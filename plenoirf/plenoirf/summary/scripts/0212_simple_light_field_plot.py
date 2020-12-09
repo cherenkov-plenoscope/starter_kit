@@ -54,20 +54,69 @@ fuzzy_image_c_bin_edges = np.linspace(
 )
 fuzzy_ring_radius_deg = 1.5
 
-long_fit_cfg = {
+
+long_fit_user_config = {
     "c_para": {
-        "start": np.deg2rad(-4.0),
-        "stop": np.deg2rad(4.0),
+        "start_deg": -4.0,
+        "stop_deg": 4.0,
         "num_supports": 128
     },
     "r_para": {
-        "start": -640,
-        "stop": 640.0,
+        "start_m": -640,
+        "stop_m": 640.0,
         "num_supports": 96,
-        "num_bins_scan_radius": 2,
     },
-    "c_perp_width": np.deg2rad(0.1)
+    "scan": {
+        "num_bins_radius": 2,
+    },
+    "shower_model": {
+        "c_perp_width_deg": 0.1,
+    },
 }
+
+
+def squarespace(start, stop, num):
+    sqrt_space = np.linspace(
+        np.sign(start) * np.sqrt(np.abs(start)),
+        np.sign(stop) * np.sqrt(np.abs(stop)),
+        num
+    )
+    signs = np.sign(sqrt_space)
+    square_space = sqrt_space ** 2
+    square_space *= signs
+    return square_space
+
+
+def _compile_user_config(user_config):
+    uc = user_config
+    cfg = {}
+    cfg["c_para"] = {}
+    cfg["c_para"]["start"] = np.deg2rad(uc["c_para"]["start_deg"])
+    cfg["c_para"]["stop"] = np.deg2rad(uc["c_para"]["stop_deg"])
+    cfg["c_para"]["num_supports"] = uc["c_para"]["num_supports"]
+    cfg["c_para"]["supports"] = squarespace(
+        start=cfg["c_para"]["start"],
+        stop=cfg["c_para"]["stop"],
+        num=cfg["c_para"]["num_supports"],
+    )
+    cfg["r_para"] = {}
+    cfg["r_para"]["start"] = uc["r_para"]["start_m"]
+    cfg["r_para"]["stop"] = uc["r_para"]["stop_m"]
+    cfg["r_para"]["num_supports"] = uc["r_para"]["num_supports"]
+    cfg["r_para"]["supports"] = squarespace(
+        start=cfg["r_para"]["start"],
+        stop=cfg["r_para"]["stop"],
+        num=cfg["r_para"]["num_supports"],
+    )
+    cfg["scan"] = dict(uc["scan"])
+    cfg["shower_model"] = {}
+    cfg["shower_model"]["c_perp_width"] = np.deg2rad(
+        uc["shower_model"]["c_perp_width_deg"]
+    )
+    return cfg
+
+
+long_fit_cfg = _compile_user_config(long_fit_user_config)
 
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
@@ -237,18 +286,6 @@ def angle_between(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
-def squarespace(start, stop, num):
-    sqrt_space = np.linspace(
-        np.sign(start) * np.sqrt(np.abs(start)),
-        np.sign(stop) * np.sqrt(np.abs(stop)),
-        num
-    )
-    signs = np.sign(sqrt_space)
-    square_space = sqrt_space ** 2
-    square_space *= signs
-    return square_space
-
-
 def matching_core_radius(c_para, epsilon, m):
     rrr = c_para - 0.5 * np.pi + epsilon
     out =  m * (np.cos(epsilon) + np.sin(epsilon) * np.tan(rrr) )
@@ -375,18 +412,6 @@ def estimate_core_radius_using_shower_model(
         light_field_y=light_field_y,
     )
 
-    c_para_supports = squarespace(
-        start=config["c_para"]["start"],
-        stop=config["c_para"]["stop"],
-        num=config["c_para"]["num_supports"],
-    )
-
-    r_para_supports = squarespace(
-        start=config["r_para"]["start"],
-        stop=config["r_para"]["stop"],
-        num=config["r_para"]["num_supports"],
-    )
-
     # mask c_para r_para
     # ------------------
 
@@ -421,7 +446,7 @@ def estimate_core_radius_using_shower_model(
         dtype=np.int
     )
 
-    for cbin, c_para in enumerate(c_para_supports):
+    for cbin, c_para in enumerate(config["c_para"]["supports"]):
         matching_r_para = matching_core_radius(
             c_para=c_para,
             epsilon=epsilon,
@@ -429,19 +454,19 @@ def estimate_core_radius_using_shower_model(
         )
 
         closest_r_para_bin = np.argmin(
-            np.abs(r_para_supports - matching_r_para)
+            np.abs(config["r_para"]["supports"] - matching_r_para)
         )
 
         if (
             closest_r_para_bin > 0 and
             closest_r_para_bin < (config["r_para"]["num_supports"] - 1)
         ):
-            if config["r_para"]["num_bins_scan_radius"] == 0:
+            if config["scan"]["num_bins_scan_radius"] == 0:
                 rbin_range = [closest_r_para_bin]
             else:
                 rbin_range = np.arange(
-                    closest_r_para_bin - config["r_para"]["num_bins_scan_radius"],
-                    closest_r_para_bin + config["r_para"]["num_bins_scan_radius"]
+                    closest_r_para_bin - config["scan"]["num_bins_scan_radius"],
+                    closest_r_para_bin + config["scan"]["num_bins_scan_radius"]
                 )
 
             for rbin in rbin_range:
@@ -450,31 +475,29 @@ def estimate_core_radius_using_shower_model(
 
     # populate c_para r_para
     # ----------------------
-
     c_para_r_para_response = np.zeros(
         shape=(
             config["c_para"]["num_supports"],
             config["r_para"]["num_supports"]
         )
     )
-    for cbin, c_para in enumerate(c_para_supports):
-        for rbin, r_para in enumerate(r_para_supports):
+    for cbin, c_para in enumerate(config["c_para"]["supports"]):
+        for rbin, r_para in enumerate(config["r_para"]["supports"]):
 
             if c_para_r_para_mask[cbin, rbin]:
                 c_para_r_para_response[cbin, rbin] = core_radius_finder.response(
                     c_para=c_para,
                     r_para=r_para,
-                    cer_perp_distance_threshold=config["c_perp_width"],
+                    cer_perp_distance_threshold=config["shower_model"]["c_perp_width"],
                 )
 
     # find highest response in c_para r_para
     # --------------------------------------
-
     argmax_c_para, argmax_r_para = pl.fuzzy.direction.argmax2d(
         c_para_r_para_response
     )
-    max_c_para = c_para_supports[argmax_c_para]
-    max_r_para = r_para_supports[argmax_r_para]
+    max_c_para = config["c_para"]["supports"][argmax_c_para]
+    max_r_para = config["r_para"]["supports"][argmax_r_para]
     max_response = c_para_r_para_response[argmax_c_para, argmax_r_para]
 
     # store finding
@@ -497,8 +520,6 @@ def estimate_core_radius_using_shower_model(
     result["primary_particle_y"] = float(reco_y)
 
     debug = {}
-    debug["c_para_supports"] = c_para_supports
-    debug["r_para_supports"] = r_para_supports
     debug["c_para_r_para_mask"] = c_para_r_para_mask
     debug["c_para_r_para_response"] = c_para_r_para_response
     debug["shower_maximum_direction"] = shower_maximum_direction
@@ -718,7 +739,7 @@ for sk in irf_config["config"]["sites"]:
             true_response = truth_core_radius_finder.response(
                 c_para=true_c_para,
                 r_para=true_r_para,
-                cer_perp_distance_threshold=long_fit_cfg["c_perp_width"],
+                cer_perp_distance_threshold=long_fit_cfg["shower_model"]["c_perp_width"],
             )
 
             fit2 = main_axis_to_core_finder.final_result
