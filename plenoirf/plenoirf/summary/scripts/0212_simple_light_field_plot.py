@@ -40,26 +40,27 @@ fov_radius_deg = np.rad2deg(
     0.5 * lfg.sensor_plane2imaging_system.max_FoV_diameter
 )
 
-fuzzy_ring_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss1d(num_steps=41)
-fuzzy_image_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss2d(num_steps=5)
-fuzzy_model_config = pl.fuzzy.direction.EXAMPLE_MODEL_CONFIG
-fuzzy_image_binning = {
-    "radius_deg": fov_radius_deg + 1.0,
-    "num_bins": 128,
+user_fuzzy_config = {
+    "image": {
+        "radius_deg": fov_radius_deg + 1.0,
+        "num_bins": 128,
+        "smoothing_kernel_width_deg": 0.3125,
+    },
+    "azimuth_ring": {
+        "num_bins": 360,
+        "radius_deg": 1.,
+        "smoothing_kernel_width_deg": 41.0,
+    },
+    "ellipse_model": {
+        "min_num_photons": 3,
+    }
 }
-fuzzy_image_c_bin_edges = np.linspace(
-    -fuzzy_image_binning["radius_deg"],
-    fuzzy_image_binning["radius_deg"],
-    fuzzy_image_binning["num_bins"] + 1,
-)
-fuzzy_ring_radius_deg = 1.5
-
 
 long_fit_user_config = {
     "c_para": {
         "start_deg": -4.0,
         "stop_deg": 4.0,
-        "num_supports": 128
+        "num_supports": 128,
     },
     "r_para": {
         "start_m": -640,
@@ -73,6 +74,64 @@ long_fit_user_config = {
         "c_perp_width_deg": 0.1,
     },
 }
+
+def _fuzzy_compile_user_config(user_config):
+    uc = user_config
+    cfg = {}
+
+    uimg = uc["image"]
+    img = {}
+    img["radius"] = np.deg2rad(uimg["radius_deg"])
+    img["num_bins"] = uimg["num_bins"]
+    img["c_bin_edges"] = np.linspace(
+        -img["radius"],
+        +img["radius"],
+        img["num_bins"] + 1,
+    )
+    img["c_bin_centers"] = irf.summary.bin_centers(
+        bin_edges=img["c_bin_edges"]
+    )
+    _image_bins_per_rad = img["num_bins"] / (2.0 * img["radius"])
+    img["smoothing_kernel_width"] = np.deg2rad(
+        uimg["smoothing_kernel_width_deg"]
+    )
+    img["smoothing_kernel"] = pl.fuzzy.discrete_kernel.gauss2d(
+        num_steps=int(
+            np.round(
+                img["smoothing_kernel_width"] * _image_bins_per_rad
+            )
+        )
+    )
+    cfg["image"] = img
+
+    uazr = uc["azimuth_ring"]
+    azr = {}
+    azr["num_bins"] = uazr["num_bins"]
+    azr["bin_edges"] = np.linspace(
+        0.0,
+        2.0 * np.pi,
+        azr["num_bins"],
+        endpoint=False
+    )
+    azr["radius"] = np.deg2rad(uazr["radius_deg"])
+    _ring_bins_per_rad = azr["num_bins"] / (2.0 * np.pi)
+    azr["smoothing_kernel_width"] = np.deg2rad(
+        uazr["smoothing_kernel_width_deg"]
+    )
+    azr["smoothing_kernel"] = pl.fuzzy.discrete_kernel.gauss1d(
+        num_steps=int(
+            np.round(
+                _ring_bins_per_rad *
+                azr["smoothing_kernel_width"]
+            )
+        )
+    )
+    cfg["azimuth_ring"] = azr
+    cfg["ellipse_model"] = dict(uc["ellipse_model"])
+    return cfg
+
+
+fuzzy_config = _fuzzy_compile_user_config(user_config=user_fuzzy_config)
 
 
 def squarespace(start, stop, num):
@@ -302,10 +361,10 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     fuzzy_image_binning,
     fuzzy_image_gaussian_kernel,
     fuzzy_ring_gaussian_kernel,
-    fuzzy_ring_radius_deg,
+    fuzzy_ring_binning,
 ):
-    median_cx_deg = np.rad2deg(split_light_field.median_cx)
-    median_cy_deg = np.rad2deg(split_light_field.median_cy)
+    median_cx = split_light_field.median_cx
+    median_cy = split_light_field.median_cy
 
     # make fuzzy image
     # ----------------
@@ -322,12 +381,12 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     fuzzy_image_smooth = scipy.signal.convolve2d(
         in1=fuzzy_image, in2=fuzzy_image_gaussian_kernel, mode="same"
     )
-    reco_cx_deg, reco_cy_deg = pl.fuzzy.direction.argmax_image_cx_cy_deg(
+    reco_cx, reco_cy = pl.fuzzy.direction.argmax_image_cx_cy(
         image=fuzzy_image_smooth, image_binning=fuzzy_image_binning,
     )
 
-    median_cx_std_deg = np.rad2deg(np.std([a["median_cx"] for a in slf_model]))
-    median_cy_std_deg = np.rad2deg(np.std([a["median_cy"] for a in slf_model]))
+    median_cx_std = np.std([a["median_cx"] for a in slf_model])
+    median_cy_std = np.std([a["median_cy"] for a in slf_model])
 
     # make ring to find main-axis
     # ---------------------------
@@ -335,9 +394,10 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     azimuth_ring = pl.fuzzy.direction.project_image_onto_ring(
         image=fuzzy_image_smooth,
         image_binning=fuzzy_image_binning,
-        ring_cx_deg=median_cx_deg,
-        ring_cy_deg=median_cy_deg,
-        ring_radius_deg=fuzzy_ring_radius_deg,
+        ring_cx=median_cx,
+        ring_cy=median_cy,
+        ring_radius=fuzzy_ring_binning["radius"],
+        ring_binning=fuzzy_ring_binning,
     )
     azimuth_ring_smooth = pl.fuzzy.direction.circular_convolve1d(
         in1=azimuth_ring, in2=fuzzy_ring_gaussian_kernel
@@ -348,22 +408,24 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     # ------------------------------
 
     # maximum
-    main_axis_azimuth_deg = np.argmax(azimuth_ring_smooth)
+    main_axis_azimuth = fuzzy_ring_binning["bin_edges"][
+        np.argmax(azimuth_ring_smooth)
+    ]
 
     # relative uncertainty
     _unc = np.mean(azimuth_ring_smooth)
-    main_axis_azimuth_uncertainty_deg = 360.0 * _unc ** 2.0
+    main_axis_azimuth_uncertainty = _unc ** 2.0
 
     result = {}
-    result["main_axis_support_cx_deg"] = median_cx_deg
-    result["main_axis_support_cy_deg"] = median_cy_deg
-    result["main_axis_support_uncertainty_deg"] = np.hypot(
-        median_cx_std_deg, median_cy_std_deg
+    result["main_axis_support_cx"] = median_cx
+    result["main_axis_support_cy"] = median_cy
+    result["main_axis_support_uncertainty"] = np.hypot(
+        median_cx_std, median_cy_std
     )
-    result["main_axis_azimuth_deg"] = float(main_axis_azimuth_deg)
-    result["main_axis_azimuth_uncertainty_deg"] = main_axis_azimuth_uncertainty_deg
-    result["reco_cx_deg"] = reco_cx_deg
-    result["reco_cy_deg"] = reco_cy_deg
+    result["main_axis_azimuth"] = float(main_axis_azimuth)
+    result["main_axis_azimuth_uncertainty"] = main_axis_azimuth_uncertainty
+    result["reco_cx"] = reco_cx
+    result["reco_cy"] = reco_cy
 
     debug = {}
     debug["split_light_field_model"] = slf_model
@@ -461,12 +523,12 @@ def estimate_core_radius_using_shower_model(
             closest_r_para_bin > 0 and
             closest_r_para_bin < (config["r_para"]["num_supports"] - 1)
         ):
-            if config["scan"]["num_bins_scan_radius"] == 0:
+            if config["scan"]["num_bins_radius"] == 0:
                 rbin_range = [closest_r_para_bin]
             else:
                 rbin_range = np.arange(
-                    closest_r_para_bin - config["scan"]["num_bins_scan_radius"],
-                    closest_r_para_bin + config["scan"]["num_bins_scan_radius"]
+                    closest_r_para_bin - config["scan"]["num_bins_radius"],
+                    closest_r_para_bin + config["scan"]["num_bins_radius"]
                 )
 
             for rbin in rbin_range:
@@ -636,11 +698,11 @@ for sk in irf_config["config"]["sites"]:
 
             fuzzy_result, fuzzy_debug = estimate_main_axis_to_core_using_fuzzy_method(
                 split_light_field=split_light_field,
-                fuzzy_model_config=fuzzy_model_config,
-                fuzzy_image_binning=fuzzy_image_binning,
-                fuzzy_image_gaussian_kernel=fuzzy_image_gaussian_kernel,
-                fuzzy_ring_gaussian_kernel=fuzzy_ring_gaussian_kernel,
-                fuzzy_ring_radius_deg=fuzzy_ring_radius_deg,
+                fuzzy_model_config=fuzzy_config["ellipse_model"],
+                fuzzy_image_binning=fuzzy_config["image"],
+                fuzzy_image_gaussian_kernel=fuzzy_config["image"]["smoothing_kernel"],
+                fuzzy_ring_gaussian_kernel=fuzzy_config["azimuth_ring"]["smoothing_kernel"],
+                fuzzy_ring_binning=fuzzy_config["azimuth_ring"],
             )
 
             if PLOT_RING:
@@ -677,28 +739,18 @@ for sk in irf_config["config"]["sites"]:
             minimizer = Minuit(
                 fcn=main_axis_to_core_finder.evaluate_shower_model,
 
-                main_axis_azimuth=np.deg2rad(
-                    fuzzy_result["main_axis_azimuth_deg"]
-                ),
-                error_main_axis_azimuth=np.deg2rad(
-                    fuzzy_result["main_axis_azimuth_uncertainty_deg"]
-                ),
+                main_axis_azimuth=fuzzy_result["main_axis_azimuth"],
+                error_main_axis_azimuth=fuzzy_result["main_axis_azimuth_uncertainty"],
                 limit_main_axis_azimuth=(
-                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) - 2.0*np.pi,
-                    np.deg2rad(fuzzy_result["main_axis_azimuth_deg"]) + 2.0*np.pi
+                    fuzzy_result["main_axis_azimuth"] - 2.0*np.pi,
+                    fuzzy_result["main_axis_azimuth"] + 2.0*np.pi
                 ),
 
                 main_axis_support_perp_offset=0.0,
-                error_main_axis_support_perp_offset=np.deg2rad(
-                    fuzzy_result["main_axis_support_uncertainty_deg"]
-                ),
+                error_main_axis_support_perp_offset=fuzzy_result["main_axis_support_uncertainty"],
                 limit_main_axis_support_perp_offset=(
-                    -5.0 * np.deg2rad(
-                        fuzzy_result["main_axis_support_uncertainty_deg"]
-                    ),
-                    5.0 * np.deg2rad(
-                        fuzzy_result["main_axis_support_uncertainty_deg"]
-                    )
+                    -5.0 * fuzzy_result["main_axis_support_uncertainty"],
+                    5.0 * fuzzy_result["main_axis_support_uncertainty"]
                 ),
 
                 print_level=0,
@@ -790,8 +842,8 @@ for sk in irf_config["config"]["sites"]:
                         alpha=0.03,
                     )
                 ax.pcolor(
-                    fuzzy_image_c_bin_edges,
-                    fuzzy_image_c_bin_edges,
+                    np.rad2deg(fuzzy_config["image"]["c_bin_edges"]),
+                    np.rad2deg(fuzzy_config["image"]["c_bin_edges"]),
                     fuzzy_debug["fuzzy_image_smooth"],
                     cmap="Reds",
                 )
@@ -812,8 +864,8 @@ for sk in irf_config["config"]["sites"]:
                 )
 
                 ax.plot(
-                    fuzzy_result["reco_cx_deg"],
-                    fuzzy_result["reco_cy_deg"],
+                    np.rad2deg(fuzzy_result["reco_cx"]),
+                    np.rad2deg(fuzzy_result["reco_cy"]),
                     "og"
                 )
                 ax.plot(fit2_cx_deg, fit2_cy_deg, "oc")
