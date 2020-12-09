@@ -279,7 +279,6 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     )
     fuzzy_image = pl.fuzzy.direction.make_image_from_model(
         split_light_field_model=slf_model,
-        model_config=fuzzy_model_config,
         image_binning=fuzzy_image_binning,
     )
     fuzzy_image_smooth = scipy.signal.convolve2d(
