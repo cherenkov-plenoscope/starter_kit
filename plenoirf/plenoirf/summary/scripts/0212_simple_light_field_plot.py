@@ -357,11 +357,11 @@ PLOT_OVERVIEW = True
 
 def estimate_main_axis_to_core_using_fuzzy_method(
     split_light_field,
-    fuzzy_model_config,
-    fuzzy_image_binning,
-    fuzzy_image_gaussian_kernel,
-    fuzzy_ring_gaussian_kernel,
-    fuzzy_ring_binning,
+    model_config,
+    image_binning,
+    image_smoothing_kernel,
+    ring_binning,
+    ring_smoothing_kernel,
 ):
     median_cx = split_light_field.median_cx
     median_cy = split_light_field.median_cy
@@ -372,17 +372,17 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     # direction.
 
     slf_model = pl.fuzzy.direction.estimate_model_from_light_field(
-        split_light_field=split_light_field, model_config=fuzzy_model_config
+        split_light_field=split_light_field, model_config=model_config
     )
     fuzzy_image = pl.fuzzy.direction.make_image_from_model(
         split_light_field_model=slf_model,
-        image_binning=fuzzy_image_binning,
+        image_binning=image_binning,
     )
     fuzzy_image_smooth = scipy.signal.convolve2d(
-        in1=fuzzy_image, in2=fuzzy_image_gaussian_kernel, mode="same"
+        in1=fuzzy_image, in2=image_smoothing_kernel, mode="same"
     )
     reco_cx, reco_cy = pl.fuzzy.direction.argmax_image_cx_cy(
-        image=fuzzy_image_smooth, image_binning=fuzzy_image_binning,
+        image=fuzzy_image_smooth, image_binning=image_binning,
     )
 
     median_cx_std = np.std([a["median_cx"] for a in slf_model])
@@ -393,14 +393,14 @@ def estimate_main_axis_to_core_using_fuzzy_method(
 
     azimuth_ring = pl.fuzzy.direction.project_image_onto_ring(
         image=fuzzy_image_smooth,
-        image_binning=fuzzy_image_binning,
+        image_binning=image_binning,
         ring_cx=median_cx,
         ring_cy=median_cy,
-        ring_radius=fuzzy_ring_binning["radius"],
-        ring_binning=fuzzy_ring_binning,
+        ring_radius=ring_binning["radius"],
+        ring_binning=ring_binning,
     )
     azimuth_ring_smooth = pl.fuzzy.direction.circular_convolve1d(
-        in1=azimuth_ring, in2=fuzzy_ring_gaussian_kernel
+        in1=azimuth_ring, in2=ring_smoothing_kernel
     )
     azimuth_ring_smooth /= np.max(azimuth_ring_smooth)
 
@@ -408,7 +408,7 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     # ------------------------------
 
     # maximum
-    main_axis_azimuth = fuzzy_ring_binning["bin_edges"][
+    main_axis_azimuth = ring_binning["bin_edges"][
         np.argmax(azimuth_ring_smooth)
     ]
 
@@ -698,11 +698,11 @@ for sk in irf_config["config"]["sites"]:
 
             fuzzy_result, fuzzy_debug = estimate_main_axis_to_core_using_fuzzy_method(
                 split_light_field=split_light_field,
-                fuzzy_model_config=fuzzy_config["ellipse_model"],
-                fuzzy_image_binning=fuzzy_config["image"],
-                fuzzy_image_gaussian_kernel=fuzzy_config["image"]["smoothing_kernel"],
-                fuzzy_ring_gaussian_kernel=fuzzy_config["azimuth_ring"]["smoothing_kernel"],
-                fuzzy_ring_binning=fuzzy_config["azimuth_ring"],
+                model_config=fuzzy_config["ellipse_model"],
+                image_binning=fuzzy_config["image"],
+                image_smoothing_kernel=fuzzy_config["image"]["smoothing_kernel"],
+                ring_binning=fuzzy_config["azimuth_ring"],
+                ring_smoothing_kernel=fuzzy_config["azimuth_ring"]["smoothing_kernel"],
             )
 
             if PLOT_RING:
