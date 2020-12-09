@@ -351,7 +351,6 @@ def matching_core_radius(c_para, epsilon, m):
     return -1.0 * out
 
 PLOT_RING = False
-PLOT_C_PARA_R_PARA_RESPONSE = False
 PLOT_OVERVIEW = True
 
 
@@ -804,35 +803,6 @@ for sk in irf_config["config"]["sites"]:
             )
 
             fit2 = main_axis_to_core_finder.final_result
-
-            print("=========================")
-            print(truth)
-
-            print("main_axis_azimuth_deg")
-            print("reco ",
-                np.rad2deg(
-                    minimizer.values["main_axis_azimuth"]
-                )
-            )
-            print("true ",
-                np.rad2deg(
-                    true_main_axis_azimuth
-                )
-            )
-
-            print("r_para")
-            print("reco ", fit2["r_main_axis_parallel"])
-            print("true ", true_r_para)
-
-            print("c_para_deg")
-            print("reco ", np.rad2deg(fit2["c_main_axis_parallel"]))
-            print("true ", np.rad2deg(true_c_para))
-
-
-            print("response")
-            print("reco ", fit2["shower_model_response"])
-            print("true ", true_response)
-
 
             if PLOT_OVERVIEW:
                 fit2_cx_deg = np.rad2deg(fit2["primary_particle_cx"])
