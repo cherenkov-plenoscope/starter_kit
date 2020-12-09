@@ -437,18 +437,26 @@ def estimate_main_axis_to_core_using_fuzzy_method(
     return result, debug
 
 
-def add_axes_fuzzy_debug(ax, fuzzy_result, fuzzy_debug):
-    azi_deg = fuzzy_result["main_axis_azimuth_deg"]
-    ax.plot(fuzzy_debug["azimuth_ring_smooth"], "k")
-    ax.plot(azi_deg, 1.0, "or")
+def add_axes_fuzzy_debug(ax, ring_binning, fuzzy_result, fuzzy_debug):
+    azi = fuzzy_result["main_axis_azimuth"]
+    ax.plot(
+        np.rad2deg(ring_binning["bin_edges"]),
+        fuzzy_debug["azimuth_ring_smooth"],
+        "k"
+    )
+    ax.plot(np.rad2deg(azi), 1.0, "or")
 
-    unc_deg = 0.5 * fuzzy_result["main_axis_azimuth_uncertainty_deg"]
-    ax.plot([azi_deg - unc_deg, azi_deg + unc_deg], [0.5, 0.5], "-r")
+    unc = 0.5 * fuzzy_result["main_axis_azimuth_uncertainty"]
+    ax.plot(
+        np.rad2deg([azi - unc, azi + unc]),
+        [0.5, 0.5],
+        "-r"
+    )
 
     ax.set_xlim([0, 360])
     ax.set_ylim([0.0, 1.0])
     ax.set_xlabel("main-axis-azimuth / deg")
-    ax.set_ylabel("probability density / deg$^{-1}$")
+    ax.set_ylabel("probability density / 1")
 
 
 def estimate_core_radius_using_shower_model(
@@ -711,6 +719,7 @@ for sk in irf_config["config"]["sites"]:
                 ax = my_axes_look(ax=ax)
                 add_axes_fuzzy_debug(
                     ax=ax,
+                    ring_binning=fuzzy_config["azimuth_ring"],
                     fuzzy_result=fuzzy_result,
                     fuzzy_debug=fuzzy_debug,
                 )
