@@ -13,6 +13,7 @@ from . import bundle
 from . import json_numpy
 from . import provenance
 from . import create_test_tables
+from . import reconstruction
 
 import os
 import numpy as np
