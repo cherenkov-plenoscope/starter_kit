@@ -8,31 +8,6 @@ import os
 import pandas
 import plenopy as pl
 
-"""
-Objective
-=========
-
-Quantify the angular resolution of the plenoscope.
-
-Input
------
-- List of reconstructed gamma-ray-directions
-- List of true gamma-ray-directions, energy, and more...
-
-Quantities
-----------
-- Containment theta 68%
-- theta parallel component
-- theta perpendicular component
-- Full width at half maximum
-
-histogram theta2
-----------------
-- in energy
-- in core radius
-
-"""
-
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -180,7 +155,7 @@ for sk in reconstruction:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
-        event_table = spt.read(
+        event_table cer_c_para= spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar"
             ),
