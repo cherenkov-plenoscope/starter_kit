@@ -7,7 +7,6 @@ import os
 import airshower_template_generator as atg
 import plenopy as pl
 import glob
-import scipy
 from iminuit import Minuit
 
 import matplotlib
