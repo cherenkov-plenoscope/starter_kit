@@ -60,7 +60,8 @@ energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 # ----------------
 core_radius_square_bin_edges_m2 = np.linspace(
     start=0.0,
-    stop=sum_config["point_spread_function"]["core_radius"]["max_radius_m"] ** 2,
+    stop=sum_config["point_spread_function"]["core_radius"]["max_radius_m"]
+    ** 2,
     num=sum_config["point_spread_function"]["core_radius"]["num_bins"] + 1,
 )
 num_core_radius_bins = core_radius_square_bin_edges_m2.shape[0] - 1
@@ -69,7 +70,8 @@ num_core_radius_bins = core_radius_square_bin_edges_m2.shape[0] - 1
 # -----------------
 theta_square_bin_edges_deg2 = np.linspace(
     start=0.0,
-    stop=sum_config["point_spread_function"]["theta_square"]["max_angle_deg"] ** 2,
+    stop=sum_config["point_spread_function"]["theta_square"]["max_angle_deg"]
+    ** 2,
     num=sum_config["point_spread_function"]["theta_square"]["num_bins"] + 1,
 )
 
@@ -106,9 +108,7 @@ level_keys = [
 
 
 def make_rectangular_table(
-    event_table,
-    reconstruction_table,
-    plenoscope_pointing
+    event_table, reconstruction_table, plenoscope_pointing
 ):
     rec_evt_tab = spt.cut_table_on_indices(
         table=event_table,
@@ -168,7 +168,7 @@ def make_rectangular_table(
 
     et_df["theta"] = np.hypot(
         et_df["reco_cx"] - et_df["true_cx"],
-        et_df["reco_cy"] - et_df["true_cy"]
+        et_df["reco_cy"] - et_df["true_cy"],
     )
 
     return et_df.to_records(index=False)
@@ -199,7 +199,9 @@ for sk in reconstruction:
         # --------------------------------
 
         hist_ene_rad = {
-            "comment": ("histogram: theta-square VS energy VS core-radius-square"),
+            "comment": (
+                "histogram: theta-square VS energy VS core-radius-square"
+            ),
             "energy_bin_edges_GeV": energy_bin_edges,
             "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
             "theta_square_bin_edges_deg2": theta_square_bin_edges_deg2,
@@ -222,8 +224,10 @@ for sk in reconstruction:
 
                 for rad in range(num_core_radius_bins):
                     rad_mask = np.logical_and(
-                        rectab["true_r"] ** 2 >= core_radius_square_bin_edges_m2[rad],
-                        rectab["true_r"] ** 2 < core_radius_square_bin_edges_m2[rad + 1],
+                        rectab["true_r"] ** 2
+                        >= core_radius_square_bin_edges_m2[rad],
+                        rectab["true_r"] ** 2
+                        < core_radius_square_bin_edges_m2[rad + 1],
                     )
 
                     ene_rad_mask = np.logical_and(ene_mask, rad_mask)
@@ -236,24 +240,23 @@ for sk in reconstruction:
                     )
 
                     hist_ene_rad[the]["mean"][ene].append(hi[0])
-                    hist_ene_rad[the]["relative_uncertainty"][ene].append(hi[1])
+                    hist_ene_rad[the]["relative_uncertainty"][ene].append(
+                        hi[1]
+                    )
 
         irf.json_numpy.write(
             os.path.join(
-                site_particle_dir, "theta_square_histogram_vs_energy_vs_core_radius.json"
+                site_particle_dir,
+                "theta_square_histogram_vs_energy_vs_core_radius.json",
             ),
             hist_ene_rad,
         )
-
 
         # containment angle 68
         # --------------------
         num_containment_fractions = 20
         containment_fractions = np.linspace(
-            0.0,
-            1.0,
-            num_containment_fractions,
-            endpoint=False
+            0.0, 1.0, num_containment_fractions, endpoint=False
         )
 
         cont = {
@@ -264,12 +267,10 @@ for sk in reconstruction:
         }
         for the in ["theta", "theta_para", "theta_perp"]:
             cont[the] = {
-                "mean": np.nan * np.ones(
-                    shape=(num_energy_bins, num_containment_fractions)
-                ),
-                "relative_uncertainty": np.nan * np.ones(
-                    shape=(num_energy_bins, num_containment_fractions)
-                )
+                "mean": np.nan
+                * np.ones(shape=(num_energy_bins, num_containment_fractions)),
+                "relative_uncertainty": np.nan
+                * np.ones(shape=(num_energy_bins, num_containment_fractions)),
             }
 
             for ene in range(num_energy_bins):
@@ -284,7 +285,7 @@ for sk in reconstruction:
                 for con in range(num_containment_fractions):
                     ca = irf.analysis.gamma_direction.estimate_containment_radius(
                         theta_deg=theta_deg,
-                        psf_containment_factor=containment_fractions[con]
+                        psf_containment_factor=containment_fractions[con],
                     )
                     cont[the]["mean"][ene][con] = ca[0]
                     cont[the]["relative_uncertainty"][ene][con] = ca[1]
@@ -311,7 +312,7 @@ for sk in reconstruction:
                 theta_deg = np.abs(theta_deg)
                 ca = irf.analysis.gamma_direction.estimate_containment_radius(
                     theta_deg=theta_deg,
-                    psf_containment_factor=psf_containment_factor
+                    psf_containment_factor=psf_containment_factor,
                 )
                 cont_ene[the]["mean"].append(ca[0])
                 cont_ene[the]["relative_uncertainty"].append(ca[1])

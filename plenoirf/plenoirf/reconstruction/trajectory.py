@@ -8,6 +8,7 @@ import numpy as np
 import plenopy as pl
 from iminuit import Minuit
 
+
 def estimate(
     loph_record,
     light_field_geometry,
@@ -48,8 +49,8 @@ def estimate(
         main_axis_azimuth=fuzzy_result["main_axis_azimuth"],
         error_main_axis_azimuth=fuzzy_result["main_axis_azimuth_uncertainty"],
         limit_main_axis_azimuth=(
-            fuzzy_result["main_axis_azimuth"] - 2.0*np.pi,
-            fuzzy_result["main_axis_azimuth"] + 2.0*np.pi
+            fuzzy_result["main_axis_azimuth"] - 2.0 * np.pi,
+            fuzzy_result["main_axis_azimuth"] + 2.0 * np.pi,
         ),
         main_axis_support_perp_offset=0.0,
         error_main_axis_support_perp_offset=fuzzy_result[
@@ -57,7 +58,7 @@ def estimate(
         ],
         limit_main_axis_support_perp_offset=(
             -5.0 * fuzzy_result["main_axis_support_uncertainty"],
-            5.0 * fuzzy_result["main_axis_support_uncertainty"]
+            5.0 * fuzzy_result["main_axis_support_uncertainty"],
         ),
         print_level=0,
         errordef=Minuit.LEAST_SQUARES,
@@ -66,10 +67,7 @@ def estimate(
 
     return (
         main_axis_to_core_finder.final_result,
-        {
-            "fuzzy_result": fuzzy_result,
-            "fuzzy_debug": fuzzy_debug,
-        }
+        {"fuzzy_result": fuzzy_result, "fuzzy_debug": fuzzy_debug,},
     )
 
 
@@ -89,13 +87,12 @@ def model_response_for_true_trajectory(
     )
 
     true_main_axis_azimuth = np.pi + np.arctan2(true_y, true_x)
-    true_r_para = (
-        np.hypot(true_x, true_y)
-        * np.sign(true_main_axis_azimuth - np.pi)
+    true_r_para = np.hypot(true_x, true_y) * np.sign(
+        true_main_axis_azimuth - np.pi
     )
     true_c_para = np.hypot(
         split_light_field.median_cx - true_cx,
-        split_light_field.median_cy - true_cy
+        split_light_field.median_cy - true_cy,
     )
 
     lixel_ids = loph_record["photons"]["channels"]
@@ -112,9 +109,9 @@ def model_response_for_true_trajectory(
     true_response = truth_core_radius_finder.response(
         c_para=true_c_para,
         r_para=true_r_para,
-        cer_perp_distance_threshold=model_fit_config[
-            "shower_model"
-        ]["c_perp_width"],
+        cer_perp_distance_threshold=model_fit_config["shower_model"][
+            "c_perp_width"
+        ],
     )
 
     return true_response

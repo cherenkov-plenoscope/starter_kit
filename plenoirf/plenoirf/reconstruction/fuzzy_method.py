@@ -4,7 +4,7 @@ First estimate for axis towards showe's core.
 import plenopy as pl
 import numpy as np
 import scipy
-from .. summary import bin_centers as make_bin_centers
+from ..summary import bin_centers as make_bin_centers
 
 
 def compile_user_config(user_config):
@@ -16,22 +16,16 @@ def compile_user_config(user_config):
     img["radius"] = np.deg2rad(uimg["radius_deg"])
     img["num_bins"] = uimg["num_bins"]
     img["c_bin_edges"] = np.linspace(
-        -img["radius"],
-        +img["radius"],
-        img["num_bins"] + 1,
+        -img["radius"], +img["radius"], img["num_bins"] + 1,
     )
-    img["c_bin_centers"] = make_bin_centers(
-        bin_edges=img["c_bin_edges"]
-    )
+    img["c_bin_centers"] = make_bin_centers(bin_edges=img["c_bin_edges"])
     _image_bins_per_rad = img["num_bins"] / (2.0 * img["radius"])
     img["smoothing_kernel_width"] = np.deg2rad(
         uimg["smoothing_kernel_width_deg"]
     )
     img["smoothing_kernel"] = pl.fuzzy.discrete_kernel.gauss2d(
         num_steps=int(
-            np.round(
-                img["smoothing_kernel_width"] * _image_bins_per_rad
-            )
+            np.round(img["smoothing_kernel_width"] * _image_bins_per_rad)
         )
     )
     cfg["image"] = img
@@ -40,10 +34,7 @@ def compile_user_config(user_config):
     azr = {}
     azr["num_bins"] = uazr["num_bins"]
     azr["bin_edges"] = np.linspace(
-        0.0,
-        2.0 * np.pi,
-        azr["num_bins"],
-        endpoint=False
+        0.0, 2.0 * np.pi, azr["num_bins"], endpoint=False
     )
     azr["radius"] = np.deg2rad(uazr["radius_deg"])
     _ring_bins_per_rad = azr["num_bins"] / (2.0 * np.pi)
@@ -52,10 +43,7 @@ def compile_user_config(user_config):
     )
     azr["smoothing_kernel"] = pl.fuzzy.discrete_kernel.gauss1d(
         num_steps=int(
-            np.round(
-                _ring_bins_per_rad *
-                azr["smoothing_kernel_width"]
-            )
+            np.round(_ring_bins_per_rad * azr["smoothing_kernel_width"])
         )
     )
     cfg["azimuth_ring"] = azr
@@ -83,8 +71,7 @@ def estimate_main_axis_to_core(
         split_light_field=split_light_field, model_config=model_config
     )
     fuzzy_image = pl.fuzzy.direction.make_image_from_model(
-        split_light_field_model=slf_model,
-        image_binning=image_binning,
+        split_light_field_model=slf_model, image_binning=image_binning,
     )
     fuzzy_image_smooth = scipy.signal.convolve2d(
         in1=fuzzy_image, in2=image_smoothing_kernel, mode="same"

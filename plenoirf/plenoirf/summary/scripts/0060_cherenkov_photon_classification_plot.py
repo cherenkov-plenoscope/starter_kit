@@ -235,9 +235,12 @@ for site_key in irf_config["config"]["sites"]:
             if num_matches == 0:
                 true_over_reco_ratios.append(np.nan)
             else:
-                true_num_cherenkov_pe = mrg_chc_fts[
-                    "trigger"]["num_cherenkov_pe"][e_mask]
-                num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][e_mask]
+                true_num_cherenkov_pe = mrg_chc_fts["trigger"][
+                    "num_cherenkov_pe"
+                ][e_mask]
+                num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][
+                    e_mask
+                ]
                 true_over_reco_ratio = true_num_cherenkov_pe / num_cherenkov_pe
                 true_over_reco_ratios.append(np.median(true_over_reco_ratio))
 
@@ -299,10 +302,12 @@ for site_key in irf_config["config"]["sites"]:
             if num_matches == 0:
                 num_ratios.append(np.nan)
             else:
-                true_num_cherenkov_pe = mrg_chc_fts["trigger"]["num_cherenkov_pe"][
+                true_num_cherenkov_pe = mrg_chc_fts["trigger"][
+                    "num_cherenkov_pe"
+                ][pe_mask]
+                num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][
                     pe_mask
                 ]
-                num_cherenkov_pe = mrg_chc_fts["features"]["num_photons"][pe_mask]
                 num_ratio = true_num_cherenkov_pe / num_cherenkov_pe
                 num_ratios.append(np.median(num_ratio))
 

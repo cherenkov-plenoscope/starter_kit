@@ -46,16 +46,12 @@ def add_axes_fuzzy_debug(ax, ring_binning, fuzzy_result, fuzzy_debug):
     ax.plot(
         np.rad2deg(ring_binning["bin_edges"]),
         fuzzy_debug["azimuth_ring_smooth"],
-        "k"
+        "k",
     )
     ax.plot(np.rad2deg(azi), 1.0, "or")
 
     unc = 0.5 * fuzzy_result["main_axis_azimuth_uncertainty"]
-    ax.plot(
-        np.rad2deg([azi - unc, azi + unc]),
-        [0.5, 0.5],
-        "-r"
-    )
+    ax.plot(np.rad2deg([azi - unc, azi + unc]), [0.5, 0.5], "-r")
 
     ax.set_xlim([0, 360])
     ax.set_ylim([0.0, 1.0])
@@ -140,9 +136,7 @@ def my_axes_look(ax):
 
 
 def read_shower_maximum_object_distance(
-    site_key,
-    particle_key,
-    key="image_smallest_ellipse_object_distance"
+    site_key, particle_key, key="image_smallest_ellipse_object_distance"
 ):
     event_table = spt.read(
         path=os.path.join(
@@ -156,11 +150,8 @@ def read_shower_maximum_object_distance(
     )
 
     return spt.get_column_as_dict_by_index(
-        table=event_table,
-        level_key="features",
-        column_key=key
+        table=event_table, level_key="features", column_key=key
     )
-
 
 
 PLOT_RING = False
@@ -171,8 +162,7 @@ for sk in irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
 
         reco_obj = read_shower_maximum_object_distance(
-            site_key=sk,
-            particle_key=pk
+            site_key=sk, particle_key=pk
         )
 
         loph_chunk_paths = glob.glob(
@@ -221,13 +211,13 @@ for sk in irf_config["config"]["sites"]:
                     fuzzy_debug=debug["fuzzy_debug"],
                 )
                 path = os.path.join(
-                    pa["out_dir"], sk, pk, "{:09d}_ring.jpg".format(
-                        airshower_id,
-                    )
+                    pa["out_dir"],
+                    sk,
+                    pk,
+                    "{:09d}_ring.jpg".format(airshower_id,),
                 )
                 fig.savefig(path)
                 plt.close(fig)
-
 
             if PLOT_OVERVIEW:
 
@@ -245,8 +235,12 @@ for sk in irf_config["config"]["sites"]:
                 ax_core = fig.add_axes([0.575, 0.1, 0.4, 0.8])
                 for pax in range(split_light_field.number_paxel):
                     ax.plot(
-                        np.rad2deg(split_light_field.image_sequences[pax][:, 0]),
-                        np.rad2deg(split_light_field.image_sequences[pax][:, 1]),
+                        np.rad2deg(
+                            split_light_field.image_sequences[pax][:, 0]
+                        ),
+                        np.rad2deg(
+                            split_light_field.image_sequences[pax][:, 1]
+                        ),
                         "xb",
                         alpha=0.03,
                     )
@@ -258,16 +252,20 @@ for sk in irf_config["config"]["sites"]:
                 )
                 phi = np.linspace(0, 2 * np.pi, 1000)
                 ax.plot(
-                    fov_radius_deg * np.cos(phi), fov_radius_deg * np.sin(phi), "k"
+                    fov_radius_deg * np.cos(phi),
+                    fov_radius_deg * np.sin(phi),
+                    "k",
                 )
                 ax.plot(
                     [
                         np.rad2deg(fit["main_axis_support_cx"]),
-                        np.rad2deg(fit["main_axis_support_cx"]) + 100 * np.cos(fit["main_axis_azimuth"])
+                        np.rad2deg(fit["main_axis_support_cx"])
+                        + 100 * np.cos(fit["main_axis_azimuth"]),
                     ],
                     [
                         np.rad2deg(fit["main_axis_support_cy"]),
-                        np.rad2deg(fit["main_axis_support_cy"]) + 100 * np.sin(fit["main_axis_azimuth"])
+                        np.rad2deg(fit["main_axis_support_cy"])
+                        + 100 * np.sin(fit["main_axis_azimuth"]),
                     ],
                     ":c",
                 )
@@ -275,7 +273,7 @@ for sk in irf_config["config"]["sites"]:
                 ax.plot(
                     np.rad2deg(debug["fuzzy_result"]["reco_cx"]),
                     np.rad2deg(debug["fuzzy_result"]["reco_cy"]),
-                    "og"
+                    "og",
                 )
                 ax.plot(fit_cx_deg, fit_cy_deg, "oc")
                 ax.plot(np.rad2deg(truth["cx"]), np.rad2deg(truth["cy"]), "xk")
@@ -309,9 +307,7 @@ for sk in irf_config["config"]["sites"]:
                 ax_core.set_ylabel("y / m")
                 ax_core = my_axes_look(ax=ax_core)
                 path = os.path.join(
-                    pa["out_dir"], sk, pk, "{:09d}.jpg".format(
-                        airshower_id,
-                    ),
+                    pa["out_dir"], sk, pk, "{:09d}.jpg".format(airshower_id,),
                 )
 
                 fig.savefig(path)

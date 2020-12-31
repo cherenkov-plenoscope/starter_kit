@@ -340,12 +340,10 @@ def _guess_summary_config(run_dir):
                     },
                     "azimuth_ring": {
                         "num_bins": 360,
-                        "radius_deg": 1.,
+                        "radius_deg": 1.0,
                         "smoothing_kernel_width_deg": 41.0,
                     },
-                    "ellipse_model": {
-                        "min_num_photons": 3,
-                    }
+                    "ellipse_model": {"min_num_photons": 3,},
                 },
                 "core_axis_fit": {
                     "c_para": {
@@ -358,12 +356,8 @@ def _guess_summary_config(run_dir):
                         "stop_m": 640.0,
                         "num_supports": 96,
                     },
-                    "scan": {
-                        "num_bins_radius": 2,
-                    },
-                    "shower_model": {
-                        "c_perp_width_deg": 0.1,
-                    },
+                    "scan": {"num_bins_radius": 2,},
+                    "shower_model": {"c_perp_width_deg": 0.1,},
                 },
             },
         },

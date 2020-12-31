@@ -45,12 +45,7 @@ fuzzy_binning = {
 fuzz_img_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss2d(num_steps=5)
 
 
-def make_jobs(
-    loph_chunk_dir,
-    quality,
-    site_key,
-    particle_key
-):
+def make_jobs(loph_chunk_dir, quality, site_key, particle_key):
     chunk_paths = glob.glob(os.path.join(loph_chunk_dir, "*.tar"))
     jobs = []
     for chunk_path in chunk_paths:
@@ -73,7 +68,6 @@ def run_job(job):
         start_time = time.time()
         airshower_id, loph_record = event
 
-
         fit, debug = irf.reconstruction.trajectory.estimate(
             loph_record=loph_record,
             light_field_geometry=lfg,
@@ -92,11 +86,12 @@ def run_job(job):
             "cy": fit["primary_particle_cy"],
             "x": fit["primary_particle_x"],
             "y": fit["primary_particle_y"],
-            "time": stop_time - start_time
+            "time": stop_time - start_time,
         }
         result.append(reco)
 
-        print("{:03d} {:09d} {:0.2f}".format(
+        print(
+            "{:03d} {:09d} {:0.2f}".format(
                 ii, airshower_id, stop_time - start_time
             )
         )
@@ -129,7 +124,7 @@ for sk in irf_config["config"]["sites"]:
         shower_maximum_object_distance = spt.get_column_as_dict_by_index(
             table=_event_table,
             level_key="features",
-            column_key="image_smallest_ellipse_object_distance"
+            column_key="image_smallest_ellipse_object_distance",
         )
 
         print("make jobs")

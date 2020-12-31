@@ -7,7 +7,7 @@ def squarespace(start, stop, num):
     sqrt_space = np.linspace(
         np.sign(start) * np.sqrt(np.abs(start)),
         np.sign(stop) * np.sqrt(np.abs(stop)),
-        num
+        num,
     )
     signs = np.sign(sqrt_space)
     square_space = sqrt_space ** 2
@@ -53,7 +53,7 @@ class CoreRadiusFinder:
         light_field_cx,
         light_field_cy,
         light_field_x,
-        light_field_y
+        light_field_y,
     ):
         self.main_axis_azimuth = main_axis_azimuth
         self.cx = light_field_cx
@@ -64,8 +64,12 @@ class CoreRadiusFinder:
         self.main_axis_support_cy = main_axis_support_cy
 
     def _source_direction_cx_cy(self, c_para):
-        source_cx = self.main_axis_support_cx + np.cos(self.main_axis_azimuth) * c_para
-        source_cy = self.main_axis_support_cy + np.sin(self.main_axis_azimuth) * c_para
+        source_cx = (
+            self.main_axis_support_cx + np.cos(self.main_axis_azimuth) * c_para
+        )
+        source_cy = (
+            self.main_axis_support_cy + np.sin(self.main_axis_azimuth) * c_para
+        )
         return source_cx, source_cy
 
     def _core_position_x_y(self, r_para):
@@ -92,8 +96,7 @@ class CoreRadiusFinder:
 
     def response(self, c_para, r_para, cer_perp_distance_threshold):
         cer_c_para, cer_c_perp = self.project_light_field_on_para_perp(
-            c_para,
-            r_para
+            c_para, r_para
         )
 
         num = len(cer_c_perp)
@@ -102,7 +105,9 @@ class CoreRadiusFinder:
             c_deg=0.0, peak_deg=0.0, width_deg=cer_perp_distance_threshold
         )
         l_trans = atg.model.lorentz_transversal(
-            c_deg=cer_c_perp, peak_deg=0.0, width_deg=cer_perp_distance_threshold
+            c_deg=cer_c_perp,
+            peak_deg=0.0,
+            width_deg=cer_perp_distance_threshold,
         )
         l_trans /= l_trans_max
 
@@ -112,7 +117,6 @@ class CoreRadiusFinder:
 
 
 def angle_between(v1, v2):
-
     def unit_vector(vector):
         return vector / np.linalg.norm(vector)
 
@@ -129,7 +133,7 @@ def matching_core_radius(c_para, epsilon, m):
     aperture-plane.
     """
     rrr = c_para - 0.5 * np.pi + epsilon
-    out =  m * (np.cos(epsilon) + np.sin(epsilon) * np.tan(rrr) )
+    out = m * (np.cos(epsilon) + np.sin(epsilon) * np.tan(rrr))
     return -1.0 * out
 
 
@@ -160,9 +164,7 @@ def estimate_core_radius_using_shower_model(
     # ------------------
 
     shower_median_direction_z = np.sqrt(
-        1.0 -
-        shower_maximum_cx ** 2 -
-        shower_maximum_cy ** 2
+        1.0 - shower_maximum_cx ** 2 - shower_maximum_cy ** 2
     )
     distance_aperture_center_to_shower_maximum = (
         shower_maximum_object_distance / shower_median_direction_z
@@ -171,13 +173,13 @@ def estimate_core_radius_using_shower_model(
     shower_maximum_direction = [
         shower_maximum_cx,
         shower_maximum_cy,
-        shower_median_direction_z
+        shower_median_direction_z,
     ]
 
     core_axis_direction = [
         np.cos(main_axis_azimuth),
         np.sin(main_axis_azimuth),
-        0.0
+        0.0,
     ]
 
     epsilon = angle_between(shower_maximum_direction, core_axis_direction)
@@ -185,32 +187,31 @@ def estimate_core_radius_using_shower_model(
     c_para_r_para_mask = np.zeros(
         shape=(
             config["c_para"]["num_supports"],
-            config["r_para"]["num_supports"]
+            config["r_para"]["num_supports"],
         ),
-        dtype=np.int
+        dtype=np.int,
     )
 
     for cbin, c_para in enumerate(config["c_para"]["supports"]):
         matching_r_para = matching_core_radius(
             c_para=c_para,
             epsilon=epsilon,
-            m=distance_aperture_center_to_shower_maximum
+            m=distance_aperture_center_to_shower_maximum,
         )
 
         closest_r_para_bin = np.argmin(
             np.abs(config["r_para"]["supports"] - matching_r_para)
         )
 
-        if (
-            closest_r_para_bin > 0 and
-            closest_r_para_bin < (config["r_para"]["num_supports"] - 1)
+        if closest_r_para_bin > 0 and closest_r_para_bin < (
+            config["r_para"]["num_supports"] - 1
         ):
             if config["scan"]["num_bins_radius"] == 0:
                 rbin_range = [closest_r_para_bin]
             else:
                 rbin_range = np.arange(
                     closest_r_para_bin - config["scan"]["num_bins_radius"],
-                    closest_r_para_bin + config["scan"]["num_bins_radius"]
+                    closest_r_para_bin + config["scan"]["num_bins_radius"],
                 )
 
             for rbin in rbin_range:
@@ -222,17 +223,21 @@ def estimate_core_radius_using_shower_model(
     c_para_r_para_response = np.zeros(
         shape=(
             config["c_para"]["num_supports"],
-            config["r_para"]["num_supports"]
+            config["r_para"]["num_supports"],
         )
     )
     for cbin, c_para in enumerate(config["c_para"]["supports"]):
         for rbin, r_para in enumerate(config["r_para"]["supports"]):
 
             if c_para_r_para_mask[cbin, rbin]:
-                c_para_r_para_response[cbin, rbin] = core_radius_finder.response(
+                c_para_r_para_response[
+                    cbin, rbin
+                ] = core_radius_finder.response(
                     c_para=c_para,
                     r_para=r_para,
-                    cer_perp_distance_threshold=config["shower_model"]["c_perp_width"],
+                    cer_perp_distance_threshold=config["shower_model"][
+                        "c_perp_width"
+                    ],
                 )
 
     # find highest response in c_para r_para
@@ -273,16 +278,13 @@ def estimate_core_radius_using_shower_model(
     return result, debug
 
 
-
 class MainAxisToCoreFinder:
     def __init__(
         self,
-
         light_field_cx,
         light_field_cy,
         light_field_x,
         light_field_y,
-
         shower_maximum_cx,
         shower_maximum_cy,
         shower_maximum_object_distance,
@@ -306,9 +308,7 @@ class MainAxisToCoreFinder:
         return cx, cy
 
     def evaluate_shower_model(
-        self,
-        main_axis_azimuth,
-        main_axis_support_perp_offset
+        self, main_axis_azimuth, main_axis_support_perp_offset
     ):
         main_axis_support_cx, main_axis_support_cy = self._support(
             main_axis_azimuth=main_axis_azimuth,

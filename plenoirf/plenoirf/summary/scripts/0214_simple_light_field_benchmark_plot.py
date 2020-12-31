@@ -39,11 +39,9 @@ for site_key in psf:
 
         print(site_key, particle_key)
 
-        t2psf = (
-            psf[site_key]
-            [particle_key]
-            ["theta_square_histogram_vs_energy_vs_core_radius"]
-        )
+        t2psf = psf[site_key][particle_key][
+            "theta_square_histogram_vs_energy_vs_core_radius"
+        ]
 
         num_radius_bins = len(t2psf["core_radius_square_bin_edges_m2"]) - 1
         num_energy_bins = len(t2psf["energy_bin_edges_GeV"]) - 1
@@ -70,7 +68,9 @@ for site_key in psf:
                     bin_count = t2psf[theta_key]["mean"][ene_idx][rad_idx]
                     bin_count = np.array(bin_count)
                     bin_count = bin_count / np.max(bin_count)
-                    bin_count_relunc = t2psf[theta_key]["relative_uncertainty"][ene_idx][rad_idx]
+                    bin_count_relunc = t2psf[theta_key][
+                        "relative_uncertainty"
+                    ][ene_idx][rad_idx]
                     bin_count_relunc = np.array(bin_count_relunc)
 
                     fig = irf.summary.figure.figure(fc16by9)
@@ -86,30 +86,37 @@ for site_key in psf:
                         face_color="k",
                         face_alpha=0.25,
                     )
-                    ax.set_xlabel(r"$(" + theta_labels[theta_key] + r")^{2}$ / $(1^\circ{})^{2}$")
+                    ax.set_xlabel(
+                        r"$("
+                        + theta_labels[theta_key]
+                        + r")^{2}$ / $(1^\circ{})^{2}$"
+                    )
                     ax.set_ylabel("relative intensity / 1")
 
                     ene_info = "energy      {: 7.1f} - {: 7.1f} GeV".format(
-                        ene_start,
-                        ene_stop
+                        ene_start, ene_stop
                     )
                     rad_info = "core-radius {: 7.1f} - {: 7.1f} m".format(
-                        rad_start,
-                        rad_stop
+                        rad_start, rad_stop
                     )
 
-                    ax.set_title(" {:s}\n{:s}".format(ene_info, rad_info), family="monospace")
+                    ax.set_title(
+                        " {:s}\n{:s}".format(ene_info, rad_info),
+                        family="monospace",
+                    )
 
                     ax.set_ylim([0.0, 1.25])
                     ax.set_xlim(
                         [
                             np.min(theta_square_bin_edges_deg2),
-                            np.max(theta_square_bin_edges_deg2)
+                            np.max(theta_square_bin_edges_deg2),
                         ]
                     )
                     ax.spines["top"].set_color("none")
                     ax.spines["right"].set_color("none")
-                    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+                    ax.grid(
+                        color="k", linestyle="-", linewidth=0.66, alpha=0.1
+                    )
                     fig.savefig(
                         os.path.join(
                             pa["out_dir"],
@@ -119,7 +126,7 @@ for site_key in psf:
                                 particle_key,
                                 rad_idx,
                                 ene_idx,
-                            )
+                            ),
                         )
                     )
                     plt.close(fig)
