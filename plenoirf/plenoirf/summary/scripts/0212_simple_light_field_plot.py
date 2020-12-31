@@ -154,11 +154,12 @@ def read_shower_maximum_object_distance(
         ),
         structure=irf.table.STRUCTURE,
     )
-    features = event_table["features"]
-    out = {}
-    for ii in range(features.shape[0]):
-        out[features[spt.IDX][ii]] = features[key][ii]
-    return out
+
+    return spt.get_column_as_dict_by_index(
+        table=event_table,
+        level_key="features",
+        column_key=key
+    )
 
 
 

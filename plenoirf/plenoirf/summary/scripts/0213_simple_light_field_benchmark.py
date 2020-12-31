@@ -58,19 +58,19 @@ energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
 
 # core radius bins
 # ----------------
-num_radius_bins = num_coarse_energy_bins
-radius_bin_edges = np.linspace(
-    0.0,
-    sum_config["point_spread_function"]["core_radius"]["max_radius_m"],
-    sum_config["point_spread_function"]["core_radius"]["num_bins"] + 1,
+core_radius_square_bin_edges_m2 = np.linspace(
+    start=0.0,
+    stop=sum_config["point_spread_function"]["core_radius"]["max_radius_m"] ** 2,
+    num=sum_config["point_spread_function"]["core_radius"]["num_bins"] + 1,
 )
+num_core_radius_bins = core_radius_square_bin_edges_m2.shape[0] - 1
 
 # theta square bins
 # -----------------
 theta_square_bin_edges_deg2 = np.linspace(
-    0.0,
-    sum_config["point_spread_function"]["theta_square"]["max_angle_deg"] ** 2,
-    sum_config["point_spread_function"]["theta_square"]["num_bins"] + 1,
+    start=0.0,
+    stop=sum_config["point_spread_function"]["theta_square"]["max_angle_deg"] ** 2,
+    num=sum_config["point_spread_function"]["theta_square"]["num_bins"] + 1,
 )
 
 psf_containment_factor = sum_config["point_spread_function"][
@@ -199,9 +199,9 @@ for sk in reconstruction:
         # --------------------------------
 
         hist_ene_rad = {
-            "comment": ("Theta-square-histogram VS energy VS core-radius"),
+            "comment": ("histogram: theta-square VS energy VS core-radius-square"),
             "energy_bin_edges_GeV": energy_bin_edges,
-            "core_radius_bin_edges": radius_bin_edges,
+            "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
             "theta_square_bin_edges_deg2": theta_square_bin_edges_deg2,
             "unit": "1",
         }
@@ -220,10 +220,10 @@ for sk in reconstruction:
                 hist_ene_rad[the]["mean"].append([])
                 hist_ene_rad[the]["relative_uncertainty"].append([])
 
-                for rad in range(num_radius_bins):
+                for rad in range(num_core_radius_bins):
                     rad_mask = np.logical_and(
-                        rectab["primary.energy_GeV"] >= radius_bin_edges[rad],
-                        rectab["primary.energy_GeV"] < radius_bin_edges[rad + 1],
+                        rectab["true_r"] ** 2 >= core_radius_square_bin_edges_m2[rad],
+                        rectab["true_r"] ** 2 < core_radius_square_bin_edges_m2[rad + 1],
                     )
 
                     ene_rad_mask = np.logical_and(ene_mask, rad_mask)
@@ -248,6 +248,53 @@ for sk in reconstruction:
 
         # containment angle 68
         # --------------------
+        num_containment_fractions = 20
+        containment_fractions = np.linspace(
+            0.0,
+            1.0,
+            num_containment_fractions,
+            endpoint=False
+        )
+
+        cont = {
+            "comment": ("Containment-angle VS energy"),
+            "energy_bin_edges_GeV": energy_bin_edges,
+            "containment_fractions": containment_fractions,
+            "unit": "deg",
+        }
+        for the in ["theta", "theta_para", "theta_perp"]:
+            cont[the] = {
+                "mean": np.nan * np.ones(
+                    shape=(num_energy_bins, num_containment_fractions)
+                ),
+                "relative_uncertainty": np.nan * np.ones(
+                    shape=(num_energy_bins, num_containment_fractions)
+                )
+            }
+
+            for ene in range(num_energy_bins):
+                ene_mask = np.logical_and(
+                    rectab["primary.energy_GeV"] >= energy_bin_edges[ene],
+                    rectab["primary.energy_GeV"] < energy_bin_edges[ene + 1],
+                )
+                theta_deg = np.rad2deg(rectab[the][ene_mask])
+                theta_deg = np.abs(theta_deg)
+                cont[the]
+
+                for con in range(num_containment_fractions):
+                    ca = irf.analysis.gamma_direction.estimate_containment_radius(
+                        theta_deg=theta_deg,
+                        psf_containment_factor=containment_fractions[con]
+                    )
+                    cont[the]["mean"][ene][con] = ca[0]
+                    cont[the]["relative_uncertainty"][ene][con] = ca[1]
+        irf.json_numpy.write(
+            os.path.join(
+                site_particle_dir, "various_containment_angle_vs_energy.json"
+            ),
+            cont,
+        )
+
         cont_ene = {
             "comment": ("Containment-angle 68percent VS energy"),
             "energy_bin_edges_GeV": energy_bin_edges,
@@ -264,7 +311,8 @@ for sk in reconstruction:
                 theta_deg = np.abs(theta_deg)
                 ca = irf.analysis.gamma_direction.estimate_containment_radius(
                     theta_deg=theta_deg,
-                    psf_containment_factor=psf_containment_factor)
+                    psf_containment_factor=psf_containment_factor
+                )
                 cont_ene[the]["mean"].append(ca[0])
                 cont_ene[the]["relative_uncertainty"].append(ca[1])
         irf.json_numpy.write(

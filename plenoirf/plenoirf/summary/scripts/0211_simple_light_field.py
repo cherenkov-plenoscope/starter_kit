@@ -9,7 +9,7 @@ import plenopy as pl
 import glob
 import multiprocessing
 import scipy
-
+import time
 
 PARALLEL = True
 
@@ -45,7 +45,12 @@ fuzzy_binning = {
 fuzz_img_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss2d(num_steps=5)
 
 
-def make_jobs(loph_chunk_dir, quality, site_key, particle_key):
+def make_jobs(
+    loph_chunk_dir,
+    quality,
+    site_key,
+    particle_key
+):
     chunk_paths = glob.glob(os.path.join(loph_chunk_dir, "*.tar"))
     jobs = []
     for chunk_path in chunk_paths:
@@ -62,49 +67,70 @@ def run_job(job):
     run = pl.photon_stream.loph.LopfTarReader(job["loph_path"])
 
     result = []
+    ii = 0
     for event in run:
+        ii += 1
+        start_time = time.time()
         airshower_id, loph_record = event
-        print("airshower_id", airshower_id)
 
-        slf = pl.fuzzy.direction.SplitLightField(
-            loph_record=loph_record, light_field_geometry=lfg
+
+        fit, debug = irf.reconstruction.trajectory.estimate(
+            loph_record=loph_record,
+            light_field_geometry=lfg,
+            shower_maximum_object_distance=shower_maximum_object_distance[
+                airshower_id
+            ],
+            fuzzy_config=fuzzy_config,
+            model_fit_config=long_fit_cfg,
         )
 
-        slf_model = pl.fuzzy.direction.estimate_model_from_light_field(
-            split_light_field=slf, model_config=fuzzy_model_config
-        )
-
-        fuzz_img = pl.fuzzy.direction.make_image_from_model(
-            light_field_model=slf_model,
-            model_config=fuzzy_model_config,
-            image_binning=fuzzy_binning,
-        )
-
-        smooth_fuzz_img = scipy.signal.convolve2d(
-            in1=fuzz_img, in2=fuzz_img_gaussian_kernel, mode="same"
-        )
-
-        reco_cx_deg, reco_cy_deg = pl.fuzzy.direction.argmax_image_cx_cy_deg(
-            image=smooth_fuzz_img, image_binning=fuzzy_binning,
-        )
+        stop_time = time.time()
 
         reco = {
             spt.IDX: airshower_id,
-            "cx": np.deg2rad(reco_cx_deg),
-            "cy": np.deg2rad(reco_cy_deg),
-            "x": float("nan"),
-            "y": float("nan"),
+            "cx": fit["primary_particle_cx"],
+            "cy": fit["primary_particle_cy"],
+            "x": fit["primary_particle_x"],
+            "y": fit["primary_particle_y"],
+            "time": stop_time - start_time
         }
         result.append(reco)
 
+        print("{:03d} {:09d} {:0.2f}".format(
+                ii, airshower_id, stop_time - start_time
+            )
+        )
+
     return result
 
+
+fuzzy_config = irf.reconstruction.fuzzy_method.compile_user_config(
+    user_config=sum_config["reconstruction"]["trajectory"]["fuzzy_method"]
+)
+
+long_fit_cfg = irf.reconstruction.model_fit.compile_user_config(
+    user_config=sum_config["reconstruction"]["trajectory"]["core_axis_fit"]
+)
 
 for sk in irf_config["config"]["sites"]:
     for pk in ["gamma"]:  # irf_config["config"]["particles"]:
 
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
+
+        _event_table = spt.read(
+            path=os.path.join(
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+            ),
+            structure=irf.table.STRUCTURE,
+        )
+
+        print("read prev. estimated object_distance")
+        shower_maximum_object_distance = spt.get_column_as_dict_by_index(
+            table=_event_table,
+            level_key="features",
+            column_key="image_smallest_ellipse_object_distance"
+        )
 
         print("make jobs")
         jobs = make_jobs(
