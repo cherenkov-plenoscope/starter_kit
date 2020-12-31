@@ -8,7 +8,6 @@ import pandas
 import plenopy as pl
 import glob
 import multiprocessing
-import scipy
 import time
 
 PARALLEL = True
@@ -26,23 +25,6 @@ lfg = pl.LightFieldGeometry(
 loph_chunk_base_dir = os.path.join(
     pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
 )
-
-fuzzy_model_config = {
-    "min_num_photons": 3,
-    "min_time_slope_ns_per_deg": 5.0,
-    "max_time_slope_ns_per_deg": 7.0,
-}
-
-plenoscope_fov_opening_angle_deg = 0.5 * np.rad2deg(
-    lfg.sensor_plane2imaging_system.max_FoV_diameter
-)
-
-fuzzy_binning = {
-    "radius_deg": 1.0 + plenoscope_fov_opening_angle_deg,
-    "num_bins": 128,
-}
-
-fuzz_img_gaussian_kernel = pl.fuzzy.discrete_kernel.gauss2d(num_steps=5)
 
 
 def make_jobs(loph_chunk_dir, quality, site_key, particle_key):
