@@ -106,8 +106,10 @@ theta_square_max_deg = sum_config[
 
 num_containment_fractions = 20
 containment_fractions = np.linspace(
-    0.0, 1.0, num_containment_fractions, endpoint=False
-)
+    0.0,
+    1.0,
+    num_containment_fractions + 1
+)[1:-1]
 
 # READ reconstruction
 # ===================
@@ -210,16 +212,16 @@ def estimate_containments_theta_deg(
     containment_fractions,
     theta_deg,
 ):
-    thetas_deg = np.nan * np.ones(containment_fractions.shape[0])
-    thetas_deg_relunc = np.nan * np.ones(containment_fractions.shape[0])
+    conta_deg = np.nan * np.ones(containment_fractions.shape[0])
+    conta_deg_relunc = np.nan * np.ones(containment_fractions.shape[0])
     for con in range(containment_fractions.shape[0]):
         ca = irf.analysis.gamma_direction.estimate_containment_radius(
             theta_deg=theta_deg,
             psf_containment_factor=containment_fractions[con],
         )
-        thetas_deg[con] = ca[0]
-        thetas_deg_relunc[con] = ca[1]
-    return thetas_deg, thetas_deg_relunc
+        conta_deg[con] = ca[0]
+        conta_deg_relunc[con] = ca[1]
+    return conta_deg, conta_deg_relunc
 
 
 def guess_theta_square_bin_edges_deg(
@@ -248,7 +250,7 @@ def guess_theta_square_bin_edges_deg(
             theta_square_bin_edges_deg2=theta_square_bin_edges_deg2,
         )[0]
 
-        print("it1", it, "bc", bc[0:num_min])
+        # print("it1", it, "bc", bc[0:num_min])
 
         if np.argmax(bc) != 0:
             break
@@ -265,7 +267,7 @@ def guess_theta_square_bin_edges_deg(
         if it2 > 64:
             break
 
-        print("it2", it, "bc", bc[0:num_min])
+        # print("it2", it, "bc", bc[0:num_min])
 
         theta_square_bin_edges_deg2 = np.linspace(
             start=0.0,

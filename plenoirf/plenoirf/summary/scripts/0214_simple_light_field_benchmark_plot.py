@@ -39,10 +39,12 @@ def write_theta_square_figure(
     theta_square_bin_edges_deg2,
     bin_count,
     bin_count_relunc,
+    containment_fractions,
+    containment_angle,
     info_title,
     theta_label,
     square=True,
-    ylim_stop=1.25
+    ylim_stop=1.2
 ):
     if square:
         tts_label = r"$(" + theta_label + r")^{2}$ / $(1^\circ{})^{2}$"
@@ -68,8 +70,26 @@ def write_theta_square_figure(
         0.5 * (tts[0:-1] + tts[1:]),
         bin_count,
         "k-",
-        alpha=0.5
+        alpha=0.25
     )
+
+    num_containments = len(containment_fractions)
+    for cc in np.arange(0, num_containments, 3):
+        if not np.isnan(containment_angle[cc]):
+            ax.plot(
+                [containment_angle[cc], containment_angle[cc]],
+                [0.0, ylim_stop],
+                "k--",
+                linewidth=1.0,
+                alpha=0.25
+            )
+            ax.text(
+                s="{:0.2f}".format(containment_fractions[cc]),
+                x=containment_angle[cc],
+                y=0.5 + 0.5 * (cc / num_containments),
+                family="monospace",
+                alpha=0.5,
+            )
 
     ax.set_xlabel(tts_label)
     ax.set_ylabel("relative intensity / 1")
@@ -100,6 +120,11 @@ for site_key in psf:
                 )
             ]
 
+            cont = psf[site_key][particle_key][
+                "{theta_key:s}_containment_vs_energy_vs_core_radius".format(
+                    theta_key=theta_key)
+            ]
+
             num_radius_bins = len(t2["core_radius_square_bin_edges_m2"]) - 1
             num_energy_bins = len(t2["energy_bin_edges_GeV"]) - 1
 
@@ -116,7 +141,7 @@ for site_key in psf:
 
                     t2_ene_rad = t2["histogram"][ene][rad]
 
-                    print(site_key, particle_key, theta_key, ene, rad)
+                    print(site_key, particle_key, theta_key, "ene", ene, "rad", rad)
 
                     rad_start = np.sqrt(
                         t2["core_radius_square_bin_edges_m2"][rad]
@@ -152,6 +177,8 @@ for site_key in psf:
                         ),
                         bin_count=bin_count,
                         bin_count_relunc=bin_count_relunc,
+                        containment_fractions=cont["containment_fractions"],
+                        containment_angle=cont["containment"][ene][rad]["theta_deg"],
                         info_title=" {:s}\n{:s}".format(ene_info, rad_info),
                         theta_label=theta_labels[theta_key],
                         square=False,
