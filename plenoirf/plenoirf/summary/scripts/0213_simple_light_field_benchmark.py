@@ -214,7 +214,7 @@ def estimate_containments_theta_deg(
     thetas_deg_relunc = np.nan * np.ones(containment_fractions.shape[0])
     for con in range(containment_fractions.shape[0]):
         ca = irf.analysis.gamma_direction.estimate_containment_radius(
-            theta_deg=ene_theta_deg,
+            theta_deg=theta_deg,
             psf_containment_factor=containment_fractions[con],
         )
         thetas_deg[con] = ca[0]
