@@ -78,22 +78,27 @@ def ax_add_hist(
 ):
     assert bin_edges.shape[0] == bincounts.shape[0] + 1
     for i, bincount in enumerate(bincounts):
-        ax.plot(
-            [bin_edges[i], bin_edges[i + 1]],
-            [bincount, bincount],
-            linestyle=linestyle,
-            color=linecolor,
-            alpha=linealpha,
-        )
-        if bincounts_upper is not None and bincounts_lower is not None:
-            ax.fill_between(
-                x=[bin_edges[i], bin_edges[i + 1]],
-                y1=[bincounts_lower[i], bincounts_lower[i]],
-                y2=[bincounts_upper[i], bincounts_upper[i]],
-                color=face_color,
-                alpha=face_alpha,
-                edgecolor="none",
+        if bincount > 0:
+            ax.plot(
+                [bin_edges[i], bin_edges[i + 1]],
+                [bincount, bincount],
+                linestyle=linestyle,
+                color=linecolor,
+                alpha=linealpha,
             )
+        if bincounts_upper is not None and bincounts_lower is not None:
+            both_nan = (
+                np.isnan(bincounts_upper[i]) and np.isnan(bincounts_lower[i])
+            )
+            if not both_nan:
+                ax.fill_between(
+                    x=[bin_edges[i], bin_edges[i + 1]],
+                    y1=[bincounts_lower[i], bincounts_lower[i]],
+                    y2=[bincounts_upper[i], bincounts_upper[i]],
+                    color=face_color,
+                    alpha=face_alpha,
+                    edgecolor="none",
+                )
 
 
 def ax_add_hatches(ax, ix, iy, x_bin_edges, y_bin_edges, alpha=0.1):
