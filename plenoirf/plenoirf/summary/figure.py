@@ -5,12 +5,19 @@ import numpy as np
 
 CONFIG_16_9 = {"rows": 1080, "cols": 1920, "fontsize": 2, "format": "jpg"}
 
+CONFIG_4_3 = {"rows": 1080, "cols": 1440, "fontsize": 2, "format": "jpg"}
+
+CONFIG_1_1 = {"rows": 1080, "cols": 1080, "fontsize": 2, "format": "jpg"}
+
 
 def figure(config=CONFIG_16_9, dpi=120):
     sc = config["fontsize"]
-    width = config["cols"] / dpi
-    height = config["rows"] / dpi
-    return plt.figure(figsize=(width / sc, height / sc), dpi=dpi * sc)
+    width_inch = config["cols"] / dpi
+    height_inch = config["rows"] / dpi
+    return plt.figure(
+        figsize=(width_inch / sc, height_inch / sc),
+        dpi=dpi * sc
+    )
 
 
 def add_axes(fig, span):

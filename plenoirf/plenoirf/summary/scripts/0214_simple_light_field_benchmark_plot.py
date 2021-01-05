@@ -34,99 +34,125 @@ theta_labels = {
     "theta_perp": r"\theta{}_\mathrm{perpendicular}",
 }
 
+def write_theta_square_figure(
+    path,
+    theta_square_bin_edges_deg2,
+    bin_count,
+    bin_count_relunc,
+    info_title,
+    theta_label,
+    square=True,
+    ylim_stop=1.25
+):
+    if square:
+        tts_label = r"$(" + theta_label + r")^{2}$ / $(1^\circ{})^{2}$"
+        tts = theta_square_bin_edges_deg2
+    else:
+        tts_label = r"$" + theta_label + r"$ / $1^\circ{}$"
+        tts = np.sqrt(theta_square_bin_edges_deg2)
+
+    fig = irf.summary.figure.figure(fc16by9)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    irf.summary.figure.ax_add_hist(
+        ax=ax,
+        bin_edges=tts,
+        bincounts=bin_count,
+        bincounts_upper=bin_count * (1 + bin_count_relunc),
+        bincounts_lower=bin_count * (1 - bin_count_relunc),
+        linestyle="-",
+        linecolor="k",
+        face_color="k",
+        face_alpha=0.25,
+    )
+    ax.plot(
+        0.5 * (tts[0:-1] + tts[1:]),
+        bin_count,
+        "k-",
+        alpha=0.5
+    )
+
+    ax.set_xlabel(tts_label)
+    ax.set_ylabel("relative intensity / 1")
+    fig.suptitle(info_title, family="monospace")
+    ax.set_ylim([0.0, ylim_stop])
+    ax.set_xlim([0.0, np.max(tts)])
+    ax.spines["top"].set_color("none")
+    ax.spines["right"].set_color("none")
+    ax.grid(
+        color="k", linestyle="-", linewidth=0.66, alpha=0.1
+    )
+
+    fig.savefig(path)
+    plt.close(fig)
+
+
 for site_key in psf:
     for particle_key in ["gamma"]:
 
-        print(site_key, particle_key)
-
-        t2psf = psf[site_key][particle_key][
-            "theta_square_histogram_vs_energy_vs_core_radius"
-        ]
-
-        num_radius_bins = len(t2psf["core_radius_square_bin_edges_m2"]) - 1
-        num_energy_bins = len(t2psf["energy_bin_edges_GeV"]) - 1
+        # theta-square vs energy vs core-radius
+        # -------------------------------------
 
         for theta_key in ["theta", "theta_para", "theta_perp"]:
 
-            for rad_idx in range(num_radius_bins):
-                for ene_idx in range(num_energy_bins):
+            t2 = psf[site_key][particle_key][
+                "{theta_key:s}_square_histogram_vs_energy_vs_core_radius".format(
+                    theta_key=theta_key
+                )
+            ]
 
-                    ene_start = t2psf["energy_bin_edges_GeV"][ene_idx]
-                    ene_stop = t2psf["energy_bin_edges_GeV"][ene_idx + 1]
+            num_radius_bins = len(t2["core_radius_square_bin_edges_m2"]) - 1
+            num_energy_bins = len(t2["energy_bin_edges_GeV"]) - 1
+
+            for ene in range(num_energy_bins):
+
+                ene_start = t2["energy_bin_edges_GeV"][ene]
+                ene_stop = t2["energy_bin_edges_GeV"][ene + 1]
+
+                ene_info = "energy      {: 7.1f} - {: 7.1f} GeV".format(
+                    ene_start, ene_stop
+                )
+
+                for rad in range(num_radius_bins):
+
+                    t2_ene_rad = t2["histogram"][ene][rad]
+
+                    print(site_key, particle_key, theta_key, ene, rad)
 
                     rad_start = np.sqrt(
-                        t2psf["core_radius_square_bin_edges_m2"][rad_idx]
+                        t2["core_radius_square_bin_edges_m2"][rad]
                     )
                     rad_stop = np.sqrt(
-                        t2psf["core_radius_square_bin_edges_m2"][rad_idx + 1]
+                        t2["core_radius_square_bin_edges_m2"][rad + 1]
                     )
 
-                    theta_square_bin_edges_deg2 = np.array(
-                        t2psf["theta_square_bin_edges_deg2"]
-                    )
-
-                    bin_count = t2psf[theta_key]["mean"][ene_idx][rad_idx]
-                    bin_count = np.array(bin_count)
-                    bin_count = bin_count / np.max(bin_count)
-                    bin_count_relunc = t2psf[theta_key][
-                        "relative_uncertainty"
-                    ][ene_idx][rad_idx]
-                    bin_count_relunc = np.array(bin_count_relunc)
-
-                    fig = irf.summary.figure.figure(fc16by9)
-                    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
-                    irf.summary.figure.ax_add_hist(
-                        ax=ax,
-                        bin_edges=theta_square_bin_edges_deg2,
-                        bincounts=bin_count,
-                        bincounts_upper=bin_count * (1 + bin_count_relunc),
-                        bincounts_lower=bin_count * (1 - bin_count_relunc),
-                        linestyle="-",
-                        linecolor="k",
-                        face_color="k",
-                        face_alpha=0.25,
-                    )
-                    ax.set_xlabel(
-                        r"$("
-                        + theta_labels[theta_key]
-                        + r")^{2}$ / $(1^\circ{})^{2}$"
-                    )
-                    ax.set_ylabel("relative intensity / 1")
-
-                    ene_info = "energy      {: 7.1f} - {: 7.1f} GeV".format(
-                        ene_start, ene_stop
-                    )
                     rad_info = "core-radius {: 7.1f} - {: 7.1f} m".format(
                         rad_start, rad_stop
                     )
 
-                    ax.set_title(
-                        " {:s}\n{:s}".format(ene_info, rad_info),
-                        family="monospace",
-                    )
+                    bin_count = t2_ene_rad["intensity"]
+                    bin_count = np.array(bin_count)
+                    bin_count = bin_count / np.max(bin_count)
 
-                    ax.set_ylim([0.0, 1.25])
-                    ax.set_xlim(
-                        [
-                            np.min(theta_square_bin_edges_deg2),
-                            np.max(theta_square_bin_edges_deg2),
-                        ]
-                    )
-                    ax.spines["top"].set_color("none")
-                    ax.spines["right"].set_color("none")
-                    ax.grid(
-                        color="k", linestyle="-", linewidth=0.66, alpha=0.1
-                    )
-                    fig.savefig(
-                        os.path.join(
+                    bin_count_relunc = t2_ene_rad["intensity_relative_uncertainty"]
+                    bin_count_relunc = np.array(bin_count_relunc)
+
+                    write_theta_square_figure(
+                        path=os.path.join(
                             pa["out_dir"],
                             "{:s}_{:s}_{:s}_rad{:06d}_ene{:06d}.jpg".format(
                                 theta_key,
                                 site_key,
                                 particle_key,
-                                rad_idx,
-                                ene_idx,
+                                rad,
+                                ene,
                             ),
-                        )
+                        ),
+                        theta_square_bin_edges_deg2=np.array(
+                            t2_ene_rad["theta_square_bin_edges_deg2"]
+                        ),
+                        bin_count=bin_count,
+                        bin_count_relunc=bin_count_relunc,
+                        info_title=" {:s}\n{:s}".format(ene_info, rad_info),
+                        theta_label=theta_labels[theta_key],
+                        square=False,
                     )
-                    plt.close(fig)
