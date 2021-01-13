@@ -26,13 +26,80 @@ fov_radius_deg = (
     0.5 * irf_config["light_field_sensor_geometry"]["max_FoV_diameter_deg"]
 )
 
-fc16by9 = sum_config["plot"]["16_by_9"]
+fc16by9 = dict(sum_config["plot"]["16_by_9"])
+fc16by9["fontsize"] = 2.25
 
 theta_labels = {
     "theta": r"\theta{}",
     "theta_para": r"\theta{}_\mathrm{parallel}",
     "theta_perp": r"\theta{}_\mathrm{perpendicular}",
 }
+
+
+def write_core_radius_figure(path, radius_bin_edges, bin_idx, info):
+    num_bins = len(radius_bin_edges) - 1
+    r_start = radius_bin_edges[bin_idx]
+    r_stop = radius_bin_edges[bin_idx + 1]
+    fig = irf.summary.figure.figure(irf.summary.figure.CONFIG_1_1)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    rs = np.linspace(0.0, 2.0 * np.pi, 137)
+    ax.fill(
+        r_stop * np.cos(rs),
+        r_stop * np.sin(rs),
+        facecolor="k",
+        alpha=0.25
+    )
+    ax.fill(
+        r_start * np.cos(rs),
+        r_start * np.sin(rs),
+        facecolor="w",
+    )
+    for rr in radius_bin_edges:
+        irf.summary.figure.ax_add_circle(
+            ax=ax,
+            x=0.0,
+            y=0.0,
+            r=rr,
+            linewidth=1.0,
+            linestyle="-",
+            color="k",
+            alpha=1,
+            num_steps=1000,
+        )
+    fig.suptitle(info, family="monospace")
+    ax.axes.get_yaxis().set_visible(False)
+    ax.spines["top"].set_color("none")
+    ax.spines["right"].set_color("none")
+    ax.spines["left"].set_color("none")
+    ax.spines["bottom"].set_color("none")
+    fig.savefig(path)
+    plt.close(fig)
+
+
+def write_energy_figure(path, energy_bin_edges, bin_idx, info):
+    num_bins = len(energy_bin_edges) - 1
+    e_start = energy_bin_edges[bin_idx]
+    e_stop = energy_bin_edges[bin_idx + 1]
+    fig = irf.summary.figure.figure(irf.summary.figure.CONFIG_1_1)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    ax.fill_between(
+        [e_start, e_start, e_stop, e_stop],
+        [0.0, 1.0, 1.0, 0.0],
+        facecolor="k",
+        alpha=0.25
+    )
+    ax.semilogx()
+    ax.set_ylim([0, 1])
+    ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
+    fig.suptitle(info, family="monospace")
+    ax.axes.get_yaxis().set_visible(False)
+    ax.spines["top"].set_color("none")
+    ax.spines["right"].set_color("none")
+    ax.spines["left"].set_color("none")
+    ax.spines["bottom"].set_color("none")
+    fig.savefig(path)
+    plt.close(fig)
+
 
 def write_theta_square_figure(
     path,
@@ -54,7 +121,7 @@ def write_theta_square_figure(
         tts = np.sqrt(theta_square_bin_edges_deg2)
 
     fig = irf.summary.figure.figure(fc16by9)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    ax = fig.add_axes((0.1, 0.12, 0.8, 0.8))
     irf.summary.figure.ax_add_hist(
         ax=ax,
         bin_edges=tts,
@@ -133,8 +200,23 @@ for site_key in psf:
                 ene_start = t2["energy_bin_edges_GeV"][ene]
                 ene_stop = t2["energy_bin_edges_GeV"][ene + 1]
 
-                ene_info = "energy      {: 7.1f} - {: 7.1f} GeV".format(
+                ene_info = "energy/GeV {: 7.1f} - {: 7.1f}".format(
                     ene_start, ene_stop
+                )
+
+                write_energy_figure(
+                    path=os.path.join(
+                        pa["out_dir"],
+                        "{:s}_{:s}_{:s}_ene{:06d}_info.jpg".format(
+                            theta_key,
+                            site_key,
+                            particle_key,
+                            ene,
+                        ),
+                    ),
+                    energy_bin_edges=t2["energy_bin_edges_GeV"],
+                    bin_idx=ene,
+                    info=ene_info
                 )
 
                 for rad in range(num_radius_bins):
@@ -150,7 +232,7 @@ for site_key in psf:
                         t2["core_radius_square_bin_edges_m2"][rad + 1]
                     )
 
-                    rad_info = "core-radius {: 7.1f} - {: 7.1f} m".format(
+                    rad_info = "core-radius/m {: 7.1f} - {: 7.1f}".format(
                         rad_start, rad_stop
                     )
 
@@ -179,7 +261,22 @@ for site_key in psf:
                         bin_count_relunc=bin_count_relunc,
                         containment_fractions=cont["containment_fractions"],
                         containment_angle=cont["containment"][ene][rad]["theta_deg"],
-                        info_title=" {:s}\n{:s}".format(ene_info, rad_info),
+                        info_title=" {:s}, {:s}".format(ene_info, rad_info),
                         theta_label=theta_labels[theta_key],
                         square=False,
+                    )
+
+                    write_core_radius_figure(
+                        path=os.path.join(
+                            pa["out_dir"],
+                            "{:s}_{:s}_{:s}_rad{:06d}_info.jpg".format(
+                                theta_key,
+                                site_key,
+                                particle_key,
+                                rad,
+                            ),
+                        ),
+                        radius_bin_edges=np.sqrt(t2["core_radius_square_bin_edges_m2"]),
+                        bin_idx=rad,
+                        info=rad_info,
                     )
