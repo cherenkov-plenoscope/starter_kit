@@ -208,9 +208,9 @@ for site_key in psf:
                     path=os.path.join(
                         pa["out_dir"],
                         "{:s}_{:s}_{:s}_ene{:06d}_info.jpg".format(
-                            theta_key,
                             site_key,
                             particle_key,
+                            theta_key,
                             ene,
                         ),
                     ),
@@ -247,9 +247,9 @@ for site_key in psf:
                         path=os.path.join(
                             pa["out_dir"],
                             "{:s}_{:s}_{:s}_rad{:06d}_ene{:06d}.jpg".format(
-                                theta_key,
                                 site_key,
                                 particle_key,
+                                theta_key,
                                 rad,
                                 ene,
                             ),
@@ -270,9 +270,9 @@ for site_key in psf:
                         path=os.path.join(
                             pa["out_dir"],
                             "{:s}_{:s}_{:s}_rad{:06d}_info.jpg".format(
-                                theta_key,
                                 site_key,
                                 particle_key,
+                                theta_key,
                                 rad,
                             ),
                         ),
