@@ -7,6 +7,8 @@ import airshower_template_generator as atg
 import os
 import pandas
 import plenopy as pl
+import iminuit
+import scipy
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import ConnectionPatch
@@ -135,6 +137,130 @@ level_keys = [
     "pasttrigger",
     "cherenkovclassification",
 ]
+
+
+def _gaussian_bell(width_deg, theta_deg):
+    return np.exp(
+        -(theta_deg ** 2.0) / (2.0 * width_deg ** 2.0)
+    )
+
+
+class _Gaussian_psf_model:
+    def __init__(
+        self,
+        theta_bin_centers_deg,
+        bin_intensity,
+    ):
+        self.theta_bin_centers_deg = np.array(theta_bin_centers_deg)
+        self.bin_intensity = np.array(bin_intensity)
+
+        self.bin_intensity_normalized = self.bin_intensity / np.max(
+            self.bin_intensity
+        )
+
+
+    def evaluate(self, width_deg, max_intensity):
+        model_bin_intensity = max_intensity * _gaussian_bell(
+            width_deg=width_deg,
+            theta_deg=self.theta_bin_centers_deg
+        )
+        val = self.bin_intensity_normalized > 0
+        rel = (self.bin_intensity_normalized ** 2 - model_bin_intensity ** 2)
+        deviation = np.sum(rel[val] ** 2.0)
+        return deviation
+
+
+def fit_gaussian_width_in_theta_square_histogram(
+    theta_square_bin_edges_deg2,
+    bin_intensity,
+):
+    theta_bin_edges_deg = np.sqrt(theta_square_bin_edges_deg2)
+    theta_bin_centers_deg = irf.summary.bin_centers(
+        bin_edges=theta_bin_edges_deg,
+        weight_lower_edge=0.5
+    )
+
+    theta_max_deg = np.max(theta_bin_edges_deg)
+    assert theta_bin_edges_deg[0] == 0.0
+    smallest_bin_width_deg = theta_bin_edges_deg[1]
+    assert smallest_bin_width_deg > 0.0
+
+    psf_model = _Gaussian_psf_model(
+        theta_bin_centers_deg=theta_bin_centers_deg,
+        bin_intensity=bin_intensity
+    )
+
+    error_width_deg = 1e-2 * smallest_bin_width_deg
+    limit_width_deg = (0.0, theta_max_deg)
+
+    minimizer = iminuit.Minuit(
+        fcn=psf_model.evaluate,
+        width_deg=1e-1 * smallest_bin_width_deg,
+        error_width_deg=error_width_deg,
+        limit_width_deg=limit_width_deg,
+        max_intensity=1.0,
+        error_max_intensity=1e-6,
+        limit_max_intensity=(1.0, 1e3),
+        print_level=0,
+        errordef=iminuit.Minuit.LEAST_SQUARES,
+    )
+    minimizer.migrad()
+
+    debug = {
+        "theta_bin_centers_deg": theta_bin_centers_deg,
+        "bin_intensity_normalized": psf_model.bin_intensity_normalized,
+        "limit_width_deg": limit_width_deg,
+        "error_width_deg": error_width_deg,
+        "initial_width_deg": smallest_bin_width_deg,
+        "final_width_deg": minimizer.values["width_deg"],
+        "final_max_intensity": minimizer.values["max_intensity"],
+    }
+
+    return minimizer.values["width_deg"], debug
+
+
+class _Gaussian_erf_model:
+    def __init__(self, x):
+        self.x = np.sort(x)
+        self.fractions = np.linspace(1.0 / len(x), 1.0, len(x))
+        self.fractions_gauss = None
+
+    def evaluate(self, width):
+        fff = 2.0 / np.sqrt(np.pi)
+        self.fractions_gauss = scipy.special.erf(self.x / width * fff)
+        dev = np.sqrt(np.sum((self.fractions - self.fractions_gauss) ** 2.0))
+        return dev
+
+
+def fit_erf_width(thetas_deg):
+    if len(thetas_deg) <= 2:
+        return np.nan, {}
+
+    erf_model = _Gaussian_erf_model(x=thetas_deg)
+
+    limit_width_deg = [1e-4, 10.0]
+    error_width_deg = erf_model.x[0] * 1e-3
+    initial_width_deg = erf_model.x[0]
+
+    minimizer = iminuit.Minuit(
+        fcn=erf_model.evaluate,
+        width=1e1 * error_width_deg,
+        error_width=error_width_deg,
+        limit_width=limit_width_deg,
+        print_level=0,
+        errordef=iminuit.Minuit.LEAST_SQUARES,
+    )
+    minimizer.migrad()
+
+    debug = {
+        "limit_width_deg": limit_width_deg,
+        "error_width_deg": error_width_deg,
+        "initial_width_deg": initial_width_deg,
+        "final_width_deg": minimizer.values["width"],
+        "fractions_gauss": erf_model.fractions_gauss,
+    }
+
+    return minimizer.values["width"], debug
 
 
 def make_rectangular_table(
@@ -418,6 +544,72 @@ for sk in reconstruction:
                         "intensity": ene_rad_hi[0],
                         "intensity_relative_uncertainty": ene_rad_hi[1]
                     }
+
+                    w_deg, w_debug = fit_gaussian_width_in_theta_square_histogram(
+                        theta_square_bin_edges_deg2=ene_rad_theta_square_bin_edges_deg2,
+                        bin_intensity=ene_rad_hi[0],
+                    )
+
+                    erf_w, erf_w_debuf = fit_erf_width(
+                        thetas_deg=ene_rad_theta_deg
+                    )
+
+                    print(sk, pk, "the", the, "ene", ene, "rad", rad, "width/deg: ", w_deg, "erf width/deg: ", erf_w)
+
+                    fig = irf.summary.figure.figure(fig_16_by_9)
+                    ax = fig.add_axes((0.1, 0.12, 0.8, 0.8))
+                    ax.plot(
+                        w_debug["theta_bin_centers_deg"],
+                        w_debug["bin_intensity_normalized"],
+                        "kx",
+                    )
+                    _ttt = np.linspace(
+                        0.0,
+                        np.max(np.sqrt(ene_rad_theta_square_bin_edges_deg2)),
+                        1337,
+                    )
+                    ax.plot(
+                        _ttt,
+                        _gaussian_bell(
+                            width_deg=erf_w,
+                            theta_deg=_ttt
+                        ),
+                        "r-",
+                    )
+                    fig.savefig(
+                        os.path.join(
+                            pa["out_dir"],
+                            "{:s}_{:s}_{:s}_ene{:06d}_rad{:06d}_fit.jpg".format(
+                                sk, pk, the, ene, rad
+                            ),
+                        ),
+                    )
+                    plt.close(fig)
+
+                    fig = irf.summary.figure.figure(fig_16_by_9)
+                    ax = fig.add_axes((0.1, 0.12, 0.8, 0.8))
+                    ax.plot(
+                        np.sort(ene_rad_theta_deg),
+                        np.linspace(0.0, 1.0, ene_rad_theta_deg.shape[0]),
+                        "k-",
+                    )
+                    if erf_w_debuf:
+                        ax.plot(
+                            np.sort(ene_rad_theta_deg),
+                            erf_w_debuf["fractions_gauss"],
+                            "r-",
+                        )
+                    ax.set_xlim([0.0, 3.25])
+                    ax.set_ylim([0.0, 1.0])
+                    fig.savefig(
+                        os.path.join(
+                            pa["out_dir"],
+                            "{:s}_{:s}_{:s}_ene{:06d}_rad{:06d}_cumulativ.jpg".format(
+                                sk, pk, the, ene, rad
+                            ),
+                        ),
+                    )
+                    plt.close(fig)
 
                     ene_rad_co = estimate_containments_theta_deg(
                         containment_fractions=containment_fractions,
