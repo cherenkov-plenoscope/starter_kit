@@ -677,36 +677,20 @@ def run_job(job):
 
     # extracting features
     # -------------------
-    lfg = merlict_run.light_field_geometry
-    lfg_addon = {}
-    lfg_addon["paxel_radius"] = (
-        lfg.sensor_plane2imaging_system.expected_imaging_system_max_aperture_radius
-        / lfg.sensor_plane2imaging_system.number_of_paxel_on_pixel_diagonal
-    )
-    lfg_addon["nearest_neighbor_paxel_enclosure_radius"] = (
-        3 * lfg_addon["paxel_radius"]
-    )
-    lfg_addon["paxel_neighborhood"] = pl.features.estimate_nearest_neighbors(
-        x=lfg.paxel_pos_x,
-        y=lfg.paxel_pos_y,
-        epsilon=lfg_addon["nearest_neighbor_paxel_enclosure_radius"],
-    )
-    lfg_addon["fov_radius"] = (
-        0.5 * lfg.sensor_plane2imaging_system.max_FoV_diameter
-    )
-    lfg_addon["fov_radius_leakage"] = 0.9 * lfg_addon["fov_radius"]
-    lfg_addon["num_pixel_on_diagonal"] = np.floor(
-        2 * np.sqrt(lfg.number_pixel / np.pi)
-    )
+    light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
+        light_field_geometry=merlict_run.light_field_geometry)
+
     logger.log("light_field_geometry_addons")
 
     for pt in table_past_trigger:
-        event = pl.Event(path=pt["tmp_path"], light_field_geometry=lfg)
+        event = pl.Event(
+            path=pt["tmp_path"],
+            light_field_geometry=merlict_run.light_field_geometry)
         try:
             lfft = pl.features.extract_features(
                 cherenkov_photons=event.cherenkov_photons,
-                light_field_geometry=lfg,
-                light_field_geometry_addon=lfg_addon,
+                light_field_geometry=merlict_run.light_field_geometry,
+                light_field_geometry_addon=light_field_geometry_addon,
             )
             lfft[spt.IDX] = pt[spt.IDX]
             tabrec["features"].append(lfft)
