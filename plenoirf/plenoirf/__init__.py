@@ -15,6 +15,7 @@ from . import provenance
 from . import create_test_tables
 from . import reconstruction
 from . import utils
+from . import production
 
 import os
 import numpy as np
@@ -121,7 +122,7 @@ EXAMPLE_CONFIG = {
             "magnetic_deflection_max_off_axis_deg": 1.5,
         },
     },
-    "grid": map_and_reduce.EXAMPLE_GRID,
+    "grid": production.example.EXAMPLE_GRID,
     "sum_trigger": {
         "object_distances_m": [
             5000.0,
@@ -523,7 +524,7 @@ def run(
     KEEP_TMP=False,
     LAZY_REDUCTION=False,
 ):
-    date_dict_now = map_and_reduce.date_dict_now()
+    date_dict_now = utils.date_dict_now()
     qmrlog("Start run()")
 
     out_absdir = op.abspath(path)
