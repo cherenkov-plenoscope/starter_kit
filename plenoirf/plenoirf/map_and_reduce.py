@@ -165,50 +165,14 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
         tarfout.add(event_dir, arcname=".")
 
 
-def run_job(job):
-    os.makedirs(job["log_dir"], exist_ok=True)
-    os.makedirs(job["past_trigger_dir"], exist_ok=True)
-    os.makedirs(job["past_trigger_reconstructed_cherenkov_dir"], exist_ok=True)
-    os.makedirs(job["feature_dir"], exist_ok=True)
-    run_id_str = "{:06d}".format(job["run_id"])
-    time_log_path = op.join(job["log_dir"], run_id_str + "_runtime.jsonl")
-    logger = logging.JsonlLog(time_log_path + ".tmp")
-    job_path = op.join(job["log_dir"], run_id_str + "_job.json")
-    with open(job_path + ".tmp", "wt") as f:
-        f.write(json.dumps(job, indent=4))
-    nfs.move(job_path + ".tmp", job_path)
-    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
-
-    # assert resources exist
-    # ----------------------
-    assert op.exists(job["corsika_primary_path"])
-    assert op.exists(job["merlict_plenoscope_propagator_path"])
-    assert op.exists(job["merlict_plenoscope_propagator_config_path"])
-    assert op.exists(job["plenoscope_scenery_path"])
-    assert op.exists(job["light_field_geometry_path"])
-    assert op.exists(job["trigger_geometry_path"])
-    logger.log("assert_resource_paths_exist.")
-
-    # draw primaries
-    # --------------
-    corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
-        run_id=job["run_id"],
-        site=job["site"],
-        particle=job["particle"],
-        site_particle_deflection=job["site_particle_deflection"],
-        num_events=job["num_air_showers"],
-    )
-    logger.log("draw_primaries")
-
-    # tmp dir
-    # -------
-    if job["tmp_dir"] is None:
-        tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
-    else:
-        tmp_dir = op.join(job["tmp_dir"], run_id_str)
-        os.makedirs(tmp_dir, exist_ok=True)
-    logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
-
+def _run_corsika_and_grid_and_output_to_tmp_dir(
+    job,
+    logger,
+    tmp_dir,
+    run_id_str,
+    corsika_primary_steering,
+    tabrec,
+):
     # set up grid geometry
     # --------------------
     assert job["plenoscope_pointing"]["zenith_deg"] == 0.0
@@ -244,12 +208,12 @@ def run_job(job):
 
     # loop over air-showers
     # ---------------------
-    tabrec = {}
     for level_key in table.STRUCTURE:
         tabrec[level_key] = []
     reuse_run_path = op.join(tmp_dir, run_id_str + "_reuse.tar")
     grid_histogram_filename = run_id_str + "_grid.tar"
     tmp_grid_histogram_path = op.join(tmp_dir, grid_histogram_filename)
+
     with tarfile.open(reuse_run_path, "w") as tarout, tarfile.open(
         tmp_grid_histogram_path, "w"
     ) as imgtar:
@@ -492,6 +456,72 @@ def run_job(job):
         op.join(job["log_dir"], run_id_str + "_corsika.stderr"),
     )
 
+    # export grid histograms
+    # ----------------------
+    nfs.copy(
+        src=tmp_grid_histogram_path,
+        dst=op.join(job["feature_dir"], grid_histogram_filename),
+    )
+    logger.log("export_grid_histograms")
+
+    return reuse_run_path, tabrec
+
+
+def run_job(job):
+    os.makedirs(job["log_dir"], exist_ok=True)
+    os.makedirs(job["past_trigger_dir"], exist_ok=True)
+    os.makedirs(job["past_trigger_reconstructed_cherenkov_dir"], exist_ok=True)
+    os.makedirs(job["feature_dir"], exist_ok=True)
+    run_id = job["run_id"]
+    run_id_str = "{:06d}".format(job["run_id"])
+    time_log_path = op.join(job["log_dir"], run_id_str + "_runtime.jsonl")
+    logger = logging.JsonlLog(time_log_path + ".tmp")
+    job_path = op.join(job["log_dir"], run_id_str + "_job.json")
+    with open(job_path + ".tmp", "wt") as f:
+        f.write(json.dumps(job, indent=4))
+    nfs.move(job_path + ".tmp", job_path)
+    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
+
+    # assert resources exist
+    # ----------------------
+    assert op.exists(job["corsika_primary_path"])
+    assert op.exists(job["merlict_plenoscope_propagator_path"])
+    assert op.exists(job["merlict_plenoscope_propagator_config_path"])
+    assert op.exists(job["plenoscope_scenery_path"])
+    assert op.exists(job["light_field_geometry_path"])
+    assert op.exists(job["trigger_geometry_path"])
+    logger.log("assert_resource_paths_exist.")
+
+    # draw primaries
+    # --------------
+    corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
+        run_id=job["run_id"],
+        site=job["site"],
+        particle=job["particle"],
+        site_particle_deflection=job["site_particle_deflection"],
+        num_events=job["num_air_showers"],
+    )
+    logger.log("draw_primaries")
+
+    # tmp dir
+    # -------
+    if job["tmp_dir"] is None:
+        tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
+    else:
+        tmp_dir = op.join(job["tmp_dir"], run_id_str)
+        os.makedirs(tmp_dir, exist_ok=True)
+    logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
+
+    tabrec = {}
+
+    reuse_run_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
+        job=job,
+        logger=logger,
+        tmp_dir=tmp_dir,
+        run_id_str=run_id_str,
+        corsika_primary_steering=corsika_primary_steering,
+        tabrec=tabrec)
+
     # run merlict
     # -----------
     merlict_run_path = op.join(tmp_dir, run_id_str + "_merlict.cp")
@@ -725,14 +755,6 @@ def run_job(job):
         dst=op.join(job["feature_dir"], table_filename),
     )
     logger.log("export_event_table")
-
-    # export grid histograms
-    # ----------------------
-    nfs.copy(
-        src=tmp_grid_histogram_path,
-        dst=op.join(job["feature_dir"], grid_histogram_filename),
-    )
-    logger.log("export_grid_histograms")
 
     # export past trigger
     # -------------------
