@@ -467,6 +467,45 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     return reuse_run_path, tabrec
 
 
+def _run_merlict(job, reuse_run_path, tmp_dir, run_id, run_id_str):
+    merlict_run_path = op.join(tmp_dir, run_id_str + "_merlict.cp")
+    if not op.exists(merlict_run_path):
+        merlict_rc = merlict.plenoscope_propagator(
+            corsika_run_path=reuse_run_path,
+            output_path=merlict_run_path,
+            light_field_geometry_path=job["light_field_geometry_path"],
+            merlict_plenoscope_propagator_path=job[
+                "merlict_plenoscope_propagator_path"
+            ],
+            merlict_plenoscope_propagator_config_path=job[
+                "merlict_plenoscope_propagator_config_path"
+            ],
+            random_seed=run_id,
+            stdout_postfix=".stdout",
+            stderr_postfix=".stderr",
+        )
+        nfs.copy(
+            merlict_run_path + ".stdout",
+            op.join(job["log_dir"], run_id_str + "_merlict.stdout"),
+        )
+        nfs.copy(
+            merlict_run_path + ".stderr",
+            op.join(job["log_dir"], run_id_str + "_merlict.stderr"),
+        )
+        assert merlict_rc == 0
+
+    return merlict_run_path
+
+
+def _assert_resources_exist(job):
+    assert op.exists(job["corsika_primary_path"])
+    assert op.exists(job["merlict_plenoscope_propagator_path"])
+    assert op.exists(job["merlict_plenoscope_propagator_config_path"])
+    assert op.exists(job["plenoscope_scenery_path"])
+    assert op.exists(job["light_field_geometry_path"])
+    assert op.exists(job["trigger_geometry_path"])
+
+
 def run_job(job):
     os.makedirs(job["log_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
@@ -482,14 +521,7 @@ def run_job(job):
     nfs.move(job_path + ".tmp", job_path)
     print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
 
-    # assert resources exist
-    # ----------------------
-    assert op.exists(job["corsika_primary_path"])
-    assert op.exists(job["merlict_plenoscope_propagator_path"])
-    assert op.exists(job["merlict_plenoscope_propagator_config_path"])
-    assert op.exists(job["plenoscope_scenery_path"])
-    assert op.exists(job["light_field_geometry_path"])
-    assert op.exists(job["trigger_geometry_path"])
+    _assert_resources_exist(job=job)
     logger.log("assert_resource_paths_exist.")
 
     # draw primaries
@@ -520,35 +552,17 @@ def run_job(job):
         tmp_dir=tmp_dir,
         run_id_str=run_id_str,
         corsika_primary_steering=corsika_primary_steering,
-        tabrec=tabrec)
+        tabrec=tabrec
+    )
 
-    # run merlict
-    # -----------
-    merlict_run_path = op.join(tmp_dir, run_id_str + "_merlict.cp")
-    if not op.exists(merlict_run_path):
-        merlict_rc = merlict.plenoscope_propagator(
-            corsika_run_path=reuse_run_path,
-            output_path=merlict_run_path,
-            light_field_geometry_path=job["light_field_geometry_path"],
-            merlict_plenoscope_propagator_path=job[
-                "merlict_plenoscope_propagator_path"
-            ],
-            merlict_plenoscope_propagator_config_path=job[
-                "merlict_plenoscope_propagator_config_path"
-            ],
-            random_seed=run_id,
-            stdout_postfix=".stdout",
-            stderr_postfix=".stderr",
-        )
-        nfs.copy(
-            merlict_run_path + ".stdout",
-            op.join(job["log_dir"], run_id_str + "_merlict.stdout"),
-        )
-        nfs.copy(
-            merlict_run_path + ".stderr",
-            op.join(job["log_dir"], run_id_str + "_merlict.stderr"),
-        )
-        assert merlict_rc == 0
+    merlict_run_path = _run_merlict(
+        job=job,
+        reuse_run_path=reuse_run_path,
+        tmp_dir=tmp_dir,
+        run_id=run_id,
+        run_id_str=run_id_str
+    )
+
     logger.log("merlict")
 
     if not job["keep_tmp"]:
