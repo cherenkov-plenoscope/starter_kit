@@ -14,6 +14,7 @@ from . import json_numpy
 from . import provenance
 from . import create_test_tables
 from . import reconstruction
+from . import utils
 
 import os
 import numpy as np
@@ -263,7 +264,7 @@ def _estimate_light_field_geometry_of_plenoscope(
     qmrlog("Estimating light-field-geometry.")
 
     if op.exists(opj(out_absdir, "light_field_geometry")):
-        assert map_and_reduce.contains_same_bytes(
+        assert utils.contains_same_bytes(
             opj(out_absdir, "input", "scenery", "scenery.json"),
             opj(
                 out_absdir,

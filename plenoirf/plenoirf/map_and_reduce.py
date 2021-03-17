@@ -300,13 +300,6 @@ def make_example_job(
     return job
 
 
-def contains_same_bytes(path_a, path_b):
-    with open(path_a, "rb") as fa, open(path_b, "rb") as fb:
-        a_bytes = fa.read()
-        b_bytes = fb.read()
-        return a_bytes == b_bytes
-
-
 def ray_plane_x_y_intersection(support, direction, plane_z):
     direction = np.array(direction)
     support = np.array(support)
