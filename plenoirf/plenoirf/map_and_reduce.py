@@ -17,7 +17,6 @@ import tempfile
 import pandas
 import json
 import tarfile
-import io
 import corsika_primary_wrapper as cpw
 import plenopy as pl
 import sparse_numeric_table as spt
@@ -260,14 +259,6 @@ def draw_corsika_primary_steering(
     return steering
 
 
-def tar_append(tarout, file_name, file_bytes):
-    with io.BytesIO() as buff:
-        info = tarfile.TarInfo(file_name)
-        info.size = buff.write(file_bytes)
-        buff.seek(0)
-        tarout.addfile(info, buff)
-
-
 def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = cherenkovsise_dict
@@ -394,7 +385,11 @@ def run_job(job):
         )
         logger.log("corskia_startup")
 
-        tar_append(tarout, cpw.TARIO_RUNH_FILENAME, corsika_run.runh.tobytes())
+        utils.tar_append(
+            tarout=tarout,
+            file_name=cpw.TARIO_RUNH_FILENAME,
+            file_bytes=corsika_run.runh.tobytes()
+        )
         for event_idx, corsika_airshower in enumerate(corsika_run):
             event_header, cherenkov_bunches = corsika_airshower
 
@@ -545,7 +540,7 @@ def run_job(job):
                 threshold_num_photons=job["grid"]["threshold_num_photons"],
                 bin_idxs_limitation=grid_bin_idxs_limitation,
             )
-            tar_append(
+            utils.tar_append(
                 tarout=imgtar,
                 file_name=random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
                     seed=event_seed
@@ -584,12 +579,12 @@ def run_job(job):
                 reuse_evth[cpw.I_EVTH_Y_CORE_CM(reuse=1)] = (
                     cpw.M2CM * reuse_event["core_y_m"]
                 )
-                tar_append(
+                utils.tar_append(
                     tarout=tarout,
                     file_name=cpw.TARIO_EVTH_FILENAME.format(event_id),
                     file_bytes=reuse_evth.tobytes(),
                 )
-                tar_append(
+                utils.tar_append(
                     tarout=tarout,
                     file_name=cpw.TARIO_BUNCHES_FILENAME.format(event_id),
                     file_bytes=reuse_event["cherenkov_bunches"].tobytes(),
