@@ -108,8 +108,6 @@ ARTIFICIAL_CORE_LIMITATION["helium"] = ARTIFICIAL_CORE_LIMITATION[
     "proton"
 ].copy()
 
-# ARTIFICIAL_CORE_LIMITATION = None
-
 
 def make_example_job(
     run_dir,
@@ -117,6 +115,7 @@ def make_example_job(
     example_dirname="_testing",
     particle_key="proton",
     site_key="namibia",
+    artificial_core_limitation=None,
 ):
     deflection_table = magnetic_deflection.read(
         work_dir=op.join(run_dir, "magnetic_deflection"), style="dict",
@@ -154,6 +153,7 @@ def make_example_job(
         "keep_tmp": True,
         "tmp_dir": op.join(test_dir, "tmp"),
         "date": utils.date_dict_now(),
-        "artificial_core_limitation": ARTIFICIAL_CORE_LIMITATION[particle_key],
+        "artificial_core_limitation": artificial_core_limitation,
     }
+
     return job
