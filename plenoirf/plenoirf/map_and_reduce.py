@@ -603,11 +603,17 @@ def _assert_resources_exist(job):
     assert op.exists(job["trigger_geometry_path"])
 
 
-def run_job(job):
+def _make_output_dirs(job):
     os.makedirs(job["log_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_reconstructed_cherenkov_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
+
+
+def run_job(job):
+    _assert_resources_exist(job=job)
+    _make_output_dirs(job=job)
+
     run_id = job["run_id"]
     run_id_str = "{:06d}".format(job["run_id"])
     time_log_path = op.join(job["log_dir"], run_id_str + "_runtime.jsonl")
@@ -617,9 +623,6 @@ def run_job(job):
         f.write(json.dumps(job, indent=4))
     nfs.move(job_path + ".tmp", job_path)
     print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
-
-    _assert_resources_exist(job=job)
-    logger.log("assert_resource_paths_exist.")
 
     # draw primaries
     # --------------
