@@ -165,11 +165,15 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
         tarfout.add(event_dir, arcname=".")
 
 
+def _run_id_str(job):
+    form = '{:0' + str(random_seed.STRUCTURE.NUM_DIGITS_RUN_ID) + 'd}'
+    return form.format(job["run_id"])
+
+
 def _run_corsika_and_grid_and_output_to_tmp_dir(
     job,
     logger,
     tmp_dir,
-    run_id_str,
     corsika_primary_steering,
     tabrec,
 ):
@@ -210,8 +214,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     # ---------------------
     for level_key in table.STRUCTURE:
         tabrec[level_key] = []
-    reuse_run_path = op.join(tmp_dir, run_id_str + "_reuse.tar")
-    grid_histogram_filename = run_id_str + "_grid.tar"
+    reuse_run_path = op.join(tmp_dir, _run_id_str(job) + "_reuse.tar")
+    grid_histogram_filename = _run_id_str(job) + "_grid.tar"
     tmp_grid_histogram_path = op.join(tmp_dir, grid_histogram_filename)
 
     with tarfile.open(reuse_run_path, "w") as tarout, tarfile.open(
@@ -449,11 +453,11 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
 
     nfs.copy(
         op.join(tmp_dir, "corsika.stdout"),
-        op.join(job["log_dir"], run_id_str + "_corsika.stdout"),
+        op.join(job["log_dir"], _run_id_str(job) + "_corsika.stdout"),
     )
     nfs.copy(
         op.join(tmp_dir, "corsika.stderr"),
-        op.join(job["log_dir"], run_id_str + "_corsika.stderr"),
+        op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
 
     # export grid histograms
@@ -467,8 +471,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     return reuse_run_path, tabrec
 
 
-def _run_merlict(job, reuse_run_path, tmp_dir, run_id, run_id_str):
-    merlict_run_path = op.join(tmp_dir, run_id_str + "_merlict.cp")
+def _run_merlict(job, reuse_run_path, tmp_dir):
+    merlict_run_path = op.join(tmp_dir, _run_id_str(job) + "_merlict.cp")
     if not op.exists(merlict_run_path):
         merlict_rc = merlict.plenoscope_propagator(
             corsika_run_path=reuse_run_path,
@@ -480,17 +484,17 @@ def _run_merlict(job, reuse_run_path, tmp_dir, run_id, run_id_str):
             merlict_plenoscope_propagator_config_path=job[
                 "merlict_plenoscope_propagator_config_path"
             ],
-            random_seed=run_id,
+            random_seed=job["run_id"],
             stdout_postfix=".stdout",
             stderr_postfix=".stderr",
         )
         nfs.copy(
             merlict_run_path + ".stdout",
-            op.join(job["log_dir"], run_id_str + "_merlict.stdout"),
+            op.join(job["log_dir"], _run_id_str(job) + "_merlict.stdout"),
         )
         nfs.copy(
             merlict_run_path + ".stderr",
-            op.join(job["log_dir"], run_id_str + "_merlict.stderr"),
+            op.join(job["log_dir"], _run_id_str(job) + "_merlict.stderr"),
         )
         assert merlict_rc == 0
 
@@ -614,11 +618,9 @@ def run_job(job):
     _assert_resources_exist(job=job)
     _make_output_dirs(job=job)
 
-    run_id = job["run_id"]
-    run_id_str = "{:06d}".format(job["run_id"])
-    time_log_path = op.join(job["log_dir"], run_id_str + "_runtime.jsonl")
+    time_log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
     logger = logging.JsonlLog(time_log_path + ".tmp")
-    job_path = op.join(job["log_dir"], run_id_str + "_job.json")
+    job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
     with open(job_path + ".tmp", "wt") as f:
         f.write(json.dumps(job, indent=4))
     nfs.move(job_path + ".tmp", job_path)
@@ -640,7 +642,7 @@ def run_job(job):
     if job["tmp_dir"] is None:
         tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
     else:
-        tmp_dir = op.join(job["tmp_dir"], run_id_str)
+        tmp_dir = op.join(job["tmp_dir"], _run_id_str(job))
         os.makedirs(tmp_dir, exist_ok=True)
     logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
 
@@ -650,7 +652,6 @@ def run_job(job):
         job=job,
         logger=logger,
         tmp_dir=tmp_dir,
-        run_id_str=run_id_str,
         corsika_primary_steering=corsika_primary_steering,
         tabrec=tabrec
     )
@@ -659,8 +660,6 @@ def run_job(job):
         job=job,
         reuse_run_path=reuse_run_path,
         tmp_dir=tmp_dir,
-        run_id=run_id,
-        run_id_str=run_id_str
     )
 
     logger.log("merlict")
@@ -694,7 +693,7 @@ def run_job(job):
     roi_cfg = job["cherenkov_classification"]["region_of_interest"]
     dbscan_cfg = job["cherenkov_classification"]
 
-    cer_phs_basename = run_id_str + "_reconstructed_cherenkov.tar"
+    cer_phs_basename = _run_id_str(job) + "_reconstructed_cherenkov.tar"
     with pl.photon_stream.loph.LopfTarWriter(
         path=os.path.join(tmp_dir, cer_phs_basename),
         id_num_digits=random_seed.STRUCTURE.NUM_DIGITS_SEED,
@@ -779,7 +778,7 @@ def run_job(job):
 
     # export event-table
     # ------------------
-    table_filename = run_id_str + "_event_table.tar"
+    table_filename = _run_id_str(job) + "_event_table.tar"
     event_table = spt.table_of_records_to_sparse_numeric_table(
         table_records=tabrec, structure=table.STRUCTURE
     )
