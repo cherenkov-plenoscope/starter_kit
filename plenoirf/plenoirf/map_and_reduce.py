@@ -497,6 +497,103 @@ def _run_merlict(job, reuse_run_path, tmp_dir, run_id, run_id_str):
     return merlict_run_path
 
 
+def _run_loose_trigger(
+    job,
+    tabrec,
+    merlict_run_path,
+    light_field_geometry,
+    trigger_geometry,
+    tmp_dir
+):
+    # loop over sensor responses
+    # --------------------------
+    merlict_run = pl.Run(merlict_run_path)
+    table_past_trigger = []
+    tmp_past_trigger_dir = op.join(tmp_dir, "past_trigger")
+    os.makedirs(tmp_past_trigger_dir, exist_ok=True)
+
+    for event in merlict_run:
+        # id
+        # --
+        cevth = event.simulation_truth.event.corsika_event_header.raw
+        run_id = int(cevth[cpw.I_EVTH_RUN_NUMBER])
+        airshower_id = int(cevth[cpw.I_EVTH_EVENT_NUMBER])
+        ide = {
+            spt.IDX: random_seed.STRUCTURE.random_seed_based_on(
+                run_id=run_id, airshower_id=airshower_id
+            )
+        }
+
+        # apply loose trigger
+        # -------------------
+        (
+            trigger_responses,
+            max_response_in_focus_vs_timeslices,
+        ) = pl.simple_trigger.estimate.first_stage(
+            raw_sensor_response=event.raw_sensor_response,
+            light_field_geometry=light_field_geometry,
+            trigger_geometry=trigger_geometry,
+            integration_time_slices=(
+                job["sum_trigger"]["integration_time_slices"]
+            ),
+        )
+
+        trg_resp_path = op.join(event._path, "refocus_sum_trigger.json")
+        with open(trg_resp_path, "wt") as f:
+            f.write(json.dumps(trigger_responses, indent=4))
+
+        trg_maxr_path = op.join(
+            event._path, "refocus_sum_trigger.focii_x_time_slices.uint32"
+        )
+        with open(trg_maxr_path, "wb") as f:
+            f.write(max_response_in_focus_vs_timeslices.tobytes())
+
+        # export trigger-truth
+        # --------------------
+        trgtru = ide.copy()
+        trgtru["num_cherenkov_pe"] = int(
+            event.simulation_truth.detector.number_air_shower_pulses()
+        )
+        trgtru["response_pe"] = int(
+            np.max([focus["response_pe"] for focus in trigger_responses])
+        )
+        for o in range(len(trigger_responses)):
+            trgtru["focus_{:02d}_response_pe".format(o)] = int(
+                trigger_responses[o]["response_pe"]
+            )
+        tabrec["trigger"].append(trgtru)
+
+        # passing loose trigger
+        # ---------------------
+        if trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]:
+            ptp = ide.copy()
+            ptp["tmp_path"] = event._path
+            ptp[
+                "unique_id_str"
+            ] = random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
+                seed=ptp[spt.IDX]
+            )
+            table_past_trigger.append(ptp)
+
+            # export past loose trigger
+            # -------------------------
+            ptrg = ide.copy()
+            tabrec["pasttrigger"].append(ptrg)
+
+            pl.tools.acp_format.compress_event_in_place(ptp["tmp_path"])
+            final_tarname = ptp["unique_id_str"] + ".tar"
+            plenoscope_event_dir_to_tar(
+                event_dir=ptp["tmp_path"],
+                output_tar_path=op.join(tmp_past_trigger_dir, final_tarname),
+            )
+            nfs.copy(
+                src=op.join(tmp_past_trigger_dir, final_tarname),
+                dst=op.join(job["past_trigger_dir"], final_tarname),
+            )
+
+    return tabrec, table_past_trigger, tmp_past_trigger_dir
+
+
 def _assert_resources_exist(job):
     assert op.exists(job["corsika_primary_path"])
     assert op.exists(job["merlict_plenoscope_propagator_path"])
@@ -568,8 +665,8 @@ def run_job(job):
     if not job["keep_tmp"]:
         os.remove(reuse_run_path)
 
-    # prepare trigger
-    # ---------------
+    # prepare loose trigger
+    # ----------------------
     light_field_geometry = pl.LightFieldGeometry(
         path=job["light_field_geometry_path"]
     )
@@ -578,80 +675,15 @@ def run_job(job):
     )
     logger.log("prepare_trigger")
 
-    # loop over sensor responses
-    # --------------------------
-    merlict_run = pl.Run(merlict_run_path)
-    table_past_trigger = []
-    tmp_past_trigger_dir = op.join(tmp_dir, "past_trigger")
-    os.makedirs(tmp_past_trigger_dir, exist_ok=True)
+    tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
+        job=job,
+        tabrec=tabrec,
+        merlict_run_path=merlict_run_path,
+        light_field_geometry=light_field_geometry,
+        trigger_geometry=trigger_geometry,
+        tmp_dir=tmp_dir
+    )
 
-    for event in merlict_run:
-        # id
-        # --
-        cevth = event.simulation_truth.event.corsika_event_header.raw
-        run_id = int(cevth[cpw.I_EVTH_RUN_NUMBER])
-        airshower_id = int(cevth[cpw.I_EVTH_EVENT_NUMBER])
-        ide = {
-            spt.IDX: random_seed.STRUCTURE.random_seed_based_on(
-                run_id=run_id, airshower_id=airshower_id
-            )
-        }
-
-        # apply trigger
-        # -------------
-        (
-            trigger_responses,
-            max_response_in_focus_vs_timeslices,
-        ) = pl.simple_trigger.estimate.first_stage(
-            raw_sensor_response=event.raw_sensor_response,
-            light_field_geometry=light_field_geometry,
-            trigger_geometry=trigger_geometry,
-            integration_time_slices=(
-                job["sum_trigger"]["integration_time_slices"]
-            ),
-        )
-
-        trg_resp_path = op.join(event._path, "refocus_sum_trigger.json")
-        with open(trg_resp_path, "wt") as f:
-            f.write(json.dumps(trigger_responses, indent=4))
-
-        trg_maxr_path = op.join(
-            event._path, "refocus_sum_trigger.focii_x_time_slices.uint32"
-        )
-        with open(trg_maxr_path, "wb") as f:
-            f.write(max_response_in_focus_vs_timeslices.tobytes())
-
-        # export trigger-truth
-        # --------------------
-        trgtru = ide.copy()
-        trgtru["num_cherenkov_pe"] = int(
-            event.simulation_truth.detector.number_air_shower_pulses()
-        )
-        trgtru["response_pe"] = int(
-            np.max([focus["response_pe"] for focus in trigger_responses])
-        )
-        for o in range(len(trigger_responses)):
-            trgtru["focus_{:02d}_response_pe".format(o)] = int(
-                trigger_responses[o]["response_pe"]
-            )
-        tabrec["trigger"].append(trgtru)
-
-        # passing trigger
-        # ---------------
-        if trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]:
-            ptp = ide.copy()
-            ptp["tmp_path"] = event._path
-            ptp[
-                "unique_id_str"
-            ] = random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
-                seed=ptp[spt.IDX]
-            )
-            table_past_trigger.append(ptp)
-
-            # export past trigger
-            # -------------------
-            ptrg = ide.copy()
-            tabrec["pasttrigger"].append(ptrg)
     logger.log("trigger")
 
     # Cherenkov classification
@@ -722,18 +754,18 @@ def run_job(job):
     # extracting features
     # -------------------
     light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
-        light_field_geometry=merlict_run.light_field_geometry)
+        light_field_geometry=light_field_geometry)
 
     logger.log("light_field_geometry_addons")
 
     for pt in table_past_trigger:
         event = pl.Event(
             path=pt["tmp_path"],
-            light_field_geometry=merlict_run.light_field_geometry)
+            light_field_geometry=light_field_geometry)
         try:
             lfft = pl.features.extract_features(
                 cherenkov_photons=event.cherenkov_photons,
-                light_field_geometry=merlict_run.light_field_geometry,
+                light_field_geometry=light_field_geometry,
                 light_field_geometry_addon=light_field_geometry_addon,
             )
             lfft[spt.IDX] = pt[spt.IDX]
@@ -741,17 +773,6 @@ def run_job(job):
         except Exception as excep:
             print("idx:", pt[spt.IDX], excep)
     logger.log("feature_extraction")
-
-    # compress and tar
-    # ----------------
-    for pt in table_past_trigger:
-        pl.tools.acp_format.compress_event_in_place(pt["tmp_path"])
-        final_tarname = pt["unique_id_str"] + ".tar"
-        plenoscope_event_dir_to_tar(
-            event_dir=pt["tmp_path"],
-            output_tar_path=op.join(tmp_past_trigger_dir, final_tarname),
-        )
-    logger.log("past_trigger_gz_tar")
 
     # export event-table
     # ------------------
@@ -769,16 +790,6 @@ def run_job(job):
         dst=op.join(job["feature_dir"], table_filename),
     )
     logger.log("export_event_table")
-
-    # export past trigger
-    # -------------------
-    for pt in table_past_trigger:
-        final_tarname = pt["unique_id_str"] + ".tar"
-        nfs.copy(
-            src=op.join(tmp_past_trigger_dir, final_tarname),
-            dst=op.join(job["past_trigger_dir"], final_tarname),
-        )
-    logger.log("export_past_trigger")
 
     # export past_trigger reconstructed cherenkov
     # -------------------------------------------
