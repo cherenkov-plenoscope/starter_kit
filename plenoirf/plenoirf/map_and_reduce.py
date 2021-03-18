@@ -595,102 +595,14 @@ def _run_loose_trigger(
     return tabrec, table_past_trigger, tmp_past_trigger_dir
 
 
-def _assert_resources_exist(job):
-    assert op.exists(job["corsika_primary_path"])
-    assert op.exists(job["merlict_plenoscope_propagator_path"])
-    assert op.exists(job["merlict_plenoscope_propagator_config_path"])
-    assert op.exists(job["plenoscope_scenery_path"])
-    assert op.exists(job["light_field_geometry_path"])
-    assert op.exists(job["trigger_geometry_path"])
-
-
-def _make_output_dirs(job):
-    os.makedirs(job["log_dir"], exist_ok=True)
-    os.makedirs(job["past_trigger_dir"], exist_ok=True)
-    os.makedirs(job["past_trigger_reconstructed_cherenkov_dir"], exist_ok=True)
-    os.makedirs(job["feature_dir"], exist_ok=True)
-
-
-def run_job(job):
-    _assert_resources_exist(job=job)
-    _make_output_dirs(job=job)
-
-    prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
-
-    time_log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
-    logger = logging.JsonlLog(time_log_path + ".tmp")
-    job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
-    with open(job_path + ".tmp", "wt") as f:
-        f.write(json.dumps(job, indent=4))
-    nfs.move(job_path + ".tmp", job_path)
-    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
-
-    # draw primaries
-    # --------------
-    corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
-        run_id=job["run_id"],
-        site=job["site"],
-        particle=job["particle"],
-        site_particle_deflection=job["site_particle_deflection"],
-        num_events=job["num_air_showers"],
-        prng=prng,
-    )
-    logger.log("draw_primaries")
-
-    # tmp dir
-    # -------
-    if job["tmp_dir"] is None:
-        tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
-    else:
-        tmp_dir = op.join(job["tmp_dir"], _run_id_str(job))
-        os.makedirs(tmp_dir, exist_ok=True)
-    logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
-
-    tabrec = {}
-
-    reuse_run_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
-        job=job,
-        prng=prng,
-        logger=logger,
-        tmp_dir=tmp_dir,
-        corsika_primary_steering=corsika_primary_steering,
-        tabrec=tabrec
-    )
-
-    merlict_run_path = _run_merlict(
-        job=job,
-        reuse_run_path=reuse_run_path,
-        tmp_dir=tmp_dir,
-    )
-
-    logger.log("merlict")
-
-    if not job["keep_tmp"]:
-        os.remove(reuse_run_path)
-
-    # prepare loose trigger
-    # ----------------------
-    light_field_geometry = pl.LightFieldGeometry(
-        path=job["light_field_geometry_path"]
-    )
-    trigger_geometry = pl.simple_trigger.io.read_trigger_geometry_from_path(
-        path=job["trigger_geometry_path"]
-    )
-    logger.log("prepare_trigger")
-
-    tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
-        job=job,
-        tabrec=tabrec,
-        merlict_run_path=merlict_run_path,
-        light_field_geometry=light_field_geometry,
-        trigger_geometry=trigger_geometry,
-        tmp_dir=tmp_dir
-    )
-
-    logger.log("trigger")
-
-    # Cherenkov classification
-    # ------------------------
+def _classify_cherenkov_photons(
+    job,
+    tabrec,
+    tmp_dir,
+    table_past_trigger,
+    light_field_geometry,
+    trigger_geometry,
+):
     roi_cfg = job["cherenkov_classification"]["region_of_interest"]
     dbscan_cfg = job["cherenkov_classification"]
 
@@ -752,6 +664,120 @@ def run_job(job):
             )
             cer_phs_run.add(identity=ptp[spt.IDX], phs=cer_phs)
 
+    nfs.copy(
+        src=op.join(tmp_dir, cer_phs_basename),
+        dst=op.join(
+            job["past_trigger_reconstructed_cherenkov_dir"], cer_phs_basename
+        ),
+    )
+    return tabrec
+
+
+def _assert_resources_exist(job):
+    assert op.exists(job["corsika_primary_path"])
+    assert op.exists(job["merlict_plenoscope_propagator_path"])
+    assert op.exists(job["merlict_plenoscope_propagator_config_path"])
+    assert op.exists(job["plenoscope_scenery_path"])
+    assert op.exists(job["light_field_geometry_path"])
+    assert op.exists(job["trigger_geometry_path"])
+
+
+def _make_output_dirs(job):
+    os.makedirs(job["log_dir"], exist_ok=True)
+    os.makedirs(job["past_trigger_dir"], exist_ok=True)
+    os.makedirs(job["past_trigger_reconstructed_cherenkov_dir"], exist_ok=True)
+    os.makedirs(job["feature_dir"], exist_ok=True)
+
+
+def run_job(job):
+    _assert_resources_exist(job=job)
+    _make_output_dirs(job=job)
+
+    prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
+
+    time_log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
+    logger = logging.JsonlLog(time_log_path + ".tmp")
+    job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
+    with open(job_path + ".tmp", "wt") as f:
+        f.write(json.dumps(job, indent=4))
+    nfs.move(job_path + ".tmp", job_path)
+    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
+
+    # draw primary particles
+    # ----------------------
+    corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
+        run_id=job["run_id"],
+        site=job["site"],
+        particle=job["particle"],
+        site_particle_deflection=job["site_particle_deflection"],
+        num_events=job["num_air_showers"],
+        prng=prng,
+    )
+    logger.log("draw_primaries")
+
+    # tmp dir
+    # -------
+    if job["tmp_dir"] is None:
+        tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
+    else:
+        tmp_dir = op.join(job["tmp_dir"], _run_id_str(job))
+        os.makedirs(tmp_dir, exist_ok=True)
+    logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
+
+    tabrec = {}
+
+    reuse_run_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
+        job=job,
+        prng=prng,
+        logger=logger,
+        tmp_dir=tmp_dir,
+        corsika_primary_steering=corsika_primary_steering,
+        tabrec=tabrec
+    )
+
+    merlict_run_path = _run_merlict(
+        job=job,
+        reuse_run_path=reuse_run_path,
+        tmp_dir=tmp_dir,
+    )
+
+    logger.log("merlict")
+
+    if not job["keep_tmp"]:
+        os.remove(reuse_run_path)
+
+
+    light_field_geometry = pl.LightFieldGeometry(
+        path=job["light_field_geometry_path"]
+    )
+    trigger_geometry = pl.simple_trigger.io.read_trigger_geometry_from_path(
+        path=job["trigger_geometry_path"]
+    )
+    logger.log("prepare_trigger")
+
+
+    # apply loose trigger
+    # -------------------
+    tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
+        job=job,
+        tabrec=tabrec,
+        merlict_run_path=merlict_run_path,
+        light_field_geometry=light_field_geometry,
+        trigger_geometry=trigger_geometry,
+        tmp_dir=tmp_dir
+    )
+    logger.log("loose_trigger")
+
+    # Cherenkov classification
+    # ------------------------
+    tabrec = _classify_cherenkov_photons(
+        job=job,
+        tabrec=tabrec,
+        tmp_dir=tmp_dir,
+        table_past_trigger=table_past_trigger,
+        light_field_geometry=light_field_geometry,
+        trigger_geometry=trigger_geometry,
+    )
     logger.log("cherenkov_classification")
 
     # extracting features
@@ -793,15 +819,6 @@ def run_job(job):
         dst=op.join(job["feature_dir"], table_filename),
     )
     logger.log("export_event_table")
-
-    # export past_trigger reconstructed cherenkov
-    # -------------------------------------------
-    nfs.copy(
-        src=op.join(tmp_dir, cer_phs_basename),
-        dst=op.join(
-            job["past_trigger_reconstructed_cherenkov_dir"], cer_phs_basename
-        ),
-    )
 
     # end
     # ---
