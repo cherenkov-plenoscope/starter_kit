@@ -64,15 +64,16 @@ def write_ascii_table_of_photons(path, supports, directions, wavelengths):
 [7] wavelength
 """
 
-def sample_2D_points_within_radius(radius, size):
-    rho = np.sqrt(np.random.uniform(0, 1, size)) * radius
-    phi = np.random.uniform(0, 2 * np.pi, size)
+def sample_2D_points_within_radius(prng, radius, size):
+    rho = np.sqrt(prng.uniform(0, 1, size)) * radius
+    phi = prng.uniform(0, 2 * np.pi, size)
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
     return x, y
 
 
 def line_source_illuminating_xy_disc(
+    prng,
     number_photons,
     line_start_x,
     line_start_y,
@@ -92,7 +93,7 @@ def line_source_illuminating_xy_disc(
     line_direction = line_end - line_start
     line_length = np.linalg.norm(line_direction)
     line_direction = line_direction/line_length
-    alphas = np.random.uniform(
+    alphas = prng.uniform(
         low=0,
         high=line_length,
         size=number_photons)
@@ -102,6 +103,7 @@ def line_source_illuminating_xy_disc(
 
     intersections_on_disc = np.zeros(shape=(number_photons, 3))
     ix, iy = sample_2D_points_within_radius(
+        prng=prng,
         radius=disc_radius,
         size=number_photons)
     intersections_on_disc[:, 0] = ix + disc_x
@@ -116,6 +118,7 @@ def line_source_illuminating_xy_disc(
 
 
 def vertex_wire_source_illuminating_xy_disc(
+    prng,
     number_photons,
     vertices,
     edges,
@@ -142,6 +145,7 @@ def vertex_wire_source_illuminating_xy_disc(
     dirs = []
     for e in range(edges.shape[0]):
         supp_ed, dirs_ed = line_source_illuminating_xy_disc(
+            prng=prng,
             number_photons=number_photons_on_edge[e],
             line_start_x=vertices[edges[e, 0]][0],
             line_start_y=vertices[edges[e, 0]][1],

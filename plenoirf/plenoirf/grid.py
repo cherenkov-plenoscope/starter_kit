@@ -146,6 +146,7 @@ def assign(
     shift_x,
     shift_y,
     threshold_num_photons,
+    prng,
     bin_idxs_limitation=None,
 ):
     pgg = grid_geometry
@@ -187,7 +188,7 @@ def assign(
     if num_bins_above_threshold == 0:
         choice = None
     else:
-        _choice_bin = np.random.choice(np.arange(num_bins_above_threshold))
+        _choice_bin = prng.choice(np.arange(num_bins_above_threshold))
         bin_idx_x = bin_idxs_above_threshold[0][_choice_bin]
         bin_idx_y = bin_idxs_above_threshold[1][_choice_bin]
         num_photons_in_bin = grid_histogram[bin_idx_x, bin_idx_y]

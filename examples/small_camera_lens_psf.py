@@ -127,21 +127,22 @@ sensor_responses = []
 focal_ratio_imaging_reflector = 1.5
 max_incident_angle = np.arctan(0.5/focal_ratio_imaging_reflector)
 
+prng = np.random.Generator(np.random.MT19937(seed=0))
+
 incident_directions = np.linspace(0, max_incident_angle, 6)
 for idx, incident_direction in enumerate(incident_directions):
 
     # photons
     # -------
-    np.random.seed(0)
     num_photons = 1000*1000
 
     supports = np.zeros(shape=(num_photons, 3))
     supports[:, 2] = 1.3*focal_length
-    supports[:, 0] = np.random.uniform(
+    supports[:, 0] = prng.uniform(
         low=-outer_radius,
         high=outer_radius,
         size=num_photons)
-    supports[:, 1] = np.random.uniform(
+    supports[:, 1] = prng.uniform(
         low=-outer_radius,
         high=outer_radius,
         size=num_photons)

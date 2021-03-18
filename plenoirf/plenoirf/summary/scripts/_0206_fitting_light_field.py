@@ -278,47 +278,6 @@ def run_job(job):
             print(e)
             print("failed airshower_id", airshower_id)
 
-        """
-        lf = LightField(
-            cx=lfg.cx_mean[lixel_ids],
-            cy=lfg.cy_mean[lixel_ids],
-            x=lfg.x_mean[lixel_ids],
-            y=lfg.y_mean[lixel_ids],
-            time_slice=phs["photons"]["arrival_time_slices"],
-            cxcy_radius_0=np.deg2rad(limits["max_cxcy_radius"]),
-            cxcy_radius_1=np.deg2rad(1.1 * limits["max_cxcy_radius"]),
-            xy_radius_0=limits["max_core_radius"],
-            xy_radius_1=1.1 * limits["max_core_radius"],
-        )
-
-        error_cxcy = np.deg2rad(0.1)
-        error_xy = 10.0
-        guess_cx = np.median(lf.cx)
-        guess_cy = np.median(lf.cy)
-        scan_cr = np.deg2rad(1.1 * limits["max_cxcy_radius"])
-        guess_x = np.random.normal(loc=0.0, scale=error_xy)
-        guess_y = np.random.normal(loc=0.0, scale=error_xy)
-        scan_r = 1.1 * limits["max_core_radius"]
-
-        mm = Minuit(
-            fcn=lf.model,
-            source_cx=guess_cx,
-            error_source_cx=error_cxcy,
-            limit_source_cx=(guess_cx - scan_cr, guess_cx + scan_cr),
-            source_cy=guess_cy,
-            error_source_cy=error_cxcy,
-            limit_source_cy=(guess_cy - scan_cr, guess_cy + scan_cr),
-            core_x=guess_x,
-            error_core_x=error_xy,
-            limit_core_x=(guess_x - scan_r, guess_x + scan_r),
-            core_y=guess_y,
-            error_core_y=error_xy,
-            limit_core_y=(guess_y - scan_r, guess_y + scan_r),
-            print_level=0,
-            errordef=Minuit.LEAST_SQUARES,
-        )
-        mm.migrad()
-        """
     return result
 
 

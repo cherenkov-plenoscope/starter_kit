@@ -380,6 +380,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 shift_x=grhi["total_shift_x_m"],
                 shift_y=grhi["total_shift_y_m"],
                 threshold_num_photons=job["grid"]["threshold_num_photons"],
+                prng=prng,
                 bin_idxs_limitation=grid_bin_idxs_limitation,
             )
             utils.tar_append(

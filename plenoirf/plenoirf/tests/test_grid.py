@@ -18,6 +18,7 @@ PLENOSCOPE_GRID_GEOMETRY = plenoirf.grid.init_geometry(
 
 
 def make_cherenkov_bunches(
+    prng,
     cx_deg,
     cx_std_deg,
     cy_deg,
@@ -29,39 +30,40 @@ def make_cherenkov_bunches(
     num_bunches,
 ):
     cherenkov_bunches = np.zeros(shape=(num_bunches, 8))
-    cherenkov_bunches[:, cpw.IX] = np.random.normal(
+    cherenkov_bunches[:, cpw.IX] = prng.normal(
         loc=x_m * cpw.M2CM, scale=x_std_m * cpw.M2CM, size=num_bunches
     )
-    cherenkov_bunches[:, cpw.IY] = np.random.normal(
+    cherenkov_bunches[:, cpw.IY] = prng.normal(
         loc=y_m * cpw.M2CM, scale=y_std_m * cpw.M2CM, size=num_bunches
     )
-    cherenkov_bunches[:, cpw.ICX] = np.random.normal(
+    cherenkov_bunches[:, cpw.ICX] = prng.normal(
         loc=np.deg2rad(cx_deg), scale=np.deg2rad(cx_std_deg), size=num_bunches
     )
-    cherenkov_bunches[:, cpw.ICY] = np.random.normal(
+    cherenkov_bunches[:, cpw.ICY] = prng.normal(
         loc=np.deg2rad(cy_deg), scale=np.deg2rad(cy_std_deg), size=num_bunches
     )
-    cherenkov_bunches[:, cpw.ITIME] = np.random.normal(
+    cherenkov_bunches[:, cpw.ITIME] = prng.normal(
         loc=100e-6, scale=10e-9, size=num_bunches
     )
-    cherenkov_bunches[:, cpw.IZEM] = np.random.uniform(
+    cherenkov_bunches[:, cpw.IZEM] = prng.uniform(
         low=1e3 * cpw.M2CM, high=1e4 * cpw.M2CM, size=num_bunches
     )
-    cherenkov_bunches[:, cpw.IBSIZE] = np.random.uniform(
+    cherenkov_bunches[:, cpw.IBSIZE] = prng.uniform(
         low=0.9, high=1.0, size=num_bunches
     )
-    cherenkov_bunches[:, cpw.IWVL] = np.random.uniform(
+    cherenkov_bunches[:, cpw.IWVL] = prng.uniform(
         low=250e-9, high=700e-9, size=num_bunches
     )
     return cherenkov_bunches
 
 
 def test_normalize_matrix_rows():
-    np.random.seed(0)
+    prng = np.random.Generator(np.random.MT19937(seed=0))
+
     mat = np.zeros(shape=(100, 3))
-    mat[:, 0] = np.random.uniform(size=100)
-    mat[:, 1] = np.random.uniform(size=100)
-    mat[:, 2] = np.random.uniform(size=100)
+    mat[:, 0] = prng.uniform(size=100)
+    mat[:, 1] = prng.uniform(size=100)
+    mat[:, 2] = prng.uniform(size=100)
     for row in mat:
         assert np.abs(np.linalg.norm(row) - 1) > 1e-6
     norm_mat = plenoirf.grid._normalize_rows_in_matrix(mat=mat)
@@ -70,8 +72,10 @@ def test_normalize_matrix_rows():
 
 
 def test_grid_assign_head_on():
-    np.random.seed(0)
+    prng = np.random.Generator(np.random.PCG64(seed=0))
+
     cherenkov_bunches = make_cherenkov_bunches(
+        prng=prng,
         cx_deg=0.0,
         cx_std_deg=1.0,
         cy_deg=0.0,
@@ -88,24 +92,26 @@ def test_grid_assign_head_on():
         shift_x=0.0,
         shift_y=0.0,
         threshold_num_photons=50,
+        prng=prng,
         bin_idxs_limitation=None,
     )
     assert result["random_choice"] is not None
     assert result["num_bins_above_threshold"] > 30
     assert (
-        NUM_BINS_RADIUS - 2
+        NUM_BINS_RADIUS - 3
         < result["random_choice"]["bin_idx_x"]
-        < NUM_BINS_RADIUS + 2
+        < NUM_BINS_RADIUS + 3
     )
     assert (
-        NUM_BINS_RADIUS - 2
+        NUM_BINS_RADIUS - 3
         < result["random_choice"]["bin_idx_y"]
-        < NUM_BINS_RADIUS + 2
+        < NUM_BINS_RADIUS + 3
     )
 
 
 def test_shower_cx_moves_out_of_fov():
-    np.random.seed(0)
+    prng = np.random.Generator(np.random.MT19937(seed=0))
+
     expectation = {
         0.0: 30,
         3.25: 10,
@@ -113,6 +119,7 @@ def test_shower_cx_moves_out_of_fov():
     }
     for shower_cx_deg in expectation:
         cherenkov_bunches = make_cherenkov_bunches(
+            prng=prng,
             cx_deg=shower_cx_deg,
             cx_std_deg=1.0,
             cy_deg=0.0,
@@ -129,13 +136,15 @@ def test_shower_cx_moves_out_of_fov():
             shift_x=0.0,
             shift_y=0.0,
             threshold_num_photons=50,
+            prng=prng,
             bin_idxs_limitation=None,
         )
         assert result["num_bins_above_threshold"] >= expectation[shower_cx_deg]
 
 
 def test_shower_size_increases():
-    np.random.seed(0)
+    prng = np.random.Generator(np.random.MT19937(seed=0))
+
     expectation = {
         1e3: 0,
         1e4: 30,
@@ -143,6 +152,7 @@ def test_shower_size_increases():
     }
     for shower_size in expectation:
         cherenkov_bunches = make_cherenkov_bunches(
+            prng=prng,
             cx_deg=0.0,
             cx_std_deg=1.0,
             cy_deg=0.0,
@@ -159,6 +169,7 @@ def test_shower_size_increases():
             shift_x=0.0,
             shift_y=0.0,
             threshold_num_photons=50,
+            prng=prng,
             bin_idxs_limitation=None,
         )
         assert result["num_bins_above_threshold"] >= expectation[shower_size]
@@ -180,7 +191,8 @@ def test_shower_x_moves_not_counteracted():
     x = 0          1e3           2e3           3e3
 
     """
-    np.random.seed(0)
+    prng = np.random.Generator(np.random.MT19937(seed=0))
+
     scenarios = {
         1: {"core_wrt_obslvl": 0e3, "num_bins_above_threshold": 2},
         2: {"core_wrt_obslvl": 1e3, "num_bins_above_threshold": 2},
@@ -189,6 +201,7 @@ def test_shower_x_moves_not_counteracted():
     }
     for s in scenarios:
         cherenkov_bunches = make_cherenkov_bunches(
+            prng=prng,
             cx_deg=0.0,
             cx_std_deg=1.0,
             cy_deg=0.0,
@@ -205,6 +218,7 @@ def test_shower_x_moves_not_counteracted():
             shift_x=0.0,
             shift_y=0.0,
             threshold_num_photons=50,
+            prng=prng,
             bin_idxs_limitation=None,
         )
         assert (
@@ -250,7 +264,8 @@ def test_shower_x_moves_but_counteracted():
     x = 0          1e3           2e3           3e3
 
     """
-    np.random.seed(0)
+    prng = np.random.Generator(np.random.MT19937(seed=0))
+
     scenarios = {
         1: {"core_wrt_obslvl": 0e3, "num_bins_above_threshold": 2},
         2: {"core_wrt_obslvl": 1e3, "num_bins_above_threshold": 2},
@@ -259,6 +274,7 @@ def test_shower_x_moves_but_counteracted():
     }
     for s in scenarios:
         cherenkov_bunches = make_cherenkov_bunches(
+            prng=prng,
             cx_deg=0.0,
             cx_std_deg=1.0,
             cy_deg=0.0,
@@ -275,6 +291,7 @@ def test_shower_x_moves_but_counteracted():
             shift_x=-1.0 * scenarios[s]["core_wrt_obslvl"],
             shift_y=0.0,
             threshold_num_photons=50,
+            prng=prng,
             bin_idxs_limitation=None,
         )
         assert (
