@@ -68,7 +68,7 @@ cherenkovpool
 
 
 def create_dummy_table(
-    config=cfg, num_primary=1000, structrue=table.STRUCTURE
+    prng, config=cfg, num_primary=1000, structrue=table.STRUCTURE,
 ):
     ones = np.ones(num_primary)
     t = {}
@@ -76,6 +76,7 @@ def create_dummy_table(
     # primary
     # -------
     _energies = cpw.random_distributions.draw_power_law(
+        prng=prng,
         lower_limit=config["energy"]["lower"],
         upper_limit=config["energy"]["upper"],
         power_slope=config["energy"]["power_slope"],
@@ -125,6 +126,7 @@ def create_dummy_table(
     _zd = []
     for i in range(lvl["num"]):
         _az_, _zd_ = cpw.random_distributions.draw_azimuth_zenith_in_viewcone(
+            prng=prng,
             azimuth_rad=primary["magnet_azimuth_rad"][i],
             zenith_rad=primary["magnet_zenith_rad"][i],
             min_scatter_opening_angle_rad=0.0,
@@ -149,7 +151,7 @@ def create_dummy_table(
     primary["momentum_y_GeV_per_c"] = 0.0 * lvl["ones"]
     primary["momentum_z_GeV_per_c"] = -1.0 * lvl["energy_GeV"]
 
-    primary["first_interaction_height_asl_m"] = np.random.uniform(
+    primary["first_interaction_height_asl_m"] = prng.uniform(
         low=1e4, high=1e5, size=lvl["num"]
     )
     primary["starting_height_asl_m"] = 120.0e3 * lvl["ones"]
@@ -163,7 +165,7 @@ def create_dummy_table(
     # -------------
     cherenkovsize = {}
     cherenkovsize[spt.IDX] = lvl["idx"]
-    cherenkovsize["num_bunches"] = 1e3 * lvl["energy_GeV"] + np.random.normal(
+    cherenkovsize["num_bunches"] = 1e3 * lvl["energy_GeV"] + prng.normal(
         loc=0.0, scale=3e2, size=lvl["num"]
     )
     cherenkovsize["num_bunches"][cherenkovsize["num_bunches"] < 0] = 0
@@ -179,25 +181,25 @@ def create_dummy_table(
     # -------------
     cherenkovpool = {}
     cherenkovpool[spt.IDX] = _plvl["idx"]
-    cherenkovpool["maximum_asl_m"] = np.random.normal(
+    cherenkovpool["maximum_asl_m"] = prng.normal(
         loc=1e4, scale=3e3, size=_plvl["num"]
     )
-    cherenkovpool["wavelength_median_nm"] = np.random.normal(
+    cherenkovpool["wavelength_median_nm"] = prng.normal(
         loc=433.0, scale=10.0, size=_plvl["num"]
     )
-    cherenkovpool["cx_median_rad"] = np.random.normal(
+    cherenkovpool["cx_median_rad"] = prng.normal(
         loc=0.0, scale=config["max_scatter_rad"], size=_plvl["num"]
     )
-    cherenkovpool["cy_median_rad"] = np.random.normal(
+    cherenkovpool["cy_median_rad"] = prng.normal(
         loc=0.0, scale=config["max_scatter_rad"], size=_plvl["num"]
     )
     cherenkovpool["x_median_m"] = _plvl["magnet_cherenkov_pool_x_m"] + (
         1e3 / _plvl["energy_GeV"]
-    ) * np.random.normal(loc=0.0, scale=1.0, size=_plvl["num"])
+    ) * prng.normal(loc=0.0, scale=1.0, size=_plvl["num"])
     cherenkovpool["y_median_m"] = _plvl["magnet_cherenkov_pool_y_m"] + (
         1e3 / _plvl["energy_GeV"]
-    ) * np.random.normal(loc=0.0, scale=1.0, size=_plvl["num"])
-    cherenkovpool["bunch_size_median"] = np.random.uniform(
+    ) * prng.normal(loc=0.0, scale=1.0, size=_plvl["num"])
+    cherenkovpool["bunch_size_median"] = prng.uniform(
         low=0.9, high=1.0, size=_plvl["num"]
     )
     t["cherenkovpool"] = cherenkovpool
@@ -215,12 +217,12 @@ def create_dummy_table(
     grid["pointing_direction_x"] = 0.0 * lvl["ones"]
     grid["pointing_direction_y"] = 0.0 * lvl["ones"]
     grid["pointing_direction_z"] = 1.0 * lvl["ones"]
-    grid["random_shift_x_m"] = np.random.uniform(
+    grid["random_shift_x_m"] = prng.uniform(
         low=-0.5 * config["grid"]["bin_width_m"],
         high=0.5 * config["grid"]["bin_width_m"],
         size=lvl["num"],
     )
-    grid["random_shift_y_m"] = np.random.uniform(
+    grid["random_shift_y_m"] = prng.uniform(
         low=-0.5 * config["grid"]["bin_width_m"],
         high=0.5 * config["grid"]["bin_width_m"],
         size=lvl["num"],
@@ -239,7 +241,7 @@ def create_dummy_table(
             xp=config["grid"]["energy_GeV"],
             fp=config["grid"]["num_bins_above_threshold"],
         )
-        + np.random.normal(loc=0.0, scale=5.0, size=lvl["num"])
+        + prng.normal(loc=0.0, scale=5.0, size=lvl["num"])
     )
     grid["num_bins_above_threshold"][grid["num_bins_above_threshold"] < 0] = 0
     grid["num_bins_above_threshold"] = grid["num_bins_above_threshold"].astype(
@@ -266,7 +268,7 @@ def create_dummy_table(
     # -------------
     cherenkovsizepart = {}
     cherenkovsizepart[spt.IDX] = _glvl["idx"]
-    cherenkovsizepart["num_bunches"] = _glvl["energy_GeV"] * np.random.normal(
+    cherenkovsizepart["num_bunches"] = _glvl["energy_GeV"] * prng.normal(
         loc=10.0, scale=10.0, size=_glvl["num"]
     )
     cherenkovsizepart["num_bunches"][cherenkovsizepart["num_bunches"] < 0] = 0
@@ -284,26 +286,26 @@ def create_dummy_table(
     # -------------
     cherenkovpoolpart = {}
     cherenkovpoolpart[spt.IDX] = _pplvl["idx"]
-    cherenkovpoolpart["maximum_asl_m"] = np.random.normal(
+    cherenkovpoolpart["maximum_asl_m"] = prng.normal(
         loc=1e4, scale=3e3, size=_pplvl["num"]
     )
-    cherenkovpoolpart["wavelength_median_nm"] = np.random.normal(
+    cherenkovpoolpart["wavelength_median_nm"] = prng.normal(
         loc=433.0, scale=10.0, size=_pplvl["num"]
     )
-    cherenkovpoolpart["cx_median_rad"] = np.random.normal(
+    cherenkovpoolpart["cx_median_rad"] = prng.normal(
         loc=0.0, scale=config["max_scatter_rad"], size=_pplvl["num"]
     )
-    cherenkovpoolpart["cy_median_rad"] = np.random.normal(
+    cherenkovpoolpart["cy_median_rad"] = prng.normal(
         loc=0.0, scale=config["max_scatter_rad"], size=_pplvl["num"]
     )
     cherenkovpoolpart["x_median_m"] = 0.0 * _pplvl["ones"]
     cherenkovpoolpart["y_median_m"] = 0.0 * _pplvl["ones"]
-    cherenkovpoolpart["bunch_size_median"] = np.random.uniform(
+    cherenkovpoolpart["bunch_size_median"] = prng.uniform(
         low=0.9, high=1.0, size=_pplvl["num"]
     )
     t["cherenkovpoolpart"] = cherenkovpoolpart
 
-    _past_trigger_ridxs = np.random.choice(
+    _past_trigger_ridxs = prng.choice(
         np.arange(_pplvl["idx"].shape[0]),
         size=int(
             _pplvl["idx"].shape[0]
@@ -369,7 +371,7 @@ def create_dummy_table(
     cercls["num_false_positives"] = (
         0.2 * trigger["num_cherenkov_pe"][past_trigger_mask]
     )
-    cercls["num_true_negatives"] = np.random.normal(
+    cercls["num_true_negatives"] = prng.normal(
         loc=1e6, scale=1e3, size=_ptlvl["num"]
     )
     t["cherenkovclassification"] = cercls
@@ -388,22 +390,22 @@ def create_dummy_table(
     features["aperture_num_islands_watershed_rel_thr_2"] = _ptlvl["ones"]
     features["aperture_num_islands_watershed_rel_thr_4"] = _ptlvl["ones"]
     features["aperture_num_islands_watershed_rel_thr_8"] = _ptlvl["ones"]
-    features["light_front_cx"] = np.random.normal(
+    features["light_front_cx"] = prng.normal(
         loc=0.0, scale=np.deg2rad(3.25), size=_ptlvl["num"]
     )
-    features["light_front_cy"] = np.random.normal(
+    features["light_front_cy"] = prng.normal(
         loc=0.0, scale=np.deg2rad(3.25), size=_ptlvl["num"]
     )
     features["image_infinity_cx_mean"] = features[
         "light_front_cy"
-    ] + np.random.normal(loc=0.0, scale=np.deg2rad(0.25), size=_ptlvl["num"])
+    ] + prng.normal(loc=0.0, scale=np.deg2rad(0.25), size=_ptlvl["num"])
     features["image_infinity_cy_mean"] = features[
         "light_front_cx"
-    ] + np.random.normal(loc=0.0, scale=np.deg2rad(0.25), size=_ptlvl["num"])
-    features["image_infinity_cx_std"] = np.random.normal(
+    ] + prng.normal(loc=0.0, scale=np.deg2rad(0.25), size=_ptlvl["num"])
+    features["image_infinity_cx_std"] = prng.normal(
         loc=0.0, scale=np.deg2rad(0.1), size=_ptlvl["num"]
     )
-    features["image_infinity_cy_std"] = np.random.normal(
+    features["image_infinity_cy_std"] = prng.normal(
         loc=0.0, scale=np.deg2rad(0.1), size=_ptlvl["num"]
     )
     features["image_infinity_num_photons_on_edge_field_of_view"] = _ptlvl[
@@ -412,16 +414,16 @@ def create_dummy_table(
     features["image_smallest_ellipse_object_distance"] = _ptlvl["ones"]
     features["image_smallest_ellipse_solid_angle"] = _ptlvl["ones"]
     features["image_smallest_ellipse_half_depth"] = _ptlvl["ones"]
-    features["image_half_depth_shift_cx"] = np.random.normal(
+    features["image_half_depth_shift_cx"] = prng.normal(
         loc=0.0, scale=np.deg2rad(0.5), size=_ptlvl["num"]
     )
-    features["image_half_depth_shift_cy"] = np.random.normal(
+    features["image_half_depth_shift_cy"] = prng.normal(
         loc=0.0, scale=np.deg2rad(0.5), size=_ptlvl["num"]
     )
     features[
         "image_smallest_ellipse_num_photons_on_edge_field_of_view"
     ] = _ptlvl["ones"]
-    features["image_num_islands"] = np.random.uniform(
+    features["image_num_islands"] = prng.uniform(
         low=1, high=2, size=_ptlvl["num"]
     )
 

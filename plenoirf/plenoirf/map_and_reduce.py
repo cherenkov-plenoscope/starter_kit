@@ -172,6 +172,7 @@ def _run_id_str(job):
 
 def _run_corsika_and_grid_and_output_to_tmp_dir(
     job,
+    prng,
     logger,
     tmp_dir,
     corsika_primary_steering,
@@ -250,10 +251,6 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 run_id=run_id, airshower_id=event_id
             )
 
-            # random seed
-            # -----------
-            np.random.seed(event_seed)
-
             # export primary table
             # --------------------
             prim = ide.copy()
@@ -312,7 +309,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
 
             # assign grid
             # -----------
-            grid_random_shift_x, grid_random_shift_y = np.random.uniform(
+            grid_random_shift_x, grid_random_shift_y = prng.uniform(
                 low=-0.5 * grid_geometry["bin_width"],
                 high=0.5 * grid_geometry["bin_width"],
                 size=2,
@@ -618,6 +615,8 @@ def run_job(job):
     _assert_resources_exist(job=job)
     _make_output_dirs(job=job)
 
+    prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
+
     time_log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
     logger = logging.JsonlLog(time_log_path + ".tmp")
     job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
@@ -634,6 +633,7 @@ def run_job(job):
         particle=job["particle"],
         site_particle_deflection=job["site_particle_deflection"],
         num_events=job["num_air_showers"],
+        prng=prng,
     )
     logger.log("draw_primaries")
 
@@ -650,6 +650,7 @@ def run_job(job):
 
     reuse_run_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
         job=job,
+        prng=prng,
         logger=logger,
         tmp_dir=tmp_dir,
         corsika_primary_steering=corsika_primary_steering,
