@@ -217,11 +217,11 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     # ---------------------
     for level_key in table.STRUCTURE:
         tabrec[level_key] = []
-    reuse_run_path = op.join(tmp_dir, _run_id_str(job) + "_reuse.tar")
+    cherenkov_pools_path = op.join(tmp_dir, "cherenkov_pools.tar")
     grid_histogram_filename = _run_id_str(job) + "_grid.tar"
     tmp_grid_histogram_path = op.join(tmp_dir, grid_histogram_filename)
 
-    with tarfile.open(reuse_run_path, "w") as tarout, tarfile.open(
+    with tarfile.open(cherenkov_pools_path, "w") as tarout, tarfile.open(
         tmp_grid_histogram_path, "w"
     ) as imgtar:
 
@@ -468,14 +468,14 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     )
     logger.log("export_grid_histograms")
 
-    return reuse_run_path, tabrec
+    return cherenkov_pools_path, tabrec
 
 
-def _run_merlict(job, reuse_run_path, tmp_dir):
+def _run_merlict(job, cherenkov_pools_path, tmp_dir):
     merlict_run_path = op.join(tmp_dir, _run_id_str(job) + "_merlict.cp")
     if not op.exists(merlict_run_path):
         merlict_rc = merlict.plenoscope_propagator(
-            corsika_run_path=reuse_run_path,
+            corsika_run_path=cherenkov_pools_path,
             output_path=merlict_run_path,
             light_field_geometry_path=job["light_field_geometry_path"],
             merlict_plenoscope_propagator_path=job[
@@ -729,7 +729,7 @@ def run_job(job):
 
     tabrec = {}
 
-    reuse_run_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
+    cherenkov_pools_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
         job=job,
         prng=prng,
         logger=logger,
@@ -740,14 +740,14 @@ def run_job(job):
 
     merlict_run_path = _run_merlict(
         job=job,
-        reuse_run_path=reuse_run_path,
+        cherenkov_pools_path=cherenkov_pools_path,
         tmp_dir=tmp_dir,
     )
 
     logger.log("merlict")
 
     if not job["keep_tmp"]:
-        os.remove(reuse_run_path)
+        os.remove(cherenkov_pools_path)
 
 
     light_field_geometry = pl.LightFieldGeometry(
