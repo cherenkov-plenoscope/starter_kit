@@ -606,9 +606,8 @@ def _classify_cherenkov_photons(
     roi_cfg = job["cherenkov_classification"]["region_of_interest"]
     dbscan_cfg = job["cherenkov_classification"]
 
-    cer_phs_basename = _run_id_str(job) + "_reconstructed_cherenkov.tar"
     with pl.photon_stream.loph.LopfTarWriter(
-        path=os.path.join(tmp_dir, cer_phs_basename),
+        path=os.path.join(tmp_dir, "reconstructed_cherenkov.tar"),
         id_num_digits=random_seed.STRUCTURE.NUM_DIGITS_SEED,
     ) as cer_phs_run:
         for ptp in table_past_trigger:
@@ -665,9 +664,10 @@ def _classify_cherenkov_photons(
             cer_phs_run.add(identity=ptp[spt.IDX], phs=cer_phs)
 
     nfs.copy(
-        src=op.join(tmp_dir, cer_phs_basename),
+        src=op.join(tmp_dir, "reconstructed_cherenkov.tar"),
         dst=op.join(
-            job["past_trigger_reconstructed_cherenkov_dir"], cer_phs_basename
+            job["past_trigger_reconstructed_cherenkov_dir"],
+            _run_id_str(job=job) + "_reconstructed_cherenkov.tar"
         ),
     )
     return tabrec
