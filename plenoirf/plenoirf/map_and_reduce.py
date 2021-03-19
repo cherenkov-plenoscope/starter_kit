@@ -170,16 +170,7 @@ def _run_id_str(job):
     return form.format(job["run_id"])
 
 
-def _run_corsika_and_grid_and_output_to_tmp_dir(
-    job,
-    prng,
-    logger,
-    tmp_dir,
-    corsika_primary_steering,
-    tabrec,
-):
-    # set up grid geometry
-    # --------------------
+def _init_grid_geometry_from_job(job):
     assert job["plenoscope_pointing"]["zenith_deg"] == 0.0
     assert job["plenoscope_pointing"]["azimuth_deg"] == 0.0
     plenoscope_pointing_direction = np.array([0, 0, 1])  # For now this is fix.
@@ -209,7 +200,18 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         field_of_view_overhead=job["grid"]["field_of_view_overhead"],
         num_bins_radius=job["grid"]["num_bins_radius"],
     )
-    logger.log("init_grid_geometry")
+    return grid_geometry
+
+
+def _run_corsika_and_grid_and_output_to_tmp_dir(
+    job,
+    prng,
+    logger,
+    tmp_dir,
+    corsika_primary_steering,
+    tabrec,
+):
+    grid_geometry = _init_grid_geometry_from_job(job=job)
 
     # loop over air-showers
     # ---------------------
@@ -797,6 +799,7 @@ def run_job(job):
                 cherenkov_photons=event.cherenkov_photons,
                 light_field_geometry=light_field_geometry,
                 light_field_geometry_addon=light_field_geometry_addon,
+                prng=prng,
             )
             lfft[spt.IDX] = pt[spt.IDX]
             tabrec["features"].append(lfft)
