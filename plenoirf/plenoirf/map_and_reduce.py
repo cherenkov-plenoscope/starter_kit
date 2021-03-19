@@ -468,11 +468,11 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
 
 
 def _run_merlict(job, cherenkov_pools_path, tmp_dir):
-    merlict_run_path = op.join(tmp_dir, _run_id_str(job) + "_merlict.cp")
-    if not op.exists(merlict_run_path):
+    detector_responses_path = op.join(tmp_dir, "detector_responses")
+    if not op.exists(detector_responses_path):
         merlict_rc = merlict.plenoscope_propagator(
             corsika_run_path=cherenkov_pools_path,
-            output_path=merlict_run_path,
+            output_path=detector_responses_path,
             light_field_geometry_path=job["light_field_geometry_path"],
             merlict_plenoscope_propagator_path=job[
                 "merlict_plenoscope_propagator_path"
@@ -481,33 +481,34 @@ def _run_merlict(job, cherenkov_pools_path, tmp_dir):
                 "merlict_plenoscope_propagator_config_path"
             ],
             random_seed=job["run_id"],
-            stdout_postfix=".stdout",
-            stderr_postfix=".stderr",
+            photon_origins=True,
+            stdout_path=op.join(tmp_dir, "merlict.stdout"),
+            stderr_path=op.join(tmp_dir, "merlict.stderr"),
         )
         nfs.copy(
-            merlict_run_path + ".stdout",
+            op.join(tmp_dir, "merlict.stdout"),
             op.join(job["log_dir"], _run_id_str(job) + "_merlict.stdout"),
         )
         nfs.copy(
-            merlict_run_path + ".stderr",
+            op.join(tmp_dir, "merlict.stderr"),
             op.join(job["log_dir"], _run_id_str(job) + "_merlict.stderr"),
         )
         assert merlict_rc == 0
 
-    return merlict_run_path
+    return detector_responses_path
 
 
 def _run_loose_trigger(
     job,
     tabrec,
-    merlict_run_path,
+    detector_responses_path,
     light_field_geometry,
     trigger_geometry,
     tmp_dir
 ):
     # loop over sensor responses
     # --------------------------
-    merlict_run = pl.Run(merlict_run_path)
+    merlict_run = pl.Run(detector_responses_path)
     table_past_trigger = []
     tmp_past_trigger_dir = op.join(tmp_dir, "past_trigger")
     os.makedirs(tmp_past_trigger_dir, exist_ok=True)
@@ -734,7 +735,7 @@ def run_job(job):
         tabrec=tabrec
     )
 
-    merlict_run_path = _run_merlict(
+    detector_responses_path = _run_merlict(
         job=job,
         cherenkov_pools_path=cherenkov_pools_path,
         tmp_dir=tmp_dir,
@@ -760,7 +761,7 @@ def run_job(job):
     tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
         job=job,
         tabrec=tabrec,
-        merlict_run_path=merlict_run_path,
+        detector_responses_path=detector_responses_path,
         light_field_geometry=light_field_geometry,
         trigger_geometry=trigger_geometry,
         tmp_dir=tmp_dir
