@@ -689,6 +689,21 @@ def _make_output_dirs(job):
     os.makedirs(job["feature_dir"], exist_ok=True)
 
 
+def _export_event_table(job, tmp_dir, tabrec):
+    event_table = spt.table_of_records_to_sparse_numeric_table(
+        table_records=tabrec, structure=table.STRUCTURE
+    )
+    spt.write(
+        path=op.join(tmp_dir, "event_table.tar"),
+        table=event_table,
+        structure=table.STRUCTURE,
+    )
+    nfs.copy(
+        src=op.join(tmp_dir, "event_table.tar"),
+        dst=op.join(job["feature_dir"], _run_id_str(job) + "_event_table.tar"),
+    )
+
+
 def run_job(job):
     _assert_resources_exist(job=job)
     _make_output_dirs(job=job)
@@ -804,21 +819,7 @@ def run_job(job):
             print("idx:", pt[spt.IDX], excep)
     logger.log("feature_extraction")
 
-    # export event-table
-    # ------------------
-    table_filename = _run_id_str(job) + "_event_table.tar"
-    event_table = spt.table_of_records_to_sparse_numeric_table(
-        table_records=tabrec, structure=table.STRUCTURE
-    )
-    spt.write(
-        path=op.join(tmp_dir, table_filename),
-        table=event_table,
-        structure=table.STRUCTURE,
-    )
-    nfs.copy(
-        src=op.join(tmp_dir, table_filename),
-        dst=op.join(job["feature_dir"], table_filename),
-    )
+    _export_event_table(job=job, tmp_dir=tmp_dir, tabrec=tabrec)
     logger.log("export_event_table")
 
     # end
