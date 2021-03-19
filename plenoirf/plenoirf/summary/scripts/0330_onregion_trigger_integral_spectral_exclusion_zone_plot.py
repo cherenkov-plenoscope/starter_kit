@@ -38,7 +38,7 @@ energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
     + 1,
 )
-energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
+energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
 
 detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"

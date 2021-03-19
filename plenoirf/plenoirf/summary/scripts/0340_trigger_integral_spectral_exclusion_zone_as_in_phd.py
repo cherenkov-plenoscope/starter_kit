@@ -157,7 +157,7 @@ for site_key in irf_config["config"]["sites"]:
         * PHD_PSF_CONTAINMENT_FACTOR
     )
 
-    all_fov_energy_bin_centers = irf.summary.bin_centers(
+    all_fov_energy_bin_centers = irf.utils.bin_centers(
         bin_edges=np.array(
             all_fov_acceptance[site_key]["gamma"]["point"][
                 "energy_bin_edges_GeV"

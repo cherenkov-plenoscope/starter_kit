@@ -40,3 +40,15 @@ def ray_plane_x_y_intersection(support, direction, plane_z):
     intersection = support + ray_parameter * direction_norm
     assert np.abs(intersection[2] - plane_z) < 1e-3
     return intersection
+
+
+def bin_centers(bin_edges, weight_lower_edge=0.5):
+    assert weight_lower_edge >= 0.0 and weight_lower_edge <= 1.0
+    weight_upper_edge = 1.0 - weight_lower_edge
+    return (
+        weight_lower_edge * bin_edges[:-1] + weight_upper_edge * bin_edges[1:]
+    )
+
+
+def bin_width(bin_edges):
+    return bin_edges[1:] - bin_edges[:-1]

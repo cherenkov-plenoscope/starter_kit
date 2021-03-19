@@ -31,7 +31,7 @@ fine_energy_bin_edges = np.geomspace(
     energy_upper,
     sum_config["energy_binning"]["num_bins"]["interpolation"] + 1,
 )
-fine_energy_bin_centers = irf.summary.bin_centers(fine_energy_bin_edges)
+fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]

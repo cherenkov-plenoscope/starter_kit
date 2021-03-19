@@ -31,7 +31,7 @@ energy_upper_edge = sum_config["energy_binning"]["upper_edge_GeV"]
 energy_bin_edges = np.geomspace(
     energy_lower_edge, energy_upper_edge, num_energy_bins + 1
 )
-energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
+energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
 
 theta_square_bin_edges_deg2 = np.linspace(
     0,

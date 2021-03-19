@@ -29,7 +29,7 @@ fine_energy_bin_edges = np.geomspace(
     energy_upper,
     sum_config["energy_binning"]["num_bins"]["interpolation"] + 1,
 )
-fine_energy_bin_centers = irf.summary.bin_centers(fine_energy_bin_edges)
+fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
 analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]

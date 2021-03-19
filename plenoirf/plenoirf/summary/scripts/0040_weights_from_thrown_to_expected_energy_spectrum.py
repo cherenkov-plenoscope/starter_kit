@@ -46,7 +46,7 @@ _fine_energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["upper_edge_GeV"],
     num_fine_energy_bins + 1,
 )
-airshower_rates["energy_bin_centers"] = irf.summary.bin_centers(
+airshower_rates["energy_bin_centers"] = irf.utils.bin_centers(
     _fine_energy_bin_edges
 )
 
@@ -93,7 +93,7 @@ tables = {}
 
 thrown_spectrum = {}
 thrown_spectrum["energy_bin_edges"] = energy_bin_edges
-thrown_spectrum["energy_bin_centers"] = irf.summary.bin_centers(
+thrown_spectrum["energy_bin_centers"] = irf.utils.bin_centers(
     thrown_spectrum["energy_bin_edges"]
 )
 thrown_spectrum["rates"] = {}

@@ -10,6 +10,7 @@ import subprocess
 import sparse_numeric_table as spt
 import glob
 from .. import features
+from .. import reconstruction
 from .. import analysis
 from .. import table
 from .. import provenance
@@ -228,18 +229,6 @@ def make_ratescan_trigger_thresholds(
     return tt
 
 
-def bin_centers(bin_edges, weight_lower_edge=0.5):
-    assert weight_lower_edge >= 0.0 and weight_lower_edge <= 1.0
-    weight_upper_edge = 1.0 - weight_lower_edge
-    return (
-        weight_lower_edge * bin_edges[:-1] + weight_upper_edge * bin_edges[1:]
-    )
-
-
-def bin_width(bin_edges):
-    return bin_edges[1:] - bin_edges[:-1]
-
-
 FERMI_3FGL_CRAB_NEBULA_NAME = "3FGL J0534.5+2201"
 FERMI_3FGL_PHD_THESIS_REFERENCE_SOURCE_NAME = "3FGL J2254.0+1608"
 
@@ -330,37 +319,8 @@ def _guess_summary_config(run_dir):
                 "pivot_energy_GeV": 1.0,
             },
         },
-        "reconstruction": {
-            "trajectory": {
-                "fuzzy_method": {
-                    "image": {
-                        "radius_deg": fov_radius_deg + 1.0,
-                        "num_bins": 128,
-                        "smoothing_kernel_width_deg": 0.3125,
-                    },
-                    "azimuth_ring": {
-                        "num_bins": 360,
-                        "radius_deg": 1.0,
-                        "smoothing_kernel_width_deg": 41.0,
-                    },
-                    "ellipse_model": {"min_num_photons": 3,},
-                },
-                "core_axis_fit": {
-                    "c_para": {
-                        "start_deg": -4.0,
-                        "stop_deg": 4.0,
-                        "num_supports": 128,
-                    },
-                    "r_para": {
-                        "start_m": -640,
-                        "stop_m": 640.0,
-                        "num_supports": 96,
-                    },
-                    "scan": {"num_bins_radius": 2,},
-                    "shower_model": {"c_perp_width_deg": 0.1,},
-                },
-            },
-        },
+        "reconstruction": reconstruction.trajectory.make_example_config_for_71m_plenoscope(
+            fov_radius_deg=fov_radius_deg)
     }
 
     summary_config["plot"] = {

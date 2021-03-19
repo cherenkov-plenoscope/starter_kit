@@ -34,7 +34,7 @@ energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["upper_edge_GeV"],
     num_energy_bins + 1,
 )
-energy_bin_centers = irf.summary.bin_centers(energy_bin_edges)
+energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
 
 max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
 min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
