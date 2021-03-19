@@ -158,6 +158,10 @@ EXAMPLE_CONFIG = {
         "neighborhood_radius_deg": 0.075,
         "direction_to_time_mixing_deg_per_s": 0.375e9,
     },
+    "reconstruction": {
+        "trajectory": reconstruction.trajectory.make_example_config_for_71m_plenoscope(
+            fov_radius_deg=3.25),
+    },
     "runs": {
         "gamma": {"num": 64, "first_run_id": 1},
         "electron": {"num": 64, "first_run_id": 1},

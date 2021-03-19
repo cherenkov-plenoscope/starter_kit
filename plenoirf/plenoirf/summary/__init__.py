@@ -319,8 +319,10 @@ def _guess_summary_config(run_dir):
                 "pivot_energy_GeV": 1.0,
             },
         },
-        "reconstruction": reconstruction.trajectory.make_example_config_for_71m_plenoscope(
-            fov_radius_deg=fov_radius_deg)
+        "reconstruction": {
+            "trajectory": reconstruction.trajectory.make_example_config_for_71m_plenoscope(
+                fov_radius_deg=fov_radius_deg),
+        }
     }
 
     summary_config["plot"] = {
