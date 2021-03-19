@@ -218,8 +218,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     for level_key in table.STRUCTURE:
         tabrec[level_key] = []
     cherenkov_pools_path = op.join(tmp_dir, "cherenkov_pools.tar")
-    grid_histogram_filename = _run_id_str(job) + "_grid.tar"
-    tmp_grid_histogram_path = op.join(tmp_dir, grid_histogram_filename)
+    tmp_grid_histogram_path = op.join(tmp_dir, "grid.tar")
 
     with tarfile.open(cherenkov_pools_path, "w") as tarout, tarfile.open(
         tmp_grid_histogram_path, "w"
@@ -459,12 +458,9 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         op.join(tmp_dir, "corsika.stderr"),
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
-
-    # export grid histograms
-    # ----------------------
     nfs.copy(
-        src=tmp_grid_histogram_path,
-        dst=op.join(job["feature_dir"], grid_histogram_filename),
+        src=op.join(tmp_dir, "grid.tar"),
+        dst=op.join(job["feature_dir"], _run_id_str(job) + "_grid.tar"),
     )
     logger.log("export_grid_histograms")
 
