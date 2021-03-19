@@ -9,17 +9,15 @@ def plenoscope_propagator(
     merlict_plenoscope_propagator_path,
     merlict_plenoscope_propagator_config_path,
     random_seed,
-    photon_origins=True,
-    stdout_postfix=".stdout",
-    stderr_postfix=".stderr",
+    photon_origins,
+    stdout_path,
+    stderr_path,
 ):
     """
     Calls the merlict Cherenkov-plenoscope propagation
     and saves the stdout and stderr
     """
-    with open(output_path + stdout_postfix, "w") as out, open(
-        output_path + stderr_postfix, "w"
-    ) as err:
+    with open(stdout_path, "w") as out, open(stderr_path, "w") as err:
         call = [
             merlict_plenoscope_propagator_path,
             "-l",
