@@ -206,7 +206,7 @@ def _init_grid_geometry_from_job(job):
 
 
 def _run_corsika_and_grid_and_output_to_tmp_dir(
-    job, prng, logger, tmp_dir, corsika_primary_steering, tabrec,
+    job, prng, tmp_dir, corsika_primary_steering, tabrec,
 ):
     grid_geometry = _init_grid_geometry_from_job(job=job)
 
@@ -225,7 +225,6 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             stdout_path=op.join(tmp_dir, "corsika.stdout"),
             stderr_path=op.join(tmp_dir, "corsika.stderr"),
         )
-        logger.log("corskia_startup")
 
         utils.tar_append(
             tarout=tarout,
@@ -334,7 +333,6 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 grhi["area_thrown_m2"] = (
                     grhi["num_bins_thrown"] * grid_geometry["bin_area"]
                 )
-                logger.log("artificial core limitation is ON")
             else:
                 grid_bin_idxs_limitation = None
                 grhi["artificial_core_limitation"] = 0
@@ -443,7 +441,6 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 rcor["core_x_m"] = reuse_event["core_x_m"]
                 rcor["core_y_m"] = reuse_event["core_y_m"]
                 tabrec["core"].append(rcor)
-    logger.log("grid")
 
     nfs.copy(
         op.join(tmp_dir, "corsika.stdout"),
@@ -453,11 +450,11 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         op.join(tmp_dir, "corsika.stderr"),
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
+
     nfs.copy(
         src=op.join(tmp_dir, "grid.tar"),
         dst=op.join(job["feature_dir"], _run_id_str(job) + "_grid.tar"),
     )
-    logger.log("export_grid_histograms")
 
     return cherenkov_pools_path, tabrec
 
@@ -717,7 +714,6 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
         op.join(tmp_dir, "reconstructed_cherenkov.tar")
     )
     for event in run:
-        compute_time_start = time.time()
         airshower_id, loph_record = event
 
         fit, debug = reconstruction.trajectory.estimate(
@@ -729,8 +725,6 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
             fuzzy_config=FUZZY_CONFIG,
             model_fit_config=MODEL_FIT_CONFIG,
         )
-
-        compute_time_stop = time.time()
 
         rec = {}
         rec[spt.IDX] = airshower_id
@@ -757,8 +751,6 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
         rec["fuzzy_main_axis_azimuth_uncertainty_rad"] = debug["fuzzy_result"][
             "main_axis_azimuth_uncertainty"
         ]
-
-        rec["_compute_time_s"] = compute_time_stop - compute_time_start
 
         tabrec["reconstructed_trajectory"].append(rec)
 
@@ -796,6 +788,13 @@ def _export_event_table(job, tmp_dir, tabrec):
     )
 
 
+def _init_table_records():
+    tabrec = {}
+    for level_key in table.STRUCTURE:
+        tabrec[level_key] = []
+    return tabrec
+
+
 def _export_job_to_log_dir(job):
     job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
     with open(job_path + ".tmp", "wt") as f:
@@ -804,21 +803,12 @@ def _export_job_to_log_dir(job):
 
 
 def run_job(job):
-    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
     _assert_resources_exist(job=job)
     _make_output_dirs(job=job)
     _export_job_to_log_dir(job=job)
 
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
-    time_log_path = op.join(
-        job["log_dir"], _run_id_str(job) + "_runtime.jsonl"
-    )
-    logger = logging.JsonlLog(time_log_path + ".tmp")
-
-
-    # draw primary particles
-    # ----------------------
     corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
         run_id=job["run_id"],
         site=job["site"],
@@ -827,25 +817,18 @@ def run_job(job):
         num_events=job["num_air_showers"],
         prng=prng,
     )
-    logger.log("draw_primaries")
 
-    # tmp dir
-    # -------
     if job["tmp_dir"] is None:
         tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
     else:
         tmp_dir = op.join(job["tmp_dir"], _run_id_str(job))
         os.makedirs(tmp_dir, exist_ok=True)
-    logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
 
-    tabrec = {}
-    for level_key in table.STRUCTURE:
-        tabrec[level_key] = []
+    tabrec = _init_table_records()
 
     cherenkov_pools_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
         job=job,
         prng=prng,
-        logger=logger,
         tmp_dir=tmp_dir,
         corsika_primary_steering=corsika_primary_steering,
         tabrec=tabrec,
@@ -854,8 +837,6 @@ def run_job(job):
     detector_responses_path = _run_merlict(
         job=job, cherenkov_pools_path=cherenkov_pools_path, tmp_dir=tmp_dir,
     )
-
-    logger.log("merlict")
 
     if not job["keep_tmp"]:
         os.remove(cherenkov_pools_path)
@@ -866,10 +847,7 @@ def run_job(job):
     trigger_geometry = pl.simple_trigger.io.read_trigger_geometry_from_path(
         path=job["trigger_geometry_path"]
     )
-    logger.log("prepare_trigger")
 
-    # apply loose trigger
-    # -------------------
     tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
         job=job,
         tabrec=tabrec,
@@ -878,10 +856,7 @@ def run_job(job):
         trigger_geometry=trigger_geometry,
         tmp_dir=tmp_dir,
     )
-    logger.log("loose_trigger")
 
-    # Cherenkov classification
-    # ------------------------
     tabrec = _classify_cherenkov_photons(
         job=job,
         tabrec=tabrec,
@@ -890,17 +865,13 @@ def run_job(job):
         light_field_geometry=light_field_geometry,
         trigger_geometry=trigger_geometry,
     )
-    logger.log("cherenkov_classification")
 
-    # extracting features
-    # -------------------
     tabrec = _extract_features(
         tabrec=tabrec,
         light_field_geometry=light_field_geometry,
         table_past_trigger=table_past_trigger,
         prng=prng,
     )
-    logger.log("feature_extraction")
 
     tabrec = _estimate_primary_trajectory(
         job=job,
@@ -910,12 +881,6 @@ def run_job(job):
     )
 
     _export_event_table(job=job, tmp_dir=tmp_dir, tabrec=tabrec)
-    logger.log("export_event_table")
-
-    # end
-    # ---
-    logger.log("end")
-    nfs.move(time_log_path + ".tmp", time_log_path)
 
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
@@ -928,6 +893,7 @@ def run_bundle(bundle):
         print(msg, file=sys.stdout)
         print(msg, file=sys.stderr)
         try:
+            print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
             result = run_job(job=job)
         except Exception as exception_msg:
             print(exception_msg, file=sys.stderr)

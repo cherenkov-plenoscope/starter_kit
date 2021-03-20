@@ -410,12 +410,6 @@ _traj["cy_rad"] = {
     "unit": "rad",
 }
 
-_traj["_compute_time_s"] = {
-    "dtype": "<f4",
-    "comment": "Time to reconstruct trajectory.",
-    "unit": "s",
-}
-
 _traj_cxy_comment_fuzzy = (
     "Primary particle's direction w.r.t. " +
     "pointing according to fuzzy-estimator."
