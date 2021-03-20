@@ -1,4 +1,5 @@
 import datetime
+import time
 import json
 import os
 import pandas as pd
@@ -7,20 +8,39 @@ import shutil
 
 class JsonlLog:
     def __init__(self, path):
-        self.last_log_time = datetime.datetime.now()
         self.path = path
         self.log("start")
 
-    def log(self, msg):
-        now = datetime.datetime.now()
+    def log(self, msg, delta=None):
+        unix_time_now = time.time()
+        date_now = datetime.datetime.fromtimestamp(unix_time_now)
         with open(self.path, "at") as f:
             d = {
-                "time": now.strftime("%Y-%m-%dT%H:%M:%S"),
-                "runtime": (now - self.last_log_time).total_seconds(),
+                "time": date_now.isoformat(),
+                "unix": unix_time_now,
                 "msg": msg,
             }
+            if delta:
+                d["delta"] = delta
             f.write(json.dumps(d) + "\n")
-        self.last_log_time = now
+
+
+class TimeDelta:
+    def __init__(self, log, msg):
+        self.log = log
+        self.msg = msg
+
+    def __enter__(self):
+        self.start = time.time()
+        self.log.log(msg=self.msg + ":start")
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.stop = time.time()
+        self.log.log(msg=self.msg + ":stop", delta=self.delta())
+
+    def delta(self):
+        return self.stop - self.start
 
 
 KEYS = [
@@ -60,6 +80,6 @@ def reduce_into_records(list_of_log_paths, keys=KEYS):
             for line in fin:
                 logline = json.loads(line)
                 if logline["msg"] in keys:
-                    run[logline["msg"]] = logline["runtime"]
+                    run[logline["msg"]] = logline["delta"]
             list_of_log_records.append(run)
     return list_of_log_records

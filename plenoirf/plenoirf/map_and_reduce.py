@@ -807,83 +807,104 @@ def run_job(job):
     _make_output_dirs(job=job)
     _export_job_to_log_dir(job=job)
 
+    jl = logging.JsonlLog(
+        path=op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
+    )
+    jl.log("starting run")
+
+    jl.log("init prng")
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
-    corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
-        run_id=job["run_id"],
-        site=job["site"],
-        particle=job["particle"],
-        site_particle_deflection=job["site_particle_deflection"],
-        num_events=job["num_air_showers"],
-        prng=prng,
-    )
+    with logging.TimeDelta(jl, "draw_primary"):
+        corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
+            run_id=job["run_id"],
+            site=job["site"],
+            particle=job["particle"],
+            site_particle_deflection=job["site_particle_deflection"],
+            num_events=job["num_air_showers"],
+            prng=prng,
+        )
 
     if job["tmp_dir"] is None:
         tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
     else:
         tmp_dir = op.join(job["tmp_dir"], _run_id_str(job))
         os.makedirs(tmp_dir, exist_ok=True)
+    jl.log("make tmp_dir: {:s}".format(tmp_dir))
 
     tabrec = _init_table_records()
 
-    cherenkov_pools_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
-        job=job,
-        prng=prng,
-        tmp_dir=tmp_dir,
-        corsika_primary_steering=corsika_primary_steering,
-        tabrec=tabrec,
-    )
-
-    detector_responses_path = _run_merlict(
-        job=job, cherenkov_pools_path=cherenkov_pools_path, tmp_dir=tmp_dir,
-    )
+    with logging.TimeDelta(jl, "corsika_and_grid"):
+        (
+            cherenkov_pools_path,
+            tabrec,
+        ) = _run_corsika_and_grid_and_output_to_tmp_dir(
+            job=job,
+            prng=prng,
+            tmp_dir=tmp_dir,
+            corsika_primary_steering=corsika_primary_steering,
+            tabrec=tabrec,
+        )
+    with logging.TimeDelta(jl, "merlict"):
+        detector_responses_path = _run_merlict(
+            job=job,
+            cherenkov_pools_path=cherenkov_pools_path,
+            tmp_dir=tmp_dir,
+        )
 
     if not job["keep_tmp"]:
         os.remove(cherenkov_pools_path)
 
-    light_field_geometry = pl.LightFieldGeometry(
-        path=job["light_field_geometry_path"]
-    )
-    trigger_geometry = pl.simple_trigger.io.read_trigger_geometry_from_path(
-        path=job["trigger_geometry_path"]
-    )
+    with logging.TimeDelta(jl, "read_geometry"):
+        light_field_geometry = pl.LightFieldGeometry(
+            path=job["light_field_geometry_path"]
+        )
+        trigger_geometry = pl.simple_trigger.io.read_trigger_geometry_from_path(
+            path=job["trigger_geometry_path"]
+        )
 
-    tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
-        job=job,
-        tabrec=tabrec,
-        detector_responses_path=detector_responses_path,
-        light_field_geometry=light_field_geometry,
-        trigger_geometry=trigger_geometry,
-        tmp_dir=tmp_dir,
-    )
+    with logging.TimeDelta(jl, "pass_loose_trigger"):
+        tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
+            job=job,
+            tabrec=tabrec,
+            detector_responses_path=detector_responses_path,
+            light_field_geometry=light_field_geometry,
+            trigger_geometry=trigger_geometry,
+            tmp_dir=tmp_dir,
+        )
 
-    tabrec = _classify_cherenkov_photons(
-        job=job,
-        tabrec=tabrec,
-        tmp_dir=tmp_dir,
-        table_past_trigger=table_past_trigger,
-        light_field_geometry=light_field_geometry,
-        trigger_geometry=trigger_geometry,
-    )
+    with logging.TimeDelta(jl, "classify_cherenkov"):
+        tabrec = _classify_cherenkov_photons(
+            job=job,
+            tabrec=tabrec,
+            tmp_dir=tmp_dir,
+            table_past_trigger=table_past_trigger,
+            light_field_geometry=light_field_geometry,
+            trigger_geometry=trigger_geometry,
+        )
 
-    tabrec = _extract_features(
-        tabrec=tabrec,
-        light_field_geometry=light_field_geometry,
-        table_past_trigger=table_past_trigger,
-        prng=prng,
-    )
+    with logging.TimeDelta(jl, "extract_features"):
+        tabrec = _extract_features(
+            tabrec=tabrec,
+            light_field_geometry=light_field_geometry,
+            table_past_trigger=table_past_trigger,
+            prng=prng,
+        )
 
-    tabrec = _estimate_primary_trajectory(
-        job=job,
-        tmp_dir=tmp_dir,
-        light_field_geometry=light_field_geometry,
-        tabrec=tabrec,
-    )
+    with logging.TimeDelta(jl, "estimate_primary_trajectory"):
+        tabrec = _estimate_primary_trajectory(
+            job=job,
+            tmp_dir=tmp_dir,
+            light_field_geometry=light_field_geometry,
+            tabrec=tabrec,
+        )
 
-    _export_event_table(job=job, tmp_dir=tmp_dir, tabrec=tabrec)
+    with logging.TimeDelta(jl, "export_event_table"):
+        _export_event_table(job=job, tmp_dir=tmp_dir, tabrec=tabrec)
 
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
+    jl.log("ending run")
 
 
 def run_bundle(bundle):
