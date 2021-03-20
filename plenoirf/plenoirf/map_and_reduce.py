@@ -168,7 +168,7 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
 
 
 def _run_id_str(job):
-    form = '{:0' + str(random_seed.STRUCTURE.NUM_DIGITS_RUN_ID) + 'd}'
+    form = "{:0" + str(random_seed.STRUCTURE.NUM_DIGITS_RUN_ID) + "d}"
     return form.format(job["run_id"])
 
 
@@ -206,12 +206,7 @@ def _init_grid_geometry_from_job(job):
 
 
 def _run_corsika_and_grid_and_output_to_tmp_dir(
-    job,
-    prng,
-    logger,
-    tmp_dir,
-    corsika_primary_steering,
-    tabrec,
+    job, prng, logger, tmp_dir, corsika_primary_steering, tabrec,
 ):
     grid_geometry = _init_grid_geometry_from_job(job=job)
 
@@ -235,7 +230,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         utils.tar_append(
             tarout=tarout,
             file_name=cpw.TARIO_RUNH_FILENAME,
-            file_bytes=corsika_run.runh.tobytes()
+            file_bytes=corsika_run.runh.tobytes(),
         )
         for event_idx, corsika_airshower in enumerate(corsika_run):
             event_header, cherenkov_bunches = corsika_airshower
@@ -504,7 +499,7 @@ def _run_loose_trigger(
     detector_responses_path,
     light_field_geometry,
     trigger_geometry,
-    tmp_dir
+    tmp_dir,
 ):
     # loop over sensor responses
     # --------------------------
@@ -667,7 +662,7 @@ def _classify_cherenkov_photons(
         src=op.join(tmp_dir, "reconstructed_cherenkov.tar"),
         dst=op.join(
             job["past_trigger_reconstructed_cherenkov_dir"],
-            _run_id_str(job=job) + "_reconstructed_cherenkov.tar"
+            _run_id_str(job=job) + "_reconstructed_cherenkov.tar",
         ),
     )
     return tabrec
@@ -684,7 +679,7 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
 
     _feature_table = spt.table_of_records_to_sparse_numeric_table(
         table_records={"features": tabrec["features"]},
-        structure={"features": table.STRUCTURE["features"]}
+        structure={"features": table.STRUCTURE["features"]},
     )
     shower_maximum_object_distance = spt.get_column_as_dict_by_index(
         table=_feature_table,
@@ -721,16 +716,21 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
 
         rec["fuzzy_cx_rad"] = debug["fuzzy_result"]["reco_cx"]
         rec["fuzzy_cy_rad"] = debug["fuzzy_result"]["reco_cy"]
-        rec["fuzzy_main_axis_support_cx_rad"] = debug[
-            "fuzzy_result"]["main_axis_support_cx"]
-        rec["fuzzy_main_axis_support_cy_rad"] = debug[
-            "fuzzy_result"]["main_axis_support_cy"]
-        rec["fuzzy_main_axis_support_uncertainty_rad"] = debug[
-            "fuzzy_result"]["main_axis_support_uncertainty"]
-        rec["fuzzy_main_axis_azimuth_rad"] = debug[
-            "fuzzy_result"]["main_axis_azimuth"]
-        rec["fuzzy_main_axis_azimuth_uncertainty_rad"] = debug[
-            "fuzzy_result"]["main_axis_azimuth_uncertainty"]
+        rec["fuzzy_main_axis_support_cx_rad"] = debug["fuzzy_result"][
+            "main_axis_support_cx"
+        ]
+        rec["fuzzy_main_axis_support_cy_rad"] = debug["fuzzy_result"][
+            "main_axis_support_cy"
+        ]
+        rec["fuzzy_main_axis_support_uncertainty_rad"] = debug["fuzzy_result"][
+            "main_axis_support_uncertainty"
+        ]
+        rec["fuzzy_main_axis_azimuth_rad"] = debug["fuzzy_result"][
+            "main_axis_azimuth"
+        ]
+        rec["fuzzy_main_axis_azimuth_uncertainty_rad"] = debug["fuzzy_result"][
+            "main_axis_azimuth_uncertainty"
+        ]
 
         rec["_compute_time_s"] = compute_time_stop - compute_time_start
 
@@ -771,18 +771,16 @@ def _export_event_table(job, tmp_dir, tabrec):
 
 
 def _extract_features(
-    tabrec,
-    light_field_geometry,
-    table_past_trigger,
-    prng,
+    tabrec, light_field_geometry, table_past_trigger, prng,
 ):
     light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
-        light_field_geometry=light_field_geometry)
+        light_field_geometry=light_field_geometry
+    )
 
     for pt in table_past_trigger:
         event = pl.Event(
-            path=pt["tmp_path"],
-            light_field_geometry=light_field_geometry)
+            path=pt["tmp_path"], light_field_geometry=light_field_geometry
+        )
         try:
             lfft = pl.features.extract_features(
                 cherenkov_photons=event.cherenkov_photons,
@@ -804,7 +802,9 @@ def run_job(job):
 
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
-    time_log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
+    time_log_path = op.join(
+        job["log_dir"], _run_id_str(job) + "_runtime.jsonl"
+    )
     logger = logging.JsonlLog(time_log_path + ".tmp")
     job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
     with open(job_path + ".tmp", "wt") as f:
@@ -843,20 +843,17 @@ def run_job(job):
         logger=logger,
         tmp_dir=tmp_dir,
         corsika_primary_steering=corsika_primary_steering,
-        tabrec=tabrec
+        tabrec=tabrec,
     )
 
     detector_responses_path = _run_merlict(
-        job=job,
-        cherenkov_pools_path=cherenkov_pools_path,
-        tmp_dir=tmp_dir,
+        job=job, cherenkov_pools_path=cherenkov_pools_path, tmp_dir=tmp_dir,
     )
 
     logger.log("merlict")
 
     if not job["keep_tmp"]:
         os.remove(cherenkov_pools_path)
-
 
     light_field_geometry = pl.LightFieldGeometry(
         path=job["light_field_geometry_path"]
@@ -866,7 +863,6 @@ def run_job(job):
     )
     logger.log("prepare_trigger")
 
-
     # apply loose trigger
     # -------------------
     tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
@@ -875,7 +871,7 @@ def run_job(job):
         detector_responses_path=detector_responses_path,
         light_field_geometry=light_field_geometry,
         trigger_geometry=trigger_geometry,
-        tmp_dir=tmp_dir
+        tmp_dir=tmp_dir,
     )
     logger.log("loose_trigger")
 
