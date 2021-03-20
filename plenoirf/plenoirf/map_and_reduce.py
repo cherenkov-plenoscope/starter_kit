@@ -668,6 +668,32 @@ def _classify_cherenkov_photons(
     return tabrec
 
 
+def _extract_features(
+    tabrec, light_field_geometry, table_past_trigger, prng,
+):
+    light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
+        light_field_geometry=light_field_geometry
+    )
+
+    for pt in table_past_trigger:
+        event = pl.Event(
+            path=pt["tmp_path"], light_field_geometry=light_field_geometry
+        )
+        try:
+            lfft = pl.features.extract_features(
+                cherenkov_photons=event.cherenkov_photons,
+                light_field_geometry=light_field_geometry,
+                light_field_geometry_addon=light_field_geometry_addon,
+                prng=prng,
+            )
+            lfft[spt.IDX] = pt[spt.IDX]
+            tabrec["features"].append(lfft)
+        except Exception as excep:
+            print("idx:", pt[spt.IDX], excep)
+
+    return tabrec
+
+
 def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
 
     FUZZY_CONFIG = reconstruction.fuzzy_method.compile_user_config(
@@ -770,35 +796,18 @@ def _export_event_table(job, tmp_dir, tabrec):
     )
 
 
-def _extract_features(
-    tabrec, light_field_geometry, table_past_trigger, prng,
-):
-    light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
-        light_field_geometry=light_field_geometry
-    )
-
-    for pt in table_past_trigger:
-        event = pl.Event(
-            path=pt["tmp_path"], light_field_geometry=light_field_geometry
-        )
-        try:
-            lfft = pl.features.extract_features(
-                cherenkov_photons=event.cherenkov_photons,
-                light_field_geometry=light_field_geometry,
-                light_field_geometry_addon=light_field_geometry_addon,
-                prng=prng,
-            )
-            lfft[spt.IDX] = pt[spt.IDX]
-            tabrec["features"].append(lfft)
-        except Exception as excep:
-            print("idx:", pt[spt.IDX], excep)
-
-    return tabrec
+def _export_job_to_log_dir(job):
+    job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
+    with open(job_path + ".tmp", "wt") as f:
+        f.write(json.dumps(job, indent=4))
+    nfs.move(job_path + ".tmp", job_path)
 
 
 def run_job(job):
+    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
     _assert_resources_exist(job=job)
     _make_output_dirs(job=job)
+    _export_job_to_log_dir(job=job)
 
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
@@ -806,11 +815,7 @@ def run_job(job):
         job["log_dir"], _run_id_str(job) + "_runtime.jsonl"
     )
     logger = logging.JsonlLog(time_log_path + ".tmp")
-    job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
-    with open(job_path + ".tmp", "wt") as f:
-        f.write(json.dumps(job, indent=4))
-    nfs.move(job_path + ".tmp", job_path)
-    print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
+
 
     # draw primary particles
     # ----------------------
