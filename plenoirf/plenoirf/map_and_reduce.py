@@ -6,12 +6,14 @@ from . import logging
 from . import network_file_system as nfs
 from . import utils
 from . import production
+from . import reconstruction
 
 import sys
 import numpy as np
 import os
 from os import path as op
 import shutil
+import time
 
 import tempfile
 import pandas
@@ -215,8 +217,6 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
 
     # loop over air-showers
     # ---------------------
-    for level_key in table.STRUCTURE:
-        tabrec[level_key] = []
     cherenkov_pools_path = op.join(tmp_dir, "cherenkov_pools.tar")
     tmp_grid_histogram_path = op.join(tmp_dir, "grid.tar")
 
@@ -673,6 +673,72 @@ def _classify_cherenkov_photons(
     return tabrec
 
 
+def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
+
+    FUZZY_CONFIG = reconstruction.fuzzy_method.compile_user_config(
+        user_config=job["reconstruction"]["trajectory"]["fuzzy_method"]
+    )
+    MODEL_FIT_CONFIG = reconstruction.model_fit.compile_user_config(
+        user_config=job["reconstruction"]["trajectory"]["core_axis_fit"]
+    )
+
+    _feature_table = spt.table_of_records_to_sparse_numeric_table(
+        table_records={"features": tabrec["features"]},
+        structure={"features": table.STRUCTURE["features"]}
+    )
+    shower_maximum_object_distance = spt.get_column_as_dict_by_index(
+        table=_feature_table,
+        level_key="features",
+        column_key="image_smallest_ellipse_object_distance",
+    )
+
+    run = pl.photon_stream.loph.LopfTarReader(
+        op.join(tmp_dir, "reconstructed_cherenkov.tar")
+    )
+    for event in run:
+        compute_time_start = time.time()
+        airshower_id, loph_record = event
+
+        fit, debug = reconstruction.trajectory.estimate(
+            loph_record=loph_record,
+            light_field_geometry=light_field_geometry,
+            shower_maximum_object_distance=shower_maximum_object_distance[
+                airshower_id
+            ],
+            fuzzy_config=FUZZY_CONFIG,
+            model_fit_config=MODEL_FIT_CONFIG,
+        )
+
+        compute_time_stop = time.time()
+
+        rec = {}
+        rec[spt.IDX] = airshower_id
+
+        rec["cx_rad"] = fit["primary_particle_cx"]
+        rec["cy_rad"] = fit["primary_particle_cy"]
+        rec["x_m"] = fit["primary_particle_x"]
+        rec["y_m"] = fit["primary_particle_y"]
+
+        rec["fuzzy_cx_rad"] = debug["fuzzy_result"]["reco_cx"]
+        rec["fuzzy_cy_rad"] = debug["fuzzy_result"]["reco_cy"]
+        rec["fuzzy_main_axis_support_cx_rad"] = debug[
+            "fuzzy_result"]["main_axis_support_cx"]
+        rec["fuzzy_main_axis_support_cy_rad"] = debug[
+            "fuzzy_result"]["main_axis_support_cy"]
+        rec["fuzzy_main_axis_support_uncertainty_rad"] = debug[
+            "fuzzy_result"]["main_axis_support_uncertainty"]
+        rec["fuzzy_main_axis_azimuth_rad"] = debug[
+            "fuzzy_result"]["main_axis_azimuth"]
+        rec["fuzzy_main_axis_azimuth_uncertainty_rad"] = debug[
+            "fuzzy_result"]["main_axis_azimuth_uncertainty"]
+
+        rec["_compute_time_s"] = compute_time_stop - compute_time_start
+
+        tabrec["reconstructed_trajectory"].append(rec)
+
+    return tabrec
+
+
 def _assert_resources_exist(job):
     assert op.exists(job["corsika_primary_path"])
     assert op.exists(job["merlict_plenoscope_propagator_path"])
@@ -702,6 +768,34 @@ def _export_event_table(job, tmp_dir, tabrec):
         src=op.join(tmp_dir, "event_table.tar"),
         dst=op.join(job["feature_dir"], _run_id_str(job) + "_event_table.tar"),
     )
+
+
+def _extract_features(
+    tabrec,
+    light_field_geometry,
+    table_past_trigger,
+    prng,
+):
+    light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
+        light_field_geometry=light_field_geometry)
+
+    for pt in table_past_trigger:
+        event = pl.Event(
+            path=pt["tmp_path"],
+            light_field_geometry=light_field_geometry)
+        try:
+            lfft = pl.features.extract_features(
+                cherenkov_photons=event.cherenkov_photons,
+                light_field_geometry=light_field_geometry,
+                light_field_geometry_addon=light_field_geometry_addon,
+                prng=prng,
+            )
+            lfft[spt.IDX] = pt[spt.IDX]
+            tabrec["features"].append(lfft)
+        except Exception as excep:
+            print("idx:", pt[spt.IDX], excep)
+
+    return tabrec
 
 
 def run_job(job):
@@ -740,6 +834,8 @@ def run_job(job):
     logger.log("make_temp_dir:'{:s}'".format(tmp_dir))
 
     tabrec = {}
+    for level_key in table.STRUCTURE:
+        tabrec[level_key] = []
 
     cherenkov_pools_path, tabrec = _run_corsika_and_grid_and_output_to_tmp_dir(
         job=job,
@@ -797,27 +893,20 @@ def run_job(job):
 
     # extracting features
     # -------------------
-    light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
-        light_field_geometry=light_field_geometry)
-
-    logger.log("light_field_geometry_addons")
-
-    for pt in table_past_trigger:
-        event = pl.Event(
-            path=pt["tmp_path"],
-            light_field_geometry=light_field_geometry)
-        try:
-            lfft = pl.features.extract_features(
-                cherenkov_photons=event.cherenkov_photons,
-                light_field_geometry=light_field_geometry,
-                light_field_geometry_addon=light_field_geometry_addon,
-                prng=prng,
-            )
-            lfft[spt.IDX] = pt[spt.IDX]
-            tabrec["features"].append(lfft)
-        except Exception as excep:
-            print("idx:", pt[spt.IDX], excep)
+    tabrec = _extract_features(
+        tabrec=tabrec,
+        light_field_geometry=light_field_geometry,
+        table_past_trigger=table_past_trigger,
+        prng=prng,
+    )
     logger.log("feature_extraction")
+
+    tabrec = _estimate_primary_trajectory(
+        job=job,
+        tmp_dir=tmp_dir,
+        light_field_geometry=light_field_geometry,
+        tabrec=tabrec,
+    )
 
     _export_event_table(job=job, tmp_dir=tmp_dir, tabrec=tabrec)
     logger.log("export_event_table")

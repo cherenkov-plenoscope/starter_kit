@@ -383,3 +383,79 @@ STRUCTURE["features"]["image_num_islands"] = {
     },
     "unit": "1",
 }
+
+_traj = {}
+
+_traj_xy_comment = "Primary particle's core-position w.r.t. principal aperture-plane."
+_traj["x_m"] = {
+    "dtype": "<f8",
+    "comment": _traj_xy_comment,
+    "unit": "m",
+}
+_traj["y_m"] = {
+    "dtype": "<f8",
+    "comment": _traj_xy_comment,
+    "unit": "m",
+}
+
+_traj_cxy_comment = "Primary particle's direction w.r.t. pointing."
+_traj["cx_rad"] = {
+    "dtype": "<f8",
+    "comment": _traj_cxy_comment,
+    "unit": "rad",
+}
+_traj["cy_rad"] = {
+    "dtype": "<f8",
+    "comment": _traj_cxy_comment,
+    "unit": "rad",
+}
+
+_traj["_compute_time_s"] = {
+    "dtype": "<f4",
+    "comment": "Time to reconstruct trajectory.",
+    "unit": "s",
+}
+
+_traj_cxy_comment_fuzzy = (
+    "Primary particle's direction w.r.t. " +
+    "pointing according to fuzzy-estimator."
+)
+_traj["fuzzy_cx_rad"] = {
+    "dtype": "<f8",
+    "comment": _traj_cxy_comment_fuzzy,
+    "unit": "rad",
+}
+_traj["fuzzy_cy_rad"] = {
+    "dtype": "<f8",
+    "comment": _traj_cxy_comment_fuzzy,
+    "unit": "rad",
+}
+
+_traj["fuzzy_main_axis_support_cx_rad"] = {
+    "dtype": "<f8",
+    "comment": "",
+    "unit": "rad",
+}
+_traj["fuzzy_main_axis_support_cy_rad"] = {
+    "dtype": "<f8",
+    "comment": "",
+    "unit": "rad",
+}
+_traj["fuzzy_main_axis_support_uncertainty_rad"] = {
+    "dtype": "<f8",
+    "comment": "",
+    "unit": "rad",
+}
+
+_traj["fuzzy_main_axis_azimuth_rad"] = {
+    "dtype": "<f8",
+    "comment": "",
+    "unit": "rad",
+}
+_traj["fuzzy_main_axis_azimuth_uncertainty_rad"] = {
+    "dtype": "<f8",
+    "comment": "",
+    "unit": "rad",
+}
+
+STRUCTURE["reconstructed_trajectory"] = _traj
