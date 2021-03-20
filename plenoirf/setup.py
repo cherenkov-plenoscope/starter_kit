@@ -14,7 +14,11 @@ setuptools.setup(
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
     license="GPL v3",
     packages=["plenoirf",],
-    install_requires=["cosmic_fluxes", "corsika_primary_wrapper",],
+    install_requires=[
+        "cosmic_fluxes",
+        "corsika_primary_wrapper",
+        "iminuit==1.4.9",
+    ],
     package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},
     classifiers=[
         "Programming Language :: Python :: 3",
