@@ -433,6 +433,7 @@ def _populate_table_of_thrown_air_showers(
                     "artificial_core_limitation": cfg[
                         "artificial_core_limitation"
                     ][particle_key],
+                    "reconstruction": cfg["reconstruction"],
                 }
                 run_id += 1
                 irf_jobs.append(irf_job)
