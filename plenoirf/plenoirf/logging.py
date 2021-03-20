@@ -15,7 +15,7 @@ class JsonlLog:
         now = datetime.datetime.now()
         with open(self.path, "at") as f:
             d = {
-                "time": now.strftime("%Y-%m-%d %H:%M:%S"),
+                "time": now.strftime("%Y-%m-%dT%H:%M:%S"),
                 "runtime": (now - self.last_log_time).total_seconds(),
                 "msg": msg,
             }
