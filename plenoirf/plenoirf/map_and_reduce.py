@@ -807,9 +807,8 @@ def run_job(job):
     _make_output_dirs(job=job)
     _export_job_to_log_dir(job=job)
 
-    jl = logging.JsonlLog(
-        path=op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
-    )
+    log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl.tmp")
+    jl = logging.JsonlLog(path=log_path+".tmp")
     jl.log("starting run")
 
     jl.log("init prng")
@@ -905,6 +904,7 @@ def run_job(job):
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
     jl.log("ending run")
+    nfs.move(log_path+".tmp", log_path)
 
 
 def run_bundle(bundle):
