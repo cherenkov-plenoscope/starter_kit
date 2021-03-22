@@ -9,7 +9,6 @@ import shutil
 class JsonlLog:
     def __init__(self, path):
         self.path = path
-        self.log("start")
 
     def log(self, msg, delta=None):
         unix_time_now = time.time()
