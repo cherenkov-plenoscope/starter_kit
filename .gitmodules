@@ -12,19 +12,19 @@
 	url = git@github.com:cherenkov-plenoscope/cable_robo_mount.git
 [submodule "photon_spectra"]
 	path = photon_spectra
-	url = https://github.com/cherenkov-plenoscope/photon_spectra
+	url = git@github.com:cherenkov-plenoscope/photon_spectra.git
 [submodule "corsika_wrapper"]
 	path = corsika_wrapper
 	url = git@github.com:fact-project/corsika_wrapper
 [submodule "spectral_energy_distribution_units"]
 	path = spectral_energy_distribution_units
-	url = https://github.com/cherenkov-plenoscope/spectral_energy_distribution_units
+	url = git@github.com:cherenkov-plenoscope/spectral_energy_distribution_units.git
 [submodule "sparse_numeric_table"]
 	path = sparse_numeric_table
-	url = https://github.com/cherenkov-plenoscope/sparse_numeric_table
+	url = git@github.com:cherenkov-plenoscope/sparse_numeric_table.git
 [submodule "magnetic_deflection"]
 	path = magnetic_deflection
-	url = https://github.com/cherenkov-plenoscope/magnetic_deflection
+	url = git@github.com:cherenkov-plenoscope/magnetic_deflection.git
 [submodule "airshower_template_generator"]
 	path = airshower_template_generator
-	url = https://github.com/cherenkov-plenoscope/airshower_template_generator
+	url = git@github.com:cherenkov-plenoscope/airshower_template_generator.git
