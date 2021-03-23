@@ -807,7 +807,7 @@ def run_job(job):
     _make_output_dirs(job=job)
     _export_job_to_log_dir(job=job)
 
-    log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl.tmp")
+    log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
     jl = logging.JsonlLog(path=log_path+".tmp")
     jl.log("starting run")
 
