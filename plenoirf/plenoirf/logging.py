@@ -45,8 +45,7 @@ class TimeDelta:
 def reduce(list_of_log_paths, out_path):
     log_records = reduce_into_records(list_of_log_paths=list_of_log_paths)
     log_df = pd.DataFrame(log_records)
-    log_df = log_df.set_index("run_id")
-    log_df = log_df.sort_index()
+    log_df = log_df.sort_values(by=["run_id"])
     log_df.to_csv(out_path + ".tmp", index=False, na_rep="nan")
     shutil.move(out_path + ".tmp", out_path)
 
