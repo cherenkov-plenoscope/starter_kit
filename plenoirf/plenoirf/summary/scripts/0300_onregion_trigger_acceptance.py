@@ -33,20 +33,10 @@ energy_bin_edges = np.geomspace(
 max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
 min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
 
-_psf = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0200_gamma_point_spread_function")
-)
-fix_onregion_radius_deg = {}
-for site_key in irf_config["config"]["sites"]:
-    fix_onregion_radius_deg[site_key] = _psf[site_key]["gamma"][
-        "containment_angle_for_fix_onregion"
-    ]["containment_angle"]
-    assert (
-        "deg"
-        == _psf[site_key]["gamma"]["containment_angle_for_fix_onregion"][
-            "unit"
-        ]
-    )
+fix_onregion_radius_deg = {
+    "namibia": 0.5,
+    "chile": 0.5,
+}
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
