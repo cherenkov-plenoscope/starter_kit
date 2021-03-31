@@ -30,13 +30,17 @@ energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
     + 1,
 )
+num_bins_energy = sum_config["energy_binning"]["num_bins"][
+    "trigger_acceptance_onregion"
+]
+
 max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
 min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
 
-fix_onregion_radius_deg = {
-    "namibia": 0.5,
-    "chile": 0.5,
-}
+onregion_radii_deg = np.array(
+    sum_config["on_off_measuremnent"]["onregion_radius_deg"]
+)
+num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
@@ -101,29 +105,36 @@ for site_key in irf_config["config"]["sites"]:
             table=candidate_table, common_indices=idx_candidates
         )
 
-        idx_detected_in_onregion = irf.analysis.cuts.cut_reconstructed_source_in_true_onregion(
-            table=candidate_table,
-            radial_angle_onregion_deg=fix_onregion_radius_deg[site_key],
-        )
+        Qeff = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
+        Qunc = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
+        for oridx in range(num_bins_onregion_radius):
 
-        mask_detected = spt.make_mask_of_right_in_left(
-            left_indices=table_point["primary"][spt.IDX],
-            right_indices=idx_detected_in_onregion,
-        )
+            idx_detected_in_onregion = irf.analysis.cuts.cut_reconstructed_source_in_true_onregion(
+                table=candidate_table,
+                radial_angle_onregion_deg=onregion_radii_deg[oridx],
+            )
 
-        (
-            _q_eff,
-            _q_unc,
-        ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
-            energy_bin_edges_GeV=energy_bin_edges,
-            energy_GeV=table_point["primary"]["energy_GeV"],
-            mask_detected=mask_detected,
-            quantity_scatter=table_point["grid"]["area_thrown_m2"],
-            num_grid_cells_above_lose_threshold=table_point["grid"][
-                "num_bins_above_threshold"
-            ],
-            total_num_grid_cells=table_point["grid"]["num_bins_thrown"],
-        )
+            mask_detected = spt.make_mask_of_right_in_left(
+                left_indices=table_point["primary"][spt.IDX],
+                right_indices=idx_detected_in_onregion,
+            )
+
+            (
+                _q_eff,
+                _q_unc,
+            ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
+                energy_bin_edges_GeV=energy_bin_edges,
+                energy_GeV=table_point["primary"]["energy_GeV"],
+                mask_detected=mask_detected,
+                quantity_scatter=table_point["grid"]["area_thrown_m2"],
+                num_grid_cells_above_lose_threshold=table_point["grid"][
+                    "num_bins_above_threshold"
+                ],
+                total_num_grid_cells=table_point["grid"]["num_bins_thrown"],
+            )
+
+            Qeff[:, oridx] = _q_eff
+            Qunc[:, oridx] = _q_unc
 
         irf.json_numpy.write(
             os.path.join(site_particle_dir, "point.json"),
@@ -131,11 +142,11 @@ for site_key in irf_config["config"]["sites"]:
                 "comment": (
                     "Effective area "
                     "for a point source, reconstructed in onregion. "
-                    "VS energy-bins"
+                    "VS energy-bins VS onregion-radii"
                 ),
                 "unit": "m$^{2}$",
-                "mean": _q_eff,
-                "relative_uncertainty": _q_unc,
+                "mean": Qeff,
+                "relative_uncertainty": Qunc,
             },
         )
 
@@ -197,13 +208,19 @@ for site_key in irf_config["config"]["sites"]:
             total_num_grid_cells=table_diffuse["grid"]["num_bins_thrown"],
         )
 
-        actual_onregion_over_possible_onregion_factor = (
-            fix_onregion_radius_deg[site_key] ** 2 / MAX_SOURCE_ANGLE_DEG ** 2
-        )
-        _q_eff = (
-            _q_eff_all_possible_onregion
-            * actual_onregion_over_possible_onregion_factor
-        )
+        Qeff = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
+        Qunc = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
+        for oridx in range(num_bins_onregion_radius):
+
+            actual_onregion_over_possible_onregion_factor = (
+                onregion_radii_deg[oridx] ** 2 / MAX_SOURCE_ANGLE_DEG ** 2
+            )
+            _q_eff = (
+                _q_eff_all_possible_onregion
+                * actual_onregion_over_possible_onregion_factor
+            )
+            Qeff[:, oridx] = _q_eff
+            Qunc[:, oridx] = _q_unc
 
         irf.json_numpy.write(
             os.path.join(site_particle_dir, "diffuse.json"),
@@ -211,10 +228,10 @@ for site_key in irf_config["config"]["sites"]:
                 "comment": (
                     "Effective acceptance (area x solid angle) "
                     "for a diffuse source, reconstructed in onregion. "
-                    "VS energy-bins"
+                    "VS energy-bins VS onregion-radii"
                 ),
                 "unit": "m$^{2}$ sr",
-                "mean": _q_eff,
-                "relative_uncertainty": _q_unc,
+                "mean": Qeff,
+                "relative_uncertainty": Qunc,
             },
         )

@@ -48,6 +48,11 @@ G_energy_bin_edges = np.geomspace(
     + 1,
 )
 
+onregion_radii_deg = np.array(
+    sum_config["on_off_measuremnent"]["onregion_radius_deg"]
+)
+num_bins_onregion_radius = onregion_radii_deg.shape[0]
+
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
@@ -75,57 +80,67 @@ for site_key in irf_config["config"]["sites"]:
                 ]
             )
 
-            acc_trg_onregion = np.array(
+            acc_trg_onregions = np.array(
                 G[site_key][particle_key][source_key]["mean"]
             )
-            acc_trg_onregion_unc = np.array(
+            acc_trg_onregions_unc = np.array(
                 G[site_key][particle_key][source_key]["relative_uncertainty"]
             )
 
-            fig = irf.summary.figure.figure(fig_16_by_9)
-            ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+            for oridx in range(num_bins_onregion_radius):
+                acc_trg_onregion = acc_trg_onregions[:, oridx]
+                acc_trg_onregion_unc = acc_trg_onregions_unc[:, oridx]
 
-            irf.summary.figure.ax_add_hist(
-                ax=ax,
-                bin_edges=A_energy_bin_edges,
-                bincounts=acc_trg,
-                linestyle="-",
-                linecolor="gray",
-                bincounts_upper=acc_trg * (1 + acc_trg_unc),
-                bincounts_lower=acc_trg * (1 - acc_trg_unc),
-                face_color=particle_colors[particle_key],
-                face_alpha=0.05,
-            )
-            irf.summary.figure.ax_add_hist(
-                ax=ax,
-                bin_edges=G_energy_bin_edges,
-                bincounts=acc_trg_onregion,
-                linestyle="-",
-                linecolor=particle_colors[particle_key],
-                bincounts_upper=acc_trg_onregion * (1 + acc_trg_onregion_unc),
-                bincounts_lower=acc_trg_onregion * (1 - acc_trg_onregion_unc),
-                face_color=particle_colors[particle_key],
-                face_alpha=0.25,
-            )
+                fig = irf.summary.figure.figure(fig_16_by_9)
+                ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
 
-            ax.set_xlabel("energy / GeV")
-            ax.set_ylabel(
-                sources[source_key]["label"]
-                + " / "
-                + sources[source_key]["unit"]
-            )
-            ax.spines["top"].set_color("none")
-            ax.spines["right"].set_color("none")
-            ax.set_ylim(sources[source_key]["limits"])
-            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-            ax.loglog()
-            ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
-            fig.savefig(
-                opj(
-                    pa["out_dir"],
-                    "{:s}_{:s}_{:s}_fix_onregion.jpg".format(
-                        site_key, particle_key, source_key,
-                    ),
+                irf.summary.figure.ax_add_hist(
+                    ax=ax,
+                    bin_edges=A_energy_bin_edges,
+                    bincounts=acc_trg,
+                    linestyle="-",
+                    linecolor="gray",
+                    bincounts_upper=acc_trg * (1 + acc_trg_unc),
+                    bincounts_lower=acc_trg * (1 - acc_trg_unc),
+                    face_color=particle_colors[particle_key],
+                    face_alpha=0.05,
                 )
-            )
-            plt.close(fig)
+                irf.summary.figure.ax_add_hist(
+                    ax=ax,
+                    bin_edges=G_energy_bin_edges,
+                    bincounts=acc_trg_onregion,
+                    linestyle="-",
+                    linecolor=particle_colors[particle_key],
+                    bincounts_upper=acc_trg_onregion
+                    * (1 + acc_trg_onregion_unc),
+                    bincounts_lower=acc_trg_onregion
+                    * (1 - acc_trg_onregion_unc),
+                    face_color=particle_colors[particle_key],
+                    face_alpha=0.25,
+                )
+
+                ax.set_title(
+                    "onregion-radius: {:.3f}".format(onregion_radii_deg[oridx])
+                    + r"$^{\circ}$"
+                )
+                ax.set_xlabel("energy / GeV")
+                ax.set_ylabel(
+                    sources[source_key]["label"]
+                    + " / "
+                    + sources[source_key]["unit"]
+                )
+                ax.spines["top"].set_color("none")
+                ax.spines["right"].set_color("none")
+                ax.set_ylim(sources[source_key]["limits"])
+                ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+                ax.loglog()
+                ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
+                fig.savefig(
+                    opj(
+                        pa["out_dir"],
+                        "{:s}_{:s}_{:s}_onregion_{:06d}.jpg".format(
+                            site_key, particle_key, source_key, oridx
+                        ),
+                    )
+                )
+                plt.close(fig)

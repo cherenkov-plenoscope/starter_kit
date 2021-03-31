@@ -309,6 +309,9 @@ def _guess_summary_config(run_dir):
         "on_off_measuremnent": {
             "on_over_off_ratio": 1 / 5,
             "detection_threshold_std": 5.0,
+            "onregion_radius_deg": (
+                np.linspace(0.0 ** 2, 0.8 ** 2, 16) ** 0.5
+            )[1:],
         },
         "gamma_ray_reference_source": {
             "type": "3fgl",
