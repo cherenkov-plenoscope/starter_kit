@@ -186,6 +186,13 @@ for sk in irf_config["config"]["sites"]:
                 model_fit_config=long_fit_cfg,
             )
 
+            if not irf.reconstruction.trajectory.is_valid_estimate(fit):
+                print(
+                    "airshower_id",
+                    airshower_id,
+                    " Can not reconstruct trajectory",
+                )
+
             # true response
             # -------------
 

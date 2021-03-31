@@ -716,7 +716,7 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
     for event in run:
         airshower_id, loph_record = event
 
-        fit, debug = reconstruction.trajectory.estimate(
+        estimate, debug = reconstruction.trajectory.estimate(
             loph_record=loph_record,
             light_field_geometry=light_field_geometry,
             shower_maximum_object_distance=shower_maximum_object_distance[
@@ -726,33 +726,34 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
             model_fit_config=MODEL_FIT_CONFIG,
         )
 
-        rec = {}
-        rec[spt.IDX] = airshower_id
+        if reconstruction.trajectory.is_valid_estimate(estimate=estimate):
+            rec = {}
+            rec[spt.IDX] = airshower_id
 
-        rec["cx_rad"] = fit["primary_particle_cx"]
-        rec["cy_rad"] = fit["primary_particle_cy"]
-        rec["x_m"] = fit["primary_particle_x"]
-        rec["y_m"] = fit["primary_particle_y"]
+            rec["cx_rad"] = estimate["primary_particle_cx"]
+            rec["cy_rad"] = estimate["primary_particle_cy"]
+            rec["x_m"] = estimate["primary_particle_x"]
+            rec["y_m"] = estimate["primary_particle_y"]
 
-        rec["fuzzy_cx_rad"] = debug["fuzzy_result"]["reco_cx"]
-        rec["fuzzy_cy_rad"] = debug["fuzzy_result"]["reco_cy"]
-        rec["fuzzy_main_axis_support_cx_rad"] = debug["fuzzy_result"][
-            "main_axis_support_cx"
-        ]
-        rec["fuzzy_main_axis_support_cy_rad"] = debug["fuzzy_result"][
-            "main_axis_support_cy"
-        ]
-        rec["fuzzy_main_axis_support_uncertainty_rad"] = debug["fuzzy_result"][
-            "main_axis_support_uncertainty"
-        ]
-        rec["fuzzy_main_axis_azimuth_rad"] = debug["fuzzy_result"][
-            "main_axis_azimuth"
-        ]
-        rec["fuzzy_main_axis_azimuth_uncertainty_rad"] = debug["fuzzy_result"][
-            "main_axis_azimuth_uncertainty"
-        ]
+            rec["fuzzy_cx_rad"] = debug["fuzzy_result"]["reco_cx"]
+            rec["fuzzy_cy_rad"] = debug["fuzzy_result"]["reco_cy"]
+            rec["fuzzy_main_axis_support_cx_rad"] = debug["fuzzy_result"][
+                "main_axis_support_cx"
+            ]
+            rec["fuzzy_main_axis_support_cy_rad"] = debug["fuzzy_result"][
+                "main_axis_support_cy"
+            ]
+            rec["fuzzy_main_axis_support_uncertainty_rad"] = debug[
+                "fuzzy_result"
+            ]["main_axis_support_uncertainty"]
+            rec["fuzzy_main_axis_azimuth_rad"] = debug["fuzzy_result"][
+                "main_axis_azimuth"
+            ]
+            rec["fuzzy_main_axis_azimuth_uncertainty_rad"] = debug[
+                "fuzzy_result"
+            ]["main_axis_azimuth_uncertainty"]
 
-        tabrec["reconstructed_trajectory"].append(rec)
+            tabrec["reconstructed_trajectory"].append(rec)
 
     return tabrec
 
@@ -808,7 +809,7 @@ def run_job(job):
     _export_job_to_log_dir(job=job)
 
     log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
-    jl = logging.JsonlLog(path=log_path+".tmp")
+    jl = logging.JsonlLog(path=log_path + ".tmp")
     jl.log("starting run")
 
     jl.log("init prng")
@@ -904,7 +905,7 @@ def run_job(job):
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
     jl.log("ending run")
-    nfs.move(log_path+".tmp", log_path)
+    nfs.move(log_path + ".tmp", log_path)
 
 
 def run_bundle(bundle):

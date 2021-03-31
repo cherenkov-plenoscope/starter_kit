@@ -99,6 +99,19 @@ def estimate(
     )
 
 
+def is_valid_estimate(estimate):
+    keys = [
+        "primary_particle_cx",
+        "primary_particle_cy",
+        "primary_particle_x",
+        "primary_particle_y",
+    ]
+    for key in keys:
+        if np.isnan(estimate[key]):
+            return False
+    return True
+
+
 def model_response_for_true_trajectory(
     true_cx,
     true_cy,
