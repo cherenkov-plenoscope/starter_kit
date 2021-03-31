@@ -42,11 +42,6 @@ cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
 
 for site_key in irf_config["config"]["sites"]:
-
-    actual_onregion_over_possible_onregion_factor = (
-        fix_onregion_radius_deg[site_key] ** 2 / MAX_SOURCE_ANGLE_DEG ** 2
-    )
-
     for particle_key in irf_config["config"]["particles"]:
         site_particle_dir = os.path.join(pa["out_dir"], site_key, particle_key)
         os.makedirs(site_particle_dir, exist_ok=True)
@@ -200,6 +195,10 @@ for site_key in irf_config["config"]["sites"]:
                 "num_bins_above_threshold"
             ],
             total_num_grid_cells=table_diffuse["grid"]["num_bins_thrown"],
+        )
+
+        actual_onregion_over_possible_onregion_factor = (
+            fix_onregion_radius_deg[site_key] ** 2 / MAX_SOURCE_ANGLE_DEG ** 2
         )
         _q_eff = (
             _q_eff_all_possible_onregion
