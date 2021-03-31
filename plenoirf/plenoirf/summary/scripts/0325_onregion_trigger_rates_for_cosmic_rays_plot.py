@@ -50,6 +50,59 @@ _, gamma_name = irf.summary.make_gamma_ray_reference_flux(
     energy_supports_GeV=fine_energy_bin_centers,
 )
 
+LiMa_alpha = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
+
+observation_time_s = 300
+
+for site_key in irf_config["config"]["sites"]:
+    fig = irf.summary.figure.figure(fig_16_by_9)
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+
+    signal_rate_in_onregion = np.array(
+        onregion_rates[site_key]["gamma"]["integral_rate"]["mean"]
+    )
+
+    background_rate_in_single_off_region = np.zeros(num_bins_onregion_radius)
+    for cosmic_ray_key in cosmic_ray_keys:
+        background_rate_in_single_off_region += np.array(
+            onregion_rates[site_key][cosmic_ray_key]["integral_rate"]["mean"]
+        )
+
+    background_rate_in_all_off_regions = (
+        1.0 / LiMa_alpha * background_rate_in_single_off_region
+    )
+
+    LiMa_N_s = signal_rate_in_onregion * observation_time_s
+    LiMa_N_on = (
+        LiMa_N_s + background_rate_in_single_off_region * observation_time_s
+    )
+    LiMa_N_off = background_rate_in_all_off_regions * observation_time_s
+
+    LiMa_S = (LiMa_N_on - LiMa_alpha * LiMa_N_off) / np.sqrt(
+        LiMa_alpha * (LiMa_N_on + LiMa_N_off)
+    )
+
+    ax.plot(onregion_radii_deg, LiMa_S, "kx")
+    ax.set_title(
+        gamma_name
+        + ", observation-time: {:d}s, ".format(int(observation_time_s))
+        + r"Li Ma $\alpha$: "
+        + "{:.2f}".format(LiMa_alpha)
+    )
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+    ax.set_xlabel(r"onregion-radius / $^{\circ}$")
+    ax.set_ylabel(r"Li Ma $S$ / 1")
+    fig.savefig(
+        os.path.join(
+            pa["out_dir"],
+            "{:s}_LiMa_significance_vs_onregion_radius.jpg".format(site_key),
+        )
+    )
+    plt.close(fig)
+
+
 for site_key in irf_config["config"]["sites"]:
     for oridx in range(num_bins_onregion_radius):
 
@@ -91,7 +144,7 @@ for site_key in irf_config["config"]["sites"]:
             ", onregion-radius: {:.3f}".format(onregion_radii_deg[oridx])
             + r"$^{\circ}$"
         )
-        ax.set_title("trigger, onregion, " + gamma_name + onregion_radius_str)
+        ax.set_title(gamma_name + onregion_radius_str)
 
         ax.set_xlim([energy_lower, energy_upper])
         ax.set_ylim([1e-3, 1e5])
@@ -100,11 +153,11 @@ for site_key in irf_config["config"]["sites"]:
         ax.spines["top"].set_visible(False)
         ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
         ax.set_xlabel("Energy / GeV")
-        ax.set_ylabel("Differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$")
+        ax.set_ylabel("Differential event-rate / s$^{-1}$ (GeV)$^{-1}$")
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
-                "{:s}_differential_trigger_rates_in_onregion_{:06d}.jpg".format(
+                "{:s}_differential_event_rates_in_onregion_{:06d}.jpg".format(
                     site_key, oridx
                 ),
             )
