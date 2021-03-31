@@ -112,35 +112,31 @@ def cut_core_radius_bin(
 
 
 def cut_reconstructed_source_in_true_onregion(
-    table, radial_angle_onregion_deg,
+    table, radial_angle_onregion_deg, IGNORE_PRIMARY_DIRECTION=False
 ):
     ta = spt.cut_table_on_indices(
         table=table,
         structure=irf_table.STRUCTURE,
-        common_indices=table["features"][spt.IDX],
-        level_keys=["primary", "features"],
+        common_indices=table["reconstructed_trajectory"][spt.IDX],
+        level_keys=["primary", "reconstructed_trajectory"],
     )
     ta = spt.sort_table_on_common_indices(
-        table=ta, common_indices=table["features"][spt.IDX],
+        table=ta, common_indices=table["reconstructed_trajectory"][spt.IDX],
     )
+    arr = spt.make_rectangular_DataFrame(table=ta).to_records()
 
     idx = []
-    for evt in range(table["features"].shape[0]):
-        (true_cx, true_cy) = mdfl.discovery._az_zd_to_cx_cy(
-            azimuth_deg=np.rad2deg(ta["primary"]["azimuth_rad"][evt]),
-            zenith_deg=np.rad2deg(ta["primary"]["zenith_rad"][evt]),
-        )
+    for ii in range(arr[spt.IDX].shape[0]):
+        if IGNORE_PRIMARY_DIRECTION:
+            (true_cx, true_cy) = (0.0, 0.0)
+        else:
+            (true_cx, true_cy) = mdfl.discovery._az_zd_to_cx_cy(
+                azimuth_deg=np.rad2deg(arr["primary.azimuth_rad"][ii]),
+                zenith_deg=np.rad2deg(arr["primary.zenith_rad"][ii]),
+            )
 
-        (rec_cx, rec_cy) = gamma_direction.estimate(
-            light_front_cx=ta["features"]["light_front_cx"][evt],
-            light_front_cy=ta["features"]["light_front_cy"][evt],
-            image_infinity_cx_mean=ta["features"]["image_infinity_cx_mean"][
-                evt
-            ],
-            image_infinity_cy_mean=ta["features"]["image_infinity_cy_mean"][
-                evt
-            ],
-        )
+        rec_cx = -arr["reconstructed_trajectory.cx_rad"][ii]
+        rec_cy = -arr["reconstructed_trajectory.cy_rad"][ii]
 
         delta_cx = true_cx - rec_cx
         delta_cy = true_cy - rec_cy
@@ -149,31 +145,16 @@ def cut_reconstructed_source_in_true_onregion(
         delta_c_deg = np.rad2deg(delta_c)
 
         if delta_c_deg <= radial_angle_onregion_deg:
-            idx.append(ta["primary"][spt.IDX][evt])
+            idx.append(arr[spt.IDX][ii])
 
     return np.array(idx)
 
 
 def cut_reconstructed_source_in_possible_onregion(
-    feature_table, radial_angle_to_put_possible_onregion_deg,
+    table, radial_angle_to_put_possible_onregion_deg,
 ):
-    idx = []
-    for evt in range(feature_table.shape[0]):
-        (rec_cx, rec_cy) = gamma_direction.estimate(
-            light_front_cx=feature_table["light_front_cx"][evt],
-            light_front_cy=feature_table["light_front_cy"][evt],
-            image_infinity_cx_mean=feature_table["image_infinity_cx_mean"][
-                evt
-            ],
-            image_infinity_cy_mean=feature_table["image_infinity_cy_mean"][
-                evt
-            ],
-        )
-
-        delta_c = np.hypot(rec_cx, rec_cx)
-        delta_c_deg = np.rad2deg(delta_c)
-
-        if delta_c_deg <= radial_angle_to_put_possible_onregion_deg:
-            idx.append(feature_table[spt.IDX][evt])
-
-    return np.array(idx)
+    return cut_reconstructed_source_in_true_onregion(
+        table=table,
+        radial_angle_onregion_deg=radial_angle_to_put_possible_onregion_deg,
+        IGNORE_PRIMARY_DIRECTION=True
+    )

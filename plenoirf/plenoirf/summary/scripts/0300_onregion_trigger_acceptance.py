@@ -176,7 +176,7 @@ for site_key in irf_config["config"]["sites"]:
             table=table_candidates, common_indices=idx_candidates
         )
         idx_in_possible_onregion = irf.analysis.cuts.cut_reconstructed_source_in_possible_onregion(
-            feature_table=table_candidates["features"],
+            table=table_candidates,
             radial_angle_to_put_possible_onregion_deg=MAX_SOURCE_ANGLE_DEG,
         )
 
