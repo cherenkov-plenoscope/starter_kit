@@ -90,10 +90,10 @@ for site_key in irf_config["config"]["sites"]:
             max_relative_leakage=max_relative_leakage,
             min_reconstructed_photons=min_reconstructed_photons,
         )
-        idx_has_features = table_point["features"][spt.IDX]
+        idx_trajectory = table_point["reconstructed_trajectory"][spt.IDX]
 
         idx_candidates = spt.intersection(
-            [idx_trigger, idx_has_features, idx_quality]
+            [idx_trigger, idx_quality, idx_trajectory]
         )
 
         candidate_table = spt.cut_table_on_indices(
@@ -161,10 +161,10 @@ for site_key in irf_config["config"]["sites"]:
             max_relative_leakage=max_relative_leakage,
             min_reconstructed_photons=min_reconstructed_photons,
         )
-        idx_features = table_diffuse["features"][spt.IDX]
+        idx_trajectory = table_diffuse["reconstructed_trajectory"][spt.IDX]
 
         idx_candidates = spt.intersection(
-            [idx_trigger, idx_features, idx_quality]
+            [idx_trigger, idx_quality, idx_trajectory]
         )
         table_candidates = spt.cut_table_on_indices(
             table=table_diffuse,
