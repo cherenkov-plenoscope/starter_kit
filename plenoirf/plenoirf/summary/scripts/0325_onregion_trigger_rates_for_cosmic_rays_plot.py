@@ -144,10 +144,10 @@ for site_key in irf_config["config"]["sites"]:
             ", onregion-radius: {:.3f}".format(onregion_radii_deg[oridx])
             + r"$^{\circ}$"
         )
-        ax.set_title(gamma_name + onregion_radius_str)
+        ax.set_title("In onregion, "+ gamma_name + onregion_radius_str)
 
         ax.set_xlim([energy_lower, energy_upper])
-        ax.set_ylim([1e-3, 1e5])
+        ax.set_ylim([1e-5, 1e3])
         ax.loglog()
         ax.spines["right"].set_visible(False)
         ax.spines["top"].set_visible(False)
