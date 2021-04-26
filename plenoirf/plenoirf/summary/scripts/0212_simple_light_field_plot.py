@@ -29,6 +29,12 @@ loph_chunk_base_dir = os.path.join(
     pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
 )
 
+onregion_angle_vs_num_photons = {}
+onregion_angle_vs_num_photons["num_photons_pe"] =  [1e1, 1e2, 1e3, 1e4, 1e5]
+onregion_angle_vs_num_photons["opening_angle_deg"]=[1.6, 0.8, 0.4, 0.2, 0.1]
+core_radius_uncertainty_doubling_m = 2.5e2
+
+
 # READ light-field-geometry
 # =========================
 lfg = pl.LightFieldGeometry(
@@ -59,11 +65,11 @@ def add_axes_fuzzy_debug(ax, ring_binning, fuzzy_result, fuzzy_debug):
 
 
 fuzzy_config = irf.reconstruction.fuzzy_method.compile_user_config(
-    user_config=sum_config["reconstruction"]["trajectory"]["fuzzy_method"]
+    user_config=irf_config["config"]["reconstruction"]["trajectory"]["fuzzy_method"]
 )
 
 long_fit_cfg = irf.reconstruction.model_fit.compile_user_config(
-    user_config=sum_config["reconstruction"]["trajectory"]["core_axis_fit"]
+    user_config=irf_config["config"]["reconstruction"]["trajectory"]["core_axis_fit"]
 )
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
@@ -155,6 +161,7 @@ def read_shower_maximum_object_distance(
 
 PLOT_RING = False
 PLOT_OVERVIEW = True
+PLOT_ONREGION = True
 
 
 for sk in irf_config["config"]["sites"]:
@@ -283,6 +290,45 @@ for sk in irf_config["config"]["sites"]:
                 )
                 ax.plot(fit_cx_deg, fit_cy_deg, "oc")
                 ax.plot(np.rad2deg(truth["cx"]), np.rad2deg(truth["cy"]), "xk")
+
+                if PLOT_ONREGION:
+
+                    onregion = irf.reconstruction.onregion.estimate_onregion(
+                        reco_cx=fit["primary_particle_cx"],
+                        reco_cy=fit["primary_particle_cy"],
+                        reco_main_axis_azimuth=fit["main_axis_azimuth"],
+                        reco_num_photons=len(
+                            loph_record["photons"]["arrival_time_slices"]
+                        ),
+                        reco_core_radius=np.hypot(
+                            fit["primary_particle_x"],
+                            fit["primary_particle_y"]
+                        ),
+                        core_radius_uncertainty_doubling=core_radius_uncertainty_doubling_m,
+                        opening_angle_vs_reco_num_photons=onregion_angle_vs_num_photons,
+                    )
+
+                    ellx, elly = irf.reconstruction.onregion.make_polygon(
+                        onregion=onregion
+                    )
+
+                    hit = irf.reconstruction.onregion.is_direction_inside(
+                        cx=truth["cx"],
+                        cy=truth["cy"],
+                        onregion=onregion
+                    )
+
+                    if hit:
+                        look = "c"
+                    else:
+                        look = ":c"
+
+                    ax.plot(
+                        np.rad2deg(ellx),
+                        np.rad2deg(elly),
+                        look,
+                    )
+
 
                 info_str = "Energy: {: .1f}GeV, reco. Cherenkov: {: 4d}p.e.\n response of shower-model: {:.4f} ({:.4f})".format(
                     truth["energy_GeV"],
