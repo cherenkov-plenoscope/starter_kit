@@ -131,26 +131,26 @@ def _make_array_from_event_table_for_onregion_estimate(event_table):
     ta = spt.sort_table_on_common_indices(
         table=ta, common_indices=common_indices,
     )
-    arr = spt.make_rectangular_DataFrame(table=ta).to_records()
-    return arr
+    event_array = spt.make_rectangular_DataFrame(table=ta).to_records()
+    return event_array
 
 
 def cut_reconstructed_source_in_true_onregion(
     event_table, radial_angle_onregion_deg
 ):
-    arr = _make_array_from_event_table_for_onregion_estimate(
+    event_array = _make_array_from_event_table_for_onregion_estimate(
         event_table=event_table
     )
 
     idx = []
-    for ii in range(arr[spt.IDX].shape[0]):
+    for ii in range(event_array[spt.IDX].shape[0]):
         true_cx, true_cy = mdfl.discovery._az_zd_to_cx_cy(
-            azimuth_deg=np.rad2deg(arr["primary.azimuth_rad"][ii]),
-            zenith_deg=np.rad2deg(arr["primary.zenith_rad"][ii]),
+            azimuth_deg=np.rad2deg(event_array["primary.azimuth_rad"][ii]),
+            zenith_deg=np.rad2deg(event_array["primary.zenith_rad"][ii]),
         )
 
-        rec_cx = -arr["reconstructed_trajectory.cx_rad"][ii]
-        rec_cy = -arr["reconstructed_trajectory.cy_rad"][ii]
+        rec_cx = -event_array["reconstructed_trajectory.cx_rad"][ii]
+        rec_cy = -event_array["reconstructed_trajectory.cy_rad"][ii]
 
         delta_cx = true_cx - rec_cx
         delta_cy = true_cy - rec_cy
@@ -159,7 +159,7 @@ def cut_reconstructed_source_in_true_onregion(
         delta_c_deg = np.rad2deg(delta_c)
 
         if delta_c_deg <= radial_angle_onregion_deg:
-            idx.append(arr[spt.IDX][ii])
+            idx.append(event_array[spt.IDX][ii])
 
     return np.array(idx)
 
