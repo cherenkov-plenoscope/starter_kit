@@ -92,7 +92,7 @@ for site_key in irf_config["config"]["sites"]:
     ax.spines["right"].set_visible(False)
     ax.spines["top"].set_visible(False)
     ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax.set_xlabel(r"onregion-radius / $^{\circ}$")
+    ax.set_xlabel(r"onregion-radius at 100p.e. / $^{\circ}$")
     ax.set_ylabel(r"Li Ma $S$ / 1")
     fig.savefig(
         os.path.join(
@@ -141,7 +141,7 @@ for site_key in irf_config["config"]["sites"]:
             text_y += 0.06
 
         onregion_radius_str = (
-            ", onregion-radius: {:.3f}".format(onregion_radii_deg[oridx])
+            ", onregion-radius at 100p.e.: {:.3f}".format(onregion_radii_deg[oridx])
             + r"$^{\circ}$"
         )
         ax.set_title("In onregion, "+ gamma_name + onregion_radius_str)
