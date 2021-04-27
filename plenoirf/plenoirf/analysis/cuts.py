@@ -136,7 +136,7 @@ def _make_array_from_event_table_for_onregion_estimate(event_table):
 
 
 def cut_reconstructed_source_in_true_onregion(
-    event_table, radial_angle_onregion_deg, IGNORE_PRIMARY_DIRECTION=False
+    event_table, radial_angle_onregion_deg
 ):
     arr = _make_array_from_event_table_for_onregion_estimate(
         event_table=event_table
@@ -144,13 +144,10 @@ def cut_reconstructed_source_in_true_onregion(
 
     idx = []
     for ii in range(arr[spt.IDX].shape[0]):
-        if IGNORE_PRIMARY_DIRECTION:
-            (true_cx, true_cy) = (0.0, 0.0)
-        else:
-            (true_cx, true_cy) = mdfl.discovery._az_zd_to_cx_cy(
-                azimuth_deg=np.rad2deg(arr["primary.azimuth_rad"][ii]),
-                zenith_deg=np.rad2deg(arr["primary.zenith_rad"][ii]),
-            )
+        true_cx, true_cy = mdfl.discovery._az_zd_to_cx_cy(
+            azimuth_deg=np.rad2deg(arr["primary.azimuth_rad"][ii]),
+            zenith_deg=np.rad2deg(arr["primary.zenith_rad"][ii]),
+        )
 
         rec_cx = -arr["reconstructed_trajectory.cx_rad"][ii]
         rec_cy = -arr["reconstructed_trajectory.cy_rad"][ii]
@@ -170,8 +167,24 @@ def cut_reconstructed_source_in_true_onregion(
 def cut_reconstructed_source_in_possible_onregion(
     event_table, radial_angle_to_put_possible_onregion_deg,
 ):
-    return cut_reconstructed_source_in_true_onregion(
-        table=event_table,
-        radial_angle_onregion_deg=radial_angle_to_put_possible_onregion_deg,
-        IGNORE_PRIMARY_DIRECTION=True
+    radial_angle_to_put_possible_onregion = np.deg2rad(
+        radial_angle_to_put_possible_onregion_deg
     )
+
+    event_array = _make_array_from_event_table_for_onregion_estimate(
+        event_table=event_table
+    )
+
+    idx = []
+    for ii in range(event_array[spt.IDX].shape[0]):
+        optical_axis_to_reconstructed_direction = np.hypot(
+            event_array["reconstructed_trajectory.cx_rad"][ii],
+            event_array["reconstructed_trajectory.cy_rad"][ii]
+        )
+        if (
+            optical_axis_to_reconstructed_direction <=
+            radial_angle_to_put_possible_onregion
+        ):
+            idx.append(event_array[spt.IDX][ii])
+
+    return np.array(idx)
