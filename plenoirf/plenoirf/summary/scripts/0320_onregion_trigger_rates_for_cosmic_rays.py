@@ -36,7 +36,7 @@ fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
 
 onregion_radii_deg = np.array(
-    sum_config["on_off_measuremnent"]["onregion_radius_deg"]
+    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
 )
 num_bins_onregion_radius = onregion_radii_deg.shape[0]
 

@@ -2,6 +2,7 @@ import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
 import numpy as np
 from . import gamma_direction
+from .. import reconstruction
 from .. import table as irf_table
 import corsika_primary_wrapper as cpw
 
@@ -136,29 +137,40 @@ def _make_array_from_event_table_for_onregion_estimate(event_table):
 
 
 def cut_reconstructed_source_in_true_onregion(
-    event_table, radial_angle_onregion_deg
+    event_table, onregion_config
 ):
     event_array = _make_array_from_event_table_for_onregion_estimate(
         event_table=event_table
     )
+    ea = event_array
 
     idx = []
     for ii in range(event_array[spt.IDX].shape[0]):
+
+        onregion = reconstruction.onregion.estimate_onregion(
+            reco_cx=ea["reconstructed_trajectory.cx_rad"][ii],
+            reco_cy=ea["reconstructed_trajectory.cy_rad"][ii],
+            reco_main_axis_azimuth=ea["reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"][ii],
+            reco_num_photons=ea["features.num_photons"][ii],
+            reco_core_radius=np.hypot(
+                ea["reconstructed_trajectory.x_m"][ii],
+                ea["reconstructed_trajectory.y_m"][ii]
+            ),
+            config=onregion_config,
+        )
+
         true_cx, true_cy = mdfl.discovery._az_zd_to_cx_cy(
             azimuth_deg=np.rad2deg(event_array["primary.azimuth_rad"][ii]),
             zenith_deg=np.rad2deg(event_array["primary.zenith_rad"][ii]),
         )
 
-        rec_cx = -event_array["reconstructed_trajectory.cx_rad"][ii]
-        rec_cy = -event_array["reconstructed_trajectory.cy_rad"][ii]
+        hit = reconstruction.onregion.is_direction_inside(
+            cx=-true_cx,
+            cy=-true_cy,
+            onregion=onregion
+        )
 
-        delta_cx = true_cx - rec_cx
-        delta_cy = true_cy - rec_cy
-
-        delta_c = np.hypot(delta_cx, delta_cy)
-        delta_c_deg = np.rad2deg(delta_c)
-
-        if delta_c_deg <= radial_angle_onregion_deg:
+        if hit:
             idx.append(event_array[spt.IDX][ii])
 
     return np.array(idx)

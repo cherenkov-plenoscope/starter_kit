@@ -37,7 +37,7 @@ num_bins_energy = sum_config["energy_binning"]["num_bins"][
 max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
 min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
 
-onreion_config = sum_config["on_off_measuremnent"]["onregion"]
+onregion_config = sum_config["on_off_measuremnent"]["onregion"]
 
 onregion_radii_deg = np.array(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
@@ -111,11 +111,11 @@ for site_key in irf_config["config"]["sites"]:
         Qunc = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
         for oridx in range(num_bins_onregion_radius):
             print(site_key, particle_key, oridx)
-            onreion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
+            onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
 
             idx_detected_in_onregion = irf.analysis.cuts.cut_reconstructed_source_in_true_onregion(
                 event_table=candidate_table,
-                radial_angle_onregion_deg=onregion_radii_deg[oridx],
+                onregion_config=onregion_config,
             )
 
             mask_detected = spt.make_mask_of_right_in_left(
