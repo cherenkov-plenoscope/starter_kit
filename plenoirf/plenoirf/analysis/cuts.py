@@ -111,19 +111,36 @@ def cut_core_radius_bin(
     return core_table[spt.IDX][mask]
 
 
-def cut_reconstructed_source_in_true_onregion(
-    event_table, radial_angle_onregion_deg, IGNORE_PRIMARY_DIRECTION=False
-):
+def _make_array_from_event_table_for_onregion_estimate(event_table):
+
+    common_indices = spt.intersection([
+        event_table["features"][spt.IDX]
+        event_table["reconstructed_trajectory"][spt.IDX]
+    ])
+
     ta = spt.cut_table_on_indices(
         table=event_table,
         structure=irf_table.STRUCTURE,
-        common_indices=event_table["reconstructed_trajectory"][spt.IDX],
-        level_keys=["primary", "reconstructed_trajectory"],
+        common_indices=common_indices,
+        level_keys=[
+            "primary",
+            "features",
+            "reconstructed_trajectory"
+        ],
     )
     ta = spt.sort_table_on_common_indices(
-        table=ta, common_indices=event_table["reconstructed_trajectory"][spt.IDX],
+        table=ta, common_indices=common_indices,
     )
     arr = spt.make_rectangular_DataFrame(table=ta).to_records()
+    return arr
+
+
+def cut_reconstructed_source_in_true_onregion(
+    event_table, radial_angle_onregion_deg, IGNORE_PRIMARY_DIRECTION=False
+):
+    arr = _make_array_from_event_table_for_onregion_estimate(
+        event_table=event_table
+    )
 
     idx = []
     for ii in range(arr[spt.IDX].shape[0]):
