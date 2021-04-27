@@ -29,11 +29,8 @@ loph_chunk_base_dir = os.path.join(
     pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
 )
 
-onregion_angle_vs_num_photons = {}
-onregion_angle_vs_num_photons["num_photons_pe"] =  [1e1, 1e2, 1e3, 1e4, 1e5]
-onregion_angle_vs_num_photons["opening_angle_deg"]=[1.6, 0.8, 0.4, 0.2, 0.1]
-core_radius_uncertainty_doubling_m = 2.5e2
-
+onreion_config = sum_config["on_off_measuremnent"]["onregion"]
+onreion_config["opening_angle_deg"] = 0.8
 
 # READ light-field-geometry
 # =========================
@@ -304,8 +301,7 @@ for sk in irf_config["config"]["sites"]:
                             fit["primary_particle_x"],
                             fit["primary_particle_y"]
                         ),
-                        core_radius_uncertainty_doubling=core_radius_uncertainty_doubling_m,
-                        opening_angle_vs_reco_num_photons=onregion_angle_vs_num_photons,
+                        config=onreion_config,
                     )
 
                     ellx, elly = irf.reconstruction.onregion.make_polygon(

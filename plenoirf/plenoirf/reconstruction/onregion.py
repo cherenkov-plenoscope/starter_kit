@@ -31,37 +31,31 @@ def _make_ellipse_polygon(
     return xs, ys
 
 
-
-def ellipse_mayor_minor_ratio(
-    reco_core_radius,
-    core_radius_uncertainty_doubling,
-):
-    return 1.0 + reco_core_radius/core_radius_uncertainty_doubling
-
-
 def estimate_onregion(
     reco_cx,
     reco_cy,
     reco_main_axis_azimuth,
     reco_num_photons,
     reco_core_radius,
-    core_radius_uncertainty_doubling,
-    opening_angle_vs_reco_num_photons,
+    config,
 ):
-    ellipse_opening_angle = np.interp(
+    pivot_opening_angle = np.deg2rad(config["opening_angle_deg"])
+    opening_angle_scaling = np.interp(
         x=reco_num_photons,
-        xp=opening_angle_vs_reco_num_photons["num_photons_pe"],
-        fp=np.deg2rad(opening_angle_vs_reco_num_photons["opening_angle_deg"])
+        xp=config["opening_angle_scaling"]["reco_num_photons_pe"],
+        fp=config["opening_angle_scaling"]["scale"],
+    )
+    opening_angle = pivot_opening_angle * opening_angle_scaling
+
+    ellipticity = np.interp(
+        x=reco_core_radius,
+        xp=config["ellipticity_scaling"]["reco_core_radius_m"],
+        fp=config["ellipticity_scaling"]["scale"],
     )
 
-    ellipse_ratio = ellipse_mayor_minor_ratio(
-        reco_core_radius=reco_core_radius,
-        core_radius_uncertainty_doubling=core_radius_uncertainty_doubling,
-    )
-
-    # constant solid angle: A = pi*(ratio*a)*(1/ratio*b)
-    ellipse_mayor_radius = ellipse_opening_angle*ellipse_ratio
-    ellipse_minor_radius = ellipse_opening_angle/ellipse_ratio
+    # constant solid angle: A = pi*(ellipticity*r)*(1/ellipticity*r)
+    ellipse_mayor_radius = opening_angle*ellipticity
+    ellipse_minor_radius = opening_angle/ellipticity
     ellipse_solid_angle = np.pi * ellipse_mayor_radius * ellipse_minor_radius
 
     return {

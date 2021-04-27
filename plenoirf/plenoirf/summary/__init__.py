@@ -309,9 +309,19 @@ def _guess_summary_config(run_dir):
         "on_off_measuremnent": {
             "on_over_off_ratio": 1 / 5,
             "detection_threshold_std": 5.0,
-            "onregion_radius_deg": (
-                np.linspace(0.0 ** 2, 0.8 ** 2, 16) ** 0.5
-            )[1:],
+            "onregion": {
+                "loop_opening_angle_deg": (
+                    np.linspace(0.0 ** 2, 0.8 ** 2, 16) ** 0.5
+                )[1:],
+                "opening_angle_scaling": {
+                    "reco_num_photons_pe": [1e1, 1e2, 1e3, 1e4, 1e5],
+                    "scale": [2.0, 1.0, 0.5, 0.25, 0.125],
+                },
+                "ellipticity_scaling": {
+                    "reco_core_radius_m": [0.0, 2.5e2, 5e2, 1e3],
+                    "scale": [1.0, 2.0, 3.0, 5.0],
+                },
+            },
         },
         "gamma_ray_reference_source": {
             "type": "3fgl",
