@@ -112,16 +112,16 @@ def cut_core_radius_bin(
 
 
 def cut_reconstructed_source_in_true_onregion(
-    table, radial_angle_onregion_deg, IGNORE_PRIMARY_DIRECTION=False
+    event_table, radial_angle_onregion_deg, IGNORE_PRIMARY_DIRECTION=False
 ):
     ta = spt.cut_table_on_indices(
-        table=table,
+        table=event_table,
         structure=irf_table.STRUCTURE,
-        common_indices=table["reconstructed_trajectory"][spt.IDX],
+        common_indices=event_table["reconstructed_trajectory"][spt.IDX],
         level_keys=["primary", "reconstructed_trajectory"],
     )
     ta = spt.sort_table_on_common_indices(
-        table=ta, common_indices=table["reconstructed_trajectory"][spt.IDX],
+        table=ta, common_indices=event_table["reconstructed_trajectory"][spt.IDX],
     )
     arr = spt.make_rectangular_DataFrame(table=ta).to_records()
 
@@ -151,10 +151,10 @@ def cut_reconstructed_source_in_true_onregion(
 
 
 def cut_reconstructed_source_in_possible_onregion(
-    table, radial_angle_to_put_possible_onregion_deg,
+    event_table, radial_angle_to_put_possible_onregion_deg,
 ):
     return cut_reconstructed_source_in_true_onregion(
-        table=table,
+        table=event_table,
         radial_angle_onregion_deg=radial_angle_to_put_possible_onregion_deg,
         IGNORE_PRIMARY_DIRECTION=True
     )

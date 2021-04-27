@@ -110,7 +110,7 @@ for site_key in irf_config["config"]["sites"]:
         for oridx in range(num_bins_onregion_radius):
 
             idx_detected_in_onregion = irf.analysis.cuts.cut_reconstructed_source_in_true_onregion(
-                table=candidate_table,
+                event_table=candidate_table,
                 radial_angle_onregion_deg=onregion_radii_deg[oridx],
             )
 
@@ -182,7 +182,7 @@ for site_key in irf_config["config"]["sites"]:
             table=table_candidates, common_indices=idx_candidates
         )
         idx_in_possible_onregion = irf.analysis.cuts.cut_reconstructed_source_in_possible_onregion(
-            table=table_candidates,
+            event_table=table_candidates,
             radial_angle_to_put_possible_onregion_deg=MAX_SOURCE_ANGLE_DEG,
         )
 
