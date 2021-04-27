@@ -114,7 +114,7 @@ def cut_core_radius_bin(
 def _make_array_from_event_table_for_onregion_estimate(event_table):
 
     common_indices = spt.intersection([
-        event_table["features"][spt.IDX]
+        event_table["features"][spt.IDX],
         event_table["reconstructed_trajectory"][spt.IDX]
     ])
 
