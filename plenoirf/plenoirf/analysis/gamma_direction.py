@@ -2,17 +2,6 @@ import numpy as np
 from . import effective_quantity
 
 
-def estimate(
-    light_front_cx,
-    light_front_cy,
-    image_infinity_cx_mean,
-    image_infinity_cy_mean,
-):
-    rec_cx = -0.5 * (light_front_cx + image_infinity_cx_mean)
-    rec_cy = -0.5 * (light_front_cy + image_infinity_cy_mean)
-    return rec_cx, rec_cy
-
-
 def momentum_to_cx_cy_wrt_aperture(
     momentum_x_GeV_per_c,
     momentum_y_GeV_per_c,
