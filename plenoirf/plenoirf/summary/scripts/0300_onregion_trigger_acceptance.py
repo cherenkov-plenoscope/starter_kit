@@ -195,14 +195,19 @@ for site_key in irf_config["config"]["sites"]:
                     config=onregion_config,
                 )
 
-                _true_cx, _true_cy = mdfl.discovery._az_zd_to_cx_cy(
-                    azimuth_deg=np.rad2deg(cap["primary.azimuth_rad"][ii]),
-                    zenith_deg=np.rad2deg(cap["primary.zenith_rad"][ii]),
+                (
+                    _true_cx,
+                    _true_cy,
+                ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
+                    momentum_x_GeV_per_c=[cap["primary.momentum_x_GeV_per_c"][ii]],
+                    momentum_y_GeV_per_c=[cap["primary.momentum_y_GeV_per_c"][ii]],
+                    momentum_z_GeV_per_c=[cap["primary.momentum_z_GeV_per_c"][ii]],
+                    plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
                 )
 
                 hit = irf.reconstruction.onregion.is_direction_inside(
-                    cx=-_true_cx,
-                    cy=-_true_cy,
+                    cx=_true_cx,
+                    cy=_true_cy,
                     onregion=_onregion
                 )
 
