@@ -242,7 +242,7 @@ for site_key in irf_config["config"]["sites"]:
             min_reconstructed_photons=min_reconstructed_photons,
         )
 
-        candidate_array_diffuse = make_array_for_onregion_estimate(
+        candidate_array_diffuse = irf.reconstruction.onregion.make_array_from_event_table_for_onregion_estimate(
             event_table=candidate_table_diffuse
         )
         cad = candidate_array_diffuse
