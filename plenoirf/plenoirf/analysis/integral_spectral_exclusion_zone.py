@@ -12,6 +12,7 @@ def estimate_integral_spectral_exclusion_zone(
     background_rate_in_onregion_per_s,
     onregion_over_offregion_ratio,
     observation_time_s,
+    instrument_systematic_uncertainty=None,
     num_points=27,
     gamma_range=[-5, -0.5],
     std_threshold=5.0,
@@ -40,6 +41,15 @@ def estimate_integral_spectral_exclusion_zone(
         t_obs=observation_time_s,
         threshold=std_threshold,
     )
+
+    if instrument_systematic_uncertainty is not None:
+        lambda_lim_sys = (
+            instrument_systematic_uncertainty *
+            background_rate_in_onregion_per_s *
+            observation_time_s
+        )
+
+        lambda_lim = np.max([lambda_lim, lambda_lim_sys])
 
     energy_range = [
         gls.sensitive_energy(gamma_range[0], a_eff_interpol),

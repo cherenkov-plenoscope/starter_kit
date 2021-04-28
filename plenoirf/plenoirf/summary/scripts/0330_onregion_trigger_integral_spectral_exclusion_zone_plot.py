@@ -44,7 +44,7 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
-observation_time_s = 50 * 3600
+observation_time_s = 3600
 num_isez_energy_supports = 7
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
@@ -71,7 +71,7 @@ output_sed_styles = {
     "fermi": sed_styles.FERMI_SED_STYLE,
 }
 
-
+instrument_systematic_uncertainty = 5e-3
 oridx = 1
 
 # background rates
@@ -139,13 +139,14 @@ for site_key in irf_config["config"]["sites"]:
         background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
         onregion_over_offregion_ratio=on_over_off_ratio,
         observation_time_s=observation_time_s,
+        instrument_systematic_uncertainty=instrument_systematic_uncertainty,
         num_points=num_isez_energy_supports,
     )
     com = {}
     com["energy"] = isez_energy_GeV
     com["differential_flux"] = isez_differential_flux_per_GeV_per_m2_per_s
-    com["label"] = "Portal {:2.0f} h, trigger".format(
-        observation_time_s / 3600.0
+    com["label"] = "Portal {:2.0f} s, trigger".format(
+        observation_time_s
     )
     com["color"] = "r"
     com["alpha"] = 1.0
@@ -163,13 +164,14 @@ for site_key in irf_config["config"]["sites"]:
         background_rate_in_onregion_per_s=electron_rate_onregion[site_key],
         onregion_over_offregion_ratio=on_over_off_ratio,
         observation_time_s=observation_time_s,
+        instrument_systematic_uncertainty=instrument_systematic_uncertainty,
         num_points=num_isez_energy_supports,
     )
     com = {}
     com["energy"] = e_isez_energy_GeV
     com["differential_flux"] = e_isez_differential_flux_per_GeV_per_m2_per_s
-    com["label"] = "Portal {:2.0f} h, trigger, rejecting all hadrons".format(
-        observation_time_s / 3600.0
+    com["label"] = "Portal {:2.0f} s, trigger, rejecting all hadrons".format(
+        observation_time_s
     )
     com["color"] = "r"
     com["alpha"] = 0.5
