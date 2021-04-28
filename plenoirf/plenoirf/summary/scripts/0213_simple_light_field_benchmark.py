@@ -115,15 +115,17 @@ containment_fractions = np.linspace(
 
 # READ reconstruction
 # ===================
-_rec = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0211_simple_light_field")
-)
 reconstruction = {}
-for sk in _rec:
+for sk in irf_config["config"]["sites"]:
     reconstruction[sk] = {}
-    for pk in _rec[sk]:
-        _df = pandas.DataFrame(_rec[sk][pk]["reco"])
-        reconstruction[sk][pk] = _df.to_records(index=False)
+    for pk in irf_config["config"]["particles"]:
+        event_table = spt.read(
+            path=os.path.join(
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar"
+            ),
+            structure=irf.table.STRUCTURE,
+        )
+        reconstruction[sk][pk] = event_table["reconstructed_trajectory"]
 
 level_keys = [
     "primary",
@@ -157,10 +159,10 @@ def make_rectangular_table(
         left=pandas.DataFrame(
             {
                 spt.IDX: reconstruction_table[spt.IDX],
-                "reco_cx": reconstruction_table["cx"],
-                "reco_cy": reconstruction_table["cy"],
-                "reco_x": reconstruction_table["x"],
-                "reco_y": reconstruction_table["y"],
+                "reco_cx": reconstruction_table["cx_rad"],
+                "reco_cy": reconstruction_table["cy_rad"],
+                "reco_x": reconstruction_table["x_m"],
+                "reco_y": reconstruction_table["y_m"],
             }
         ),
         right=rec_evt_df,
