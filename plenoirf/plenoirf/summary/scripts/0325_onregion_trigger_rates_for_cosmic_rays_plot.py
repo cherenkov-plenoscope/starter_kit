@@ -52,7 +52,7 @@ _, gamma_name = irf.summary.make_gamma_ray_reference_flux(
 
 LiMa_alpha = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 
-observation_time_s = 300
+observation_time_s = 180
 
 for site_key in irf_config["config"]["sites"]:
     fig = irf.summary.figure.figure(fig_16_by_9)
