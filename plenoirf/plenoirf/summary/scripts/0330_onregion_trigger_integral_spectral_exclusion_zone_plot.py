@@ -71,6 +71,9 @@ output_sed_styles = {
     "fermi": sed_styles.FERMI_SED_STYLE,
 }
 
+
+oridx = 1
+
 # background rates
 # ----------------
 cosmic_ray_rate_onregion = {}
@@ -79,13 +82,13 @@ for site_key in irf_config["config"]["sites"]:
 
     electron_rate_onregion[site_key] = onregion_rates[site_key]["electron"][
         "integral_rate"
-    ]["mean"]
+    ]["mean"][oridx]
 
     cosmic_ray_rate_onregion[site_key] = 0
     for cosmic_ray_key in cosmic_ray_keys:
         cosmic_ray_rate_onregion[site_key] += onregion_rates[site_key][
             cosmic_ray_key
-        ]["integral_rate"]["mean"]
+        ]["integral_rate"]["mean"][oridx]
 
 x_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e-0, 1e-16])
@@ -125,7 +128,7 @@ for site_key in irf_config["config"]["sites"]:
     # plenoscope
     # ----------
     gamma_effective_area_m2 = np.array(
-        onregion_acceptance[site_key]["gamma"]["point"]["mean"]
+        np.array(onregion_acceptance[site_key]["gamma"]["point"]["mean"])[:, oridx]
     )
     (
         isez_energy_GeV,
