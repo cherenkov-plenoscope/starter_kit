@@ -74,7 +74,7 @@ fig_16_by_9 = sum_config["plot"]["16_by_9"]
 truth_by_index = {}
 for sk in irf_config["config"]["sites"]:
     truth_by_index[sk] = {}
-    for pk in ["gamma"]:  # irf_config["config"]["particles"]:
+    for pk in irf_config["config"]["particles"]:
         truth_by_index[sk][pk] = {}
 
         event_table = spt.read(
@@ -161,8 +161,11 @@ PLOT_OVERVIEW = True
 PLOT_ONREGION = True
 
 
+NUM_EVENTS_PER_PARTICLE = 10
+
+
 for sk in irf_config["config"]["sites"]:
-    for pk in ["gamma"]:  # irf_config["config"]["particles"]:
+    for pk in irf_config["config"]["particles"]:
 
         reco_obj = read_shower_maximum_object_distance(
             site_key=sk, particle_key=pk
@@ -177,7 +180,11 @@ for sk in irf_config["config"]["sites"]:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
-        for event in run:
+        for event_counter, event in enumerate(run):
+
+            if event_counter > NUM_EVENTS_PER_PARTICLE:
+                break
+
             airshower_id, loph_record = event
 
             truth = dict(truth_by_index[sk][pk][airshower_id])
