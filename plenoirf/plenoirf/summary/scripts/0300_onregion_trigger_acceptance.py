@@ -105,28 +105,6 @@ def make_wighted_mask_wrt_primary_table(
     return mask
 
 
-def make_array_for_onregion_estimate(event_table):
-    common_indices = spt.intersection([
-        event_table["features"][spt.IDX],
-        event_table["reconstructed_trajectory"][spt.IDX]
-    ])
-    ta = spt.cut_table_on_indices(
-        table=event_table,
-        structure=irf.table.STRUCTURE,
-        common_indices=common_indices,
-        level_keys=[
-            "primary",
-            "features",
-            "reconstructed_trajectory"
-        ],
-    )
-    ta = spt.sort_table_on_common_indices(
-        table=ta, common_indices=common_indices,
-    )
-    event_array = spt.make_rectangular_DataFrame(table=ta).to_records()
-    return event_array
-
-
 for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
         site_particle_dir = os.path.join(pa["out_dir"], site_key, particle_key)
@@ -169,7 +147,7 @@ for site_key in irf_config["config"]["sites"]:
             min_reconstructed_photons=min_reconstructed_photons,
         )
 
-        candidate_array_point = make_array_for_onregion_estimate(
+        candidate_array_point = irf.reconstruction.onregion.make_array_from_event_table_for_onregion_estimate(
             event_table=candidate_table_point
         )
         cap = candidate_array_point
