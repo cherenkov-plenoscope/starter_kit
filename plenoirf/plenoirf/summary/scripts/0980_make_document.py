@@ -524,7 +524,7 @@ _bd += make_site_particle_index_table(
     particles=irf_config["config"]["particles"],
     energy_bin_edges=[0, 1],
     wild_card=opj(
-        pa["run_dir"],
+        "..",
         "magnetic_deflection",
         "control_figures",
         "{site_key:s}_{particle_key:s}_cherenkov_pool_x_m.jpg",
