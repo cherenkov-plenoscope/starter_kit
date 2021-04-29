@@ -84,19 +84,25 @@ def write_relative_runtime(table, out_path, figure_config):
     ert = table
     total_times = {}
     total_time = 0
-    for key in irf.logging.KEYS:
+
+    KEYS = []
+    for key in ert.dtype.names:
+        if "num_" not in key and "run_id" not in key:
+            KEYS.append(key)
+
+    for key in KEYS:
         total_times[key] = np.sum(ert[key])
         total_time += total_times[key]
 
     relative_times = {}
-    for key in irf.logging.KEYS:
+    for key in KEYS:
         relative_times[key] = float(total_times[key] / total_time)
 
     fig = irf.summary.figure.figure(figure_config)
     ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])
     labels = []
     sizes = []
-    _y = np.arange(len(irf.logging.KEYS))
+    _y = np.arange(len(KEYS))
     for ikey, key in enumerate(relative_times):
         labels.append(key)
         sizes.append(relative_times[key])
@@ -126,12 +132,12 @@ def write_relative_runtime(table, out_path, figure_config):
 def write_speed(table, out_path, figure_config):
     ert = table
     speed_keys = {
-        "corsika": "num_events_corsika",
-        "grid": "num_events_corsika",
+        "corsika_and_grid": "num_events_corsika",
         "merlict": "num_events_merlict",
-        "trigger": "num_events_merlict",
-        "cherenkov_classification": "num_events_pasttrigger",
-        "feature_extraction": "num_events_pasttrigger",
+        "pass_loose_trigger": "num_events_merlict",
+        "classify_cherenkov": "num_events_pasttrigger",
+        "extract_features": "num_events_pasttrigger",
+        "estimate_primary_trajectory": "num_events_pasttrigger",
     }
     speeds = {}
     for key in speed_keys:

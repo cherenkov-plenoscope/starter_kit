@@ -186,7 +186,7 @@ _bd += sam.p(
     text_align="justify",
     font_family="calibri",
 )
-_runs_config = get_value_by_key_but_forgive(irf_config, "runs").copy()
+_runs_config = get_value_by_key_but_forgive(irf_config["config"], "runs").copy()
 _bd += sam.code(
     json.dumps(_runs_config, indent=4), font_size=50, line_height=100,
 )
