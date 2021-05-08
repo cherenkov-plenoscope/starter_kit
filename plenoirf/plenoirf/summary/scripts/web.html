@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html>
+
+<head>
+<style>
+.p3 {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 30px;
+}
+</style>
+</head>
+
+<body>
+
+<p class="p3" id="site_indicator">sites</p>
+<p class="p3" id="particle_indicator">particles</p>
+<p class="p3" id="energy_indicator">energies</p>
+
+<a id="figure" href="#">
+        <img id="inner_figure" src="none.jpg" width="1280" height="720"/>
+</a>
+
+<script>
+        var site_keys = ["chile", "namibia"];
+        var particle_keys = ["gamma", "electron", "proton", "helium"];
+        var ene_keys = [
+                "000000",
+                "000001",
+                "000002",
+                "000003",
+                "000004",
+                "000005",
+                "000006",
+                "000007"
+        ];
+
+        var ene = 0;
+        var ene_stop = ene_keys.length - 1;
+
+        var sit = 0;
+        var sit_stop = site_keys.length - 1;
+
+        var par = 0;
+        var par_stop = particle_keys.length - 1;
+
+        function make_indicator_str(names, idx, keys) {
+                var s = "";
+
+                for (i = 0; i < names.length; i++) {
+                        s += '<span style="color:';
+                        if (i == idx) {
+                                s += '#000';
+                        } else {
+                                s += '#ccc';
+                        }
+                        s += ';">';
+                        s += names[i];
+                        s += "</span> ";
+                }
+                return s + keys;
+        }
+
+        function update_navigation_map(ene, par, sit) {
+                var sit_elem = document.getElementById("site_indicator");
+                var par_elem = document.getElementById("particle_indicator");
+                var ene_elem = document.getElementById("energy_indicator");
+
+                sit_elem.innerHTML = make_indicator_str(
+                        site_keys, sit, " {5, 6}");
+                par_elem.innerHTML = make_indicator_str(
+                        particle_keys, par, " {3, 4}");
+                ene_elem.innerHTML = make_indicator_str(
+                        ene_keys, ene, " {1, 2}");
+        }
+
+        function make_figure_path(ene, par, sit) {
+                p = ""
+                p += site_keys[sit] + "_"
+                p += particle_keys[par] + "_psf_image_ene"
+                p += ene_keys[ene] + ".jpg"
+                return p
+        }
+
+        function update_figure(ene, par, sit) {
+                var img_elem = document.getElementById("inner_figure");
+                img_elem.src = make_figure_path(ene, par, sit);
+        }
+
+        function navigate_figure_onkeydown(event) {
+                var key = event.key;
+
+                switch(key) {
+                        case '1':
+                                if (ene > 0) {
+                                        ene = ene - 1;
+                                }
+                                break;
+                        case '2':
+                                if (ene < ene_stop) {
+                                        ene = ene + 1;
+                                }
+                                break;
+
+                        case '5':
+                                if (sit > 0) {
+                                        sit = sit - 1;
+                                }
+                                break;
+                        case '6':
+                                if (sit < sit_stop) {
+                                        sit = sit + 1;
+                                }
+                                break;
+
+                        case '3':
+                                if (par > 0) {
+                                        par = par - 1;
+                                }
+                                break;
+                        case '4':
+                                if (par < par_stop) {
+                                        par = par + 1;
+                                }
+                                break;
+
+                }
+
+                update_figure(ene, par, sit);
+                update_navigation_map(ene, par, sit);
+
+                console.log("ene", ene, "site", sit, "par", par);
+        }
+
+        update_figure(ene, par, sit);
+        update_navigation_map(ene, par, sit);
+        var figure_elem = document.getElementById('figure');
+        figure_elem.focus();
+        figure_elem.onkeydown = function() {navigate_figure_onkeydown(event);}
+
+</script>
+
+</body>
+</html>
