@@ -44,7 +44,7 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
-observation_time_s = 3600
+observation_time_s = 300
 num_isez_energy_supports = 7
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
@@ -66,13 +66,18 @@ crab_flux = cosmic_fluxes.read_crab_nebula_flux_from_resources()
 internal_sed_style = sed_styles.PLENOIRF_SED_STYLE
 
 output_sed_styles = {
-    "plenoirf": sed_styles.PLENOIRF_SED_STYLE,
-    "science": sed_styles.SCIENCE_SED_STYLE,
+    #"plenoirf": sed_styles.PLENOIRF_SED_STYLE,
+    #"science": sed_styles.SCIENCE_SED_STYLE,
     "fermi": sed_styles.FERMI_SED_STYLE,
 }
 
 instrument_systematic_uncertainty = 5e-3
-oridx = 1
+
+loop_systematic_uncertainty = [0.0, 1e-3, 1e-2]
+loop_systematic_uncertainty_line_style = ["-", "--", ":"]
+
+oridx = 4
+onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"][oridx]
 
 # background rates
 # ----------------
@@ -106,7 +111,7 @@ for site_key in irf_config["config"]["sites"]:
         com["differential_flux"] = scale_factor * np.array(
             crab_flux["differential_flux"]["values"]
         )
-        com["label"] = "{:.3f} Crab".format(scale_factor)
+        com["label"] = "{:1.1e} Crab".format(scale_factor)
         com["color"] = "k"
         com["alpha"] = 1.0 / (1.0 + i)
         com["linestyle"] = "--"
@@ -119,7 +124,7 @@ for site_key in irf_config["config"]["sites"]:
     com["differential_flux"] = np.array(
         fermi_broadband["differential_flux"]["values"]
     )
-    com["label"] = "Fermi-LAT 10 y"
+    com["label"] = "Fermi-LAT 10y"
     com["color"] = "k"
     com["alpha"] = 1.0
     com["linestyle"] = "-"
@@ -127,56 +132,61 @@ for site_key in irf_config["config"]["sites"]:
 
     # plenoscope
     # ----------
-    gamma_effective_area_m2 = np.array(
-        np.array(onregion_acceptance[site_key]["gamma"]["point"]["mean"])[:, oridx]
-    )
-    (
-        isez_energy_GeV,
-        isez_differential_flux_per_GeV_per_m2_per_s,
-    ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
-        gamma_effective_area_m2=gamma_effective_area_m2,
-        energy_bin_centers_GeV=energy_bin_centers,
-        background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
-        onregion_over_offregion_ratio=on_over_off_ratio,
-        observation_time_s=observation_time_s,
-        instrument_systematic_uncertainty=instrument_systematic_uncertainty,
-        num_points=num_isez_energy_supports,
-    )
-    com = {}
-    com["energy"] = isez_energy_GeV
-    com["differential_flux"] = isez_differential_flux_per_GeV_per_m2_per_s
-    com["label"] = "Portal {:2.0f} s, trigger".format(
-        observation_time_s
-    )
-    com["color"] = "r"
-    com["alpha"] = 1.0
-    com["linestyle"] = "-"
-    components.append(com)
+    for sys, systematic_uncertainty in enumerate(loop_systematic_uncertainty):
+        gamma_effective_area_m2 = np.array(
+            np.array(onregion_acceptance[site_key]["gamma"]["point"]["mean"])[:, oridx]
+        )
+        (
+            isez_energy_GeV,
+            isez_differential_flux_per_GeV_per_m2_per_s,
+        ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
+            gamma_effective_area_m2=gamma_effective_area_m2,
+            energy_bin_centers_GeV=energy_bin_centers,
+            background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
+            onregion_over_offregion_ratio=on_over_off_ratio,
+            observation_time_s=observation_time_s,
+            instrument_systematic_uncertainty=systematic_uncertainty,
+            num_points=num_isez_energy_supports,
+        )
+        com = {}
+        com["energy"] = isez_energy_GeV
+        com["differential_flux"] = isez_differential_flux_per_GeV_per_m2_per_s
+        com["label"] = "Portal {:2.0f}s, trigger, sys. {:1.1e}".format(
+            observation_time_s, systematic_uncertainty,
+        )
 
-    # plenoscope no hadrons
-    # ---------------------
-    (
-        e_isez_energy_GeV,
-        e_isez_differential_flux_per_GeV_per_m2_per_s,
-    ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
-        gamma_effective_area_m2=gamma_effective_area_m2,
-        energy_bin_centers_GeV=energy_bin_centers,
-        background_rate_in_onregion_per_s=electron_rate_onregion[site_key],
-        onregion_over_offregion_ratio=on_over_off_ratio,
-        observation_time_s=observation_time_s,
-        instrument_systematic_uncertainty=instrument_systematic_uncertainty,
-        num_points=num_isez_energy_supports,
-    )
-    com = {}
-    com["energy"] = e_isez_energy_GeV
-    com["differential_flux"] = e_isez_differential_flux_per_GeV_per_m2_per_s
-    com["label"] = "Portal {:2.0f} s, trigger, rejecting all hadrons".format(
-        observation_time_s
-    )
-    com["color"] = "r"
-    com["alpha"] = 0.5
-    com["linestyle"] = "--"
-    components.append(com)
+        com["alpha"] = 1.0 / (1.0 + sys)
+        com["color"] = "r"
+        com["linestyle"] = loop_systematic_uncertainty_line_style[sys]
+
+        components.append(com)
+
+        '''
+        # plenoscope no hadrons
+        # ---------------------
+        (
+            e_isez_energy_GeV,
+            e_isez_differential_flux_per_GeV_per_m2_per_s,
+        ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
+            gamma_effective_area_m2=gamma_effective_area_m2,
+            energy_bin_centers_GeV=energy_bin_centers,
+            background_rate_in_onregion_per_s=electron_rate_onregion[site_key],
+            onregion_over_offregion_ratio=on_over_off_ratio,
+            observation_time_s=observation_time_s,
+            instrument_systematic_uncertainty=instrument_systematic_uncertainty,
+            num_points=num_isez_energy_supports,
+        )
+        com = {}
+        com["energy"] = e_isez_energy_GeV
+        com["differential_flux"] = e_isez_differential_flux_per_GeV_per_m2_per_s
+        com["label"] = "Portal {:2.0f} s, trigger, rejecting all hadrons".format(
+            observation_time_s
+        )
+        com["color"] = "r"
+        com["alpha"] = 0.5
+        com["linestyle"] = "--"
+        components.append(com)
+        '''
 
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]
@@ -217,6 +227,13 @@ for site_key in irf_config["config"]["sites"]:
         ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
         ax.set_xlabel(sed_style["x_label"] + " / " + sed_style["x_unit"])
         ax.set_ylabel(sed_style["y_label"] + " / " + sed_style["y_unit"])
+        ax.set_title(
+            "onregion-opening-angle at 100p.e. {: 2.1f}".format(
+                onregion_opening_angle_deg
+            ) + r"$^{\circ}$",
+            family="monospace",
+        )
+
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
