@@ -240,16 +240,17 @@ def histogram_confusion_matrix_with_normalized_columns(
         x, y, weights=weights_x, bins=[x_bin_edges, y_bin_edges],
     )[0]
 
-    exposure_bins_x = np.histogram(x, bins=x_bin_edges, weights=weights_x)[0]
-    exposure_bins_x_no_weights = np.histogram(x, bins=x_bin_edges)[0]
+    exposure_bins_no_weights = np.histogram2d(
+        x, y, bins=[x_bin_edges, y_bin_edges],
+    )[0]
 
     confusion_bins_normalized_columns = confusion_bins.copy()
     for col in range(num_bins_x):
-        if exposure_bins_x_no_weights[col] >= min_exposure_x:
-            confusion_bins_normalized_columns[col, :] /= exposure_bins_x[col]
+        if np.sum(exposure_bins_no_weights[col, :]) >= min_exposure_x:
+            confusion_bins_normalized_columns[col, :] /= np.sum(confusion_bins[col, :])
         else:
             confusion_bins_normalized_columns[col, :] = (
-                np.ones(num_bins_x) * default_low_exposure
+                np.ones(num_bins_y) * default_low_exposure
             )
 
     return {
@@ -257,6 +258,7 @@ def histogram_confusion_matrix_with_normalized_columns(
         "y_bin_edges": y_bin_edges,
         "confusion_bins": confusion_bins,
         "confusion_bins_normalized_columns": confusion_bins_normalized_columns,
-        "exposure_bins_x_no_weights": exposure_bins_x_no_weights,
-        "exposure_bins_x": exposure_bins_x,
+        "exposure_bins_x_no_weights": np.sum(exposure_bins_no_weights, axis=1),
+        "exposure_bins_x": np.sum(confusion_bins, axis=1),
+        "min_exposure_x": min_exposure_x,
     }
