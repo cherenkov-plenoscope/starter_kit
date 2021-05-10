@@ -220,7 +220,8 @@ def mark_ax_thrown_spectrum(ax, x=0.93, y=0.93, fontsize=42):
 def histogram_confusion_matrix_with_normalized_columns(
     x,
     y,
-    bin_edges,
+    x_bin_edges,
+    y_bin_edges,
     weights_x=None,
     min_exposure_x=100,
     default_low_exposure=np.nan,
@@ -229,27 +230,31 @@ def histogram_confusion_matrix_with_normalized_columns(
     if weights_x is not None:
         assert len(x) == len(weights_x)
 
-    num_bins = len(bin_edges) - 1
-    assert num_bins >= 1
+    num_bins_x = len(x_bin_edges) - 1
+    assert num_bins_x >= 1
+
+    num_bins_y = len(y_bin_edges) - 1
+    assert num_bins_y >= 1
 
     confusion_bins = np.histogram2d(
-        x, y, weights=weights_x, bins=[bin_edges, bin_edges],
+        x, y, weights=weights_x, bins=[x_bin_edges, y_bin_edges],
     )[0]
 
-    exposure_bins_x = np.histogram(x, bins=bin_edges, weights=weights_x)[0]
-    exposure_bins_x_no_weights = np.histogram(x, bins=bin_edges)[0]
+    exposure_bins_x = np.histogram(x, bins=x_bin_edges, weights=weights_x)[0]
+    exposure_bins_x_no_weights = np.histogram(x, bins=x_bin_edges)[0]
 
     confusion_bins_normalized_columns = confusion_bins.copy()
-    for col in range(num_bins):
+    for col in range(num_bins_x):
         if exposure_bins_x_no_weights[col] >= min_exposure_x:
             confusion_bins_normalized_columns[col, :] /= exposure_bins_x[col]
         else:
             confusion_bins_normalized_columns[col, :] = (
-                np.ones(num_bins) * default_low_exposure
+                np.ones(num_bins_x) * default_low_exposure
             )
 
     return {
-        "bin_edges": bin_edges,
+        "x_bin_edges": x_bin_edges,
+        "y_bin_edges": y_bin_edges,
         "confusion_bins": confusion_bins,
         "confusion_bins_normalized_columns": confusion_bins_normalized_columns,
         "exposure_bins_x_no_weights": exposure_bins_x_no_weights,
