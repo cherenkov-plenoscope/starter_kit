@@ -62,7 +62,7 @@ for site_key in irf_config["config"]["sites"]:
                     reco_cx=eva["reconstructed_trajectory.cx_rad"][ii],
                     reco_cy=eva["reconstructed_trajectory.cy_rad"][ii],
                     reco_main_axis_azimuth=eva["reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"][ii],
-                    reco_num_photons=NUM_PHOTONS_PIVOT,
+                    reco_num_photons=eva["features.num_photons"][ii],
                     reco_core_radius=np.hypot(
                         eva["reconstructed_trajectory.x_m"][ii],
                         eva["reconstructed_trajectory.y_m"][ii]
