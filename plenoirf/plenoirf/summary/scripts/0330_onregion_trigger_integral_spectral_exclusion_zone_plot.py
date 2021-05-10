@@ -44,8 +44,8 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
-observation_time_s = 300
-num_isez_energy_supports = 7
+observation_time_s = 600
+num_isez_energy_supports = 5
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
@@ -76,7 +76,7 @@ instrument_systematic_uncertainty = 5e-3
 loop_systematic_uncertainty = [0.0, 1e-3, 1e-2]
 loop_systematic_uncertainty_line_style = ["-", "--", ":"]
 
-oridx = 4
+oridx = 2
 onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"][oridx]
 
 # background rates
