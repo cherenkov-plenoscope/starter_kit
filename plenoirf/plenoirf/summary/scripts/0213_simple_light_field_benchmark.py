@@ -11,6 +11,7 @@ import iminuit
 import scipy
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as plt_colors
 from matplotlib.patches import ConnectionPatch
 
 """
@@ -47,6 +48,8 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 fig_16_by_9 = dict(sum_config["plot"]["16_by_9"])
+fig_1_by_1 = fig_16_by_9.copy()
+fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
 
 # energy
 # ------
@@ -138,7 +141,78 @@ level_keys = [
     "trigger",
     "pasttrigger",
     "cherenkovclassification",
+    "reconstructed_trajectory",
+    "features",
 ]
+
+
+def write_correlation_figure(
+    path,
+    x,
+    y,
+    x_bin_edges,
+    y_bin_edges,
+    x_label,
+    y_label,
+    min_exposure_x,
+    logx=False,
+    logy=False,
+    log_exposure_counter=False,
+):
+    valid = np.logical_and(
+        np.logical_not((np.isnan(x))),
+        np.logical_not((np.isnan(y)))
+    )
+
+    cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
+        x=x[valid],
+        y=y[valid],
+        x_bin_edges=x_bin_edges,
+        y_bin_edges=y_bin_edges,
+        min_exposure_x=min_exposure_x,
+        default_low_exposure=0.0,
+    )
+
+    fig = irf.summary.figure.figure(fig_1_by_1)
+    ax = irf.summary.figure.add_axes(fig, [0.1, 0.23, 0.7, 0.7])
+    ax_h = irf.summary.figure.add_axes(fig, [0.1, 0.07, 0.7, 0.1])
+    ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
+    _pcm_confusion = ax.pcolormesh(
+        cm["x_bin_edges"],
+        cm["y_bin_edges"],
+        np.transpose(cm["confusion_bins_normalized_columns"]),
+        cmap="Greys",
+        norm=plt_colors.PowerNorm(gamma=0.5),
+    )
+    plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
+    ax.set_title("normalized for each column")
+    ax.set_ylabel(y_label)
+    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+    ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["x_bin_edges"])])
+    ax_h.set_xlabel(x_label)
+    ax_h.set_ylabel("num. events / 1")
+    ax_h.axhline(cm["min_exposure_x"], linestyle=":", color="k")
+    irf.summary.figure.ax_add_hist(
+        ax=ax_h,
+        bin_edges=cm["x_bin_edges"],
+        bincounts=cm["exposure_bins_x_no_weights"],
+        linestyle="-",
+        linecolor="k",
+    )
+
+    if logx:
+        ax.semilogx()
+        ax_h.semilogx()
+
+    if logy:
+        ax.semilogy()
+
+    if log_exposure_counter:
+        ax_h.semilogy()
+
+    fig.savefig(path)
+    plt.close(fig)
+
 
 
 def make_rectangular_table(
@@ -163,6 +237,10 @@ def make_rectangular_table(
                 "reco_cy": reconstruction_table["cy_rad"],
                 "reco_x": reconstruction_table["x_m"],
                 "reco_y": reconstruction_table["y_m"],
+                "reco_r": np.hypot(
+                    reconstruction_table["x_m"],
+                    reconstruction_table["y_m"]
+                )
             }
         ),
         right=rec_evt_df,
@@ -353,6 +431,42 @@ for sk in reconstruction:
 
             c_ene_rad = dict(cont_ene_rad)
             c_ene = dict(cont_ene)
+
+            if pk == "gamma":
+
+                write_correlation_figure(
+                    path=os.path.join(
+                        pa["out_dir"],
+                        "{:s}_{:s}_{:s}_vs_reco_core_radius.jpg".format(sk, pk, the)
+                    ),
+                    x=rectab["reco_r"],
+                    y=np.rad2deg(rectab[the]),
+                    x_bin_edges=np.linspace(0.0, 640, 13),
+                    y_bin_edges=np.linspace(0.0, 3.0, 15),
+                    x_label="reco. core-radius / m",
+                    y_label=the + r" / $1^{\circ}$",
+                    min_exposure_x=100,
+                    logx=False,
+                    logy=False,
+                    log_exposure_counter=False,
+                )
+
+                write_correlation_figure(
+                    path=os.path.join(
+                        pa["out_dir"],
+                        "{:s}_{:s}_{:s}_vs_reco_num_photons.jpg".format(sk, pk, the)
+                    ),
+                    x=rectab["features.num_photons"],
+                    y=np.rad2deg(rectab[the]),
+                    x_bin_edges=np.geomspace(1e1, 1e4, 13),
+                    y_bin_edges=np.linspace(0.0, 3.0, 15),
+                    x_label="reco. num. photons / p.e.",
+                    y_label="theta / deg",
+                    min_exposure_x=100,
+                    logx=True,
+                    logy=False,
+                    log_exposure_counter=False,
+                )
 
             for ene in range(num_energy_bins):
 
