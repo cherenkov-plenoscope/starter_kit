@@ -116,6 +116,48 @@ containment_fractions = np.linspace(
     num_containment_fractions + 1
 )[1:-1]
 
+
+# feature correlation
+# ===================
+feature_correlations = [
+    {
+        "key": "reco_r",
+        "label": "reco. core-radius / m",
+        "bin_edges": np.linspace(0.0, 640, 17),
+        "log": False,
+    },
+    {
+        "key": "features.image_smallest_ellipse_object_distance",
+        "label": "object-distance / m",
+        "bin_edges": np.geomspace(5e3, 50e3, 17),
+        "log": True,
+    },
+    {
+        "key": "features.image_smallest_ellipse_solid_angle",
+        "label": "smallest ellipse solid angle / sr",
+        "bin_edges": np.geomspace(1e-7, 1e-3, 17),
+        "log": True,
+    },
+    {
+        "key": "features.num_photons",
+        "label": "reco. num. photons / p.e.",
+        "bin_edges": np.geomspace(1e1, 1e5, 17),
+        "log": True,
+    },
+    {
+        "key": "features.image_num_islands",
+        "label": "num. islands / 1",
+        "bin_edges": np.arange(7),
+        "log": False,
+    },
+    {
+        "key": "features.image_half_depth_shift",
+        "label": "image_half_depth_shift / rad",
+        "bin_edges": np.deg2rad(np.linspace(0.0, .2, 17)),
+        "log": False,
+    },
+]
+
 # READ reconstruction
 # ===================
 reconstruction = {}
@@ -283,6 +325,12 @@ def make_rectangular_table(
         et_df["reco_cy"] - et_df["true_cy"],
     )
 
+
+    et_df["features.image_half_depth_shift"] = np.hypot(
+        et_df["features.image_half_depth_shift_cx"],
+        et_df["features.image_half_depth_shift_cy"]
+    )
+
     return et_df.to_records(index=False)
 
 
@@ -432,41 +480,28 @@ for sk in reconstruction:
             c_ene_rad = dict(cont_ene_rad)
             c_ene = dict(cont_ene)
 
-            if pk == "gamma":
+            if pk == "gamma" and the == "theta":
 
-                write_correlation_figure(
-                    path=os.path.join(
-                        pa["out_dir"],
-                        "{:s}_{:s}_{:s}_vs_reco_core_radius.jpg".format(sk, pk, the)
-                    ),
-                    x=rectab["reco_r"],
-                    y=np.rad2deg(rectab[the]),
-                    x_bin_edges=np.linspace(0.0, 640, 13),
-                    y_bin_edges=np.linspace(0.0, 3.0, 15),
-                    x_label="reco. core-radius / m",
-                    y_label=the + r" / $1^{\circ}$",
-                    min_exposure_x=100,
-                    logx=False,
-                    logy=False,
-                    log_exposure_counter=False,
-                )
+                for fk in feature_correlations:
+                    write_correlation_figure(
+                        path=os.path.join(
+                            pa["out_dir"],
+                            "{:s}_{:s}_{:s}_vs_{:s}.jpg".format(
+                                sk, pk, the, fk["key"]
+                            )
+                        ),
+                        x=rectab[fk["key"]],
+                        y=np.rad2deg(rectab[the]),
+                        x_bin_edges=fk["bin_edges"],
+                        y_bin_edges=np.linspace(0.0, 3.0, 15),
+                        x_label=fk["label"],
+                        y_label=the + r" / $1^{\circ}$",
+                        min_exposure_x=100,
+                        logx=fk["log"],
+                        logy=False,
+                        log_exposure_counter=False,
+                    )
 
-                write_correlation_figure(
-                    path=os.path.join(
-                        pa["out_dir"],
-                        "{:s}_{:s}_{:s}_vs_reco_num_photons.jpg".format(sk, pk, the)
-                    ),
-                    x=rectab["features.num_photons"],
-                    y=np.rad2deg(rectab[the]),
-                    x_bin_edges=np.geomspace(1e1, 1e4, 13),
-                    y_bin_edges=np.linspace(0.0, 3.0, 15),
-                    x_label="reco. num. photons / p.e.",
-                    y_label="theta / deg",
-                    min_exposure_x=100,
-                    logx=True,
-                    logy=False,
-                    log_exposure_counter=False,
-                )
 
             for ene in range(num_energy_bins):
 
