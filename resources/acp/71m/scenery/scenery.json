@@ -161,6 +161,7 @@
           "focal_length": 106.5,
           "max_outer_aperture_radius": 41.0,
           "min_inner_aperture_radius": 3.05,
+          "outer_aperture_shape_hex": true,
           "DaviesCotton_over_parabolic_mixing_factor": 0.0,
           "facet_inner_hex_radius": 0.75,
           "gap_between_facets": 0.025,
