@@ -306,6 +306,14 @@ def _estimate_light_field_geometry_of_plenoscope(
                 ]
             )
 
+    if not op.exists(opj(out_absdir, "light_field_geometry", "plot")):
+        qmrlog("Plotting light-field-geometry.")
+        lfg = pl.LightFieldGeometry(opj(out_absdir, "light_field_geometry"))
+        pl.plot.light_field_geometry.save_all(
+            light_field_geometry=lfg,
+            out_dir=opj(out_absdir, "light_field_geometry", "plot"),
+        )
+
 
 def _estimate_trigger_geometry_of_plenoscope(
     cfg, out_absdir,
