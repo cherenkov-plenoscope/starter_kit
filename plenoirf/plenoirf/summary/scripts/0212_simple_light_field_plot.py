@@ -8,12 +8,7 @@ import airshower_template_generator as atg
 import plenopy as pl
 import glob
 from iminuit import Minuit
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -22,7 +17,7 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 _passed_trigger_indices = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_passing_trigger")
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
 loph_chunk_base_dir = os.path.join(
@@ -72,8 +67,6 @@ long_fit_cfg = irf.reconstruction.model_fit.compile_user_config(
         "core_axis_fit"
     ]
 )
-
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
 truth_by_index = {}
 for sk in irf_config["config"]["sites"]:
@@ -131,15 +124,7 @@ for sk in irf_config["config"]["sites"]:
                 "energy_GeV": all_truth["primary"]["energy_GeV"][ii],
             }
 
-
-def my_axes_look(ax):
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
-    ax.spines["bottom"].set_color("none")
-    ax.spines["left"].set_color("none")
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    return ax
-
+axes_style = {"spines": [], "axes": ["x", "y"], "grid": True}
 
 def read_shower_maximum_object_distance(
     site_key, particle_key, key="image_smallest_ellipse_object_distance"
@@ -222,9 +207,8 @@ for sk in irf_config["config"]["sites"]:
             )
 
             if PLOT_RING:
-                fig = irf.summary.figure.figure(fig_16_by_9)
-                ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-                ax = my_axes_look(ax=ax)
+                fig = seb.figure(seb.FIGURE_16_9)
+                ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
                 add_axes_fuzzy_debug(
                     ax=ax,
                     ring_binning=fuzzy_config["azimuth_ring"],
@@ -238,7 +222,7 @@ for sk in irf_config["config"]["sites"]:
                     "{:09d}_ring.jpg".format(airshower_id,),
                 )
                 fig.savefig(path)
-                plt.close(fig)
+                seb.close_figure(fig)
 
             if PLOT_OVERVIEW:
 
@@ -251,9 +235,13 @@ for sk in irf_config["config"]["sites"]:
                 fit_x = fit["primary_particle_x"]
                 fit_y = fit["primary_particle_y"]
 
-                fig = irf.summary.figure.figure(fig_16_by_9)
-                ax = fig.add_axes([0.075, 0.1, 0.4, 0.8])
-                ax_core = fig.add_axes([0.575, 0.1, 0.4, 0.8])
+                fig = seb.figure(seb.FIGURE_16_9)
+                ax = seb.add_axes(
+                    fig=fig, span=[0.075, 0.1, 0.4, 0.8], style=axes_style
+                )
+                ax_core = seb.add_axes(
+                    fig=fig, span=[0.575, 0.1, 0.4, 0.8], style=axes_style
+                )
                 for pax in range(split_light_field.number_paxel):
                     ax.plot(
                         np.rad2deg(
@@ -271,12 +259,8 @@ for sk in irf_config["config"]["sites"]:
                     debug["fuzzy_debug"]["fuzzy_image_smooth"],
                     cmap="Reds",
                 )
-                phi = np.linspace(0, 2 * np.pi, 1000)
-                ax.plot(
-                    fov_radius_deg * np.cos(phi),
-                    fov_radius_deg * np.sin(phi),
-                    "k",
-                )
+                seb.ax_add_grid(ax)
+                seb.ax_add_circle(ax=ax, x=0.0, y=0.0, r=fov_radius_deg)
                 ax.plot(
                     [
                         np.rad2deg(fit["main_axis_support_cx"]),
@@ -346,7 +330,6 @@ for sk in irf_config["config"]["sites"]:
                 ax.set_aspect("equal")
                 ax.set_xlabel("cx / deg")
                 ax.set_ylabel("cy / deg")
-                ax = my_axes_look(ax=ax)
 
                 ax_core.plot(fit_x, fit_y, "oc")
                 ax_core.plot([0, fit_x], [0, fit_y], "c", alpha=0.5)
@@ -359,10 +342,9 @@ for sk in irf_config["config"]["sites"]:
                 ax_core.set_aspect("equal")
                 ax_core.set_xlabel("x / m")
                 ax_core.set_ylabel("y / m")
-                ax_core = my_axes_look(ax=ax_core)
                 path = os.path.join(
                     pa["out_dir"], sk, pk, "{:09d}.jpg".format(airshower_id,),
                 )
 
                 fig.savefig(path)
-                plt.close(fig)
+                seb.close_figure(fig)
