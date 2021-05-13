@@ -65,7 +65,6 @@ assert (
     == "m$^{-2}$ s$^{-1}$ GeV$^{-1}$"
 )
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 num_isez_energy_supports = 7
 
 # gamma-ray-flux of crab-nebula

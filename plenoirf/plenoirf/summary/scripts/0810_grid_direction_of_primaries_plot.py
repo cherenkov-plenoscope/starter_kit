@@ -118,7 +118,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             ax.set_xlim([np.min(c_bin_edges_deg), np.max(c_bin_edges_deg)])
             ax.set_ylim([np.min(c_bin_edges_deg), np.max(c_bin_edges_deg)])
-            plt.colorbar(_pcm_grid, cax=ax_cb, extend="max")
+            seb.plt.colorbar(_pcm_grid, cax=ax_cb, extend="max")
             ax.set_xlabel("$c_x$ / $1^\\circ$")
             ax.set_ylabel("$c_y$ / $1^\\circ$")
             seb.ax_add_grid(ax)
@@ -153,7 +153,7 @@ for site_key in irf_config["config"]["sites"]:
                             x_bin_edges=c_bin_edges_deg,
                             y_bin_edges=c_bin_edges_deg,
                         )
-            plt.savefig(
+            fig.savefig(
                 opj(
                     pa["out_dir"],
                     "{:s}_{:s}_{:06d}.{:s}".format(
