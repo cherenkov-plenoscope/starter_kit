@@ -225,7 +225,7 @@ for sk in SITES:
                 linestyle="-",
                 linecolor="k",
             )
-            plt.savefig(
+            fig.savefig(
                 os.path.join(pa["out_dir"], sk + "_" + mk + "_" + tk + ".jpg")
             )
             seb.close_figure(fig)

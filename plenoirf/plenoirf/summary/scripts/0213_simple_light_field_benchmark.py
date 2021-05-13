@@ -44,10 +44,6 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-fig_16_by_9 = dict(sum_config["plot"]["16_by_9"])
-fig_1_by_1 = fig_16_by_9.copy()
-fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
-
 # energy
 # ------
 num_energy_bins = sum_config["energy_binning"]["num_bins"][

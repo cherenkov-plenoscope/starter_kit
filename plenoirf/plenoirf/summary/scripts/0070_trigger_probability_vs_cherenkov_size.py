@@ -18,7 +18,7 @@ num_size_bins = 12
 size_bin_edges = np.geomspace(1, 2 ** num_size_bins, (3 * num_size_bins) + 1)
 
 passing_trigger = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_passing_trigger")
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
 for site_key in irf_config["config"]["sites"]:
