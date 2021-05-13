@@ -3,12 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -34,7 +29,6 @@ fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
 analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 _, gamma_name = irf.summary.make_gamma_ray_reference_flux(
@@ -50,8 +44,8 @@ for site_key in irf_config["config"]["sites"]:
         if trigger_threshold == analysis_trigger_threshold:
             break
 
-    fig = irf.summary.figure.figure(fig_16_by_9)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(seb.FIGURE_16_9)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
 
     text_y = 0.7
     for particle_key in irf_config["config"]["particles"]:
@@ -84,12 +78,9 @@ for site_key in irf_config["config"]["sites"]:
         )
         text_y += 0.06
 
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
     ax.set_title("trigger, entire field-of-view, " + gamma_name)
     ax.set_xlabel("energy / GeV")
     ax.set_ylabel("differential trigger-rate / s$^{-1}$ (GeV)$^{-1}$")
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     ax.loglog()
     ax.set_xlim([energy_lower, energy_upper])
     ax.set_ylim([1e-3, 1e5])
@@ -99,4 +90,4 @@ for site_key in irf_config["config"]["sites"]:
             "{:s}_differential_trigger_rate.jpg".format(site_key),
         )
     )
-    plt.close(fig)
+    seb.close_figure(fig)
