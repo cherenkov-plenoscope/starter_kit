@@ -25,9 +25,12 @@ weights_thrown2expected = irf.json_numpy.read_tree(
         "0040_weights_from_thrown_to_expected_energy_spectrum",
     )
 )
-
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
-trigger_modus = sum_config["trigger"]["modus"]
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_quality")
+)
 
 num_energy_bins = sum_config["energy_binning"]["num_bins"][
     "trigger_acceptance"
@@ -59,14 +62,10 @@ for sk in SITES:
             structure=irf.table.STRUCTURE,
         )
 
-        idx_triggered = irf.analysis.light_field_trigger_modi.make_indices(
-            trigger_table=_table["trigger"],
-            threshold=trigger_threshold,
-            modus=trigger_modus,
-        )
-        idx_features = _table["features"][spt.IDX]
-
-        idx_common = spt.intersection([idx_triggered, idx_features,])
+        idx_common = spt.intersection([
+            passing_trigger[sk][pk]["passed_trigger"]["idx"],
+            passing_quality[sk][pk]["passed_quality"]["idx"]
+        ])
 
         table = spt.cut_table_on_indices(
             table=_table,

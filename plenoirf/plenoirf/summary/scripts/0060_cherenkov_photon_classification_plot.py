@@ -20,8 +20,12 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
-trigger_modus = sum_config["trigger"]["modus"]
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_quality")
+)
 
 num_energy_bins = sum_config["energy_binning"]["num_bins"][
     "point_spread_function"
@@ -57,13 +61,10 @@ for site_key in irf_config["config"]["sites"]:
             structure=irf.table.STRUCTURE,
         )
 
-        idx_triggered = irf.analysis.light_field_trigger_modi.make_indices(
-            trigger_table=event_table["trigger"],
-            threshold=trigger_threshold,
-            modus=trigger_modus,
-        )
-        idx_features = event_table["features"][spt.IDX]
-        idx_common = spt.intersection([idx_triggered, idx_features])
+        idx_common = spt.intersection([
+            passing_trigger[site_key][particle_key]["passed_trigger"]["idx"],
+            passing_quality[site_key][particle_key]["passed_quality"]["idx"]
+        ])
 
         mrg_chc_fts = spt.cut_table_on_indices(
             table=event_table,
