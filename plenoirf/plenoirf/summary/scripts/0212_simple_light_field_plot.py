@@ -126,6 +126,7 @@ for sk in irf_config["config"]["sites"]:
 
 axes_style = {"spines": [], "axes": ["x", "y"], "grid": True}
 
+
 def read_shower_maximum_object_distance(
     site_key, particle_key, key="image_smallest_ellipse_object_distance"
 ):
@@ -316,11 +317,13 @@ for sk in irf_config["config"]["sites"]:
                         np.rad2deg(ellx), np.rad2deg(elly), look,
                     )
 
-                info_str = "Energy: {: .1f}GeV, reco. Cherenkov: {: 4d}p.e.\n response of shower-model: {:.4f} ({:.4f})".format(
-                    truth["energy_GeV"],
-                    loph_record["photons"]["channels"].shape[0],
-                    fit["shower_model_response"],
-                    true_response,
+                info_str = ""
+                info_str += "Energy: {: .1f}GeV, ".format(truth["energy_GeV"])
+                info_str += "reco. Cherenkov: {: 4d}p.e.\n ".format(
+                    loph_record["photons"]["channels"].shape[0]
+                )
+                info_str += "response of shower-model: {:.4f} ({:.4f})".format(
+                    fit["shower_model_response"], true_response,
                 )
 
                 ax.set_title(info_str)
