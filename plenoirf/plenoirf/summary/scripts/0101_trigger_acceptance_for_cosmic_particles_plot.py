@@ -3,11 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -43,15 +39,14 @@ sources = {
     "point": {"label": "area", "unit": "m$^{2}$", "limits": [1e1, 1e6],},
 }
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 for site_key in irf_config["config"]["sites"]:
     for source_key in sources:
         for tt in range(len(trigger_thresholds)):
 
-            fig = irf.summary.figure.figure(fig_16_by_9)
-            ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+            fig = seb.figure(style=seb.FIGURE_16_9)
+            ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
 
             text_y = 0
             for particle_key in irf_config["config"]["particles"]:
@@ -67,7 +62,7 @@ for site_key in irf_config["config"]["sites"]:
                 Q_lower = (1 - delta_Q) * Q
                 Q_upper = (1 + delta_Q) * Q
 
-                irf.summary.figure.ax_add_hist(
+                seb.ax_add_histogram(
                     ax=ax,
                     bin_edges=energy_bin_edges,
                     bincounts=Q,
@@ -94,10 +89,7 @@ for site_key in irf_config["config"]["sites"]:
                     sources[source_key]["label"], sources[source_key]["unit"]
                 )
             )
-            ax.spines["top"].set_color("none")
-            ax.spines["right"].set_color("none")
             ax.set_ylim(sources[source_key]["limits"])
-            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
             ax.loglog()
             ax.set_xlim([energy_bin_edges[0], energy_bin_edges[-1]])
 
@@ -117,4 +109,4 @@ for site_key in irf_config["config"]["sites"]:
                     "{:s}_{:s}_{:06d}.jpg".format(site_key, source_key, tt,),
                 )
             )
-            plt.close(fig)
+            seb.close_figure(fig)
