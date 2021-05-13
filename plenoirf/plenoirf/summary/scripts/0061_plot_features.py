@@ -4,12 +4,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import numpy as np
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -44,7 +39,6 @@ energy_bin_edges = np.geomspace(
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 # Read features
@@ -131,8 +125,8 @@ for fk in Sfeatures:
 for fk in Sfeatures:
     for sk in SITES:
 
-        fig = irf.summary.figure.figure(fig_16_by_9)
-        ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+        fig = seb.figure(style=seb.FIGURE_1_1)
+        ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
 
         for pk in PARTICLES:
 
@@ -176,7 +170,7 @@ for fk in Sfeatures:
                 default=0,
             )
 
-            irf.summary.figure.ax_add_hist(
+            seb.ax_add_histogram(
                 ax=ax,
                 bin_edges=bin_edges_fk,
                 bincounts=bin_counts_weight_norm_fk,
@@ -197,11 +191,9 @@ for fk in Sfeatures:
             ax.semilogy()
 
         irf.summary.figure.mark_ax_airshower_spectrum(ax=ax)
-        ax.spines["right"].set_visible(False)
-        ax.spines["top"].set_visible(False)
         ax.set_xlabel("{:s} / {:s}".format(fk, Sfeatures[fk]["unit"]))
         ax.set_ylabel("relative intensity / 1")
-        ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+        seb.ax_add_grid(ax)
         ax.set_xlim(
             [
                 lims[fk][sk][pk]["bin_edges"]["start"],
@@ -212,4 +204,4 @@ for fk in Sfeatures:
         fig.savefig(
             os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, fk))
         )
-        plt.close(fig)
+        seb.close_figure(fig)
