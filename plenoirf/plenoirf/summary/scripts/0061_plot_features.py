@@ -62,10 +62,12 @@ for sk in SITES:
             structure=irf.table.STRUCTURE,
         )
 
-        idx_common = spt.intersection([
-            passing_trigger[sk][pk]["passed_trigger"]["idx"],
-            passing_quality[sk][pk]["passed_quality"]["idx"]
-        ])
+        idx_common = spt.intersection(
+            [
+                passing_trigger[sk][pk]["passed_trigger"]["idx"],
+                passing_quality[sk][pk]["passed_quality"]["idx"],
+            ]
+        )
 
         table = spt.cut_table_on_indices(
             table=_table,

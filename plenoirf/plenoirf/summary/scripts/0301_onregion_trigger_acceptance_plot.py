@@ -120,7 +120,9 @@ for site_key in irf_config["config"]["sites"]:
                 )
 
                 ax.set_title(
-                    "onregion-radius at 100p.e.: {:.3f}".format(onregion_radii_deg[oridx])
+                    "onregion-radius at 100p.e.: {:.3f}".format(
+                        onregion_radii_deg[oridx]
+                    )
                     + r"$^{\circ}$"
                 )
                 ax.set_xlabel("energy / GeV")

@@ -44,15 +44,10 @@ def write_core_radius_figure(path, radius_bin_edges, bin_idx, info):
     ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     rs = np.linspace(0.0, 2.0 * np.pi, 137)
     ax.fill(
-        r_stop * np.cos(rs),
-        r_stop * np.sin(rs),
-        facecolor="k",
-        alpha=0.25
+        r_stop * np.cos(rs), r_stop * np.sin(rs), facecolor="k", alpha=0.25
     )
     ax.fill(
-        r_start * np.cos(rs),
-        r_start * np.sin(rs),
-        facecolor="w",
+        r_start * np.cos(rs), r_start * np.sin(rs), facecolor="w",
     )
     for rr in radius_bin_edges:
         irf.summary.figure.ax_add_circle(
@@ -86,7 +81,7 @@ def write_energy_figure(path, energy_bin_edges, bin_idx, info):
         [e_start, e_start, e_stop, e_stop],
         [0.0, 1.0, 1.0, 0.0],
         facecolor="k",
-        alpha=0.25
+        alpha=0.25,
     )
     ax.semilogx()
     ax.set_ylim([0, 1])
@@ -111,7 +106,7 @@ def write_theta_square_figure(
     info_title,
     theta_label,
     square=True,
-    ylim_stop=1.2
+    ylim_stop=1.2,
 ):
     if square:
         tts_label = r"$(" + theta_label + r")^{2}$ / $(1^\circ{})^{2}$"
@@ -133,12 +128,7 @@ def write_theta_square_figure(
         face_color="k",
         face_alpha=0.25,
     )
-    ax.plot(
-        0.5 * (tts[0:-1] + tts[1:]),
-        bin_count,
-        "k-",
-        alpha=0.25
-    )
+    ax.plot(0.5 * (tts[0:-1] + tts[1:]), bin_count, "k-", alpha=0.25)
 
     num_containments = len(containment_fractions)
     for cc in np.arange(0, num_containments, 3):
@@ -148,7 +138,7 @@ def write_theta_square_figure(
                 [0.0, ylim_stop],
                 "k--",
                 linewidth=1.0,
-                alpha=0.25
+                alpha=0.25,
             )
             ax.text(
                 s="{:0.2f}".format(containment_fractions[cc]),
@@ -165,9 +155,7 @@ def write_theta_square_figure(
     ax.set_xlim([0.0, np.max(tts)])
     ax.spines["top"].set_color("none")
     ax.spines["right"].set_color("none")
-    ax.grid(
-        color="k", linestyle="-", linewidth=0.66, alpha=0.1
-    )
+    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
 
     fig.savefig(path)
     plt.close(fig)
@@ -189,7 +177,8 @@ for site_key in psf:
 
             cont = psf[site_key][particle_key][
                 "{theta_key:s}_containment_vs_energy_vs_core_radius".format(
-                    theta_key=theta_key)
+                    theta_key=theta_key
+                )
             ]
 
             num_radius_bins = len(t2["core_radius_square_bin_edges_m2"]) - 1
@@ -208,22 +197,27 @@ for site_key in psf:
                     path=os.path.join(
                         pa["out_dir"],
                         "{:s}_{:s}_{:s}_ene{:06d}_info.jpg".format(
-                            site_key,
-                            particle_key,
-                            theta_key,
-                            ene,
+                            site_key, particle_key, theta_key, ene,
                         ),
                     ),
                     energy_bin_edges=t2["energy_bin_edges_GeV"],
                     bin_idx=ene,
-                    info=ene_info
+                    info=ene_info,
                 )
 
                 for rad in range(num_radius_bins):
 
                     t2_ene_rad = t2["histogram"][ene][rad]
 
-                    print(site_key, particle_key, theta_key, "ene", ene, "rad", rad)
+                    print(
+                        site_key,
+                        particle_key,
+                        theta_key,
+                        "ene",
+                        ene,
+                        "rad",
+                        rad,
+                    )
 
                     rad_start = np.sqrt(
                         t2["core_radius_square_bin_edges_m2"][rad]
@@ -240,18 +234,16 @@ for site_key in psf:
                     bin_count = np.array(bin_count)
                     bin_count = bin_count / np.max(bin_count)
 
-                    bin_count_relunc = t2_ene_rad["intensity_relative_uncertainty"]
+                    bin_count_relunc = t2_ene_rad[
+                        "intensity_relative_uncertainty"
+                    ]
                     bin_count_relunc = np.array(bin_count_relunc)
 
                     write_theta_square_figure(
                         path=os.path.join(
                             pa["out_dir"],
                             "{:s}_{:s}_{:s}_rad{:06d}_ene{:06d}.jpg".format(
-                                site_key,
-                                particle_key,
-                                theta_key,
-                                rad,
-                                ene,
+                                site_key, particle_key, theta_key, rad, ene,
                             ),
                         ),
                         theta_square_bin_edges_deg2=np.array(
@@ -260,7 +252,9 @@ for site_key in psf:
                         bin_count=bin_count,
                         bin_count_relunc=bin_count_relunc,
                         containment_fractions=cont["containment_fractions"],
-                        containment_angle=cont["containment"][ene][rad]["theta_deg"],
+                        containment_angle=cont["containment"][ene][rad][
+                            "theta_deg"
+                        ],
                         info_title=" {:s}, {:s}".format(ene_info, rad_info),
                         theta_label=theta_labels[theta_key],
                         square=False,
@@ -270,13 +264,12 @@ for site_key in psf:
                         path=os.path.join(
                             pa["out_dir"],
                             "{:s}_{:s}_{:s}_rad{:06d}_info.jpg".format(
-                                site_key,
-                                particle_key,
-                                theta_key,
-                                rad,
+                                site_key, particle_key, theta_key, rad,
                             ),
                         ),
-                        radius_bin_edges=np.sqrt(t2["core_radius_square_bin_edges_m2"]),
+                        radius_bin_edges=np.sqrt(
+                            t2["core_radius_square_bin_edges_m2"]
+                        ),
                         bin_idx=rad,
                         info=rad_info,
                     )

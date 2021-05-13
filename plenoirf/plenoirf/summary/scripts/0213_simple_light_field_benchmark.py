@@ -92,29 +92,19 @@ pivot_energy_GeV = sum_config["point_spread_function"]["pivot_energy_GeV"]
 num_c_bins = 32
 fov_radius_deg = 3.05
 fov_radius_fine_deg = (1.0 / 5.0) * fov_radius_deg
-c_bin_edges_deg = np.linspace(
-    -fov_radius_deg,
-    fov_radius_deg,
-    num_c_bins
-)
+c_bin_edges_deg = np.linspace(-fov_radius_deg, fov_radius_deg, num_c_bins)
 c_bin_edges_fine_deg = np.linspace(
-    -fov_radius_fine_deg,
-    fov_radius_fine_deg,
-    num_c_bins
+    -fov_radius_fine_deg, fov_radius_fine_deg, num_c_bins
 )
 
-theta_square_max_deg = sum_config[
-    "point_spread_function"][
-    "theta_square"][
-    "max_angle_deg"
-] ** 2
+theta_square_max_deg = (
+    sum_config["point_spread_function"]["theta_square"]["max_angle_deg"] ** 2
+)
 
 num_containment_fractions = 20
-containment_fractions = np.linspace(
-    0.0,
-    1.0,
-    num_containment_fractions + 1
-)[1:-1]
+containment_fractions = np.linspace(0.0, 1.0, num_containment_fractions + 1)[
+    1:-1
+]
 
 
 # feature correlation
@@ -153,7 +143,7 @@ feature_correlations = [
     {
         "key": "features.image_half_depth_shift",
         "label": "image_half_depth_shift / rad",
-        "bin_edges": np.deg2rad(np.linspace(0.0, .2, 17)),
+        "bin_edges": np.deg2rad(np.linspace(0.0, 0.2, 17)),
         "log": False,
     },
 ]
@@ -202,8 +192,7 @@ def write_correlation_figure(
     log_exposure_counter=False,
 ):
     valid = np.logical_and(
-        np.logical_not((np.isnan(x))),
-        np.logical_not((np.isnan(y)))
+        np.logical_not((np.isnan(x))), np.logical_not((np.isnan(y)))
     )
 
     cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
@@ -256,7 +245,6 @@ def write_correlation_figure(
     plt.close(fig)
 
 
-
 def make_rectangular_table(
     event_table, reconstruction_table, plenoscope_pointing
 ):
@@ -280,9 +268,8 @@ def make_rectangular_table(
                 "reco_x": reconstruction_table["x_m"],
                 "reco_y": reconstruction_table["y_m"],
                 "reco_r": np.hypot(
-                    reconstruction_table["x_m"],
-                    reconstruction_table["y_m"]
-                )
+                    reconstruction_table["x_m"], reconstruction_table["y_m"]
+                ),
             }
         ),
         right=rec_evt_df,
@@ -325,10 +312,9 @@ def make_rectangular_table(
         et_df["reco_cy"] - et_df["true_cy"],
     )
 
-
     et_df["features.image_half_depth_shift"] = np.hypot(
         et_df["features.image_half_depth_shift_cx"],
-        et_df["features.image_half_depth_shift_cy"]
+        et_df["features.image_half_depth_shift_cy"],
     )
 
     return et_df.to_records(index=False)
@@ -339,8 +325,7 @@ def empty_dim2(dim0, dim1):
 
 
 def estimate_containments_theta_deg(
-    containment_fractions,
-    theta_deg,
+    containment_fractions, theta_deg,
 ):
     conta_deg = np.nan * np.ones(containment_fractions.shape[0])
     conta_deg_relunc = np.nan * np.ones(containment_fractions.shape[0])
@@ -355,10 +340,7 @@ def estimate_containments_theta_deg(
 
 
 def guess_theta_square_bin_edges_deg(
-    theta_square_max_deg,
-    theta_deg,
-    num_min=10,
-    num_max=2048,
+    theta_square_max_deg, theta_deg, num_min=10, num_max=2048,
 ):
     num_t2_bins = int(np.sqrt(theta_deg.shape[0]))
     num_t2_bins = np.max([num_min, num_t2_bins])
@@ -370,9 +352,7 @@ def guess_theta_square_bin_edges_deg(
             break
 
         theta_square_bin_edges_deg2 = np.linspace(
-            start=0.0,
-            stop=theta_square_max_deg,
-            num=num_t2_bins + 1,
+            start=0.0, stop=theta_square_max_deg, num=num_t2_bins + 1,
         )
 
         bc = irf.analysis.gamma_direction.histogram_theta_square(
@@ -400,9 +380,7 @@ def guess_theta_square_bin_edges_deg(
         # print("it2", it, "bc", bc[0:num_min])
 
         theta_square_bin_edges_deg2 = np.linspace(
-            start=0.0,
-            stop=theta_square_max_deg,
-            num=num_t2_bins + 1,
+            start=0.0, stop=theta_square_max_deg, num=num_t2_bins + 1,
         )
 
         bc = irf.analysis.gamma_direction.histogram_theta_square(
@@ -446,10 +424,7 @@ for sk in reconstruction:
         hist_ene_rad = {
             "energy_bin_edges_GeV": energy_bin_edges,
             "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
-            "histogram": empty_dim2(
-                num_energy_bins,
-                num_core_radius_bins
-            ),
+            "histogram": empty_dim2(num_energy_bins, num_core_radius_bins),
         }
 
         hist_ene = {
@@ -461,10 +436,7 @@ for sk in reconstruction:
             "energy_bin_edges_GeV": energy_bin_edges,
             "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
             "containment_fractions": containment_fractions,
-            "containment": empty_dim2(
-                num_energy_bins,
-                num_core_radius_bins
-            ),
+            "containment": empty_dim2(num_energy_bins, num_core_radius_bins),
         }
         cont_ene = {
             "energy_bin_edges_GeV": energy_bin_edges,
@@ -488,7 +460,7 @@ for sk in reconstruction:
                             pa["out_dir"],
                             "{:s}_{:s}_{:s}_vs_{:s}.jpg".format(
                                 sk, pk, the, fk["key"]
-                            )
+                            ),
                         ),
                         x=rectab[fk["key"]],
                         y=np.rad2deg(rectab[the]),
@@ -501,7 +473,6 @@ for sk in reconstruction:
                         logy=False,
                         log_exposure_counter=False,
                     )
-
 
             for ene in range(num_energy_bins):
 
@@ -529,7 +500,7 @@ for sk in reconstruction:
                 h_ene["histogram"][ene] = {
                     "theta_square_bin_edges_deg2": ene_theta_square_bin_edges_deg2,
                     "intensity": ene_hi[0],
-                    "intensity_relative_uncertainty": ene_hi[1]
+                    "intensity_relative_uncertainty": ene_hi[1],
                 }
 
                 ene_co = estimate_containments_theta_deg(
@@ -569,7 +540,7 @@ for sk in reconstruction:
                     h_ene_rad["histogram"][ene][rad] = {
                         "theta_square_bin_edges_deg2": ene_rad_theta_square_bin_edges_deg2,
                         "intensity": ene_rad_hi[0],
-                        "intensity_relative_uncertainty": ene_rad_hi[1]
+                        "intensity_relative_uncertainty": ene_rad_hi[1],
                     }
 
                     ene_rad_co = estimate_containments_theta_deg(
@@ -644,12 +615,12 @@ for sk in reconstruction:
             ene_psf_image = np.histogram2d(
                 ene_delta_cx_deg,
                 ene_delta_cy_deg,
-                bins=(c_bin_edges_deg, c_bin_edges_deg)
+                bins=(c_bin_edges_deg, c_bin_edges_deg),
             )[0]
             ene_psf_image_fine = np.histogram2d(
                 ene_delta_cx_deg,
                 ene_delta_cy_deg,
-                bins=(c_bin_edges_fine_deg, c_bin_edges_fine_deg)
+                bins=(c_bin_edges_fine_deg, c_bin_edges_fine_deg),
             )[0]
 
             fig = irf.summary.figure.figure(fig_16_by_9)
@@ -662,10 +633,7 @@ for sk in reconstruction:
                 vmax=None,
             )
             ax1.set_title(
-                "energy {: 7.1f} - {: 7.1f} GeV".format(
-                    ene_start,
-                    ene_stop,
-                ),
+                "energy {: 7.1f} - {: 7.1f} GeV".format(ene_start, ene_stop,),
                 family="monospace",
             )
             ax1.set_aspect("equal")
@@ -684,28 +652,28 @@ for sk in reconstruction:
                 [fov_radius_fine_deg, fov_radius_fine_deg],
                 "k-",
                 linewidth=2 * 0.66,
-                alpha=0.15
+                alpha=0.15,
             )
             ax1.plot(
                 [-fov_radius_fine_deg, fov_radius_fine_deg],
                 [-fov_radius_fine_deg, -fov_radius_fine_deg],
                 "k-",
                 linewidth=2 * 0.66,
-                alpha=0.15
+                alpha=0.15,
             )
             ax1.plot(
                 [fov_radius_fine_deg, fov_radius_fine_deg],
                 [-fov_radius_fine_deg, fov_radius_fine_deg],
                 "k-",
                 linewidth=2 * 0.66,
-                alpha=0.15
+                alpha=0.15,
             )
             ax1.plot(
                 [-fov_radius_fine_deg, -fov_radius_fine_deg],
                 [-fov_radius_fine_deg, fov_radius_fine_deg],
                 "k-",
                 linewidth=2 * 0.66,
-                alpha=0.15
+                alpha=0.15,
             )
 
             ax2 = fig.add_axes([0.575, 0.1, 0.4, 0.8])
@@ -727,11 +695,7 @@ for sk in reconstruction:
             fig.savefig(
                 os.path.join(
                     pa["out_dir"],
-                    "{:s}_{:s}_psf_image_ene{:06d}.jpg".format(
-                        sk,
-                        pk,
-                        ene
-                    )
+                    "{:s}_{:s}_psf_image_ene{:06d}.jpg".format(sk, pk, ene),
                 )
             )
             plt.close(fig)

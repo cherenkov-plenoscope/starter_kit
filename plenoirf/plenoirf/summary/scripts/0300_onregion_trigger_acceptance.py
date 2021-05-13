@@ -89,7 +89,6 @@ def cut_candidates_for_detection(
     return candidate_event_table
 
 
-
 def make_wighted_mask_wrt_primary_table(
     primary_table, idx_dict_of_weights, default_weight=0.0
 ):
@@ -164,11 +163,13 @@ for site_key in irf_config["config"]["sites"]:
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
                     reco_cx=cap["reconstructed_trajectory.cx_rad"][ii],
                     reco_cy=cap["reconstructed_trajectory.cy_rad"][ii],
-                    reco_main_axis_azimuth=cap["reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"][ii],
+                    reco_main_axis_azimuth=cap[
+                        "reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"
+                    ][ii],
                     reco_num_photons=cap["features.num_photons"][ii],
                     reco_core_radius=np.hypot(
                         cap["reconstructed_trajectory.x_m"][ii],
-                        cap["reconstructed_trajectory.y_m"][ii]
+                        cap["reconstructed_trajectory.y_m"][ii],
                     ),
                     config=onregion_config,
                 )
@@ -177,16 +178,22 @@ for site_key in irf_config["config"]["sites"]:
                     _true_cx,
                     _true_cy,
                 ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-                    momentum_x_GeV_per_c=[cap["primary.momentum_x_GeV_per_c"][ii]],
-                    momentum_y_GeV_per_c=[cap["primary.momentum_y_GeV_per_c"][ii]],
-                    momentum_z_GeV_per_c=[cap["primary.momentum_z_GeV_per_c"][ii]],
-                    plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+                    momentum_x_GeV_per_c=[
+                        cap["primary.momentum_x_GeV_per_c"][ii]
+                    ],
+                    momentum_y_GeV_per_c=[
+                        cap["primary.momentum_y_GeV_per_c"][ii]
+                    ],
+                    momentum_z_GeV_per_c=[
+                        cap["primary.momentum_z_GeV_per_c"][ii]
+                    ],
+                    plenoscope_pointing=irf_config["config"][
+                        "plenoscope_pointing"
+                    ],
                 )
 
                 hit = irf.reconstruction.onregion.is_direction_inside(
-                    cx=_true_cx,
-                    cy=_true_cy,
-                    onregion=_onregion
+                    cx=_true_cx, cy=_true_cy, onregion=_onregion
                 )
 
                 idx_dict_source_in_onregion[cap[spt.IDX][ii]] = hit
@@ -260,35 +267,38 @@ for site_key in irf_config["config"]["sites"]:
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
                     reco_cx=cad["reconstructed_trajectory.cx_rad"][ii],
                     reco_cy=cad["reconstructed_trajectory.cy_rad"][ii],
-                    reco_main_axis_azimuth=cad["reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"][ii],
+                    reco_main_axis_azimuth=cad[
+                        "reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"
+                    ][ii],
                     reco_num_photons=cad["features.num_photons"][ii],
                     reco_core_radius=np.hypot(
                         cad["reconstructed_trajectory.x_m"][ii],
-                        cad["reconstructed_trajectory.y_m"][ii]
+                        cad["reconstructed_trajectory.y_m"][ii],
                     ),
                     config=onregion_config,
                 )
 
                 _probability = (
-                    _onregion["ellipse_solid_angle"] /
-                    SOLID_ANGLE_TO_CONTAIN_SOURCE
+                    _onregion["ellipse_solid_angle"]
+                    / SOLID_ANGLE_TO_CONTAIN_SOURCE
                 )
 
                 _optical_axis_to_reconstructed_direction = np.hypot(
                     cad["reconstructed_trajectory.cx_rad"][ii],
-                    cad["reconstructed_trajectory.cy_rad"][ii]
+                    cad["reconstructed_trajectory.cy_rad"][ii],
                 )
 
                 _closest_reconstructed_direction = (
                     _optical_axis_to_reconstructed_direction
-                    -_onregion["ellipse_mayor_radius"]
+                    - _onregion["ellipse_mayor_radius"]
                 )
 
                 if _closest_reconstructed_direction > MAX_SOURCE_ANGLE:
                     _probability = 0.0
 
-                idx_dict_probability_for_source_in_onregion[cad[spt.IDX][ii]] = _probability
-
+                idx_dict_probability_for_source_in_onregion[
+                    cad[spt.IDX][ii]
+                ] = _probability
 
             mask_probability_for_source_in_onregion = make_wighted_mask_wrt_primary_table(
                 primary_table=table_diffuse["primary"],

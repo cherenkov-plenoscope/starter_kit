@@ -62,11 +62,15 @@ def add_axes_fuzzy_debug(ax, ring_binning, fuzzy_result, fuzzy_debug):
 
 
 fuzzy_config = irf.reconstruction.fuzzy_method.compile_user_config(
-    user_config=irf_config["config"]["reconstruction"]["trajectory"]["fuzzy_method"]
+    user_config=irf_config["config"]["reconstruction"]["trajectory"][
+        "fuzzy_method"
+    ]
 )
 
 long_fit_cfg = irf.reconstruction.model_fit.compile_user_config(
-    user_config=irf_config["config"]["reconstruction"]["trajectory"]["core_axis_fit"]
+    user_config=irf_config["config"]["reconstruction"]["trajectory"][
+        "core_axis_fit"
+    ]
 )
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
@@ -306,7 +310,7 @@ for sk in irf_config["config"]["sites"]:
                         ),
                         reco_core_radius=np.hypot(
                             fit["primary_particle_x"],
-                            fit["primary_particle_y"]
+                            fit["primary_particle_y"],
                         ),
                         config=onreion_config,
                     )
@@ -316,9 +320,7 @@ for sk in irf_config["config"]["sites"]:
                     )
 
                     hit = irf.reconstruction.onregion.is_direction_inside(
-                        cx=truth["cx"],
-                        cy=truth["cy"],
-                        onregion=onregion
+                        cx=truth["cx"], cy=truth["cy"], onregion=onregion
                     )
 
                     if hit:
@@ -327,11 +329,8 @@ for sk in irf_config["config"]["sites"]:
                         look = ":c"
 
                     ax.plot(
-                        np.rad2deg(ellx),
-                        np.rad2deg(elly),
-                        look,
+                        np.rad2deg(ellx), np.rad2deg(elly), look,
                     )
-
 
                 info_str = "Energy: {: .1f}GeV, reco. Cherenkov: {: 4d}p.e.\n response of shower-model: {:.4f} ({:.4f})".format(
                     truth["energy_GeV"],

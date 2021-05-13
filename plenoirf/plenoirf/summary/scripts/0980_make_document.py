@@ -186,7 +186,9 @@ _bd += sam.p(
     text_align="justify",
     font_family="calibri",
 )
-_runs_config = get_value_by_key_but_forgive(irf_config["config"], "runs").copy()
+_runs_config = get_value_by_key_but_forgive(
+    irf_config["config"], "runs"
+).copy()
 _bd += sam.code(
     json.dumps(_runs_config, indent=4), font_size=50, line_height=100,
 )
@@ -371,7 +373,7 @@ _bd += make_site_table(
     energy_bin_edges=energy_bin_edges_coarse,
     wild_card=opj(
         "0213_simple_light_field_benchmark",
-        "{site_key:s}_gamma_psf_image_ene{energy_bin_index:06d}.jpg"
+        "{site_key:s}_gamma_psf_image_ene{energy_bin_index:06d}.jpg",
     ),
 )
 

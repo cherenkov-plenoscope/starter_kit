@@ -47,25 +47,23 @@ fig_16_by_9 = sum_config["plot"]["16_by_9"]
 fig_1_by_1 = fig_16_by_9.copy()
 fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
 
-for site_key in irf_config["config"]["sites"]:
-    particle_key = "gamma"
-    site_particle_prefix = "{:s}_{:s}".format(site_key, particle_key)
+for sk in irf_config["config"]["sites"]:
+    pk = "gamma"
+    site_particle_prefix = "{:s}_{:s}".format(sk, pk)
 
     event_table = spt.read(
         path=os.path.join(
-            pa["run_dir"],
-            "event_table",
-            site_key,
-            particle_key,
-            "event_table.tar",
+            pa["run_dir"], "event_table", sk, pk, "event_table.tar",
         ),
         structure=irf.table.STRUCTURE,
     )
 
-    idx_common = spt.intersection([
-        passing_trigger[site_key][particle_key]["passed_trigger"]["idx"],
-        passing_quality[site_key][particle_key]["passed_quality"]["idx"]
-    ])
+    idx_common = spt.intersection(
+        [
+            passing_trigger[sk][pk]["passed_trigger"]["idx"],
+            passing_quality[sk][pk]["passed_quality"]["idx"],
+        ]
+    )
 
     table = spt.cut_table_on_indices(
         table=event_table,
@@ -90,12 +88,8 @@ for site_key in irf_config["config"]["sites"]:
 
     event_weights = np.interp(
         x=table["primary"]["energy_GeV"],
-        fp=weights_thrown2expected[site_key][particle_key][
-            "weights_vs_energy"
-        ]["mean"],
-        xp=weights_thrown2expected[site_key][particle_key][
-            "weights_vs_energy"
-        ]["energy_GeV"],
+        fp=weights_thrown2expected[sk][pk]["weights_vs_energy"]["mean"],
+        xp=weights_thrown2expected[sk][pk]["weights_vs_energy"]["energy_GeV"],
     )
 
     cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(

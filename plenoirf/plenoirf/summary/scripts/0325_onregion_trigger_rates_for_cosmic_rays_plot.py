@@ -141,10 +141,12 @@ for site_key in irf_config["config"]["sites"]:
             text_y += 0.06
 
         onregion_radius_str = (
-            ", onregion-radius at 100p.e.: {:.3f}".format(onregion_radii_deg[oridx])
+            ", onregion-radius at 100p.e.: {:.3f}".format(
+                onregion_radii_deg[oridx]
+            )
             + r"$^{\circ}$"
         )
-        ax.set_title("In onregion, "+ gamma_name + onregion_radius_str)
+        ax.set_title("In onregion, " + gamma_name + onregion_radius_str)
 
         ax.set_xlim([energy_lower, energy_upper])
         ax.set_ylim([1e-5, 1e3])

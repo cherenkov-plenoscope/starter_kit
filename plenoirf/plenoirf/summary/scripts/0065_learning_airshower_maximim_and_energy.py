@@ -218,7 +218,9 @@ for sk in SITES:
             )
             ax.loglog()
             ax_h.loglog()
-            ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])])
+            ax_h.set_xlim(
+                [np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])]
+            )
             ax_h.set_xlabel(
                 "true {:s} / {:s}".format(
                     targets[tk]["label"], targets[tk]["unit"]

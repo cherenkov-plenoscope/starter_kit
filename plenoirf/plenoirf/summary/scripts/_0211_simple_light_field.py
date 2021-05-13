@@ -32,7 +32,7 @@ for sk in irf_config["config"]["sites"]:
             table=event_table,
             structure=irf.table.STRUCTURE,
             common_indices=passing_trigger[sk][pk]["passed_trigger"][spt.IDX],
-            level_keys=["reconstructed_trajectory"]
+            level_keys=["reconstructed_trajectory"],
         )
 
         traj = {}

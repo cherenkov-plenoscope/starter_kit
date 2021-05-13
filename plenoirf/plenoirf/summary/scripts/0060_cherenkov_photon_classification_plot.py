@@ -42,29 +42,25 @@ fig_16_by_9 = sum_config["plot"]["16_by_9"]
 fig_1_by_1 = fig_16_by_9.copy()
 fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
 
-for site_key in irf_config["config"]["sites"]:
-    site_dir = opj(pa["out_dir"], site_key)
-    for particle_key in irf_config["config"]["particles"]:
-        site_particle_dir = opj(site_dir, particle_key)
+for sk in irf_config["config"]["sites"]:
+    site_dir = opj(pa["out_dir"], sk)
+    for pk in irf_config["config"]["particles"]:
+        site_particle_dir = opj(site_dir, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
-        site_particle_prefix = "{:s}_{:s}".format(site_key, particle_key)
+        site_particle_prefix = "{:s}_{:s}".format(sk, pk)
 
         event_table = spt.read(
-            path=opj(
-                pa["run_dir"],
-                "event_table",
-                site_key,
-                particle_key,
-                "event_table.tar",
-            ),
+            path=opj(pa["run_dir"], "event_table", sk, pk, "event_table.tar",),
             structure=irf.table.STRUCTURE,
         )
 
-        idx_common = spt.intersection([
-            passing_trigger[site_key][particle_key]["passed_trigger"]["idx"],
-            passing_quality[site_key][particle_key]["passed_quality"]["idx"]
-        ])
+        idx_common = spt.intersection(
+            [
+                passing_trigger[sk][pk]["passed_trigger"]["idx"],
+                passing_quality[sk][pk]["passed_quality"]["idx"],
+            ]
+        )
 
         mrg_chc_fts = spt.cut_table_on_indices(
             table=event_table,

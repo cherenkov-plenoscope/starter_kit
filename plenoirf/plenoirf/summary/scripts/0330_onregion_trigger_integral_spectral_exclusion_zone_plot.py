@@ -66,8 +66,8 @@ crab_flux = cosmic_fluxes.read_crab_nebula_flux_from_resources()
 internal_sed_style = sed_styles.PLENOIRF_SED_STYLE
 
 output_sed_styles = {
-    #"plenoirf": sed_styles.PLENOIRF_SED_STYLE,
-    #"science": sed_styles.SCIENCE_SED_STYLE,
+    # "plenoirf": sed_styles.PLENOIRF_SED_STYLE,
+    # "science": sed_styles.SCIENCE_SED_STYLE,
     "fermi": sed_styles.FERMI_SED_STYLE,
 }
 
@@ -77,7 +77,9 @@ loop_systematic_uncertainty = [0.0, 1e-3, 1e-2]
 loop_systematic_uncertainty_line_style = ["-", "--", ":"]
 
 oridx = 2
-onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"][oridx]
+onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][
+    "loop_opening_angle_deg"
+][oridx]
 
 # background rates
 # ----------------
@@ -134,7 +136,9 @@ for site_key in irf_config["config"]["sites"]:
     # ----------
     for sys, systematic_uncertainty in enumerate(loop_systematic_uncertainty):
         gamma_effective_area_m2 = np.array(
-            np.array(onregion_acceptance[site_key]["gamma"]["point"]["mean"])[:, oridx]
+            np.array(onregion_acceptance[site_key]["gamma"]["point"]["mean"])[
+                :, oridx
+            ]
         )
         (
             isez_energy_GeV,
@@ -142,7 +146,9 @@ for site_key in irf_config["config"]["sites"]:
         ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
             gamma_effective_area_m2=gamma_effective_area_m2,
             energy_bin_centers_GeV=energy_bin_centers,
-            background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
+            background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
+                site_key
+            ],
             onregion_over_offregion_ratio=on_over_off_ratio,
             observation_time_s=observation_time_s,
             instrument_systematic_uncertainty=systematic_uncertainty,
@@ -161,7 +167,7 @@ for site_key in irf_config["config"]["sites"]:
 
         components.append(com)
 
-        '''
+        """
         # plenoscope no hadrons
         # ---------------------
         (
@@ -186,7 +192,7 @@ for site_key in irf_config["config"]["sites"]:
         com["alpha"] = 0.5
         com["linestyle"] = "--"
         components.append(com)
-        '''
+        """
 
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]
@@ -230,7 +236,8 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_title(
             "onregion-opening-angle at 100p.e. {: 2.1f}".format(
                 onregion_opening_angle_deg
-            ) + r"$^{\circ}$",
+            )
+            + r"$^{\circ}$",
             family="monospace",
         )
 
