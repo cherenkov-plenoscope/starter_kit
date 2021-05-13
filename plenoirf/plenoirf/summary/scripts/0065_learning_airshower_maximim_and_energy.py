@@ -31,9 +31,14 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 train_test = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0030_splitting_train_and_test_sample",)
 )
-
 transformed_features_dir = os.path.join(
     pa["summary_dir"], "0062_transform_features"
+)
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_quality")
 )
 
 trigger_config = sum_config["trigger"]

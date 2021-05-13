@@ -13,12 +13,11 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-_passed_trigger_indices = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_passing_trigger")
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-
-_passed_quality_indices = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0067_passing_quality")
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_quality")
 )
 
 passed_idx_sets = {}
@@ -27,8 +26,8 @@ for sk in irf_config["config"]["sites"]:
     for pk in irf_config["config"]["particles"]:
         passed_trigger_and_quality = spt.intersection(
             [
-                _passed_trigger_indices[sk][pk]["passed_trigger"][spt.IDX],
-                _passed_quality_indices[sk][pk]["passed_quality"][spt.IDX],
+                passing_trigger[sk][pk]["passed_trigger"][spt.IDX],
+                passing_quality[sk][pk]["passed_quality"][spt.IDX],
             ]
         )
         passed_idx_sets[sk][pk] = set(passed_trigger_and_quality)
