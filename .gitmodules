@@ -28,3 +28,6 @@
 [submodule "airshower_template_generator"]
 	path = airshower_template_generator
 	url = git@github.com:cherenkov-plenoscope/airshower_template_generator.git
+[submodule "sebastians_matplotlib_addons"]
+	path = sebastians_matplotlib_addons
+	url = git@github.com:cherenkov-plenoscope/sebastians_matplotlib_addons.git
