@@ -6,7 +6,6 @@ import os
 from os.path import join as opj
 import numpy as np
 import sebastians_matplotlib_addons as seb
-import matplotlib
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
