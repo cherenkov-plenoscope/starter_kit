@@ -4,11 +4,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import numpy as np
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -30,7 +26,6 @@ energy_bin_edges = np.geomspace(
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 # AIRSHOWER RATES
@@ -158,8 +153,8 @@ for sk in SITES:
 weights = irf.json_numpy.read_tree(pa["out_dir"])
 
 for sk in SITES:
-    fig = irf.summary.figure.figure(fig_16_by_9)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(seb.FIGURE_16_9)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
     for pk in PARTICLES:
         ax.plot(
             weights[sk][pk]["weights_vs_energy"]["energy_GeV"],
@@ -167,12 +162,9 @@ for sk in SITES:
             color=particle_colors[pk],
         )
     ax.loglog()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
     ax.set_xlabel("energy / GeV")
     ax.set_ylabel("relative re-weights/ 1")
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     ax.set_xlim([1e-1, 1e3])
     ax.set_ylim([1e-6, 1.0])
     fig.savefig(os.path.join(pa["out_dir"], "{:s}_weights.jpg".format(sk)))
-    plt.close(fig)
+    seb.close_figure(fig)
