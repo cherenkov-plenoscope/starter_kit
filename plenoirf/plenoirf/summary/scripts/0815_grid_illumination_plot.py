@@ -5,13 +5,7 @@ from os.path import join as opj
 import numpy as np
 import sparse_numeric_table as spt
 import plenoirf as irf
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -34,9 +28,7 @@ MAX_CHERENKOV_INTENSITY = (
     10.0 * irf_config["config"]["grid"]["threshold_num_photons"]
 )
 
-fc16by9 = sum_config["plot"]["16_by_9"]
-fc5by4 = fc16by9.copy()
-fc5by4["cols"] = fc16by9["cols"] * (9 / 16) * (5 / 4)
+FIGURE_STYLE = {"rows": 1080, "cols": 1350, "fontsize": 1}
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
@@ -130,11 +122,9 @@ for site_key in irf_config["config"]["sites"]:
             if num_airshower > 0:
                 normalized_grid_intensity /= num_airshower
 
-            fig = irf.summary.figure.figure(fc5by4)
-            ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-            ax_cb = fig.add_axes([0.85, 0.1, 0.02, 0.8])
-            ax.spines["top"].set_color("none")
-            ax.spines["right"].set_color("none")
+            fig = seb.figure(style=FIGURE_STYLE)
+            ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
+            ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.1, 0.02, 0.8])
             ax.set_aspect("equal")
             _pcm_grid = ax.pcolormesh(
                 np.array(irf_config["grid_geometry"]["xy_bin_edges"]) * 1e-3,
@@ -156,8 +146,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             ax.set_xlabel("$x$ / km")
             ax.set_ylabel("$y$ / km")
-            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-
+            seb.ax_add_grid(ax)
             plt.savefig(
                 opj(
                     pa["out_dir"],
@@ -169,4 +158,4 @@ for site_key in irf_config["config"]["sites"]:
                     ),
                 )
             )
-            plt.close(fig)
+            seb.close_figure(fig)
