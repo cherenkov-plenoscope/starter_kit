@@ -5,12 +5,7 @@ import os
 import plenoirf as irf
 import sparse_numeric_table as spt
 from os.path import join as opj
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -36,11 +31,9 @@ energy_bin_edges = np.geomspace(
     num_energy_bins + 1,
 )
 
-CHCL = "cherenkovclassification"
+span_hist_1_1 = [0.2, 0.15, 0.75, 0.8]
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
-fig_1_by_1 = fig_16_by_9.copy()
-fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
+CHCL = "cherenkovclassification"
 
 for sk in irf_config["config"]["sites"]:
     site_dir = opj(pa["out_dir"], sk)
@@ -94,25 +87,24 @@ for sk in irf_config["config"]["sites"]:
             if np_exposure_bins[true_bin] > 0:
                 np_bins_normalized[true_bin, :] /= np_exposure_bins[true_bin]
 
-        fig = irf.summary.figure.figure(fig_1_by_1)
-        ax = fig.add_axes([0.1, 0.23, 0.7, 0.7])
-        ax_h = fig.add_axes([0.1, 0.08, 0.7, 0.1])
-        ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
+        fig = seb.figure(style=seb.FIGURE_1_1)
+        ax = seb.add_axes(fig=fig, span=[0.15, 0.27, 0.65, 0.65])
+        ax_h = seb.add_axes(fig=fig, span=[0.15, 0.11, 0.65, 0.1])
+        ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
         _pcm_confusion = ax.pcolormesh(
             size_bin_edges,
             size_bin_edges,
             np.transpose(np_bins_normalized),
             cmap="Greys",
-            norm=plt_colors.PowerNorm(gamma=0.5),
+            norm=seb.plt_colors.PowerNorm(gamma=0.5),
         )
-        plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
+        seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
         ax.set_aspect("equal")
         ax.set_title("normalized for each column")
-        ax.spines["top"].set_color("none")
-        ax.spines["right"].set_color("none")
         ax.set_ylabel("reconstructed Cherenkov-size / p.e.")
         ax.loglog()
-        ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+        ax.set_xticklabels([])
+        seb.ax_add_grid(ax)
 
         irf.summary.figure.ax_add_hist(
             ax=ax_h,
@@ -121,18 +113,14 @@ for sk in irf_config["config"]["sites"]:
             linestyle="-",
             linecolor="k",
         )
-        ax_h.loglog()
-        ax_h.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+        ax_h.semilogx()
         ax_h.set_xlim([np.min(size_bin_edges), np.max(size_bin_edges)])
         ax_h.set_xlabel("true Cherenkov-size / p.e.")
         ax_h.set_ylabel("num. events")
-        ax_h.spines["top"].set_color("none")
-        ax_h.spines["right"].set_color("none")
-
-        plt.savefig(
+        fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        plt.close("all")
+        seb.close_figure(fig)
 
         # ---------------------------------------------------------------------
         key = "sensitivity_vs_true_energy"
@@ -168,11 +156,9 @@ for sk in irf_config["config"]["sites"]:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v]) / num_events[_v]
 
-        fig = irf.summary.figure.figure(fig_16_by_9)
-        ax = fig.add_axes([0.12, 0.12, 0.85, 0.85])
-        ax.spines["top"].set_color("none")
-        ax.spines["right"].set_color("none")
-        irf.summary.figure.ax_add_hist(
+        fig = seb.figure(style=seb.FIGURE_1_1)
+        ax = seb.add_axes(fig=fig, span=span_hist_1_1)
+        seb.ax_add_histogram(
             ax=ax,
             bin_edges=energy_bin_edges,
             bincounts=tprs,
@@ -183,7 +169,7 @@ for sk in irf_config["config"]["sites"]:
             face_color="k",
             face_alpha=0.05,
         )
-        irf.summary.figure.ax_add_hist(
+        seb.ax_add_histogram(
             ax=ax,
             bin_edges=energy_bin_edges,
             bincounts=ppvs,
@@ -199,11 +185,10 @@ for sk in irf_config["config"]["sites"]:
         ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
         ax.set_ylim([0, 1])
         ax.semilogx()
-        ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-        plt.savefig(
+        fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        plt.close(fig)
+        seb.close_figure(fig)
 
         irf.json_numpy.write(
             opj(site_particle_dir, key + ".json"),
@@ -247,9 +232,9 @@ for sk in irf_config["config"]["sites"]:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v]) / num_events[_v]
 
-        fig = irf.summary.figure.figure(fig_16_by_9)
-        ax = fig.add_axes([0.12, 0.12, 0.85, 0.85])
-        irf.summary.figure.ax_add_hist(
+        fig = seb.figure(style=seb.FIGURE_1_1)
+        ax = seb.add_axes(fig=fig, span=span_hist_1_1)
+        seb.ax_add_histogram(
             ax=ax,
             bin_edges=energy_bin_edges,
             bincounts=true_over_reco_ratios,
@@ -261,17 +246,14 @@ for sk in irf_config["config"]["sites"]:
             face_alpha=0.1,
         )
         ax.axhline(y=1, color="k", linestyle=":")
-        ax.spines["top"].set_color("none")
-        ax.spines["right"].set_color("none")
         ax.set_xlabel("energy / GeV")
         ax.set_ylabel("Cherenkov-size true/extracted / 1")
         ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
         ax.semilogx()
-        ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-        plt.savefig(
+        fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        plt.close("all")
+        seb.close_figure(fig)
 
         irf.json_numpy.write(
             opj(site_particle_dir, key + ".json"),
@@ -314,9 +296,9 @@ for sk in irf_config["config"]["sites"]:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v]) / num_events[_v]
 
-        fig = irf.summary.figure.figure(fig_16_by_9)
-        ax = fig.add_axes([0.12, 0.12, 0.85, 0.85])
-        irf.summary.figure.ax_add_hist(
+        fig = seb.figure(style=seb.FIGURE_1_1)
+        ax = seb.add_axes(fig=fig, span=span_hist_1_1)
+        seb.ax_add_histogram(
             ax=ax,
             bin_edges=size_bin_edges,
             bincounts=num_ratios,
@@ -328,17 +310,14 @@ for sk in irf_config["config"]["sites"]:
             face_alpha=0.1,
         )
         ax.axhline(y=1, color="k", linestyle=":")
-        ax.spines["top"].set_color("none")
-        ax.spines["right"].set_color("none")
         ax.set_xlabel("true Cherenkov-size / p.e.")
         ax.set_ylabel("Cherenkov-size true/extracted / 1")
         ax.set_xlim([np.min(size_bin_edges), np.max(size_bin_edges)])
         ax.semilogx()
-        ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-        plt.savefig(
+        fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        plt.close("all")
+        seb.close_figure(fig)
 
         irf.json_numpy.write(
             opj(site_particle_dir, key + ".json"),
