@@ -4,11 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 from os.path import join as opj
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -53,7 +49,6 @@ onregion_radii_deg = np.array(
 )
 num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 sources = {
@@ -91,10 +86,10 @@ for site_key in irf_config["config"]["sites"]:
                 acc_trg_onregion = acc_trg_onregions[:, oridx]
                 acc_trg_onregion_unc = acc_trg_onregions_unc[:, oridx]
 
-                fig = irf.summary.figure.figure(fig_16_by_9)
-                ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+                fig = seb.figure(seb.FIGURE_16_9)
+                ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
 
-                irf.summary.figure.ax_add_hist(
+                seb.ax_add_histogram(
                     ax=ax,
                     bin_edges=A_energy_bin_edges,
                     bincounts=acc_trg,
@@ -105,7 +100,7 @@ for site_key in irf_config["config"]["sites"]:
                     face_color=particle_colors[particle_key],
                     face_alpha=0.05,
                 )
-                irf.summary.figure.ax_add_hist(
+                seb.ax_add_histogram(
                     ax=ax,
                     bin_edges=G_energy_bin_edges,
                     bincounts=acc_trg_onregion,
@@ -131,10 +126,7 @@ for site_key in irf_config["config"]["sites"]:
                     + " / "
                     + sources[source_key]["unit"]
                 )
-                ax.spines["top"].set_color("none")
-                ax.spines["right"].set_color("none")
                 ax.set_ylim(sources[source_key]["limits"])
-                ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
                 ax.loglog()
                 ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
                 fig.savefig(
@@ -145,4 +137,4 @@ for site_key in irf_config["config"]["sites"]:
                         ),
                     )
                 )
-                plt.close(fig)
+                seb.close_figure(fig)
