@@ -6,11 +6,7 @@ import spectral_energy_distribution_units as sed
 from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
 import os
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -46,8 +42,6 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 observation_time_s = 600
 num_isez_energy_supports = 5
-
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
@@ -197,8 +191,8 @@ for site_key in irf_config["config"]["sites"]:
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]
 
-        fig = irf.summary.figure.figure(fig_16_by_9)
-        ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+        fig = seb.figure(seb.FIGURE_16_9)
+        ax = seb.add_axes(fig, (0.1, 0.1, 0.8, 0.8))
 
         for com in components:
 
@@ -228,9 +222,6 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_ylim(np.sort(_y_lim))
         ax.loglog()
         ax.legend(loc="best", fontsize=10)
-        ax.spines["right"].set_visible(False)
-        ax.spines["top"].set_visible(False)
-        ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
         ax.set_xlabel(sed_style["x_label"] + " / " + sed_style["x_unit"])
         ax.set_ylabel(sed_style["y_label"] + " / " + sed_style["y_unit"])
         ax.set_title(
@@ -240,7 +231,6 @@ for site_key in irf_config["config"]["sites"]:
             + r"$^{\circ}$",
             family="monospace",
         )
-
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
@@ -249,4 +239,4 @@ for site_key in irf_config["config"]["sites"]:
                 ),
             )
         )
-        plt.close(fig)
+        seb.close_figure(fig)
