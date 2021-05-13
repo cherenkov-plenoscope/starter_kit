@@ -7,20 +7,13 @@ import numpy as np
 import json
 import plenoirf as irf
 import sparse_numeric_table as spt
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
-
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 
 
 def read_csv_records(path):
@@ -80,7 +73,7 @@ def merge_event_table(runtime_table, event_table):
     return rta.to_records(index=False)
 
 
-def write_relative_runtime(table, out_path, figure_config):
+def write_relative_runtime(table, out_path, figure_style):
     ert = table
     total_times = {}
     total_time = 0
@@ -98,8 +91,8 @@ def write_relative_runtime(table, out_path, figure_config):
     for key in KEYS:
         relative_times[key] = float(total_times[key] / total_time)
 
-    fig = irf.summary.figure.figure(figure_config)
-    ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])
+    fig = seb.figure(figure_style)
+    ax = seb.add_axes(fig=fig, span=[0.5, 0.15, 0.45, 0.8])
     labels = []
     sizes = []
     _y = np.arange(len(KEYS))
@@ -116,20 +109,17 @@ def write_relative_runtime(table, out_path, figure_config):
     ax.set_yticks(_y)
     ax.set_yticklabels(labels, rotation=0)
     ax.set_xlim([0, 1])
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
     out_path_jpg = out_path + ".jpg"
     fig.savefig(out_path_jpg + ".tmp.jpg")
     os.rename(out_path_jpg + ".tmp.jpg", out_path_jpg)
-    plt.close(fig)
+    seb.close_figure(fig)
     out_path_json = out_path + ".json"
     with open(out_path_json + ".tmp", "wt") as fout:
         fout.write(json.dumps(relative_times))
     os.rename(out_path_json + ".tmp", out_path_json)
 
 
-def write_speed(table, out_path, figure_config):
+def write_speed(table, out_path, figure_style):
     ert = table
     speed_keys = {
         "corsika_and_grid": "num_events_corsika",
@@ -148,8 +138,8 @@ def write_speed(table, out_path, figure_config):
         else:
             speeds[key] = float(np.mean(num_events[mask] / ert[key][mask]))
 
-    fig = irf.summary.figure.figure(figure_config)
-    ax = fig.add_axes([0.3, 0.15, 0.5, 0.8])
+    fig = seb.figure(figure_style)
+    ax = seb.add_axes(fig=fig, span=[0.5, 0.15, 0.45, 0.8])
     labels = []
     sizes = []
     _y = np.arange(len(speeds))
@@ -168,12 +158,9 @@ def write_speed(table, out_path, figure_config):
     ax.set_yticks(_y)
     ax.set_yticklabels(labels, rotation=0)
     ax.set_xlim([0, np.max(sizes[valid]) * 1.1])
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
     fig.savefig(out_path + ".tmp" + ".jpg")
     os.rename(out_path + ".tmp" + ".jpg", out_path + ".jpg")
-    plt.close(fig)
+    seb.close_figure(fig)
     with open(out_path + ".json" + ".tmp", "wt") as fout:
         fout.write(json.dumps(speeds))
     os.rename(out_path + ".json" + ".tmp", out_path + ".json")
@@ -218,11 +205,11 @@ for site_key in irf_config["config"]["sites"]:
         write_relative_runtime(
             table=extended_runtime_table,
             out_path=opj(pa["out_dir"], prefix_str + "_relative_runtime"),
-            figure_config=fig_16_by_9,
+            figure_style=seb.FIGURE_1_1,
         )
 
         write_speed(
             table=extended_runtime_table,
             out_path=opj(pa["out_dir"], prefix_str + "_speed_runtime"),
-            figure_config=fig_16_by_9,
+            figure_style=seb.FIGURE_1_1,
         )
