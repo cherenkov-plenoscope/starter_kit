@@ -3,11 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -29,7 +25,6 @@ nsb_rates = irf.json_numpy.read_tree(
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
 analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 trigger_rates = {}
@@ -49,8 +44,8 @@ cosmic_ray_keys.remove("gamma")
 for site_key in irf_config["config"]["sites"]:
     tr = trigger_rates[site_key]
 
-    fig = irf.summary.figure.figure(fig_16_by_9)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(seb.FIGURE_16_9)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
     ax.plot(
         trigger_thresholds,
         tr["night_sky_background"]
@@ -73,11 +68,8 @@ for site_key in irf_config["config"]["sites"]:
         )
 
     ax.semilogy()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
     ax.set_xlabel("trigger-threshold / photo-electrons")
     ax.set_ylabel("trigger-rate / s$^{-1}$")
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     ax.legend(loc="best", fontsize=10)
     ax.axvline(
         x=analysis_trigger_threshold, color="k", linestyle="-", alpha=0.25
@@ -86,4 +78,4 @@ for site_key in irf_config["config"]["sites"]:
     fig.savefig(
         os.path.join(pa["out_dir"], "{:s}_ratescan.jpg".format(site_key))
     )
-    plt.close(fig)
+    seb.close_figure(fig)
