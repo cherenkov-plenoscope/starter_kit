@@ -9,10 +9,7 @@ import pandas
 import plenopy as pl
 import iminuit
 import scipy
-
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
-from matplotlib.patches import ConnectionPatch
+import sebastians_matplotlib_addons as seb
 
 """
 Objective
@@ -204,26 +201,27 @@ def write_correlation_figure(
         default_low_exposure=0.0,
     )
 
-    fig = irf.summary.figure.figure(fig_1_by_1)
-    ax = irf.summary.figure.add_axes(fig, [0.1, 0.23, 0.7, 0.7])
-    ax_h = irf.summary.figure.add_axes(fig, [0.1, 0.07, 0.7, 0.1])
-    ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
+    fig = seb.figure(seb.FIGURE_1_1)
+    ax = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
+    ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
+    ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
     _pcm_confusion = ax.pcolormesh(
         cm["x_bin_edges"],
         cm["y_bin_edges"],
         np.transpose(cm["confusion_bins_normalized_columns"]),
         cmap="Greys",
-        norm=plt_colors.PowerNorm(gamma=0.5),
+        norm=seb.plt_colors.PowerNorm(gamma=0.5),
     )
-    plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
+    seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
     ax.set_title("normalized for each column")
     ax.set_ylabel(y_label)
+    ax.set_xticklabels([])
     ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["x_bin_edges"])])
     ax_h.set_xlabel(x_label)
     ax_h.set_ylabel("num. events / 1")
     ax_h.axhline(cm["min_exposure_x"], linestyle=":", color="k")
-    irf.summary.figure.ax_add_hist(
+    seb.ax_add_histogram(
         ax=ax_h,
         bin_edges=cm["x_bin_edges"],
         bincounts=cm["exposure_bins_x_no_weights"],
@@ -242,7 +240,7 @@ def write_correlation_figure(
         ax_h.semilogy()
 
     fig.savefig(path)
-    plt.close(fig)
+    seb.close_figure(fig)
 
 
 def make_rectangular_table(
@@ -396,6 +394,7 @@ def guess_theta_square_bin_edges_deg(
 
     return theta_square_bin_edges_deg2
 
+psf_ax_style = {"spines": [], "axes": ["x", "y"], "grid": True}
 
 for sk in reconstruction:
     for pk in reconstruction[sk]:
@@ -623,8 +622,10 @@ for sk in reconstruction:
                 bins=(c_bin_edges_fine_deg, c_bin_edges_fine_deg),
             )[0]
 
-            fig = irf.summary.figure.figure(fig_16_by_9)
-            ax1 = fig.add_axes([0.075, 0.1, 0.4, 0.8])
+            fig = seb.figure(seb.FIGURE_16_9)
+            ax1 = seb.add_axes(
+                fig=fig, span=[0.075, 0.1, 0.4, 0.8], style=psf_ax_style
+            )
             ax1.pcolor(
                 c_bin_edges_deg,
                 c_bin_edges_deg,
@@ -632,6 +633,7 @@ for sk in reconstruction:
                 cmap="Blues",
                 vmax=None,
             )
+            seb.ax_add_grid(ax1)
             ax1.set_title(
                 "energy {: 7.1f} - {: 7.1f} GeV".format(ene_start, ene_stop,),
                 family="monospace",
@@ -641,11 +643,6 @@ for sk in reconstruction:
             ax1.set_ylim([-1.01 * fov_radius_deg, 1.01 * fov_radius_deg])
             ax1.set_xlabel(r"$\Delta{} c_x$ / $1^\circ{}$")
             ax1.set_ylabel(r"$\Delta{} c_y$ / $1^\circ{}$")
-            ax1.spines["top"].set_color("none")
-            ax1.spines["right"].set_color("none")
-            ax1.spines["bottom"].set_color("none")
-            ax1.spines["left"].set_color("none")
-            ax1.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
 
             ax1.plot(
                 [-fov_radius_fine_deg, fov_radius_fine_deg],
@@ -676,13 +673,10 @@ for sk in reconstruction:
                 alpha=0.15,
             )
 
-            ax2 = fig.add_axes([0.575, 0.1, 0.4, 0.8])
+            ax2 = seb.add_axes(
+                fig=fig, span=[0.575, 0.1, 0.4, 0.8], style=psf_ax_style
+            )
             ax2.set_aspect("equal")
-            ax2.spines["top"].set_color("none")
-            ax2.spines["right"].set_color("none")
-            ax2.spines["bottom"].set_color("none")
-            ax2.spines["left"].set_color("none")
-
             ax2.pcolor(
                 c_bin_edges_fine_deg,
                 c_bin_edges_fine_deg,
@@ -690,12 +684,11 @@ for sk in reconstruction:
                 cmap="Blues",
                 vmax=None,
             )
-            ax2.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-
+            seb.ax_add_grid(ax2)
             fig.savefig(
                 os.path.join(
                     pa["out_dir"],
                     "{:s}_{:s}_psf_image_ene{:06d}.jpg".format(sk, pk, ene),
                 )
             )
-            plt.close(fig)
+            seb.close_figure(fig)
