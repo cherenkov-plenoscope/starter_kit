@@ -3,11 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -38,7 +34,6 @@ fine_energy_bin_edges = np.geomspace(
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
@@ -55,8 +50,8 @@ LiMa_alpha = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 observation_time_s = 60 * 10
 
 for site_key in irf_config["config"]["sites"]:
-    fig = irf.summary.figure.figure(fig_16_by_9)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(seb.FIGURE_16_9)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
 
     signal_rate_in_onregion = np.array(
         onregion_rates[site_key]["gamma"]["integral_rate"]["mean"]
@@ -89,9 +84,6 @@ for site_key in irf_config["config"]["sites"]:
         + r"Li Ma $\alpha$: "
         + "{:.2f}".format(LiMa_alpha)
     )
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     ax.set_xlabel(r"onregion-radius at 100p.e. / $^{\circ}$")
     ax.set_ylabel(r"Li Ma $S$ / 1")
     fig.savefig(
@@ -100,14 +92,14 @@ for site_key in irf_config["config"]["sites"]:
             "{:s}_LiMa_significance_vs_onregion_radius.jpg".format(site_key),
         )
     )
-    plt.close(fig)
+    seb.close_figure(fig)
 
 
 for site_key in irf_config["config"]["sites"]:
     for oridx in range(num_bins_onregion_radius):
 
-        fig = irf.summary.figure.figure(fig_16_by_9)
-        ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+        fig = seb.figure(seb.FIGURE_16_9)
+        ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
 
         text_y = 0.7
         for particle_key in irf_config["config"]["particles"]:
@@ -151,9 +143,6 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_xlim([energy_lower, energy_upper])
         ax.set_ylim([1e-5, 1e3])
         ax.loglog()
-        ax.spines["right"].set_visible(False)
-        ax.spines["top"].set_visible(False)
-        ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
         ax.set_xlabel("Energy / GeV")
         ax.set_ylabel("Differential event-rate / s$^{-1}$ (GeV)$^{-1}$")
         fig.savefig(
@@ -164,4 +153,4 @@ for site_key in irf_config["config"]["sites"]:
                 ),
             )
         )
-        plt.close(fig)
+        seb.close_figure(fig)
