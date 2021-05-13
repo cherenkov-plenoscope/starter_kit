@@ -28,8 +28,12 @@ weights_thrown2expected = irf.json_numpy.read_tree(
     )
 )
 
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
-trigger_modus = sum_config["trigger"]["modus"]
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_quality")
+)
 
 num_energy_bins = 32
 min_number_samples = 100
@@ -37,7 +41,7 @@ min_number_samples = 100
 max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
 min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
 
-distance_bin_edges = np.geomspace(3e3, 3e4, num_energy_bins + 1)
+distance_bin_edges = np.geomspace(5e3, 25e3, num_energy_bins + 1)
 
 fig_16_by_9 = sum_config["plot"]["16_by_9"]
 fig_1_by_1 = fig_16_by_9.copy()
@@ -58,19 +62,10 @@ for site_key in irf_config["config"]["sites"]:
         structure=irf.table.STRUCTURE,
     )
 
-    idx_triggered = irf.analysis.light_field_trigger_modi.make_indices(
-        trigger_table=event_table["trigger"],
-        threshold=trigger_threshold,
-        modus=trigger_modus,
-    )
-    idx_quality = irf.analysis.cuts.cut_quality(
-        feature_table=event_table["features"],
-        max_relative_leakage=max_relative_leakage,
-        min_reconstructed_photons=min_reconstructed_photons,
-    )
-    idx_features = event_table["features"][spt.IDX]
-
-    idx_common = spt.intersection([idx_triggered, idx_quality, idx_features])
+    idx_common = spt.intersection([
+        passing_trigger[site_key][particle_key]["passed_trigger"]["idx"],
+        passing_quality[site_key][particle_key]["passed_quality"]["idx"]
+    ])
 
     table = spt.cut_table_on_indices(
         table=event_table,
@@ -114,8 +109,8 @@ for site_key in irf_config["config"]["sites"]:
     )
 
     fig = irf.summary.figure.figure(fig_1_by_1)
-    ax = irf.summary.figure.add_axes(fig, [0.1, 0.23, 0.7, 0.7])
-    ax_h = irf.summary.figure.add_axes(fig, [0.1, 0.07, 0.7, 0.1])
+    ax = irf.summary.figure.add_axes(fig, [0.125, 0.23, 0.7, 0.7])
+    ax_h = irf.summary.figure.add_axes(fig, [0.125, 0.07, 0.7, 0.1])
     ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
     _pcm_confusion = ax.pcolormesh(
         cm["x_bin_edges"],
@@ -131,7 +126,7 @@ for site_key in irf_config["config"]["sites"]:
     ax.set_ylabel(fk + " / " + irf.table.STRUCTURE["features"][fk]["unit"])
     ax.loglog()
     ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax_h.loglog()
+    ax_h.semilogx()
     ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])])
     ax_h.set_xlabel("true maximum of airshower / m")
     ax_h.set_ylabel("num. events / 1")
