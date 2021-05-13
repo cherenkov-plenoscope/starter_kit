@@ -105,8 +105,7 @@ for sk in irf_config["config"]["sites"]:
         ax.loglog()
         ax.set_xticklabels([])
         seb.ax_add_grid(ax)
-
-        irf.summary.figure.ax_add_hist(
+        seb.ax_add_histogram(
             ax=ax_h,
             bin_edges=size_bin_edges,
             bincounts=np_exposure_bins,
