@@ -44,6 +44,13 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_quality")
+)
+
 # energy
 # ------
 num_energy_bins = sum_config["energy_binning"]["num_bins"][
@@ -242,14 +249,21 @@ def write_correlation_figure(
 def make_rectangular_table(
     event_table, reconstruction_table, plenoscope_pointing
 ):
+    common_indices = spt.intersection(
+        [
+            event_table["primary"][spt.IDX],
+            reconstruction_table[spt.IDX]
+        ]
+    )
+
     rec_evt_tab = spt.cut_table_on_indices(
         table=event_table,
         structure=irf.table.STRUCTURE,
-        common_indices=reconstruction_table[spt.IDX],
+        common_indices=common_indices,
         level_keys=level_keys,
     )
     rec_evt_tab = spt.sort_table_on_common_indices(
-        table=rec_evt_tab, common_indices=reconstruction_table[spt.IDX],
+        table=rec_evt_tab, common_indices=common_indices,
     )
     rec_evt_df = spt.make_rectangular_DataFrame(rec_evt_tab)
 
@@ -404,6 +418,21 @@ for sk in reconstruction:
             ),
             structure=irf.table.STRUCTURE,
         )
+        idx_common = spt.intersection(
+            [
+                passing_trigger[sk][pk]["passed_trigger"]["idx"],
+                passing_quality[sk][pk]["passed_quality"]["idx"],
+            ]
+        )
+        _event_table = spt.cut_table_on_indices(
+            table=_event_table,
+            structure=irf.table.STRUCTURE,
+            common_indices=idx_common,
+        )
+        _event_table = spt.sort_table_on_common_indices(
+            table=_event_table, common_indices=idx_common
+        )
+
 
         reconstructed_event_table = make_rectangular_table(
             event_table=_event_table,
