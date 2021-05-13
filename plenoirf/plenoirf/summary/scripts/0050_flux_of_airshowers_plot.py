@@ -4,12 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import pandas as pd
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -28,8 +23,6 @@ fine_energy_bin_edges = np.geomspace(
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 
-
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 # cosmic-ray-flux
@@ -46,8 +39,8 @@ airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensat
 
 for site_key in irf_config["config"]["sites"]:
 
-    fig = irf.summary.figure.figure(fig_16_by_9)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(seb.FIGURE_16_9)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
     for particle_key in airshower_fluxes[site_key]:
         ax.plot(
             fine_energy_bin_centers,
@@ -60,9 +53,6 @@ for site_key in irf_config["config"]["sites"]:
         "differential flux of airshowers / "
         + "m$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$"
     )
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     ax.loglog()
     ax.set_xlim([energy_lower, energy_upper])
     ax.legend()
@@ -73,7 +63,7 @@ for site_key in irf_config["config"]["sites"]:
             "{:s}_airshower_differential_flux.jpg".format(site_key),
         )
     )
-    plt.close(fig)
+    seb.close_figure(fig)
 
     for particle_key in airshower_fluxes[site_key]:
         out_df = pd.DataFrame(
