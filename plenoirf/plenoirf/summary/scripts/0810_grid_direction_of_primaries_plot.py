@@ -6,13 +6,7 @@ import numpy as np
 import magnetic_deflection as mdfl
 import sparse_numeric_table as spt
 import plenoirf as irf
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -35,9 +29,8 @@ c_bin_edges_deg = np.linspace(
     sum_config["direction_binning"]["radial_angle_deg"],
     sum_config["direction_binning"]["num_bins"] + 1,
 )
-fc16by9 = sum_config["plot"]["16_by_9"]
-fc5by4 = fc16by9.copy()
-fc5by4["cols"] = fc16by9["cols"] * (9 / 16) * (5 / 4)
+
+FIGURE_STYLE = {"rows": 1080, "cols": 1350, "fontsize": 1}
 
 for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
@@ -111,17 +104,15 @@ for site_key in irf_config["config"]["sites"]:
 
         for energy_idx in range(len(energy_bin_edges) - 1):
 
-            fig = irf.summary.figure.figure(fc5by4)
-            ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+            fig = seb.figure(style=FIGURE_STYLE)
+            ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
             ax_cb = fig.add_axes([0.85, 0.1, 0.02, 0.8])
-            ax.spines["top"].set_color("none")
-            ax.spines["right"].set_color("none")
             ax.set_aspect("equal")
             _pcm_grid = ax.pcolormesh(
                 c_bin_edges_deg,
                 c_bin_edges_deg,
                 np.transpose(intensity_cube[energy_idx, :, :]),
-                norm=plt_colors.PowerNorm(gamma=0.5),
+                norm=seb.plt_colors.PowerNorm(gamma=0.5),
                 cmap="Blues",
                 vmin=0.0,
                 vmax=vmax,
@@ -131,7 +122,7 @@ for site_key in irf_config["config"]["sites"]:
             plt.colorbar(_pcm_grid, cax=ax_cb, extend="max")
             ax.set_xlabel("$c_x$ / $1^\\circ$")
             ax.set_ylabel("$c_y$ / $1^\\circ$")
-            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+            seb.ax_add_grid(ax)
             ax.set_title(
                 "num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f} GeV".format(
                     num_events_stack[energy_idx],
@@ -141,7 +132,7 @@ for site_key in irf_config["config"]["sites"]:
                 family="monospace",
             )
             for rr in [10, 20, 30, 40, 50]:
-                irf.summary.figure.ax_add_circle(
+                seb.ax_add_circle(
                     ax=ax,
                     x=0,
                     y=0,
@@ -156,7 +147,7 @@ for site_key in irf_config["config"]["sites"]:
             for ix in range(num_c_bins):
                 for iy in range(num_c_bins):
                     if not exposure_cube[energy_idx][ix][iy]:
-                        irf.summary.figure.ax_add_hatches(
+                        seb.ax_add_hatches(
                             ax=ax,
                             ix=ix,
                             iy=iy,
@@ -170,8 +161,8 @@ for site_key in irf_config["config"]["sites"]:
                         prefix_str,
                         "grid_direction_pasttrigger",
                         energy_idx,
-                        fc5by4["format"],
+                        "jpg",
                     ),
                 )
             )
-            plt.close(fig)
+            seb.close_figure(fig)
