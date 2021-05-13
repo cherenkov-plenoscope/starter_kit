@@ -12,13 +12,7 @@ from sklearn import neural_network
 from sklearn import ensemble
 from sklearn import model_selection
 from sklearn import utils
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -47,11 +41,6 @@ random_seed = sum_config["random_seed"]
 
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
-
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
-fig_1_by_1 = fig_16_by_9.copy()
-fig_1_by_1["rows"] = fig_16_by_9["rows"] * (16 / 9)
-
 
 targets = {
     "energy": {
@@ -195,29 +184,29 @@ for sk in SITES:
                 default_low_exposure=0.0,
             )
 
-            fig = irf.summary.figure.figure(fig_1_by_1)
-            ax = irf.summary.figure.add_axes(fig, [0.1, 0.23, 0.7, 0.7])
-            ax_h = irf.summary.figure.add_axes(fig, [0.1, 0.07, 0.7, 0.1])
-            ax_cb = fig.add_axes([0.85, 0.23, 0.02, 0.7])
-            _pcm_confusion = ax.pcolormesh(
+            fig = seb.figure(seb.FIGURE_1_1)
+            ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
+            ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
+            ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
+            _pcm_confusion = ax_c.pcolormesh(
                 cm["x_bin_edges"],
                 cm["y_bin_edges"],
                 np.transpose(cm["confusion_bins_normalized_columns"]),
                 cmap="Greys",
-                norm=plt_colors.PowerNorm(gamma=0.5),
+                norm=seb.plt_colors.PowerNorm(gamma=0.5),
             )
-            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-            plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
-            irf.summary.figure.mark_ax_thrown_spectrum(ax=ax)
-            ax.set_aspect("equal")
-            ax.set_title("normalized for each column")
-            ax.set_ylabel(
+            ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+            seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
+            irf.summary.figure.mark_ax_thrown_spectrum(ax=ax_c)
+            ax_c.set_aspect("equal")
+            ax_c.set_title("normalized for each column")
+            ax_c.set_ylabel(
                 "reco. {:s} / {:s}".format(
                     targets[tk]["label"], targets[tk]["unit"]
                 )
             )
-            ax.loglog()
-            ax_h.loglog()
+            ax_c.loglog()
+            ax_h.semilogx()
             ax_h.set_xlim(
                 [np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])]
             )
@@ -229,12 +218,14 @@ for sk in SITES:
             ax_h.set_ylabel("num. events / 1")
             irf.summary.figure.mark_ax_thrown_spectrum(ax_h)
             ax_h.axhline(min_number_samples, linestyle=":", color="k")
-            irf.summary.figure.ax_add_hist(
+            seb.ax_add_histogram(
                 ax=ax_h,
                 bin_edges=cm["x_bin_edges"],
                 bincounts=cm["exposure_bins_x_no_weights"],
                 linestyle="-",
                 linecolor="k",
             )
-            plt.savefig(os.path.join(pa["out_dir"], mk + "_" + tk + ".jpg"))
-            plt.close("all")
+            plt.savefig(
+                os.path.join(pa["out_dir"], sk + "_" + mk + "_" + tk + ".jpg")
+            )
+            seb.close_figure(fig)
