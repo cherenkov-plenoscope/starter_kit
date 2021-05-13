@@ -5,12 +5,7 @@ import sparse_numeric_table as spt
 import os
 import pandas
 import numpy as np
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -30,7 +25,6 @@ ORIGINAL_FEATURES = irf.features.ORIGINAL
 COMBINED_FEATURES = irf.features.COMBINED
 ALL_FEATURES = irf.features.ALL
 
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 ft_trafo = {}
@@ -107,8 +101,8 @@ for sk in SITES:
 
         if not os.path.exists(fig_path):
 
-            fig = irf.summary.figure.figure(fig_16_by_9)
-            ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+            fig = seb.figure(seb.FIGURE_16_9)
+            ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
 
             for pk in PARTICLES:
                 start = -5
@@ -133,7 +127,7 @@ for sk in SITES:
                     default=0,
                 )
 
-                irf.summary.figure.ax_add_hist(
+                seb.ax_add_histogram(
                     ax=ax,
                     bin_edges=bin_edges_fk,
                     bincounts=bin_counts_norm_fk,
@@ -150,12 +144,9 @@ for sk in SITES:
 
             ax.semilogy()
             irf.summary.figure.mark_ax_thrown_spectrum(ax=ax)
-            ax.spines["right"].set_visible(False)
-            ax.spines["top"].set_visible(False)
             ax.set_xlabel("transformed {:s} / 1".format(fk))
             ax.set_ylabel("relative intensity / 1")
-            ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
             ax.set_xlim([start, stop])
             ax.set_ylim([1e-5, 1.0])
             fig.savefig(fig_path)
-            plt.close(fig)
+            seb.close_figure(fig)

@@ -6,12 +6,7 @@ import numpy as np
 import sparse_numeric_table as spt
 import plenoirf as irf
 import magnetic_deflection as mdfl
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -20,7 +15,7 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 passing_trigger = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_passing_trigger")
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
 energy_bin_edges = np.geomspace(
@@ -28,8 +23,6 @@ energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["upper_edge_GeV"],
     sum_config["energy_binning"]["num_bins"]["point_spread_function"] + 1,
 )
-fig_16_by_9 = sum_config["plot"]["16_by_9"]
-
 
 def histogram(
     cradial2_bin_edges_deg2, offaxis2_deg2, energy_mask, pasttrigger_mask,
@@ -89,12 +82,12 @@ def write_figure(
     trgprb,
     trgprb_absunc,
     ylim,
-    figure_config,
+    figure_style,
     title,
 ):
-    fig = irf.summary.figure.figure(figure_config)
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-    irf.summary.figure.ax_add_hist(
+    fig = seb.figure(figure_style)
+    ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
+    seb.ax_add_histogram(
         ax=ax,
         bin_edges=cradial2_bin_edges_deg2,
         bincounts=trgprb,
@@ -109,13 +102,10 @@ def write_figure(
     ax.semilogy()
     ax.set_xlabel("angle between(pointing, primary)$^2$ / deg$^2$")
     ax.set_ylabel("trigger-probability / 1")
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
     ax.set_xlim([0, np.max(cradial2_bin_edges_deg2)])
     ax.set_ylim(ylim)
     fig.savefig(path)
-    plt.close(fig)
+    seb.close_figure(fig)
 
 
 os.makedirs(pa["out_dir"], exist_ok=True)
@@ -182,15 +172,13 @@ for site_key in irf_config["config"]["sites"]:
         write_figure(
             path=opj(
                 pa["out_dir"],
-                "{:s}_trigger_probability_vs_offaxis.{:s}".format(
-                    prefix_str, fig_16_by_9["format"]
-                ),
+                "{:s}_trigger_probability_vs_offaxis.jpg".format(prefix_str),
             ),
             cradial2_bin_edges_deg2=cradial2_bin_edges_deg2,
             trgprb=res["trgprb"],
             trgprb_absunc=res["trgprb_absunc"],
             ylim=GLOBAL_YLIM,
-            figure_config=fig_16_by_9,
+            figure_style=seb.FIGURE_16_9,
             title="",
         )
 
@@ -222,15 +210,15 @@ for site_key in irf_config["config"]["sites"]:
             write_figure(
                 path=opj(
                     pa["out_dir"],
-                    "{:s}_trigger_probability_vs_offaxis_{:06d}.{:s}".format(
-                        prefix_str, ex, fig_16_by_9["format"]
+                    "{:s}_trigger_probability_vs_offaxis_{:06d}.jpg".format(
+                        prefix_str, ex
                     ),
                 ),
                 cradial2_bin_edges_deg2=coarse_cradial2_bin_edges_deg2,
                 trgprb=energy_hists[ex]["trgprb"],
                 trgprb_absunc=energy_hists[ex]["trgprb_absunc"],
                 ylim=GLOBAL_YLIM,
-                figure_config=fig_16_by_9,
+                figure_style=seb.FIGURE_16_9,
                 title=(
                     "energy {: 7.1f} - {: 7.1f} GeV, " + "num. events {: 6d}"
                 ).format(
