@@ -3,12 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
+import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -26,22 +21,20 @@ fov_radius_deg = (
     0.5 * irf_config["light_field_sensor_geometry"]["max_FoV_diameter_deg"]
 )
 
-fc16by9 = dict(sum_config["plot"]["16_by_9"])
-fc16by9["fontsize"] = 2.25
-
 theta_labels = {
     "theta": r"\theta{}",
     "theta_para": r"\theta{}_\mathrm{parallel}",
     "theta_perp": r"\theta{}_\mathrm{perpendicular}",
 }
 
+axes_style = {"spines": [], "axes": ["x"], "grid": False}
 
 def write_core_radius_figure(path, radius_bin_edges, bin_idx, info):
     num_bins = len(radius_bin_edges) - 1
     r_start = radius_bin_edges[bin_idx]
     r_stop = radius_bin_edges[bin_idx + 1]
-    fig = irf.summary.figure.figure(irf.summary.figure.CONFIG_1_1)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(seb.FIGURE_1_1)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8), style=axes_style)
     rs = np.linspace(0.0, 2.0 * np.pi, 137)
     ax.fill(
         r_stop * np.cos(rs), r_stop * np.sin(rs), facecolor="k", alpha=0.25
@@ -50,7 +43,7 @@ def write_core_radius_figure(path, radius_bin_edges, bin_idx, info):
         r_start * np.cos(rs), r_start * np.sin(rs), facecolor="w",
     )
     for rr in radius_bin_edges:
-        irf.summary.figure.ax_add_circle(
+        seb.ax_add_circle(
             ax=ax,
             x=0.0,
             y=0.0,
@@ -62,21 +55,16 @@ def write_core_radius_figure(path, radius_bin_edges, bin_idx, info):
             num_steps=1000,
         )
     fig.suptitle(info, family="monospace")
-    ax.axes.get_yaxis().set_visible(False)
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
-    ax.spines["left"].set_color("none")
-    ax.spines["bottom"].set_color("none")
     fig.savefig(path)
-    plt.close(fig)
+    seb.close_figure(fig)
 
 
 def write_energy_figure(path, energy_bin_edges, bin_idx, info):
     num_bins = len(energy_bin_edges) - 1
     e_start = energy_bin_edges[bin_idx]
     e_stop = energy_bin_edges[bin_idx + 1]
-    fig = irf.summary.figure.figure(irf.summary.figure.CONFIG_1_1)
-    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(seb.FIGURE_1_1)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8), style=axes_style)
     ax.fill_between(
         [e_start, e_start, e_stop, e_stop],
         [0.0, 1.0, 1.0, 0.0],
@@ -87,13 +75,8 @@ def write_energy_figure(path, energy_bin_edges, bin_idx, info):
     ax.set_ylim([0, 1])
     ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
     fig.suptitle(info, family="monospace")
-    ax.axes.get_yaxis().set_visible(False)
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
-    ax.spines["left"].set_color("none")
-    ax.spines["bottom"].set_color("none")
     fig.savefig(path)
-    plt.close(fig)
+    seb.close_figure(fig)
 
 
 def write_theta_square_figure(
@@ -115,9 +98,9 @@ def write_theta_square_figure(
         tts_label = r"$" + theta_label + r"$ / $1^\circ{}$"
         tts = np.sqrt(theta_square_bin_edges_deg2)
 
-    fig = irf.summary.figure.figure(fc16by9)
-    ax = fig.add_axes((0.1, 0.12, 0.8, 0.8))
-    irf.summary.figure.ax_add_hist(
+    fig = seb.figure(seb.FIGURE_16_9)
+    ax = seb.add_axes(fig=fig, span=(0.1, 0.12, 0.8, 0.8))
+    seb.ax_add_histogram(
         ax=ax,
         bin_edges=tts,
         bincounts=bin_count,
@@ -153,12 +136,8 @@ def write_theta_square_figure(
     fig.suptitle(info_title, family="monospace")
     ax.set_ylim([0.0, ylim_stop])
     ax.set_xlim([0.0, np.max(tts)])
-    ax.spines["top"].set_color("none")
-    ax.spines["right"].set_color("none")
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-
     fig.savefig(path)
-    plt.close(fig)
+    seb.close_figure(fig)
 
 
 for site_key in psf:
