@@ -390,14 +390,11 @@ def read_train_test_frame(
         idxs_valid_kk = spt.intersection(
             [idxs_triggered, idxs_quality, train_test[sk][pk][kk],]
         )
-        table_kk = spt.cut_table_on_indices(
+        table_kk = spt.cut_and_sort_table_on_indices(
             table=airshower_table,
             structure=EXT_STRUCTRURE,
             common_indices=idxs_valid_kk,
             level_keys=level_keys,
-        )
-        table_kk = spt.sort_table_on_common_indices(
-            table=table_kk, common_indices=idxs_valid_kk
         )
         out[kk] = spt.make_rectangular_DataFrame(table_kk)
 

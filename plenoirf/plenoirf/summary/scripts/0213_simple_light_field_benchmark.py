@@ -256,15 +256,13 @@ def make_rectangular_table(
         ]
     )
 
-    rec_evt_tab = spt.cut_table_on_indices(
+    rec_evt_tab = spt.cut_and_sort_table_on_indices(
         table=event_table,
         structure=irf.table.STRUCTURE,
         common_indices=common_indices,
         level_keys=level_keys,
     )
-    rec_evt_tab = spt.sort_table_on_common_indices(
-        table=rec_evt_tab, common_indices=common_indices,
-    )
+
     rec_evt_df = spt.make_rectangular_DataFrame(rec_evt_tab)
 
     et_df = pandas.merge(
@@ -424,15 +422,11 @@ for sk in reconstruction:
                 passing_quality[sk][pk]["passed_quality"]["idx"],
             ]
         )
-        _event_table = spt.cut_table_on_indices(
+        _event_table = spt.cut_and_sort_table_on_indices(
             table=_event_table,
             structure=irf.table.STRUCTURE,
             common_indices=idx_common,
         )
-        _event_table = spt.sort_table_on_common_indices(
-            table=_event_table, common_indices=idx_common
-        )
-
 
         reconstructed_event_table = make_rectangular_table(
             event_table=_event_table,

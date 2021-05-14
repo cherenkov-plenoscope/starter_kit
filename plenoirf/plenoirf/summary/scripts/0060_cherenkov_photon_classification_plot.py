@@ -55,14 +55,11 @@ for sk in irf_config["config"]["sites"]:
             ]
         )
 
-        mrg_chc_fts = spt.cut_table_on_indices(
+        mrg_chc_fts = spt.cut_and_sort_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
             common_indices=idx_common,
             level_keys=["primary", "trigger", CHCL, "features"],
-        )
-        mrg_chc_fts = spt.sort_table_on_common_indices(
-            table=mrg_chc_fts, common_indices=idx_common
         )
 
         # ---------------------------------------------------------------------

@@ -136,7 +136,7 @@ def make_array_from_event_table_for_onregion_estimate(event_table):
         event_table["features"][spt.IDX],
         event_table["reconstructed_trajectory"][spt.IDX]
     ])
-    ta = spt.cut_table_on_indices(
+    ta = spt.cut_and_sort_table_on_indices(
         table=event_table,
         structure=irf_table.STRUCTURE,
         common_indices=common_indices,
@@ -145,9 +145,6 @@ def make_array_from_event_table_for_onregion_estimate(event_table):
             "features",
             "reconstructed_trajectory"
         ],
-    )
-    ta = spt.sort_table_on_common_indices(
-        table=ta, common_indices=common_indices,
     )
     event_array = spt.make_rectangular_DataFrame(table=ta).to_records()
     return event_array

@@ -55,7 +55,7 @@ for sk in irf_config["config"]["sites"]:
         ]
     )
 
-    table = spt.cut_table_on_indices(
+    table = spt.cut_and_sort_table_on_indices(
         table=event_table,
         structure=irf.table.STRUCTURE,
         common_indices=idx_common,
@@ -67,9 +67,6 @@ for sk in irf_config["config"]["sites"]:
             "trigger",
             "features",
         ],
-    )
-    table = spt.sort_table_on_common_indices(
-        table=table, common_indices=idx_common
     )
 
     fk = "image_smallest_ellipse_object_distance"

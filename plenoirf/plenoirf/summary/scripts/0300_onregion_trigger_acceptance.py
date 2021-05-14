@@ -76,14 +76,11 @@ def cut_candidates_for_detection(
         [idx_trigger, idx_quality, idx_trajectory]
     )
 
-    candidate_event_table = spt.cut_table_on_indices(
+    candidate_event_table = spt.cut_and_sort_table_on_indices(
         table=event_table,
         structure=irf.table.STRUCTURE,
         common_indices=idx_candidates,
         level_keys=None,
-    )
-    candidate_event_table = spt.sort_table_on_common_indices(
-        table=candidate_event_table, common_indices=idx_candidates
     )
 
     return candidate_event_table

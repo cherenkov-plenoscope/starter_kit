@@ -63,14 +63,11 @@ for sk in SITES:
             ]
         )
 
-        table = spt.cut_table_on_indices(
+        tables[sk][pk] = spt.cut_and_sort_table_on_indices(
             table=_table,
             structure=irf.table.STRUCTURE,
             common_indices=idx_common,
             level_keys=["primary", "features"],
-        )
-        tables[sk][pk] = spt.sort_table_on_common_indices(
-            table=table, common_indices=idx_common
         )
 
 # guess bin edges

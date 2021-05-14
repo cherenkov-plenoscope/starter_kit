@@ -84,7 +84,7 @@ for sk in irf_config["config"]["sites"]:
             _passed_trigger_indices[sk][pk]["passed_trigger"][spt.IDX]
         )
 
-        all_truth = spt.cut_table_on_indices(
+        all_truth = spt.cut_and_sort_table_on_indices(
             event_table,
             irf.table.STRUCTURE,
             common_indices=passed_trigger_idx,
@@ -101,9 +101,7 @@ for sk in irf_config["config"]["sites"]:
                 "cherenkovclassification",
             ],
         )
-        all_truth = spt.sort_table_on_common_indices(
-            table=all_truth, common_indices=passed_trigger_idx
-        )
+
         (
             true_cx,
             true_cy,
