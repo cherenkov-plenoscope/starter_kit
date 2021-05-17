@@ -94,6 +94,8 @@ for site_key in irf_config["config"]["sites"]:
 x_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e-0, 1e-16])
 
+
+
 for site_key in irf_config["config"]["sites"]:
 
     components = []
@@ -134,6 +136,8 @@ for site_key in irf_config["config"]["sites"]:
                 :, oridx
             ]
         )
+
+        """
         (
             isez_energy_GeV,
             isez_differential_flux_per_GeV_per_m2_per_s,
@@ -148,6 +152,7 @@ for site_key in irf_config["config"]["sites"]:
             instrument_systematic_uncertainty=systematic_uncertainty,
             num_points=num_isez_energy_supports,
         )
+
         com = {}
         com["energy"] = isez_energy_GeV
         com["differential_flux"] = isez_differential_flux_per_GeV_per_m2_per_s
@@ -160,6 +165,64 @@ for site_key in irf_config["config"]["sites"]:
         com["linestyle"] = loop_systematic_uncertainty_line_style[sys]
 
         components.append(com)
+        """
+
+        critical_rate_per_s = irf.analysis.integral_sensitivity.estimate_critical_rate(
+            background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
+                site_key
+            ],
+            onregion_over_offregion_ratio=on_over_off_ratio,
+            observation_time_s=observation_time_s,
+            instrument_systematic_uncertainty=systematic_uncertainty,
+            detection_threshold_std=5.0,
+            method="LiMa_eq9",
+        )
+
+        powlaws = irf.analysis.integral_sensitivity.estimate_critical_power_laws(
+            effective_area_bins_m2=gamma_effective_area_m2,
+            effective_area_energy_bin_edges_GeV=energy_bin_edges,
+            critical_rate_per_s=critical_rate_per_s,
+            power_law_spectral_indices=np.linspace(-4.0, -0.5, 100),
+        )
+
+        (
+            tangent_E_GeV,
+            tangent_dF_per_m2_per_GeV_per_s
+        ) = irf.analysis.integral_sensitivity.estimate_tangent_of_critical_power_laws(
+            critical_power_laws=powlaws
+        )
+        com = {}
+        com["energy"] = tangent_E_GeV
+        com["differential_flux"] = tangent_dF_per_m2_per_GeV_per_s
+        com["label"] = "Portal {:2.0f}s, trigger, sys. {:1.1e}".format(
+            observation_time_s, systematic_uncertainty,
+        )
+
+        com["alpha"] = 1.0 / (1.0 + sys)
+        com["color"] = "r"
+        com["linestyle"] = loop_systematic_uncertainty_line_style[sys]
+        components.append(com)
+
+        for powlaw in powlaws:
+            _E_GeV = np.geomspace(
+                np.min(energy_bin_edges),
+                np.max(energy_bin_edges),
+                1337,
+            )
+            _dF_per_m2_per_GeV_per_s = cosmic_fluxes._power_law(
+                energy=_E_GeV,
+                flux_density=powlaw["flux_density_per_m2_per_GeV_per_s"],
+                spectral_index=powlaw["spectral_index"],
+                pivot_energy=powlaw["pivot_energy_GeV"]
+            )
+            com = {}
+            com["energy"] = _E_GeV
+            com["differential_flux"] = _dF_per_m2_per_GeV_per_s
+            com["label"] = None
+            com["alpha"] = 0.01
+            com["color"] = "black"
+            com["linestyle"] = "-"
+            components.append(com)
 
         """
         # plenoscope no hadrons
