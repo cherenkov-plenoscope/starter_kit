@@ -1,5 +1,6 @@
 import numpy as np
 import cosmic_fluxes
+import lima1983analysis
 from .. import utils
 
 def estimate_detection_rate_per_s_for_power_law(
@@ -133,7 +134,7 @@ def estimate_critical_rate(
     observation_time_s,
     instrument_systematic_uncertainty,
     detection_threshold_std,
-    method="LiMa_eq9",
+    method="LiMa_eq17",
 ):
     bg_rate_off_per_s = (
         background_rate_in_onregion_per_s / onregion_over_offregion_ratio
@@ -145,11 +146,15 @@ def estimate_critical_rate(
         bg_count_on_std = bg_count_off_std * onregion_over_offregion_ratio
         sig_count_stat_on = detection_threshold_std * bg_count_on_std
     elif method == "LiMa_eq9":
-        sig_count_stat_on = estimate_N_s_LiMa_eq9(
+        sig_count_stat_on = lima1983analysis.estimate_N_s_eq9(
             N_off=bg_count_off,
             alpha=onregion_over_offregion_ratio,
             S=detection_threshold_std)
-    else:
+    elif method == "LiMa_eq17":
+        sig_count_stat_on = lima1983analys.eisestimate_N_s_eq17(
+            N_off=bg_count_off,
+            alpha=onregion_over_offregion_ratio,
+            S=detection_threshold_std)
         assert False
 
     sig_count_sys_on = (
@@ -163,21 +168,3 @@ def estimate_critical_rate(
 
     sig_rate_on_per_s = sig_count_on / observation_time_s
     return sig_rate_on_per_s
-
-
-def estimate_N_s_LiMa_eq9(N_off, alpha, S):
-    assert N_off > 0.0
-    assert alpha > 0.0
-    assert S >= 0.0
-    p = S**2 * alpha
-    q = -1.0 * S**2 * N_off * alpha * (1 + alpha)
-    return -p/2 + np.sqrt((p/2)**2 - q)
-
-
-def estimate_S_LiMa_eq9(N_on, N_off, alpha):
-    assert N_on > 0.0
-    assert N_off > 0.0
-    assert alpha > 0.0
-    _N_s = (N_on - N_off * alpha)
-    assert _N_s >= 0.0
-    return _N_s / np.sqrt(alpha * (N_on + N_off))

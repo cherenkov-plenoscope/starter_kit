@@ -31,3 +31,6 @@
 [submodule "sebastians_matplotlib_addons"]
 	path = sebastians_matplotlib_addons
 	url = git@github.com:cherenkov-plenoscope/sebastians_matplotlib_addons.git
+[submodule "lima1983analysis"]
+	path = lima1983analysis
+	url = git@github.com:cherenkov-plenoscope/lima1983analysis.git
