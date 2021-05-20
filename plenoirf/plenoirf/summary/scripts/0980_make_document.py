@@ -27,6 +27,8 @@ energy_bin_edges_coarse = np.geomspace(
     sum_config["energy_binning"]["num_bins"]["point_spread_function"] + 1,
 )
 
+onregion_openings_deg = sum_config[
+    "on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
 
 def get_value_by_key_but_forgive(dic, key):
     try:
@@ -223,14 +225,14 @@ _bd += make_site_table(
     ),
 )
 
-_bd += sam.h("Trigger-ratescan", level=2)
+_bd += sam.h("Trigger-rate vs. threshold", level=2)
 _bd += make_site_table(
     sites=irf_config["config"]["sites"],
     energy_bin_edges=[0, 1],
     wild_card=opj("0130_trigger_ratescan_plot", "{site_key:s}_ratescan.jpg"),
 )
 
-_bd += sam.h("Differential trigger-rates, entire field-of-view", level=2)
+_bd += sam.h("Differential trigger-rate, all field-of-view", level=2)
 _bd += make_site_table(
     sites=irf_config["config"]["sites"],
     energy_bin_edges=[0, 1],
@@ -240,7 +242,7 @@ _bd += make_site_table(
     ),
 )
 
-_bd += sam.h("Directions of primaries, past trigger", level=2)
+_bd += sam.h("Direction of primary, trigger-level", level=2)
 _bd += sam.p(
     "Primary particle's incidend direction color-coded "
     "with their probability to trigger the plenoscope. "
@@ -259,7 +261,7 @@ _bd += make_site_particle_index_table(
         "grid_direction_pasttrigger_{energy_bin_index:06d}.jpg",
     ),
 )
-_bd += sam.h("Cherenkov-intensity on observation-level, past trigger", level=2)
+_bd += sam.h("Cherenkov-intensity on observation-level", level=2)
 _bd += sam.p(
     "Areal intensity of Cherenkov-photons on the observation-level. "
     "Only showing airshowers which passed the plenoscope's trigger. "
@@ -278,7 +280,7 @@ _bd += make_site_particle_index_table(
         "grid_area_pasttrigger_{energy_bin_index:06d}.jpg",
     ),
 )
-_bd += sam.h("Trigger-probability vs. true Cherenkov-size / p.e.", level=2)
+_bd += sam.h("Trigger-probability vs. true Cherenkov-size", level=2)
 _bd += make_site_table(
     sites=irf_config["config"]["sites"],
     energy_bin_edges=[0, 1],
@@ -308,7 +310,7 @@ _bd += make_site_particle_index_table(
         "trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg",
     ),
 )
-_bd += sam.h("Cherenkov and night-sky-background classification", level=2)
+_bd += sam.h("Cherenkov- and night-sky-background-light classification", level=2)
 _bd += make_site_particle_index_table(
     sites=irf_config["config"]["sites"],
     particles=irf_config["config"]["particles"],
@@ -350,21 +352,27 @@ _bd += make_site_particle_index_table(
 
 _bd += sam.h("Reconstructing the gamma-ray's direction", level=2)
 _bd += sam.p(
-    "Opening angle for 68% containment. "
-    "Dashed line shows fix onregion openin angle.",
+    "Theta-square histograms.",
     text_align="justify",
     font_family="calibri",
 )
-_bd += make_site_table(
-    sites=irf_config["config"]["sites"],
-    energy_bin_edges=[0, 1],
-    wild_card=opj(
-        "0214_simple_light_field_benchmark_plot",
-        "{site_key:s}_gamma_psf_radial.jpg",
-    ),
-)
+for rrbin in range(6):
+    rbin_str = "{:06d}".format(rrbin)
+    _bd += make_site_particle_index_table(
+        sites=irf_config["config"]["sites"],
+        particles=["gamma"],
+        energy_bin_edges=energy_bin_edges_coarse,
+        wild_card=opj(
+            "0214_simple_light_field_benchmark_plot",
+            "{site_key:s}_{particle_key:s}_"
+            "theta_rad" + rbin_str + "_ene{energy_bin_index:06d}.jpg",
+        ),
+        particle_width_px=320
+    )
+
+
 _bd += sam.p(
-    "Images of point-spread-function for different energy-bins.",
+    "Point-spread-function.",
     text_align="justify",
     font_family="calibri",
 )
@@ -392,7 +400,7 @@ _bd += make_site_particle_index_table(
     ),
 )
 
-_bd += sam.h("Effective area, trigger, fix onregion", level=2)
+_bd += sam.h("Effective area, trigger, in onregion", level=2)
 _bd += sam.p(
     "Direction reconstructed to be in an onregion of fixed solid angle. "
     "Fade lines show entire field-of-view.",
@@ -403,25 +411,25 @@ _bd += sam.p(
 _bd += make_site_particle_index_table(
     sites=irf_config["config"]["sites"],
     particles=irf_config["config"]["particles"],
-    energy_bin_edges=[0, 1],
+    energy_bin_edges=onregion_openings_deg,
     wild_card=opj(
         "0301_onregion_trigger_acceptance_plot",
-        "{site_key:s}_{particle_key:s}_point_fix_onregion.jpg",
+        "{site_key:s}_{particle_key:s}_point_onregion_onr{energy_bin_index:06d}.jpg",
     ),
 )
 
-_bd += sam.h("Effective acceptance, trigger, fix onregion", level=2)
+_bd += sam.h("Effective acceptance, trigger, in onregion", level=2)
 _bd += make_site_particle_index_table(
     sites=irf_config["config"]["sites"],
     particles=irf_config["config"]["particles"],
-    energy_bin_edges=[0, 1],
+    energy_bin_edges=onregion_openings_deg,
     wild_card=opj(
         "0301_onregion_trigger_acceptance_plot",
-        "{site_key:s}_{particle_key:s}_diffuse_fix_onregion.jpg",
+        "{site_key:s}_{particle_key:s}_diffuse_onregion_onr{energy_bin_index:06d}.jpg",
     ),
 )
 
-_bd += sam.h("Differential trigger-rates, fix onregion", level=2)
+_bd += sam.h("Differential trigger-rates, in onregion", level=2)
 _bd += make_site_table(
     sites=irf_config["config"]["sites"],
     energy_bin_edges=[0, 1],
@@ -431,11 +439,9 @@ _bd += make_site_table(
     ),
 )
 
-_bd += sam.h("Braodband-sensitivity, trigger, fix onregion", level=2)
+_bd += sam.h("Integral-sensitivity, trigger-level, in onregion", level=2)
 _bd += sam.p(
-    "A.k.a integral spectral exclusion zone. Only on trigger-level.\n"
-    "Figures have same information, "
-    "but different styles of Spectral-Energy-Distributions (SEDs). ",
+    "Trigger-level.\n",
     font_size=75,
     text_align="justify",
     font_family="calibri",
@@ -474,10 +480,11 @@ _bd += make_site_table(
 )
 """
 
-_bd += sam.h("Braodband-sensitivity, (phd-thesis)", level=2)
+_bd += sam.h("Integral-sensitivity, (phd-thesis)", level=2)
 _bd += sam.p(
-    "Gamma acceptance off all field-of-view multiplied by 0.68. "
-    "Cosmic-rays are only leptons and proton. "
+    "Gamma acceptance in all field-of-view multiplied by onregion's "
+    "containment-factor 0.68. "
+    "Cosmic-rays are only electron, positron, and proton. "
     "Cosmic-ray acceptance is taken from all field-of-view and scaled by "
     "the ratio "
     "of solid angles between all field-of-view and onregion. "
@@ -495,7 +502,7 @@ _bd += make_site_table(
     ),
 )
 
-_bd += sam.h("Magnetic deflection in atmosphere", level=2)
+_bd += sam.h("Magnetic deflection of airshower in atmosphere", level=2)
 _bd += sam.h("primary azimuth", level=4)
 _bd += make_site_particle_index_table(
     sites=irf_config["config"]["sites"],
@@ -545,6 +552,7 @@ _bd += make_site_particle_index_table(
     ),
 )
 
+"""
 _bd += sam.h("Features", level=1)
 _bd += sam.p("Reweighted to energy-spectrum of airshowers.")
 matrix = []
@@ -576,7 +584,7 @@ for feature_key in irf.table.STRUCTURE["features"]:
 _bd += sam.table(
     matrix=matrix, width_px=len(irf_config["config"]["sites"]) * SITE_WIDTH
 )
-
+"""
 
 _bd += sam.h("Runtime", level=2)
 _bd += make_site_particle_index_table(
