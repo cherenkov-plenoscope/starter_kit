@@ -20,10 +20,6 @@ _passed_trigger_indices = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
-loph_chunk_base_dir = os.path.join(
-    pa["summary_dir"], "0068_prepare_loph_passed_trigger_and_quality"
-)
-
 onreion_config = sum_config["on_off_measuremnent"]["onregion"]
 onreion_config["opening_angle_deg"] = 0.8
 
@@ -159,21 +155,26 @@ for sk in irf_config["config"]["sites"]:
             site_key=sk, particle_key=pk
         )
 
-        loph_chunk_paths = glob.glob(
-            os.path.join(loph_chunk_base_dir, sk, pk, "chunks", "*.tar")
-        )
-
-        run = pl.photon_stream.loph.LopfTarReader(loph_chunk_paths[1])
+        run = pl.photon_stream.loph.LopfTarReader(os.path.join(
+            pa["run_dir"],
+            "event_table",
+            sk,
+            pk,
+            "cherenkov.phs.loph.tar"
+        ))
 
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
-        for event_counter, event in enumerate(run):
-
-            if event_counter > NUM_EVENTS_PER_PARTICLE:
-                break
-
+        event_counter = 0
+        while event_counter <= NUM_EVENTS_PER_PARTICLE:
+            event = next(run)
             airshower_id, loph_record = event
+
+            if airshower_id not in truth_by_index[sk][pk]:
+                continue
+            else:
+                event_counter += 1
 
             truth = dict(truth_by_index[sk][pk][airshower_id])
 
