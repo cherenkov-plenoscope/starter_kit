@@ -4,6 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
+import lima1983analysis
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -47,7 +48,7 @@ _, gamma_name = irf.summary.make_gamma_ray_reference_flux(
 
 LiMa_alpha = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 
-observation_time_s = 60 * 10
+observation_time_s = 60 * 5
 
 for site_key in irf_config["config"]["sites"]:
     fig = seb.figure(seb.FIGURE_16_9)
@@ -58,6 +59,7 @@ for site_key in irf_config["config"]["sites"]:
     )
 
     background_rate_in_single_off_region = np.zeros(num_bins_onregion_radius)
+    LiMa_S = np.zeros(num_bins_onregion_radius)
     for cosmic_ray_key in cosmic_ray_keys:
         background_rate_in_single_off_region += np.array(
             onregion_rates[site_key][cosmic_ray_key]["integral_rate"]["mean"]
@@ -67,29 +69,34 @@ for site_key in irf_config["config"]["sites"]:
         1.0 / LiMa_alpha * background_rate_in_single_off_region
     )
 
-    LiMa_N_s = signal_rate_in_onregion * observation_time_s
-    LiMa_N_on = (
-        LiMa_N_s + background_rate_in_single_off_region * observation_time_s
-    )
-    LiMa_N_off = background_rate_in_all_off_regions * observation_time_s
+    for onr in range(num_bins_onregion_radius):
+        N_s = signal_rate_in_onregion[onr] * observation_time_s
+        N_on = (
+            N_s + background_rate_in_single_off_region[onr] * observation_time_s
+        )
+        N_off = background_rate_in_all_off_regions[onr] * observation_time_s
 
-    LiMa_S = (LiMa_N_on - LiMa_alpha * LiMa_N_off) / np.sqrt(
-        LiMa_alpha * (LiMa_N_on + LiMa_N_off)
-    )
+        LiMa_S[onr] = lima1983analysis.estimate_S_eq17(
+            N_on=N_on,
+            N_off=N_off,
+            alpha=LiMa_alpha
+        )
 
-    ax.plot(onregion_radii_deg, LiMa_S, "kx")
+    ax.plot(onregion_radii_deg, LiMa_S, "ko")
+    ax.plot(onregion_radii_deg, LiMa_S, "k")
     ax.set_title(
         gamma_name
         + ", observation-time: {:d}s, ".format(int(observation_time_s))
-        + r"Li Ma $\alpha$: "
+        + r"Li and Ma Eq.17, $\alpha$: "
         + "{:.2f}".format(LiMa_alpha)
     )
     ax.set_xlabel(r"onregion-radius at 100p.e. / $^{\circ}$")
-    ax.set_ylabel(r"Li Ma $S$ / 1")
+    ax.set_ylabel(r"Significance / 1")
+    ax.set_ylim([0, 10])
     fig.savefig(
         os.path.join(
             pa["out_dir"],
-            "{:s}_LiMa_significance_vs_onregion_radius.jpg".format(site_key),
+            "{:s}_LiMa_eq17_significance_vs_onregion_radius.jpg".format(site_key),
         )
     )
     seb.close_figure(fig)
@@ -148,7 +155,7 @@ for site_key in irf_config["config"]["sites"]:
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
-                "{:s}_differential_event_rates_in_onregion_{:06d}.jpg".format(
+                "{:s}_differential_event_rates_in_onregion_onr{:06d}.jpg".format(
                     site_key, oridx
                 ),
             )

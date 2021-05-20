@@ -27,8 +27,9 @@ energy_bin_edges_coarse = np.geomspace(
     sum_config["energy_binning"]["num_bins"]["point_spread_function"] + 1,
 )
 
-onregion_openings_deg = sum_config[
-    "on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
+onregion_openings_deg = np.arange(
+    1 + len(sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"])
+)
 
 def get_value_by_key_but_forgive(dic, key):
     try:
@@ -385,21 +386,6 @@ _bd += make_site_table(
     ),
 )
 
-_bd += sam.p(
-    "Reconstructed directions in field-of-view:",
-    text_align="justify",
-    font_family="calibri",
-)
-_bd += make_site_particle_index_table(
-    sites=irf_config["config"]["sites"],
-    particles=irf_config["config"]["particles"],
-    energy_bin_edges=[0, 1],
-    wild_card=opj(
-        "0205_reconstructed_directions_in_field_of_view",
-        "{site_key:s}_{particle_key:s}.jpg",
-    ),
-)
-
 _bd += sam.h("Effective area, trigger, in onregion", level=2)
 _bd += sam.p(
     "Direction reconstructed to be in an onregion of fixed solid angle. "
@@ -430,12 +416,31 @@ _bd += make_site_particle_index_table(
 )
 
 _bd += sam.h("Differential trigger-rates, in onregion", level=2)
+
+_bd += make_site_table(
+    sites=irf_config["config"]["sites"],
+    energy_bin_edges=onregion_openings_deg,
+    wild_card=opj(
+        "0325_onregion_trigger_rates_for_cosmic_rays_plot",
+        "{site_key:s}_differential_event_rates_in_onregion_onr{energy_bin_index:06d}.jpg",
+    ),
+)
+
 _bd += make_site_table(
     sites=irf_config["config"]["sites"],
     energy_bin_edges=[0, 1],
     wild_card=opj(
         "0325_onregion_trigger_rates_for_cosmic_rays_plot",
-        "{site_key:s}_differential_trigger_rates_in_onregion.jpg",
+        "{site_key:s}_LiMa_eq17_significance_vs_onregion_radius.jpg",
+    ),
+)
+
+_bd += make_site_table(
+    sites=irf_config["config"]["sites"],
+    energy_bin_edges=energy_bin_edges_coarse,
+    wild_card=opj(
+        "0325_simple_light_field_benchmark",
+        "{site_key:s}_gamma_psf_image_ene{energy_bin_index:06d}.jpg",
     ),
 )
 
