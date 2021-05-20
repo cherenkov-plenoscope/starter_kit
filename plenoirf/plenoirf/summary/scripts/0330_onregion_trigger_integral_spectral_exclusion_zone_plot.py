@@ -165,8 +165,8 @@ for site_key in irf_config["config"]["sites"]:
         com = {}
         com["energy"] = tangent_E_GeV
         com["differential_flux"] = tangent_dF_per_m2_per_GeV_per_s
-        com["label"] = "Portal {:2.0f}s, trigger, sys. {:1.1e}".format(
-            observation_time_s, systematic_uncertainty,
+        com["label"] = "Portal {:2.0f}h, trigger, sys. {:1.1e}".format(
+            observation_time_s/3600, systematic_uncertainty,
         )
 
         com["alpha"] = 1.0 / (1.0 + sys)
