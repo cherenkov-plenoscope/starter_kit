@@ -379,7 +379,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 prng=prng,
                 bin_idxs_limitation=grid_bin_idxs_limitation,
             )
-            if event_idx%GRID_SKIP == 0:
+            if event_idx % GRID_SKIP == 0:
                 utils.tar_append(
                     tarout=imgtar,
                     file_name=random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(

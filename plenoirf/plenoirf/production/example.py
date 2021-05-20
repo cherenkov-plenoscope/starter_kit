@@ -6,6 +6,7 @@ import magnetic_deflection
 from .. import utils
 from .. import reconstruction
 
+
 def absjoin(*args):
     return op.abspath(op.join(*args))
 
@@ -156,7 +157,7 @@ def make_example_job(
         "tmp_dir": op.join(test_dir, "tmp"),
         "date": utils.date_dict_now(),
         "artificial_core_limitation": artificial_core_limitation,
-        "reconstruction": config["reconstruction"]
+        "reconstruction": config["reconstruction"],
     }
 
     return job
