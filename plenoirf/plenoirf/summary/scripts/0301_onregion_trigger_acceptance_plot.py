@@ -132,7 +132,7 @@ for site_key in irf_config["config"]["sites"]:
                 fig.savefig(
                     opj(
                         pa["out_dir"],
-                        "{:s}_{:s}_{:s}_onregion_{:06d}.jpg".format(
+                        "{:s}_{:s}_{:s}_onregion_onr{:06d}.jpg".format(
                             site_key, particle_key, source_key, oridx
                         ),
                     )
