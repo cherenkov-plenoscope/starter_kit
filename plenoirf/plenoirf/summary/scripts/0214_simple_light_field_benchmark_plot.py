@@ -188,16 +188,6 @@ for site_key in psf:
 
                     t2_ene_rad = t2["histogram"][ene][rad]
 
-                    print(
-                        site_key,
-                        particle_key,
-                        theta_key,
-                        "ene",
-                        ene,
-                        "rad",
-                        rad,
-                    )
-
                     rad_start = np.sqrt(
                         t2["core_radius_square_bin_edges_m2"][rad]
                     )
