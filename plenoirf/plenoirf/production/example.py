@@ -52,6 +52,7 @@ EXAMPLE_GRID = {
     "threshold_num_photons": 50,
     "field_of_view_overhead": 1.1,
     "bin_width_overhead": 1.1,
+    "output_after_num_events": 25,
 }
 
 EXAMPLE_SUM_TRIGGER = {
