@@ -151,10 +151,11 @@ def estimate_critical_rate(
             alpha=onregion_over_offregion_ratio,
             S=detection_threshold_std)
     elif method == "LiMa_eq17":
-        sig_count_stat_on = lima1983analys.eisestimate_N_s_eq17(
+        sig_count_stat_on = lima1983analysis.estimate_N_s_eq17(
             N_off=bg_count_off,
             alpha=onregion_over_offregion_ratio,
             S=detection_threshold_std)
+    else:
         assert False
 
     sig_count_sys_on = (
