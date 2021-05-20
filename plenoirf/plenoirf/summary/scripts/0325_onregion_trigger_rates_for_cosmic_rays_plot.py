@@ -72,14 +72,13 @@ for site_key in irf_config["config"]["sites"]:
     for onr in range(num_bins_onregion_radius):
         N_s = signal_rate_in_onregion[onr] * observation_time_s
         N_on = (
-            N_s + background_rate_in_single_off_region[onr] * observation_time_s
+            N_s
+            + background_rate_in_single_off_region[onr] * observation_time_s
         )
         N_off = background_rate_in_all_off_regions[onr] * observation_time_s
 
         LiMa_S[onr] = lima1983analysis.estimate_S_eq17(
-            N_on=N_on,
-            N_off=N_off,
-            alpha=LiMa_alpha
+            N_on=N_on, N_off=N_off, alpha=LiMa_alpha
         )
 
     ax.plot(onregion_radii_deg, LiMa_S, "ko")
@@ -96,7 +95,9 @@ for site_key in irf_config["config"]["sites"]:
     fig.savefig(
         os.path.join(
             pa["out_dir"],
-            "{:s}_LiMa_eq17_significance_vs_onregion_radius.jpg".format(site_key),
+            "{:s}_LiMa_eq17_significance_vs_onregion_radius.jpg".format(
+                site_key
+            ),
         )
     )
     seb.close_figure(fig)

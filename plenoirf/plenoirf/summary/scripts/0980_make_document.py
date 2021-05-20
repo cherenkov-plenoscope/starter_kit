@@ -28,8 +28,12 @@ energy_bin_edges_coarse = np.geomspace(
 )
 
 onregion_openings_deg = np.arange(
-    1 + len(sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"])
+    1
+    + len(
+        sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
+    )
 )
+
 
 def get_value_by_key_but_forgive(dic, key):
     try:
@@ -311,7 +315,9 @@ _bd += make_site_particle_index_table(
         "trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg",
     ),
 )
-_bd += sam.h("Cherenkov- and night-sky-background-light classification", level=2)
+_bd += sam.h(
+    "Cherenkov- and night-sky-background-light classification", level=2
+)
 _bd += make_site_particle_index_table(
     sites=irf_config["config"]["sites"],
     particles=irf_config["config"]["particles"],
@@ -353,9 +359,7 @@ _bd += make_site_particle_index_table(
 
 _bd += sam.h("Reconstructing the gamma-ray's direction", level=2)
 _bd += sam.p(
-    "Theta-square histograms.",
-    text_align="justify",
-    font_family="calibri",
+    "Theta-square histograms.", text_align="justify", font_family="calibri",
 )
 for rrbin in range(6):
     rbin_str = "{:06d}".format(rrbin)
@@ -368,14 +372,12 @@ for rrbin in range(6):
             "{site_key:s}_{particle_key:s}_"
             "theta_rad" + rbin_str + "_ene{energy_bin_index:06d}.jpg",
         ),
-        particle_width_px=320
+        particle_width_px=320,
     )
 
 
 _bd += sam.p(
-    "Point-spread-function.",
-    text_align="justify",
-    font_family="calibri",
+    "Point-spread-function.", text_align="justify", font_family="calibri",
 )
 _bd += make_site_table(
     sites=irf_config["config"]["sites"],

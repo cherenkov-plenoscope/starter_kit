@@ -250,10 +250,7 @@ def make_rectangular_table(
     event_table, reconstruction_table, plenoscope_pointing
 ):
     common_indices = spt.intersection(
-        [
-            event_table["primary"][spt.IDX],
-            reconstruction_table[spt.IDX]
-        ]
+        [event_table["primary"][spt.IDX], reconstruction_table[spt.IDX]]
     )
 
     rec_evt_tab = spt.cut_and_sort_table_on_indices(
@@ -401,6 +398,7 @@ def guess_theta_square_bin_edges_deg(
             break
 
     return theta_square_bin_edges_deg2
+
 
 psf_ax_style = {"spines": [], "axes": ["x", "y"], "grid": True}
 

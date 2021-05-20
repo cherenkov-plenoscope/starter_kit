@@ -24,6 +24,7 @@ energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["num_bins"]["point_spread_function"] + 1,
 )
 
+
 def histogram(
     cradial2_bin_edges_deg2, offaxis2_deg2, energy_mask, pasttrigger_mask,
 ):

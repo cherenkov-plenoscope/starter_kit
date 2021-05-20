@@ -155,13 +155,11 @@ for sk in irf_config["config"]["sites"]:
             site_key=sk, particle_key=pk
         )
 
-        run = pl.photon_stream.loph.LopfTarReader(os.path.join(
-            pa["run_dir"],
-            "event_table",
-            sk,
-            pk,
-            "cherenkov.phs.loph.tar"
-        ))
+        run = pl.photon_stream.loph.LopfTarReader(
+            os.path.join(
+                pa["run_dir"], "event_table", sk, pk, "cherenkov.phs.loph.tar"
+            )
+        )
 
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)

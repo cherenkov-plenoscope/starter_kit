@@ -158,7 +158,7 @@ for site_key in irf_config["config"]["sites"]:
 
         (
             tangent_E_GeV,
-            tangent_dF_per_m2_per_GeV_per_s
+            tangent_dF_per_m2_per_GeV_per_s,
         ) = irf.analysis.integral_sensitivity.estimate_tangent_of_critical_power_laws(
             critical_power_laws=powlaws
         )
@@ -166,7 +166,7 @@ for site_key in irf_config["config"]["sites"]:
         com["energy"] = tangent_E_GeV
         com["differential_flux"] = tangent_dF_per_m2_per_GeV_per_s
         com["label"] = "Portal {:2.0f}h, trigger, sys. {:1.1e}".format(
-            observation_time_s/3600, systematic_uncertainty,
+            observation_time_s / 3600, systematic_uncertainty,
         )
 
         com["alpha"] = 1.0 / (1.0 + sys)
@@ -177,15 +177,13 @@ for site_key in irf_config["config"]["sites"]:
         if PLOT_TANGENTIAL_POWERLAWS:
             for powlaw in powlaws:
                 _E_GeV = np.geomspace(
-                    np.min(energy_bin_edges),
-                    np.max(energy_bin_edges),
-                    1337,
+                    np.min(energy_bin_edges), np.max(energy_bin_edges), 1337,
                 )
                 _dF_per_m2_per_GeV_per_s = cosmic_fluxes._power_law(
                     energy=_E_GeV,
                     flux_density=powlaw["flux_density_per_m2_per_GeV_per_s"],
                     spectral_index=powlaw["spectral_index"],
-                    pivot_energy=powlaw["pivot_energy_GeV"]
+                    pivot_energy=powlaw["pivot_energy_GeV"],
                 )
                 com = {}
                 com["energy"] = _E_GeV
@@ -195,7 +193,6 @@ for site_key in irf_config["config"]["sites"]:
                 com["color"] = "black"
                 com["linestyle"] = "-"
                 components.append(com)
-
 
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]

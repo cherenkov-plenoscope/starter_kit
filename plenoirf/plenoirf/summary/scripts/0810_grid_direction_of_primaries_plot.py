@@ -52,8 +52,9 @@ for site_key in irf_config["config"]["sites"]:
 
         # summarize
         # ---------
-        idx_triggered = passing_trigger[
-            site_key][particle_key]["passed_trigger"][spt.IDX]
+        idx_triggered = passing_trigger[site_key][particle_key][
+            "passed_trigger"
+        ][spt.IDX]
 
         mask_triggered = spt.make_mask_of_right_in_left(
             left_indices=event_table["primary"][spt.IDX],

@@ -29,6 +29,7 @@ theta_labels = {
 
 axes_style = {"spines": [], "axes": ["x"], "grid": False}
 
+
 def write_core_radius_figure(path, radius_bin_edges, bin_idx, info):
     num_bins = len(radius_bin_edges) - 1
     r_start = radius_bin_edges[bin_idx]
