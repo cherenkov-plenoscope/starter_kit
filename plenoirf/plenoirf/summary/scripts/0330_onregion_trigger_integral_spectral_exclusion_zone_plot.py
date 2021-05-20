@@ -40,7 +40,7 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
-observation_time_s = 600
+observation_time_s = 50 * 3600
 num_isez_energy_supports = 5
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
@@ -60,8 +60,8 @@ crab_flux = cosmic_fluxes.read_crab_nebula_flux_from_resources()
 internal_sed_style = sed_styles.PLENOIRF_SED_STYLE
 
 output_sed_styles = {
-    # "plenoirf": sed_styles.PLENOIRF_SED_STYLE,
-    # "science": sed_styles.SCIENCE_SED_STYLE,
+    "plenoirf": sed_styles.PLENOIRF_SED_STYLE,
+    "science": sed_styles.SCIENCE_SED_STYLE,
     "fermi": sed_styles.FERMI_SED_STYLE,
 }
 
@@ -70,7 +70,7 @@ instrument_systematic_uncertainty = 5e-3
 loop_systematic_uncertainty = [0.0, 1e-3, 1e-2]
 loop_systematic_uncertainty_line_style = ["-", "--", ":"]
 
-oridx = 2
+oridx = 3
 onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][
     "loop_opening_angle_deg"
 ][oridx]
@@ -94,6 +94,7 @@ for site_key in irf_config["config"]["sites"]:
 x_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e-0, 1e-16])
 
+PLOT_TANGENTIAL_POWERLAWS = False
 
 
 for site_key in irf_config["config"]["sites"]:
@@ -137,36 +138,6 @@ for site_key in irf_config["config"]["sites"]:
             ]
         )
 
-        """
-        (
-            isez_energy_GeV,
-            isez_differential_flux_per_GeV_per_m2_per_s,
-        ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
-            gamma_effective_area_m2=gamma_effective_area_m2,
-            energy_bin_centers_GeV=energy_bin_centers,
-            background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
-                site_key
-            ],
-            onregion_over_offregion_ratio=on_over_off_ratio,
-            observation_time_s=observation_time_s,
-            instrument_systematic_uncertainty=systematic_uncertainty,
-            num_points=num_isez_energy_supports,
-        )
-
-        com = {}
-        com["energy"] = isez_energy_GeV
-        com["differential_flux"] = isez_differential_flux_per_GeV_per_m2_per_s
-        com["label"] = "Portal {:2.0f}s, trigger, sys. {:1.1e}".format(
-            observation_time_s, systematic_uncertainty,
-        )
-
-        com["alpha"] = 1.0 / (1.0 + sys)
-        com["color"] = "r"
-        com["linestyle"] = loop_systematic_uncertainty_line_style[sys]
-
-        components.append(com)
-        """
-
         critical_rate_per_s = irf.analysis.integral_sensitivity.estimate_critical_rate(
             background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
                 site_key
@@ -175,14 +146,14 @@ for site_key in irf_config["config"]["sites"]:
             observation_time_s=observation_time_s,
             instrument_systematic_uncertainty=systematic_uncertainty,
             detection_threshold_std=5.0,
-            method="LiMa_eq9",
+            method="LiMa_eq17",
         )
 
         powlaws = irf.analysis.integral_sensitivity.estimate_critical_power_laws(
             effective_area_bins_m2=gamma_effective_area_m2,
             effective_area_energy_bin_edges_GeV=energy_bin_edges,
             critical_rate_per_s=critical_rate_per_s,
-            power_law_spectral_indices=np.linspace(-4.0, -0.5, 100),
+            power_law_spectral_indices=np.linspace(-6.0, 0.0, 100),
         )
 
         (
@@ -203,53 +174,28 @@ for site_key in irf_config["config"]["sites"]:
         com["linestyle"] = loop_systematic_uncertainty_line_style[sys]
         components.append(com)
 
-        for powlaw in powlaws:
-            _E_GeV = np.geomspace(
-                np.min(energy_bin_edges),
-                np.max(energy_bin_edges),
-                1337,
-            )
-            _dF_per_m2_per_GeV_per_s = cosmic_fluxes._power_law(
-                energy=_E_GeV,
-                flux_density=powlaw["flux_density_per_m2_per_GeV_per_s"],
-                spectral_index=powlaw["spectral_index"],
-                pivot_energy=powlaw["pivot_energy_GeV"]
-            )
-            com = {}
-            com["energy"] = _E_GeV
-            com["differential_flux"] = _dF_per_m2_per_GeV_per_s
-            com["label"] = None
-            com["alpha"] = 0.01
-            com["color"] = "black"
-            com["linestyle"] = "-"
-            components.append(com)
+        if PLOT_TANGENTIAL_POWERLAWS:
+            for powlaw in powlaws:
+                _E_GeV = np.geomspace(
+                    np.min(energy_bin_edges),
+                    np.max(energy_bin_edges),
+                    1337,
+                )
+                _dF_per_m2_per_GeV_per_s = cosmic_fluxes._power_law(
+                    energy=_E_GeV,
+                    flux_density=powlaw["flux_density_per_m2_per_GeV_per_s"],
+                    spectral_index=powlaw["spectral_index"],
+                    pivot_energy=powlaw["pivot_energy_GeV"]
+                )
+                com = {}
+                com["energy"] = _E_GeV
+                com["differential_flux"] = _dF_per_m2_per_GeV_per_s
+                com["label"] = None
+                com["alpha"] = 0.01
+                com["color"] = "black"
+                com["linestyle"] = "-"
+                components.append(com)
 
-        """
-        # plenoscope no hadrons
-        # ---------------------
-        (
-            e_isez_energy_GeV,
-            e_isez_differential_flux_per_GeV_per_m2_per_s,
-        ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
-            gamma_effective_area_m2=gamma_effective_area_m2,
-            energy_bin_centers_GeV=energy_bin_centers,
-            background_rate_in_onregion_per_s=electron_rate_onregion[site_key],
-            onregion_over_offregion_ratio=on_over_off_ratio,
-            observation_time_s=observation_time_s,
-            instrument_systematic_uncertainty=instrument_systematic_uncertainty,
-            num_points=num_isez_energy_supports,
-        )
-        com = {}
-        com["energy"] = e_isez_energy_GeV
-        com["differential_flux"] = e_isez_differential_flux_per_GeV_per_m2_per_s
-        com["label"] = "Portal {:2.0f} s, trigger, rejecting all hadrons".format(
-            observation_time_s
-        )
-        com["color"] = "r"
-        com["alpha"] = 0.5
-        com["linestyle"] = "--"
-        components.append(com)
-        """
 
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]

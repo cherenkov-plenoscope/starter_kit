@@ -65,7 +65,7 @@ assert (
     == "m$^{-2}$ s$^{-1}$ GeV$^{-1}$"
 )
 
-num_isez_energy_supports = 7
+num_isez_energy_supports = 137
 
 # gamma-ray-flux of crab-nebula
 # -----------------------------
@@ -152,25 +152,23 @@ for site_key in irf_config["config"]["sites"]:
         * PHD_PSF_CONTAINMENT_FACTOR
     )
 
-    all_fov_energy_bin_centers = irf.utils.bin_centers(
-        bin_edges=np.array(
-            all_fov_acceptance[site_key]["gamma"]["point"][
-                "energy_bin_edges_GeV"
-            ]
-        )
+    all_fov_energy_bin_edges = np.array(
+        all_fov_acceptance[site_key]["gamma"]["point"]["energy_bin_edges_GeV"]
     )
 
     (
         isez_energy_GeV,
         isez_differential_flux_per_GeV_per_m2_per_s,
     ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
-        gamma_effective_area_m2=all_fov_gamma_effective_area_m2,
-        energy_bin_centers_GeV=all_fov_energy_bin_centers,
+        effective_area_bins_m2=all_fov_gamma_effective_area_m2,
+        effective_area_energy_bin_edges_GeV=all_fov_energy_bin_edges,
         background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
         onregion_over_offregion_ratio=PHD_ON_OVER_OFF_RATIO,
         observation_time_s=PHD_OBSERVATION_TIME_S,
+        instrument_systematic_uncertainty=0.0,
         num_points=num_isez_energy_supports,
-        std_threshold=PHD_DETECTION_THRESHOLD_STD,
+        gamma_range=[-5, -0.5],
+        detection_threshold_std=PHD_DETECTION_THRESHOLD_STD,
     )
     com = {}
     com["energy"] = isez_energy_GeV
@@ -181,31 +179,6 @@ for site_key in irf_config["config"]["sites"]:
     com["color"] = "r"
     com["alpha"] = 1.0
     com["linestyle"] = "-"
-    components.append(com)
-
-    # plenoscope no hadrons
-    # ---------------------
-    (
-        e_isez_energy_GeV,
-        e_isez_differential_flux_per_GeV_per_m2_per_s,
-    ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
-        gamma_effective_area_m2=all_fov_gamma_effective_area_m2,
-        energy_bin_centers_GeV=all_fov_energy_bin_centers,
-        background_rate_in_onregion_per_s=electron_rate_onregion[site_key],
-        onregion_over_offregion_ratio=PHD_ON_OVER_OFF_RATIO,
-        observation_time_s=PHD_OBSERVATION_TIME_S,
-        num_points=num_isez_energy_supports,
-        std_threshold=PHD_DETECTION_THRESHOLD_STD,
-    )
-    com = {}
-    com["energy"] = e_isez_energy_GeV
-    com["differential_flux"] = e_isez_differential_flux_per_GeV_per_m2_per_s
-    com["label"] = "Portal {:2.0f} h, trigger, rejecting all hadrons".format(
-        PHD_OBSERVATION_TIME_S / 3600.0
-    )
-    com["color"] = "r"
-    com["alpha"] = 0.5
-    com["linestyle"] = "--"
     components.append(com)
 
     for sed_style_key in output_sed_styles:
