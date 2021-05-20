@@ -7,28 +7,28 @@ from . import spectral_energy_distribution as sed_styles
 from . import integral_sensitivity
 
 def estimate_integral_spectral_exclusion_zone(
-    gamma_effective_area_m2,
-    energy_bin_edges_GeV,
+    effective_area_bins_m2,
+    effective_area_energy_bin_edges_GeV,
     background_rate_in_onregion_per_s,
     onregion_over_offregion_ratio,
     observation_time_s,
     instrument_systematic_uncertainty=0.0,
     num_points=137,
     gamma_range=[-5, -0.5],
-    std_threshold=5.0,
+    detection_threshold_std=5.0,
 ):
     critical_rate_per_s = integral_sensitivity.estimate_critical_rate(
         background_rate_in_onregion_per_s=background_rate_in_onregion_per_s,
         onregion_over_offregion_ratio=onregion_over_offregion_ratio,
         observation_time_s=observation_time_s,
         instrument_systematic_uncertainty=instrument_systematic_uncertainty,
-        detection_threshold_std=std_threshold,
+        detection_threshold_std=detection_threshold_std,
         method="LiMa_eq17",
     )
 
     powlaws = integral_sensitivity.estimate_critical_power_laws(
-        effective_area_bins_m2=gamma_effective_area_m2,
-        effective_area_energy_bin_edges_GeV=energy_bin_edges_GeV,
+        effective_area_bins_m2=effective_area_bins_m2,
+        effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
         critical_rate_per_s=critical_rate_per_s,
         power_law_spectral_indices=np.linspace(
             gamma_range[0],
@@ -43,24 +43,24 @@ def estimate_integral_spectral_exclusion_zone(
 
 
 def estimate_integral_spectral_exclusion_zone_using_gls(
-    gamma_effective_area_m2,
-    energy_bin_centers_GeV,
+    effective_area_bins_m2,
+    effective_area_energy_bin_edges_GeV,
     background_rate_in_onregion_per_s,
     onregion_over_offregion_ratio,
     observation_time_s,
     instrument_systematic_uncertainty=0.0,
     num_points=27,
     gamma_range=[-5, -0.5],
-    std_threshold=5.0,
+    detection_threshold_std=5.0,
 ):
-    assert len(gamma_effective_area_m2) == len(energy_bin_centers_GeV)
+    assert len(effective_area_bins_m2) == len(effective_area_energy_bin_edges_GeV)
     assert observation_time_s >= 0.0
     assert background_rate_in_onregion_per_s >= 0.0
     assert num_points > 0
-    assert std_threshold > 0.0
+    assert detection_threshold_std > 0.0
 
-    log10_energy_bin_centers_TeV = np.log10(1e-3 * energy_bin_centers_GeV)
-    gamma_effective_area_cm2 = 1e2 * 1e2 * gamma_effective_area_m2
+    log10_energy_bin_centers_TeV = np.log10(1e-3 * effective_area_energy_bin_edges_GeV)
+    gamma_effective_area_cm2 = 1e2 * 1e2 * effective_area_bins_m2
     a_eff_interpol = scipy.interpolate.interpolate.interp1d(
         x=log10_energy_bin_centers_TeV,
         y=gamma_effective_area_cm2,
@@ -75,7 +75,7 @@ def estimate_integral_spectral_exclusion_zone_using_gls(
         sigma_bg=background_rate_in_onregion_per_s,
         alpha=onregion_over_offregion_ratio,
         t_obs=observation_time_s,
-        threshold=std_threshold,
+        threshold=detection_threshold_std,
     )
 
     lambda_lim_sys = (
