@@ -90,6 +90,8 @@ def main():
             "magnetic_deflection",
             "sparse_numeric_table",
             "spectral_energy_distribution_units",
+            "lima1983analysis",
+            "sebastians_matplotlib_addons",
         ]
         for tool in tools:
             call(["pip", "install", "-e", join(".", tool)])
