@@ -13,8 +13,10 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
-trigger_modus = sum_config["trigger"]["modus"]
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+
 energy_bin_edges_GeV = np.geomspace(
     sum_config["energy_binning"]["lower_edge_GeV"],
     sum_config["energy_binning"]["upper_edge_GeV"],
@@ -38,6 +40,24 @@ for site_key in irf_config["config"]["sites"]:
 
         # read
         # ----
+        idx_passed_trigger = passing_trigger[site_key][particle_key][
+            "passed_trigger"
+        ][spt.IDX]
+
+        detected_grid_histograms = irf.grid.read_histograms(
+            path=opj(
+                pa["run_dir"],
+                "event_table",
+                site_key,
+                particle_key,
+                "grid.tar",
+            ),
+            indices=idx_passed_trigger,
+        )
+        idx_passed_trigger_and_in_debug_output = np.array(
+            list(detected_grid_histograms.keys())
+        )
+
         event_table = spt.read(
             path=os.path.join(
                 pa["run_dir"],
@@ -49,16 +69,10 @@ for site_key in irf_config["config"]["sites"]:
             structure=irf.table.STRUCTURE,
         )
 
-        idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
-            trigger_table=event_table["trigger"],
-            threshold=trigger_threshold,
-            modus=trigger_modus,
-        )
-
         detected_events = spt.cut_table_on_indices(
             table=event_table,
             structure=irf.table.STRUCTURE,
-            common_indices=idx_detected,
+            common_indices=idx_passed_trigger_and_in_debug_output,
             level_keys=[
                 "primary",
                 "grid",
@@ -69,17 +83,6 @@ for site_key in irf_config["config"]["sites"]:
                 "cherenkovpoolpart",
                 "trigger",
             ],
-        )
-
-        detected_grid_histograms = irf.grid.read_histograms(
-            path=opj(
-                pa["run_dir"],
-                "event_table",
-                site_key,
-                particle_key,
-                "grid.tar",
-            ),
-            indices=idx_detected,
         )
 
         # summarize
@@ -130,7 +133,7 @@ for site_key in irf_config["config"]["sites"]:
                 np.array(irf_config["grid_geometry"]["xy_bin_edges"]) * 1e-3,
                 np.array(irf_config["grid_geometry"]["xy_bin_edges"]) * 1e-3,
                 np.transpose(normalized_grid_intensity),
-                norm=plt_colors.PowerNorm(gamma=1.0 / 4.0),
+                norm=seb.plt_colors.PowerNorm(gamma=1.0 / 4.0),
                 cmap="Blues",
                 vmin=0,
                 vmax=MAX_CHERENKOV_INTENSITY,
@@ -150,11 +153,8 @@ for site_key in irf_config["config"]["sites"]:
             plt.savefig(
                 opj(
                     pa["out_dir"],
-                    "{:s}_{:s}_{:06d}.{:s}".format(
-                        prefix_str,
-                        "grid_area_pasttrigger",
-                        energy_idx,
-                        fc5by4["format"],
+                    "{:s}_{:s}_{:06d}.jpg".format(
+                        prefix_str, "grid_area_pasttrigger", energy_idx,
                     ),
                 )
             )
