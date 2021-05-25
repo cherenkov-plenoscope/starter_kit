@@ -51,21 +51,22 @@ for ii in range(len(study_config["arrival_times_resolution_s"])):
     config["num_airshowers_per_run"] = 250
 
     run_dir = os.path.join(out_dir, "{:06d}_run".format(ii))
-    plenoirf.init(
-        out_dir=run_dir,
-        config=config
-    )
+    if not os.path.exists(run_dir):
+        plenoirf.init(
+            out_dir=run_dir,
+            config=config
+        )
 
-    prop_conf = plenoirf.json_numpy.read(
-        path=os.path.join(run_dir, "input", "merlict_propagation_config.json")
-    )
-    prop_conf["photon_stream"][
-        "single_photon_arrival_time_resolution"] = study_config[
-        "arrival_times_resolution_s"][ii]
-    plenoirf.json_numpy.write(
-        path=os.path.join(run_dir, "input", "merlict_propagation_config.json"),
-        out_dict=prop_conf
-    )
+        prop_conf = plenoirf.json_numpy.read(
+            path=os.path.join(run_dir, "input", "merlict_propagation_config.json")
+        )
+        prop_conf["photon_stream"][
+            "single_photon_arrival_time_resolution"] = study_config[
+            "arrival_times_resolution_s"][ii]
+        plenoirf.json_numpy.write(
+            path=os.path.join(run_dir, "input", "merlict_propagation_config.json"),
+            out_dict=prop_conf
+        )
 
 # run
 # ===
