@@ -16,8 +16,11 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-_passed_trigger_indices = irf.json_numpy.read_tree(
+passing_trigger = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_quality")
 )
 
 onreion_config = sum_config["on_off_measuremnent"]["onregion"]
@@ -77,13 +80,17 @@ for sk in irf_config["config"]["sites"]:
             structure=irf.table.STRUCTURE,
         )
         passed_trigger_idx = np.array(
-            _passed_trigger_indices[sk][pk]["passed_trigger"][spt.IDX]
+            passing_trigger[sk][pk]["passed_trigger"][spt.IDX]
         )
+        passed_quality_idx = np.array(
+            passing_quality[sk][pk]["passed_quality"][spt.IDX]
+        )
+        common_idx = spt.intersection([passed_trigger_idx, passed_quality_idx])
 
         all_truth = spt.cut_and_sort_table_on_indices(
             event_table,
             irf.table.STRUCTURE,
-            common_indices=passed_trigger_idx,
+            common_indices=common_idx,
             level_keys=[
                 "primary",
                 "cherenkovsize",
