@@ -21,6 +21,7 @@ from . import samtex
 from .. import json_numpy
 from .cosmic_flux import read_airshower_differential_flux_zenith_compensated
 from .cosmic_flux import make_gamma_ray_reference_flux
+from .scripts_multiprocessing import run_parallel
 
 
 def init(run_dir):
@@ -124,10 +125,6 @@ def run(run_dir):
         path=opj(run_dir, "summary", "provenance.json"),
         out_dict=provenance.make_provenance(),
     )
-
-    summary_dir = opj(run_dir, "summary")
-    irf_config = read_instrument_response_config(run_dir=run_dir)
-    sum_config = read_summary_config(summary_dir=summary_dir)
 
     script_abspaths = _make_script_abspaths()
 
