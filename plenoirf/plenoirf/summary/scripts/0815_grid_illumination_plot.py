@@ -138,7 +138,7 @@ for site_key in irf_config["config"]["sites"]:
                 vmin=0,
                 vmax=MAX_CHERENKOV_INTENSITY,
             )
-            plt.colorbar(_pcm_grid, cax=ax_cb, extend="max")
+            seb.plt.colorbar(_pcm_grid, cax=ax_cb, extend="max")
             ax.set_title(
                 "num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f} GeV".format(
                     num_airshower,
@@ -150,7 +150,7 @@ for site_key in irf_config["config"]["sites"]:
             ax.set_xlabel("$x$ / km")
             ax.set_ylabel("$y$ / km")
             seb.ax_add_grid(ax)
-            plt.savefig(
+            fig.savefig(
                 opj(
                     pa["out_dir"],
                     "{:s}_{:s}_{:06d}.jpg".format(
