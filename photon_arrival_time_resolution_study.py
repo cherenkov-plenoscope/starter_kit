@@ -81,13 +81,13 @@ for ii in range(len(study_config["arrival_times_resolution_s"])):
 
     if ii > 0:
         for common_resource in common_resources:
-            if not os.path.exists(os.path.join(run_dir, common_resource))
+            if not os.path.exists(os.path.join(run_dir, common_resource)):
                 plenoirf.network_file_system.copy(
                     src=os.path.join(run0_dir, common_resource),
                     dst=os.path.join(run_dir, common_resource)
                 )
 
-    if not os.path.exists(os.path.join(run_dir, "event_table"))
+    if not os.path.exists(os.path.join(run_dir, "event_table")):
         plenoirf.run(
             path=run_dir,
             MULTIPROCESSING_POOL=MULTIPROCESSING_POOL
