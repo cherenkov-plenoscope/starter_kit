@@ -145,7 +145,7 @@ for site_key in irf_config["config"]["sites"]:
 
         candidate_array_point = irf.reconstruction.trajectory_quality.make_rectangular_table(
             event_table=candidate_table_point,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"]
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
         cap = candidate_array_point
         num_candidate_events = cap[spt.IDX].shape[0]
@@ -175,7 +175,7 @@ for site_key in irf_config["config"]["sites"]:
                 hit = irf.reconstruction.onregion.is_direction_inside(
                     cx=cap["true_trajectory/cx_rad"][ii],
                     cy=cap["true_trajectory/cy_rad"][ii],
-                    onregion=_onregion
+                    onregion=_onregion,
                 )
 
                 idx_dict_source_in_onregion[cap[spt.IDX][ii]] = hit
@@ -233,7 +233,7 @@ for site_key in irf_config["config"]["sites"]:
 
         candidate_array_diffuse = irf.reconstruction.trajectory_quality.make_rectangular_table(
             event_table=candidate_table_diffuse,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"]
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
         cad = candidate_array_diffuse

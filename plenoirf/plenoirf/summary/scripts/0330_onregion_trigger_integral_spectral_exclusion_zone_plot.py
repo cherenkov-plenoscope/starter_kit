@@ -135,11 +135,13 @@ for site_key in irf_config["config"]["sites"]:
     for obt in range(len(loop_observation_time)):
         observation_time_s = loop_observation_time[obt]
 
-        for sys, systematic_uncertainty in enumerate(loop_systematic_uncertainty):
+        for sys, systematic_uncertainty in enumerate(
+            loop_systematic_uncertainty
+        ):
             gamma_effective_area_m2 = np.array(
-                np.array(onregion_acceptance[site_key]["gamma"]["point"]["mean"])[
-                    :, oridx
-                ]
+                np.array(
+                    onregion_acceptance[site_key]["gamma"]["point"]["mean"]
+                )[:, oridx]
             )
 
             critical_rate_per_s = irf.analysis.integral_sensitivity.estimate_critical_rate(
@@ -181,11 +183,15 @@ for site_key in irf_config["config"]["sites"]:
             if PLOT_TANGENTIAL_POWERLAWS:
                 for powlaw in powlaws:
                     _E_GeV = np.geomspace(
-                        np.min(energy_bin_edges), np.max(energy_bin_edges), 1337,
+                        np.min(energy_bin_edges),
+                        np.max(energy_bin_edges),
+                        1337,
                     )
                     _dF_per_m2_per_GeV_per_s = cosmic_fluxes._power_law(
                         energy=_E_GeV,
-                        flux_density=powlaw["flux_density_per_m2_per_GeV_per_s"],
+                        flux_density=powlaw[
+                            "flux_density_per_m2_per_GeV_per_s"
+                        ],
                         spectral_index=powlaw["spectral_index"],
                         pivot_energy=powlaw["pivot_energy_GeV"],
                     )

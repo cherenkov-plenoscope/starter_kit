@@ -37,7 +37,7 @@ for site_key in irf_config["config"]["sites"]:
 
         eva = irf.reconstruction.trajectory_quality.make_rectangular_table(
             event_table=event_table,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"]
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
         num_events = eva[spt.IDX].shape[0]
