@@ -107,222 +107,6 @@ containment_fractions = np.linspace(0.0, 1.0, num_containment_fractions + 1)[
 ]
 
 
-# feature correlation
-# ===================
-feature_correlations = [
-    {
-        "key": "reco_r",
-        "label": "reco. core-radius / m",
-        "bin_edges": np.linspace(0.0, 640, 17),
-        "log": False,
-    },
-    {
-        "key": "features/image_smallest_ellipse_object_distance",
-        "label": "object-distance / m",
-        "bin_edges": np.geomspace(5e3, 50e3, 17),
-        "log": True,
-    },
-    {
-        "key": "features/image_smallest_ellipse_solid_angle",
-        "label": "smallest ellipse solid angle / sr",
-        "bin_edges": np.geomspace(1e-7, 1e-3, 17),
-        "log": True,
-    },
-    {
-        "key": "features/num_photons",
-        "label": "reco. num. photons / p.e.",
-        "bin_edges": np.geomspace(1e1, 1e5, 17),
-        "log": True,
-    },
-    {
-        "key": "features/image_num_islands",
-        "label": "num. islands / 1",
-        "bin_edges": np.arange(7),
-        "log": False,
-    },
-    {
-        "key": "features/image_half_depth_shift",
-        "label": "image_half_depth_shift / rad",
-        "bin_edges": np.deg2rad(np.linspace(0.0, 0.2, 17)),
-        "log": False,
-    },
-]
-
-# READ reconstruction
-# ===================
-reconstruction = {}
-for sk in irf_config["config"]["sites"]:
-    reconstruction[sk] = {}
-    for pk in irf_config["config"]["particles"]:
-        event_table = spt.read(
-            path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar"
-            ),
-            structure=irf.table.STRUCTURE,
-        )
-        reconstruction[sk][pk] = event_table["reconstructed_trajectory"]
-
-level_keys = [
-    "primary",
-    "cherenkovsize",
-    "grid",
-    "cherenkovpool",
-    "cherenkovsizepart",
-    "cherenkovpoolpart",
-    "core",
-    "trigger",
-    "pasttrigger",
-    "cherenkovclassification",
-    "reconstructed_trajectory",
-    "features",
-]
-
-
-def write_correlation_figure(
-    path,
-    x,
-    y,
-    x_bin_edges,
-    y_bin_edges,
-    x_label,
-    y_label,
-    min_exposure_x,
-    logx=False,
-    logy=False,
-    log_exposure_counter=False,
-):
-    valid = np.logical_and(
-        np.logical_not((np.isnan(x))), np.logical_not((np.isnan(y)))
-    )
-
-    cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
-        x=x[valid],
-        y=y[valid],
-        x_bin_edges=x_bin_edges,
-        y_bin_edges=y_bin_edges,
-        min_exposure_x=min_exposure_x,
-        default_low_exposure=0.0,
-    )
-
-    fig = seb.figure(seb.FIGURE_1_1)
-    ax = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
-    ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
-    ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
-    _pcm_confusion = ax.pcolormesh(
-        cm["x_bin_edges"],
-        cm["y_bin_edges"],
-        np.transpose(cm["confusion_bins_normalized_columns"]),
-        cmap="Greys",
-        norm=seb.plt_colors.PowerNorm(gamma=0.5),
-    )
-    seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
-    ax.set_title("normalized for each column")
-    ax.set_ylabel(y_label)
-    ax.set_xticklabels([])
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["x_bin_edges"])])
-    ax_h.set_xlabel(x_label)
-    ax_h.set_ylabel("num. events / 1")
-    ax_h.axhline(cm["min_exposure_x"], linestyle=":", color="k")
-    seb.ax_add_histogram(
-        ax=ax_h,
-        bin_edges=cm["x_bin_edges"],
-        bincounts=cm["exposure_bins_x_no_weights"],
-        linestyle="-",
-        linecolor="k",
-    )
-
-    if logx:
-        ax.semilogx()
-        ax_h.semilogx()
-
-    if logy:
-        ax.semilogy()
-
-    if log_exposure_counter:
-        ax_h.semilogy()
-
-    fig.savefig(path)
-    seb.close_figure(fig)
-
-
-def make_rectangular_table(
-    event_table, reconstruction_table, plenoscope_pointing
-):
-    common_indices = spt.intersection(
-        [event_table["primary"][spt.IDX], reconstruction_table[spt.IDX]]
-    )
-
-    rec_evt_tab = spt.cut_and_sort_table_on_indices(
-        table=event_table,
-        structure=irf.table.STRUCTURE,
-        common_indices=common_indices,
-        level_keys=level_keys,
-    )
-
-    rec_evt_df = spt.make_rectangular_DataFrame(rec_evt_tab)
-
-    et_df = pandas.merge(
-        left=pandas.DataFrame(
-            {
-                spt.IDX: reconstruction_table[spt.IDX],
-                "reco_cx": reconstruction_table["cx_rad"],
-                "reco_cy": reconstruction_table["cy_rad"],
-                "reco_x": reconstruction_table["x_m"],
-                "reco_y": reconstruction_table["y_m"],
-                "reco_r": np.hypot(
-                    reconstruction_table["x_m"], reconstruction_table["y_m"]
-                ),
-            }
-        ),
-        right=rec_evt_df,
-        on=spt.IDX,
-    )
-
-    (
-        _true_cx,
-        _true_cy,
-    ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-        momentum_x_GeV_per_c=et_df["primary/momentum_x_GeV_per_c"],
-        momentum_y_GeV_per_c=et_df["primary/momentum_y_GeV_per_c"],
-        momentum_z_GeV_per_c=et_df["primary/momentum_z_GeV_per_c"],
-        plenoscope_pointing=plenoscope_pointing,
-    )
-    et_df["true_cx"] = _true_cx
-    et_df["true_cy"] = _true_cy
-    et_df["true_x"] = -et_df["core/core_x_m"]
-    et_df["true_y"] = -et_df["core/core_y_m"]
-    et_df["true_r"] = np.hypot(et_df["true_x"], et_df["true_y"])
-
-    # w.r.t. source
-    # -------------
-    c_para, c_perp = atg.projection.project_light_field_onto_source_image(
-        cer_cx_rad=et_df["reco_cx"],
-        cer_cy_rad=et_df["reco_cy"],
-        cer_x_m=0.0,
-        cer_y_m=0.0,
-        primary_cx_rad=et_df["true_cx"],
-        primary_cy_rad=et_df["true_cy"],
-        primary_core_x_m=et_df["true_x"],
-        primary_core_y_m=et_df["true_y"],
-    )
-
-    et_df["theta_para"] = c_para
-    et_df["theta_perp"] = c_perp
-
-    et_df["theta"] = np.hypot(
-        et_df["reco_cx"] - et_df["true_cx"],
-        et_df["reco_cy"] - et_df["true_cy"],
-    )
-
-    et_df["features/image_half_depth_shift"] = np.hypot(
-        et_df["features/image_half_depth_shift_cx"],
-        et_df["features/image_half_depth_shift_cy"],
-    )
-
-    return et_df.to_records(index=False)
-
-
 def empty_dim2(dim0, dim1):
     return [[None for ii in range(dim1)] for jj in range(dim0)]
 
@@ -402,9 +186,8 @@ def guess_theta_square_bin_edges_deg(
 
 psf_ax_style = {"spines": [], "axes": ["x", "y"], "grid": True}
 
-for sk in reconstruction:
-    for pk in reconstruction[sk]:
-
+for sk in irf_config["config"]["sites"]:
+    for pk in irf_config["config"]["particles"]:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
@@ -426,9 +209,8 @@ for sk in reconstruction:
             common_indices=idx_common,
         )
 
-        reconstructed_event_table = make_rectangular_table(
+        reconstructed_event_table = irf.reconstruction.trajectory_quality.make_rectangular_table(
             event_table=_event_table,
-            reconstruction_table=reconstruction[sk][pk],
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
@@ -468,28 +250,6 @@ for sk in reconstruction:
             c_ene_rad = dict(cont_ene_rad)
             c_ene = dict(cont_ene)
 
-            if pk == "gamma" and the == "theta":
-
-                for fk in feature_correlations:
-                    write_correlation_figure(
-                        path=os.path.join(
-                            pa["out_dir"],
-                            "{:s}_{:s}_{:s}_vs_{:s}.jpg".format(
-                                sk, pk, the, str.replace(fk["key"], "/", "-")
-                            ),
-                        ),
-                        x=rectab[fk["key"]],
-                        y=np.rad2deg(rectab[the]),
-                        x_bin_edges=fk["bin_edges"],
-                        y_bin_edges=np.linspace(0.0, 3.0, 15),
-                        x_label=fk["label"],
-                        y_label=the + r" / $1^{\circ}$",
-                        min_exposure_x=100,
-                        logx=fk["log"],
-                        logy=False,
-                        log_exposure_counter=False,
-                    )
-
             for ene in range(num_energy_bins):
 
                 energy_start = energy_bin_edges[ene]
@@ -499,7 +259,8 @@ for sk in reconstruction:
                     rectab["primary/energy_GeV"] < energy_stop,
                 )
 
-                ene_theta_deg = np.rad2deg(rectab[the][ene_mask])
+                the_key = "trajectory/" + the + "_rad"
+                ene_theta_deg = np.rad2deg(rectab[the_key][ene_mask])
                 ene_theta_deg = np.abs(ene_theta_deg)
 
                 ene_theta_square_bin_edges_deg2 = guess_theta_square_bin_edges_deg(
@@ -534,12 +295,14 @@ for sk in reconstruction:
                     radius_sq_stop = core_radius_square_bin_edges_m2[rad + 1]
 
                     rad_mask = np.logical_and(
-                        rectab["true_r"] ** 2 >= radius_sq_start,
-                        rectab["true_r"] ** 2 < radius_sq_stop,
+                        rectab["true_trajectory/r_m"] ** 2 >= radius_sq_start,
+                        rectab["true_trajectory/r_m"] ** 2 < radius_sq_stop,
                     )
 
                     ene_rad_mask = np.logical_and(ene_mask, rad_mask)
-                    ene_rad_theta_deg = np.rad2deg(rectab[the][ene_rad_mask])
+                    ene_rad_theta_deg = np.rad2deg(
+                        rectab[the_key][ene_rad_mask]
+                    )
                     ene_rad_theta_deg = np.abs(ene_rad_theta_deg)
 
                     ene_rad_theta_square_bin_edges_deg2 = guess_theta_square_bin_edges_deg(
@@ -611,8 +374,14 @@ for sk in reconstruction:
         # image of point-spread-function
         # -------------------------------
 
-        delta_cx_deg = np.rad2deg(rectab["reco_cx"] - rectab["true_cx"])
-        delta_cy_deg = np.rad2deg(rectab["reco_cy"] - rectab["true_cy"])
+        delta_cx_deg = np.rad2deg(
+            rectab["reconstructed_trajectory/cx_rad"]
+            - rectab["true_trajectory/cx_rad"]
+        )
+        delta_cy_deg = np.rad2deg(
+            rectab["reconstructed_trajectory/cy_rad"]
+            - rectab["true_trajectory/cy_rad"]
+        )
 
         for ene in range(num_energy_bins):
 
