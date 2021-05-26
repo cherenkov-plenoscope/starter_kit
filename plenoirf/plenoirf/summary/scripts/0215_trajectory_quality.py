@@ -20,8 +20,17 @@ passing_trigger = irf.json_numpy.read_tree(
 passing_quality = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_quality")
 )
+weights_thrown2expected = irf.json_numpy.read_tree(
+    os.path.join(
+        pa["summary_dir"],
+        "0040_weights_from_thrown_to_expected_energy_spectrum",
+    )
+)
 
 theta_bin_edges_deg = np.linspace(0.0, 3.0, 15)
+
+PARTICLES = irf_config["config"]["particles"]
+SITES = irf_config["config"]["sites"]
 
 # feature correlation
 # ===================
@@ -67,23 +76,23 @@ feature_correlations = [
 quality_features = {
     "reconstructed_trajectory/r_m": {
         "scale": "linear",
-        "trace": [[0, 0.25], [80, 1], [160, 1], [320, 0.25], [640, 0.0]],
+        "trace": [[0, 0.25], [50, 0.8], [175, 1.0], [200, 0.8], [350, 0.25], [640, 0.0]],
         "weight": 1.0,
     },
     "features/num_photons": {
         "scale": "log10",
         "trace": [[1, 0.0], [4, 1.0],],
-        "weight": 0.5,
+        "weight": 0.0,
     },
     "features/image_half_depth_shift_c": {
         "scale": "linear",
         "trace": [[0.0, 0.0], [1.5e-3, 1.0],],
-        "weight": 1.0,
+        "weight": 0.0,
     },
     "features/image_smallest_ellipse_solid_angle": {
         "scale": "log10",
         "trace": [[-7, 0.0], [-5, 1.0],],
-        "weight": 0.5,
+        "weight": 0.0,
     },
 }
 
@@ -181,8 +190,17 @@ def write_correlation_figure(
 
 the = "theta"
 
-for sk in irf_config["config"]["sites"]:
-    for pk in irf_config["config"]["particles"]:
+QP = {}
+QP["quality_cuts"] = np.linspace(0.0, 1.0, 137)
+QP["fraction_passing"] = {}
+QP["fraction_passing_w"] = {}
+for sk in SITES:
+    QP["fraction_passing"][sk] = {}
+    QP["fraction_passing_w"][sk] = {}
+
+
+for sk in SITES:
+    for pk in PARTICLES:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
@@ -233,22 +251,23 @@ for sk in irf_config["config"]["sites"]:
             log_exposure_counter=False,
         )
 
-        write_correlation_figure(
-            path=os.path.join(
-                pa["out_dir"],
-                "{:s}_{:s}_energy_vs_quality.jpg".format(sk, pk, the),
-            ),
-            x=quality,
-            y=rectab["primary/energy_GeV"],
-            x_bin_edges=np.linspace(0, 1, 15),
-            y_bin_edges=np.geomspace(1, 1000, 15),
-            x_label="quality / 1",
-            y_label="energy / GeV",
-            min_exposure_x=100,
-            logx=False,
-            logy=True,
-            log_exposure_counter=False,
-        )
+        if pk == "gamma":
+            write_correlation_figure(
+                path=os.path.join(
+                    pa["out_dir"],
+                    "{:s}_{:s}_energy_vs_quality.jpg".format(sk, pk, the),
+                ),
+                x=quality,
+                y=rectab["primary/energy_GeV"],
+                x_bin_edges=np.linspace(0, 1, 15),
+                y_bin_edges=np.geomspace(1, 1000, 15),
+                x_label="quality / 1",
+                y_label="energy / GeV",
+                min_exposure_x=100,
+                logx=False,
+                logy=True,
+                log_exposure_counter=False,
+            )
 
         irf.json_numpy.write(
             os.path.join(site_particle_dir, "trajectory_quality.json"),
@@ -284,3 +303,47 @@ for sk in irf_config["config"]["sites"]:
                     logy=False,
                     log_exposure_counter=False,
                 )
+
+
+        # plot losses
+        # ===========
+
+        reweight_spectrum = np.interp(
+            x=rectab["primary/energy_GeV"],
+            xp=weights_thrown2expected[sk][pk]["weights_vs_energy"][
+                "energy_GeV"
+            ],
+            fp=weights_thrown2expected[sk][pk]["weights_vs_energy"][
+                "mean"
+            ],
+        )
+
+        fraction_passing = []
+        fraction_passing_w = []
+        for quality_cut in QP["quality_cuts"]:
+            mask = quality >= quality_cut
+            num_passing_cut = np.sum(mask)
+            num_total = quality.shape[0]
+            fraction_passing.append(num_passing_cut/num_total)
+
+            num_passing_cut_w = np.sum(reweight_spectrum[mask])
+            num_total_w = np.sum(reweight_spectrum)
+            fraction_passing_w.append(num_passing_cut_w/num_total_w)
+
+        QP["fraction_passing"][sk][pk] = np.array(fraction_passing)
+        QP["fraction_passing_w"][sk][pk] = np.array(fraction_passing_w)
+
+
+for sk in SITES:
+    fig = seb.figure(seb.FIGURE_1_1)
+    ax = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
+    for pk in PARTICLES:
+        ax.plot(
+            QP["quality_cuts"],
+            QP["fraction_passing_w"][sk][pk],
+            color=sum_config["plot"]["particle_colors"][pk]
+        )
+    ax.set_xlabel("trajectory-quality / 1")
+    ax.set_ylabel("passing cut / 1")
+    fig.savefig(os.path.join(pa["out_dir"], "{:s}_passing.jpg".format(sk)))
+    seb.close_figure(fig)
