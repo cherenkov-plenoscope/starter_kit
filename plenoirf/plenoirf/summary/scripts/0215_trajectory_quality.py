@@ -21,6 +21,8 @@ passing_quality = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_quality")
 )
 
+theta_bin_edges_deg = np.linspace(0.0, 3.0, 15)
+
 # feature correlation
 # ===================
 feature_correlations = [
@@ -84,6 +86,29 @@ quality_features = {
         "weight": 0.5,
     },
 }
+
+
+def estimate_trajectory_quality(event_frame, quality_features):
+    weight_sum = 0.0
+    quality = np.zeros(event_frame["idx"].shape[0])
+    for qf_key in quality_features:
+        weight_sum += quality_features[qf_key]["weight"]
+
+    for qf_key in quality_features:
+        qf = quality_features[qf_key]
+
+        if qf["scale"] == "linear":
+            w = event_frame[qf_key]
+        elif qf["scale"] == "log10":
+            w = np.log10(event_frame[qf_key])
+        else:
+            assert False, "Scaling unknown"
+
+        trace = np.array(qf["trace"])
+        q_comp = np.interp(x=w, xp=trace[:, 0], fp=trace[:, 1])
+        q_comp *= qf["weight"] / weight_sum
+        quality += q_comp
+    return quality
 
 
 def write_correlation_figure(
@@ -154,110 +179,108 @@ def write_correlation_figure(
     seb.close_figure(fig)
 
 
+the = "theta"
+
 for sk in irf_config["config"]["sites"]:
-    pk = "gamma"
-    the = "theta"
+    for pk in irf_config["config"]["particles"]:
+        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
+        os.makedirs(site_particle_dir, exist_ok=True)
 
-    site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
-    os.makedirs(site_particle_dir, exist_ok=True)
-
-    event_table = spt.read(
-        path=os.path.join(
-            pa["run_dir"], "event_table", sk, pk, "event_table.tar"
-        ),
-        structure=irf.table.STRUCTURE,
-    )
-    idx_common = spt.intersection(
-        [
-            passing_trigger[sk][pk]["passed_trigger"]["idx"],
-            passing_quality[sk][pk]["passed_quality"]["idx"],
-        ]
-    )
-    event_table = spt.cut_and_sort_table_on_indices(
-        table=event_table,
-        structure=irf.table.STRUCTURE,
-        common_indices=idx_common,
-    )
-
-    rectab = irf.reconstruction.trajectory_quality.make_rectangular_table(
-        event_table=event_table,
-        plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
-    )
-
-    for fk in feature_correlations:
-        """
-        write_correlation_figure(
+        event_table = spt.read(
             path=os.path.join(
-                pa["out_dir"],
-                "{:s}_{:s}_{:s}_vs_{:s}.jpg".format(
-                    sk, pk, the, str.replace(fk["key"], "/", "-")
-                ),
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar"
             ),
-            x=rectab[fk["key"]],
-            y=np.rad2deg(rectab["trajectory/" + the + "_rad"]),
-            x_bin_edges=fk["bin_edges"],
-            y_bin_edges=np.linspace(0.0, 3.0, 15),
-            x_label=fk["label"],
-            y_label=the + r" / $1^{\circ}$",
-            min_exposure_x=100,
-            logx=fk["log"],
-            logy=False,
-            log_exposure_counter=False,
+            structure=irf.table.STRUCTURE,
         )
-        """
+        idx_common = spt.intersection(
+            [
+                passing_trigger[sk][pk]["passed_trigger"]["idx"],
+                passing_quality[sk][pk]["passed_quality"]["idx"],
+            ]
+        )
+        event_table = spt.cut_and_sort_table_on_indices(
+            table=event_table,
+            structure=irf.table.STRUCTURE,
+            common_indices=idx_common,
+        )
+
+        rectab = irf.reconstruction.trajectory_quality.make_rectangular_table(
+            event_table=event_table,
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+        )
 
         # estimate_quality
         # ================
 
-    weight_sum = 0.0
-    quality = np.zeros(rectab["idx"].shape[0])
-    for qf_key in quality_features:
-        weight_sum += quality_features[qf_key]["weight"]
+        quality = estimate_trajectory_quality(
+            event_frame=rectab, quality_features=quality_features
+        )
 
-    for qf_key in quality_features:
-        qf = quality_features[qf_key]
+        write_correlation_figure(
+            path=os.path.join(
+                pa["out_dir"],
+                "{:s}_{:s}_{:s}_vs_quality.jpg".format(sk, pk, the),
+            ),
+            x=quality,
+            y=np.rad2deg(rectab["trajectory/" + the + "_rad"]),
+            x_bin_edges=np.linspace(0, 1, 15),
+            y_bin_edges=theta_bin_edges_deg,
+            x_label="quality / 1",
+            y_label=the + r" / $1^{\circ}$",
+            min_exposure_x=100,
+            logx=False,
+            logy=False,
+            log_exposure_counter=False,
+        )
 
-        if qf["scale"] == "linear":
-            w = rectab[qf_key]
-        elif qf["scale"] == "log10":
-            w = np.log10(rectab[qf_key])
-        else:
-            assert False, "Scaling unknown"
+        write_correlation_figure(
+            path=os.path.join(
+                pa["out_dir"],
+                "{:s}_{:s}_energy_vs_quality.jpg".format(sk, pk, the),
+            ),
+            x=quality,
+            y=rectab["primary/energy_GeV"],
+            x_bin_edges=np.linspace(0, 1, 15),
+            y_bin_edges=np.geomspace(1, 1000, 15),
+            x_label="quality / 1",
+            y_label="energy / GeV",
+            min_exposure_x=100,
+            logx=False,
+            logy=True,
+            log_exposure_counter=False,
+        )
 
-        trace = np.array(qf["trace"])
-        q_comp = np.interp(x=w, xp=trace[:, 0], fp=trace[:, 1])
-        q_comp *= qf["weight"] / weight_sum
-        quality += q_comp
+        irf.json_numpy.write(
+            os.path.join(site_particle_dir, "trajectory_quality.json"),
+            {
+                "comment": (
+                    "Quality of reconstructed trajectory. "
+                    "0 is worst, 1 is best."
+                ),
+                spt.IDX: rectab[spt.IDX],
+                "unit": "1",
+                "quality": quality,
+            },
+        )
 
-    write_correlation_figure(
-        path=os.path.join(
-            pa["out_dir"], "{:s}_{:s}_{:s}_vs_quality.jpg".format(sk, pk, the),
-        ),
-        x=quality,
-        y=np.rad2deg(rectab["trajectory/" + the + "_rad"]),
-        x_bin_edges=np.linspace(0, 1, 15),
-        y_bin_edges=np.linspace(0.0, 3.0, 15),
-        x_label="quality / 1",
-        y_label=the + r" / $1^{\circ}$",
-        min_exposure_x=100,
-        logx=False,
-        logy=False,
-        log_exposure_counter=False,
-    )
+        if pk == "gamma":
+            for fk in feature_correlations:
 
-    write_correlation_figure(
-        path=os.path.join(
-            pa["out_dir"],
-            "{:s}_{:s}_energy_vs_quality.jpg".format(sk, pk, the),
-        ),
-        x=quality,
-        y=rectab["primary/energy_GeV"],
-        x_bin_edges=np.linspace(0, 1, 15),
-        y_bin_edges=np.geomspace(1, 1000, 15),
-        x_label="quality / 1",
-        y_label="energy / GeV",
-        min_exposure_x=100,
-        logx=False,
-        logy=True,
-        log_exposure_counter=False,
-    )
+                write_correlation_figure(
+                    path=os.path.join(
+                        pa["out_dir"],
+                        "{:s}_{:s}_{:s}_vs_{:s}.jpg".format(
+                            sk, pk, the, str.replace(fk["key"], "/", "-")
+                        ),
+                    ),
+                    x=rectab[fk["key"]],
+                    y=np.rad2deg(rectab["trajectory/" + the + "_rad"]),
+                    x_bin_edges=fk["bin_edges"],
+                    y_bin_edges=theta_bin_edges_deg,
+                    x_label=fk["label"],
+                    y_label=the + r" / $1^{\circ}$",
+                    min_exposure_x=100,
+                    logx=fk["log"],
+                    logy=False,
+                    log_exposure_counter=False,
+                )
