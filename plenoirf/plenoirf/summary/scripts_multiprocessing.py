@@ -106,7 +106,15 @@ def run_parallel(run_dir, num_threads=6, polling_interval=1):
 
         print("====================", num_polls)
         for name in script_names:
-            print("{:<70s}     {:s}".format(name, job_statii[name]))
+            sta = job_statii[name]
+            if sta == "pending":
+                print("{:<70s}     pending".format(name))
+            elif sta == "running":
+                print("{:<70s}      running".format(name))
+            elif sta == "complete":
+                print("{:<70s}       complete".format(name))
+            else:
+                print("{:<70s}     ?".format(name))
 
         time.sleep(polling_interval)
         num_polls += 1
