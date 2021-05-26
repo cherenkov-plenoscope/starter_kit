@@ -65,8 +65,8 @@ output_sed_styles = {
 
 instrument_systematic_uncertainty = 5e-3
 
-loop_systematic_uncertainty = [0.0, 1e-3, 1e-2]
-loop_systematic_uncertainty_line_style = ["-", "--", ":"]
+loop_systematic_uncertainty = [0.0, 1e-2]
+loop_systematic_uncertainty_line_style = ["-", ":"]
 
 loop_observation_time = [60, 300, 1500]
 loop_observation_time_line_color = ["red", "brown", "orange"]
