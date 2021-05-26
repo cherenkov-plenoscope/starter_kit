@@ -35,41 +35,29 @@ for site_key in irf_config["config"]["sites"]:
             structure=irf.table.STRUCTURE,
         )
 
-        event_array = irf.reconstruction.onregion.make_array_from_event_table_for_onregion_estimate(
-            event_table=event_table
+        eva = irf.reconstruction.trajectory_quality.make_rectangular_table(
+            event_table=event_table,
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"]
         )
 
-        eva = event_array
         num_events = eva[spt.IDX].shape[0]
 
         list_idx = []
         list_angles = []
         for ii in range(num_events):
 
-            (
-                _true_cx,
-                _true_cy,
-            ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-                momentum_x_GeV_per_c=[eva["primary.momentum_x_GeV_per_c"][ii]],
-                momentum_y_GeV_per_c=[eva["primary.momentum_y_GeV_per_c"][ii]],
-                momentum_z_GeV_per_c=[eva["primary.momentum_z_GeV_per_c"][ii]],
-                plenoscope_pointing=irf_config["config"][
-                    "plenoscope_pointing"
-                ],
-            )
-
             theta_deg = irf.reconstruction.onregion.estimate_required_opening_angle_deg(
-                true_cx=_true_cx,
-                true_cy=_true_cy,
-                reco_cx=eva["reconstructed_trajectory.cx_rad"][ii],
-                reco_cy=eva["reconstructed_trajectory.cy_rad"][ii],
+                true_cx=eva["true_trajectory/cx_rad"][ii],
+                true_cy=eva["true_trajectory/cx_rad"][ii],
+                reco_cx=eva["reconstructed_trajectory/cx_rad"][ii],
+                reco_cy=eva["reconstructed_trajectory/cy_rad"][ii],
                 reco_main_axis_azimuth=eva[
-                    "reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"
+                    "reconstructed_trajectory/fuzzy_main_axis_azimuth_rad"
                 ][ii],
-                reco_num_photons=eva["features.num_photons"][ii],
+                reco_num_photons=eva["features/num_photons"][ii],
                 reco_core_radius=np.hypot(
-                    eva["reconstructed_trajectory.x_m"][ii],
-                    eva["reconstructed_trajectory.y_m"][ii],
+                    eva["reconstructed_trajectory/x_m"][ii],
+                    eva["reconstructed_trajectory/y_m"][ii],
                 ),
                 config=onregion_config,
                 margin_deg=1e-3,

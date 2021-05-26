@@ -143,8 +143,9 @@ for site_key in irf_config["config"]["sites"]:
             min_reconstructed_photons=min_reconstructed_photons,
         )
 
-        candidate_array_point = irf.reconstruction.onregion.make_array_from_event_table_for_onregion_estimate(
-            event_table=candidate_table_point
+        candidate_array_point = irf.reconstruction.trajectory_quality.make_rectangular_table(
+            event_table=candidate_table_point,
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"]
         )
         cap = candidate_array_point
         num_candidate_events = cap[spt.IDX].shape[0]
@@ -158,39 +159,23 @@ for site_key in irf_config["config"]["sites"]:
             for ii in range(num_candidate_events):
 
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
-                    reco_cx=cap["reconstructed_trajectory.cx_rad"][ii],
-                    reco_cy=cap["reconstructed_trajectory.cy_rad"][ii],
+                    reco_cx=cap["reconstructed_trajectory/cx_rad"][ii],
+                    reco_cy=cap["reconstructed_trajectory/cy_rad"][ii],
                     reco_main_axis_azimuth=cap[
-                        "reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"
+                        "reconstructed_trajectory/fuzzy_main_axis_azimuth_rad"
                     ][ii],
-                    reco_num_photons=cap["features.num_photons"][ii],
+                    reco_num_photons=cap["features/num_photons"][ii],
                     reco_core_radius=np.hypot(
-                        cap["reconstructed_trajectory.x_m"][ii],
-                        cap["reconstructed_trajectory.y_m"][ii],
+                        cap["reconstructed_trajectory/x_m"][ii],
+                        cap["reconstructed_trajectory/y_m"][ii],
                     ),
                     config=onregion_config,
                 )
 
-                (
-                    _true_cx,
-                    _true_cy,
-                ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-                    momentum_x_GeV_per_c=[
-                        cap["primary.momentum_x_GeV_per_c"][ii]
-                    ],
-                    momentum_y_GeV_per_c=[
-                        cap["primary.momentum_y_GeV_per_c"][ii]
-                    ],
-                    momentum_z_GeV_per_c=[
-                        cap["primary.momentum_z_GeV_per_c"][ii]
-                    ],
-                    plenoscope_pointing=irf_config["config"][
-                        "plenoscope_pointing"
-                    ],
-                )
-
                 hit = irf.reconstruction.onregion.is_direction_inside(
-                    cx=_true_cx, cy=_true_cy, onregion=_onregion
+                    cx=cap["true_trajectory/cx_rad"][ii],
+                    cy=cap["true_trajectory/cy_rad"][ii],
+                    onregion=_onregion
                 )
 
                 idx_dict_source_in_onregion[cap[spt.IDX][ii]] = hit
@@ -246,9 +231,11 @@ for site_key in irf_config["config"]["sites"]:
             min_reconstructed_photons=min_reconstructed_photons,
         )
 
-        candidate_array_diffuse = irf.reconstruction.onregion.make_array_from_event_table_for_onregion_estimate(
-            event_table=candidate_table_diffuse
+        candidate_array_diffuse = irf.reconstruction.trajectory_quality.make_rectangular_table(
+            event_table=candidate_table_diffuse,
+            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"]
         )
+
         cad = candidate_array_diffuse
         num_candidate_events = cad[spt.IDX].shape[0]
 
@@ -262,15 +249,15 @@ for site_key in irf_config["config"]["sites"]:
             for ii in range(num_candidate_events):
 
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
-                    reco_cx=cad["reconstructed_trajectory.cx_rad"][ii],
-                    reco_cy=cad["reconstructed_trajectory.cy_rad"][ii],
+                    reco_cx=cad["reconstructed_trajectory/cx_rad"][ii],
+                    reco_cy=cad["reconstructed_trajectory/cy_rad"][ii],
                     reco_main_axis_azimuth=cad[
-                        "reconstructed_trajectory.fuzzy_main_axis_azimuth_rad"
+                        "reconstructed_trajectory/fuzzy_main_axis_azimuth_rad"
                     ][ii],
-                    reco_num_photons=cad["features.num_photons"][ii],
+                    reco_num_photons=cad["features/num_photons"][ii],
                     reco_core_radius=np.hypot(
-                        cad["reconstructed_trajectory.x_m"][ii],
-                        cad["reconstructed_trajectory.y_m"][ii],
+                        cad["reconstructed_trajectory/x_m"][ii],
+                        cad["reconstructed_trajectory/y_m"][ii],
                     ),
                     config=onregion_config,
                 )
@@ -281,8 +268,8 @@ for site_key in irf_config["config"]["sites"]:
                 )
 
                 _optical_axis_to_reconstructed_direction = np.hypot(
-                    cad["reconstructed_trajectory.cx_rad"][ii],
-                    cad["reconstructed_trajectory.cy_rad"][ii],
+                    cad["reconstructed_trajectory/cx_rad"][ii],
+                    cad["reconstructed_trajectory/cy_rad"][ii],
                 )
 
                 _closest_reconstructed_direction = (

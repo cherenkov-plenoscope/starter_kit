@@ -117,31 +117,31 @@ feature_correlations = [
         "log": False,
     },
     {
-        "key": "features.image_smallest_ellipse_object_distance",
+        "key": "features/image_smallest_ellipse_object_distance",
         "label": "object-distance / m",
         "bin_edges": np.geomspace(5e3, 50e3, 17),
         "log": True,
     },
     {
-        "key": "features.image_smallest_ellipse_solid_angle",
+        "key": "features/image_smallest_ellipse_solid_angle",
         "label": "smallest ellipse solid angle / sr",
         "bin_edges": np.geomspace(1e-7, 1e-3, 17),
         "log": True,
     },
     {
-        "key": "features.num_photons",
+        "key": "features/num_photons",
         "label": "reco. num. photons / p.e.",
         "bin_edges": np.geomspace(1e1, 1e5, 17),
         "log": True,
     },
     {
-        "key": "features.image_num_islands",
+        "key": "features/image_num_islands",
         "label": "num. islands / 1",
         "bin_edges": np.arange(7),
         "log": False,
     },
     {
-        "key": "features.image_half_depth_shift",
+        "key": "features/image_half_depth_shift",
         "label": "image_half_depth_shift / rad",
         "bin_edges": np.deg2rad(np.linspace(0.0, 0.2, 17)),
         "log": False,
@@ -283,15 +283,15 @@ def make_rectangular_table(
         _true_cx,
         _true_cy,
     ) = irf.analysis.gamma_direction.momentum_to_cx_cy_wrt_aperture(
-        momentum_x_GeV_per_c=et_df["primary.momentum_x_GeV_per_c"],
-        momentum_y_GeV_per_c=et_df["primary.momentum_y_GeV_per_c"],
-        momentum_z_GeV_per_c=et_df["primary.momentum_z_GeV_per_c"],
+        momentum_x_GeV_per_c=et_df["primary/momentum_x_GeV_per_c"],
+        momentum_y_GeV_per_c=et_df["primary/momentum_y_GeV_per_c"],
+        momentum_z_GeV_per_c=et_df["primary/momentum_z_GeV_per_c"],
         plenoscope_pointing=plenoscope_pointing,
     )
     et_df["true_cx"] = _true_cx
     et_df["true_cy"] = _true_cy
-    et_df["true_x"] = -et_df["core.core_x_m"]
-    et_df["true_y"] = -et_df["core.core_y_m"]
+    et_df["true_x"] = -et_df["core/core_x_m"]
+    et_df["true_y"] = -et_df["core/core_y_m"]
     et_df["true_r"] = np.hypot(et_df["true_x"], et_df["true_y"])
 
     # w.r.t. source
@@ -315,9 +315,9 @@ def make_rectangular_table(
         et_df["reco_cy"] - et_df["true_cy"],
     )
 
-    et_df["features.image_half_depth_shift"] = np.hypot(
-        et_df["features.image_half_depth_shift_cx"],
-        et_df["features.image_half_depth_shift_cy"],
+    et_df["features/image_half_depth_shift"] = np.hypot(
+        et_df["features/image_half_depth_shift_cx"],
+        et_df["features/image_half_depth_shift_cy"],
     )
 
     return et_df.to_records(index=False)
@@ -475,7 +475,7 @@ for sk in reconstruction:
                         path=os.path.join(
                             pa["out_dir"],
                             "{:s}_{:s}_{:s}_vs_{:s}.jpg".format(
-                                sk, pk, the, fk["key"]
+                                sk, pk, the, str.replace(fk["key"], "/", "-")
                             ),
                         ),
                         x=rectab[fk["key"]],
@@ -495,8 +495,8 @@ for sk in reconstruction:
                 energy_start = energy_bin_edges[ene]
                 energy_stop = energy_bin_edges[ene + 1]
                 ene_mask = np.logical_and(
-                    rectab["primary.energy_GeV"] >= energy_start,
-                    rectab["primary.energy_GeV"] < energy_stop,
+                    rectab["primary/energy_GeV"] >= energy_start,
+                    rectab["primary/energy_GeV"] < energy_stop,
                 )
 
                 ene_theta_deg = np.rad2deg(rectab[the][ene_mask])
@@ -620,8 +620,8 @@ for sk in reconstruction:
             ene_stop = energy_bin_edges[ene + 1]
 
             ene_mask = np.logical_and(
-                rectab["primary.energy_GeV"] >= ene_start,
-                rectab["primary.energy_GeV"] < ene_stop,
+                rectab["primary/energy_GeV"] >= ene_start,
+                rectab["primary/energy_GeV"] < ene_stop,
             )
 
             ene_delta_cx_deg = delta_cx_deg[ene_mask]

@@ -90,34 +90,34 @@ for sk in SITES:
 
         MA[mk]["x"] = np.array(
             [
-                gf[mk]["transformed_features.num_photons"].values,
+                gf[mk]["transformed_features/num_photons"].values,
                 gf[mk][
-                    "transformed_features.image_smallest_ellipse_object_distance"
+                    "transformed_features/image_smallest_ellipse_object_distance"
                 ].values,
                 gf[mk][
-                    "transformed_features.image_smallest_ellipse_solid_angle"
+                    "transformed_features/image_smallest_ellipse_solid_angle"
                 ].values,
                 gf[mk][
-                    "transformed_features.image_smallest_ellipse_half_depth"
+                    "transformed_features/image_smallest_ellipse_half_depth"
                 ].values,
-                gf[mk]["transformed_features.combi_A"].values,
-                gf[mk]["transformed_features.combi_B"].values,
-                gf[mk]["transformed_features.combi_C"].values,
+                gf[mk]["transformed_features/combi_A"].values,
+                gf[mk]["transformed_features/combi_B"].values,
+                gf[mk]["transformed_features/combi_C"].values,
                 gf[mk][
-                    "transformed_features.combi_image_infinity_std_density"
-                ].values,
-                gf[mk][
-                    "transformed_features.combi_paxel_intensity_median_hypot"
+                    "transformed_features/combi_image_infinity_std_density"
                 ].values,
                 gf[mk][
-                    "transformed_features.combi_diff_image_and_light_front"
+                    "transformed_features/combi_paxel_intensity_median_hypot"
+                ].values,
+                gf[mk][
+                    "transformed_features/combi_diff_image_and_light_front"
                 ].values,
             ]
         ).T
         MA[mk]["y"] = np.array(
             [
-                np.log10(gf[mk]["primary.energy_GeV"].values),
-                np.log10(gf[mk]["cherenkovpool.maximum_asl_m"].values),
+                np.log10(gf[mk]["primary/energy_GeV"].values),
+                np.log10(gf[mk]["cherenkovpool/maximum_asl_m"].values),
             ]
         ).T
 
