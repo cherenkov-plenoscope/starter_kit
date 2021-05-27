@@ -3,6 +3,8 @@ import os
 import glob
 import subprocess
 import time
+from .. import json_numpy
+from .. import provenance
 
 
 def find_script_names(script_dir):
@@ -63,14 +65,18 @@ def find_script_names_not_yet_complete(run_dir, script_names):
 
 
 def run_parallel(run_dir, num_threads=6, polling_interval=1):
+    json_numpy.write(
+        path=os.path.join(run_dir, "summary", "provenance.json"),
+        out_dict=provenance.make_provenance(),
+    )
+
     script_dir = pkg_resources.resource_filename(
         "plenoirf", os.path.join("summary", "scripts")
     )
 
     script_names = find_script_names(script_dir=script_dir)
     script_names = find_script_names_not_yet_complete(
-        run_dir=run_dir,
-        script_names=script_names
+        run_dir=run_dir, script_names=script_names
     )
     job_dependencies = find_job_dependencies(
         script_dir=script_dir, script_names=script_names,
