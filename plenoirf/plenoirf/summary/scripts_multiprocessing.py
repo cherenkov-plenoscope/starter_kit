@@ -53,12 +53,25 @@ def find_jobs_ready_to_run(job_statii, job_dependencies):
     return jobs_ready_to_run
 
 
+def find_script_names_not_yet_complete(run_dir, script_names):
+    out = []
+    for script_name in script_names:
+        expected_outdir = os.path.join(run_dir, "summary", script_name)
+        if not os.path.exists(expected_outdir):
+            out.append(script_name)
+    return out
+
+
 def run_parallel(run_dir, num_threads=6, polling_interval=1):
     script_dir = pkg_resources.resource_filename(
         "plenoirf", os.path.join("summary", "scripts")
     )
 
     script_names = find_script_names(script_dir=script_dir)
+    script_names = find_script_names_not_yet_complete(
+        run_dir=run_dir,
+        script_names=script_names
+    )
     job_dependencies = find_job_dependencies(
         script_dir=script_dir, script_names=script_names,
     )
