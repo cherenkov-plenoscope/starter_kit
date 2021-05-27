@@ -140,6 +140,7 @@ def write_correlation_figure(
     logx=False,
     logy=False,
     log_exposure_counter=False,
+    x_cut=None,
 ):
     valid = np.logical_and(
         np.logical_not((np.isnan(x))), np.logical_not((np.isnan(y)))
@@ -181,6 +182,10 @@ def write_correlation_figure(
         linestyle="-",
         linecolor="k",
     )
+
+    if x_cut is not None:
+        for aa in [ax, ax_h]:
+            aa.plot([x_cut, x_cut], aa.get_ylim(), "k:")
 
     if logx:
         ax.semilogx()
@@ -282,6 +287,7 @@ for sk in SITES:
             logx=False,
             logy=False,
             log_exposure_counter=False,
+            x_cut=min_trajectory_quality,
         )
 
         if pk == "gamma":
@@ -300,6 +306,7 @@ for sk in SITES:
                 logx=False,
                 logy=True,
                 log_exposure_counter=False,
+                x_cut=min_trajectory_quality,
             )
 
         if pk == "gamma":
@@ -353,21 +360,17 @@ for sk in SITES:
 
 for sk in SITES:
     fig = seb.figure(seb.FIGURE_1_1)
-    ax = seb.add_axes(fig=fig, span=[0.15, 0.1, 0.8, 0.8])
+    ax = seb.add_axes(fig=fig, span=[0.16, 0.11, 0.8, 0.8])
     for pk in PARTICLES:
         ax.plot(
             QP["quality_cuts"],
             QP["fraction_passing_w"][sk][pk],
             color=sum_config["plot"]["particle_colors"][pk],
         )
-    ax.plot(
-        [min_trajectory_quality, min_trajectory_quality],
-        [0.0, 1.0],
-        "k:"
-    )
+    ax.plot([min_trajectory_quality, min_trajectory_quality], [0.0, 1.0], "k:")
     ax.set_xlim([0, 1])
     ax.set_ylim([0, 1])
-    ax.set_xlabel("trajectory-quality / 1")
+    ax.set_xlabel("trajectory-quality-cut / 1")
     ax.set_ylabel("passing cut / 1")
     fig.savefig(os.path.join(pa["out_dir"], "{:s}_passing.jpg".format(sk)))
     seb.close_figure(fig)
