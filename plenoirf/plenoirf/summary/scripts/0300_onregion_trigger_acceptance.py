@@ -14,22 +14,40 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-_trajectory_quality = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0215_trajectory_quality")
+
+def read_idx(path, key):
+    akk = irf.json_numpy.read_tree(path)
+    out = {}
+    for sk in akk:
+        out[sk] = {}
+        for pk in akk[sk]:
+            out[sk][pk] = np.array(akk[sk][pk][key][spt.IDX])
+    return out
+
+
+passing_trigger = read_idx(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger"),
+    "passed_trigger"
+)
+passing_quality = read_idx(
+    os.path.join(pa["summary_dir"], "0056_passing_quality"),
+    "passed_quality"
+)
+passing_trajectory_quality = read_idx(
+    os.path.join(pa["summary_dir"], "0215_trajectory_quality"),
+    "passed_trajectory_quality"
 )
 
-NUM_GRID_BINS = irf_config["grid_geometry"]["num_bins_diameter"] ** 2
 MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
     "max_angle_relative_to_pointing_deg"
 ]
 MAX_SOURCE_ANGLE = np.deg2rad(MAX_SOURCE_ANGLE_DEG)
+SOLID_ANGLE_TO_CONTAIN_SOURCE = np.pi * MAX_SOURCE_ANGLE ** 2.0
 
 pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
     "azimuth_deg"
 ]
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
-analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
-trigger_modus = sum_config["trigger"]["modus"]
 
 energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["lower_edge_GeV"],
@@ -41,9 +59,6 @@ num_bins_energy = sum_config["energy_binning"]["num_bins"][
     "trigger_acceptance_onregion"
 ]
 
-max_relative_leakage = sum_config["quality"]["max_relative_leakage"]
-min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
-
 onregion_config = sum_config["on_off_measuremnent"]["onregion"]
 
 onregion_radii_deg = np.array(
@@ -51,49 +66,34 @@ onregion_radii_deg = np.array(
 )
 num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
-SOLID_ANGLE_TO_CONTAIN_SOURCE = np.pi * MAX_SOURCE_ANGLE ** 2.0
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
 
-min_trajectory_quality = 0.3
 
 def cut_candidates_for_detection(
     event_table,
-    trajectory_quality,
-    analysis_trigger_threshold,
-    trigger_modus,
-    max_relative_leakage,
-    min_reconstructed_photons,
-    min_trajectory_quality,
+    idx_trajectory_quality,
+    idx_trigger,
+    idx_quality,
 ):
-    idx_trigger = irf.analysis.light_field_trigger_modi.make_indices(
-        trigger_table=event_table["trigger"],
-        threshold=analysis_trigger_threshold,
-        modus=trigger_modus,
-    )
-    idx_quality = irf.analysis.cuts.cut_quality(
-        feature_table=event_table["features"],
-        max_relative_leakage=max_relative_leakage,
-        min_reconstructed_photons=min_reconstructed_photons,
-    )
-    idx_trajectory = event_table["reconstructed_trajectory"][spt.IDX]
-
-    mask_trajectory_quality = trajectory_quality["trajectory/quality"] >= min_trajectory_quality
-    idx_trajectory_quality = trajectory_quality[spt.IDX][mask_trajectory_quality]
+    idx_self = event_table["primary"][spt.IDX]
 
     idx_candidates = spt.intersection(
-        [idx_trigger, idx_quality, idx_trajectory, idx_trajectory_quality]
+        [
+            idx_self,
+            idx_trigger,
+            idx_quality,
+            idx_trajectory_quality
+        ]
     )
 
-    candidate_event_table = spt.cut_and_sort_table_on_indices(
+    return spt.cut_and_sort_table_on_indices(
         table=event_table,
         structure=irf.table.STRUCTURE,
         common_indices=idx_candidates,
         level_keys=None,
     )
-
-    return candidate_event_table
 
 
 def make_wighted_mask_wrt_primary_table(
@@ -110,21 +110,10 @@ def make_wighted_mask_wrt_primary_table(
             mask[ii] = default_weight
     return mask
 
-trajectory_quality = {}
+
 for sk in irf_config["config"]["sites"]:
-    trajectory_quality[sk] = {}
     for pk in irf_config["config"]["particles"]:
-        trajectory_quality[sk][pk] = spt.dict_to_recarray(
-            {
-                spt.IDX: _trajectory_quality[sk][pk]["trajectory_quality"][spt.IDX],
-                "trajectory/quality": _trajectory_quality[sk][pk]["trajectory_quality"]["quality"]
-            }
-        )
-
-
-for site_key in irf_config["config"]["sites"]:
-    for particle_key in irf_config["config"]["particles"]:
-        site_particle_dir = os.path.join(pa["out_dir"], site_key, particle_key)
+        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
         # SCENARIO: point source
@@ -133,8 +122,8 @@ for site_key in irf_config["config"]["sites"]:
             path=os.path.join(
                 pa["run_dir"],
                 "event_table",
-                site_key,
-                particle_key,
+                sk,
+                pk,
                 "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
@@ -158,12 +147,9 @@ for site_key in irf_config["config"]["sites"]:
         # detected
         candidate_table_point = cut_candidates_for_detection(
             event_table=table_point,
-            trajectory_quality=trajectory_quality[site_key][particle_key],
-            analysis_trigger_threshold=analysis_trigger_threshold,
-            trigger_modus=trigger_modus,
-            max_relative_leakage=max_relative_leakage,
-            min_reconstructed_photons=min_reconstructed_photons,
-            min_trajectory_quality=min_trajectory_quality
+            idx_trajectory_quality=passing_trajectory_quality[sk][pk],
+            idx_trigger=passing_trigger[sk][pk],
+            idx_quality=passing_quality[sk][pk],
         )
 
         candidate_array_point = irf.reconstruction.trajectory_quality.make_rectangular_table(
@@ -248,12 +234,9 @@ for site_key in irf_config["config"]["sites"]:
         # detected
         candidate_table_diffuse = cut_candidates_for_detection(
             event_table=table_diffuse,
-            trajectory_quality=trajectory_quality[site_key][particle_key],
-            analysis_trigger_threshold=analysis_trigger_threshold,
-            trigger_modus=trigger_modus,
-            max_relative_leakage=max_relative_leakage,
-            min_reconstructed_photons=min_reconstructed_photons,
-            min_trajectory_quality=min_trajectory_quality
+            idx_trajectory_quality=passing_trajectory_quality[sk][pk],
+            idx_trigger=passing_trigger[sk][pk],
+            idx_quality=passing_quality[sk][pk],
         )
 
         candidate_array_diffuse = irf.reconstruction.trajectory_quality.make_rectangular_table(
