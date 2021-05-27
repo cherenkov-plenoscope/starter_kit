@@ -26,6 +26,7 @@ weights_thrown2expected = irf.json_numpy.read_tree(
         "0040_weights_from_thrown_to_expected_energy_spectrum",
     )
 )
+min_trajectory_quality = sum_config["quality"]["min_trajectory_quality"]
 
 theta_bin_edges_deg = np.linspace(0.0, 3.0, 15)
 
@@ -76,7 +77,14 @@ feature_correlations = [
 quality_features = {
     "reconstructed_trajectory/r_m": {
         "scale": "linear",
-        "trace": [[0, 0.25], [50, 0.8], [175, 1.0], [200, 0.8], [350, 0.25], [640, 0.0]],
+        "trace": [
+            [0, 0.25],
+            [50, 0.8],
+            [175, 1.0],
+            [200, 0.8],
+            [350, 0.25],
+            [640, 0.0],
+        ],
         "weight": 1.0,
     },
     "features/num_photons": {
@@ -234,6 +242,31 @@ for sk in SITES:
             event_frame=rectab, quality_features=quality_features
         )
 
+        irf.json_numpy.write(
+            os.path.join(site_particle_dir, "trajectory_quality.json"),
+            {
+                "comment": (
+                    "Quality of reconstructed trajectory. "
+                    "0 is worst, 1 is best."
+                ),
+                spt.IDX: rectab[spt.IDX],
+                "unit": "1",
+                "quality": quality,
+            },
+        )
+
+        mask_passed_trajectory_quality = quality >= min_trajectory_quality
+        idx_passed_trajectory_quality = rectab[spt.IDX][
+            mask_passed_trajectory_quality
+        ]
+
+        irf.json_numpy.write(
+            path=os.path.join(
+                site_particle_dir, "passed_trajectory_quality.json"
+            ),
+            out_dict={spt.IDX: idx_passed_trajectory_quality},
+        )
+
         write_correlation_figure(
             path=os.path.join(
                 pa["out_dir"],
@@ -269,19 +302,6 @@ for sk in SITES:
                 log_exposure_counter=False,
             )
 
-        irf.json_numpy.write(
-            os.path.join(site_particle_dir, "trajectory_quality.json"),
-            {
-                "comment": (
-                    "Quality of reconstructed trajectory. "
-                    "0 is worst, 1 is best."
-                ),
-                spt.IDX: rectab[spt.IDX],
-                "unit": "1",
-                "quality": quality,
-            },
-        )
-
         if pk == "gamma":
             for fk in feature_correlations:
 
@@ -304,7 +324,6 @@ for sk in SITES:
                     log_exposure_counter=False,
                 )
 
-
         # plot losses
         # ===========
 
@@ -313,9 +332,7 @@ for sk in SITES:
             xp=weights_thrown2expected[sk][pk]["weights_vs_energy"][
                 "energy_GeV"
             ],
-            fp=weights_thrown2expected[sk][pk]["weights_vs_energy"][
-                "mean"
-            ],
+            fp=weights_thrown2expected[sk][pk]["weights_vs_energy"]["mean"],
         )
 
         fraction_passing = []
@@ -324,11 +341,11 @@ for sk in SITES:
             mask = quality >= quality_cut
             num_passing_cut = np.sum(mask)
             num_total = quality.shape[0]
-            fraction_passing.append(num_passing_cut/num_total)
+            fraction_passing.append(num_passing_cut / num_total)
 
             num_passing_cut_w = np.sum(reweight_spectrum[mask])
             num_total_w = np.sum(reweight_spectrum)
-            fraction_passing_w.append(num_passing_cut_w/num_total_w)
+            fraction_passing_w.append(num_passing_cut_w / num_total_w)
 
         QP["fraction_passing"][sk][pk] = np.array(fraction_passing)
         QP["fraction_passing_w"][sk][pk] = np.array(fraction_passing_w)
@@ -336,13 +353,20 @@ for sk in SITES:
 
 for sk in SITES:
     fig = seb.figure(seb.FIGURE_1_1)
-    ax = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
+    ax = seb.add_axes(fig=fig, span=[0.15, 0.1, 0.8, 0.8])
     for pk in PARTICLES:
         ax.plot(
             QP["quality_cuts"],
             QP["fraction_passing_w"][sk][pk],
-            color=sum_config["plot"]["particle_colors"][pk]
+            color=sum_config["plot"]["particle_colors"][pk],
         )
+    ax.plot(
+        [min_trajectory_quality, min_trajectory_quality],
+        [0.0, 1.0],
+        "k:"
+    )
+    ax.set_xlim([0, 1])
+    ax.set_ylim([0, 1])
     ax.set_xlabel("trajectory-quality / 1")
     ax.set_ylabel("passing cut / 1")
     fig.savefig(os.path.join(pa["out_dir"], "{:s}_passing.jpg".format(sk)))
