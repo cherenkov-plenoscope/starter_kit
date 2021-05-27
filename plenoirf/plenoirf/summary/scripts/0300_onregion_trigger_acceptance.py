@@ -34,7 +34,7 @@ passing_quality = read_idx(
     "passed_quality"
 )
 passing_trajectory_quality = read_idx(
-    os.path.join(pa["summary_dir"], "0215_trajectory_quality"),
+    os.path.join(pa["summary_dir"], "0205_trajectory_quality"),
     "passed_trajectory_quality"
 )
 
