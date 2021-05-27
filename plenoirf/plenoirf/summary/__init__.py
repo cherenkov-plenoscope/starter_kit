@@ -245,7 +245,7 @@ def _guess_summary_config(run_dir):
         "threshold_pe"
     ]
     analysis_trigger_threshold_pe = int(
-        np.round(1.22 * collection_trigger_threshold_pe)
+        np.round(1.17 * collection_trigger_threshold_pe)
     )
 
     fov_radius_deg = (
@@ -271,7 +271,7 @@ def _guess_summary_config(run_dir):
         },
         "trigger": {
             "modus": {
-                "accepting_focus": 7,
+                "accepting_focus": 9,
                 "rejecting_focus": -1,
                 "intensity_ratio_between_foci": 1.0,
                 "use_rejection_focus": False,
