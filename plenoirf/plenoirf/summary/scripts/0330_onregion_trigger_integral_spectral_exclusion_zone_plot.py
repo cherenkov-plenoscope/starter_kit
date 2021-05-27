@@ -63,15 +63,13 @@ output_sed_styles = {
     "fermi": sed_styles.FERMI_SED_STYLE,
 }
 
-instrument_systematic_uncertainty = 5e-3
-
 loop_systematic_uncertainty = [0.0, 1e-2]
 loop_systematic_uncertainty_line_style = ["-", ":"]
 
 loop_observation_time = [60, 300, 1500]
 loop_observation_time_line_color = ["red", "brown", "orange"]
 
-oridx = 0
+oridx = 1
 onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][
     "loop_opening_angle_deg"
 ][oridx]
