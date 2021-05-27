@@ -245,7 +245,7 @@ def _guess_summary_config(run_dir):
         "threshold_pe"
     ]
     analysis_trigger_threshold_pe = int(
-        np.round(1.11 * collection_trigger_threshold_pe)
+        np.round(1.22 * collection_trigger_threshold_pe)
     )
 
     fov_radius_deg = (
@@ -311,11 +311,11 @@ def _guess_summary_config(run_dir):
                 "loop_opening_angle_deg": np.linspace(0.2, 0.8, 4),
                 "opening_angle_scaling": {
                     "reco_num_photons_pe": [1e1, 1e2, 1e3, 1e4, 1e5],
-                    "scale": [2.0, 1.0, 0.5, 0.25, 0.125],
+                    "scale": [1.0, 1.0, 1.0, 1.0, 1.0],
                 },
                 "ellipticity_scaling": {
                     "reco_core_radius_m": [0.0, 2.5e2, 5e2, 1e3],
-                    "scale": [1.0, 2.0, 3.0, 5.0],
+                    "scale": [1.0, 1.0, 1.0, 1.0],
                 },
             },
         },
