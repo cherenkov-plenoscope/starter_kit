@@ -296,7 +296,7 @@ def _guess_summary_config(run_dir):
         "quality": {
             "max_relative_leakage": 0.1,
             "min_reconstructed_photons": 50,
-            "min_trajectory_quality": 0.0,
+            "min_trajectory_quality": 0.3,
         },
         "point_spread_function": {
             "theta_square": {"max_angle_deg": 3.25, "num_bins": 256,},
