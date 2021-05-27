@@ -14,10 +14,10 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-key = "trigger_probability_vs_cherenkov_size"
-
 trigger_vs_size = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0070_" + key)
+    os.path.join(
+        pa["summary_dir"], "0070_trigger_probability_vs_cherenkov_size"
+    )
 )
 
 particle_colors = sum_config["plot"]["particle_colors"]
@@ -74,5 +74,10 @@ for site_key in irf_config["config"]["sites"]:
     ax.set_ylim([1e-6, 1.5e-0])
     ax.set_xlabel("true Cherenkov-size / p.e.")
     ax.set_ylabel("trigger-probability / 1")
-    fig.savefig(opj(pa["out_dir"], site_key + "_" + key + ".jpg"))
+    fig.savefig(
+        opj(
+            pa["out_dir"],
+            site_key + "_trigger_probability_vs_cherenkov_size.jpg"
+        )
+    )
     seb.close_figure(fig)
