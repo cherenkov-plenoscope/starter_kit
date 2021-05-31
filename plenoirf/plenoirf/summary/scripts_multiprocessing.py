@@ -129,9 +129,9 @@ def run_parallel(run_dir, num_threads=6, polling_interval=1):
             if sta == "pending":
                 print("{:<70s}     P . .".format(name))
             elif sta == "running":
-                print("{:<70s}     . R .".format(name))
+                print("{:<70s}       R .".format(name))
             elif sta == "complete":
-                print("{:<70s}     . . C".format(name))
+                print("{:<70s}         C".format(name))
             else:
                 print("{:<70s}     ?".format(name))
 
