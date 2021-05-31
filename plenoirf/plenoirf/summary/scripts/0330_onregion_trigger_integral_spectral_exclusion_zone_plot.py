@@ -63,11 +63,11 @@ output_sed_styles = {
     "fermi": sed_styles.FERMI_SED_STYLE,
 }
 
-loop_systematic_uncertainty = [0.0, 1e-2]
-loop_systematic_uncertainty_line_style = ["-", ":"]
+loop_systematic_uncertainty = [0.0, 1e-2, 5e-2]
+loop_systematic_uncertainty_line_style = ["-","-.", ":"]
 
-loop_observation_time = [60, 300, 1500]
-loop_observation_time_line_color = ["red", "brown", "orange"]
+loop_observation_time = [300]
+loop_observation_time_line_color = ["brown"]
 
 oridx = 1
 onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][
@@ -91,7 +91,7 @@ for site_key in irf_config["config"]["sites"]:
         ]["integral_rate"]["mean"][oridx]
 
 x_lim_GeV = np.array([1e-1, 1e4])
-y_lim_per_m2_per_s_per_GeV = np.array([1e-0, 1e-16])
+y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
 
 PLOT_TANGENTIAL_POWERLAWS = False
 
