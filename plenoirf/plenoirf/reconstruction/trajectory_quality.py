@@ -61,3 +61,57 @@ def make_rectangular_table(event_table, plenoscope_pointing):
     )
 
     return df.to_records(index=False)
+
+
+QUALITY_FEATURES = {
+    "reconstructed_trajectory/r_m": {
+        "scale": "linear",
+        "trace": [
+            [0, 0.25],
+            [50, 0.8],
+            [175, 1.0],
+            [200, 0.8],
+            [350, 0.25],
+            [640, 0.0],
+        ],
+        "weight": 1.0,
+    },
+    "features/num_photons": {
+        "scale": "log10",
+        "trace": [[1, 0.0], [4, 1.0],],
+        "weight": 0.0,
+    },
+    "features/image_half_depth_shift_c": {
+        "scale": "linear",
+        "trace": [[0.0, 0.0], [1.5e-3, 1.0],],
+        "weight": 0.0,
+    },
+    "features/image_smallest_ellipse_solid_angle": {
+        "scale": "log10",
+        "trace": [[-7, 0.0], [-5, 1.0],],
+        "weight": 0.0,
+    },
+}
+
+
+def estimate_trajectory_quality(event_frame, quality_features):
+    weight_sum = 0.0
+    quality = np.zeros(event_frame["idx"].shape[0])
+    for qf_key in quality_features:
+        weight_sum += quality_features[qf_key]["weight"]
+
+    for qf_key in quality_features:
+        qf = quality_features[qf_key]
+
+        if qf["scale"] == "linear":
+            w = event_frame[qf_key]
+        elif qf["scale"] == "log10":
+            w = np.log10(event_frame[qf_key])
+        else:
+            assert False, "Scaling unknown"
+
+        trace = np.array(qf["trace"])
+        q_comp = np.interp(x=w, xp=trace[:, 0], fp=trace[:, 1])
+        q_comp *= qf["weight"] / weight_sum
+        quality += q_comp
+    return quality
