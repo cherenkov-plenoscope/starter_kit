@@ -14,7 +14,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 psf = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0213_simple_light_field_benchmark")
+    os.path.join(pa["summary_dir"], "0213_trajectory_benchmarking")
 )
 
 fov_radius_deg = (
