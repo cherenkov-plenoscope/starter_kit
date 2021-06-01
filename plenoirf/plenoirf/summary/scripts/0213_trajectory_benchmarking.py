@@ -51,7 +51,7 @@ passing_quality = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 passing_trajectory_quality = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0205_trajectory_quality")
+    os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
 # energy
