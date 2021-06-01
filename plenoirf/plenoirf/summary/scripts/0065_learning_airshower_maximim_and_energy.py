@@ -214,8 +214,8 @@ for sk in SITES:
     for mk in models:
         models[mk].fit(_X_shuffle, _y_shuffle)
 
-        model_gh_path = os.path.join(pa["out_dir"], mk)
-        with open(model_gh_path + ".pkl", "wb") as fout:
+        model_path = os.path.join(pa["out_dir"], mk + ".pkl")
+        with open(model_path, "wb") as fout:
             fout.write(pickle.dumps(models[mk]))
 
         for pk in PARTICLES:
