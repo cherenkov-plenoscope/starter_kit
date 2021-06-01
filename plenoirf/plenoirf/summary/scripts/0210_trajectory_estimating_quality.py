@@ -20,6 +20,9 @@ passing_trigger = irf.json_numpy.read_tree(
 passing_quality = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
+passing_trajectory = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
+)
 weights_thrown2expected = irf.json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"],
@@ -148,6 +151,17 @@ def write_correlation_figure(
     seb.close_figure(fig)
 
 
+def align_values_with_event_frame(event_frame, idxs, values):
+    Q = {}
+    for ii in range(len(idxs)):
+        Q[idxs[ii]] = values[ii]
+
+    aligned_values = np.nan * np.ones(event_frame.shape[0])
+    for ii in range(event_frame.shape[0]):
+        aligned_values[ii] = Q[event_frame[spt.IDX][ii]]
+    return aligned_values
+
+
 the = "theta"
 
 QP = {}
@@ -184,9 +198,10 @@ for sk in SITES:
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
-        quality = irf.reconstruction.trajectory_quality.estimate_trajectory_quality(
+        quality = align_values_with_event_frame(
             event_frame=event_frame,
-            quality_features=irf.reconstruction.trajectory_quality.QUALITY_FEATURES,
+            idxs=passing_trajectory[sk][pk]["trajectory_quality"][spt.IDX],
+            values=passing_trajectory[sk][pk]["trajectory_quality"]["quality"],
         )
 
         write_correlation_figure(
