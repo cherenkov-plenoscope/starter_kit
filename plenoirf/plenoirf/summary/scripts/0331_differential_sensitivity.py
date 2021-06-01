@@ -17,8 +17,8 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 
-reconstructed_energies = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0065_learning_airshower_maximum_and_energy")
+reconstructed_energy = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0065_learning_airshower_maximuqm_and_energy")
 )
 onregion_acceptance = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
@@ -46,3 +46,11 @@ on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
+
+
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+
+ordix = 1
+
+for sk in SITES:
