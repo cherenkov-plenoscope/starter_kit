@@ -32,7 +32,7 @@ passing_trigger = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 passing_quality = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0056_passing_quality")
+    os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
 random_seed = sum_config["random_seed"]
@@ -125,14 +125,20 @@ def make_x_y_arrays(event_frame):
     x = np.array(
         [
             f["transformed_features/num_photons"].values,
-            f["transformed_features/image_smallest_ellipse_object_distance"].values,
-            f["transformed_features/image_smallest_ellipse_solid_angle"].values,
+            f[
+                "transformed_features/image_smallest_ellipse_object_distance"
+            ].values,
+            f[
+                "transformed_features/image_smallest_ellipse_solid_angle"
+            ].values,
             f["transformed_features/image_smallest_ellipse_half_depth"].values,
             f["transformed_features/combi_A"].values,
             f["transformed_features/combi_B"].values,
             f["transformed_features/combi_C"].values,
             f["transformed_features/combi_image_infinity_std_density"].values,
-            f["transformed_features/combi_paxel_intensity_median_hypot"].values,
+            f[
+                "transformed_features/combi_paxel_intensity_median_hypot"
+            ].values,
             f["transformed_features/combi_diff_image_and_light_front"].values,
         ]
     ).T
@@ -151,15 +157,18 @@ for sk in SITES:
     for pk in PARTICLES:
         if pk == "gamma":
             train_test_gamma_energy[sk][pk] = {}
-            train_test_gamma_energy[sk][pk]["train"] = train_test[sk][pk]["train"]
-            train_test_gamma_energy[sk][pk]["test"] = train_test[sk][pk]["test"]
+            train_test_gamma_energy[sk][pk]["train"] = train_test[sk][pk][
+                "train"
+            ]
+            train_test_gamma_energy[sk][pk]["test"] = train_test[sk][pk][
+                "test"
+            ]
         else:
             train_test_gamma_energy[sk][pk] = {}
             train_test_gamma_energy[sk][pk]["train"] = []
-            train_test_gamma_energy[sk][pk]["test"] = np.concatenate([
-                train_test[sk][pk]["train"],
-                train_test[sk][pk]["test"]
-            ])
+            train_test_gamma_energy[sk][pk]["test"] = np.concatenate(
+                [train_test[sk][pk]["train"], train_test[sk][pk]["test"]]
+            )
 
 
 for sk in SITES:
@@ -208,7 +217,7 @@ for sk in SITES:
     _X_shuffle, _y_shuffle = sklearn.utils.shuffle(
         MA["gamma"]["train"]["x"],
         MA["gamma"]["train"]["y"],
-        random_state=random_seed
+        random_state=random_seed,
     )
 
     for mk in models:
@@ -261,7 +270,9 @@ for sk in SITES:
                     fig = seb.figure(seb.FIGURE_1_1)
                     ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
                     ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
-                    ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
+                    ax_cb = seb.add_axes(
+                        fig=fig, span=[0.85, 0.27, 0.02, 0.65]
+                    )
                     _pcm_confusion = ax_c.pcolormesh(
                         cm["x_bin_edges"],
                         cm["y_bin_edges"],
@@ -269,7 +280,9 @@ for sk in SITES:
                         cmap="Greys",
                         norm=seb.plt_colors.PowerNorm(gamma=0.5),
                     )
-                    ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+                    ax_c.grid(
+                        color="k", linestyle="-", linewidth=0.66, alpha=0.1
+                    )
                     seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
                     irf.summary.figure.mark_ax_thrown_spectrum(ax=ax_c)
                     ax_c.set_aspect("equal")
@@ -300,6 +313,8 @@ for sk in SITES:
                         linecolor="k",
                     )
                     fig.savefig(
-                        os.path.join(pa["out_dir"], sk + "_" + mk + "_" + tk + ".jpg")
+                        os.path.join(
+                            pa["out_dir"], sk + "_" + mk + "_" + tk + ".jpg"
+                        )
                     )
                     seb.close_figure(fig)

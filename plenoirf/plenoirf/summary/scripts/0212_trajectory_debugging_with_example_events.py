@@ -20,7 +20,7 @@ passing_trigger = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 passing_quality = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0056_passing_quality")
+    os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
 onreion_config = sum_config["on_off_measuremnent"]["onregion"]

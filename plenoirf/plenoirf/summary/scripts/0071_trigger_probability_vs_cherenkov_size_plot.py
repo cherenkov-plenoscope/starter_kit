@@ -77,7 +77,7 @@ for site_key in irf_config["config"]["sites"]:
     fig.savefig(
         opj(
             pa["out_dir"],
-            site_key + "_trigger_probability_vs_cherenkov_size.jpg"
+            site_key + "_trigger_probability_vs_cherenkov_size.jpg",
         )
     )
     seb.close_figure(fig)

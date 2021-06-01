@@ -48,7 +48,7 @@ passing_trigger = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 passing_quality = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0056_passing_quality")
+    os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 passing_trajectory_quality = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0205_trajectory_quality")
@@ -204,7 +204,9 @@ for sk in irf_config["config"]["sites"]:
             [
                 passing_trigger[sk][pk]["passed_trigger"]["idx"],
                 passing_quality[sk][pk]["passed_quality"]["idx"],
-                passing_trajectory_quality[sk][pk]["passed_trajectory_quality"]["idx"],
+                passing_trajectory_quality[sk][pk][
+                    "passed_trajectory_quality"
+                ]["idx"],
             ]
         )
         _event_table = spt.cut_and_sort_table_on_indices(

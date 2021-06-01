@@ -64,7 +64,7 @@ output_sed_styles = {
 }
 
 loop_systematic_uncertainty = [0.0, 1e-2, 5e-2]
-loop_systematic_uncertainty_line_style = ["-","-.", ":"]
+loop_systematic_uncertainty_line_style = ["-", "-.", ":"]
 
 loop_observation_time = [300]
 loop_observation_time_line_color = ["brown"]

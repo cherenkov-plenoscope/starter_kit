@@ -26,16 +26,15 @@ def read_idx(path, key):
 
 
 passing_trigger = read_idx(
-    os.path.join(pa["summary_dir"], "0055_passing_trigger"),
-    "passed_trigger"
+    os.path.join(pa["summary_dir"], "0055_passing_trigger"), "passed_trigger"
 )
 passing_quality = read_idx(
-    os.path.join(pa["summary_dir"], "0056_passing_quality"),
-    "passed_quality"
+    os.path.join(pa["summary_dir"], "0056_passing_basic_quality"),
+    "passed_quality",
 )
 passing_trajectory_quality = read_idx(
     os.path.join(pa["summary_dir"], "0205_trajectory_quality"),
-    "passed_trajectory_quality"
+    "passed_trajectory_quality",
 )
 
 MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
@@ -72,20 +71,12 @@ cosmic_ray_keys.remove("gamma")
 
 
 def cut_candidates_for_detection(
-    event_table,
-    idx_trajectory_quality,
-    idx_trigger,
-    idx_quality,
+    event_table, idx_trajectory_quality, idx_trigger, idx_quality,
 ):
     idx_self = event_table["primary"][spt.IDX]
 
     idx_candidates = spt.intersection(
-        [
-            idx_self,
-            idx_trigger,
-            idx_quality,
-            idx_trajectory_quality
-        ]
+        [idx_self, idx_trigger, idx_quality, idx_trajectory_quality]
     )
 
     return spt.cut_and_sort_table_on_indices(
@@ -120,11 +111,7 @@ for sk in irf_config["config"]["sites"]:
         # ----------------------
         table_diffuse = spt.read(
             path=os.path.join(
-                pa["run_dir"],
-                "event_table",
-                sk,
-                pk,
-                "event_table.tar",
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
