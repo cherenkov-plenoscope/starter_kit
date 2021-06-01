@@ -57,10 +57,7 @@ for sk in SITES:
         )
 
         idx_common = spt.intersection(
-            [
-                passing_trigger[sk][pk]["passed_trigger"]["idx"],
-                passing_quality[sk][pk]["passed_quality"]["idx"],
-            ]
+            [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"],]
         )
 
         tables[sk][pk] = spt.cut_and_sort_table_on_indices(

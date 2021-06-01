@@ -52,13 +52,9 @@ for site_key in irf_config["config"]["sites"]:
 
         # summarize
         # ---------
-        idx_triggered = passing_trigger[site_key][particle_key][
-            "passed_trigger"
-        ][spt.IDX]
-
         mask_triggered = spt.make_mask_of_right_in_left(
             left_indices=event_table["primary"][spt.IDX],
-            right_indices=idx_triggered,
+            right_indices=passing_trigger[site_key][particle_key]["idx"],
         )
         (primary_cx, primary_cy) = mdfl.discovery._az_zd_to_cx_cy(
             azimuth_deg=np.rad2deg(event_table["primary"]["azimuth_rad"]),

@@ -104,8 +104,8 @@ def read_event_frame(
     for kk in ["test", "train"]:
         idxs_valid_kk = spt.intersection(
             [
-                passing_trigger[sk][pk]["passed_trigger"][spt.IDX],
-                passing_quality[sk][pk]["passed_quality"][spt.IDX],
+                passing_trigger[sk][pk]["idx"],
+                passing_quality[sk][pk]["idx"],
                 train_test[sk][pk][kk],
             ]
         )

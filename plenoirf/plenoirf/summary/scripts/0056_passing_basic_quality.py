@@ -39,6 +39,6 @@ for site_key in irf_config["config"]["sites"]:
         )
 
         irf.json_numpy.write(
-            path=os.path.join(site_particle_dir, "passed_quality" + ".json"),
-            out_dict={spt.IDX: idx_pastquality},
+            path=os.path.join(site_particle_dir, "idx.json"),
+            out_dict=idx_pastquality,
         )

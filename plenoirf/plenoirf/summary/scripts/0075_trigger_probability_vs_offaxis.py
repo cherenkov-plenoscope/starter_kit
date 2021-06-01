@@ -134,15 +134,12 @@ for site_key in irf_config["config"]["sites"]:
             ),
             structure=irf.table.STRUCTURE,
         )
-        passed_trigger = passing_trigger[site_key][particle_key][
-            "passed_trigger"
-        ]
 
         # summarize
         # ---------
         pasttrigger_mask = spt.make_mask_of_right_in_left(
             left_indices=event_table["primary"][spt.IDX],
-            right_indices=passed_trigger[spt.IDX],
+            right_indices=passing_trigger[site_key][particle_key]["idx"],
         )
 
         offaxis_deg = mdfl.discovery._angle_between_az_zd_deg(

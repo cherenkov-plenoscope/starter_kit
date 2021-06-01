@@ -14,27 +14,14 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-
-def read_idx(path, key):
-    akk = irf.json_numpy.read_tree(path)
-    out = {}
-    for sk in akk:
-        out[sk] = {}
-        for pk in akk[sk]:
-            out[sk][pk] = np.array(akk[sk][pk][key][spt.IDX])
-    return out
-
-
-passing_trigger = read_idx(
-    os.path.join(pa["summary_dir"], "0055_passing_trigger"), "passed_trigger"
+passing_trigger = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = read_idx(
-    os.path.join(pa["summary_dir"], "0056_passing_basic_quality"),
-    "passed_quality",
+passing_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = read_idx(
-    os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality"),
-    "passed_trajectory_quality",
+passing_trajectory_quality = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
 MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
@@ -134,9 +121,9 @@ for sk in irf_config["config"]["sites"]:
         # detected
         candidate_table_point = cut_candidates_for_detection(
             event_table=table_point,
-            idx_trajectory_quality=passing_trajectory_quality[sk][pk],
-            idx_trigger=passing_trigger[sk][pk],
-            idx_quality=passing_quality[sk][pk],
+            idx_trajectory_quality=passing_trajectory_quality[sk][pk]["idx"],
+            idx_trigger=passing_trigger[sk][pk]["idx"],
+            idx_quality=passing_quality[sk][pk]["idx"],
         )
 
         candidate_array_point = irf.reconstruction.trajectory_quality.make_rectangular_table(
@@ -221,9 +208,9 @@ for sk in irf_config["config"]["sites"]:
         # detected
         candidate_table_diffuse = cut_candidates_for_detection(
             event_table=table_diffuse,
-            idx_trajectory_quality=passing_trajectory_quality[sk][pk],
-            idx_trigger=passing_trigger[sk][pk],
-            idx_quality=passing_quality[sk][pk],
+            idx_trajectory_quality=passing_trajectory_quality[sk][pk]["idx"],
+            idx_trigger=passing_trigger[sk][pk]["idx"],
+            idx_quality=passing_quality[sk][pk]["idx"],
         )
 
         candidate_array_diffuse = irf.reconstruction.trajectory_quality.make_rectangular_table(

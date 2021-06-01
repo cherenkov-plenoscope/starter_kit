@@ -40,10 +40,6 @@ for site_key in irf_config["config"]["sites"]:
 
         # read
         # ----
-        idx_passed_trigger = passing_trigger[site_key][particle_key][
-            "passed_trigger"
-        ][spt.IDX]
-
         detected_grid_histograms = irf.grid.read_histograms(
             path=opj(
                 pa["run_dir"],
@@ -52,7 +48,7 @@ for site_key in irf_config["config"]["sites"]:
                 particle_key,
                 "grid.tar",
             ),
-            indices=idx_passed_trigger,
+            indices=passing_trigger[site_key][particle_key]["idx"],
         )
         idx_passed_trigger_and_in_debug_output = np.array(
             list(detected_grid_histograms.keys())

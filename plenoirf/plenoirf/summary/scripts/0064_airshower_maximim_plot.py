@@ -49,10 +49,7 @@ for sk in irf_config["config"]["sites"]:
     )
 
     idx_common = spt.intersection(
-        [
-            passing_trigger[sk][pk]["passed_trigger"]["idx"],
-            passing_quality[sk][pk]["passed_quality"]["idx"],
-        ]
+        [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"],]
     )
 
     table = spt.cut_and_sort_table_on_indices(

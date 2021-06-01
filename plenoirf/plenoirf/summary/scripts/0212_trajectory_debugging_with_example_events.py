@@ -79,14 +79,9 @@ for sk in irf_config["config"]["sites"]:
             ),
             structure=irf.table.STRUCTURE,
         )
-        passed_trigger_idx = np.array(
-            passing_trigger[sk][pk]["passed_trigger"][spt.IDX]
+        common_idx = spt.intersection(
+            [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"]]
         )
-        passed_quality_idx = np.array(
-            passing_quality[sk][pk]["passed_quality"][spt.IDX]
-        )
-        common_idx = spt.intersection([passed_trigger_idx, passed_quality_idx])
-
         all_truth = spt.cut_and_sort_table_on_indices(
             event_table,
             irf.table.STRUCTURE,
