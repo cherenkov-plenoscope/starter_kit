@@ -12,7 +12,6 @@ from sklearn import neural_network
 from sklearn import ensemble
 from sklearn import model_selection
 from sklearn import utils
-import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -247,74 +246,3 @@ for sk in SITES:
                 irf.json_numpy.write(
                     os.path.join(site_particle_dir, tk + ".json"), out
                 )
-
-                if pk == "gamma":
-
-                    # plot
-                    # ====
-                    bin_edges = np.geomspace(
-                        targets[tk]["start"],
-                        targets[tk]["stop"],
-                        targets[tk]["num_bins"] + 1,
-                    )
-
-                    cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
-                        x=y_true,
-                        y=y_score,
-                        x_bin_edges=bin_edges,
-                        y_bin_edges=bin_edges,
-                        min_exposure_x=min_number_samples,
-                        default_low_exposure=0.0,
-                    )
-
-                    fig = seb.figure(seb.FIGURE_1_1)
-                    ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
-                    ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
-                    ax_cb = seb.add_axes(
-                        fig=fig, span=[0.85, 0.27, 0.02, 0.65]
-                    )
-                    _pcm_confusion = ax_c.pcolormesh(
-                        cm["x_bin_edges"],
-                        cm["y_bin_edges"],
-                        np.transpose(cm["confusion_bins_normalized_columns"]),
-                        cmap="Greys",
-                        norm=seb.plt_colors.PowerNorm(gamma=0.5),
-                    )
-                    ax_c.grid(
-                        color="k", linestyle="-", linewidth=0.66, alpha=0.1
-                    )
-                    seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
-                    irf.summary.figure.mark_ax_thrown_spectrum(ax=ax_c)
-                    ax_c.set_aspect("equal")
-                    ax_c.set_title("normalized for each column")
-                    ax_c.set_ylabel(
-                        "reco. {:s} / {:s}".format(
-                            targets[tk]["label"], targets[tk]["unit"]
-                        )
-                    )
-                    ax_c.loglog()
-                    ax_h.semilogx()
-                    ax_h.set_xlim(
-                        [np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])]
-                    )
-                    ax_h.set_xlabel(
-                        "true {:s} / {:s}".format(
-                            targets[tk]["label"], targets[tk]["unit"]
-                        )
-                    )
-                    ax_h.set_ylabel("num. events / 1")
-                    irf.summary.figure.mark_ax_thrown_spectrum(ax_h)
-                    ax_h.axhline(min_number_samples, linestyle=":", color="k")
-                    seb.ax_add_histogram(
-                        ax=ax_h,
-                        bin_edges=cm["x_bin_edges"],
-                        bincounts=cm["exposure_bins_x_no_weights"],
-                        linestyle="-",
-                        linecolor="k",
-                    )
-                    fig.savefig(
-                        os.path.join(
-                            pa["out_dir"], sk + "_" + mk + "_" + tk + ".jpg"
-                        )
-                    )
-                    seb.close_figure(fig)
