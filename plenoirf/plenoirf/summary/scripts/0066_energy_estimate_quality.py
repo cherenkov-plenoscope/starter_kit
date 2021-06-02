@@ -59,6 +59,9 @@ def align_on_idx(input_idx, input_values, target_idxs):
 
 for sk in irf_config["config"]["sites"]:
     for pk in irf_config["config"]["particles"]:
+        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
+        os.makedirs(site_particle_dir, exist_ok=True)
+
         event_table = spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
@@ -93,6 +96,10 @@ for sk in irf_config["config"]["sites"]:
             y_bin_edges=energy_bin_edges,
             min_exposure_x=min_number_samples,
             default_low_exposure=0.0,
+        )
+
+        irf.json_numpy.write(
+            os.path.join(site_particle_dir, "confusion_matrix" + ".json"), cm
         )
 
         fig = seb.figure(seb.FIGURE_1_1)
