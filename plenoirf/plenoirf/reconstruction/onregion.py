@@ -1,5 +1,7 @@
 import numpy as np
 import sparse_numeric_table as spt
+import shapely
+from shapely import geometry as shapely_geometry
 from .. import table as irf_table
 
 
@@ -14,6 +16,20 @@ def make_polygon(onregion, num_steps=1000):
     )
 
 
+def intersecting_area_of_polygons(a, b):
+    poly_a = shapely_geometry.Polygon(shell=a)
+    poly_b = shapely_geometry.Polygon(shell=b)
+    poly_intersection_a_b = poly_a.intersection(poly_b)
+    return poly_intersection_a_b.area
+
+
+def make_circular_polygon(radius, num_steps=1000):
+    poly = []
+    for phi in np.linspace(0, np.pi * 2.0, num_steps, endpoint=False):
+        poly.append([radius * np.cos(phi), radius * np.sin(phi)])
+    return np.array(poly)
+
+
 def _make_ellipse_polygon(
     center_x,
     center_y,
@@ -23,7 +39,7 @@ def _make_ellipse_polygon(
     num_steps=1000
 ):
     # polar coordinates
-    theta = np.linspace(0, 2 * np.pi, num_steps)
+    theta = np.linspace(0, 2 * np.pi, num_steps, endpoint=False)
     radius = (mayor_radius*minor_radius) / np.sqrt(
         (minor_radius*np.cos(theta))**2 +
         (mayor_radius*np.sin(theta))**2
@@ -31,7 +47,7 @@ def _make_ellipse_polygon(
 
     xs = center_x + np.cos(theta + main_axis_azimuth) * radius
     ys = center_y + np.sin(theta + main_axis_azimuth) * radius
-    return xs, ys
+    return np.array([xs, ys]).T
 
 
 def estimate_onregion(

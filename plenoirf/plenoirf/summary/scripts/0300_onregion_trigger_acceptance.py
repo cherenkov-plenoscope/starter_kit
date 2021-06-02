@@ -30,6 +30,10 @@ MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
 MAX_SOURCE_ANGLE = np.deg2rad(MAX_SOURCE_ANGLE_DEG)
 SOLID_ANGLE_TO_CONTAIN_SOURCE = np.pi * MAX_SOURCE_ANGLE ** 2.0
 
+POSSIBLE_ONREGION_POLYGON = irf.reconstruction.onregion.make_circular_polygon(
+    radius=MAX_SOURCE_ANGLE,
+    num_steps=37
+)
 pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
     "azimuth_deg"
 ]
@@ -239,27 +243,23 @@ for sk in irf_config["config"]["sites"]:
                     config=onregion_config,
                 )
 
-                _probability = (
-                    _onregion["ellipse_solid_angle"]
-                    / SOLID_ANGLE_TO_CONTAIN_SOURCE
+                onregion_polygon = irf.reconstruction.onregion.make_polygon(
+                    onregion=_onregion,
+                    num_steps=37
                 )
 
-                _optical_axis_to_reconstructed_direction = np.hypot(
-                    difcanarr["reconstructed_trajectory/cx_rad"][ii],
-                    difcanarr["reconstructed_trajectory/cy_rad"][ii],
+                overlap_srad = irf.reconstruction.onregion.intersecting_area_of_polygons(
+                    a=onregion_polygon,
+                    b=POSSIBLE_ONREGION_POLYGON
                 )
 
-                _closest_reconstructed_direction = (
-                    _optical_axis_to_reconstructed_direction
-                    - _onregion["ellipse_mayor_radius"]
+                probability_to_contain_random_source = (
+                    overlap_srad / SOLID_ANGLE_TO_CONTAIN_SOURCE
                 )
-
-                if _closest_reconstructed_direction > MAX_SOURCE_ANGLE:
-                    _probability = 0.0
 
                 idx_dict_probability_for_source_in_onregion[
                     difcanarr[spt.IDX][ii]
-                ] = _probability
+                ] = probability_to_contain_random_source
 
             mask_probability_for_source_in_onregion = make_wighted_mask_wrt_primary_table(
                 primary_table=diffuse_thrown["primary"],
