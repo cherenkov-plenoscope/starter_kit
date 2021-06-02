@@ -96,42 +96,40 @@ for sk in irf_config["config"]["sites"]:
 
         # SCENARIO: point source
         # ----------------------
-        table_diffuse = spt.read(
+        diffuse_thrown = spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
 
-        idx_onregion = irf.analysis.cuts.cut_primary_direction_within_angle(
-            primary_table=table_diffuse["primary"],
+        idx_source_in_possible_onregion = irf.analysis.cuts.cut_primary_direction_within_angle(
+            primary_table=diffuse_thrown["primary"],
             radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
             azimuth_deg=pointing_azimuth_deg,
             zenith_deg=pointing_zenith_deg,
         )
 
         # thrown
-        table_point = spt.cut_table_on_indices(
-            table=table_diffuse,
+        point_thrown = spt.cut_table_on_indices(
+            table=diffuse_thrown,
             structure=irf.table.STRUCTURE,
-            common_indices=idx_onregion,
+            common_indices=idx_source_in_possible_onregion,
             level_keys=None,
         )
 
         # detected
-        candidate_table_point = cut_candidates_for_detection(
-            event_table=table_point,
+        point_candidate = cut_candidates_for_detection(
+            event_table=point_thrown,
             idx_trajectory_quality=passing_trajectory_quality[sk][pk]["idx"],
             idx_trigger=passing_trigger[sk][pk]["idx"],
             idx_quality=passing_quality[sk][pk]["idx"],
         )
 
-        candidate_array_point = irf.reconstruction.trajectory_quality.make_rectangular_table(
-            event_table=candidate_table_point,
+        poicanarr = irf.reconstruction.trajectory_quality.make_rectangular_table(
+            event_table=point_candidate,
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
-        cap = candidate_array_point
-        num_candidate_events = cap[spt.IDX].shape[0]
 
         Qeff = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
         Qunc = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
@@ -139,32 +137,32 @@ for sk in irf_config["config"]["sites"]:
             onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
 
             idx_dict_source_in_onregion = {}
-            for ii in range(num_candidate_events):
+            for ii in range(poicanarr[spt.IDX].shape[0]):
 
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
-                    reco_cx=cap["reconstructed_trajectory/cx_rad"][ii],
-                    reco_cy=cap["reconstructed_trajectory/cy_rad"][ii],
-                    reco_main_axis_azimuth=cap[
+                    reco_cx=poicanarr["reconstructed_trajectory/cx_rad"][ii],
+                    reco_cy=poicanarr["reconstructed_trajectory/cy_rad"][ii],
+                    reco_main_axis_azimuth=poicanarr[
                         "reconstructed_trajectory/fuzzy_main_axis_azimuth_rad"
                     ][ii],
-                    reco_num_photons=cap["features/num_photons"][ii],
+                    reco_num_photons=poicanarr["features/num_photons"][ii],
                     reco_core_radius=np.hypot(
-                        cap["reconstructed_trajectory/x_m"][ii],
-                        cap["reconstructed_trajectory/y_m"][ii],
+                        poicanarr["reconstructed_trajectory/x_m"][ii],
+                        poicanarr["reconstructed_trajectory/y_m"][ii],
                     ),
                     config=onregion_config,
                 )
 
                 hit = irf.reconstruction.onregion.is_direction_inside(
-                    cx=cap["true_trajectory/cx_rad"][ii],
-                    cy=cap["true_trajectory/cy_rad"][ii],
+                    cx=poicanarr["true_trajectory/cx_rad"][ii],
+                    cy=poicanarr["true_trajectory/cy_rad"][ii],
                     onregion=_onregion,
                 )
 
-                idx_dict_source_in_onregion[cap[spt.IDX][ii]] = hit
+                idx_dict_source_in_onregion[poicanarr[spt.IDX][ii]] = hit
 
             mask_detected = make_wighted_mask_wrt_primary_table(
-                primary_table=table_point["primary"],
+                primary_table=point_thrown["primary"],
                 idx_dict_of_weights=idx_dict_source_in_onregion,
             )
 
@@ -173,13 +171,13 @@ for sk in irf_config["config"]["sites"]:
                 _q_unc,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin_edges,
-                energy_GeV=table_point["primary"]["energy_GeV"],
+                energy_GeV=point_thrown["primary"]["energy_GeV"],
                 mask_detected=mask_detected,
-                quantity_scatter=table_point["grid"]["area_thrown_m2"],
-                num_grid_cells_above_lose_threshold=table_point["grid"][
+                quantity_scatter=point_thrown["grid"]["area_thrown_m2"],
+                num_grid_cells_above_lose_threshold=point_thrown["grid"][
                     "num_bins_above_threshold"
                 ],
-                total_num_grid_cells=table_point["grid"]["num_bins_thrown"],
+                total_num_grid_cells=point_thrown["grid"]["num_bins_thrown"],
             )
 
             Qeff[:, oridx] = _q_eff
@@ -203,23 +201,20 @@ for sk in irf_config["config"]["sites"]:
         # ------------------------
 
         # thrown
-        table_diffuse = table_diffuse
+        diffuse_thrown = diffuse_thrown
 
         # detected
-        candidate_table_diffuse = cut_candidates_for_detection(
-            event_table=table_diffuse,
+        diffuse_candidate = cut_candidates_for_detection(
+            event_table=diffuse_thrown,
             idx_trajectory_quality=passing_trajectory_quality[sk][pk]["idx"],
             idx_trigger=passing_trigger[sk][pk]["idx"],
             idx_quality=passing_quality[sk][pk]["idx"],
         )
 
-        candidate_array_diffuse = irf.reconstruction.trajectory_quality.make_rectangular_table(
-            event_table=candidate_table_diffuse,
+        difcanarr = irf.reconstruction.trajectory_quality.make_rectangular_table(
+            event_table=diffuse_candidate,
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
-
-        cad = candidate_array_diffuse
-        num_candidate_events = cad[spt.IDX].shape[0]
 
         Qeff = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
         Qunc = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
@@ -228,18 +223,18 @@ for sk in irf_config["config"]["sites"]:
             onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
 
             idx_dict_probability_for_source_in_onregion = {}
-            for ii in range(num_candidate_events):
+            for ii in range(difcanarr[spt.IDX].shape[0]):
 
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
-                    reco_cx=cad["reconstructed_trajectory/cx_rad"][ii],
-                    reco_cy=cad["reconstructed_trajectory/cy_rad"][ii],
-                    reco_main_axis_azimuth=cad[
+                    reco_cx=difcanarr["reconstructed_trajectory/cx_rad"][ii],
+                    reco_cy=difcanarr["reconstructed_trajectory/cy_rad"][ii],
+                    reco_main_axis_azimuth=difcanarr[
                         "reconstructed_trajectory/fuzzy_main_axis_azimuth_rad"
                     ][ii],
-                    reco_num_photons=cad["features/num_photons"][ii],
+                    reco_num_photons=difcanarr["features/num_photons"][ii],
                     reco_core_radius=np.hypot(
-                        cad["reconstructed_trajectory/x_m"][ii],
-                        cad["reconstructed_trajectory/y_m"][ii],
+                        difcanarr["reconstructed_trajectory/x_m"][ii],
+                        difcanarr["reconstructed_trajectory/y_m"][ii],
                     ),
                     config=onregion_config,
                 )
@@ -250,8 +245,8 @@ for sk in irf_config["config"]["sites"]:
                 )
 
                 _optical_axis_to_reconstructed_direction = np.hypot(
-                    cad["reconstructed_trajectory/cx_rad"][ii],
-                    cad["reconstructed_trajectory/cy_rad"][ii],
+                    difcanarr["reconstructed_trajectory/cx_rad"][ii],
+                    difcanarr["reconstructed_trajectory/cy_rad"][ii],
                 )
 
                 _closest_reconstructed_direction = (
@@ -263,11 +258,11 @@ for sk in irf_config["config"]["sites"]:
                     _probability = 0.0
 
                 idx_dict_probability_for_source_in_onregion[
-                    cad[spt.IDX][ii]
+                    difcanarr[spt.IDX][ii]
                 ] = _probability
 
             mask_probability_for_source_in_onregion = make_wighted_mask_wrt_primary_table(
-                primary_table=table_diffuse["primary"],
+                primary_table=diffuse_thrown["primary"],
                 idx_dict_of_weights=idx_dict_probability_for_source_in_onregion,
             )
 
@@ -276,16 +271,16 @@ for sk in irf_config["config"]["sites"]:
                 _q_unc,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin_edges,
-                energy_GeV=table_diffuse["primary"]["energy_GeV"],
+                energy_GeV=diffuse_thrown["primary"]["energy_GeV"],
                 mask_detected=mask_probability_for_source_in_onregion,
                 quantity_scatter=(
-                    table_diffuse["grid"]["area_thrown_m2"]
-                    * table_diffuse["primary"]["solid_angle_thrown_sr"]
+                    diffuse_thrown["grid"]["area_thrown_m2"]
+                    * diffuse_thrown["primary"]["solid_angle_thrown_sr"]
                 ),
-                num_grid_cells_above_lose_threshold=table_diffuse["grid"][
+                num_grid_cells_above_lose_threshold=diffuse_thrown["grid"][
                     "num_bins_above_threshold"
                 ],
-                total_num_grid_cells=table_diffuse["grid"]["num_bins_thrown"],
+                total_num_grid_cells=diffuse_thrown["grid"]["num_bins_thrown"],
             )
 
             Qeff[:, oridx] = _q_eff
