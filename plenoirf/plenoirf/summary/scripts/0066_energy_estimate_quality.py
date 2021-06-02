@@ -46,6 +46,7 @@ energy_bin_edges = np.geomspace(
 
 min_number_samples = 10
 
+
 def align_on_idx(input_idx, input_values, target_idxs):
     Q = {}
     for ii in range(len(input_idx)):
@@ -54,7 +55,6 @@ def align_on_idx(input_idx, input_values, target_idxs):
     for ii in range(target_idxs.shape[0]):
         aligned_values[ii] = Q[target_idxs[ii]]
     return aligned_values
-
 
 
 for sk in irf_config["config"]["sites"]:
@@ -69,12 +69,14 @@ for sk in irf_config["config"]["sites"]:
             structure=irf.table.STRUCTURE,
         )
 
-        idx_valid = spt.intersection([
-            passing_trigger[sk][pk]["idx"],
-            passing_quality[sk][pk]["idx"],
-            passing_trajectory_quality[sk][pk]["idx"],
-            reconstructed_energy[sk][pk]["energy"]["idx"],
-        ])
+        idx_valid = spt.intersection(
+            [
+                passing_trigger[sk][pk]["idx"],
+                passing_quality[sk][pk]["idx"],
+                passing_trajectory_quality[sk][pk]["idx"],
+                reconstructed_energy[sk][pk]["energy"]["idx"],
+            ]
+        )
 
         valid_event_table = spt.cut_and_sort_table_on_indices(
             table=event_table,
@@ -86,7 +88,7 @@ for sk in irf_config["config"]["sites"]:
         reco_energy = align_on_idx(
             input_idx=reconstructed_energy[sk][pk]["energy"]["idx"],
             input_values=reconstructed_energy[sk][pk]["energy"]["energy"],
-            target_idxs=valid_event_table["primary"]["idx"]
+            target_idxs=valid_event_table["primary"]["idx"],
         )
 
         cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
@@ -105,9 +107,7 @@ for sk in irf_config["config"]["sites"]:
         fig = seb.figure(seb.FIGURE_1_1)
         ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
         ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
-        ax_cb = seb.add_axes(
-            fig=fig, span=[0.85, 0.27, 0.02, 0.65]
-        )
+        ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
         _pcm_confusion = ax_c.pcolormesh(
             cm["x_bin_edges"],
             cm["y_bin_edges"],
@@ -115,9 +115,7 @@ for sk in irf_config["config"]["sites"]:
             cmap="Greys",
             norm=seb.plt_colors.PowerNorm(gamma=0.5),
         )
-        ax_c.grid(
-            color="k", linestyle="-", linewidth=0.66, alpha=0.1
-        )
+        ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
         seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
         irf.summary.figure.mark_ax_thrown_spectrum(ax=ax_c)
         ax_c.set_aspect("equal")
@@ -125,9 +123,7 @@ for sk in irf_config["config"]["sites"]:
         ax_c.set_ylabel("reco. energy / GeV")
         ax_c.loglog()
         ax_h.semilogx()
-        ax_h.set_xlim(
-            [np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])]
-        )
+        ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])])
         ax_h.set_xlabel("true energy / GeV")
         ax_h.set_ylabel("num. events / 1")
         irf.summary.figure.mark_ax_thrown_spectrum(ax_h)
@@ -139,9 +135,5 @@ for sk in irf_config["config"]["sites"]:
             linestyle="-",
             linecolor="k",
         )
-        fig.savefig(
-            os.path.join(
-                pa["out_dir"], sk + "_" + pk + ".jpg"
-            )
-        )
+        fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + ".jpg"))
         seb.close_figure(fig)

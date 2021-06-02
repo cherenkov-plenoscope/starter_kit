@@ -20,9 +20,7 @@ PARTICLES = irf_config["config"]["particles"]
 # prepare energy confusion
 # ------------------------
 _energy_confusion = irf.json_numpy.read_tree(
-    os.path.join(
-        pa["summary_dir"], "0066_energy_estimate_quality"
-    ),
+    os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
 )
 energy_confusion = {}
 for sk in SITES:
@@ -52,20 +50,20 @@ for sk in SITES:
 # prepare integration-intervalls
 energy_start_GeV = sum_config["energy_binning"]["lower_edge_GeV"]
 energy_stop_GeV = sum_config["energy_binning"]["upper_edge_GeV"]
-num_fine_energy_bins = sum_config["energy_binning"]["num_bins"]["interpolation"]
+num_fine_energy_bins = sum_config["energy_binning"]["num_bins"][
+    "interpolation"
+]
 fine_energy_bin_edges = np.geomspace(
-    energy_start_GeV,
-    energy_stop_GeV,
-    num_fine_energy_bins + 1,
+    energy_start_GeV, energy_stop_GeV, num_fine_energy_bins + 1,
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
 
-num_energy_bins = sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
+num_energy_bins = sum_config["energy_binning"]["num_bins"][
+    "trigger_acceptance_onregion"
+]
 energy_bin_edges = np.geomspace(
-    energy_start_GeV,
-    energy_stop_GeV,
-    num_energy_bins + 1,
+    energy_start_GeV, energy_stop_GeV, num_energy_bins + 1,
 )
 
 fine_energy_bin_edge_matches = []
@@ -93,20 +91,19 @@ for sk in SITES:
                 estop = fine_energy_bin_edge_matches[ee + 1]
 
                 rate_true_energy_per_s[ee] = np.sum(
-                    diff_rate_per_s_per_GeV[sk][pk][:, ordix][estart:estop] *
-                    fine_energy_bin_width[estart:estop]
+                    diff_rate_per_s_per_GeV[sk][pk][:, ordix][estart:estop]
+                    * fine_energy_bin_width[estart:estop]
                 )
 
             for ee in range(num_energy_bins):
                 rate_reco_energy_per_s[:, ordix] += (
-                    energy_confusion[sk][pk][ee] *
-                    rate_true_energy_per_s[ee]
+                    energy_confusion[sk][pk][ee] * rate_true_energy_per_s[ee]
                 )
 
         irf.json_numpy.write(
             os.path.join(
                 site_particle_dir,
-                "rate_in_onregion_and_reconstructed_energy.json"
+                "rate_in_onregion_and_reconstructed_energy.json",
             ),
             {
                 "comment": (

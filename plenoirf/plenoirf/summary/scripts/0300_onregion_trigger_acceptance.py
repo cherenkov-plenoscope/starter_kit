@@ -31,8 +31,7 @@ MAX_SOURCE_ANGLE = np.deg2rad(MAX_SOURCE_ANGLE_DEG)
 SOLID_ANGLE_TO_CONTAIN_SOURCE = np.pi * MAX_SOURCE_ANGLE ** 2.0
 
 POSSIBLE_ONREGION_POLYGON = irf.reconstruction.onregion.make_circular_polygon(
-    radius=MAX_SOURCE_ANGLE,
-    num_steps=37
+    radius=MAX_SOURCE_ANGLE, num_steps=37
 )
 pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
     "azimuth_deg"
@@ -244,13 +243,11 @@ for sk in irf_config["config"]["sites"]:
                 )
 
                 onregion_polygon = irf.reconstruction.onregion.make_polygon(
-                    onregion=_onregion,
-                    num_steps=37
+                    onregion=_onregion, num_steps=37
                 )
 
                 overlap_srad = irf.reconstruction.onregion.intersecting_area_of_polygons(
-                    a=onregion_polygon,
-                    b=POSSIBLE_ONREGION_POLYGON
+                    a=onregion_polygon, b=POSSIBLE_ONREGION_POLYGON
                 )
 
                 probability_to_contain_random_source = (

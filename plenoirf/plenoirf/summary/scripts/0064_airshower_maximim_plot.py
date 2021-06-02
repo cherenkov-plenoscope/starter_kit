@@ -65,13 +65,17 @@ for sk in irf_config["config"]["sites"]:
         )
 
         fk = "image_smallest_ellipse_object_distance"
-        true_airshower_maximum_altitude = table["cherenkovpool"]["maximum_asl_m"]
+        true_airshower_maximum_altitude = table["cherenkovpool"][
+            "maximum_asl_m"
+        ]
         image_smallest_ellipse_object_distance = table["features"][fk]
 
         event_weights = np.interp(
             x=table["primary"]["energy_GeV"],
             fp=weights_thrown2expected[sk][pk]["weights_vs_energy"]["mean"],
-            xp=weights_thrown2expected[sk][pk]["weights_vs_energy"]["energy_GeV"],
+            xp=weights_thrown2expected[sk][pk]["weights_vs_energy"][
+                "energy_GeV"
+            ],
         )
 
         cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
@@ -99,7 +103,9 @@ for sk in irf_config["config"]["sites"]:
         irf.summary.figure.mark_ax_airshower_spectrum(ax=ax_c)
         ax_c.set_aspect("equal")
         ax_c.set_title("normalized for each column")
-        ax_c.set_ylabel(fk + " / " + irf.table.STRUCTURE["features"][fk]["unit"])
+        ax_c.set_ylabel(
+            fk + " / " + irf.table.STRUCTURE["features"][fk]["unit"]
+        )
         ax_c.loglog()
         seb.ax_add_grid(ax_c)
 
