@@ -159,6 +159,7 @@ def estimate_critical_rate(
         assert False
 
     sig_count_sys_on = (
+        detection_threshold_std *
         instrument_systematic_uncertainty *
         background_rate_in_onregion_per_s *
         observation_time_s
