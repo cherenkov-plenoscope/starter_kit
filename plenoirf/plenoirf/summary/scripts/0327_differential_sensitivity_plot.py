@@ -37,8 +37,8 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
-observation_time_s = 300
-systematic_uncertainty = 5e-2
+observation_time_s = 60
+systematic_uncertainty = 1e-2
 
 COSMIC_RAYS = list(irf_config["config"]["particles"].keys())
 COSMIC_RAYS.remove("gamma")

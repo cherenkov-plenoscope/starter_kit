@@ -65,15 +65,16 @@ crab_flux = cosmic_fluxes.read_crab_nebula_flux_from_resources()
 internal_sed_style = sed_styles.PLENOIRF_SED_STYLE
 
 output_sed_styles = {
-    "plenoirf": sed_styles.PLENOIRF_SED_STYLE,
+    "portal": sed_styles.PLENOIRF_SED_STYLE,
     "science": sed_styles.SCIENCE_SED_STYLE,
     "fermi": sed_styles.FERMI_SED_STYLE,
+    "cta": sed_styles.CHERENKOV_TELESCOPE_ARRAY_SED_STYLE,
 }
 
-loop_systematic_uncertainty = [5e-2]
+loop_systematic_uncertainty = [1e-2]
 loop_systematic_uncertainty_line_style = ["-"]
 
-loop_observation_time = [300]
+loop_observation_time = [60]
 loop_observation_time_line_color = ["brown"]
 
 oridx = 1
@@ -165,7 +166,7 @@ for site_key in irf_config["config"]["sites"]:
                 diff_sensitivity[site_key]["differential_sensitivity"]["differential_flux"]
             )[ii, oridx]
         ])
-    com["label"] = "Portal, 300s, diff., sys. 5.0e-02"
+    com["label"] = "Portal, 60s, diff., sys. 1.0e-02"
     com["color"] = "orange"
     com["alpha"] = 1.0
     com["linestyle"] = "-"
