@@ -42,3 +42,16 @@ SCIENCE_SED_STYLE = {
     "y_label": "Energy$^{2}$ $\\times$ (differential flux)",
     "y_unit": "(MeV)$^{2}$ (cm)$^{-2}$ s$^{-1}$ (MeV)$^{-1}$",
 }
+
+CHERENKOV_TELESCOPE_ARRAY_SED_STYLE = {
+    "x_energy_in_eV": 1e12,
+    "y_inverse_energy_in_eV": one_erg_in_eV,
+    "y_inverse_area_in_m2": 1e-4,
+    "y_inverse_time_in_s": 1.0,
+    "y_scale_energy_in_eV": one_erg_in_eV,
+    "y_scale_energy_power": 2.0,
+    "x_label": "Energy",
+    "x_unit": "TeV",
+    "y_label": "Energy$^{2}$ $\\times$ (differential flux)",
+    "y_unit": "erg$^{2}$ (cm)$^{-2}$ s$^{-1}$ erg$^{-1}$",
+}

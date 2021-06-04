@@ -280,3 +280,143 @@ def fermi_lat_integral_spectral_exclusion_zone():
         "title": "Fermi-LAT broadband flux sensitivity 10years, "
         "P8R2, l=0deg, b=90deg.",
     }
+
+
+def cherenkov_telescope_array_south_differential_sensitivity(observation_time=1800):
+    enrgy_bin_edges_TeV = [
+        0.02,
+        0.0316,
+        0.0501,
+        0.0794,
+        0.126,
+        0.2,
+        0.316,
+        0.501,
+        0.794,
+        1.26,
+        2,
+        3.16,
+        5.01,
+        7.94,
+        12.6,
+        20,
+        31.6,
+        50.1,
+        79.4,
+        126,
+        200,
+    ]
+
+    num_bins = len(enrgy_bin_edges_TeV) - 1
+
+    energy_TeV = []
+    for ee in range(num_bins):
+        energy_TeV.append(enrgy_bin_edges_TeV[ee])
+        energy_TeV.append(enrgy_bin_edges_TeV[ee + 1])
+    energy_TeV = np.array(energy_TeV)
+
+    # E^{2} x Flux Sensitivity (erg cm^{-2} s^{-1})
+
+    if observation_time == 1800:
+        E2_senitivity_erg_per_cm2_per_s = [
+            6.16e-11,
+            3.23e-11,
+            1.58e-11,
+            7.61e-12,
+            4.94e-12,
+            3.51e-12,
+            2.79e-12,
+            2.45e-12,
+            2.14e-12,
+            1.97e-12,
+            1.98e-12,
+            2.28e-12,
+            2.91e-12,
+            3.96e-12,
+            5.83e-12,
+            8.74e-12,
+            1.39e-11,
+            2.11e-11,
+            3.26e-11,
+            5.12e-11,
+        ]
+    elif observation_time == 5 * 3600:
+        E2_senitivity_erg_per_cm2_per_s = [
+            2.79e-11,
+            1.22e-11,
+            5.78e-12,
+            2.59e-12,
+            1.53e-12,
+            1.01e-12,
+            7.2e-13,
+            5.72e-13,
+            4.59e-13,
+            4.03e-13,
+            3.54e-13,
+            3.64e-13,
+            4.5e-13,
+            5.24e-13,
+            6.81e-13,
+            9.67e-13,
+            1.5e-12,
+            2.28e-12,
+            3.51e-12,
+            5.46e-12,
+        ]
+    elif observation_time == 50 * 3600:
+        E2_senitivity_erg_per_cm2_per_s = [
+            2.18e-11,
+            6.94e-12,
+            1.83e-12,
+            7.97e-13,
+            4.63e-13,
+            2.89e-13,
+            1.98e-13,
+            1.44e-13,
+            9.67e-14,
+            8.12e-14,
+            6.63e-14,
+            6.3e-14,
+            7.07e-14,
+            6.28e-14,
+            8.27e-14,
+            1.18e-13,
+            1.88e-13,
+            2.89e-13,
+            4.59e-13,
+            7.14e-13,
+        ]
+    else:
+        assert False, "No such observation_time"
+
+    sens = []
+    for ss in range(num_bins):
+        sens.append(E2_senitivity_erg_per_cm2_per_s[ss])
+        sens.append(E2_senitivity_erg_per_cm2_per_s[ss])
+
+    CTA_STYLE = sed_styles.CHERENKOV_TELESCOPE_ARRAY_SED_STYLE
+
+    assert CTA_STYLE["x_energy_in_eV"] == 1e12
+    assert CTA_STYLE["y_inverse_energy_in_eV"] == sed_styles.one_erg_in_eV
+    assert CTA_STYLE["y_inverse_area_in_m2"] == 1e-4
+    assert CTA_STYLE["y_inverse_time_in_s"] == 1.0
+    assert CTA_STYLE["y_scale_energy_in_eV"] == sed_styles.one_erg_in_eV
+    assert CTA_STYLE["y_scale_energy_power"] == 2.0
+
+    energy, dfdE = sed.convert_units_with_style(
+        x=energy_TeV,
+        y=sens,
+        input_style=CTA_STYLE,
+        target_style=sed_styles.PLENOIRF_SED_STYLE,
+    )
+
+    return {
+        "energy": {"values": energy, "unit_tex": "GeV", "unit": "GeV",},
+        "differential_flux": {
+            "values": dfdE,
+            "unit_tex": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
+            "unit": "per_m2_per_s_per_GeV",
+        },
+        "comment": "www.cta-observatory.org/science/cta-performance/ (prod3b-v2)",
+        "title": "CTA-South, observation-time: {:d}s".format(observation_time)
+    }
