@@ -45,7 +45,7 @@ energy_bin_edges = np.geomspace(
 )
 
 min_number_samples = 10
-
+mk = "energy"
 
 def align_on_idx(input_idx, input_values, target_idxs):
     Q = {}
@@ -74,7 +74,7 @@ for sk in irf_config["config"]["sites"]:
                 passing_trigger[sk][pk]["idx"],
                 passing_quality[sk][pk]["idx"],
                 passing_trajectory_quality[sk][pk]["idx"],
-                reconstructed_energy[sk][pk]["energy"]["idx"],
+                reconstructed_energy[sk][pk][mk]["idx"],
             ]
         )
 
@@ -86,8 +86,8 @@ for sk in irf_config["config"]["sites"]:
 
         true_energy = valid_event_table["primary"]["energy_GeV"]
         reco_energy = align_on_idx(
-            input_idx=reconstructed_energy[sk][pk]["energy"]["idx"],
-            input_values=reconstructed_energy[sk][pk]["energy"]["energy"],
+            input_idx=reconstructed_energy[sk][pk][mk]["idx"],
+            input_values=reconstructed_energy[sk][pk][mk]["energy"],
             target_idxs=valid_event_table["primary"]["idx"],
         )
 
@@ -99,6 +99,56 @@ for sk in irf_config["config"]["sites"]:
             min_exposure_x=min_number_samples,
             default_low_exposure=0.0,
         )
+
+        # performace
+        if pk == "gamma":
+            containment_fraction = 0.68
+
+            delta_energy = []
+            delta_energy_relunc = []
+            for ebin in range(len(energy_bin_edges) - 1):
+                emin = energy_bin_edges[ebin]
+                emax = energy_bin_edges[ebin + 1]
+                reco_energy_mask = np.logical_and(reco_energy >= emin, reco_energy < emax)
+                num_events_in_ebin = np.sum(reco_energy_mask)
+                if num_events_in_ebin > 0:
+                    delta_E_relunc = 1.0 / np.sqrt(num_events_in_ebin)
+
+                    __true_energy = true_energy[reco_energy_mask]
+                    __reco_energy = reco_energy[reco_energy_mask]
+                    delta_E = np.abs(__reco_energy - __true_energy) / __true_energy
+                    delta_E_sorted = np.sort(delta_E)
+                    delta_E68 = delta_E_sorted[int(containment_fraction*num_events_in_ebin)]
+
+                else:
+                    delta_E_relunc = float("nan")
+                    delta_E68 = float("nan")
+
+                delta_energy.append(delta_E68)
+                delta_energy_relunc.append(delta_E_relunc)
+            delta_energy = np.array(delta_energy)
+            delta_energy_relunc = np.array(delta_energy_relunc)
+
+            fig = seb.figure(seb.FIGURE_1_1)
+            ax1 = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.8, 0.8])
+            seb.ax_add_histogram(
+                ax=ax1,
+                bin_edges=energy_bin_edges,
+                bincounts=delta_energy,
+                bincounts_upper=delta_energy * (1 + delta_energy_relunc),
+                bincounts_lower=delta_energy * (1 - delta_energy_relunc),
+                face_color="k",
+                face_alpha=0.1,
+            )
+            ax1.semilogx()
+            ax1.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
+            ax1.set_ylim([0, 1])
+            ax1.set_xlabel("reco. energy / GeV")
+            ax1.set_ylabel(r"energy (reco. - true)/true (68% containment) / 1")
+
+            fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg"))
+            seb.close_figure(fig)
+
 
         irf.json_numpy.write(
             os.path.join(site_particle_dir, "confusion_matrix" + ".json"), cm

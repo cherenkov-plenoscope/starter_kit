@@ -33,6 +33,9 @@ passing_trigger = irf.json_numpy.read_tree(
 passing_quality = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
+passing_trajectory = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
+)
 
 random_seed = sum_config["random_seed"]
 
@@ -64,6 +67,7 @@ level_keys = [
     "primary",
     "cherenkovpool",
     "transformed_features",
+    "reconstructed_trajectory"
 ]
 
 min_number_samples = 100
@@ -105,6 +109,7 @@ def read_event_frame(
             [
                 passing_trigger[sk][pk]["idx"],
                 passing_quality[sk][pk]["idx"],
+                passing_trajectory[sk][pk]["idx"],
                 train_test[sk][pk][kk],
             ]
         )
@@ -121,6 +126,20 @@ def read_event_frame(
 
 def make_x_y_arrays(event_frame):
     f = event_frame
+
+    reco_radius_core_m = np.hypot(
+        f["reconstructed_trajectory/x_m"],
+        f["reconstructed_trajectory/y_m"],
+    )
+
+    norm_reco_radius_core_m = reco_radius_core_m / 640.0
+
+    reco_theta_rad = np.hypot(
+        f["reconstructed_trajectory/cx_rad"],
+        f["reconstructed_trajectory/cy_rad"],
+    )
+    norm_reco_theta_rad = reco_theta_rad / np.deg2rad(3.5)
+
     x = np.array(
         [
             f["transformed_features/num_photons"].values,
@@ -131,14 +150,16 @@ def make_x_y_arrays(event_frame):
                 "transformed_features/image_smallest_ellipse_solid_angle"
             ].values,
             f["transformed_features/image_smallest_ellipse_half_depth"].values,
-            f["transformed_features/combi_A"].values,
-            f["transformed_features/combi_B"].values,
-            f["transformed_features/combi_C"].values,
-            f["transformed_features/combi_image_infinity_std_density"].values,
-            f[
-                "transformed_features/combi_paxel_intensity_median_hypot"
-            ].values,
-            f["transformed_features/combi_diff_image_and_light_front"].values,
+            #f["transformed_features/combi_A"].values,
+            #f["transformed_features/combi_B"].values,
+            #f["transformed_features/combi_C"].values,
+            norm_reco_radius_core_m,
+            norm_reco_theta_rad,
+            #f["transformed_features/combi_image_infinity_std_density"].values,
+            #f[
+            #    "transformed_features/combi_paxel_intensity_median_hypot"
+            #].values,
+            #f["transformed_features/combi_diff_image_and_light_front"].values,
         ]
     ).T
     y = np.array(
@@ -244,5 +265,6 @@ for sk in SITES:
                 site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
                 os.makedirs(site_particle_dir, exist_ok=True)
                 irf.json_numpy.write(
-                    os.path.join(site_particle_dir, tk + ".json"), out
+                    os.path.join(site_particle_dir, tk + ".json"),
+                    out
                 )

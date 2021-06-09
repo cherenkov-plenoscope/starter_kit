@@ -16,6 +16,7 @@ from . import create_test_tables
 from . import reconstruction
 from . import utils
 from . import production
+from . import other_instruments
 
 import os
 import numpy as np
