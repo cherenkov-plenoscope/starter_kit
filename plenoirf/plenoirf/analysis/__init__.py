@@ -7,7 +7,4 @@ from . import integral_sensitivity
 from .integral_spectral_exclusion_zone import (
     estimate_integral_spectral_exclusion_zone,
 )
-from .integral_spectral_exclusion_zone import (
-    fermi_lat_integral_spectral_exclusion_zone,
-)
 from .reweight_energy_spectrum import reweight_energy_spectrum
