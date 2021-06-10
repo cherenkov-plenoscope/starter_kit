@@ -67,7 +67,7 @@ level_keys = [
     "primary",
     "cherenkovpool",
     "transformed_features",
-    "reconstructed_trajectory"
+    "reconstructed_trajectory",
 ]
 
 min_number_samples = 100
@@ -128,8 +128,7 @@ def make_x_y_arrays(event_frame):
     f = event_frame
 
     reco_radius_core_m = np.hypot(
-        f["reconstructed_trajectory/x_m"],
-        f["reconstructed_trajectory/y_m"],
+        f["reconstructed_trajectory/x_m"], f["reconstructed_trajectory/y_m"],
     )
 
     norm_reco_radius_core_m = reco_radius_core_m / 640.0
@@ -150,16 +149,16 @@ def make_x_y_arrays(event_frame):
                 "transformed_features/image_smallest_ellipse_solid_angle"
             ].values,
             f["transformed_features/image_smallest_ellipse_half_depth"].values,
-            #f["transformed_features/combi_A"].values,
-            #f["transformed_features/combi_B"].values,
-            #f["transformed_features/combi_C"].values,
+            # f["transformed_features/combi_A"].values,
+            # f["transformed_features/combi_B"].values,
+            # f["transformed_features/combi_C"].values,
             norm_reco_radius_core_m,
             norm_reco_theta_rad,
-            #f["transformed_features/combi_image_infinity_std_density"].values,
-            #f[
+            # f["transformed_features/combi_image_infinity_std_density"].values,
+            # f[
             #    "transformed_features/combi_paxel_intensity_median_hypot"
-            #].values,
-            #f["transformed_features/combi_diff_image_and_light_front"].values,
+            # ].values,
+            # f["transformed_features/combi_diff_image_and_light_front"].values,
         ]
     ).T
     y = np.array(
@@ -265,6 +264,5 @@ for sk in SITES:
                 site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
                 os.makedirs(site_particle_dir, exist_ok=True)
                 irf.json_numpy.write(
-                    os.path.join(site_particle_dir, tk + ".json"),
-                    out
+                    os.path.join(site_particle_dir, tk + ".json"), out
                 )

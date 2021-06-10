@@ -26,9 +26,7 @@ onregion_rates = irf.json_numpy.read_tree(
     )
 )
 diff_sensitivity = irf.json_numpy.read_tree(
-    os.path.join(
-        pa["summary_dir"], "0327_differential_sensitivity_plot"
-    )
+    os.path.join(pa["summary_dir"], "0327_differential_sensitivity_plot")
 )
 
 energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
@@ -55,7 +53,9 @@ assert (
     fermi_broadband["differential_flux"]["unit_tex"]
     == "m$^{-2}$ s$^{-1}$ GeV$^{-1}$"
 )
-cta_south_30min = irf.analysis.integral_spectral_exclusion_zone.cherenkov_telescope_array_south_differential_sensitivity()
+cta_south_30min = (
+    irf.analysis.integral_spectral_exclusion_zone.cherenkov_telescope_array_south_differential_sensitivity()
+)
 
 
 # gamma-ray-flux of crab-nebula
@@ -114,9 +114,9 @@ for site_key in irf_config["config"]["sites"]:
         com = {}
         scale_factor = np.power(10.0, (-1) * i)
         com["energy"] = [np.array(crab_flux["energy"]["values"])]
-        com["differential_flux"] = [scale_factor * np.array(
-            crab_flux["differential_flux"]["values"]
-        )]
+        com["differential_flux"] = [
+            scale_factor * np.array(crab_flux["differential_flux"]["values"])
+        ]
         com["label"] = "{:1.1e} Crab".format(scale_factor) if i == 0 else None
         com["color"] = "k"
         com["alpha"] = 1.0 / (1.0 + i)
@@ -127,23 +127,22 @@ for site_key in irf_config["config"]["sites"]:
     # -------------------
     com = {}
     com["energy"] = [np.array(fermi_broadband["energy"]["values"])]
-    com["differential_flux"] = [np.array(
-        fermi_broadband["differential_flux"]["values"]
-    )]
+    com["differential_flux"] = [
+        np.array(fermi_broadband["differential_flux"]["values"])
+    ]
     com["label"] = "Fermi-LAT, 10y, int."
     com["color"] = "k"
     com["alpha"] = 1.0
     com["linestyle"] = "-"
     components.append(com)
 
-
     # CTA South 30min
     # ---------------
     com = {}
     com["energy"] = [np.array(cta_south_30min["energy"]["values"])]
-    com["differential_flux"] = [np.array(
-        cta_south_30min["differential_flux"]["values"]
-    )]
+    com["differential_flux"] = [
+        np.array(cta_south_30min["differential_flux"]["values"])
+    ]
     com["label"] = "CTA-South, 30min, diff."
     com["color"] = "blue"
     com["alpha"] = 1.0
@@ -158,14 +157,20 @@ for site_key in irf_config["config"]["sites"]:
 
     for ii in range(len(energy_bin_edges) - 1):
         com["energy"].append([energy_bin_edges[ii], energy_bin_edges[ii + 1]])
-        com["differential_flux"].append([
-            np.array(
-                diff_sensitivity[site_key]["differential_sensitivity"]["differential_flux"]
-            )[ii, oridx],
-            np.array(
-                diff_sensitivity[site_key]["differential_sensitivity"]["differential_flux"]
-            )[ii, oridx]
-        ])
+        com["differential_flux"].append(
+            [
+                np.array(
+                    diff_sensitivity[site_key]["differential_sensitivity"][
+                        "differential_flux"
+                    ]
+                )[ii, oridx],
+                np.array(
+                    diff_sensitivity[site_key]["differential_sensitivity"][
+                        "differential_flux"
+                    ]
+                )[ii, oridx],
+            ]
+        )
     com["label"] = "Portal, 60s, diff., sys. 1.0e-02"
     com["color"] = "orange"
     com["alpha"] = 1.0

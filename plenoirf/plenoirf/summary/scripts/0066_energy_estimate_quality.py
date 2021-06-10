@@ -44,7 +44,9 @@ energy_bin_edges = np.geomspace(
     + 1,
 )
 
-cta_south = irf.other_instruments.cherenkov_telescope_array_south.energy_resolution()
+cta_south = (
+    irf.other_instruments.cherenkov_telescope_array_south.energy_resolution()
+)
 cta_color = irf.other_instruments.cherenkov_telescope_array_south.COLOR
 
 min_number_samples = 10
@@ -52,9 +54,7 @@ mk = "energy"
 
 
 def estimate_energy_resolution(
-    true_energy,
-    reco_energy,
-    containment_fraction=0.68
+    true_energy, reco_energy, containment_fraction=0.68
 ):
     assert len(true_energy) == len(reco_energy)
     assert containment_fraction >= 0.0
@@ -65,7 +65,7 @@ def estimate_energy_resolution(
         delta_E_relunc = 1.0 / np.sqrt(num_events)
         delta_energy = np.abs(reco_energy - true_energy) / true_energy
         delta_energy_sorted = np.sort(delta_energy)
-        delta_E = delta_energy_sorted[int(containment_fraction*num_events)]
+        delta_E = delta_energy_sorted[int(containment_fraction * num_events)]
     else:
         delta_E_relunc = float("nan")
         delta_E = float("nan")
@@ -73,10 +73,7 @@ def estimate_energy_resolution(
 
 
 def estimate_energy_resolution_vs_reco_energy(
-    true_energy,
-    reco_energy,
-    energy_bin_edges,
-    containment_fraction=0.68
+    true_energy, reco_energy, energy_bin_edges, containment_fraction=0.68
 ):
     assert len(true_energy) == len(reco_energy)
     assert len(energy_bin_edges) >= 2
@@ -90,15 +87,14 @@ def estimate_energy_resolution_vs_reco_energy(
         energy_start = energy_bin_edges[ebin]
         energy_stop = energy_bin_edges[ebin + 1]
         reco_energy_mask = np.logical_and(
-            reco_energy >= energy_start,
-            reco_energy < energy_stop
+            reco_energy >= energy_start, reco_energy < energy_stop
         )
         bin_true_energy = true_energy[reco_energy_mask]
         bin_reco_energy = reco_energy[reco_energy_mask]
         delta_E, delta_E_relunc = estimate_energy_resolution(
             true_energy=bin_true_energy,
             reco_energy=bin_reco_energy,
-            containment_fraction=containment_fraction
+            containment_fraction=containment_fraction,
         )
         delta_energy.append(delta_E)
         delta_energy_relunc.append(delta_E_relunc)
@@ -163,11 +159,14 @@ for sk in irf_config["config"]["sites"]:
         # performace
         if pk == "gamma":
 
-            delta_energy, delta_energy_relunc = estimate_energy_resolution_vs_reco_energy(
+            (
+                delta_energy,
+                delta_energy_relunc,
+            ) = estimate_energy_resolution_vs_reco_energy(
                 true_energy,
                 reco_energy,
                 energy_bin_edges=energy_bin_edges,
-                containment_fraction=0.68
+                containment_fraction=0.68,
             )
 
             fig = seb.figure(seb.FIGURE_1_1)
@@ -185,7 +184,7 @@ for sk in irf_config["config"]["sites"]:
                 cta_south["reconstructed_energy"]["values"],
                 cta_south["energy_resolution_68"]["values"],
                 color=cta_color,
-                label="CTA-South"
+                label="CTA-South",
             )
             ax1.semilogx()
             ax1.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
@@ -193,9 +192,10 @@ for sk in irf_config["config"]["sites"]:
             ax1.set_xlabel("reco. energy / GeV")
             ax1.set_ylabel("abs(reco. - true)/true (68% containment) / 1")
 
-            fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg"))
+            fig.savefig(
+                os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg")
+            )
             seb.close_figure(fig)
-
 
         irf.json_numpy.write(
             os.path.join(site_particle_dir, "confusion_matrix" + ".json"), cm

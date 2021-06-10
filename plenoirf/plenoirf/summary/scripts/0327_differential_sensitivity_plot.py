@@ -76,11 +76,12 @@ for sk in SITES:
             acceptance[sk]["gamma"]["point"]["mean"]
         )[:, oridx]
 
-
         for ee in range(num_bins_energy):
             if cosmic_ray_rate_per_s[ee] > 0:
                 critical_rate_per_s = irf.analysis.integral_sensitivity.estimate_critical_rate(
-                    background_rate_in_onregion_per_s=cosmic_ray_rate_per_s[ee],
+                    background_rate_in_onregion_per_s=cosmic_ray_rate_per_s[
+                        ee
+                    ],
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_time_s,
                     instrument_systematic_uncertainty=systematic_uncertainty,
@@ -98,9 +99,8 @@ for sk in SITES:
             )
             critical_dFdE[ee, oridx] = critical_dFdE_per_m2_per_s_per_GeV
 
-
     irf.json_numpy.write(
-        os.path.join(pa["out_dir"], sk , "differential_sensitivity" + ".json"),
+        os.path.join(pa["out_dir"], sk, "differential_sensitivity" + ".json"),
         {
             "energy_bin_edges": energy_bin_edges,
             "differential_flux": critical_dFdE,
@@ -108,6 +108,6 @@ for sk in SITES:
                 "Critical differential flux-sensitivity "
                 "VS energy VS onregion-size, "
                 "LiMa-eq.17, 5.0std , "
-            )
-        }
+            ),
+        },
     )
