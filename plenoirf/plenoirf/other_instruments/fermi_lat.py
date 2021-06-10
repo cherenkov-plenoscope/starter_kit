@@ -2,7 +2,71 @@ import numpy as np
 import spectral_energy_distribution_units as sed
 from .. analysis import spectral_energy_distribution as sed_styles
 
-COLOR = "gold"
+COLOR = "darkorange"
+LABEL = "Fermi-LAT"
+
+
+def differential_sensitivity():
+
+    raw = np.array([
+        [4.19738e+1, 1.89701e-11],
+        [7.48560e+1, 1.55628e-11],
+        [1.33496e+2, 1.30110e-11],
+        [2.35880e+2, 1.16211e-11],
+        [4.20677e+2, 9.35538e-12],
+        [7.36614e+2, 7.39032e-12],
+        [1.33813e+3, 5.56883e-12],
+        [2.34321e+3, 4.19617e-12],
+        [4.25618e+3, 3.54148e-12],
+        [7.38463e+3, 2.77129e-12],
+        [1.31686e+4, 2.47527e-12],
+        [2.36959e+4, 2.57162e-12],
+        [4.18593e+4, 2.93638e-12],
+        [7.46174e+4, 3.82697e-12],
+        [1.34232e+5, 5.22895e-12],
+        [2.37020e+5, 9.22013e-12],
+        [4.26270e+5, 1.64122e-11],
+        [7.52640e+5, 3.09178e-11],
+    ])
+
+    fermi_lat_energy_MeV = raw[:, 0]
+    fermi_lat_sed_erg_per_cm2_per_s = raw[:, 1]
+
+    ss = sed_styles
+    assert ss.FERMI_SED_STYLE["x_energy_in_eV"] == 1e6
+    assert ss.FERMI_SED_STYLE["y_inverse_energy_in_eV"] == ss.one_erg_in_eV
+    assert ss.FERMI_SED_STYLE["y_inverse_area_in_m2"] == 1e-4
+    assert ss.FERMI_SED_STYLE["y_inverse_time_in_s"] == 1.0
+    assert ss.FERMI_SED_STYLE["y_scale_energy_in_eV"] == ss.one_erg_in_eV
+    assert ss.FERMI_SED_STYLE["y_scale_energy_power"] == 2.0
+
+    energy, dfdE = sed.convert_units_with_style(
+        x=fermi_lat_energy_MeV,
+        y=fermi_lat_sed_erg_per_cm2_per_s,
+        input_style=sed_styles.FERMI_SED_STYLE,
+        target_style=sed_styles.PLENOIRF_SED_STYLE,
+    )
+
+    return {
+        "energy": {
+            "values": energy,
+            "unit_tex": "GeV",
+            "unit": "GeV",
+        },
+        "differential_flux": {
+            "values": dfdE,
+            "unit_tex": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
+            "unit": "per_m2_per_s_per_GeV",
+        },
+        "reference": {
+            "url": "https://www.slac.stanford.edu/exp/glast/groups/canda/lat_Performance.htm",
+            "figure_name": "differential_flux_sensitivity_p8r3_source_v2_all_10yr_zmax100_n10.0_e1.50_ts25.png",
+            "l": 0.0,
+            "b": 0.0,
+            "observation_time": 10 * 365 * 24 * 3600
+        }
+    }
+
 
 def integral_sensitivity():
     """
@@ -170,3 +234,64 @@ def integral_sensitivity():
         "title": "Fermi-LAT broadband flux sensitivity 10years, "
         "P8R2, l=0deg, b=90deg.",
     }
+
+
+def energy_resolution():
+    raw = np.array([
+        [2.80634e+1, 2.99275e-1],
+        [3.13220e+1, 2.76430e-1],
+        [5.46466e+1, 2.27752e-1],
+        [9.73430e+1, 1.96304e-1],
+        [1.73388e+2, 1.65978e-1],
+        [3.08760e+2, 1.40522e-1],
+        [5.49731e+2, 1.18062e-1],
+        [9.67900e+2, 1.01219e-1],
+        [1.76017e+3, 8.88718e-2],
+        [3.09803e+3, 7.83964e-2],
+        [5.57227e+3, 6.86705e-2],
+        [9.69848e+3, 6.41874e-2],
+        [1.72476e+4, 6.30755e-2],
+        [3.06699e+4, 6.38362e-2],
+        [5.45318e+4, 6.64697e-2],
+        [9.48561e+4, 7.28480e-2],
+        [1.72315e+5, 8.03507e-2],
+        [3.02978e+5, 8.86019e-2],
+        [5.32655e+5, 9.91003e-2],
+        [9.56327e+5, 1.22708e-1],
+        [1.71378e+6, 1.80772e-1],
+        [2.97252e+6, 2.39959e-1],
+    ])
+
+    reco_energy_MeV = raw[:, 0]
+    resolution_68 = raw[:, 1]
+
+    res = {
+        "reconstructed_energy": {
+            "values": 1e-3 * reco_energy_MeV,
+            "label": "reco. energy",
+            "unit_tex": "GeV",
+            "unit": "GeV",
+        },
+        "energy_resolution_68": {
+            "values": resolution_68,
+            "label": "energy (reco. - true) / true (68% containment)",
+            "unit_tex": "1",
+            "unit": "1",
+        },
+        "reference": {
+            "url": (
+                "https://www.slac.stanford.edu/exp/glast/"
+                "groups/canda/lat_Performance.htm"
+            ),
+            "date": "2021-06-10",
+            "production": "P8R3_SOURCE_V2",
+            "figure_name": "gEdispAve68Energy_P8R3_SOURCE_V2fb_10MeV.png",
+            "comment": (
+                "Acceptance weighted (acc. weighted) energy resolution "
+                "(i.e. 68% containment half width of the reconstructed "
+                "incoming photon energy) as a function of energy; "
+                "Black total curve. Not red front curve, not blue back curve."
+            )
+        }
+    }
+    return res
