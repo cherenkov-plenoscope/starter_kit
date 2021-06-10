@@ -176,7 +176,7 @@ EXAMPLE_CONFIG = {
             fov_radius_deg=3.25),
     },
     "raw_sensor_response": {
-        "skip_num_events" 50,
+        "skip_num_events": 50,
     },
     "runs": {
         "gamma": {"num": 64, "first_run_id": 1},
