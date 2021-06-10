@@ -115,7 +115,7 @@ EXAMPLE_CONFIG = {
         "proton": {
             "particle_id": 14,
             "energy_bin_edges_GeV": [
-                utils.power10_bin_edge(0, 3, 5),
+                5.0,
                 utils.power10_bin_edge(3, 1, 5)
             ],
             "max_scatter_angle_deg": 13,
