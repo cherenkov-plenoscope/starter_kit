@@ -44,10 +44,8 @@ energy_bin_edges = np.geomspace(
     + 1,
 )
 
-cta_south = (
-    irf.other_instruments.cherenkov_telescope_array_south.energy_resolution()
-)
-cta_color = irf.other_instruments.cherenkov_telescope_array_south.COLOR
+cta = irf.other_instruments.cherenkov_telescope_array_south
+fermi_lat = irf.other_instruments.fermi_lat
 
 min_number_samples = 10
 mk = "energy"
@@ -129,18 +127,28 @@ for sk in irf_config["config"]["sites"]:
                 face_color="k",
                 face_alpha=0.1,
             )
-            assert cta_south["reconstructed_energy"]["unit"] == "GeV"
+            cta_res = cta.energy_resolution()
+            assert cta_res["reconstructed_energy"]["unit"] == "GeV"
             ax1.plot(
-                cta_south["reconstructed_energy"]["values"],
-                cta_south["energy_resolution_68"]["values"],
-                color=cta_color,
-                label="CTA-South",
+                cta_res["reconstructed_energy"]["values"],
+                cta_res["energy_resolution_68"]["values"],
+                color=cta.COLOR,
+                label=cta.LABEL,
+            )
+            fermi_lat_res = fermi_lat.energy_resolution()
+            assert fermi_lat_res["reconstructed_energy"]["unit"] == "GeV"
+            ax1.plot(
+                fermi_lat_res["reconstructed_energy"]["values"],
+                fermi_lat_res["energy_resolution_68"]["values"],
+                color=fermi_lat.COLOR,
+                label=fermi_lat.LABEL,
             )
             ax1.semilogx()
-            ax1.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
+            ax1.set_xlim([1e-1, 1e4])
             ax1.set_ylim([0, 1])
             ax1.set_xlabel("reco. energy / GeV")
             ax1.set_ylabel(r"$\Delta{}$E/E (68% containment) / 1")
+            ax1.legend(loc="best", fontsize=10)
 
             fig.savefig(
                 os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg")

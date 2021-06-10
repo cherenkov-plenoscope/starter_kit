@@ -47,15 +47,8 @@ on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
 
-fermi_broadband = irf.analysis.fermi_lat_integral_spectral_exclusion_zone()
-assert fermi_broadband["energy"]["unit_tex"] == "GeV"
-assert (
-    fermi_broadband["differential_flux"]["unit_tex"]
-    == "m$^{-2}$ s$^{-1}$ GeV$^{-1}$"
-)
-cta_south_30min = (
-    irf.analysis.integral_spectral_exclusion_zone.cherenkov_telescope_array_south_differential_sensitivity()
-)
+fermi = irf.other_instruments.fermi_lat
+cta = irf.other_instruments.cherenkov_telescope_array_south
 
 
 # gamma-ray-flux of crab-nebula
@@ -123,28 +116,44 @@ for site_key in irf_config["config"]["sites"]:
         com["linestyle"] = "--"
         components.append(com.copy())
 
-    # Fermi-LAT broadband
-    # -------------------
+    # Fermi-LAT integral
+    # ------------------
+    fermi_inte = fermi.integral_sensitivity()
     com = {}
-    com["energy"] = [np.array(fermi_broadband["energy"]["values"])]
+    com["energy"] = [np.array(fermi_inte["energy"]["values"])]
     com["differential_flux"] = [
-        np.array(fermi_broadband["differential_flux"]["values"])
+        np.array(fermi_inte["differential_flux"]["values"])
     ]
-    com["label"] = "Fermi-LAT, 10y, int."
-    com["color"] = "k"
+    com["label"] = fermi.LABEL + ", 10y, int."
+    com["color"] = fermi.COLOR
+    com["alpha"] = 1.0
+    com["linestyle"] = ":"
+    components.append(com)
+
+    # Fermi-LAT diff
+    # --------------
+    fermi_diff = fermi.differential_sensitivity()
+    com = {}
+    com["energy"] = [np.array(fermi_diff["energy"]["values"])]
+    com["differential_flux"] = [
+        np.array(fermi_diff["differential_flux"]["values"])
+    ]
+    com["label"] = fermi.LABEL + ", 10y, diff."
+    com["color"] = fermi.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "-"
     components.append(com)
 
     # CTA South 30min
     # ---------------
+    cta_diff = cta.differential_sensitivity(observation_time=1800)
     com = {}
-    com["energy"] = [np.array(cta_south_30min["energy"]["values"])]
+    com["energy"] = [np.array(cta_diff["energy"]["values"])]
     com["differential_flux"] = [
-        np.array(cta_south_30min["differential_flux"]["values"])
+        np.array(cta_diff["differential_flux"]["values"])
     ]
-    com["label"] = "CTA-South, 30min, diff."
-    com["color"] = "blue"
+    com["label"] = cta.LABEL + ", 30min, diff."
+    com["color"] = cta.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "-"
     components.append(com)
@@ -172,7 +181,7 @@ for site_key in irf_config["config"]["sites"]:
             ]
         )
     com["label"] = "Portal, 60s, diff., sys. 1.0e-02"
-    com["color"] = "orange"
+    com["color"] = "black"
     com["alpha"] = 1.0
     com["linestyle"] = "-"
     components.append(com)
@@ -223,8 +232,8 @@ for site_key in irf_config["config"]["sites"]:
             )
 
             com["alpha"] = 1.0 / (1.0 + sys)
-            com["color"] = loop_observation_time_line_color[obt]
-            com["linestyle"] = loop_systematic_uncertainty_line_style[sys]
+            com["color"] = "black"
+            com["linestyle"] = ":"
             components.append(com)
 
             if PLOT_TANGENTIAL_POWERLAWS:
