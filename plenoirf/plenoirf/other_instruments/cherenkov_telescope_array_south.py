@@ -2,8 +2,8 @@ import numpy as np
 import spectral_energy_distribution_units as sed
 from .. analysis import spectral_energy_distribution as sed_styles
 
-COLOR = "navy"
-
+COLOR = "mediumblue"
+LABEL = "CTA-South"
 
 def differential_sensitivity(observation_time=1800):
     enrgy_bin_edges_TeV = [
