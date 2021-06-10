@@ -52,3 +52,12 @@ def bin_centers(bin_edges, weight_lower_edge=0.5):
 
 def bin_width(bin_edges):
     return bin_edges[1:] - bin_edges[:-1]
+
+
+def power10_bin_edge(decade, bin, num_bins=5):
+    """
+    returns the lower bin_edge of bin in decade.
+    The binning has num_bins_per_decade.
+    """
+    assert bin < num_bins
+    return 10 ** (decade + np.linspace(0, 1, num_bins + 1))[bin]

@@ -92,15 +92,21 @@ EXAMPLE_CONFIG = {
     "particles": {
         "gamma": {
             "particle_id": 1,
-            "energy_bin_edges_GeV": [0.25, 1000],
+            "energy_bin_edges_GeV": [
+                utils.power10_bin_edge(-1, 2, 5),
+                utils.power10_bin_edge(3, 1, 5)
+            ],
             "max_scatter_angle_deg": 3.25,
-            "energy_power_law_slope": -1.7,
+            "energy_power_law_slope": -1.5,
             "electric_charge_qe": 0.0,
             "magnetic_deflection_max_off_axis_deg": 0.25,
         },
         "electron": {
             "particle_id": 3,
-            "energy_bin_edges_GeV": [0.5, 1000],
+            "energy_bin_edges_GeV": [
+                utils.power10_bin_edge(-1, 3, 5),
+                utils.power10_bin_edge(3, 1, 5)
+            ],
             "max_scatter_angle_deg": 6.5,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": -1.0,
@@ -108,7 +114,10 @@ EXAMPLE_CONFIG = {
         },
         "proton": {
             "particle_id": 14,
-            "energy_bin_edges_GeV": [5, 1000],
+            "energy_bin_edges_GeV": [
+                utils.power10_bin_edge(0, 3, 5),
+                utils.power10_bin_edge(3, 1, 5)
+            ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +1.0,
@@ -116,7 +125,10 @@ EXAMPLE_CONFIG = {
         },
         "helium": {
             "particle_id": 402,
-            "energy_bin_edges_GeV": [10, 1000],
+            "energy_bin_edges_GeV": [
+                utils.power10_bin_edge(1, 0, 5),
+                utils.power10_bin_edge(3, 1, 5)
+            ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +2.0,
