@@ -175,6 +175,9 @@ EXAMPLE_CONFIG = {
         "trajectory": reconstruction.trajectory.make_example_config_for_71m_plenoscope(
             fov_radius_deg=3.25),
     },
+    "raw_sensor_response": {
+        "skip_num_events" 50,
+    },
     "runs": {
         "gamma": {"num": 64, "first_run_id": 1},
         "electron": {"num": 64, "first_run_id": 1},

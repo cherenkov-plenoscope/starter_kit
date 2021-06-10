@@ -158,6 +158,7 @@ def make_example_job(
         "date": utils.date_dict_now(),
         "artificial_core_limitation": artificial_core_limitation,
         "reconstruction": config["reconstruction"],
+        "raw_sensor_response": config["raw_sensor_response"],
     }
 
     return job

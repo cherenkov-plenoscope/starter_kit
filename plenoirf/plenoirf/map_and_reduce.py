@@ -509,6 +509,8 @@ def _run_loose_trigger(
     table_past_trigger = []
     tmp_past_trigger_dir = op.join(tmp_dir, "past_trigger")
     os.makedirs(tmp_past_trigger_dir, exist_ok=True)
+    RAW_SKIP = int(job["raw_sensor_response"]["skip_num_events"])
+    assert RAW_SKIP > 0
 
     for event in merlict_run:
         # id
@@ -573,21 +575,22 @@ def _run_loose_trigger(
             )
             table_past_trigger.append(ptp)
 
-            # export past loose trigger
-            # -------------------------
             ptrg = ide.copy()
             tabrec["pasttrigger"].append(ptrg)
 
-            pl.tools.acp_format.compress_event_in_place(ptp["tmp_path"])
-            final_tarname = ptp["unique_id_str"] + ".tar"
-            plenoscope_event_dir_to_tar(
-                event_dir=ptp["tmp_path"],
-                output_tar_path=op.join(tmp_past_trigger_dir, final_tarname),
-            )
-            nfs.copy(
-                src=op.join(tmp_past_trigger_dir, final_tarname),
-                dst=op.join(job["past_trigger_dir"], final_tarname),
-            )
+            # export past loose trigger
+            # -------------------------
+            if ide[spt.IDX] % RAW_SKIP == 0:
+                pl.tools.acp_format.compress_event_in_place(ptp["tmp_path"])
+                final_tarname = ptp["unique_id_str"] + ".tar"
+                plenoscope_event_dir_to_tar(
+                    event_dir=ptp["tmp_path"],
+                    output_tar_path=op.join(tmp_past_trigger_dir, final_tarname),
+                )
+                nfs.copy(
+                    src=op.join(tmp_past_trigger_dir, final_tarname),
+                    dst=op.join(job["past_trigger_dir"], final_tarname),
+                )
 
     return tabrec, table_past_trigger, tmp_past_trigger_dir
 
