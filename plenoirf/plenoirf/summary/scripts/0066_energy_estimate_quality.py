@@ -116,7 +116,7 @@ for sk in irf_config["config"]["sites"]:
                 containment_fraction=0.68,
             )
 
-            fig = seb.figure(seb.FIGURE_1_1)
+            fig = seb.figure(seb.FIGURE_16_9)
             ax1 = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.8, 0.8])
             seb.ax_add_histogram(
                 ax=ax1,
