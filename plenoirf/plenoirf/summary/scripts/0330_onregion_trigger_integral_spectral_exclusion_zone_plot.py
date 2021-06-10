@@ -132,13 +132,13 @@ for site_key in irf_config["config"]["sites"]:
 
     # Fermi-LAT diff
     # --------------
-    fermi_diff = fermi.differential_sensitivity()
+    fermi_diff = fermi.differential_sensitivity(l=0, b=90)
     com = {}
     com["energy"] = [np.array(fermi_diff["energy"]["values"])]
     com["differential_flux"] = [
         np.array(fermi_diff["differential_flux"]["values"])
     ]
-    com["label"] = fermi.LABEL + ", 10y, diff."
+    com["label"] = fermi.LABEL + ", 10y, (l=0, b=90), diff."
     com["color"] = fermi.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "-"
