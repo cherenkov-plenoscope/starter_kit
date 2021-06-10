@@ -118,6 +118,7 @@ for site_key in irf_config["config"]["sites"]:
 
     # Fermi-LAT integral
     # ------------------
+    """
     fermi_inte = fermi.integral_sensitivity()
     com = {}
     com["energy"] = [np.array(fermi_inte["energy"]["values"])]
@@ -129,6 +130,7 @@ for site_key in irf_config["config"]["sites"]:
     com["alpha"] = 1.0
     com["linestyle"] = ":"
     components.append(com)
+    """
 
     # Fermi-LAT diff
     # --------------
@@ -188,6 +190,7 @@ for site_key in irf_config["config"]["sites"]:
 
     # plenoscope
     # ----------
+    """
     for obt in range(len(loop_observation_time)):
         observation_time_s = loop_observation_time[obt]
 
@@ -259,6 +262,7 @@ for site_key in irf_config["config"]["sites"]:
                     com["color"] = "black"
                     com["linestyle"] = "-"
                     components.append(com)
+    """
 
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]
@@ -298,9 +302,7 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_xlabel(sed_style["x_label"] + " / " + sed_style["x_unit"])
         ax.set_ylabel(sed_style["y_label"] + " / " + sed_style["y_unit"])
         ax.set_title(
-            "onregion-opening-angle at 100p.e. {: 2.1f}".format(
-                onregion_opening_angle_deg
-            )
+            "onregion {: 2.1f}".format(onregion_opening_angle_deg)
             + r"$^{\circ}$",
             family="monospace",
         )
