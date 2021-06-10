@@ -2,6 +2,7 @@ import numpy as np
 import spectral_energy_distribution_units as sed
 from .. analysis import spectral_energy_distribution as sed_styles
 
+COLOR = "gold"
 
 def integral_sensitivity():
     """
