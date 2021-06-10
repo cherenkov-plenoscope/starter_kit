@@ -299,7 +299,7 @@ for sk in irf_config["config"]["sites"]:
                         config=onreion_config,
                     )
 
-                    ellx, elly = irf.reconstruction.onregion.make_polygon(
+                    ellxy = irf.reconstruction.onregion.make_polygon(
                         onregion=onregion
                     )
 
@@ -313,7 +313,7 @@ for sk in irf_config["config"]["sites"]:
                         look = ":c"
 
                     ax.plot(
-                        np.rad2deg(ellx), np.rad2deg(elly), look,
+                        np.rad2deg(ellxy[:, 0]), np.rad2deg(ellxy[:, 1]), look,
                     )
 
                 info_str = ""
