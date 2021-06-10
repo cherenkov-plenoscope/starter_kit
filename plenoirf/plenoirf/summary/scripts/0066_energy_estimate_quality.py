@@ -52,57 +52,6 @@ cta_color = irf.other_instruments.cherenkov_telescope_array_south.COLOR
 min_number_samples = 10
 mk = "energy"
 
-
-def estimate_energy_resolution(
-    true_energy, reco_energy, containment_fraction=0.68
-):
-    assert len(true_energy) == len(reco_energy)
-    assert containment_fraction >= 0.0
-    assert containment_fraction <= 1.0
-
-    num_events = len(true_energy)
-    if num_events > 0:
-        delta_E_relunc = 1.0 / np.sqrt(num_events)
-        delta_energy = np.abs(reco_energy - true_energy) / true_energy
-        delta_energy_sorted = np.sort(delta_energy)
-        delta_E = delta_energy_sorted[int(containment_fraction * num_events)]
-    else:
-        delta_E_relunc = float("nan")
-        delta_E = float("nan")
-    return delta_E, delta_E_relunc
-
-
-def estimate_energy_resolution_vs_reco_energy(
-    true_energy, reco_energy, energy_bin_edges, containment_fraction=0.68
-):
-    assert len(true_energy) == len(reco_energy)
-    assert len(energy_bin_edges) >= 2
-    assert np.all(np.gradient(energy_bin_edges) > 0)
-    assert containment_fraction >= 0.0
-    assert containment_fraction <= 1.0
-
-    delta_energy = []
-    delta_energy_relunc = []
-    for ebin in range(len(energy_bin_edges) - 1):
-        energy_start = energy_bin_edges[ebin]
-        energy_stop = energy_bin_edges[ebin + 1]
-        reco_energy_mask = np.logical_and(
-            reco_energy >= energy_start, reco_energy < energy_stop
-        )
-        bin_true_energy = true_energy[reco_energy_mask]
-        bin_reco_energy = reco_energy[reco_energy_mask]
-        delta_E, delta_E_relunc = estimate_energy_resolution(
-            true_energy=bin_true_energy,
-            reco_energy=bin_reco_energy,
-            containment_fraction=containment_fraction,
-        )
-        delta_energy.append(delta_E)
-        delta_energy_relunc.append(delta_E_relunc)
-    delta_energy = np.array(delta_energy)
-    delta_energy_relunc = np.array(delta_energy_relunc)
-    return delta_energy, delta_energy_relunc
-
-
 def align_on_idx(input_idx, input_values, target_idxs):
     Q = {}
     for ii in range(len(input_idx)):
@@ -162,10 +111,10 @@ for sk in irf_config["config"]["sites"]:
             (
                 delta_energy,
                 delta_energy_relunc,
-            ) = estimate_energy_resolution_vs_reco_energy(
-                true_energy,
-                reco_energy,
-                energy_bin_edges=energy_bin_edges,
+            ) = irf.analysis.energy.estimate_energy_resolution_vs_reco_energy(
+                true_energy=true_energy,
+                reco_energy=reco_energy,
+                reco_energy_bin_edges=energy_bin_edges,
                 containment_fraction=0.68,
             )
 
@@ -180,6 +129,7 @@ for sk in irf_config["config"]["sites"]:
                 face_color="k",
                 face_alpha=0.1,
             )
+            assert cta_south["reconstructed_energy"]["unit"] == "GeV"
             ax1.plot(
                 cta_south["reconstructed_energy"]["values"],
                 cta_south["energy_resolution_68"]["values"],
@@ -190,7 +140,7 @@ for sk in irf_config["config"]["sites"]:
             ax1.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
             ax1.set_ylim([0, 1])
             ax1.set_xlabel("reco. energy / GeV")
-            ax1.set_ylabel("abs(reco. - true)/true (68% containment) / 1")
+            ax1.set_ylabel(r"$\Delta{}$E/E (68% containment) / 1")
 
             fig.savefig(
                 os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg")
