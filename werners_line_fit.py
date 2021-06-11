@@ -133,7 +133,7 @@ for event_path in paths:
     idx = int(os.path.basename(event_path).split(".")[0])
 
     truth = spt.cut_table_on_indices(
-        gamma_table, plenoirf.table.STRUCTURE, common_indices=[idx]
+        gamma_table, common_indices=[idx]
     )
 
     momentum = np.array(

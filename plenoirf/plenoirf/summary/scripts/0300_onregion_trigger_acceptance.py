@@ -71,7 +71,6 @@ def cut_candidates_for_detection(
 
     return spt.cut_and_sort_table_on_indices(
         table=event_table,
-        structure=irf.table.STRUCTURE,
         common_indices=idx_candidates,
         level_keys=None,
     )
@@ -116,7 +115,6 @@ for sk in irf_config["config"]["sites"]:
         # thrown
         point_thrown = spt.cut_table_on_indices(
             table=diffuse_thrown,
-            structure=irf.table.STRUCTURE,
             common_indices=idx_source_in_possible_onregion,
             level_keys=None,
         )

@@ -84,7 +84,6 @@ for sk in irf_config["config"]["sites"]:
         )
         all_truth = spt.cut_and_sort_table_on_indices(
             event_table,
-            irf.table.STRUCTURE,
             common_indices=common_idx,
             level_keys=[
                 "primary",

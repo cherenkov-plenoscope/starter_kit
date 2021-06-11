@@ -57,7 +57,6 @@ for site_key in irf_config["config"]["sites"]:
         ]
         nsb_table = spt.cut_level_on_indices(
             table=airshower_table,
-            structure=irf.table.STRUCTURE,
             level_key="trigger",
             indices=idx_nsb,
         )

@@ -59,7 +59,6 @@ for site_key in irf_config["config"]["sites"]:
 
         point_particle_table = spt.cut_table_on_indices(
             table=diffuse_particle_table,
-            structure=irf.table.STRUCTURE,
             common_indices=idx_possible_onregion,
         )
 

@@ -9,7 +9,6 @@ import sparse_numeric_table as spt
 def make_rectangular_table(event_table, plenoscope_pointing):
     tab = spt.cut_and_sort_table_on_indices(
         table=event_table,
-        structure=table.STRUCTURE,
         common_indices=event_table["reconstructed_trajectory"][spt.IDX],
     )
     df = spt.make_rectangular_DataFrame(tab)

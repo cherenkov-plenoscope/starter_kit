@@ -154,7 +154,6 @@ def make_array_from_event_table_for_onregion_estimate(event_table):
     ])
     ta = spt.cut_and_sort_table_on_indices(
         table=event_table,
-        structure=irf_table.STRUCTURE,
         common_indices=common_indices,
         level_keys=[
             "primary",

@@ -67,7 +67,6 @@ for site_key in irf_config["config"]["sites"]:
 
         detected_events = spt.cut_table_on_indices(
             table=event_table,
-            structure=irf.table.STRUCTURE,
             common_indices=idx_passed_trigger_and_in_debug_output,
             level_keys=[
                 "primary",

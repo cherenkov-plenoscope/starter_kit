@@ -390,7 +390,6 @@ def read_train_test_frame(
         )
         table_kk = spt.cut_and_sort_table_on_indices(
             table=airshower_table,
-            structure=EXT_STRUCTRURE,
             common_indices=idxs_valid_kk,
             level_keys=level_keys,
         )

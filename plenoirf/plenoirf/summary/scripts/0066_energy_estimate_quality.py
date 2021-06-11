@@ -83,7 +83,6 @@ for sk in irf_config["config"]["sites"]:
 
         valid_event_table = spt.cut_and_sort_table_on_indices(
             table=event_table,
-            structure=irf.table.STRUCTURE,
             common_indices=idx_valid,
         )
 

@@ -41,7 +41,6 @@ for sk in SITES:
 
         features = spt.cut_table_on_indices(
             table=_table,
-            structure=irf.table.STRUCTURE,
             common_indices=train_test[sk][pk]["train"],
             level_keys=["features"],
         )["features"]
