@@ -6,7 +6,6 @@ import spectral_energy_distribution_units as sed
 from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
 import os
-import gamma_limits_sensitivity as gls
 import scipy
 import sebastians_matplotlib_addons as seb
 
