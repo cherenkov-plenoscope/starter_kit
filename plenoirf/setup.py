@@ -18,6 +18,7 @@ setuptools.setup(
         "cosmic_fluxes",
         "corsika_primary_wrapper",
         "iminuit==1.4.9",
+        "shapely",
     ],
     package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},
     classifiers=[
