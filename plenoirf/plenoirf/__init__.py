@@ -39,6 +39,8 @@ import queue_map_reduce
 from queue_map_reduce.tools import _log as qmrlog
 import magnetic_deflection as mdfl
 
+MIN_PROTON_ENERGY_GEV = 5.0
+MIN_HELIUM_ENERGY_GEV = 10.0
 
 EXAMPLE_EXECUTABLES = {
     "corsika_primary_path": opj(
@@ -115,7 +117,7 @@ EXAMPLE_CONFIG = {
         "proton": {
             "particle_id": 14,
             "energy_bin_edges_GeV": [
-                5.0,
+                max(MIN_PROTON_ENERGY_GEV, utils.power10_bin_edge(0, 3, 5)),
                 utils.power10_bin_edge(3, 1, 5)
             ],
             "max_scatter_angle_deg": 13,
@@ -126,7 +128,7 @@ EXAMPLE_CONFIG = {
         "helium": {
             "particle_id": 402,
             "energy_bin_edges_GeV": [
-                utils.power10_bin_edge(1, 0, 5),
+                max(MIN_HELIUM_ENERGY_GEV, utils.power10_bin_edge(1, 0, 5)),
                 utils.power10_bin_edge(3, 1, 5)
             ],
             "max_scatter_angle_deg": 13,
