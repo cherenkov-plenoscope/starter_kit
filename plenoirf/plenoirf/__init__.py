@@ -272,7 +272,11 @@ def _estimate_magnetic_deflection_of_air_showers(cfg, out_absdir, pool):
 
         mdfl_jobs = mdfl.B_make_jobs_from_work_dir(work_dir=mdfl_absdir)
 
-        mdfl_job_results = pool.map(mdfl.map_and_reduce.run_job, mdfl_jobs)
+        _ = pool.map(mdfl.map_and_reduce.run_job, mdfl_jobs)
+
+        mdfl_job_results = mdfl.B2_read_job_results_from_work_dir(
+            work_dir=mdfl_absdir
+        )
 
         mdfl.C_reduce_job_results_in_work_dir(
             job_results=mdfl_job_results, work_dir=mdfl_absdir
