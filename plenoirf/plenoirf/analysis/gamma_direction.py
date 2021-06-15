@@ -53,31 +53,3 @@ def estimate_containment_radius(theta_deg, psf_containment_factor):
         theta_containment_deg_relunc = np.nan
     return theta_containment_deg, theta_containment_deg_relunc
 
-
-def estimate_fix_opening_angle_for_onregion(
-    energy_bin_centers_GeV,
-    point_spread_function_containment_opening_angle_deg,
-    pivot_energy_GeV,
-    num_rise=8,
-):
-    """
-    Estimates and returns the psf's opening angle at a given pivot_energy when
-    given psf's opening angle vs energy.
-    Uses weighted interpolation in the vicinity of the pivot_energy.
-    """
-    smooth_kernel_energy = np.geomspace(
-        pivot_energy_GeV / 2, pivot_energy_GeV * 2, num_rise * 2
-    )
-    triangle_kernel_weight = np.hstack(
-        [np.cumsum(np.ones(num_rise)), np.flip(np.cumsum(np.ones(num_rise)))]
-    )
-    triangle_kernel_weight /= np.sum(triangle_kernel_weight)
-    pivot_containtment_deg = np.interp(
-        x=smooth_kernel_energy,
-        xp=energy_bin_centers_GeV,
-        fp=point_spread_function_containment_opening_angle_deg,
-    )
-    fix_onregion_radius_deg = np.sum(
-        pivot_containtment_deg * triangle_kernel_weight
-    )
-    return fix_onregion_radius_deg
