@@ -57,12 +57,7 @@ trigger_threshold_key = np.where(
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
 
-fermi_broadband = irf.analysis.fermi_lat_integral_spectral_exclusion_zone()
-assert fermi_broadband["energy"]["unit_tex"] == "GeV"
-assert (
-    fermi_broadband["differential_flux"]["unit_tex"]
-    == "m$^{-2}$ s$^{-1}$ GeV$^{-1}$"
-)
+fermi = irf.other_instruments.fermi_lat
 
 num_isez_energy_supports = 137
 
@@ -117,25 +112,26 @@ for site_key in irf_config["config"]["sites"]:
     for i in range(4):
         com = {}
         scale_factor = np.power(10.0, (-1) * i)
-        com["energy"] = np.array(crab_flux["energy"]["values"])
-        com["differential_flux"] = scale_factor * np.array(
+        com["energy"] = [np.array(crab_flux["energy"]["values"])]
+        com["differential_flux"] = [scale_factor * np.array(
             crab_flux["differential_flux"]["values"]
-        )
+        )]
         com["label"] = "{:.3f} Crab".format(scale_factor)
         com["color"] = "k"
         com["alpha"] = 1.0 / (1.0 + i)
         com["linestyle"] = "--"
         components.append(com.copy())
 
-    # Fermi-LAT broadband
-    # -------------------
+    # Fermi-LAT diff
+    # --------------
+    fermi_diff = fermi.differential_sensitivity(l=0, b=90)
     com = {}
-    com["energy"] = np.array(fermi_broadband["energy"]["values"])
-    com["differential_flux"] = np.array(
-        fermi_broadband["differential_flux"]["values"]
-    )
-    com["label"] = "Fermi-LAT 10 y"
-    com["color"] = "k"
+    com["energy"] = [np.array(fermi_diff["energy"]["values"])]
+    com["differential_flux"] = [
+        np.array(fermi_diff["differential_flux"]["values"])
+    ]
+    com["label"] = fermi.LABEL + ", 10y, (l=0, b=90), diff."
+    com["color"] = fermi.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "-"
     components.append(com)
@@ -170,8 +166,8 @@ for site_key in irf_config["config"]["sites"]:
         detection_threshold_std=PHD_DETECTION_THRESHOLD_STD,
     )
     com = {}
-    com["energy"] = isez_energy_GeV
-    com["differential_flux"] = isez_differential_flux_per_GeV_per_m2_per_s
+    com["energy"] = [isez_energy_GeV]
+    com["differential_flux"] = [isez_differential_flux_per_GeV_per_m2_per_s]
     com["label"] = "Portal {:2.0f} h, trigger".format(
         PHD_OBSERVATION_TIME_S / 3600.0
     )
@@ -196,20 +192,21 @@ for site_key in irf_config["config"]["sites"]:
 
         for com in components:
 
-            _energy, _dFdE = sed.convert_units_with_style(
-                x=com["energy"],
-                y=com["differential_flux"],
-                input_style=internal_sed_style,
-                target_style=sed_style,
-            )
-            ax.plot(
-                _energy,
-                _dFdE,
-                label=com["label"],
-                color=com["color"],
-                alpha=com["alpha"],
-                linestyle=com["linestyle"],
-            )
+            for ii in range(len(com["energy"])):
+                _energy, _dFdE = sed.convert_units_with_style(
+                    x=com["energy"][ii],
+                    y=com["differential_flux"][ii],
+                    input_style=internal_sed_style,
+                    target_style=sed_style,
+                )
+                ax.plot(
+                    _energy,
+                    _dFdE,
+                    label=com["label"] if ii == 0 else None,
+                    color=com["color"],
+                    alpha=com["alpha"],
+                    linestyle=com["linestyle"],
+                )
 
         _x_lim, _y_lim = sed.convert_units_with_style(
             x=x_lim_GeV,
