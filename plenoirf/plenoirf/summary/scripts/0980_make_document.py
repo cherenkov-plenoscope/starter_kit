@@ -294,27 +294,7 @@ _bd += make_site_table(
         "{site_key:s}_trigger_probability_vs_cherenkov_size.jpg",
     ),
 )
-_bd += sam.h("Trigger-probability vs. offaxis-angle", level=2)
-_bd += make_site_particle_index_table(
-    sites=irf_config["config"]["sites"],
-    particles=irf_config["config"]["particles"],
-    energy_bin_edges=[0, 1],
-    wild_card=opj(
-        "0075_trigger_probability_vs_offaxis",
-        "{site_key:s}_{particle_key:s}_trigger_probability_vs_offaxis.jpg",
-    ),
-)
-_bd += sam.h("Trigger-probability vs. offaxis-angle vs. energy", level=2)
-_bd += make_site_particle_index_table(
-    sites=irf_config["config"]["sites"],
-    particles=irf_config["config"]["particles"],
-    energy_bin_edges=energy_bin_edges_coarse,
-    wild_card=opj(
-        "0075_trigger_probability_vs_offaxis",
-        "{site_key:s}_{particle_key:s}_"
-        "trigger_probability_vs_offaxis_{energy_bin_index:06d}.jpg",
-    ),
-)
+
 _bd += sam.h(
     "Cherenkov- and night-sky-background-light classification", level=2
 )
