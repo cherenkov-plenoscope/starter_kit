@@ -17,6 +17,7 @@ from . import reconstruction
 from . import utils
 from . import production
 from . import other_instruments
+from . import single_thread_dummy
 
 import os
 import numpy as np
@@ -426,6 +427,7 @@ def _populate_table_of_thrown_air_showers(
                         particle_key
                     ],
                     "grid": cfg["grid"],
+                    "raw_sensor_response": cfg["raw_sensor_response"],
                     "sum_trigger": cfg["sum_trigger"],
                     "cherenkov_classification": cfg[
                         "cherenkov_classification"
@@ -580,6 +582,8 @@ def run(
     elif MULTIPROCESSING_POOL == "local":
         pool = multiprocessing.Pool(8)
         qmrlog("Use local multiprocessing-pool.")
+    elif MULTIPROCESSING_POOL == "single_thread":
+        pool = single_thread_dummy
     else:
         raise KeyError(
             "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL)
