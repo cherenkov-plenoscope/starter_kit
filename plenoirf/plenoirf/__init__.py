@@ -361,7 +361,7 @@ def _estimate_trigger_geometry_of_plenoscope(
             trigger_image_geometry=trigger_image_geometry,
             object_distances=cfg["sum_trigger"]["object_distances_m"],
         )
-        pl.trigger.io.write_trigger_geometry_to_path(
+        pl.trigger.geometry.write(
             trigger_geometry=trigger_geometry,
             path=opj(out_absdir, "trigger_geometry"),
         )

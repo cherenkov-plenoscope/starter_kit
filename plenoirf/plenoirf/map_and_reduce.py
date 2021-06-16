@@ -868,7 +868,7 @@ def run_job(job):
         light_field_geometry = pl.LightFieldGeometry(
             path=job["light_field_geometry_path"]
         )
-        trigger_geometry = pl.trigger.io.read_trigger_geometry_from_path(
+        trigger_geometry = pl.trigger.geometry.read(
             path=job["trigger_geometry_path"]
         )
 
