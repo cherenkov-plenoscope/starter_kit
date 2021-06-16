@@ -365,7 +365,7 @@ def _estimate_trigger_geometry_of_plenoscope(
             trigger_geometry=trigger_geometry,
             path=opj(out_absdir, "trigger_geometry"),
         )
-        tss = pl.trigger.statistics.gather_summation_statistics(
+        tss = pl.trigger.geometry.init_summation_statistics(
             trigger_geometry=trigger_geometry
         )
         pl.trigger.plot.write_figures_to_directory(
