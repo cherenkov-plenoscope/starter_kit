@@ -348,7 +348,7 @@ def _estimate_trigger_geometry_of_plenoscope(
             path=opj(out_absdir, "light_field_geometry")
         )
         img = cfg["sum_trigger"]["image"]
-        trigger_image = pl.trigger.prepare.generate_trigger_image(
+        trigger_image_geometry = pl.trigger.geometry.init_trigger_image_geometry(
             image_outer_radius_rad=np.deg2rad(img["image_outer_radius_deg"]),
             pixel_spacing_rad=np.deg2rad(img["pixel_spacing_deg"]),
             pixel_radius_rad=np.deg2rad(img["pixel_radius_deg"]),
@@ -356,9 +356,9 @@ def _estimate_trigger_geometry_of_plenoscope(
                 "max_number_nearest_lixel_in_pixel"
             ],
         )
-        trigger_geometry = pl.trigger.prepare.prepare_trigger_geometry(
+        trigger_geometry = pl.trigger.geometry.init_trigger_geometry(
             light_field_geometry=light_field_geometry,
-            trigger_image=trigger_image,
+            trigger_image_geometry=trigger_image_geometry,
             object_distances=cfg["sum_trigger"]["object_distances_m"],
         )
         pl.trigger.io.write_trigger_geometry_to_path(
