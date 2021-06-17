@@ -3,7 +3,6 @@ import sys
 import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
-import airshower_template_generator as atg
 import os
 import plenopy as pl
 import sebastians_matplotlib_addons as seb

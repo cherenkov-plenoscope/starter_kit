@@ -4,7 +4,6 @@ import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
-import airshower_template_generator as atg
 import plenopy as pl
 import glob
 from iminuit import Minuit
