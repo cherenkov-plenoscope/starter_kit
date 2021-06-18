@@ -30,9 +30,6 @@ energy_bin_edges = np.geomspace(
 )
 energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
 
-cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
-cosmic_ray_keys.remove("gamma")
-
 fermi = irf.other_instruments.fermi_lat
 cta = irf.other_instruments.cherenkov_telescope_array_south
 
