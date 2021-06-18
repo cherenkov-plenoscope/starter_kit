@@ -55,13 +55,11 @@ observation_time_str = irf.utils.make_civil_time_str(
 
 
 def find_observation_time_index(observation_times, observation_time, max_rel_error=0.1):
-    observation_times = np.array(observation_times)
-    obstidx = np.argmin(np.abs(observation_times - observation_time))
-    assert (
-        np.abs(observation_times[obstidx] - observation_time)
-        < max_rel_error * observation_time
-    )
-    return obstidx
+    return irf.utils.find_closest_index_in_array_for_value(
+        arr=observation_times,
+        val=observation_time,
+        max_rel_error=max_rel_error,
+        )
 
 
 oridx = 1
