@@ -16,15 +16,6 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-
-onregion_acceptance = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
-)
-onregion_rates = irf.json_numpy.read_tree(
-    os.path.join(
-        pa["summary_dir"], "0320_onregion_trigger_rates_for_cosmic_rays"
-    )
-)
 diff_sensitivity = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0327_differential_sensitivity_plot")
 )
@@ -38,11 +29,6 @@ energy_bin_edges = np.geomspace(
     + 1,
 )
 energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
-
-detection_threshold_std = sum_config["on_off_measuremnent"][
-    "detection_threshold_std"
-]
-on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
@@ -87,26 +73,8 @@ onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][
     "loop_opening_angle_deg"
 ][oridx]
 
-# background rates
-# ----------------
-cosmic_ray_rate_onregion = {}
-electron_rate_onregion = {}
-for site_key in irf_config["config"]["sites"]:
-
-    electron_rate_onregion[site_key] = onregion_rates[site_key]["electron"][
-        "integral_rate"
-    ]["mean"][oridx]
-
-    cosmic_ray_rate_onregion[site_key] = 0
-    for cosmic_ray_key in cosmic_ray_keys:
-        cosmic_ray_rate_onregion[site_key] += onregion_rates[site_key][
-            cosmic_ray_key
-        ]["integral_rate"]["mean"][oridx]
-
 x_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
-
-PLOT_TANGENTIAL_POWERLAWS = False
 
 
 for site_key in irf_config["config"]["sites"]:
