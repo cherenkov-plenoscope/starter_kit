@@ -64,13 +64,25 @@ output_sed_styles = {
     "cta": sed_styles.CHERENKOV_TELESCOPE_ARRAY_SED_STYLE,
 }
 
-loop_systematic_uncertainty = [1e-2]
-loop_systematic_uncertainty_line_style = ["-"]
+observation_time = 30 * 60
+observation_time_str = irf.utils.make_civil_time_str(
+    time_s=observation_time,
+    format_seconds="{:.0f}"
+)
 
-loop_observation_time = [60]
-loop_observation_time_line_color = ["brown"]
+
+def find_observation_time_index(observation_times, observation_time, max_rel_error=0.1):
+    observation_times = np.array(observation_times)
+    obstidx = np.argmin(np.abs(observation_times - observation_time))
+    assert (
+        np.abs(observation_times[obstidx] - observation_time)
+        < max_rel_error * observation_time
+    )
+    return obstidx
+
 
 oridx = 1
+sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
 onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][
     "loop_opening_angle_deg"
 ][oridx]
@@ -116,22 +128,6 @@ for site_key in irf_config["config"]["sites"]:
         com["linestyle"] = "--"
         components.append(com.copy())
 
-    # Fermi-LAT integral
-    # ------------------
-    """
-    fermi_inte = fermi.integral_sensitivity()
-    com = {}
-    com["energy"] = [np.array(fermi_inte["energy"]["values"])]
-    com["differential_flux"] = [
-        np.array(fermi_inte["differential_flux"]["values"])
-    ]
-    com["label"] = fermi.LABEL + ", 10y, int."
-    com["color"] = fermi.COLOR
-    com["alpha"] = 1.0
-    com["linestyle"] = ":"
-    components.append(com)
-    """
-
     # Fermi-LAT diff
     # --------------
     fermi_diff = fermi.differential_sensitivity(l=0, b=90)
@@ -148,13 +144,13 @@ for site_key in irf_config["config"]["sites"]:
 
     # CTA South 30min
     # ---------------
-    cta_diff = cta.differential_sensitivity(observation_time=1800)
+    cta_diff = cta.differential_sensitivity(observation_time=observation_time)
     com = {}
     com["energy"] = [np.array(cta_diff["energy"]["values"])]
     com["differential_flux"] = [
         np.array(cta_diff["differential_flux"]["values"])
     ]
-    com["label"] = cta.LABEL + ", 30min, diff."
+    com["label"] = cta.LABEL + ", " + observation_time_str +" , diff."
     com["color"] = cta.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "-"
@@ -162,107 +158,29 @@ for site_key in irf_config["config"]["sites"]:
 
     # Plenoscope diff
     # ---------------
+    obstidx = find_observation_time_index(
+        observation_times=diff_sensitivity[
+            site_key]["differential_sensitivity"]["observation_times"],
+        observation_time=observation_time
+    )
+
     com = {}
     com["energy"] = []
     com["differential_flux"] = []
 
     for ii in range(len(energy_bin_edges) - 1):
         com["energy"].append([energy_bin_edges[ii], energy_bin_edges[ii + 1]])
-        com["differential_flux"].append(
-            [
-                np.array(
-                    diff_sensitivity[site_key]["differential_sensitivity"][
-                        "differential_flux"
-                    ]
-                )[ii, oridx],
-                np.array(
-                    diff_sensitivity[site_key]["differential_sensitivity"][
-                        "differential_flux"
-                    ]
-                )[ii, oridx],
+        _dFdE_sens = np.array(
+            diff_sensitivity[site_key]["differential_sensitivity"][
+                "differential_flux"
             ]
-        )
-    com["label"] = "Portal, 60s, diff., sys. 1.0e-02"
+        )[ii, oridx, obstidx]
+        com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
+    com["label"] = "Portal, " + observation_time_str + ", diff., sys. {:.1e}".format(sys_unc)
     com["color"] = "black"
     com["alpha"] = 1.0
     com["linestyle"] = "-"
     components.append(com)
-
-    # plenoscope
-    # ----------
-    """
-    for obt in range(len(loop_observation_time)):
-        observation_time_s = loop_observation_time[obt]
-
-        for sys, systematic_uncertainty in enumerate(
-            loop_systematic_uncertainty
-        ):
-            gamma_effective_area_m2 = np.array(
-                np.array(
-                    onregion_acceptance[site_key]["gamma"]["point"]["mean"]
-                )[:, oridx]
-            )
-
-            critical_rate_per_s = irf.analysis.integral_sensitivity.estimate_critical_rate(
-                background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
-                    site_key
-                ],
-                onregion_over_offregion_ratio=on_over_off_ratio,
-                observation_time_s=observation_time_s,
-                instrument_systematic_uncertainty=systematic_uncertainty,
-                detection_threshold_std=5.0,
-                method="LiMa_eq17",
-            )
-
-            powlaws = irf.analysis.integral_sensitivity.estimate_critical_power_laws(
-                effective_area_bins_m2=gamma_effective_area_m2,
-                effective_area_energy_bin_edges_GeV=energy_bin_edges,
-                critical_rate_per_s=critical_rate_per_s,
-                power_law_spectral_indices=np.linspace(-6.0, 0.0, 100),
-            )
-
-            (
-                tangent_E_GeV,
-                tangent_dF_per_m2_per_GeV_per_s,
-            ) = irf.analysis.integral_sensitivity.estimate_tangent_of_critical_power_laws(
-                critical_power_laws=powlaws
-            )
-            com = {}
-            com["energy"] = [tangent_E_GeV]
-            com["differential_flux"] = [tangent_dF_per_m2_per_GeV_per_s]
-            com["label"] = "Portal, {:2.0f}s, int., sys. {:1.1e}".format(
-                observation_time_s, systematic_uncertainty,
-            )
-
-            com["alpha"] = 1.0 / (1.0 + sys)
-            com["color"] = "black"
-            com["linestyle"] = ":"
-            components.append(com)
-
-            if PLOT_TANGENTIAL_POWERLAWS:
-                for powlaw in powlaws:
-                    _E_GeV = np.geomspace(
-                        np.min(energy_bin_edges),
-                        np.max(energy_bin_edges),
-                        1337,
-                    )
-                    _dF_per_m2_per_GeV_per_s = cosmic_fluxes._power_law(
-                        energy=_E_GeV,
-                        flux_density=powlaw[
-                            "flux_density_per_m2_per_GeV_per_s"
-                        ],
-                        spectral_index=powlaw["spectral_index"],
-                        pivot_energy=powlaw["pivot_energy_GeV"],
-                    )
-                    com = {}
-                    com["energy"] = [_E_GeV]
-                    com["differential_flux"] = [_dF_per_m2_per_GeV_per_s]
-                    com["label"] = None
-                    com["alpha"] = 0.01
-                    com["color"] = "black"
-                    com["linestyle"] = "-"
-                    components.append(com)
-    """
 
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]
@@ -301,11 +219,6 @@ for site_key in irf_config["config"]["sites"]:
         ax.legend(loc="best", fontsize=10)
         ax.set_xlabel(sed_style["x_label"] + " / " + sed_style["x_unit"])
         ax.set_ylabel(sed_style["y_label"] + " / " + sed_style["y_unit"])
-        ax.set_title(
-            "onregion {: 2.1f}".format(onregion_opening_angle_deg)
-            + r"$^{\circ}$",
-            family="monospace",
-        )
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
