@@ -61,3 +61,38 @@ def power10_bin_edge(decade, bin, num_bins=5):
     """
     assert bin < num_bins
     return 10 ** (decade + np.linspace(0, 1, num_bins + 1))[bin]
+
+
+def make_civil_times_points_in_quasi_logspace():
+    """
+    time-points from 1s to 100y in the civil steps of:
+    s, m, h, d, week, Month, year, decade
+    """
+    _10s = 10
+    _1M = 60
+    _1h = _1M * 60
+    _1d = _1h * 24
+    _1w = _1d * 7
+    _1m = _1d * 30
+    _1y = 365 * _1d
+
+    times = []
+    for _secs in np.arange(1, _10s, 1):
+        times.append(_secs)
+    for _10secs in np.arange(_10s, _1M, _10s):
+        times.append(_10secs)
+    for _mins in np.arange(_1M, _1h, _1M):
+        times.append(_mins)
+    for _hours in np.arange(_1h, _1d, _1h):
+        times.append(_hours)
+    for _days in np.arange(_1d, _1w, _1d):
+        times.append(_days)
+    for _weeks in np.arange(_1w, 4*_1w, _1w):
+        times.append(_weeks)
+    for _months in np.arange(_1m, 12*_1m, _1m):
+        times.append(_months)
+    for _years in np.arange(_1y, 10*_1y, _1y):
+        times.append(_years)
+    for _decades in np.arange(10*_1y, 100*_1y, 10*_1y):
+        times.append(_decades)
+    return times
