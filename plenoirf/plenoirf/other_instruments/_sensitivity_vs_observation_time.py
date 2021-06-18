@@ -126,7 +126,7 @@ def sensitivity_vs_observation_time(energy_GeV=25.0, instrument="cta_south"):
             "unit": "per_m2_per_s_per_GeV",
         },
         "observation_time": {
-            "values": fermi,
+            "values": obstime_s,
             "unit_tex": "s",
             "unit": "s",
         },
