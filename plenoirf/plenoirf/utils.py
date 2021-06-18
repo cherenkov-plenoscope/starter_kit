@@ -131,3 +131,10 @@ def make_civil_time_str(time_s, format_seconds="{:f}"):
     except Exception as err:
         print(str(err))
         return (format_seconds + "s").format(time_s)
+
+
+def find_closest_index_in_array_for_value(arr, val, max_rel_error=0.1):
+    arr = np.array(arr)
+    idx = np.argmin(np.abs(arr - val))
+    assert np.abs(arr[idx] - val) < max_rel_error * val
+    return idx
