@@ -3,19 +3,7 @@ import spectral_energy_distribution_units as sed
 from .. analysis import spectral_energy_distribution as sed_styles
 
 
-def sensitivity_vs_observation_time(energy_GeV=25.0, instrument="cta"):
-    """
-    @article{funk2013comparison,
-      title={Comparison of Fermi-LAT and CTA in the region between 10--100 GeV},
-      author={Funk, Stefan and Hinton, JA and CTA Consortium and others},
-      journal={Astroparticle Physics},
-      volume={43},
-      pages={348--355},
-      year={2013},
-      publisher={Elsevier}
-    }
-    """
-
+def sensitivity_vs_observation_time(energy_GeV=25.0, instrument="cta_south"):
     if energy_GeV == 25.0:
         cta = np.array([
             [1.54448e+1, 6.15336e-9],
@@ -108,11 +96,11 @@ def sensitivity_vs_observation_time(energy_GeV=25.0, instrument="cta"):
 
     PIVOT_ENERGY_GEV = 25.0
 
-    if instrument == "fermi":
+    if instrument == "Fermi-LAT":
         _energy_GeV = PIVOT_ENERGY_GEV * np.ones(fermi.shape[0])
         _sens_E2_rg_per_cm2_per_s = fermi[:, 1]
         obstime_s = fermi[:, 0]
-    elif instrument == "cta":
+    elif instrument == "CTA-South":
         _energy_GeV = PIVOT_ENERGY_GEV * np.ones(cta.shape[0])
         _sens_E2_rg_per_cm2_per_s = cta[:, 1]
         obstime_s = cta[:, 0]
@@ -143,5 +131,13 @@ def sensitivity_vs_observation_time(energy_GeV=25.0, instrument="cta"):
             "unit": "s",
         },
         "reference": {
+            "key": "funk2013comparison",
+            "title": "Comparison of Fermi-LAT and CTA in the region between 10--100 GeV",
+            "author": "Funk, Stefan and Hinton, JA and CTA Consortium and others",
+            "journal": "Astroparticle Physics",
+            "volume": "43",
+            "pages": "348--355",
+            "year": "2013",
+            "publisher": "Elsevier",
         }
     }

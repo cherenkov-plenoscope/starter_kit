@@ -1,9 +1,17 @@
 import numpy as np
 import spectral_energy_distribution_units as sed
 from .. analysis import spectral_energy_distribution as sed_styles
+from ._sensitivity_vs_observation_time import sensitivity_vs_observation_time as _sens_vs_obs
 
 COLOR = "darkorange"
 LABEL = "Fermi-LAT"
+
+
+def sensitivity_vs_observation_time(energy_GeV=25.0):
+    return _sens_vs_obs(
+        energy_GeV=energy_GeV,
+        instrument=LABEL
+    )
 
 
 def differential_sensitivity(l=0, b=0):
