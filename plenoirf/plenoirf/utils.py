@@ -63,18 +63,20 @@ def power10_bin_edge(decade, bin, num_bins=5):
     return 10 ** (decade + np.linspace(0, 1, num_bins + 1))[bin]
 
 
+_10s = 10
+_1M = 60
+_1h = _1M * 60
+_1d = _1h * 24
+_1w = _1d * 7
+_1m = _1d * 30
+_1y = 365 * _1d
+
+
 def make_civil_times_points_in_quasi_logspace():
     """
     time-points from 1s to 100y in the civil steps of:
     s, m, h, d, week, Month, year, decade
     """
-    _10s = 10
-    _1M = 60
-    _1h = _1M * 60
-    _1d = _1h * 24
-    _1w = _1d * 7
-    _1m = _1d * 30
-    _1y = 365 * _1d
 
     times = []
     for _secs in np.arange(1, _10s, 1):
@@ -96,3 +98,36 @@ def make_civil_times_points_in_quasi_logspace():
     for _decades in np.arange(10*_1y, 100*_1y, 10*_1y):
         times.append(_decades)
     return times
+
+
+def make_civil_time_str(time_s, format_seconds="{:f}"):
+    try:
+        years = int(time_s // _1y)
+        tr = time_s - years*_1y
+
+        days = int(tr // _1d)
+        tr = tr - days*_1d
+
+        hours = int(tr // _1h)
+        tr = tr - hours*_1h
+
+        minutes = int(tr // _1M)
+        tr = tr - minutes*_1M
+
+        s = ""
+        if years:
+            s += "{:d}y ".format(years)
+        if days:
+            s += "{:d}d ".format(days)
+        if hours:
+            s += "{:d}h ".format(hours)
+        if minutes:
+            s += "{:d}min ".format(minutes)
+        if tr:
+            s += (format_seconds + "s").format(tr)
+        if s[-1] == " ":
+            s = s[0:-1]
+        return s
+    except Exception as err:
+        print(str(err))
+        return (format_seconds + "s").format(time_s)
