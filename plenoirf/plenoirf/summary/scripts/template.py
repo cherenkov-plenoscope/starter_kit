@@ -4,11 +4,7 @@ import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import sebastians_matplotlib_addons as seb
 
 
 argv = irf.summary.argv_since_py(sys.argv)
