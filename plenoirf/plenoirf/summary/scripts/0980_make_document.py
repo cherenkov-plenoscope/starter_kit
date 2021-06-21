@@ -623,9 +623,7 @@ _bd += sam.code(
 with open(opj(pa["summary_dir"], "index.html"), "wt") as fout:
     fout.write(_html.render())
 
-production_name = pa["run_dir"]
-if production_name[-1] == "/":
-    production_name = os.path.dirname(production_name)
+production_name = irf.summary.production_name_from_run_dir(pa["run_dir"])
 
 weasyprint.HTML(opj(pa["summary_dir"], "index.html")).write_pdf(
     opj(pa["summary_dir"], "{:s}.pdf".format(production_name))

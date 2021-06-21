@@ -75,6 +75,10 @@ def paths_from_argv(argv):
     }
 
 
+def production_name_from_run_dir(path):
+    return os.path.basename(os.path.normpath(path))
+
+
 def read_summary_config(summary_dir):
     with open(opj(summary_dir, "summary_config.json"), "rt") as fin:
         config = json.loads(fin.read())
