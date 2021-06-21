@@ -185,7 +185,7 @@ for site_key in irf_config["config"]["sites"]:
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
-                "{:s}_integral_spectral_exclusion_zone_style_{:s}.jpg".format(
+                "{:s}_differential_sensitivity_sed-style-{:s}.jpg".format(
                     site_key, sed_style_key
                 ),
             )
