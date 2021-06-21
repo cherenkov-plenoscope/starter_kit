@@ -17,7 +17,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 diff_sensitivity = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0327_differential_sensitivity_plot")
+    os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
 )
 
 energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
