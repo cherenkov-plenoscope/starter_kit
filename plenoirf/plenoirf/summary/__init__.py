@@ -275,7 +275,7 @@ def _guess_summary_config(run_dir):
         },
         "trigger": {
             "modus": {
-                "accepting_focus": 9,
+                "accepting_focus": 6,
                 "rejecting_focus": -1,
                 "intensity_ratio_between_foci": 1.0,
                 "use_rejection_focus": False,
