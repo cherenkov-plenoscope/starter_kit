@@ -1,6 +1,9 @@
 import numpy as np
 
 
+FIGURE_STYLE = {"rows": 720, "cols": 1280, "fontsize": 1.0}
+AX_SPAN = [0.2, 0.2, 0.75, 0.75]
+
 def mark_ax_airshower_spectrum(ax, x=0.93, y=0.93, fontsize=42):
     ax.text(
         x=x,
