@@ -17,7 +17,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 diff_sensitivity = irf.json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0327_differential_sensitivity_plot")
+    os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
 )
 
 energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
@@ -84,7 +84,7 @@ for site_key in irf_config["config"]["sites"]:
         com["differential_flux"] = _flux * np.ones(len(observation_times))
         com["label"] = "{:1.1e} Crab".format(scale_factor) if i == 0 else None
         com["color"] = "k"
-        com["alpha"] = 1.0 / (1.0 + i)
+        com["alpha"] = 0.25 / (1.0 + i)
         com["linestyle"] = "--"
         components.append(com.copy())
 
@@ -138,8 +138,8 @@ for site_key in irf_config["config"]["sites"]:
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]
 
-        fig = seb.figure(seb.FIGURE_16_9)
-        ax = seb.add_axes(fig, (0.1, 0.1, 0.8, 0.8))
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
         for com in components:
 
@@ -170,9 +170,9 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_xlim(x_lim_s)
         ax.set_ylim(np.sort(_dFdE_lim))
         ax.loglog()
-        ax.legend(loc="best", fontsize=10)
+        #ax.legend(loc="best", fontsize=10)
         ax.set_xlabel("observation-time / s")
-        ax.set_ylabel(sed_style["y_label"] + " / " + sed_style["y_unit"])
+        ax.set_ylabel(sed_style["y_label"] + " /\n " + sed_style["y_unit"])
         fig.savefig(
             os.path.join(
                 pa["out_dir"],

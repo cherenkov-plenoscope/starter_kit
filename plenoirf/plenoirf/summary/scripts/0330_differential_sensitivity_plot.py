@@ -85,9 +85,9 @@ for site_key in irf_config["config"]["sites"]:
         com["differential_flux"] = [
             scale_factor * np.array(crab_flux["differential_flux"]["values"])
         ]
-        com["label"] = "{:1.1e} Crab".format(scale_factor) if i == 0 else None
+        com["label"] = None # "{:1.1e} Crab".format(scale_factor) if i == 0 else None
         com["color"] = "k"
-        com["alpha"] = 1.0 / (1.0 + i)
+        com["alpha"] = 0.25 / (1.0 + i)
         com["linestyle"] = "--"
         components.append(com.copy())
 
@@ -99,7 +99,7 @@ for site_key in irf_config["config"]["sites"]:
     com["differential_flux"] = [
         np.array(fermi_diff["differential_flux"]["values"])
     ]
-    com["label"] = fermi.LABEL + ", 10y, (l=0, b=90), diff."
+    com["label"] = fermi.LABEL + ", 10y, (l=0, b=90)"
     com["color"] = fermi.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "-"
@@ -113,7 +113,7 @@ for site_key in irf_config["config"]["sites"]:
     com["differential_flux"] = [
         np.array(cta_diff["differential_flux"]["values"])
     ]
-    com["label"] = cta.LABEL + ", " + observation_time_str +" , diff."
+    com["label"] = cta.LABEL + ", " + observation_time_str
     com["color"] = cta.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "-"
@@ -139,7 +139,7 @@ for site_key in irf_config["config"]["sites"]:
             ]
         )[ii, oridx, obstidx]
         com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
-    com["label"] = "Portal, " + observation_time_str + ", diff., sys. {:.1e}".format(sys_unc)
+    com["label"] = "Portal, " + observation_time_str + ", sys. {:.1e}".format(sys_unc)
     com["color"] = "black"
     com["alpha"] = 1.0
     com["linestyle"] = "-"
@@ -148,8 +148,8 @@ for site_key in irf_config["config"]["sites"]:
     for sed_style_key in output_sed_styles:
         sed_style = output_sed_styles[sed_style_key]
 
-        fig = seb.figure(seb.FIGURE_16_9)
-        ax = seb.add_axes(fig, (0.1, 0.1, 0.8, 0.8))
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
         for com in components:
 
@@ -180,8 +180,8 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_ylim(np.sort(_y_lim))
         ax.loglog()
         ax.legend(loc="best", fontsize=10)
-        ax.set_xlabel(sed_style["x_label"] + " / " + sed_style["x_unit"])
-        ax.set_ylabel(sed_style["y_label"] + " / " + sed_style["y_unit"])
+        ax.set_xlabel(sed_style["x_label"] + " /" + sed_style["x_unit"])
+        ax.set_ylabel(sed_style["y_label"] + " /\n " + sed_style["y_unit"])
         fig.savefig(
             os.path.join(
                 pa["out_dir"],

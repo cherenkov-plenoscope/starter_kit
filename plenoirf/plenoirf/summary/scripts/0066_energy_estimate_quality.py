@@ -115,8 +115,9 @@ for sk in irf_config["config"]["sites"]:
                 containment_fraction=0.68,
             )
 
-            fig = seb.figure(seb.FIGURE_16_9)
-            ax1 = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.8, 0.8])
+            fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+            ax1 = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+
             seb.ax_add_histogram(
                 ax=ax1,
                 bin_edges=energy_bin_edges,
@@ -146,8 +147,8 @@ for sk in irf_config["config"]["sites"]:
             ax1.set_xlim([1e-1, 1e4])
             ax1.set_ylim([0, 1])
             ax1.set_xlabel("reco. energy / GeV")
-            ax1.set_ylabel(r"$\Delta{}$E/E (68% containment) / 1")
-            ax1.legend(loc="best", fontsize=10)
+            ax1.set_ylabel(r"$\Delta{}$E/E 68% / 1")
+            #ax1.legend(loc="best", fontsize=10)
 
             fig.savefig(
                 os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg")

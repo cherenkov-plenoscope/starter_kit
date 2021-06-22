@@ -44,8 +44,8 @@ cosmic_ray_keys.remove("gamma")
 for site_key in irf_config["config"]["sites"]:
     tr = trigger_rates[site_key]
 
-    fig = seb.figure(seb.FIGURE_16_9)
-    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     ax.plot(
         trigger_thresholds,
         tr["night_sky_background"]
@@ -70,7 +70,7 @@ for site_key in irf_config["config"]["sites"]:
     ax.semilogy()
     ax.set_xlabel("trigger-threshold / photo-electrons")
     ax.set_ylabel("trigger-rate / s$^{-1}$")
-    ax.legend(loc="best", fontsize=10)
+    ax.legend(loc="best", fontsize=8)
     ax.axvline(
         x=analysis_trigger_threshold, color="k", linestyle="-", alpha=0.25
     )

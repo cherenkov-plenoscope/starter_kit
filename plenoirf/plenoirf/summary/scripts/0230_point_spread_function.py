@@ -138,8 +138,8 @@ for sk in irf_config["config"]["sites"]:
         out,
     )
 
-    fig = seb.figure(seb.FIGURE_16_9)
-    ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
     con = 0
     tt_deg = np.rad2deg(out["theta68_rad"])
@@ -172,7 +172,8 @@ for sk in irf_config["config"]["sites"]:
         label=fermi.LABEL,
     )
 
-    ax.legend(loc="best", fontsize=10)
+    ax.set_xlim([1e-1, 1e4])
+    #ax.legend(loc="best", fontsize=10)
     ax.loglog()
     ax.set_xlabel("reco. energy / GeV")
     ax.set_ylabel(r"$\Theta{}$ 68% / 1$^\circ{}$")
