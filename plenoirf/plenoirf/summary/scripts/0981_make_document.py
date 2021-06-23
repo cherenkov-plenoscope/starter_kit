@@ -25,8 +25,9 @@ site_key = "namibia"
 SED_STYLE_KEY = "portal"
 
 geometry_options = {
-    "paperwidth": "18cm",
-    "paperheight": "32cm",
+    "paper": "a4paper",
+    #"paperwidth": "18cm",
+    #"paperheight": "32cm",
     "head": "0cm",
     "left": "2cm",
     "right": "2cm",
@@ -46,12 +47,6 @@ def read_json_but_forgive(path, default={}):
         out = default
     return out
 
-production_provenance = read_json_but_forgive(
-    path=os.path.join(pa["run_dir"], "event_table", "provenance.json")
-)
-analysis_provenance = read_json_but_forgive(
-    path=os.path.join(pa["summary_dir"], "provenance.json")
-)
 
 def make_basic_version_str(
     production_dirname,
@@ -82,6 +77,14 @@ def ppath(*args):
     p1 = os.path.join(*args)
     p2 = os.path.normpath(p1)
     return os.path.abspath(p2)
+
+
+production_provenance = read_json_but_forgive(
+    path=os.path.join(pa["run_dir"], "event_table", "provenance.json")
+)
+analysis_provenance = read_json_but_forgive(
+    path=os.path.join(pa["summary_dir"], "provenance.json")
+)
 
 energy_resolution_figure_path = ppath(
     pa["summary_dir"],
