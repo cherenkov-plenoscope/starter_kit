@@ -26,8 +26,8 @@ SED_STYLE_KEY = "portal"
 
 geometry_options = {
     "paper": "a4paper",
-    #"paperwidth": "18cm",
-    #"paperheight": "32cm",
+    # "paperwidth": "18cm",
+    # "paperheight": "32cm",
     "head": "0cm",
     "left": "2cm",
     "right": "2cm",
@@ -36,6 +36,7 @@ geometry_options = {
     "includehead": True,
     "includefoot": True,
 }
+
 
 def read_json_but_forgive(path, default={}):
     try:
@@ -49,9 +50,7 @@ def read_json_but_forgive(path, default={}):
 
 
 def make_basic_version_str(
-    production_dirname,
-    production_provenance,
-    analysis_provenance
+    production_dirname, production_provenance, analysis_provenance
 ):
     pp = production_provenance
     ap = analysis_provenance
@@ -60,11 +59,15 @@ def make_basic_version_str(
     ver += "Production\n"
     ver += "    dirname: {:s}\n".format(production_dirname)
     ver += "    date: {:s}\n".format(pp["time"]["iso"][0:16])
-    ver += "    git-commit: {:s}\n".format(pp["starter_kit"]["git"]["commit"][0:9])
+    ver += "    git-commit: {:s}\n".format(
+        pp["starter_kit"]["git"]["commit"][0:9]
+    )
     ver += "    hostname: {:s}\n".format(pp["hostname"])
     ver += "Analysis\n"
     ver += "    date: {:s}\n".format(ap["time"]["iso"][0:16])
-    ver += "    git-commit:   {:s}\n".format(ap["starter_kit"]["git"]["commit"][0:9])
+    ver += "    git-commit:   {:s}\n".format(
+        ap["starter_kit"]["git"]["commit"][0:9]
+    )
     ver += "    hostname: {:s}\n".format(ap["hostname"])
     return ver
 
@@ -89,43 +92,41 @@ analysis_provenance = read_json_but_forgive(
 energy_resolution_figure_path = ppath(
     pa["summary_dir"],
     "0066_energy_estimate_quality",
-    site_key + "_gamma_resolution.jpg"
+    site_key + "_gamma_resolution.jpg",
 )
 
 angular_resolution_figure_path = ppath(
-    pa["summary_dir"],
-    "0230_point_spread_function",
-    site_key + "_gamma.jpg"
+    pa["summary_dir"], "0230_point_spread_function", site_key + "_gamma.jpg"
 )
 
 differential_sensitivity_figure_path = ppath(
     pa["summary_dir"],
     "0330_differential_sensitivity_plot",
-    site_key + "_differential_sensitivity_sed-style-{:s}.jpg".format(SED_STYLE_KEY)
+    site_key
+    + "_differential_sensitivity_sed-style-{:s}.jpg".format(SED_STYLE_KEY),
 )
 
 sens_vs_observation_time_figure_path = ppath(
     pa["summary_dir"],
     "0331_sensitivity_vs_observation_time",
-    site_key + "_sensitivity_vs_obseravtion_time_{:s}.jpg".format(SED_STYLE_KEY)
+    site_key
+    + "_sensitivity_vs_obseravtion_time_{:s}.jpg".format(SED_STYLE_KEY),
 )
 
 ratescan_figure_path = ppath(
-    pa["summary_dir"],
-    "0130_trigger_ratescan_plot",
-    site_key + "_ratescan.jpg"
+    pa["summary_dir"], "0130_trigger_ratescan_plot", site_key + "_ratescan.jpg"
 )
 
 diff_trigger_rates_figure_path = ppath(
     pa["summary_dir"],
     "0106_trigger_rates_for_cosmic_particles_plot",
-    site_key + "_differential_trigger_rate.jpg"
+    site_key + "_differential_trigger_rate.jpg",
 )
 
 basic_version_str = make_basic_version_str(
     production_dirname=production_dirname,
     production_provenance=production_provenance,
-    analysis_provenance=analysis_provenance
+    analysis_provenance=analysis_provenance,
 )
 
 doc = ltx.Document(
@@ -137,19 +138,28 @@ doc = ltx.Document(
     page_numbers=True,
 )
 
+
 def Verbatim(string):
     return r"\begin{verbatim}" + r"{:s}".format(string) + r"\end{verbatim}"
+
 
 doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{multicol}"))
 doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{lipsum}"))
 doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{float}"))
 doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{verbatim}"))
 
-doc.preamble.append(ltx.Command('title',  ltx.utils.NoEscape(r'Simulating the Performance of the 71\,m Portal Cherenkov-Plenoscope')))
-doc.preamble.append(ltx.Command('author', 'Sebastian A. Mueller'))
-doc.preamble.append(ltx.Command('date', ""))
+doc.preamble.append(
+    ltx.Command(
+        "title",
+        ltx.utils.NoEscape(
+            r"Simulating the Performance of the 71\,m Portal Cherenkov-Plenoscope"
+        ),
+    )
+)
+doc.preamble.append(ltx.Command("author", "Sebastian A. Mueller"))
+doc.preamble.append(ltx.Command("date", ""))
 
-doc.append(ltx.utils.NoEscape(r'\maketitle'))
+doc.append(ltx.utils.NoEscape(r"\maketitle"))
 doc.append(ltx.utils.NoEscape(r"\begin{multicols}{2}"))
 
 """
@@ -159,59 +169,68 @@ with doc.create(ltx.TextBlock(width=10, horizontal_pos=0, vertical_pos=0)) as bl
     blk.append('Plenoscope')
 """
 
-with doc.create(ltx.Section('Version', numbering=False)):
+with doc.create(ltx.Section("Version", numbering=False)):
     doc.append(ltx.utils.NoEscape(Verbatim(basic_version_str)))
 
-with doc.create(ltx.Section('Performance', numbering=False)):
-    with doc.create(ltx.Figure(position='H')) as fig:
+with doc.create(ltx.Section("Performance", numbering=False)):
+    with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             differential_sensitivity_figure_path,
-            width=ltx.utils.NoEscape(r'1.0\linewidth')
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
         fig.add_caption("Differential sensitivity.")
 
-    with doc.create(ltx.Figure(position='H')) as fig:
+    with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             sens_vs_observation_time_figure_path,
-            width=ltx.utils.NoEscape(r'1.0\linewidth')
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
-        fig.add_caption(ltx.utils.NoEscape("Sensitivity vs. observation-time at 25\,GeV."))
+        fig.add_caption(
+            ltx.utils.NoEscape("Sensitivity vs. observation-time at 25\,GeV.")
+        )
 
-    with doc.create(ltx.Figure(position='H')) as fig:
+    with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             angular_resolution_figure_path,
-            width=ltx.utils.NoEscape(r'1.0\linewidth')
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
         fig.add_caption("Angular resolution.")
 
-    with doc.create(ltx.Figure(position='H')) as fig:
+    with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             energy_resolution_figure_path,
-            width=ltx.utils.NoEscape(r'1.0\linewidth')
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
         fig.add_caption("Energy resolution.")
 
 
 doc.append(ltx.utils.NoEscape(r"\columnbreak"))
 
-with doc.create(ltx.Section('Trigger', numbering=False)):
+with doc.create(ltx.Section("Trigger", numbering=False)):
 
-    with doc.create(ltx.Figure(position='H')) as fig:
+    with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            ratescan_figure_path,
-            width=ltx.utils.NoEscape(r'1.0\linewidth')
+            ratescan_figure_path, width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
         fig.add_caption("Ratescan.")
 
-    with doc.create(ltx.Figure(position='H')) as fig:
+    with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             diff_trigger_rates_figure_path,
-            width=ltx.utils.NoEscape(r'1.0\linewidth')
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
-        fig.add_caption("Trigger-rate on {:s}".format(sum_config['gamma_ray_reference_source']['name_3fgl']))
+        fig.add_caption(
+            "Trigger-rate on {:s}".format(
+                sum_config["gamma_ray_reference_source"]["name_3fgl"]
+            )
+        )
 
-with doc.create(ltx.Section('Site: ' + site_key, numbering=False)):
-    doc.append(ltx.utils.NoEscape(Verbatim(pretty_str(irf_config["config"]["sites"][site_key]))))
+with doc.create(ltx.Section("Site: " + site_key, numbering=False)):
+    doc.append(
+        ltx.utils.NoEscape(
+            Verbatim(pretty_str(irf_config["config"]["sites"][site_key]))
+        )
+    )
 
 doc.append(ltx.utils.NoEscape(r"\end{multicols}{2}"))
 doc.generate_pdf(clean_tex=False)
