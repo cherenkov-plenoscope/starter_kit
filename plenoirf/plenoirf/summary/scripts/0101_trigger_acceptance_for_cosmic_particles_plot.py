@@ -30,19 +30,10 @@ energy_bin_edges = np.geomspace(
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
 analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
 
-sources = {
-    "diffuse": {
-        "label": "area $\\times$ solid angle",
-        "unit": "m$^{2}$ sr",
-        "limits": [1e-1, 1e5],
-    },
-    "point": {"label": "area", "unit": "m$^{2}$", "limits": [1e1, 1e6],},
-}
-
 particle_colors = sum_config["plot"]["particle_colors"]
 
 for site_key in irf_config["config"]["sites"]:
-    for source_key in sources:
+    for source_key in irf.summary.figure.SOURCES:
         for tt in range(len(trigger_thresholds)):
 
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
@@ -86,10 +77,11 @@ for site_key in irf_config["config"]["sites"]:
             ax.set_xlabel("energy / GeV")
             ax.set_ylabel(
                 "{:s} / {:s}".format(
-                    sources[source_key]["label"], sources[source_key]["unit"]
+                    irf.summary.figure.SOURCES[source_key]["label"],
+                    irf.summary.figure.SOURCES[source_key]["unit"]
                 )
             )
-            ax.set_ylim(sources[source_key]["limits"])
+            ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"])
             ax.loglog()
             ax.set_xlim([energy_bin_edges[0], energy_bin_edges[-1]])
 

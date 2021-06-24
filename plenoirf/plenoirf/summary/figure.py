@@ -4,6 +4,15 @@ import numpy as np
 FIGURE_STYLE = {"rows": 720, "cols": 1280, "fontsize": 1.0}
 AX_SPAN = [0.2, 0.2, 0.75, 0.75]
 
+SOURCES = {
+    "diffuse": {
+        "label": "area $\\times$ solid angle",
+        "unit": "m$^{2}$ sr",
+        "limits": [1e-1, 1e5],
+    },
+    "point": {"label": "area", "unit": "m$^{2}$", "limits": [1e1, 1e6],},
+}
+
 def mark_ax_airshower_spectrum(ax, x=0.93, y=0.93, fontsize=42):
     ax.text(
         x=x,

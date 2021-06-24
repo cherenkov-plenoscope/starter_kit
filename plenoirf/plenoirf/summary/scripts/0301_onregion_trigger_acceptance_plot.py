@@ -51,18 +51,9 @@ num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
-sources = {
-    "diffuse": {
-        "label": "area $\\times$ solid angle",
-        "unit": "m$^{2}$ sr",
-        "limits": [1e-1, 1e5],
-    },
-    "point": {"label": "area", "unit": "m$^{2}$", "limits": [1e1, 1e6],},
-}
-
 for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
-        for source_key in sources:
+        for source_key in irf.summary.figure.SOURCES:
 
             acc_trg = np.array(
                 A[site_key][particle_key][source_key]["mean"][
@@ -122,11 +113,11 @@ for site_key in irf_config["config"]["sites"]:
                 )
                 ax.set_xlabel("energy / GeV")
                 ax.set_ylabel(
-                    sources[source_key]["label"]
+                    irf.summary.figure.SOURCES[source_key]["label"]
                     + " / "
-                    + sources[source_key]["unit"]
+                    + irf.summary.figure.SOURCES[source_key]["unit"]
                 )
-                ax.set_ylim(sources[source_key]["limits"])
+                ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"])
                 ax.loglog()
                 ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
                 fig.savefig(
