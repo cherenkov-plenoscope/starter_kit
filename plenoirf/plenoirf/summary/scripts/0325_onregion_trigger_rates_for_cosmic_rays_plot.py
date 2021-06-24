@@ -51,8 +51,8 @@ LiMa_alpha = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 observation_time_s = 60 * 5
 
 for site_key in irf_config["config"]["sites"]:
-    fig = seb.figure(seb.FIGURE_16_9)
-    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
     signal_rate_in_onregion = np.array(
         onregion_rates[site_key]["gamma"]["integral_rate"]["mean"]
@@ -105,9 +105,8 @@ for site_key in irf_config["config"]["sites"]:
 
 for site_key in irf_config["config"]["sites"]:
     for oridx in range(num_bins_onregion_radius):
-
-        fig = seb.figure(seb.FIGURE_16_9)
-        ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
         text_y = 0.7
         for particle_key in irf_config["config"]["particles"]:
@@ -121,7 +120,7 @@ for site_key in irf_config["config"]["sites"]:
                 color=sum_config["plot"]["particle_colors"][particle_key],
             )
             ax.text(
-                0.8,
+                0.6,
                 0.1 + text_y,
                 particle_key,
                 color=particle_colors[particle_key],
@@ -131,7 +130,7 @@ for site_key in irf_config["config"]["sites"]:
                 "mean"
             ][oridx]
             ax.text(
-                0.9,
+                0.7,
                 0.1 + text_y,
                 "{: 8.1f} s$^{{-1}}$".format(ir),
                 color="k",
@@ -140,19 +139,11 @@ for site_key in irf_config["config"]["sites"]:
             )
             text_y += 0.06
 
-        onregion_radius_str = (
-            ", onregion-radius at 100p.e.: {:.3f}".format(
-                onregion_radii_deg[oridx]
-            )
-            + r"$^{\circ}$"
-        )
-        ax.set_title("In onregion, " + gamma_name + onregion_radius_str)
-
         ax.set_xlim([energy_lower, energy_upper])
         ax.set_ylim([1e-5, 1e3])
         ax.loglog()
         ax.set_xlabel("Energy / GeV")
-        ax.set_ylabel("Differential event-rate / s$^{-1}$ (GeV)$^{-1}$")
+        ax.set_ylabel("differential rate /\ns$^{-1}$ (GeV)$^{-1}$")
         fig.savefig(
             os.path.join(
                 pa["out_dir"],

@@ -59,7 +59,7 @@ enidx = irf.utils.find_closest_index_in_array_for_value(
 
 x_lim_s = np.array([1e0, 1e9])
 e_lim_GeV = np.array([1e-1, 1e4])
-y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
+y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-10])# np.array([1e3, 1e-16])
 
 
 for site_key in irf_config["config"]["sites"]:
