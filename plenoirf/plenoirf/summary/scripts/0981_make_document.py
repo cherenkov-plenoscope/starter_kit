@@ -246,7 +246,7 @@ with doc.create(ltx.Section("Site", numbering=False)):
             ppath(pa["summary_dir"], "0050_flux_of_airshowers_plot", site_key + "_airshower_differential_flux.jpg"),
             width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
-        fig.add_caption("Flux of airshowers (not particles) at the site.")
+        fig.add_caption("Flux of airshowers (not particles) at the site. This includes airshowers below the geomagnetic-cutoff created by secondary, terrestrial particles.")
 
 
 
