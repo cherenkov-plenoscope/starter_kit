@@ -72,6 +72,33 @@ def make_basic_version_str(
     return ver
 
 
+def make_trigger_modus_str(analysis_trigger, production_trigger):
+    prdtrg = production_trigger
+    anatrg = analysis_trigger
+    s = ""
+    s += "Modus\n"
+    s += "    Accepting object-distance "
+    s += "{:.1f}km, focus {:02d}\n".format(
+        1e-3*prdtrg["object_distances_m"][anatrg["modus"]["accepting_focus"]],
+        anatrg["modus"]["accepting_focus"]
+    )
+    s += "    Rejecting object-distance "
+    if anatrg["modus"]["use_rejection_focus"]:
+        s += "{:.1f}km, focus {:02d}\n".format(
+            1e-3*prdtrg["object_distances_m"][anatrg["modus"]["rejecting_focus"]],
+            anatrg["modus"]["rejecting_focus"]
+        )
+        s += "    Intensity-ratio between foci: {:.2f}\n".format(
+            anatrg["modus"]["intensity_ratio_between_foci"])
+    else:
+        s += "None\n"
+        s += "\n"
+    s += "Threshold\n"
+    s += "    {:d}p.e. ".format(anatrg["threshold_pe"])
+    s += "({:d}p.e. in production)\n".format(prdtrg["threshold_pe"])
+    return s
+
+
 def pretty_str(dictionary):
     return yaml.dump(dictionary, default_flow_style=False)
 
@@ -152,7 +179,7 @@ doc.preamble.append(
     ltx.Command(
         "title",
         ltx.utils.NoEscape(
-            r"Simulating the Performance of the 71\,m Portal Cherenkov-Plenoscope"
+            r"Simulating the Cherenkov-Plenoscope"
         ),
     )
 )
@@ -204,15 +231,54 @@ with doc.create(ltx.Section("Performance", numbering=False)):
         fig.add_caption("Energy resolution.")
 
 
-doc.append(ltx.utils.NoEscape(r"\columnbreak"))
+#doc.append(ltx.utils.NoEscape(r"\columnbreak"))
+
+with doc.create(ltx.Section("Site", numbering=False)):
+    doc.append(site_key)
+    doc.append(
+        ltx.utils.NoEscape(
+            Verbatim(pretty_str(irf_config["config"]["sites"][site_key]))
+        )
+    )
+
+trgstr = make_trigger_modus_str(
+    analysis_trigger=sum_config["trigger"],
+    production_trigger=irf_config["config"]["sum_trigger"]
+)
 
 with doc.create(ltx.Section("Trigger", numbering=False)):
+    doc.append(ltx.utils.NoEscape(Verbatim(trgstr)))
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             ratescan_figure_path, width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
         fig.add_caption("Ratescan.")
+
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(
+                pa["summary_dir"],
+                "0071_trigger_probability_vs_cherenkov_size_plot",
+                site_key + "_trigger_probability_vs_cherenkov_size.jpg"
+            ),
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+        )
+        fig.add_caption("Trigger-probability vs. true Cherenkov-size.")
+
+with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0101_trigger_acceptance_for_cosmic_particles_plot", site_key + "_diffuse.jpg"),
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+        )
+        fig.add_caption("Effective acceptance for diffuse source.")
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0101_trigger_acceptance_for_cosmic_particles_plot", site_key + "_point.jpg"),
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+        )
+        fig.add_caption("Effective area for point like source.")
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
@@ -225,12 +291,50 @@ with doc.create(ltx.Section("Trigger", numbering=False)):
             )
         )
 
-with doc.create(ltx.Section("Site: " + site_key, numbering=False)):
-    doc.append(
-        ltx.utils.NoEscape(
-            Verbatim(pretty_str(irf_config["config"]["sites"][site_key]))
+with doc.create(ltx.Section("Cherenkov/night-sky", numbering=False)):
+    doc.append("Finding Cherenkov-photons in the pool of nigth-sky-light.")
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0060_cherenkov_photon_classification_plot", site_key + "_gamma_confusion.jpg"),
+            width=ltx.utils.NoEscape(r"0.8\linewidth")
         )
-    )
+        fig.add_caption("Gamma-rays.")
+
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0060_cherenkov_photon_classification_plot", site_key + "_gamma_sensitivity_vs_true_energy.jpg"),
+            width=ltx.utils.NoEscape(r"0.8\linewidth")
+        )
+        fig.add_caption("Gamma-rays.")
+
+with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
+    """
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0301_onregion_trigger_acceptance_plot", site_key + "_diffuse.jpg"),
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+        )
+        fig.add_caption("Effective acceptance for diffuse source.")
+
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0301_onregion_trigger_acceptance_plot", site_key + "_diffuse.jpg"),
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+        )
+        fig.add_caption("Effective area for point like source.")
+    """
+
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0325_onregion_trigger_rates_for_cosmic_rays_plot", site_key + "_differential_event_rates_in_onregion_onr000001.jpg"),
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+        )
+        fig.add_caption(
+            "Final rate on {:s}".format(
+                sum_config["gamma_ray_reference_source"]["name_3fgl"]
+            )
+        )
+
 
 doc.append(ltx.utils.NoEscape(r"\end{multicols}{2}"))
 doc.generate_pdf(clean_tex=False)
