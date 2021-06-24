@@ -8,9 +8,19 @@ SOURCES = {
     "diffuse": {
         "label": "area $\\times$ solid angle",
         "unit": "m$^{2}$ sr",
-        "limits": [1e-1, 1e5],
+        "limits": {
+            "passed_trigger": [1e-1, 1e5],
+            "passed_all_cuts": [1e-1, 1e3],
+        }
     },
-    "point": {"label": "area", "unit": "m$^{2}$", "limits": [1e1, 1e6],},
+    "point": {
+        "label": "area",
+        "unit": "m$^{2}$",
+        "limits": {
+            "passed_trigger": [1e1, 1e6],
+            "passed_all_cuts": [1e1, 1e5],
+        },
+    }
 }
 
 def mark_ax_airshower_spectrum(ax, x=0.93, y=0.93, fontsize=42):

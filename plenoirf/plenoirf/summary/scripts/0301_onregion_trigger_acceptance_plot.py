@@ -21,6 +21,8 @@ idx_trigger_threshold = np.where(
 )[0][0]
 assert trigger_threshold in trigger_thresholds
 
+IDX_FINAL_ONREGION = 1
+
 # trigger
 # -------
 A = irf.json_numpy.read_tree(
@@ -50,6 +52,67 @@ onregion_radii_deg = np.array(
 num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
 particle_colors = sum_config["plot"]["particle_colors"]
+
+
+for site_key in irf_config["config"]["sites"]:
+    for source_key in irf.summary.figure.SOURCES:
+
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+
+        text_y = 0
+        for particle_key in irf_config["config"]["particles"]:
+
+            Q = np.array(
+                G[site_key][particle_key][source_key]["mean"]
+            )[:, IDX_FINAL_ONREGION]
+            delta_Q = np.array(
+                G[site_key][particle_key][source_key]["relative_uncertainty"]
+            )[:, IDX_FINAL_ONREGION]
+
+            Q_lower = (1 - delta_Q) * Q
+            Q_upper = (1 + delta_Q) * Q
+
+            seb.ax_add_histogram(
+                ax=ax,
+                bin_edges=G_energy_bin_edges,
+                bincounts=Q,
+                linestyle="-",
+                linecolor=particle_colors[particle_key],
+                bincounts_upper=Q_upper,
+                bincounts_lower=Q_lower,
+                face_color=particle_colors[particle_key],
+                face_alpha=0.25,
+            )
+
+            ax.text(
+                0.9,
+                0.1 + text_y,
+                particle_key,
+                color=particle_colors[particle_key],
+                transform=ax.transAxes,
+            )
+            text_y += 0.06
+
+        ax.set_xlabel("energy / GeV")
+        ax.set_ylabel(
+            "{:s} / {:s}".format(
+                irf.summary.figure.SOURCES[source_key]["label"],
+                irf.summary.figure.SOURCES[source_key]["unit"]
+            )
+        )
+        ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"]["passed_all_cuts"])
+        ax.loglog()
+        ax.set_xlim([G_energy_bin_edges[0], G_energy_bin_edges[-1]])
+
+        fig.savefig(
+            os.path.join(
+                pa["out_dir"],
+                "{:s}_{:s}.jpg".format(site_key, source_key,),
+            )
+        )
+        seb.close_figure(fig)
+
 
 for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
@@ -117,7 +180,7 @@ for site_key in irf_config["config"]["sites"]:
                     + " / "
                     + irf.summary.figure.SOURCES[source_key]["unit"]
                 )
-                ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"])
+                ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"]["passed_trigger"])
                 ax.loglog()
                 ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
                 fig.savefig(

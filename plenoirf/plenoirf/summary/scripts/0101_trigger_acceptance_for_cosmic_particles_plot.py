@@ -81,7 +81,7 @@ for site_key in irf_config["config"]["sites"]:
                     irf.summary.figure.SOURCES[source_key]["unit"]
                 )
             )
-            ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"])
+            ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"]["passed_trigger"])
             ax.loglog()
             ax.set_xlim([energy_bin_edges[0], energy_bin_edges[-1]])
 
