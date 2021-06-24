@@ -40,10 +40,6 @@ onregion_radii_deg = np.array(
 )
 num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
-trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
-analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
-num_trigger_thresholds = len(trigger_thresholds)
-
 # cosmic-ray-flux
 # ----------------
 airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
