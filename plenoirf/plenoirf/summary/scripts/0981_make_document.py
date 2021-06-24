@@ -291,21 +291,21 @@ with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
             )
         )
 
-with doc.create(ltx.Section("Cherenkov/night-sky", numbering=False)):
+with doc.create(ltx.Section("Cherenkov- and Night-sky-light", numbering=False)):
     doc.append("Finding Cherenkov-photons in the pool of nigth-sky-light.")
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             ppath(pa["summary_dir"], "0060_cherenkov_photon_classification_plot", site_key + "_gamma_confusion.jpg"),
             width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
-        fig.add_caption("Gamma-rays.")
+        fig.add_caption("Size-confusion of Cherenkov-photons emitted in airshowers initiated by gamma-rays.")
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             ppath(pa["summary_dir"], "0060_cherenkov_photon_classification_plot", site_key + "_gamma_sensitivity_vs_true_energy.jpg"),
             width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
-        fig.add_caption("Gamma-rays.")
+        fig.add_caption("Classification-power for Cherenkov-photons emitted in airshowers initiated by gamma-rays.")
 
 with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
     """
@@ -330,7 +330,7 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
             width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
         fig.add_caption(
-            "Final rate on {:s}".format(
+            "Final rates in on-region while observing {:s}".format(
                 sum_config["gamma_ray_reference_source"]["name_3fgl"]
             )
         )
