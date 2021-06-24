@@ -173,10 +173,10 @@ def Verbatim(string):
     return r"\begin{verbatim}" + r"{:s}".format(string) + r"\end{verbatim}"
 
 
-doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{multicol}"))
-doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{lipsum}"))
-doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{float}"))
-doc.preamble.append(ltx.utils.NoEscape(r"\usepackage{verbatim}"))
+doc.preamble.append(ltx.Package("multicol"))
+doc.preamble.append(ltx.Package("lipsum"))
+doc.preamble.append(ltx.Package("float"))
+doc.preamble.append(ltx.Package("verbatim"))
 
 doc.preamble.append(
     ltx.Command(
@@ -243,12 +243,17 @@ with doc.create(ltx.Section("Site", numbering=False)):
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            ppath(pa["summary_dir"], "0050_flux_of_airshowers_plot", site_key + "_airshower_differential_flux.jpg"),
-            width=ltx.utils.NoEscape(r"1.0\linewidth")
+            ppath(
+                pa["summary_dir"],
+                "0050_flux_of_airshowers_plot",
+                site_key + "_airshower_differential_flux.jpg",
+            ),
+            width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
-        fig.add_caption("Flux of airshowers (not particles) at the site. This includes airshowers below the geomagnetic-cutoff created by secondary, terrestrial particles.")
-
-
+        fig.add_caption(
+            "Flux of airshowers (not particles) at the site. "
+            "This includes airshowers below the geomagnetic-cutoff created by secondary, terrestrial particles."
+        )
 
 
 trgstr = make_trigger_modus_str(
