@@ -241,6 +241,16 @@ with doc.create(ltx.Section("Site", numbering=False)):
         )
     )
 
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            ppath(pa["summary_dir"], "0050_flux_of_airshowers_plot", site_key + "_airshower_differential_flux.jpg"),
+            width=ltx.utils.NoEscape(r"1.0\linewidth")
+        )
+        fig.add_caption("Flux of airshowers (not particles) at the site.")
+
+
+
+
 trgstr = make_trigger_modus_str(
     analysis_trigger=sum_config["trigger"],
     production_trigger=irf_config["config"]["sum_trigger"],

@@ -39,8 +39,8 @@ airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensat
 
 for site_key in irf_config["config"]["sites"]:
 
-    fig = seb.figure(seb.FIGURE_16_9)
-    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for particle_key in airshower_fluxes[site_key]:
         ax.plot(
             fine_energy_bin_centers,
@@ -50,13 +50,13 @@ for site_key in irf_config["config"]["sites"]:
         )
     ax.set_xlabel("energy / GeV")
     ax.set_ylabel(
-        "differential flux of airshowers / "
+        "differential flux of airshowers /\n"
         + "m$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$"
     )
     ax.loglog()
     ax.set_xlim([energy_lower, energy_upper])
     ax.legend()
-    ax.set_title("compensated for zenith-distance w.r.t. observation-plane")
+    # ax.set_title("compensated for zenith-distance w.r.t. observation-plane")
     fig.savefig(
         os.path.join(
             pa["out_dir"],
