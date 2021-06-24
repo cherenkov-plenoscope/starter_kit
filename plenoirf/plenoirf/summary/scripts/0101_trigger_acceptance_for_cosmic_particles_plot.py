@@ -45,8 +45,8 @@ for site_key in irf_config["config"]["sites"]:
     for source_key in sources:
         for tt in range(len(trigger_thresholds)):
 
-            fig = seb.figure(style=seb.FIGURE_16_9)
-            ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
+            fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+            ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
             text_y = 0
             for particle_key in irf_config["config"]["particles"]:

@@ -148,8 +148,8 @@ for sk in irf_config["config"]["sites"]:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v]) / num_events[_v]
 
-        fig = seb.figure(style=seb.FIGURE_1_1)
-        ax = seb.add_axes(fig=fig, span=span_hist_1_1)
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
         seb.ax_add_histogram(
             ax=ax,
             bin_edges=energy_bin_edges,
@@ -224,8 +224,8 @@ for sk in irf_config["config"]["sites"]:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v]) / num_events[_v]
 
-        fig = seb.figure(style=seb.FIGURE_1_1)
-        ax = seb.add_axes(fig=fig, span=span_hist_1_1)
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
         seb.ax_add_histogram(
             ax=ax,
             bin_edges=energy_bin_edges,
@@ -288,8 +288,8 @@ for sk in irf_config["config"]["sites"]:
         _v = num_events > 0
         num_events_relunc[_v] = np.sqrt(num_events[_v]) / num_events[_v]
 
-        fig = seb.figure(style=seb.FIGURE_1_1)
-        ax = seb.add_axes(fig=fig, span=span_hist_1_1)
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
         seb.ax_add_histogram(
             ax=ax,
             bin_edges=size_bin_edges,

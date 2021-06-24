@@ -296,14 +296,14 @@ with doc.create(ltx.Section("Cherenkov/night-sky", numbering=False)):
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             ppath(pa["summary_dir"], "0060_cherenkov_photon_classification_plot", site_key + "_gamma_confusion.jpg"),
-            width=ltx.utils.NoEscape(r"0.8\linewidth")
+            width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
         fig.add_caption("Gamma-rays.")
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             ppath(pa["summary_dir"], "0060_cherenkov_photon_classification_plot", site_key + "_gamma_sensitivity_vs_true_energy.jpg"),
-            width=ltx.utils.NoEscape(r"0.8\linewidth")
+            width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
         fig.add_caption("Gamma-rays.")
 

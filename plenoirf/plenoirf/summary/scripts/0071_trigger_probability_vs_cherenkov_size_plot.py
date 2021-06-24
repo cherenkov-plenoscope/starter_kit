@@ -26,8 +26,8 @@ for site_key in irf_config["config"]["sites"]:
 
     # all particles together
     # ----------------------
-    fig = seb.figure(style=seb.FIGURE_1_1)
-    ax = seb.add_axes(fig=fig, span=[0.2, 0.1, 0.75, 0.8])
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
     text_y = 0
     for particle_key in irf_config["config"]["particles"]:
