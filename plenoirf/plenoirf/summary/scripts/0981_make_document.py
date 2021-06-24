@@ -189,12 +189,6 @@ doc.preamble.append(ltx.Command("date", ""))
 doc.append(ltx.utils.NoEscape(r"\maketitle"))
 doc.append(ltx.utils.NoEscape(r"\begin{multicols}{2}"))
 
-"""
-doc.change_length(r"\TPHorizModule", "1cm")
-doc.change_length(r"\TPVertModule", "1cm")
-with doc.create(ltx.TextBlock(width=10, horizontal_pos=0, vertical_pos=0)) as blk:
-    blk.append('Plenoscope')
-"""
 
 with doc.create(ltx.Section("Version", numbering=False)):
     doc.append(ltx.utils.NoEscape(Verbatim(basic_version_str)))
