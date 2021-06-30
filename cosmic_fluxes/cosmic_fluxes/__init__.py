@@ -25,6 +25,7 @@ def read_cosmic_proton_flux_from_resources():
         "title": "Precision measurement of the proton flux in primary cosmic "
         "rays from rigidity 1 GV to 1.8 TV with the Alpha Magnetic "
         "Spectrometer on the International Space Station",
+        "citekey": "aguilar2015precision",
     }
 
 
@@ -49,6 +50,7 @@ def read_cosmic_electron_positron_flux_from_resources():
         "title": "Precision measurement of the (e++ e-) flux in primary "
         "cosmic rays from 0.5 GeV to 1 TeV with the Alpha Magnetic "
         "Spectrometer on the International Space Station",
+        "citekey": "aguilar2014precision",
     }
 
 
@@ -71,6 +73,7 @@ def read_cosmic_helium_flux_from_resources():
         "title": "Cosmic-ray primary spectra "
         "Revised October 2017 by J.J. Beatty (Ohio State Univ.), J. Matthews "
         "(Louisiana State Univ.), and S.P. Wakely (Univ. of Chicago)",
+        "citekey": "patrignani2017helium",
     }
 
 
@@ -118,6 +121,7 @@ def read_crab_nebula_flux_from_resources():
             "unit": "per_m2_per_s_per_GeV"
         },
         "title": "Crab-nebula, Fermi-LAT and MAGIC. ",
+        "citekey": "aleksic2015measurement"
     }
 
 
