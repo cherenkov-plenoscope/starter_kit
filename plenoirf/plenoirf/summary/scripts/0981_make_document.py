@@ -21,6 +21,10 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 production_dirname = irf.summary.production_name_from_run_dir(pa["run_dir"])
 fname = os.path.join(pa["summary_dir"], "{:s}_ltx".format(production_dirname))
 
+BIB_REFERENCES_PATH = os.path.join(
+    os.getcwd(), "sebastians_references", "references"
+)
+
 site_key = "namibia"
 SED_STYLE_KEY = "portal"
 
@@ -194,6 +198,25 @@ with doc.create(ltx.Section("Version", numbering=False)):
     doc.append(ltx.utils.NoEscape(Verbatim(basic_version_str)))
 
 with doc.create(ltx.Section("Performance", numbering=False)):
+
+    doc.append(
+        ltx.utils.NoEscape(
+            r"The Crab Nebula's gamma-ray-flux \cite{aleksic2015measurement} "
+            r"\mbox{(100\%, 10\%, 1\%, and 0.1\%)} is shown in fading gray dashes. "
+        )
+    )
+    doc.append(
+        ltx.utils.NoEscape(
+            r"Performance of Fermi-LAT \cite{wood2016fermiperformance} shown in orange."
+        )
+    )
+    doc.append(
+        ltx.utils.NoEscape(
+            r"Performance of the Cherenkov-Telescope-Array (CTA)-south "
+            r"\cite{cta2018baseline} shown in blue."
+        )
+    )
+
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             differential_sensitivity_figure_path,
@@ -234,6 +257,15 @@ with doc.create(ltx.Section("Site", numbering=False)):
             Verbatim(pretty_str(irf_config["config"]["sites"][site_key]))
         )
     )
+    doc.append(
+        ltx.utils.NoEscape(
+            r"Flux of airshowers (not cosmic particles) are estimated "
+            r"based on the "
+            r"fluxes of cosmic protons \cite{aguilar2015precision}, "
+            r"electrons and positrons \cite{aguilar2014precision}, and "
+            r"helium \cite{patrignani2017helium}."
+        )
+    )
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
@@ -257,12 +289,17 @@ trgstr = make_trigger_modus_str(
 
 with doc.create(ltx.Section("Trigger", numbering=False)):
     doc.append(ltx.utils.NoEscape(Verbatim(trgstr)))
+    doc.append("Trigger-rate at threshold \\approx{}")
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             ratescan_figure_path, width=ltx.utils.NoEscape(r"1.0\linewidth")
         )
-        fig.add_caption("Ratescan.")
+        fig.add_caption(
+            "Ratescan. For low thresholds the rates seem "
+            "to saturate. This is because of limited statistics. "
+            "The rates are expected to raise further."
+        )
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
@@ -303,13 +340,16 @@ with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
             width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
         fig.add_caption(
-            "Trigger-rate on {:s}".format(
-                sum_config["gamma_ray_reference_source"]["name_3fgl"]
+            ltx.utils.NoEscape(
+                r"Trigger-rate on gamma-ray-source {:s}".format(
+                    sum_config["gamma_ray_reference_source"]["name_3fgl"]
+                )
+                + r"\cite{acero2015fermi3fglcatalog}."
             )
         )
 
 with doc.create(
-    ltx.Section("Cherenkov- and Night-sky-light", numbering=False)
+    ltx.Section("Cherenkov- and Night-Sky-Light", numbering=False)
 ):
     doc.append("Finding Cherenkov-photons in the pool of nigth-sky-light.")
     with doc.create(ltx.Figure(position="H")) as fig:
@@ -377,6 +417,8 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
             )
         )
 
+doc.append(ltx.utils.NoEscape(r"\bibliographystyle{apalike}"))
+doc.append(ltx.utils.NoEscape(r"\bibliography{" + BIB_REFERENCES_PATH + "}"))
 
 doc.append(ltx.utils.NoEscape(r"\end{multicols}{2}"))
 doc.generate_pdf(clean_tex=False)
