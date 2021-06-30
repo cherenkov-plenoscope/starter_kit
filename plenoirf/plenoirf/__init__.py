@@ -83,6 +83,8 @@ EXAMPLE_CONFIG = {
             "earth_magnetic_field_z_muT": -25.9,
             "atmosphere_id": 10,
             "geomagnetic_cutoff_rigidity_GV": 12.5,
+            "coordinates_wgs1984": [-23.3425, 16.225556],
+            "comment": "The Gamsberg-mesa in Khoma, Namibia, southern Africa.",
         },
         "chile": {
             "observation_level_asl_m": 5000,
@@ -90,6 +92,8 @@ EXAMPLE_CONFIG = {
             "earth_magnetic_field_z_muT": -11.366,
             "atmosphere_id": 26,
             "geomagnetic_cutoff_rigidity_GV": 10.0,
+            "coordinates_wgs1984": [-23.0193, -67.7532],
+            "comment": "Llano de Chajnantor in Chile, southern America.",
         },
     },
     "particles": {
