@@ -199,30 +199,18 @@ with doc.create(ltx.Section("Version", numbering=False)):
 
 with doc.create(ltx.Section("Performance", numbering=False)):
 
-    doc.append(
-        ltx.utils.NoEscape(
-            r"The Crab Nebula's gamma-ray-flux \cite{aleksic2015measurement} "
-            r"\mbox{(100\%, 10\%, 1\%, and 0.1\%)} is shown in fading gray dashes. "
-        )
-    )
-    doc.append(
-        ltx.utils.NoEscape(
-            r"Performance of Fermi-LAT \cite{wood2016fermiperformance} shown in orange."
-        )
-    )
-    doc.append(
-        ltx.utils.NoEscape(
-            r"Performance of the Cherenkov-Telescope-Array (CTA)-south "
-            r"\cite{cta2018baseline} shown in blue."
-        )
-    )
-
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             differential_sensitivity_figure_path,
             width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
-        fig.add_caption("Differential sensitivity.")
+        fig.add_caption(
+            ltx.utils.NoEscape(
+                r"Differential sensitivity. "
+                r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
+                r"CTA-south \cite{cta2018baseline} in blue. "
+            )
+        )
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
@@ -230,7 +218,11 @@ with doc.create(ltx.Section("Performance", numbering=False)):
             width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
         fig.add_caption(
-            ltx.utils.NoEscape("Sensitivity vs. observation-time at 25\,GeV.")
+            ltx.utils.NoEscape(
+                r"Sensitivity vs. observation-time at 25\,GeV. "
+                r"Fermi-LAT in orange and CTA-south in blue taken from "
+                r"\cite{funk2013comparison}."
+            )
         )
 
     with doc.create(ltx.Figure(position="H")) as fig:
@@ -238,14 +230,33 @@ with doc.create(ltx.Section("Performance", numbering=False)):
             angular_resolution_figure_path,
             width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
-        fig.add_caption("Angular resolution.")
+        fig.add_caption(
+            ltx.utils.NoEscape(
+                r"Angular resolution. "
+                r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
+                r"CTA-south \cite{cta2018baseline} in blue. "
+            )
+        )
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             energy_resolution_figure_path,
             width=ltx.utils.NoEscape(r"1.0\linewidth"),
         )
-        fig.add_caption("Energy resolution.")
+        fig.add_caption(
+            ltx.utils.NoEscape(
+                r"Energy resolution. "
+                r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
+                r"CTA-south \cite{cta2018baseline} in blue. "
+            )
+        )
+
+    doc.append(
+        ltx.utils.NoEscape(
+            r"The Crab Nebula's gamma-ray-flux \cite{aleksic2015measurement} "
+            r"\mbox{(100\%, 10\%, 1\%, and 0.1\%)} is shown in fading gray dashes. "
+        )
+    )
 
 
 # doc.append(ltx.utils.NoEscape(r"\columnbreak"))
