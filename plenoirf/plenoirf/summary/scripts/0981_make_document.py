@@ -106,7 +106,7 @@ def make_trigger_modus_str(analysis_trigger, production_trigger):
     return s
 
 
-def pretty_str(dictionary):
+def dict_to_pretty_str(dictionary):
     return yaml.dump(dictionary, default_flow_style=False)
 
 
@@ -265,7 +265,7 @@ with doc.create(ltx.Section("Site", numbering=False)):
     doc.append(site_key)
     doc.append(
         ltx.utils.NoEscape(
-            Verbatim(pretty_str(irf_config["config"]["sites"][site_key]))
+            Verbatim(dict_to_pretty_str(irf_config["config"]["sites"][site_key]))
         )
     )
     doc.append(
