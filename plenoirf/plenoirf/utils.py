@@ -138,3 +138,13 @@ def find_closest_index_in_array_for_value(arr, val, max_rel_error=0.1):
     idx = np.argmin(np.abs(arr - val))
     assert np.abs(arr[idx] - val) < max_rel_error * val
     return idx
+
+
+def latex_scientific(real, format_template="{:e}"):
+    s = format_template.format(real)
+    pos_e = s.find("e")
+    assert pos_e >= 0
+    mantisse = s[0:pos_e]
+    exponent = str(int(s[pos_e+1:]))
+    out = mantisse + r"\times{}10^{" + exponent + r"}"
+    return out

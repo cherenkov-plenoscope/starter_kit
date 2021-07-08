@@ -119,6 +119,18 @@ def ppath(*args):
     return os.path.abspath(p2)
 
 
+def get_total_trigger_rate_at_analysis_threshold(site_key):
+    trigger_rates_by_origin = irf.json_numpy.read_tree(
+        ppath(pa["summary_dir"], "0131_trigger_rates_total")
+    )[site_key]["trigger_rates_by_origin"]
+
+    idx = trigger_rates_by_origin["analysis_trigger_threshold_idx"]
+    total_rate_per_s = 0.0
+    for origin in trigger_rates_by_origin["origins"]:
+        total_rate_per_s += trigger_rates_by_origin["origins"][origin][idx]
+    return total_rate_per_s
+
+
 production_provenance = read_json_but_forgive(
     path=os.path.join(pa["run_dir"], "event_table", "provenance.json")
 )
@@ -158,6 +170,14 @@ diff_trigger_rates_figure_path = ppath(
     pa["summary_dir"],
     "0106_trigger_rates_for_cosmic_particles_plot",
     site_key + "_differential_trigger_rate.jpg",
+)
+
+total_trigger_rate_per_s = get_total_trigger_rate_at_analysis_threshold(
+    site_key
+)
+total_trigger_rate_per_s_ltx = irf.utils.latex_scientific(
+    real=total_trigger_rate_per_s,
+    format_template="{:.3e}"
 )
 
 basic_version_str = make_basic_version_str(
@@ -303,7 +323,11 @@ trgstr = make_trigger_modus_str(
 
 with doc.create(ltx.Section("Trigger", numbering=False)):
     doc.append(noesc(Verbatim(trgstr)))
-    doc.append("Trigger-rate at threshold \\approx{}")
+    doc.append(noesc(
+        "Trigger-rate during observation is $\\approx{" +
+        total_trigger_rate_per_s_ltx +
+        r"}\,$s$^{-1}$"
+    ))
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
