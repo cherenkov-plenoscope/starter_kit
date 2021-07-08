@@ -89,13 +89,13 @@ def make_civil_times_points_in_quasi_logspace():
         times.append(_hours)
     for _days in np.arange(_1d, _1w, _1d):
         times.append(_days)
-    for _weeks in np.arange(_1w, 4*_1w, _1w):
+    for _weeks in np.arange(_1w, 4 * _1w, _1w):
         times.append(_weeks)
-    for _months in np.arange(_1m, 12*_1m, _1m):
+    for _months in np.arange(_1m, 12 * _1m, _1m):
         times.append(_months)
-    for _years in np.arange(_1y, 10*_1y, _1y):
+    for _years in np.arange(_1y, 10 * _1y, _1y):
         times.append(_years)
-    for _decades in np.arange(10*_1y, 100*_1y, 10*_1y):
+    for _decades in np.arange(10 * _1y, 100 * _1y, 10 * _1y):
         times.append(_decades)
     return times
 
@@ -103,16 +103,16 @@ def make_civil_times_points_in_quasi_logspace():
 def make_civil_time_str(time_s, format_seconds="{:f}"):
     try:
         years = int(time_s // _1y)
-        tr = time_s - years*_1y
+        tr = time_s - years * _1y
 
         days = int(tr // _1d)
-        tr = tr - days*_1d
+        tr = tr - days * _1d
 
         hours = int(tr // _1h)
-        tr = tr - hours*_1h
+        tr = tr - hours * _1h
 
         minutes = int(tr // _1M)
-        tr = tr - minutes*_1M
+        tr = tr - minutes * _1M
 
         s = ""
         if years:
@@ -140,11 +140,14 @@ def find_closest_index_in_array_for_value(arr, val, max_rel_error=0.1):
     return idx
 
 
-def latex_scientific(real, format_template="{:e}"):
+def latex_scientific(real, format_template="{:e}", nan_template="nan"):
+    if real != real:
+        return nan_template
+    assert format_template.endswith("e}")
     s = format_template.format(real)
     pos_e = s.find("e")
     assert pos_e >= 0
     mantisse = s[0:pos_e]
-    exponent = str(int(s[pos_e+1:]))
+    exponent = str(int(s[pos_e + 1 :]))
     out = mantisse + r"\times{}10^{" + exponent + r"}"
     return out
