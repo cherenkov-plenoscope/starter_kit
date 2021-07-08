@@ -41,6 +41,9 @@ geometry_options = {
     "includefoot": True,
 }
 
+def noesc(text):
+    return ltx.utils.NoEscape(text)
+
 
 def read_json_but_forgive(path, default={}):
     try:
@@ -184,28 +187,28 @@ doc.preamble.append(ltx.Package("verbatim"))
 
 doc.preamble.append(
     ltx.Command(
-        "title", ltx.utils.NoEscape(r"Simulating the Cherenkov-Plenoscope"),
+        "title", noesc(r"Simulating the Cherenkov-Plenoscope"),
     )
 )
 doc.preamble.append(ltx.Command("author", "Sebastian A. Mueller"))
 doc.preamble.append(ltx.Command("date", ""))
 
-doc.append(ltx.utils.NoEscape(r"\maketitle"))
-doc.append(ltx.utils.NoEscape(r"\begin{multicols}{2}"))
+doc.append(noesc(r"\maketitle"))
+doc.append(noesc(r"\begin{multicols}{2}"))
 
 
 with doc.create(ltx.Section("Version", numbering=False)):
-    doc.append(ltx.utils.NoEscape(Verbatim(basic_version_str)))
+    doc.append(noesc(Verbatim(basic_version_str)))
 
 with doc.create(ltx.Section("Performance", numbering=False)):
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             differential_sensitivity_figure_path,
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
-            ltx.utils.NoEscape(
+            noesc(
                 r"Differential sensitivity. "
                 r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
                 r"CTA-south \cite{cta2018baseline} in blue. "
@@ -215,10 +218,10 @@ with doc.create(ltx.Section("Performance", numbering=False)):
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             sens_vs_observation_time_figure_path,
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
-            ltx.utils.NoEscape(
+            noesc(
                 r"Sensitivity vs. observation-time at 25\,GeV. "
                 r"Fermi-LAT in orange and CTA-south in blue taken from "
                 r"\cite{funk2013comparison}."
@@ -228,10 +231,10 @@ with doc.create(ltx.Section("Performance", numbering=False)):
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             angular_resolution_figure_path,
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
-            ltx.utils.NoEscape(
+            noesc(
                 r"Angular resolution. "
                 r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
                 r"CTA-south \cite{cta2018baseline} in blue. "
@@ -241,10 +244,10 @@ with doc.create(ltx.Section("Performance", numbering=False)):
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             energy_resolution_figure_path,
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
-            ltx.utils.NoEscape(
+            noesc(
                 r"Energy resolution. "
                 r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
                 r"CTA-south \cite{cta2018baseline} in blue. "
@@ -252,24 +255,24 @@ with doc.create(ltx.Section("Performance", numbering=False)):
         )
 
     doc.append(
-        ltx.utils.NoEscape(
+        noesc(
             r"The Crab Nebula's gamma-ray-flux \cite{aleksic2015measurement} "
             r"\mbox{(100\%, 10\%, 1\%, and 0.1\%)} is shown in fading gray dashes. "
         )
     )
 
 
-# doc.append(ltx.utils.NoEscape(r"\columnbreak"))
+# doc.append(noesc(r"\columnbreak"))
 
 with doc.create(ltx.Section("Site", numbering=False)):
     doc.append(site_key)
     doc.append(
-        ltx.utils.NoEscape(
+        noesc(
             Verbatim(dict_to_pretty_str(irf_config["config"]["sites"][site_key]))
         )
     )
     doc.append(
-        ltx.utils.NoEscape(
+        noesc(
             r"Flux of airshowers (not cosmic particles) are estimated "
             r"based on the "
             r"fluxes of cosmic protons \cite{aguilar2015precision}, "
@@ -285,7 +288,7 @@ with doc.create(ltx.Section("Site", numbering=False)):
                 "0050_flux_of_airshowers_plot",
                 site_key + "_airshower_differential_flux.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
             "Flux of airshowers (not particles) at the site. "
@@ -299,12 +302,12 @@ trgstr = make_trigger_modus_str(
 )
 
 with doc.create(ltx.Section("Trigger", numbering=False)):
-    doc.append(ltx.utils.NoEscape(Verbatim(trgstr)))
+    doc.append(noesc(Verbatim(trgstr)))
     doc.append("Trigger-rate at threshold \\approx{}")
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            ratescan_figure_path, width=ltx.utils.NoEscape(r"1.0\linewidth")
+            ratescan_figure_path, width=noesc(r"1.0\linewidth")
         )
         fig.add_caption(
             "Ratescan. For low thresholds the rates seem "
@@ -319,7 +322,7 @@ with doc.create(ltx.Section("Trigger", numbering=False)):
                 "0071_trigger_probability_vs_cherenkov_size_plot",
                 site_key + "_trigger_probability_vs_cherenkov_size.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption("Trigger-probability vs. true Cherenkov-size.")
 
@@ -331,7 +334,7 @@ with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
                 "0101_trigger_acceptance_for_cosmic_particles_plot",
                 site_key + "_diffuse.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption("Effective acceptance for a diffuse source.")
     with doc.create(ltx.Figure(position="H")) as fig:
@@ -341,17 +344,17 @@ with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
                 "0101_trigger_acceptance_for_cosmic_particles_plot",
                 site_key + "_point.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption("Effective area for a point like source.")
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
             diff_trigger_rates_figure_path,
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
-            ltx.utils.NoEscape(
+            noesc(
                 r"Trigger-rate on gamma-ray-source {:s}".format(
                     sum_config["gamma_ray_reference_source"]["name_3fgl"]
                 )
@@ -370,7 +373,7 @@ with doc.create(
                 "0060_cherenkov_photon_classification_plot",
                 site_key + "_gamma_confusion.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
             "Size-confusion of Cherenkov-photons emitted in airshowers initiated by gamma-rays."
@@ -383,7 +386,7 @@ with doc.create(
                 "0060_cherenkov_photon_classification_plot",
                 site_key + "_gamma_sensitivity_vs_true_energy.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
             "Classification-power for Cherenkov-photons emitted in airshowers initiated by gamma-rays."
@@ -397,7 +400,7 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
                 "0301_onregion_trigger_acceptance_plot",
                 site_key + "_diffuse.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption("Effective acceptance for a diffuse source.")
 
@@ -408,7 +411,7 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
                 "0301_onregion_trigger_acceptance_plot",
                 site_key + "_point.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption("Effective area for a point like source.")
 
@@ -420,7 +423,7 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
                 site_key
                 + "_differential_event_rates_in_onregion_onr000001.jpg",
             ),
-            width=ltx.utils.NoEscape(r"1.0\linewidth"),
+            width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
             "Final rates in on-region while observing {:s}".format(
@@ -428,8 +431,8 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
             )
         )
 
-doc.append(ltx.utils.NoEscape(r"\bibliographystyle{apalike}"))
-doc.append(ltx.utils.NoEscape(r"\bibliography{" + BIB_REFERENCES_PATH + "}"))
+doc.append(noesc(r"\bibliographystyle{apalike}"))
+doc.append(noesc(r"\bibliography{" + BIB_REFERENCES_PATH + "}"))
 
-doc.append(ltx.utils.NoEscape(r"\end{multicols}{2}"))
+doc.append(noesc(r"\end{multicols}{2}"))
 doc.generate_pdf(clean_tex=False)
