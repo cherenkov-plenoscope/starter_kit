@@ -151,3 +151,50 @@ def latex_scientific(real, format_template="{:e}", nan_template="nan"):
     exponent = str(int(s[pos_e + 1 :]))
     out = mantisse + r"\times{}10^{" + exponent + r"}"
     return out
+
+
+
+def apply_confusion_matrix(x, confusion_matrix, x_unc=None):
+    """
+    Parameters
+    ----------
+    x : 1D-array
+            E.g. Effective acceptance vs. true energy.
+    confusion_matrix : 2D-array
+            Confusion between e.g. true and reco. energy.
+            The rows are expected to be notmalized:
+            CM[i, :] == 1.0
+    """
+    cm = confusion_matrix
+    n = cm.shape[0]
+    assert cm.shape[1] == n
+    assert x.shape[0] == n
+
+    # assert confusion matrix is normalized
+    for i in range(n):
+        s = np.sum(cm[i, :])
+        assert np.abs(s-1) < 1e-3 or s < 1e-3
+
+    y = np.zeros(shape=(n))
+    for r in range(n):
+        for t in range(n):
+            y[r] += cm[t, r] * x[t]
+
+    return y
+
+
+def apply_confusion_matrix_uncertainty(x_unc, confusion_matrix):
+    cm = confusion_matrix
+    n = cm.shape[0]
+    assert cm.shape[1] == n
+    assert x_unc.shape[0] == n
+
+    y_unc = np.zeros(shape=(n))
+    for r in range(n):
+        for t in range(n):
+            if not np.isnan(x_unc[t]):
+                y_unc[r] += (cm[t, r] * x_unc[t]) ** 2.0
+    y_unc = np.sqrt(y_unc)
+    y_unc[y_unc == 0.0] = np.nan
+
+    return y_unc
