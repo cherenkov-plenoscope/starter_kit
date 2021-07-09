@@ -18,6 +18,10 @@ acceptance = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
+acceptance_Ereco = irf.json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0311_onregion_trigger_acceptance_in_reconstructed_energy")
+)
+
 rate_onregion_reco_energy = irf.json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0326_differential_rates")
 )
@@ -75,8 +79,8 @@ for sk in SITES:
 
         # signal effective area
         # ---------------------
-        gamma_effective_area_m2 = np.array(
-            acceptance[sk]["gamma"]["point"]["mean"]
+        gamma_effective_area_Ereco_m2 = np.array(
+            acceptance_Ereco[sk]["gamma"]["point"]["mean"]
         )[:, oridx]
 
         for eidx in range(num_bins_energy):
@@ -97,7 +101,7 @@ for sk in SITES:
                     critical_rate_per_s = float("nan")
 
                 critical_F_per_m2_per_s = (
-                    critical_rate_per_s / gamma_effective_area_m2[eidx]
+                    critical_rate_per_s / gamma_effective_area_Ereco_m2[eidx]
                 )
                 critical_dFdE_per_m2_per_s_per_GeV = (
                     critical_F_per_m2_per_s / energy_bin_widths[eidx]
