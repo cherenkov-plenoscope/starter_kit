@@ -1,6 +1,6 @@
 import os
 import plenoirf
-import json
+import json_numpy
 import argparse
 
 parser = argparse.ArgumentParser(
@@ -23,7 +23,7 @@ MULTIPROCESSING_POOL = ["sun_grid_engine", "local"][0]
 
 
 os.makedirs(out_dir, exist_ok=True)
-plenoirf.json_numpy.write(
+json_numpy.write(
     path=os.path.join(out_dir, "arrival_time_study_config.json"),
     out_dict=study_config
 )
@@ -57,13 +57,13 @@ for ii in range(len(study_config["arrival_times_resolution_s"])):
             config=config
         )
 
-        prop_conf = plenoirf.json_numpy.read(
+        prop_conf = json_numpy.read(
             path=os.path.join(run_dir, "input", "merlict_propagation_config.json")
         )
         prop_conf["photon_stream"][
             "single_photon_arrival_time_resolution"] = study_config[
             "arrival_times_resolution_s"][ii]
-        plenoirf.json_numpy.write(
+        json_numpy.write(
             path=os.path.join(run_dir, "input", "merlict_propagation_config.json"),
             out_dict=prop_conf
         )
