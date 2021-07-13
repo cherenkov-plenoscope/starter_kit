@@ -224,7 +224,7 @@ for sk in irf_config["config"]["sites"]:
 
             if PLOT_OVERVIEW:
 
-                split_light_field = pl.SplitLightField(
+                split_light_field = pl.split_light_field.make_split_light_field(
                     loph_record=loph_record, light_field_geometry=lfg
                 )
 
@@ -240,13 +240,13 @@ for sk in irf_config["config"]["sites"]:
                 ax_core = seb.add_axes(
                     fig=fig, span=[0.575, 0.1, 0.4, 0.8], style=axes_style
                 )
-                for pax in range(split_light_field.number_paxel):
+                for pax in range(split_light_field["number_paxel"]):
                     ax.plot(
                         np.rad2deg(
-                            split_light_field.image_sequences[pax][:, 0]
+                            split_light_field["image_sequences"][pax][:, 0]
                         ),
                         np.rad2deg(
-                            split_light_field.image_sequences[pax][:, 1]
+                            split_light_field["image_sequences"][pax][:, 1]
                         ),
                         "xb",
                         alpha=0.03,
