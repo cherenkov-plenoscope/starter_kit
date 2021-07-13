@@ -181,7 +181,7 @@ EXAMPLE_CONFIG = {
         "direction_to_time_mixing_deg_per_s": 0.375e9,
     },
     "reconstruction": {
-        "trajectory": gamrec.trajectory.iron.config.make_example_config_for_71m_plenoscope(
+        "trajectory": gamrec.trajectory.v2020dec04iron0b.config.make_example_config_for_71m_plenoscope(
             fov_radius_deg=3.25),
     },
     "raw_sensor_response": {

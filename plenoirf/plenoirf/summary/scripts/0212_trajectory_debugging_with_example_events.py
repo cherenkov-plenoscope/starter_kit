@@ -5,8 +5,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import plenopy as pl
-import glob
-from iminuit import Minuit
+import gamma_ray_reconstruction as gamrec
 import sebastians_matplotlib_addons as seb
 import json_numpy
 
@@ -55,13 +54,13 @@ def add_axes_fuzzy_debug(ax, ring_binning, fuzzy_result, fuzzy_debug):
     ax.set_ylabel("probability density / 1")
 
 
-fuzzy_config = irf.reconstruction.fuzzy_method.compile_user_config(
+fuzzy_config = gamrec.trajectory.v2020nov12fuzzy0.config.compile_user_config(
     user_config=irf_config["config"]["reconstruction"]["trajectory"][
         "fuzzy_method"
     ]
 )
 
-long_fit_cfg = irf.reconstruction.model_fit.compile_user_config(
+long_fit_cfg = gamrec.trajectory.v2020dec04iron0b.config.compile_user_config(
     user_config=irf_config["config"]["reconstruction"]["trajectory"][
         "core_axis_fit"
     ]
@@ -177,7 +176,7 @@ for sk in irf_config["config"]["sites"]:
 
             truth = dict(truth_by_index[sk][pk][airshower_id])
 
-            fit, debug = irf.reconstruction.trajectory.estimate(
+            fit, debug = gamrec.trajectory.v2020dec04iron0b.estimate(
                 loph_record=loph_record,
                 light_field_geometry=lfg,
                 shower_maximum_object_distance=reco_obj[airshower_id],
@@ -185,7 +184,7 @@ for sk in irf_config["config"]["sites"]:
                 model_fit_config=long_fit_cfg,
             )
 
-            if not irf.reconstruction.trajectory.is_valid_estimate(fit):
+            if not gamrec.trajectory.v2020dec04iron0b.is_valid_estimate(fit):
                 print(
                     "airshower_id",
                     airshower_id,
@@ -195,7 +194,7 @@ for sk in irf_config["config"]["sites"]:
             # true response
             # -------------
 
-            true_response = irf.reconstruction.trajectory.model_response_for_true_trajectory(
+            true_response = gamrec.trajectory.v2020dec04iron0b.model_response_for_true_trajectory(
                 true_cx=truth["cx"],
                 true_cy=truth["cy"],
                 true_x=truth["x"],
@@ -225,7 +224,7 @@ for sk in irf_config["config"]["sites"]:
 
             if PLOT_OVERVIEW:
 
-                split_light_field = pl.fuzzy.direction.SplitLightField(
+                split_light_field = pl.SplitLightField(
                     loph_record=loph_record, light_field_geometry=lfg
                 )
 
