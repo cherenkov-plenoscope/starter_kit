@@ -34,3 +34,6 @@
 [submodule "lima1983analysis"]
 	path = lima1983analysis
 	url = git@github.com:cherenkov-plenoscope/lima1983analysis.git
+[submodule "json_numpy"]
+	path = json_numpy
+	url = https://github.com/cherenkov-plenoscope/json_numpy

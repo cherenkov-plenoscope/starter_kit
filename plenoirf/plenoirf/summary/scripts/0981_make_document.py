@@ -9,7 +9,7 @@ import pylatex as ltx
 import warnings
 import json
 import yaml
-
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -120,7 +120,7 @@ def ppath(*args):
 
 
 def get_total_trigger_rate_at_analysis_threshold(site_key):
-    trigger_rates_by_origin = irf.json_numpy.read_tree(
+    trigger_rates_by_origin = json_numpy.read_tree(
         ppath(pa["summary_dir"], "0131_trigger_rates_total")
     )[site_key]["trigger_rates_by_origin"]
 

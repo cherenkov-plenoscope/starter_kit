@@ -7,6 +7,7 @@ from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
 import os
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -16,7 +17,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-diff_sensitivity = irf.json_numpy.read_tree(
+diff_sensitivity = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
 )
 

@@ -5,6 +5,7 @@ import plenoirf as irf
 import os
 from os.path import join as opj
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -16,7 +17,7 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 
 onregion_config = sum_config["on_off_measuremnent"]["onregion"]
 
-required_opening_angle_for_onregion = irf.json_numpy.read_tree(
+required_opening_angle_for_onregion = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0290_find_onregion_opening_angle")
 )
 

@@ -5,6 +5,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import cosmic_fluxes
 import os
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -14,7 +15,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-acceptance = irf.json_numpy.read_tree(
+acceptance = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles"
     )
@@ -98,7 +99,7 @@ for site_key in irf_config["config"]["sites"]:
         T.append(gamma_rate_per_s)
         dT_dE.append(gamma_differential_rate_per_s_per_GeV)
 
-    irf.json_numpy.write(
+    json_numpy.write(
         os.path.join(site_gamma_dir, "differential_rate.json"),
         {
             "comment": comment_differential + ", " + gamma_name,
@@ -106,7 +107,7 @@ for site_key in irf_config["config"]["sites"]:
             "mean": dT_dE,
         },
     )
-    irf.json_numpy.write(
+    json_numpy.write(
         os.path.join(site_gamma_dir, "integral_rate.json"),
         {
             "comment": comment_integral + ", " + gamma_name,
@@ -142,7 +143,7 @@ for site_key in irf_config["config"]["sites"]:
             T.append(cosmic_rate_per_s)
             dT_dE.append(cosmic_differential_rate_per_s_per_GeV)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "differential_rate.json"),
             {
                 "comment": comment_differential,
@@ -150,7 +151,7 @@ for site_key in irf_config["config"]["sites"]:
                 "mean": dT_dE,
             },
         )
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "integral_rate.json"),
             {"comment": comment_integral, "unit": "s$^{-1}$", "mean": T},
         )

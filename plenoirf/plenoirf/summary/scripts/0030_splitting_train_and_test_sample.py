@@ -4,6 +4,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import sklearn
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -35,7 +36,7 @@ for sk in SITES:
             random_state=summary_random_seed,
         )
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_dir, pk + ".json"),
             {
                 "comment": (

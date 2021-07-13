@@ -4,6 +4,7 @@ import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -85,7 +86,7 @@ for site_key in irf_config["config"]["sites"]:
 
     site_dir = os.path.join(pa["out_dir"], site_key)
     os.makedirs(site_dir, exist_ok=True)
-    irf.json_numpy.write(
+    json_numpy.write(
         os.path.join(site_dir, "night_sky_background_rates.json"),
         {
             "comment": (

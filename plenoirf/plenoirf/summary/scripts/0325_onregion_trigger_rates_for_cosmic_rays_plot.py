@@ -5,6 +5,7 @@ import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -14,7 +15,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-onregion_rates = irf.json_numpy.read_tree(
+onregion_rates = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0320_onregion_trigger_rates_for_cosmic_rays"
     )

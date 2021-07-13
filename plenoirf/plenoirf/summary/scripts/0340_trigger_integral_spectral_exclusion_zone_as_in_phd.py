@@ -8,6 +8,7 @@ import cosmic_fluxes
 import os
 import scipy
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -38,13 +39,13 @@ PHD_DETECTION_THRESHOLD_STD = 5.0
 PHD_ON_OVER_OFF_RATIO = 1.0 / 5.0
 PHD_OBSERVATION_TIME_S = 50 * 3600
 
-all_fov_acceptance = irf.json_numpy.read_tree(
+all_fov_acceptance = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles"
     )
 )
 
-all_fov_rates = irf.json_numpy.read_tree(
+all_fov_rates = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0105_trigger_rates_for_cosmic_particles")
 )
 

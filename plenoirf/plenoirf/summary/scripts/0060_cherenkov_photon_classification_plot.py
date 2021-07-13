@@ -6,6 +6,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 from os.path import join as opj
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -15,10 +16,10 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-passing_trigger = irf.json_numpy.read_tree(
+passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = irf.json_numpy.read_tree(
+passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
@@ -182,7 +183,7 @@ for sk in irf_config["config"]["sites"]:
         )
         seb.close_figure(fig)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             opj(site_particle_dir, key + ".json"),
             {
                 "energy_bin_edges_GeV": energy_bin_edges,
@@ -247,7 +248,7 @@ for sk in irf_config["config"]["sites"]:
         )
         seb.close_figure(fig)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             opj(site_particle_dir, key + ".json"),
             {
                 "energy_bin_edges_GeV": energy_bin_edges,
@@ -311,7 +312,7 @@ for sk in irf_config["config"]["sites"]:
         )
         seb.close_figure(fig)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             opj(site_particle_dir, key + ".json"),
             {
                 "size_bin_edges_pe": size_bin_edges,

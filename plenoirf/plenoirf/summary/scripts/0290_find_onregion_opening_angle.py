@@ -5,6 +5,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
 import os
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -66,7 +67,7 @@ for site_key in irf_config["config"]["sites"]:
             list_idx.append(eva[spt.IDX][ii]),
             list_angles.append(theta_deg)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(
                 site_particle_dir, "reqired_opening_angle_for_onregion.json"
             ),

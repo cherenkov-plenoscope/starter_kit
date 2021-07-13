@@ -5,6 +5,7 @@ import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -35,7 +36,7 @@ SOURCE_GEOMETRY = {
 
 # prepare energy confusion
 # ------------------------
-_energy_confusion = irf.json_numpy.read_tree(
+_energy_confusion = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
 )
 energy_confusion = {}
@@ -49,7 +50,7 @@ for sk in SITES:
 
 # prepare onregion acceptance vs true energy
 # ------------------------------------------
-acceptance_true_energy = irf.json_numpy.read_tree(
+acceptance_true_energy = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
@@ -79,7 +80,7 @@ for sk in SITES:
 
             out_path = os.path.join(pa["out_dir"], sk, pk, gk + ".json")
             os.makedirs(os.path.dirname(out_path), exist_ok=True)
-            irf.json_numpy.write(
+            json_numpy.write(
                 out_path,
                 {
                     "comment": SOURCE_GEOMETRY[gk]["comment"],

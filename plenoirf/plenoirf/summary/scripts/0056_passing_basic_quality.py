@@ -3,6 +3,7 @@ import sys
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -38,7 +39,7 @@ for site_key in irf_config["config"]["sites"]:
             min_reconstructed_photons=min_reconstructed_photons,
         )
 
-        irf.json_numpy.write(
+        json_numpy.write(
             path=os.path.join(site_particle_dir, "idx.json"),
             out_dict=idx_pastquality,
         )

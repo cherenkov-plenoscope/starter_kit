@@ -8,6 +8,7 @@ import numpy as np
 import sklearn
 import pickle
 import json
+import json_numpy
 from sklearn import neural_network
 from sklearn import ensemble
 from sklearn import model_selection
@@ -21,19 +22,19 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-train_test = irf.json_numpy.read_tree(
+train_test = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0030_splitting_train_and_test_sample",)
 )
 transformed_features_dir = os.path.join(
     pa["summary_dir"], "0062_transform_features"
 )
-passing_trigger = irf.json_numpy.read_tree(
+passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = irf.json_numpy.read_tree(
+passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory = irf.json_numpy.read_tree(
+passing_trajectory = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
@@ -262,6 +263,6 @@ for sk in SITES:
 
                 site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
                 os.makedirs(site_particle_dir, exist_ok=True)
-                irf.json_numpy.write(
+                json_numpy.write(
                     os.path.join(site_particle_dir, tk + ".json"), out
                 )

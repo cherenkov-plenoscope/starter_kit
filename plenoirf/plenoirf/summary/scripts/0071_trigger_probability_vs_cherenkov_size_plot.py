@@ -5,6 +5,7 @@ import os
 import numpy as np
 from os.path import join as opj
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -14,7 +15,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-trigger_vs_size = irf.json_numpy.read_tree(
+trigger_vs_size = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0070_trigger_probability_vs_cherenkov_size"
     )

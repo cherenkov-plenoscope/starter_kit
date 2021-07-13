@@ -10,7 +10,6 @@ from . import map_and_reduce
 from . import map_and_reduce_light_field_geometry
 from . import network_file_system
 from . import bundle
-from . import json_numpy
 from . import provenance
 from . import create_test_tables
 from . import reconstruction
@@ -34,6 +33,7 @@ import pandas as pd
 import tarfile
 import io
 
+import json_numpy
 import plenopy as pl
 import sparse_numeric_table as spt
 import queue_map_reduce

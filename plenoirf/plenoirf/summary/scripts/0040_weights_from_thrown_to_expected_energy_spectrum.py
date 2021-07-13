@@ -5,6 +5,7 @@ import sparse_numeric_table as spt
 import os
 import numpy as np
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -134,7 +135,7 @@ for sk in SITES:
             event_energies=w_energy,
         )
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "weights_vs_energy.json"),
             {
                 "comment": (
@@ -150,7 +151,7 @@ for sk in SITES:
             },
         )
 
-weights = irf.json_numpy.read_tree(pa["out_dir"])
+weights = json_numpy.read_tree(pa["out_dir"])
 
 for sk in SITES:
     fig = seb.figure(seb.FIGURE_16_9)

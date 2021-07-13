@@ -9,6 +9,7 @@ import plenopy as pl
 import iminuit
 import scipy
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 """
 Objective
@@ -43,13 +44,13 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-passing_trigger = irf.json_numpy.read_tree(
+passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = irf.json_numpy.read_tree(
+passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = irf.json_numpy.read_tree(
+passing_trajectory_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
@@ -333,7 +334,7 @@ for sk in irf_config["config"]["sites"]:
                         "theta_deg_relative_uncertainty": ene_rad_co[1],
                     }
 
-            irf.json_numpy.write(
+            json_numpy.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_square_histogram_vs_energy_vs_core_radius.json".format(
@@ -343,7 +344,7 @@ for sk in irf_config["config"]["sites"]:
                 h_ene_rad,
             )
 
-            irf.json_numpy.write(
+            json_numpy.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_square_histogram_vs_energy.json".format(
@@ -353,7 +354,7 @@ for sk in irf_config["config"]["sites"]:
                 h_ene,
             )
 
-            irf.json_numpy.write(
+            json_numpy.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_containment_vs_energy_vs_core_radius.json".format(
@@ -363,7 +364,7 @@ for sk in irf_config["config"]["sites"]:
                 c_ene_rad,
             )
 
-            irf.json_numpy.write(
+            json_numpy.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_containment_vs_energy.json".format(

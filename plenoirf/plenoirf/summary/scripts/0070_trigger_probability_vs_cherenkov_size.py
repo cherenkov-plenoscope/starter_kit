@@ -5,6 +5,7 @@ import os
 import numpy as np
 from os.path import join as opj
 import sparse_numeric_table as spt
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -17,7 +18,7 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 num_size_bins = 12
 size_bin_edges = np.geomspace(1, 2 ** num_size_bins, (3 * num_size_bins) + 1)
 
-passing_trigger = irf.json_numpy.read_tree(
+passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
@@ -64,7 +65,7 @@ for site_key in irf_config["config"]["sites"]:
             default=np.nan,
         )
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, key + ".json"),
             {
                 "true_Cherenkov_size_bin_edges_pe": size_bin_edges,

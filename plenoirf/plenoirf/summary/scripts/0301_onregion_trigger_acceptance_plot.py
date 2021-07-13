@@ -5,6 +5,7 @@ import plenoirf as irf
 import os
 from os.path import join as opj
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -25,7 +26,7 @@ IDX_FINAL_ONREGION = 1
 
 # trigger
 # -------
-A = irf.json_numpy.read_tree(
+A = json_numpy.read_tree(
     opj(pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles")
 )
 A_energy_bin_edges = np.geomspace(
@@ -36,7 +37,7 @@ A_energy_bin_edges = np.geomspace(
 
 # trigger fix onregion
 # --------------------
-G = irf.json_numpy.read_tree(
+G = json_numpy.read_tree(
     opj(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 G_energy_bin_edges = np.geomspace(

@@ -4,6 +4,7 @@ import numpy as np
 import plenoirf as irf
 import cosmic_fluxes
 import os
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -13,7 +14,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-onregion_acceptance = irf.json_numpy.read_tree(
+onregion_acceptance = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
@@ -94,7 +95,7 @@ for site_key in irf_config["config"]["sites"]:
         T[oridx] = gamma_rate_per_s
         dT_dE[:, oridx] = gamma_differential_rate_per_s_per_GeV
 
-    irf.json_numpy.write(
+    json_numpy.write(
         os.path.join(site_gamma_dir, "differential_rate.json"),
         {
             "comment": comment_differential
@@ -105,7 +106,7 @@ for site_key in irf_config["config"]["sites"]:
             "mean": dT_dE,
         },
     )
-    irf.json_numpy.write(
+    json_numpy.write(
         os.path.join(site_gamma_dir, "integral_rate.json"),
         {
             "comment": comment_integral
@@ -147,7 +148,7 @@ for site_key in irf_config["config"]["sites"]:
             T[oridx] = cosmic_rate_per_s
             dT_dE[:, oridx] = cosmic_differential_rate_per_s_per_GeV
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "differential_rate.json"),
             {
                 "comment": comment_differential + " VS onregion-radius",
@@ -155,7 +156,7 @@ for site_key in irf_config["config"]["sites"]:
                 "mean": dT_dE,
             },
         )
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "integral_rate.json"),
             {
                 "comment": comment_integral + " VS onregion-radius",

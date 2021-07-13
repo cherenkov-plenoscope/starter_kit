@@ -5,6 +5,7 @@ import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -19,7 +20,7 @@ PARTICLES = irf_config["config"]["particles"]
 
 # prepare energy confusion
 # ------------------------
-_energy_confusion = irf.json_numpy.read_tree(
+_energy_confusion = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
 )
 energy_confusion = {}
@@ -33,7 +34,7 @@ for sk in SITES:
 
 # prepare onregion rates
 # ----------------------
-_onregion_rates = irf.json_numpy.read_tree(
+_onregion_rates = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0320_onregion_trigger_rates_for_cosmic_rays"
     )
@@ -100,7 +101,7 @@ for sk in SITES:
                     energy_confusion[sk][pk][ee] * rate_true_energy_per_s[ee]
                 )
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(
                 site_particle_dir,
                 "rate_in_onregion_and_reconstructed_energy.json",

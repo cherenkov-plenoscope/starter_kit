@@ -6,6 +6,7 @@ import os
 from os.path import join as opj
 import numpy as np
 import sebastians_matplotlib_addons as seb
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -15,17 +16,17 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-weights_thrown2expected = irf.json_numpy.read_tree(
+weights_thrown2expected = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"],
         "0040_weights_from_thrown_to_expected_energy_spectrum",
     )
 )
 
-passing_trigger = irf.json_numpy.read_tree(
+passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = irf.json_numpy.read_tree(
+passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 

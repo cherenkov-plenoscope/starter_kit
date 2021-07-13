@@ -5,6 +5,7 @@ import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -14,15 +15,15 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-acceptance = irf.json_numpy.read_tree(
+acceptance = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-acceptance_Ereco = irf.json_numpy.read_tree(
+acceptance_Ereco = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0311_onregion_trigger_acceptance_in_reconstructed_energy")
 )
 
-rate_onregion_reco_energy = irf.json_numpy.read_tree(
+rate_onregion_reco_energy = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0326_differential_rates")
 )
 
@@ -108,7 +109,7 @@ for sk in SITES:
                 )
                 critical_dFdE[eidx, oridx, obstix] = critical_dFdE_per_m2_per_s_per_GeV
 
-    irf.json_numpy.write(
+    json_numpy.write(
         os.path.join(pa["out_dir"], sk, "differential_sensitivity" + ".json"),
         {
             "energy_bin_edges": energy_bin_edges,

@@ -8,6 +8,7 @@ import numpy as np
 import sklearn
 import pickle
 import json
+import json_numpy
 from sklearn import neural_network
 from sklearn import ensemble
 from sklearn import model_selection
@@ -22,16 +23,16 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-passing_trigger = irf.json_numpy.read_tree(
+passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = irf.json_numpy.read_tree(
+passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = irf.json_numpy.read_tree(
+passing_trajectory_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
-reconstructed_energy = irf.json_numpy.read_tree(
+reconstructed_energy = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0065_learning_airshower_maximum_and_energy"
     ),
@@ -155,7 +156,7 @@ for sk in irf_config["config"]["sites"]:
             )
             seb.close_figure(fig)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "confusion_matrix" + ".json"), cm
         )
 

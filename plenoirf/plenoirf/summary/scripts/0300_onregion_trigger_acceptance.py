@@ -5,6 +5,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
 import os
+import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -14,13 +15,13 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-passing_trigger = irf.json_numpy.read_tree(
+passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = irf.json_numpy.read_tree(
+passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = irf.json_numpy.read_tree(
+passing_trajectory_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
@@ -184,7 +185,7 @@ for sk in irf_config["config"]["sites"]:
             Qeff[:, oridx] = _q_eff
             Qunc[:, oridx] = _q_unc
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "point.json"),
             {
                 "comment": (
@@ -281,7 +282,7 @@ for sk in irf_config["config"]["sites"]:
             Qeff[:, oridx] = _q_eff
             Qunc[:, oridx] = _q_unc
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "diffuse.json"),
             {
                 "comment": (

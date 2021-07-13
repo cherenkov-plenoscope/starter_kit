@@ -4,7 +4,7 @@ import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
-
+import json_numpy
 import matplotlib
 
 matplotlib.use("Agg")
@@ -97,7 +97,7 @@ for site_key in irf_config["config"]["sites"]:
             value.append(_q_eff)
             relative_uncertainty.append(_q_unc)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "point.json"),
             {
                 "comment": (
@@ -154,7 +154,7 @@ for site_key in irf_config["config"]["sites"]:
             value.append(_q_eff)
             relative_uncertainty.append(_q_unc)
 
-        irf.json_numpy.write(
+        json_numpy.write(
             os.path.join(site_particle_dir, "diffuse.json"),
             {
                 "comment": (
