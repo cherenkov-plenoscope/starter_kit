@@ -39,6 +39,8 @@ import sparse_numeric_table as spt
 import queue_map_reduce
 from queue_map_reduce.tools import _log as qmrlog
 import magnetic_deflection as mdfl
+import gamma_ray_reconstruction as gamrec
+
 
 MIN_PROTON_ENERGY_GEV = 5.0
 MIN_HELIUM_ENERGY_GEV = 10.0
@@ -179,7 +181,7 @@ EXAMPLE_CONFIG = {
         "direction_to_time_mixing_deg_per_s": 0.375e9,
     },
     "reconstruction": {
-        "trajectory": reconstruction.trajectory.make_example_config_for_71m_plenoscope(
+        "trajectory": gamrec.trajectory.iron.config.make_example_config_for_71m_plenoscope(
             fov_radius_deg=3.25),
     },
     "raw_sensor_response": {

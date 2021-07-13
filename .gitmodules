@@ -37,3 +37,6 @@
 [submodule "json_numpy"]
 	path = json_numpy
 	url = git@github.com:cherenkov-plenoscope/json_numpy.git
+[submodule "gamma_ray_reconstruction"]
+	path = gamma_ray_reconstruction
+	url = git@github.com:cherenkov-plenoscope/gamma_ray_reconstruction.git
