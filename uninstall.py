@@ -15,6 +15,8 @@ tools = [
     "spectral_energy_distribution_units",
     "lima1983analysis",
     "sebastians_matplotlib_addons",
+    "json_numpy",
+    "gamma_ray_reconstruction",
 ]
 for tool in tools:
     call(["pip", "uninstall", tool])
