@@ -22,6 +22,7 @@ import tarfile
 import corsika_primary_wrapper as cpw
 import plenopy as pl
 import sparse_numeric_table as spt
+import gamma_ray_reconstruction as gamrec
 
 
 """
@@ -701,10 +702,10 @@ def _extract_features(
 
 def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
 
-    FUZZY_CONFIG = reconstruction.fuzzy_method.compile_user_config(
+    FUZZY_CONFIG = gamrec.trajectory.v2020nov12fuzzy0.config.compile_user_config(
         user_config=job["reconstruction"]["trajectory"]["fuzzy_method"]
     )
-    MODEL_FIT_CONFIG = reconstruction.model_fit.compile_user_config(
+    MODEL_FIT_CONFIG = gamrec.trajectory.v2020dec04iron0b.config.compile_user_config(
         user_config=job["reconstruction"]["trajectory"]["core_axis_fit"]
     )
 
@@ -725,7 +726,7 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
         airshower_id, loph_record = event
 
         if airshower_id in shower_maximum_object_distance:
-            estimate, debug = reconstruction.trajectory.estimate(
+            estimate, debug = gamrec.trajectory.v2020dec04iron0b.estimate(
                 loph_record=loph_record,
                 light_field_geometry=light_field_geometry,
                 shower_maximum_object_distance=shower_maximum_object_distance[
@@ -735,7 +736,7 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
                 model_fit_config=MODEL_FIT_CONFIG,
             )
 
-            if reconstruction.trajectory.is_valid_estimate(estimate=estimate):
+            if gamrec.trajectory.v2020dec04iron0b.is_valid_estimate(estimate=estimate):
                 rec = {}
                 rec[spt.IDX] = airshower_id
 
