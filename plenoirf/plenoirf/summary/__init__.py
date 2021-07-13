@@ -9,6 +9,7 @@ import pkg_resources
 import subprocess
 import sparse_numeric_table as spt
 import glob
+import json_numpy
 from .. import features
 from .. import reconstruction
 from .. import analysis
@@ -18,7 +19,6 @@ from .. import merlict
 from .. import grid
 from . import figure
 from . import samtex
-from .. import json_numpy
 from .cosmic_flux import read_airshower_differential_flux_zenith_compensated
 from .cosmic_flux import make_gamma_ray_reference_flux
 from .scripts_multiprocessing import run_parallel

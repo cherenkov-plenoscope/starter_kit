@@ -3,7 +3,7 @@ import os
 import glob
 import subprocess
 import time
-from .. import json_numpy
+import json_numpy
 from .. import provenance
 
 

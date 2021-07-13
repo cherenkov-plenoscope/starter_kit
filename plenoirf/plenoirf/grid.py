@@ -5,9 +5,9 @@ import io
 import tarfile
 import shutil
 import json
+import json_numpy
 import corsika_primary_wrapper as cpw
 from . import random_seed
-from . import json_numpy
 
 
 def init_geometry(
