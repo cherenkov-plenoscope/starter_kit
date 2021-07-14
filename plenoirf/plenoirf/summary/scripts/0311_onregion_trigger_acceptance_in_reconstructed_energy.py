@@ -36,17 +36,9 @@ SOURCE_GEOMETRY = {
 
 # prepare energy confusion
 # ------------------------
-_energy_confusion = json_numpy.read_tree(
+energy_confusion = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
 )
-energy_confusion = {}
-for sk in SITES:
-    energy_confusion[sk] = {}
-    for pk in PARTICLES:
-        cm = _energy_confusion[sk][pk]["confusion_matrix"]
-        energy_confusion[sk][pk] = np.array(
-            cm["confusion_bins_normalized_columns"]
-        )
 
 # prepare onregion acceptance vs true energy
 # ------------------------------------------
@@ -61,7 +53,9 @@ ONREGION_SIZES = range(num_bins_onregion_radius)
 
 for sk in SITES:
     for pk in PARTICLES:
-        CM = energy_confusion[sk][pk]
+        CM = energy_confusion[sk][pk]["confusion_matrix"]
+        assert CM["ax0_key"] == "true_energy"
+        assert CM["ax1_key"] == "reco_energy"
         for gk in SOURCE_GEOMETRY:
             Q_true = np.array(acceptance_true_energy[sk][pk][gk]["mean"])
             Q_true_u = np.array(
@@ -72,10 +66,12 @@ for sk in SITES:
 
             for oi in ONREGION_SIZES:
                 Q_reco[:, oi] = irf.utils.apply_confusion_matrix(
-                    x=Q_true[:, oi], confusion_matrix=CM,
+                    x=Q_true[:, oi],
+                    confusion_matrix=CM["confusion_bins_normalized_on_ax0"],
                 )
                 Q_reco_u[:, oi] = irf.utils.apply_confusion_matrix_uncertainty(
-                    x_unc=Q_true_u[:, oi], confusion_matrix=CM,
+                    x_unc=Q_true_u[:, oi],
+                    confusion_matrix=CM["confusion_bins_normalized_on_ax0"],
                 )
 
             out_path = os.path.join(pa["out_dir"], sk, pk, gk + ".json")
