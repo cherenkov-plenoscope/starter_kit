@@ -48,8 +48,7 @@ observation_times = irf.utils.make_civil_times_points_in_quasi_logspace()
 observation_times = np.array(observation_times)
 num_observation_times = len(observation_times)
 
-COSMIC_RAYS = list(irf_config["config"]["particles"].keys())
-COSMIC_RAYS.remove("gamma")
+COSMIC_RAYS = list(irf_config["config"]["particles"].keys()).remove("gamma")
 
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
