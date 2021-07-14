@@ -23,6 +23,10 @@ acceptance_Ereco = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0311_onregion_trigger_acceptance_in_reconstructed_energy")
 )
 
+acceptance_Etrue = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
+)
+
 rate_onregion_reco_energy = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0326_differential_rates")
 )
@@ -48,7 +52,8 @@ observation_times = irf.utils.make_civil_times_points_in_quasi_logspace()
 observation_times = np.array(observation_times)
 num_observation_times = len(observation_times)
 
-COSMIC_RAYS = list(irf_config["config"]["particles"].keys()).remove("gamma")
+COSMIC_RAYS = list(irf_config["config"]["particles"].keys())
+COSMIC_RAYS.remove("gamma")
 
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
@@ -58,6 +63,8 @@ critical_method = sum_config["on_off_measuremnent"]["method"]
 num_onregion_sizes = len(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
 )
+
+SCENARIOS = ["true", "reco_broad", "reco_sharp"]
 
 for sk in SITES:
     os.makedirs(os.path.join(pa["out_dir"], sk), exist_ok=True)
@@ -72,17 +79,14 @@ for sk in SITES:
         # ----------------
         cosmic_ray_rate_per_s = np.zeros(num_bins_energy)
         for ck in COSMIC_RAYS:
-            cosmic_ray_rate_per_s += np.array(
-                rate_onregion_reco_energy[sk][ck][
+            cosmic_ray_rate_per_s += rate_onregion_reco_energy[sk][ck][
                     "rate_in_onregion_and_reconstructed_energy"
-                ]["rate"]
-            )[:, oridx]
+                ]["rate"][:, oridx]
 
         # signal effective area
         # ---------------------
-        gamma_effective_area_Ereco_m2 = np.array(
-            acceptance_Ereco[sk]["gamma"]["point"]["mean"]
-        )[:, oridx]
+        gamma_effective_area_Ereco_m2 = acceptance_Ereco[sk]["gamma"]["point"]["mean"][:, oridx]
+        gamma_effective_area_Etrue_m2 = acceptance_Etrue[sk]["gamma"]["point"]["mean"][:, oridx]
 
         for eidx in range(num_bins_energy):
 
