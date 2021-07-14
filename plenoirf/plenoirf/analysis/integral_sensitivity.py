@@ -134,7 +134,7 @@ def estimate_critical_rate(
     observation_time_s,
     instrument_systematic_uncertainty,
     detection_threshold_std,
-    method="LiMa_eq17",
+    method="LiMaEq17",
 ):
     bg_rate_off_per_s = (
         background_rate_in_onregion_per_s / onregion_over_offregion_ratio
@@ -145,12 +145,12 @@ def estimate_critical_rate(
         bg_count_off_std = np.sqrt(bg_count_off)
         bg_count_on_std = bg_count_off_std * onregion_over_offregion_ratio
         sig_count_stat_on = detection_threshold_std * bg_count_on_std
-    elif method == "LiMa_eq9":
+    elif method == "LiMaEq9":
         sig_count_stat_on = lima1983analysis.estimate_N_s_eq9(
             N_off=bg_count_off,
             alpha=onregion_over_offregion_ratio,
             S=detection_threshold_std)
-    elif method == "LiMa_eq17":
+    elif method == "LiMaEq17":
         sig_count_stat_on = lima1983analysis.estimate_N_s_eq17(
             N_off=bg_count_off,
             alpha=onregion_over_offregion_ratio,

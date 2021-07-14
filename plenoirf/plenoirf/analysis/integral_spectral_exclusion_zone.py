@@ -19,7 +19,7 @@ def estimate_integral_spectral_exclusion_zone(
         observation_time_s=observation_time_s,
         instrument_systematic_uncertainty=instrument_systematic_uncertainty,
         detection_threshold_std=detection_threshold_std,
-        method="LiMa_eq17",
+        method="LiMaEq17",
     )
 
     powlaws = integral_sensitivity.estimate_critical_power_laws(

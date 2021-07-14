@@ -413,7 +413,7 @@ _bd += make_site_table(
     energy_bin_edges=[0, 1],
     wild_card=opj(
         "0325_onregion_trigger_rates_for_cosmic_rays_plot",
-        "{site_key:s}_LiMa_eq17_significance_vs_onregion_radius.jpg",
+        "{site_key:s}_LiMaEq17_significance_vs_onregion_radius.jpg",
     ),
 )
 

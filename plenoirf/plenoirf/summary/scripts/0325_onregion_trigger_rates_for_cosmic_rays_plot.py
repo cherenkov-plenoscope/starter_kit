@@ -96,7 +96,7 @@ for site_key in irf_config["config"]["sites"]:
     fig.savefig(
         os.path.join(
             pa["out_dir"],
-            "{:s}_LiMa_eq17_significance_vs_onregion_radius.jpg".format(
+            "{:s}_LiMaEq17_significance_vs_onregion_radius.jpg".format(
                 site_key
             ),
         )
