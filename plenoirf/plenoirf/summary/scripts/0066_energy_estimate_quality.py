@@ -94,7 +94,7 @@ for sk in irf_config["config"]["sites"]:
             target_idxs=valid_event_table["primary"]["idx"],
         )
 
-        cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
+        cm = irf.utils.make_confusion_matrix(
             ax0_key="true_energy",
             ax0_values=true_energy,
             ax0_bin_edges=energy_bin_edges,

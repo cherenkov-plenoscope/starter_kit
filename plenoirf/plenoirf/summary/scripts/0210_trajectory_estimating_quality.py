@@ -97,7 +97,7 @@ def write_correlation_figure(
         np.logical_not((np.isnan(x))), np.logical_not((np.isnan(y)))
     )
 
-    cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
+    cm = irf.utils.make_confusion_matrix(
         ax0_key="x",
         ax0_values=x[valid],
         ax0_bin_edges=x_bin_edges,

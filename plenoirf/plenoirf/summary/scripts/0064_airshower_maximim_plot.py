@@ -78,7 +78,7 @@ for sk in irf_config["config"]["sites"]:
             ],
         )
 
-        cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
+        cm = irf.utils.make_confusion_matrix(
             ax0_key="true_airshower_maximum_altitude",
             ax0_values=true_airshower_maximum_altitude,
             ax0_bin_edges=distance_bin_edges,
