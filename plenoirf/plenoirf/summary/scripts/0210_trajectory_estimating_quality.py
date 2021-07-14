@@ -98,11 +98,13 @@ def write_correlation_figure(
     )
 
     cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
-        x=x[valid],
-        y=y[valid],
-        x_bin_edges=x_bin_edges,
-        y_bin_edges=y_bin_edges,
-        min_exposure_x=min_exposure_x,
+        ax0_key="x",
+        ax0_values=x[valid],
+        ax0_bin_edges=x_bin_edges,
+        ax1_key="y",
+        ax1_values=y[valid],
+        ax1_bin_edges=y_bin_edges,
+        min_exposure_ax0=min_exposure_x,
         default_low_exposure=0.0,
     )
 
@@ -111,9 +113,9 @@ def write_correlation_figure(
     ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
     ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
     _pcm_confusion = ax.pcolormesh(
-        cm["x_bin_edges"],
-        cm["y_bin_edges"],
-        np.transpose(cm["confusion_bins_normalized_columns"]),
+        cm["ax0_bin_edges"],
+        cm["ax1_bin_edges"],
+        np.transpose(cm["confusion_bins_normalized_on_ax0"]),
         cmap="Greys",
         norm=seb.plt_colors.PowerNorm(gamma=0.5),
     )
@@ -122,14 +124,14 @@ def write_correlation_figure(
     ax.set_ylabel(y_label)
     ax.set_xticklabels([])
     ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-    ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["x_bin_edges"])])
+    ax_h.set_xlim([np.min(cm["ax0_bin_edges"]), np.max(cm["ax0_bin_edges"])])
     ax_h.set_xlabel(x_label)
     ax_h.set_ylabel("num. events / 1")
-    ax_h.axhline(cm["min_exposure_x"], linestyle=":", color="k")
+    ax_h.axhline(cm["min_exposure_ax0"], linestyle=":", color="k")
     seb.ax_add_histogram(
         ax=ax_h,
-        bin_edges=cm["x_bin_edges"],
-        bincounts=cm["exposure_bins_x_no_weights"],
+        bin_edges=cm["ax0_bin_edges"],
+        bincounts=cm["exposure_bins_ax0_no_weights"],
         linestyle="-",
         linecolor="k",
     )

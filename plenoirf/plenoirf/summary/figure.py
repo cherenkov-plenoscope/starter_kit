@@ -46,47 +46,56 @@ def mark_ax_thrown_spectrum(ax, x=0.93, y=0.93, fontsize=42):
 
 
 def histogram_confusion_matrix_with_normalized_columns(
-    x,
-    y,
-    x_bin_edges,
-    y_bin_edges,
-    weights_x=None,
-    min_exposure_x=100,
+    ax0_key,
+    ax0_values,
+    ax0_bin_edges,
+    ax1_key,
+    ax1_values,
+    ax1_bin_edges,
+    ax0_weights=None,
+    min_exposure_ax0=100,
     default_low_exposure=np.nan,
 ):
-    assert len(x) == len(y)
-    if weights_x is not None:
-        assert len(x) == len(weights_x)
+    assert len(ax0_values) == len(ax1_values)
+    if ax0_weights is not None:
+        assert len(ax0_values) == len(ax0_weights)
 
-    num_bins_x = len(x_bin_edges) - 1
-    assert num_bins_x >= 1
+    num_bins_ax0 = len(ax0_bin_edges) - 1
+    assert num_bins_ax0 >= 1
 
-    num_bins_y = len(y_bin_edges) - 1
-    assert num_bins_y >= 1
+    num_bins_ax1 = len(ax1_bin_edges) - 1
+    assert num_bins_ax1 >= 1
 
     confusion_bins = np.histogram2d(
-        x, y, weights=weights_x, bins=[x_bin_edges, y_bin_edges],
+        ax0_values,
+        ax1_values,
+        weights=ax0_weights,
+        bins=[ax0_bin_edges, ax1_bin_edges],
     )[0]
 
     exposure_bins_no_weights = np.histogram2d(
-        x, y, bins=[x_bin_edges, y_bin_edges],
+        ax0_values, ax1_values, bins=[ax0_bin_edges, ax1_bin_edges],
     )[0]
 
-    confusion_bins_normalized_columns = confusion_bins.copy()
-    for col in range(num_bins_x):
-        if np.sum(exposure_bins_no_weights[col, :]) >= min_exposure_x:
-            confusion_bins_normalized_columns[col, :] /= np.sum(confusion_bins[col, :])
+    confusion_bins_normalized_on_ax0 = confusion_bins.copy()
+    for i0 in range(num_bins_ax0):
+        if np.sum(exposure_bins_no_weights[i0, :]) >= min_exposure_ax0:
+            confusion_bins_normalized_on_ax0[i0, :] /= np.sum(
+                confusion_bins[i0, :]
+            )
         else:
-            confusion_bins_normalized_columns[col, :] = (
-                np.ones(num_bins_y) * default_low_exposure
+            confusion_bins_normalized_on_ax0[i0, :] = (
+                np.ones(num_bins_ax1) * default_low_exposure
             )
 
     return {
-        "x_bin_edges": x_bin_edges,
-        "y_bin_edges": y_bin_edges,
+        "ax0_key": ax0_key,
+        "ax1_key": ax1_key,
+        "ax0_bin_edges": ax0_bin_edges,
+        "ax1_bin_edges": ax1_bin_edges,
         "confusion_bins": confusion_bins,
-        "confusion_bins_normalized_columns": confusion_bins_normalized_columns,
-        "exposure_bins_x_no_weights": np.sum(exposure_bins_no_weights, axis=1),
-        "exposure_bins_x": np.sum(confusion_bins, axis=1),
-        "min_exposure_x": min_exposure_x,
+        "confusion_bins_normalized_on_ax0": confusion_bins_normalized_on_ax0,
+        "exposure_bins_ax0_no_weights": np.sum(exposure_bins_no_weights, axis=1),
+        "exposure_bins_ax0": np.sum(confusion_bins, axis=1),
+        "min_exposure_ax0": min_exposure_ax0,
     }

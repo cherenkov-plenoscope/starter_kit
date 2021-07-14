@@ -79,12 +79,14 @@ for sk in irf_config["config"]["sites"]:
         )
 
         cm = irf.summary.figure.histogram_confusion_matrix_with_normalized_columns(
-            x=true_airshower_maximum_altitude,
-            y=image_smallest_ellipse_object_distance,
-            x_bin_edges=distance_bin_edges,
-            y_bin_edges=distance_bin_edges,
-            weights_x=event_weights,
-            min_exposure_x=min_number_samples,
+            ax0_key="true_airshower_maximum_altitude",
+            ax0_values=true_airshower_maximum_altitude,
+            ax0_bin_edges=distance_bin_edges,
+            ax1_key="image_smallest_ellipse_object_distance",
+            ax1_values=image_smallest_ellipse_object_distance,
+            ax1_bin_edges=distance_bin_edges,
+            ax0_weights=event_weights,
+            min_exposure_ax0=min_number_samples,
             default_low_exposure=0.0,
         )
 
@@ -93,9 +95,9 @@ for sk in irf_config["config"]["sites"]:
         ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
         ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
         _pcm_confusion = ax_c.pcolormesh(
-            cm["x_bin_edges"],
-            cm["y_bin_edges"],
-            np.transpose(cm["confusion_bins_normalized_columns"]),
+            cm["ax0_bin_edges"],
+            cm["ax1_bin_edges"],
+            np.transpose(cm["confusion_bins_normalized_on_ax0"]),
             cmap="Greys",
             norm=seb.plt_colors.PowerNorm(gamma=0.5),
         )
@@ -110,15 +112,15 @@ for sk in irf_config["config"]["sites"]:
         seb.ax_add_grid(ax_c)
 
         ax_h.semilogx()
-        ax_h.set_xlim([np.min(cm["x_bin_edges"]), np.max(cm["y_bin_edges"])])
+        ax_h.set_xlim([np.min(cm["ax0_bin_edges"]), np.max(cm["ax1_bin_edges"])])
         ax_h.set_xlabel("true maximum of airshower / m")
         ax_h.set_ylabel("num. events / 1")
         irf.summary.figure.mark_ax_thrown_spectrum(ax_h)
         ax_h.axhline(min_number_samples, linestyle=":", color="k")
         seb.ax_add_histogram(
             ax=ax_h,
-            bin_edges=cm["x_bin_edges"],
-            bincounts=cm["exposure_bins_x_no_weights"],
+            bin_edges=cm["ax0_bin_edges"],
+            bincounts=cm["exposure_bins_ax0_no_weights"],
             linestyle="-",
             linecolor="k",
         )
