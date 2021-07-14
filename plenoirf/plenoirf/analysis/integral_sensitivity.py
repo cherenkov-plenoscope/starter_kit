@@ -156,7 +156,7 @@ def estimate_critical_rate(
             alpha=onregion_over_offregion_ratio,
             S=detection_threshold_std)
     else:
-        assert False
+        raise KeyError("Unknown method: '{:s}'".format(method))
 
     sig_count_sys_on = (
         detection_threshold_std *
