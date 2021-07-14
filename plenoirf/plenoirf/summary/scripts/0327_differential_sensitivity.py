@@ -54,6 +54,7 @@ COSMIC_RAYS.remove("gamma")
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
+critical_method = sum_config["on_off_measuremnent"]["method"]
 
 num_onregion_sizes = len(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
@@ -96,7 +97,7 @@ for sk in SITES:
                         observation_time_s=observation_times[obstix],
                         instrument_systematic_uncertainty=systematic_uncertainty,
                         detection_threshold_std=detection_threshold_std,
-                        method="LiMa_eq17",
+                        method=critical_method,
                     )
                 else:
                     critical_rate_per_s = float("nan")
@@ -117,8 +118,7 @@ for sk in SITES:
             "differential_flux": critical_dFdE,
             "comment": (
                 "Critical differential flux-sensitivity "
-                "VS energy VS onregion-size VS observation-time, "
-                "LiMa-eq.17, 5.0std , "
+                "VS energy VS onregion-size VS observation-time"
             ),
         },
     )
