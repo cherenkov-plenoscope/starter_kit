@@ -19,13 +19,13 @@ observation_times = np.geomspace(60, 10 * year, 27)
 
 cfg = {
     "--glon": {
-        "value": 30.0,
+        "value": 120.0,
         "help": "Galactic longitude in deg at which the sensitivity "
         "will be evaluated. Also sets the center of the sensitivity map "
         "for the `wcs` map type.",
     },
     "--glat": {
-        "value": 30.0,
+        "value": 60.0,
         "help": "Galactic latitude in deg at which the sensitivity "
         "will be evaluated. Also sets the center of the sensitivity "
         "map for the `wcs` map type.",
