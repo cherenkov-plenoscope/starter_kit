@@ -21,6 +21,24 @@ diff_sensitivity = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
 )
 
+PIVOT_ENERGY_GEV = 25.0
+
+fls = json_numpy.read(os.path.join(
+    "fermi_lat", "dnde_vs_observation_time_vs_energy.json"
+))
+assert fls["dnde"]["unit"] == "cm-2 MeV-1 ph s-1"
+odnde = {"dnde": {}}
+odnde["dnde"]["value"] = fls["dnde"]["value"] * 1e4 * 1e3
+odnde["dnde"]["unit"] = "m-2 GeV ph s-1"
+odnde["energy_bin_edges"] = {}
+odnde["energy_bin_edges"]["value"] = fls["energy_bin_edges"]["value"] * 1e-3
+odnde["energy_bin_edges"]["unit"] = "GeV"
+odnde["observation_times"] = fls["observation_times"]
+lo_ebin = np.digitize(
+    PIVOT_ENERGY_GEV,
+    bins=odnde["energy_bin_edges"]["value"]
+) - 1
+
 energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
 energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
 energy_bin_edges = np.geomspace(
@@ -49,8 +67,6 @@ output_sed_styles = {
 }
 
 oridx = 1
-
-PIVOT_ENERGY_GEV = 25.0
 
 enidx = irf.utils.find_closest_index_in_array_for_value(
         arr=energy_bin_edges,
@@ -105,6 +121,15 @@ for site_key in irf_config["config"]["sites"]:
     com["linestyle"] = "-"
     components.append(com)
 
+    com = {}
+    com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(odnde["observation_times"]["value"]))
+    com["observation_time"] = odnde["observation_times"]["value"]
+    com["differential_flux"] = odnde["dnde"]["value"][:, lo_ebin]
+    com["label"] = irf.other_instruments.fermi_lat.LABEL + "seb."
+    com["color"] = "red"# irf.other_instruments.fermi_lat.COLOR
+    com["alpha"] = 1.0
+    com["linestyle"] = "--"
+    components.append(com)
 
     # CTA South
     # ---------
