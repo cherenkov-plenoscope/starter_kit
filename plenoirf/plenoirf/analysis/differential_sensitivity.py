@@ -36,13 +36,13 @@ def estimate_differential_sensitivity(
 
 def make_energy_confusion_matrix_for_scenario(
     energy_confusion_matrix,
-    scenario="reco_sharp",
+    scenario="RecoSharp",
 ):
-    if scenario == "true":
+    if scenario == "RecoIsTrue":
         cm = np.eye(N=energy_confusion_matrix.shape[0])
-    elif scenario == "reco_broad":
+    elif scenario == "RecoBroad":
         cm = np.array(energy_confusion_matrix)
-    elif scenario == "reco_sharp":
+    elif scenario == "RecoSharp":
         cm = np.diag(energy_confusion_matrix)
     else:
         raise KeyError("Unknown scenario: '{:s}'".format(scenario))
