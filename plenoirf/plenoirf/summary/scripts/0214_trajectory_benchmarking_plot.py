@@ -31,56 +31,6 @@ theta_labels = {
 axes_style = {"spines": [], "axes": ["x"], "grid": False}
 
 
-def write_core_radius_figure(path, radius_bin_edges, bin_idx, info):
-    num_bins = len(radius_bin_edges) - 1
-    r_start = radius_bin_edges[bin_idx]
-    r_stop = radius_bin_edges[bin_idx + 1]
-    fig = seb.figure(seb.FIGURE_1_1)
-    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8), style=axes_style)
-    rs = np.linspace(0.0, 2.0 * np.pi, 137)
-    ax.fill(
-        r_stop * np.cos(rs), r_stop * np.sin(rs), facecolor="k", alpha=0.25
-    )
-    ax.fill(
-        r_start * np.cos(rs), r_start * np.sin(rs), facecolor="w",
-    )
-    for rr in radius_bin_edges:
-        seb.ax_add_circle(
-            ax=ax,
-            x=0.0,
-            y=0.0,
-            r=rr,
-            linewidth=1.0,
-            linestyle="-",
-            color="k",
-            alpha=1,
-            num_steps=1000,
-        )
-    fig.suptitle(info, family="monospace")
-    fig.savefig(path)
-    seb.close_figure(fig)
-
-
-def write_energy_figure(path, energy_bin_edges, bin_idx, info):
-    num_bins = len(energy_bin_edges) - 1
-    e_start = energy_bin_edges[bin_idx]
-    e_stop = energy_bin_edges[bin_idx + 1]
-    fig = seb.figure(seb.FIGURE_1_1)
-    ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8), style=axes_style)
-    ax.fill_between(
-        [e_start, e_start, e_stop, e_stop],
-        [0.0, 1.0, 1.0, 0.0],
-        facecolor="k",
-        alpha=0.25,
-    )
-    ax.semilogx()
-    ax.set_ylim([0, 1])
-    ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
-    fig.suptitle(info, family="monospace")
-    fig.savefig(path)
-    seb.close_figure(fig)
-
-
 def write_theta_square_figure(
     path,
     theta_square_bin_edges_deg2,
@@ -100,7 +50,7 @@ def write_theta_square_figure(
         tts_label = r"$" + theta_label + r"$ / $1^\circ{}$"
         tts = np.sqrt(theta_square_bin_edges_deg2)
 
-    fig = seb.figure(seb.FIGURE_16_9)
+    fig = seb.figure( {"rows": 540, "cols": 960, "fontsize": 0.5})
     ax = seb.add_axes(fig=fig, span=(0.1, 0.12, 0.8, 0.8))
     seb.ax_add_histogram(
         ax=ax,
@@ -150,6 +100,9 @@ for site_key in psf:
 
         for theta_key in ["theta", "theta_para", "theta_perp"]:
 
+            scenario_dir = os.path.join(pa["out_dir"], site_key, particle_key, theta_key)
+            os.makedirs(scenario_dir, exist_ok=True)
+
             t2 = psf[site_key][particle_key][
                 "{theta_key:s}_square_histogram_vs_energy_vs_core_radius".format(
                     theta_key=theta_key
@@ -172,18 +125,6 @@ for site_key in psf:
 
                 ene_info = "energy/GeV {: 7.1f} - {: 7.1f}".format(
                     ene_start, ene_stop
-                )
-
-                write_energy_figure(
-                    path=os.path.join(
-                        pa["out_dir"],
-                        "{:s}_{:s}_{:s}_ene{:06d}_info.jpg".format(
-                            site_key, particle_key, theta_key, ene,
-                        ),
-                    ),
-                    energy_bin_edges=t2["energy_bin_edges_GeV"],
-                    bin_idx=ene,
-                    info=ene_info,
                 )
 
                 for rad in range(num_radius_bins):
@@ -212,7 +153,7 @@ for site_key in psf:
 
                     write_theta_square_figure(
                         path=os.path.join(
-                            pa["out_dir"],
+                            pa["out_dir"], site_key, particle_key, theta_key,
                             "{:s}_{:s}_{:s}_rad{:06d}_ene{:06d}.jpg".format(
                                 site_key, particle_key, theta_key, rad, ene,
                             ),
@@ -229,18 +170,4 @@ for site_key in psf:
                         info_title=" {:s}, {:s}".format(ene_info, rad_info),
                         theta_label=theta_labels[theta_key],
                         square=False,
-                    )
-
-                    write_core_radius_figure(
-                        path=os.path.join(
-                            pa["out_dir"],
-                            "{:s}_{:s}_{:s}_rad{:06d}_info.jpg".format(
-                                site_key, particle_key, theta_key, rad,
-                            ),
-                        ),
-                        radius_bin_edges=np.sqrt(
-                            t2["core_radius_square_bin_edges_m2"]
-                        ),
-                        bin_idx=rad,
-                        info=rad_info,
                     )
