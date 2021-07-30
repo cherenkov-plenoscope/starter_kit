@@ -28,9 +28,7 @@ for sk in SITES:
     energy_confusion[sk] = {}
     for pk in PARTICLES:
         cm = _energy_confusion[sk][pk]["confusion_matrix"]
-        energy_confusion[sk][pk] = np.array(
-            cm["confusion_bins_normalized_columns"]
-        )
+        energy_confusion[sk][pk] = cm["confusion_bins_normalized_on_ax0"]
 
 # prepare onregion rates
 # ----------------------
