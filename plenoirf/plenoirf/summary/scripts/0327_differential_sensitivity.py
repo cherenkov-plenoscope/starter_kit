@@ -63,20 +63,17 @@ COSMIC_RAYS.remove("gamma")
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
-critical_method = sum_config["on_off_measuremnent"]["method"]
+critical_method = sum_config["on_off_measuremnent"]["estimator_for_critical_signal_rate"]
 
 num_onregion_sizes = len(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
 )
 
-SCENARIOS = ["RecoIsTrue", "RecoBroad", "RecoSharp"]
-
-
 for sk in SITES:
     os.makedirs(os.path.join(pa["out_dir"], sk), exist_ok=True)
 
     critical_dFdE = {}
-    for scenario in SCENARIOS:
+    for scenario in irf.analysis.differential_sensitivity.SCENARIOS:
         critical_dFdE[scenario] = np.nan * np.ones(
             shape=(num_bins_energy, num_onregion_sizes, num_observation_times)
         )
@@ -90,7 +87,7 @@ for sk in SITES:
         == "reco_energy"
     )
     CM = {}
-    for scenario in SCENARIOS:
+    for scenario in irf.analysis.differential_sensitivity.SCENARIOS:
         CM[
             scenario
         ] = irf.analysis.differential_sensitivity.make_energy_confusion_matrix_for_scenario(
@@ -117,7 +114,7 @@ for sk in SITES:
         ][:, oridx]
 
         signal_area_m2 = {}
-        for scenario in SCENARIOS:
+        for scenario in irf.analysis.differential_sensitivity.SCENARIOS:
             signal_area_m2[scenario] = np.matmul(
                 CM[scenario].T, signal_area_vs_true_energy_m2
             )
@@ -132,7 +129,7 @@ for sk in SITES:
                 method=critical_method,
             )
 
-            for scenario in SCENARIOS:
+            for scenario in irf.analysis.differential_sensitivity.SCENARIOS:
                 dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin_edges,
                     signal_area_vs_energy_m2=signal_area_m2[scenario],

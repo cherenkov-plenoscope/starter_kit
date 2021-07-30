@@ -307,8 +307,11 @@ def _guess_summary_config(run_dir):
             "containment_factor": 0.68,
             "pivot_energy_GeV": 2.0,
         },
+        "differential_sensitivity": {
+            "gamma_ray_effective_area_scenario": "line_spectrum",
+        },
         "on_off_measuremnent": {
-            "method": "LiMaEq17",
+            "estimator_for_critical_signal_rate": "LiMaEq17",
             "on_over_off_ratio": 1 / 5,
             "detection_threshold_std": 5.0,
             "systematic_uncertainty": 1e-2,

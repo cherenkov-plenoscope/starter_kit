@@ -64,7 +64,8 @@ def find_observation_time_index(
     )
 
 
-diff_sens_scenario = "RecoSharp"
+diff_sens_scenario = sum_config["differential_sensitivity"][
+    "gamma_ray_effective_area_scenario"]
 oridx = 1
 sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
 onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][

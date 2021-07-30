@@ -36,15 +36,22 @@ def estimate_differential_sensitivity(
     return dfdE_per_s_per_m2_per_GeV
 
 
+SCENARIOS = [
+    "perfect_energy",
+    "broad_spectrum",
+    "line_spectrum"
+]
+
+
 def make_energy_confusion_matrix_for_scenario(
     energy_confusion_matrix,
-    scenario="RecoSharp",
+    scenario="line_spectrum",
 ):
-    if scenario == "RecoIsTrue":
+    if scenario == "perfect_energy":
         cm = np.eye(N=energy_confusion_matrix.shape[0])
-    elif scenario == "RecoBroad":
+    elif scenario == "broad_spectrum":
         cm = np.array(energy_confusion_matrix)
-    elif scenario == "RecoSharp":
+    elif scenario == "line_spectrum":
         cm = np.eye(N=energy_confusion_matrix.shape[0]) * np.diag(
             energy_confusion_matrix
         )
