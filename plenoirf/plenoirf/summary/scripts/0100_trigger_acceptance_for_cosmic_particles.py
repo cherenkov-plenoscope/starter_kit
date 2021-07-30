@@ -58,8 +58,7 @@ for site_key in irf_config["config"]["sites"]:
         )
 
         point_particle_table = spt.cut_table_on_indices(
-            table=diffuse_particle_table,
-            common_indices=idx_possible_onregion,
+            table=diffuse_particle_table, common_indices=idx_possible_onregion,
         )
 
         energy_GeV = point_particle_table["primary"]["energy_GeV"]

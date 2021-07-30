@@ -52,6 +52,7 @@ mk = "energy"
 cta = irf.other_instruments.cherenkov_telescope_array_south
 fermi = irf.other_instruments.fermi_lat
 
+
 def align_on_idx(input_idx, input_values, target_idxs):
     Q = {}
     for ii in range(len(input_idx)):
@@ -83,8 +84,7 @@ for sk in irf_config["config"]["sites"]:
         ]
     )
     event_table = spt.cut_and_sort_table_on_indices(
-        table=event_table,
-        common_indices=idx_valid,
+        table=event_table, common_indices=idx_valid,
     )
 
     rectab = irf.reconstruction.trajectory_quality.make_rectangular_table(
@@ -102,34 +102,36 @@ for sk in irf_config["config"]["sites"]:
     theta_deg = np.abs(theta_deg)
 
     out = {}
-    out["comment"] = (
-        "theta is angle between true and reco. direction of source. "
-    )
+    out[
+        "comment"
+    ] = "theta is angle between true and reco. direction of source. "
     out["energy_bin_edges_GeV"] = energy_bin_edges
     for con in range(num_containment_fractions):
         tkey = "theta{:02d}".format(containment_percents[con])
-        out[tkey+"_rad"] = np.nan * np.ones(shape=num_energy_bins)
-        out[tkey+"_relunc"] = np.nan * np.ones(shape=num_energy_bins)
+        out[tkey + "_rad"] = np.nan * np.ones(shape=num_energy_bins)
+        out[tkey + "_relunc"] = np.nan * np.ones(shape=num_energy_bins)
 
     for ebin in range(num_energy_bins):
         energy_bin_start = energy_bin_edges[ebin]
         energy_bin_stop = energy_bin_edges[ebin + 1]
         energy_bin_mask = np.logical_and(
-            reco_energy >= energy_bin_start,
-            reco_energy < energy_bin_stop
+            reco_energy >= energy_bin_start, reco_energy < energy_bin_stop
         )
         num_events = np.sum(energy_bin_mask)
         energy_bin_theta_deg = theta_deg[energy_bin_mask]
 
         for con in range(num_containment_fractions):
-            t_deg, t_relunc = irf.analysis.gamma_direction.estimate_containment_radius(
+            (
+                t_deg,
+                t_relunc,
+            ) = irf.analysis.gamma_direction.estimate_containment_radius(
                 theta_deg=energy_bin_theta_deg,
                 psf_containment_factor=1e-2 * containment_percents[con],
             )
 
             tkey = "theta{:02d}".format(containment_percents[con])
-            out[tkey+"_rad"][ebin] = np.deg2rad(t_deg)
-            out[tkey+"_relunc"][ebin] = t_relunc
+            out[tkey + "_rad"][ebin] = np.deg2rad(t_deg)
+            out[tkey + "_relunc"][ebin] = t_relunc
 
     json_numpy.write(
         os.path.join(
@@ -156,25 +158,29 @@ for sk in irf_config["config"]["sites"]:
         bincounts_lower=tt_deg * (1 - tt_relunc),
         face_color="k",
         face_alpha=0.1,
-        label="Portal"
+        label="Portal",
     )
 
     ax.plot(
         cta.angular_resolution()["reconstructed_energy"]["values"],
-        np.rad2deg(cta.angular_resolution()["angular_resolution_68"]["values"]),
+        np.rad2deg(
+            cta.angular_resolution()["angular_resolution_68"]["values"]
+        ),
         color=cta.COLOR,
         label=cta.LABEL,
     )
 
     ax.plot(
         fermi.angular_resolution()["reconstructed_energy"]["values"],
-        np.rad2deg(fermi.angular_resolution()["angular_resolution_68"]["values"]),
+        np.rad2deg(
+            fermi.angular_resolution()["angular_resolution_68"]["values"]
+        ),
         color=fermi.COLOR,
         label=fermi.LABEL,
     )
 
     ax.set_xlim([1e-1, 1e4])
-    #ax.legend(loc="best", fontsize=10)
+    # ax.legend(loc="best", fontsize=10)
     ax.loglog()
     ax.set_xlabel("reco. energy / GeV")
     ax.set_ylabel(r"$\Theta{}$ 68% / 1$^\circ{}$")

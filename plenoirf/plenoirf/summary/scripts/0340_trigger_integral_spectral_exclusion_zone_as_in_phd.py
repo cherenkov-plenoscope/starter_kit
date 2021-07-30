@@ -114,9 +114,9 @@ for site_key in irf_config["config"]["sites"]:
         com = {}
         scale_factor = np.power(10.0, (-1) * i)
         com["energy"] = [np.array(crab_flux["energy"]["values"])]
-        com["differential_flux"] = [scale_factor * np.array(
-            crab_flux["differential_flux"]["values"]
-        )]
+        com["differential_flux"] = [
+            scale_factor * np.array(crab_flux["differential_flux"]["values"])
+        ]
         com["label"] = "{:.3f} Crab".format(scale_factor)
         com["color"] = "k"
         com["alpha"] = 1.0 / (1.0 + i)

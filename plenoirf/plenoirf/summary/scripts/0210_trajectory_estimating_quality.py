@@ -188,8 +188,7 @@ for sk in SITES:
             [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"],]
         )
         event_table = spt.cut_and_sort_table_on_indices(
-            table=event_table,
-            common_indices=idx_common,
+            table=event_table, common_indices=idx_common,
         )
 
         event_frame = irf.reconstruction.trajectory_quality.make_rectangular_table(

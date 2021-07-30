@@ -3,9 +3,9 @@ from . import integral_sensitivity
 
 
 def estimate_differential_sensitivity(
-    energy_bin_edges,
-    signal_effective_area_vs_energy_m2,
-    signal_critical_rate_vs_energy_per_s,
+    energy_bin_edges_GeV,
+    signal_area_vs_energy_m2,
+    signal_rate_vs_energy_per_s,
 ):
     """
     Returns the diff.Flux-sensitivity df/dE / m^{-2} s^{-1} (GeV)^{-1}
@@ -13,25 +13,27 @@ def estimate_differential_sensitivity(
 
     Parameters
     ----------
-    energy_bin_edges : array 1d
+    energy_bin_edges_GeV : array 1d
             The edges of the energy-bins in GeV.
-    signal_effective_area_vs_energy_m2 : array 1d
-            The effective collection area for the signal in m$^{2}$.
-    signal_critical_rate_vs_energy_per_s : array 1d
+    signal_area_vs_energy_m2 : array 1d
+            The effective area for the signal in m$^{2}$.
+    signal_rate_vs_energy_per_s : array 1d
             The minimal rate for signal to claim a detection in s$^{-1}$.
     """
-    dfdE = []
-    for e in range(len(energy_bin_edges) - 1):
-        dE_start_GeV = energy_bin_edges[e]
-        dE_stop_GeV = energy_bin_edges[e + 1]
-        dE_width_GeV = dE_stop - dE_start
-        assert dE_width_GeV > 0.0
+    num_bins = len(energy_bin_edges_GeV) - 1
+    dfdE_per_s_per_m2_per_GeV = np.nan * np.ones(num_bins)
+    for e in range(num_bins):
+        dE_GeV = energy_bin_edges_GeV[e + 1] - energy_bin_edges_GeV[e]
+        assert dE_GeV > 0.0
+        if signal_area_vs_energy_m2[e] > 0:
+            f_per_s_per_m2 = (
+                signal_rate_vs_energy_per_s[e] / signal_area_vs_energy_m2[e]
+            )
+        else:
+            f_per_s_per_m2 = np.nan
 
-        rate_per_s = signal_critical_rate_vs_energy_per_s[e]
-        f_per_s_per_m2 = rate_per_s / signal_effective_area_vs_energy_m2[e]
-        dfdE_per_s_per_m2_per_GeV = f_per_s_per_m2 / dE_width_GeV
-        dfdE.append(dfdE)
-    return np.array(dfdE)
+        dfdE_per_s_per_m2_per_GeV[e] = f_per_s_per_m2 / dE_GeV
+    return dfdE_per_s_per_m2_per_GeV
 
 
 def make_energy_confusion_matrix_for_scenario(
@@ -43,7 +45,9 @@ def make_energy_confusion_matrix_for_scenario(
     elif scenario == "RecoBroad":
         cm = np.array(energy_confusion_matrix)
     elif scenario == "RecoSharp":
-        cm = np.diag(energy_confusion_matrix)
+        cm = np.eye(N=energy_confusion_matrix.shape[0]) * np.diag(
+            energy_confusion_matrix
+        )
     else:
         raise KeyError("Unknown scenario: '{:s}'".format(scenario))
     return cm

@@ -71,9 +71,7 @@ def cut_candidates_for_detection(
     )
 
     return spt.cut_and_sort_table_on_indices(
-        table=event_table,
-        common_indices=idx_candidates,
-        level_keys=None,
+        table=event_table, common_indices=idx_candidates, level_keys=None,
     )
 
 

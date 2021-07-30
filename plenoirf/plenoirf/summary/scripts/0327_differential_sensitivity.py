@@ -15,12 +15,11 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-acceptance = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
-)
-
 acceptance_Ereco = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0311_onregion_trigger_acceptance_in_reconstructed_energy")
+    os.path.join(
+        pa["summary_dir"],
+        "0311_onregion_trigger_acceptance_in_reconstructed_energy",
+    )
 )
 
 acceptance_Etrue = json_numpy.read_tree(
@@ -29,6 +28,10 @@ acceptance_Etrue = json_numpy.read_tree(
 
 rate_onregion_reco_energy = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0326_differential_rates")
+)
+
+energy_confusion = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
 )
 
 num_bins_energy = sum_config["energy_binning"]["num_bins"][
@@ -46,7 +49,9 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
-systematic_uncertainty = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
+systematic_uncertainty = sum_config["on_off_measuremnent"][
+    "systematic_uncertainty"
+]
 
 observation_times = irf.utils.make_civil_times_points_in_quasi_logspace()
 observation_times = np.array(observation_times)
@@ -64,14 +69,36 @@ num_onregion_sizes = len(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
 )
 
-SCENARIOS = ["true", "reco_broad", "reco_sharp"]
+SCENARIOS = ["RecoIsTrue", "RecoBroad", "RecoSharp"]
+
 
 for sk in SITES:
     os.makedirs(os.path.join(pa["out_dir"], sk), exist_ok=True)
 
-    critical_dFdE = np.nan * np.ones(
-        shape=(num_bins_energy, num_onregion_sizes, num_observation_times)
+    critical_dFdE = {}
+    for scenario in SCENARIOS:
+        critical_dFdE[scenario] = np.nan * np.ones(
+            shape=(num_bins_energy, num_onregion_sizes, num_observation_times)
+        )
+
+    assert (
+        energy_confusion[sk]["gamma"]["confusion_matrix"]["ax0_key"]
+        == "true_energy"
     )
+    assert (
+        energy_confusion[sk]["gamma"]["confusion_matrix"]["ax1_key"]
+        == "reco_energy"
+    )
+    CM = {}
+    for scenario in SCENARIOS:
+        CM[
+            scenario
+        ] = irf.analysis.differential_sensitivity.make_energy_confusion_matrix_for_scenario(
+            energy_confusion_matrix=energy_confusion[sk]["gamma"][
+                "confusion_matrix"
+            ]["confusion_bins_normalized_on_ax0"],
+            scenario=scenario,
+        )
 
     for oridx in range(num_onregion_sizes):
 
@@ -80,38 +107,39 @@ for sk in SITES:
         cosmic_ray_rate_per_s = np.zeros(num_bins_energy)
         for ck in COSMIC_RAYS:
             cosmic_ray_rate_per_s += rate_onregion_reco_energy[sk][ck][
-                    "rate_in_onregion_and_reconstructed_energy"
-                ]["rate"][:, oridx]
+                "rate_in_onregion_and_reconstructed_energy"
+            ]["rate"][:, oridx]
 
         # signal effective area
         # ---------------------
-        gamma_effective_area_Ereco_m2 = acceptance_Ereco[sk]["gamma"]["point"]["mean"][:, oridx]
-        gamma_effective_area_Etrue_m2 = acceptance_Etrue[sk]["gamma"]["point"]["mean"][:, oridx]
+        signal_area_vs_true_energy_m2 = acceptance_Etrue[sk]["gamma"]["point"][
+            "mean"
+        ][:, oridx]
 
-        for eidx in range(num_bins_energy):
+        signal_area_m2 = {}
+        for scenario in SCENARIOS:
+            signal_area_m2[scenario] = np.matmul(
+                CM[scenario].T, signal_area_vs_true_energy_m2
+            )
 
-            for obstix in range(num_observation_times):
-                if cosmic_ray_rate_per_s[eidx] > 0:
-                    critical_rate_per_s = irf.analysis.integral_sensitivity.estimate_critical_rate(
-                        background_rate_in_onregion_per_s=cosmic_ray_rate_per_s[
-                            eidx
-                        ],
-                        onregion_over_offregion_ratio=on_over_off_ratio,
-                        observation_time_s=observation_times[obstix],
-                        instrument_systematic_uncertainty=systematic_uncertainty,
-                        detection_threshold_std=detection_threshold_std,
-                        method=critical_method,
-                    )
-                else:
-                    critical_rate_per_s = float("nan")
+        for obstix in range(num_observation_times):
+            critical_rate_per_s = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
+                background_rate_in_onregion_vs_energy_per_s=cosmic_ray_rate_per_s,
+                onregion_over_offregion_ratio=on_over_off_ratio,
+                observation_time_s=observation_times[obstix],
+                instrument_systematic_uncertainty=systematic_uncertainty,
+                detection_threshold_std=detection_threshold_std,
+                method=critical_method,
+            )
 
-                critical_F_per_m2_per_s = (
-                    critical_rate_per_s / gamma_effective_area_Ereco_m2[eidx]
+            for scenario in SCENARIOS:
+                dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
+                    energy_bin_edges_GeV=energy_bin_edges,
+                    signal_area_vs_energy_m2=signal_area_m2[scenario],
+                    signal_rate_vs_energy_per_s=critical_rate_per_s,
                 )
-                critical_dFdE_per_m2_per_s_per_GeV = (
-                    critical_F_per_m2_per_s / energy_bin_widths[eidx]
-                )
-                critical_dFdE[eidx, oridx, obstix] = critical_dFdE_per_m2_per_s_per_GeV
+
+                critical_dFdE[scenario][:, oridx, obstix] = dFdE
 
     json_numpy.write(
         os.path.join(pa["out_dir"], sk, "differential_sensitivity" + ".json"),

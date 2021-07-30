@@ -51,6 +51,7 @@ fermi_lat = irf.other_instruments.fermi_lat
 min_number_samples = 10
 mk = "energy"
 
+
 def align_on_idx(input_idx, input_values, target_idxs):
     Q = {}
     for ii in range(len(input_idx)):
@@ -83,8 +84,7 @@ for sk in irf_config["config"]["sites"]:
         )
 
         valid_event_table = spt.cut_and_sort_table_on_indices(
-            table=event_table,
-            common_indices=idx_valid,
+            table=event_table, common_indices=idx_valid,
         )
 
         true_energy = valid_event_table["primary"]["energy_GeV"]
@@ -151,7 +151,7 @@ for sk in irf_config["config"]["sites"]:
             ax1.set_ylim([0, 1])
             ax1.set_xlabel("reco. energy / GeV")
             ax1.set_ylabel(r"$\Delta{}$E/E 68% / 1")
-            #ax1.legend(loc="best", fontsize=10)
+            # ax1.legend(loc="best", fontsize=10)
 
             fig.savefig(
                 os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg")
@@ -181,7 +181,9 @@ for sk in irf_config["config"]["sites"]:
         ax_c.set_ylabel("reco. energy / GeV")
         ax_c.loglog()
         ax_h.semilogx()
-        ax_h.set_xlim([np.min(cm["ax0_bin_edges"]), np.max(cm["ax1_bin_edges"])])
+        ax_h.set_xlim(
+            [np.min(cm["ax0_bin_edges"]), np.max(cm["ax1_bin_edges"])]
+        )
         ax_h.set_xlabel("true energy / GeV")
         ax_h.set_ylabel("num. events / 1")
         irf.summary.figure.mark_ax_thrown_spectrum(ax_h)

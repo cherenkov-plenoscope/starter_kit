@@ -50,19 +50,21 @@ output_sed_styles = {
 
 observation_time = 30 * 60
 observation_time_str = irf.utils.make_civil_time_str(
-    time_s=observation_time,
-    format_seconds="{:.0f}"
+    time_s=observation_time, format_seconds="{:.0f}"
 )
 
 
-def find_observation_time_index(observation_times, observation_time, max_rel_error=0.1):
+def find_observation_time_index(
+    observation_times, observation_time, max_rel_error=0.1
+):
     return irf.utils.find_closest_index_in_array_for_value(
         arr=observation_times,
         val=observation_time,
         max_rel_error=max_rel_error,
-        )
+    )
 
 
+diff_sens_scenario = "RecoSharp"
 oridx = 1
 sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
 onregion_opening_angle_deg = sum_config["on_off_measuremnent"]["onregion"][
@@ -86,7 +88,9 @@ for site_key in irf_config["config"]["sites"]:
         com["differential_flux"] = [
             scale_factor * np.array(crab_flux["differential_flux"]["values"])
         ]
-        com["label"] = None # "{:1.1e} Crab".format(scale_factor) if i == 0 else None
+        com[
+            "label"
+        ] = None  # "{:1.1e} Crab".format(scale_factor) if i == 0 else None
         com["color"] = "k"
         com["alpha"] = 0.25 / (1.0 + i)
         com["linestyle"] = "--"
@@ -123,9 +127,10 @@ for site_key in irf_config["config"]["sites"]:
     # Plenoscope diff
     # ---------------
     obstidx = find_observation_time_index(
-        observation_times=diff_sensitivity[
-            site_key]["differential_sensitivity"]["observation_times"],
-        observation_time=observation_time
+        observation_times=diff_sensitivity[site_key][
+            "differential_sensitivity"
+        ]["observation_times"],
+        observation_time=observation_time,
     )
 
     com = {}
@@ -137,10 +142,12 @@ for site_key in irf_config["config"]["sites"]:
         _dFdE_sens = np.array(
             diff_sensitivity[site_key]["differential_sensitivity"][
                 "differential_flux"
-            ]
+            ][diff_sens_scenario]
         )[ii, oridx, obstidx]
         com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
-    com["label"] = "Portal, " + observation_time_str + ", sys. {:.1e}".format(sys_unc)
+    com["label"] = (
+        "Portal, " + observation_time_str + ", sys. {:.1e}".format(sys_unc)
+    )
     com["color"] = "black"
     com["alpha"] = 1.0
     com["linestyle"] = "-"

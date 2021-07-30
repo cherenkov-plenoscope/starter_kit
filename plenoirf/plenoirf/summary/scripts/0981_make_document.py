@@ -41,6 +41,7 @@ geometry_options = {
     "includefoot": True,
 }
 
+
 def noesc(text):
     return ltx.utils.NoEscape(text)
 
@@ -176,8 +177,7 @@ total_trigger_rate_per_s = get_total_trigger_rate_at_analysis_threshold(
     site_key
 )
 total_trigger_rate_per_s_ltx = irf.utils.latex_scientific(
-    real=total_trigger_rate_per_s,
-    format_template="{:.3e}"
+    real=total_trigger_rate_per_s, format_template="{:.3e}"
 )
 
 basic_version_str = make_basic_version_str(
@@ -206,9 +206,7 @@ doc.preamble.append(ltx.Package("float"))
 doc.preamble.append(ltx.Package("verbatim"))
 
 doc.preamble.append(
-    ltx.Command(
-        "title", noesc(r"Simulating the Cherenkov-Plenoscope"),
-    )
+    ltx.Command("title", noesc(r"Simulating the Cherenkov-Plenoscope"),)
 )
 doc.preamble.append(ltx.Command("author", "Sebastian A. Mueller"))
 doc.preamble.append(ltx.Command("date", ""))
@@ -250,8 +248,7 @@ with doc.create(ltx.Section("Performance", numbering=False)):
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            angular_resolution_figure_path,
-            width=noesc(r"1.0\linewidth"),
+            angular_resolution_figure_path, width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
             noesc(
@@ -263,8 +260,7 @@ with doc.create(ltx.Section("Performance", numbering=False)):
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            energy_resolution_figure_path,
-            width=noesc(r"1.0\linewidth"),
+            energy_resolution_figure_path, width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
             noesc(
@@ -288,7 +284,9 @@ with doc.create(ltx.Section("Site", numbering=False)):
     doc.append(site_key)
     doc.append(
         noesc(
-            Verbatim(dict_to_pretty_str(irf_config["config"]["sites"][site_key]))
+            Verbatim(
+                dict_to_pretty_str(irf_config["config"]["sites"][site_key])
+            )
         )
     )
     doc.append(
@@ -323,16 +321,16 @@ trgstr = make_trigger_modus_str(
 
 with doc.create(ltx.Section("Trigger", numbering=False)):
     doc.append(noesc(Verbatim(trgstr)))
-    doc.append(noesc(
-        "Trigger-rate during observation is $\\approx{" +
-        total_trigger_rate_per_s_ltx +
-        r"}\,$s$^{-1}$"
-    ))
+    doc.append(
+        noesc(
+            "Trigger-rate during observation is $\\approx{"
+            + total_trigger_rate_per_s_ltx
+            + r"}\,$s$^{-1}$"
+        )
+    )
 
     with doc.create(ltx.Figure(position="H")) as fig:
-        fig.add_image(
-            ratescan_figure_path, width=noesc(r"1.0\linewidth")
-        )
+        fig.add_image(ratescan_figure_path, width=noesc(r"1.0\linewidth"))
         fig.add_caption(
             "Ratescan. For low thresholds the rates seem "
             "to saturate. This is because of limited statistics. "
@@ -374,8 +372,7 @@ with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            diff_trigger_rates_figure_path,
-            width=noesc(r"1.0\linewidth"),
+            diff_trigger_rates_figure_path, width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
             noesc(

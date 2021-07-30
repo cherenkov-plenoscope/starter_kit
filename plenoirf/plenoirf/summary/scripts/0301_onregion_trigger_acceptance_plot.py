@@ -64,9 +64,9 @@ for site_key in irf_config["config"]["sites"]:
         text_y = 0
         for particle_key in irf_config["config"]["particles"]:
 
-            Q = np.array(
-                G[site_key][particle_key][source_key]["mean"]
-            )[:, IDX_FINAL_ONREGION]
+            Q = np.array(G[site_key][particle_key][source_key]["mean"])[
+                :, IDX_FINAL_ONREGION
+            ]
             delta_Q = np.array(
                 G[site_key][particle_key][source_key]["relative_uncertainty"]
             )[:, IDX_FINAL_ONREGION]
@@ -99,17 +99,18 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_ylabel(
             "{:s} / {:s}".format(
                 irf.summary.figure.SOURCES[source_key]["label"],
-                irf.summary.figure.SOURCES[source_key]["unit"]
+                irf.summary.figure.SOURCES[source_key]["unit"],
             )
         )
-        ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"]["passed_all_cuts"])
+        ax.set_ylim(
+            irf.summary.figure.SOURCES[source_key]["limits"]["passed_all_cuts"]
+        )
         ax.loglog()
         ax.set_xlim([G_energy_bin_edges[0], G_energy_bin_edges[-1]])
 
         fig.savefig(
             os.path.join(
-                pa["out_dir"],
-                "{:s}_{:s}.jpg".format(site_key, source_key,),
+                pa["out_dir"], "{:s}_{:s}.jpg".format(site_key, source_key,),
             )
         )
         seb.close_figure(fig)
@@ -181,7 +182,11 @@ for site_key in irf_config["config"]["sites"]:
                     + " / "
                     + irf.summary.figure.SOURCES[source_key]["unit"]
                 )
-                ax.set_ylim(irf.summary.figure.SOURCES[source_key]["limits"]["passed_trigger"])
+                ax.set_ylim(
+                    irf.summary.figure.SOURCES[source_key]["limits"][
+                        "passed_trigger"
+                    ]
+                )
                 ax.loglog()
                 ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
                 fig.savefig(

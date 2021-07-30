@@ -21,11 +21,12 @@ diff_sensitivity = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
 )
 
+diff_sens_scenario = "RecoSharp"
 PIVOT_ENERGY_GEV = 25.0
 
-fls = json_numpy.read(os.path.join(
-    "fermi_lat", "dnde_vs_observation_time_vs_energy.json"
-))
+fls = json_numpy.read(
+    os.path.join("fermi_lat", "dnde_vs_observation_time_vs_energy.json")
+)
 assert fls["dnde"]["unit"] == "cm-2 MeV-1 ph s-1"
 odnde = {"dnde": {}}
 odnde["dnde"]["value"] = fls["dnde"]["value"] * 1e4 * 1e3
@@ -34,10 +35,9 @@ odnde["energy_bin_edges"] = {}
 odnde["energy_bin_edges"]["value"] = fls["energy_bin_edges"]["value"] * 1e-3
 odnde["energy_bin_edges"]["unit"] = "GeV"
 odnde["observation_times"] = fls["observation_times"]
-lo_ebin = np.digitize(
-    PIVOT_ENERGY_GEV,
-    bins=odnde["energy_bin_edges"]["value"]
-) - 1
+lo_ebin = (
+    np.digitize(PIVOT_ENERGY_GEV, bins=odnde["energy_bin_edges"]["value"]) - 1
+)
 
 energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
 energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
@@ -69,20 +69,21 @@ output_sed_styles = {
 oridx = 1
 
 enidx = irf.utils.find_closest_index_in_array_for_value(
-        arr=energy_bin_edges,
-        val=PIVOT_ENERGY_GEV,
-        max_rel_error=0.25,
+    arr=energy_bin_edges, val=PIVOT_ENERGY_GEV, max_rel_error=0.25,
 )
 
 x_lim_s = np.array([1e0, 1e9])
 e_lim_GeV = np.array([1e-1, 1e4])
-y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-10])# np.array([1e3, 1e-16])
+y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-10])  # np.array([1e3, 1e-16])
 
 
 for site_key in irf_config["config"]["sites"]:
 
-    observation_times = np.array(diff_sensitivity[
-                site_key]["differential_sensitivity"]["observation_times"])
+    observation_times = np.array(
+        diff_sensitivity[site_key]["differential_sensitivity"][
+            "observation_times"
+        ]
+    )
 
     components = []
 
@@ -105,16 +106,21 @@ for site_key in irf_config["config"]["sites"]:
         com["linestyle"] = "--"
         components.append(com.copy())
 
-
     # Fermi-LAT
     # ---------
     fermi_s_vs_t = irf.other_instruments.fermi_lat.sensitivity_vs_observation_time(
         energy_GeV=PIVOT_ENERGY_GEV
     )
     com = {}
-    com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(fermi_s_vs_t["observation_time"]["values"]))
-    com["observation_time"] = np.array(fermi_s_vs_t["observation_time"]["values"])
-    com["differential_flux"] = np.array(fermi_s_vs_t["differential_flux"]["values"])
+    com["energy"] = PIVOT_ENERGY_GEV * np.ones(
+        len(fermi_s_vs_t["observation_time"]["values"])
+    )
+    com["observation_time"] = np.array(
+        fermi_s_vs_t["observation_time"]["values"]
+    )
+    com["differential_flux"] = np.array(
+        fermi_s_vs_t["differential_flux"]["values"]
+    )
     com["label"] = irf.other_instruments.fermi_lat.LABEL
     com["color"] = irf.other_instruments.fermi_lat.COLOR
     com["alpha"] = 1.0
@@ -122,11 +128,13 @@ for site_key in irf_config["config"]["sites"]:
     components.append(com)
 
     com = {}
-    com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(odnde["observation_times"]["value"]))
+    com["energy"] = PIVOT_ENERGY_GEV * np.ones(
+        len(odnde["observation_times"]["value"])
+    )
     com["observation_time"] = odnde["observation_times"]["value"]
     com["differential_flux"] = odnde["dnde"]["value"][:, lo_ebin]
     com["label"] = irf.other_instruments.fermi_lat.LABEL + "seb."
-    com["color"] = "red"# irf.other_instruments.fermi_lat.COLOR
+    com["color"] = "red"  # irf.other_instruments.fermi_lat.COLOR
     com["alpha"] = 1.0
     com["linestyle"] = "--"
     components.append(com)
@@ -137,9 +145,15 @@ for site_key in irf_config["config"]["sites"]:
         energy_GeV=PIVOT_ENERGY_GEV
     )
     com = {}
-    com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(cta_s_vs_t["observation_time"]["values"]))
-    com["observation_time"] = np.array(cta_s_vs_t["observation_time"]["values"])
-    com["differential_flux"] = np.array(cta_s_vs_t["differential_flux"]["values"])
+    com["energy"] = PIVOT_ENERGY_GEV * np.ones(
+        len(cta_s_vs_t["observation_time"]["values"])
+    )
+    com["observation_time"] = np.array(
+        cta_s_vs_t["observation_time"]["values"]
+    )
+    com["differential_flux"] = np.array(
+        cta_s_vs_t["differential_flux"]["values"]
+    )
     com["label"] = irf.other_instruments.cherenkov_telescope_array_south.LABEL
     com["color"] = irf.other_instruments.cherenkov_telescope_array_south.COLOR
     com["alpha"] = 1.0
@@ -149,8 +163,9 @@ for site_key in irf_config["config"]["sites"]:
     # Plenoscope
     # ----------
 
-    portal_dFdE = np.array(diff_sensitivity[
-                site_key]["differential_sensitivity"]["differential_flux"])
+    portal_dFdE = diff_sensitivity[site_key]["differential_sensitivity"][
+        "differential_flux"
+    ][diff_sens_scenario]
     com = {}
     com["observation_time"] = observation_times
     com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(observation_times))
@@ -196,7 +211,7 @@ for site_key in irf_config["config"]["sites"]:
         ax.set_xlim(x_lim_s)
         ax.set_ylim(np.sort(_dFdE_lim))
         ax.loglog()
-        #ax.legend(loc="best", fontsize=10)
+        # ax.legend(loc="best", fontsize=10)
         ax.set_xlabel("observation-time / s")
         ax.set_ylabel(sed_style["y_label"] + " /\n " + sed_style["y_unit"])
         fig.savefig(

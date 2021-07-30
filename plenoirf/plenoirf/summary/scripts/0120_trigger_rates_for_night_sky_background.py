@@ -57,9 +57,7 @@ for site_key in irf_config["config"]["sites"]:
             <= MAX_CHERENKOV_IN_NSB_PE
         ]
         nsb_table = spt.cut_level_on_indices(
-            table=airshower_table,
-            level_key="trigger",
-            indices=idx_nsb,
+            table=airshower_table, level_key="trigger", indices=idx_nsb,
         )
 
         for tt, threshold in enumerate(trigger_thresholds):

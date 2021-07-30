@@ -58,7 +58,9 @@ for sk in SITES:
         assert CM["ax1_key"] == "reco_energy"
         for gk in SOURCE_GEOMETRY:
             Q_true = acceptance_true_energy[sk][pk][gk]["mean"]
-            Q_true_u = acceptance_true_energy[sk][pk][gk]["relative_uncertainty"]
+            Q_true_u = acceptance_true_energy[sk][pk][gk][
+                "relative_uncertainty"
+            ]
             Q_reco = np.nan * np.ones(shape=Q_true.shape)
             Q_reco_u = np.nan * np.ones(shape=Q_true_u.shape)
 
