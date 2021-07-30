@@ -137,3 +137,12 @@ def make_provenance():
     )[0]
 
     return p
+
+
+def add_corsika_provenance(prov, corsika_primary_path):
+    if not "starter_kit" in prov:
+        prov["starter_kit"] = {}
+    prov["starter_kit"]["corsika"] = {}
+    prov["starter_kit"]["corsika"]["path"] = corsika_primary_path
+    prov["starter_kit"]["corsika"]["config"] = corsika_primary_wrapper.collect_version_information.get_coconut_config_header(corsika_primary_path, strip=True)
+    return prov

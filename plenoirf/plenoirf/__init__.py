@@ -396,10 +396,14 @@ def _populate_table_of_thrown_air_showers(
     table_absdir = opj(out_absdir, "event_table")
     os.makedirs(table_absdir, exist_ok=True)
 
+    prov = provenance.make_provenance()
+    prov = provenance.add_corsika(
+        prov=prov, corsika_primary_path=corsika_primary_path)
+
     qmrlog("Write provenance.")
     json_numpy.write(
         path=opj(table_absdir, "provenance.json"),
-        out_dict=provenance.make_provenance(),
+        out_dict=prov,
     )
 
     deflection = mdfl.read(
