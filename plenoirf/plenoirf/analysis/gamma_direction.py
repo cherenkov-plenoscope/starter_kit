@@ -1,5 +1,6 @@
 import numpy as np
 from . import effective_quantity
+from .. import utils
 
 
 def momentum_to_cx_cy_wrt_aperture(
@@ -26,7 +27,7 @@ def histogram_theta_square(theta_deg, theta_square_bin_edges_deg2):
         theta_square_hist = np.histogram(
             theta_deg ** 2, bins=theta_square_bin_edges_deg2
         )[0]
-        theta_square_hist_relunc = effective_quantity._divide_silent(
+        theta_square_hist_relunc = utils._divide_silent(
             np.sqrt(theta_square_hist), theta_square_hist, np.nan
         )
     else:

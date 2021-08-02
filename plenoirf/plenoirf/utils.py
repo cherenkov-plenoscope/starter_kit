@@ -63,6 +63,13 @@ def power10_bin_edge(decade, bin, num_bins=5):
     return 10 ** (decade + np.linspace(0, 1, num_bins + 1))[bin]
 
 
+def _divide_silent(numerator, denominator, default):
+    valid = denominator != 0
+    division = np.ones(shape=numerator.shape) * default
+    division[valid] = numerator[valid] / denominator[valid]
+    return division
+
+
 _10s = 10
 _1M = 60
 _1h = _1M * 60

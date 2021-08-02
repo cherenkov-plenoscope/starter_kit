@@ -76,7 +76,7 @@ for site_key in irf_config["config"]["sites"]:
     mean = num_triggers_vs_threshold / (
         num_exposures * EXPOSURE_TIME_PER_EVENT
     )
-    relative_uncertainty = irf.analysis.effective_quantity._divide_silent(
+    relative_uncertainty = irf.utils._divide_silent(
         numerator=np.sqrt(num_triggers_vs_threshold),
         denominator=num_triggers_vs_threshold,
         default=np.nan,

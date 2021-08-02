@@ -1,13 +1,8 @@
 import numpy as np
 import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
-
-
-def _divide_silent(numerator, denominator, default):
-    valid = denominator != 0
-    division = np.ones(shape=numerator.shape) * default
-    division[valid] = numerator[valid] / denominator[valid]
-    return division
+from . import reweight
+from .. import utils
 
 
 def effective_quantity_for_grid(
@@ -95,7 +90,7 @@ def effective_quantity_for_grid(
         energy_GeV, weights=total_num_grid_cells, bins=energy_bin_edges_GeV
     )[0]
 
-    effective_quantity = _divide_silent(
+    effective_quantity = utils._divide_silent(
         numerator=quantity_detected, denominator=count_thrown, default=0.0
     )
 
@@ -114,7 +109,7 @@ def effective_quantity_for_grid(
         weights=(mask_detected * num_grid_cells_above_lose_threshold),
     )[0]
 
-    effective_quantity_uncertainty = _divide_silent(
+    effective_quantity_uncertainty = utils._divide_silent(
         numerator=np.sqrt(A_square), denominator=A, default=np.nan
     )
 

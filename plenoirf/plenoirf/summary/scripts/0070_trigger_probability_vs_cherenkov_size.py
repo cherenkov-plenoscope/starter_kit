@@ -55,11 +55,11 @@ for site_key in irf_config["config"]["sites"]:
             weights=mask_pasttrigger,
         )[0]
 
-        trigger_probability = irf.analysis.effective_quantity._divide_silent(
+        trigger_probability = irf.utils._divide_silent(
             numerator=num_pasttrigger, denominator=num_thrown, default=np.nan
         )
 
-        trigger_probability_unc = irf.analysis.effective_quantity._divide_silent(
+        trigger_probability_unc = irf.utils._divide_silent(
             numerator=np.sqrt(num_pasttrigger),
             denominator=num_pasttrigger,
             default=np.nan,

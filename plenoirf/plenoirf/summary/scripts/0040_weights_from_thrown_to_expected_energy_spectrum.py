@@ -127,7 +127,7 @@ for sk in SITES:
             energy_ranges[sk][pk]["max"],
             num_fine_energy_bins,
         )
-        w_weight = irf.analysis.reweight_energy_spectrum(
+        w_weight = irf.analysis.reweight.reweight(
             initial_energies=thrown_spectrum["energy_bin_centers"],
             initial_rates=thrown_spectrum["rates"][sk][pk],
             target_energies=airshower_rates["energy_bin_centers"],

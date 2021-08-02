@@ -153,12 +153,12 @@ for fk in Sfeatures:
                 bins=bin_edges_fk,
             )[0]
 
-            bin_counts_unc_fk = irf.analysis.effective_quantity._divide_silent(
+            bin_counts_unc_fk = irf.utils._divide_silent(
                 numerator=np.sqrt(bin_counts_fk),
                 denominator=bin_counts_fk,
                 default=np.nan,
             )
-            bin_counts_weight_norm_fk = irf.analysis.effective_quantity._divide_silent(
+            bin_counts_weight_norm_fk = irf.utils._divide_silent(
                 numerator=bin_counts_weight_fk,
                 denominator=np.sum(bin_counts_weight_fk),
                 default=0,

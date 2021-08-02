@@ -113,12 +113,12 @@ for sk in SITES:
                     transformed_features[sk][pk][fk], bins=bin_edges_fk
                 )[0]
 
-                bin_counts_unc_fk = irf.analysis.effective_quantity._divide_silent(
+                bin_counts_unc_fk = irf.utils._divide_silent(
                     numerator=np.sqrt(bin_counts_fk),
                     denominator=bin_counts_fk,
                     default=np.nan,
                 )
-                bin_counts_norm_fk = irf.analysis.effective_quantity._divide_silent(
+                bin_counts_norm_fk = irf.utils._divide_silent(
                     numerator=bin_counts_fk,
                     denominator=(
                         np.ones(shape=bin_counts_fk.shape)
