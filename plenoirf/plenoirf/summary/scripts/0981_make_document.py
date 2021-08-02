@@ -144,6 +144,12 @@ energy_resolution_figure_path = ppath(
     "0066_energy_estimate_quality",
     site_key + "_gamma_resolution.jpg",
 )
+energy_confusion_figure_path = ppath(
+    pa["summary_dir"],
+    "0066_energy_estimate_quality",
+    site_key + "_gamma.jpg",
+)
+
 
 angular_resolution_figure_path = ppath(
     pa["summary_dir"], "0230_point_spread_function", site_key + "_gamma.jpg"
@@ -227,7 +233,7 @@ with doc.create(ltx.Section("Performance", numbering=False)):
         )
         fig.add_caption(
             noesc(
-                r"Differential sensitivity. "
+                r"Differential sensitivity for a gamma-ray-source that emitts only in the energy-range of one bin. "
                 r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
                 r"CTA-south \cite{cta2018baseline} in blue. "
             )
@@ -412,6 +418,19 @@ with doc.create(
         fig.add_caption(
             "Classification-power for Cherenkov-photons emitted in airshowers initiated by gamma-rays."
         )
+
+with doc.create(
+    ltx.Section("Energy", numbering=False)
+):
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            energy_confusion_figure_path,
+            width=noesc(r"1.0\linewidth"),
+        )
+        fig.add_caption(
+            "Energy-confusion for gamma-rays."
+        )
+
 
 with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
     with doc.create(ltx.Figure(position="H")) as fig:
