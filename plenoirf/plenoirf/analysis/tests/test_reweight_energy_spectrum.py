@@ -21,7 +21,7 @@ def test_random_spectrum():
             target_rates=some_spectrum,
             event_energies=np.linspace(0, 1, N),
         )
-        some_spectrum_norm = some_spectrum/np.max(some_spectrum)
+        some_spectrum_norm = some_spectrum / np.max(some_spectrum)
 
         assert np.all(np.abs(weights - some_spectrum_norm) < 1e-2)
 
@@ -43,22 +43,17 @@ def test_power_law_spectrum():
 
 def test_estimate_binning():
     s, n = plenoirf.analysis.reweight.estimate_binning(
-        energies=np.linspace(1, 10, 100),
-        start_energy=1,
-        stop_energy=10
+        energies=np.linspace(1, 10, 100), start_energy=1, stop_energy=10
     )
     assert s == "linspace"
-    assert 50 ** (1/3) <= n <= 200 ** (1/3)
+    assert 50 ** (1 / 3) <= n <= 200 ** (1 / 3)
 
     s, n = plenoirf.analysis.reweight.estimate_binning(
-        energies=np.geomspace(1, 10, 1000),
-        start_energy=1,
-        stop_energy=10
+        energies=np.geomspace(1, 10, 1000), start_energy=1, stop_energy=10
     )
 
     assert s == "geomspace"
-    assert 500 ** (1/3) <= n <= 2000 ** (1/3)
-
+    assert 500 ** (1 / 3) <= n <= 2000 ** (1 / 3)
 
 
 def test_estimate_relative_rates_with_power_law_minus_one():
@@ -69,13 +64,11 @@ def test_estimate_relative_rates_with_power_law_minus_one():
         lower_limit=1.0,
         upper_limit=10.0,
         power_slope=-1.0,
-        num_samples=10000
+        num_samples=10000,
     )
 
     energy, rate = plenoirf.analysis.reweight.estimate_relative_rates(
-        energies=power,
-        start_energy=1,
-        stop_energy=10
+        energies=power, start_energy=1, stop_energy=10
     )
     assert np.std(rate) < 0.1 * np.mean(rate)
 
@@ -88,41 +81,82 @@ def test_estimate_relative_rates_with_power():
         lower_limit=1.0,
         upper_limit=10.0,
         power_slope=-2.7,
-        num_samples=10000
+        num_samples=10000,
     )
 
     energy, rate = plenoirf.analysis.reweight.estimate_relative_rates(
-        energies=power,
-        start_energy=1,
-        stop_energy=10
+        energies=power, start_energy=1, stop_energy=10
     )
     assert np.std(rate) > 0.1 * np.mean(rate)
 
 
-def test_histogram():
+def test_histogram_weights_equal_one():
     prng = np.random.Generator(np.random.MT19937(seed=0))
+    thrown_slope = -2.0
+    cosmic_slope = -2.7
 
-    N = 100000
-    thrown = cpw.random_distributions.draw_power_law(
+    N = 1000
+    energy = cpw.random_distributions.draw_power_law(
         prng=prng,
         lower_limit=1.0,
         upper_limit=10.0,
-        power_slope=-2.0,
-        num_samples=N
+        power_slope=thrown_slope,
+        num_samples=N,
     )
+    weights = np.ones(N)
     bin_edges = np.geomspace(1, 10, 6)
 
-    np_bin_counts = np.histogram(
-        a=thrown,
-        bins=bin_edges,
-        weights=np.ones(N)
-    )
+    np_bin_counts, _ = np.histogram(a=energy, bins=bin_edges, weights=weights)
 
-    nw_bin_counts = plenoirf.analysis.reweight.histogram_power_law_weights(
-        a=thrown,
+    (
+        rw_bin_counts,
+        _,
+    ) = plenoirf.analysis.reweight.histogram_with_bin_wise_power_law_reweighting(
+        a=energy,
         bins=bin_edges,
-        weights=np.ones(N),
-        target_power_law_slope=-2.7,
+        weights=weights,
+        target_power_law_slope=cosmic_slope,
         max_power_law_weight_factor=5,
     )
 
+    # as long as weights are 1, power-law reweighting must not matter.
+    np.testing.assert_array_almost_equal(
+        x=np_bin_counts, y=rw_bin_counts, decimal=6
+    )
+
+
+def test_histogram_weights_equal_one():
+    prng = np.random.Generator(np.random.MT19937(seed=0))
+    thrown_slope = -2.0
+    cosmic_slope = -2.7
+
+    N = 10 * 1000
+    energy = cpw.random_distributions.draw_power_law(
+        prng=prng,
+        lower_limit=1.0,
+        upper_limit=10.0,
+        power_slope=thrown_slope,
+        num_samples=N,
+    )
+    weights = 1.0 * energy / 10.0
+    bin_edges = np.geomspace(1, 10, 6)
+
+    np_bin_counts, _ = np.histogram(a=energy, bins=bin_edges, weights=weights)
+
+    (
+        rw_bin_counts,
+        _,
+    ) = plenoirf.analysis.reweight.histogram_with_bin_wise_power_law_reweighting(
+        a=energy,
+        bins=bin_edges,
+        weights=weights,
+        target_power_law_slope=cosmic_slope,
+        max_power_law_weight_factor=3,
+    )
+
+    # When weights ~ energy, then the non reweighted histogram should
+    # overestimate the effective-area as the thrown spectrum is harder then
+    # the cosmic spectrum
+    print(np_bin_counts / rw_bin_counts)
+    assert np.all(np_bin_counts / rw_bin_counts > 1.02)
+    assert np.all(np_bin_counts / rw_bin_counts < 1.04)

@@ -6,16 +6,19 @@ from .. import utils
 
 
 def make_histogram(a, bins, weights, options):
-    if options is None:
-        return np.histogram(a=a, bins=bins, weights=weights)
-    else:
-        return reweight.histogram_power_law_weights(
+    counts, _ = np.histogram(a=a, bins=bins, weights=weights)
+    if options is not None:
+        rw_counts, _ = reweight.histogram_with_bin_wise_power_law_reweighting(
             a=a,
             bins=bins,
             weights=weights,
             target_power_law_slope=options["target_power_law_slope"],
             max_power_law_weight_factor=options["max_power_law_weight_factor"],
         )
+        assert np.all(rw_counts / counts > options["min_bin_count_ratio"])
+        assert np.all(rw_counts / counts < options["max_bin_count_ratio"])
+        counts = rw_counts
+    return counts, bins
 
 
 def effective_quantity_for_grid(
@@ -102,7 +105,9 @@ def effective_quantity_for_grid(
     )[0]
 
     count_thrown = make_histogram(
-        energy_GeV, weights=total_num_grid_cells, bins=energy_bin_edges_GeV,
+        energy_GeV,
+        weights=total_num_grid_cells,
+        bins=energy_bin_edges_GeV,
         options=energy_histogram_options,
     )[0]
 

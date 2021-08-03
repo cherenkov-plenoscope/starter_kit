@@ -30,21 +30,23 @@ def reweight(
 
 
 def estimate_binning(
-    energies,
-    start_energy,
-    stop_energy,
+    energies, start_energy, stop_energy,
 ):
     num_events = energies.shape[0]
-    num_bins = int(np.round(num_events ** (1/3)))
+    num_bins = int(np.round(num_events ** (1 / 3)))
     assert num_bins > 0
     num_bin_edges = num_bins + 1
 
     # geomspace
-    geom_energy_bin_edges = np.geomspace(start_energy, stop_energy, num_bin_edges)
+    geom_energy_bin_edges = np.geomspace(
+        start_energy, stop_energy, num_bin_edges
+    )
     geom_counts = np.histogram(energies, bins=geom_energy_bin_edges)[0]
 
     # linspace
-    lins_energy_bin_edges = np.linspace(start_energy, stop_energy, num_bin_edges)
+    lins_energy_bin_edges = np.linspace(
+        start_energy, stop_energy, num_bin_edges
+    )
     lins_counts = np.histogram(energies, bins=lins_energy_bin_edges)[0]
 
     if np.std(geom_counts) < np.std(lins_counts):
@@ -58,14 +60,10 @@ def geominterp(x, xp, fp):
 
 
 def estimate_relative_rates(
-    energies,
-    start_energy,
-    stop_energy,
+    energies, start_energy, stop_energy,
 ):
     space_name, num_bins = estimate_binning(
-        energies=energies,
-        start_energy=start_energy,
-        stop_energy=stop_energy
+        energies=energies, start_energy=start_energy, stop_energy=stop_energy
     )
     if space_name == "linspace":
         space = np.linspace
@@ -87,10 +85,7 @@ def estimate_relative_rates(
 
 
 def make_relative_rates_for_power_law(
-    energy_start,
-    energy_stop,
-    num,
-    slope,
+    energy_start, energy_stop, num, slope,
 ):
     assert energy_stop > energy_start > 0
     energies = np.geomspace(energy_start, energy_stop, num)
@@ -99,12 +94,8 @@ def make_relative_rates_for_power_law(
     return energies, relative_rates
 
 
-def histogram_power_law_weights(
-    a,
-    bins,
-    weights,
-    target_power_law_slope,
-    max_power_law_weight_factor
+def histogram_with_bin_wise_power_law_reweighting(
+    a, bins, weights, target_power_law_slope, max_power_law_weight_factor
 ):
     """
     Returns the bin-counts and bin-edges of a histogram.
@@ -149,14 +140,14 @@ def histogram_power_law_weights(
         a_in_bin_energies, a_in_bin_rates = estimate_relative_rates(
             energies=a_in_bin,
             start_energy=bins[ibin],
-            stop_energy=bins[ibin + 1]
+            stop_energy=bins[ibin + 1],
         )
 
         target_energies, target_rates = make_relative_rates_for_power_law(
             energy_start=a_start,
             energy_stop=a_stop,
             num=len(a_in_bin_rates),
-            slope=target_power_law_slope
+            slope=target_power_law_slope,
         )
 
         power_law_weights = reweight(
@@ -168,8 +159,8 @@ def histogram_power_law_weights(
         )
 
         power_law_weights = power_law_weights / np.mean(power_law_weights)
-        assert power_law_weights < max_power_law_weight_factor
-        assert power_law_weights > 1.0 / max_power_law_weight_factor
+        assert np.all(power_law_weights < max_power_law_weight_factor)
+        assert np.all(power_law_weights > 1.0 / max_power_law_weight_factor)
 
         bin_counts[ibin] = np.sum(weights_in_bin * power_law_weights)
 
