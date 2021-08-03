@@ -39,7 +39,8 @@ def estimate_differential_sensitivity(
 SCENARIOS = [
     "perfect_energy",
     "broad_spectrum",
-    "line_spectrum"
+    "line_spectrum",
+    "bell_spectrum",
 ]
 
 
@@ -55,6 +56,12 @@ def make_energy_confusion_matrix_for_scenario(
         cm = np.eye(N=energy_confusion_matrix.shape[0]) * np.diag(
             energy_confusion_matrix
         )
+    elif scenario == "bell_spectrum":
+        mask = make_energy_confusion_matrix_for_bell_spectrum(
+            energy_confusion_matrix=energy_confusion_matrix,
+            containment=0.68,
+        )
+        cm = mask * energy_confusion_matrix
     else:
         raise KeyError("Unknown scenario: '{:s}'".format(scenario))
     return cm
@@ -84,3 +91,42 @@ def estimate_critical_rate_vs_energy(
         else:
             rate_per_s[ebin] = float("nan")
     return rate_per_s
+
+
+
+def make_energy_confusion_matrix_for_bell_spectrum(
+    energy_confusion_matrix,
+    containment=0.68
+):
+    # ax0 -> true
+    # ax1 -> reco
+    num_bins = energy_confusion_matrix.shape[0]
+    mask = np.zeros(shape=(num_bins, num_bins), dtype=np.int)
+
+    # estimate containment regions:
+    for etrue in range(num_bins):
+        prob = energy_confusion_matrix[etrue, :]
+        if np.sum(prob) > 0.0:
+            assert 0.99 < np.sum(prob) < 1.01
+            ereco_best = np.argmax(prob)
+            cont = prob[ereco_best]
+            mask[etrue, ereco_best] = 1
+
+            start = ereco_best - 1
+            stop = ereco_best + 1
+            while True:
+                if start > 0:
+                    cont += prob[start]
+                    mask[etrue, start] = 1
+                    start -= 1
+                if cont > containment:
+                    break
+                if stop + 1 < num_bins:
+                    cont += prob[stop]
+                    mask[etrue, stop] = 1
+                    stop += 1
+                if cont > containment:
+                    break
+                if start == 0 and stop + 1 == num_bins:
+                    break
+    return mask

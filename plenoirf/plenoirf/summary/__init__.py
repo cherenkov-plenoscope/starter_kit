@@ -308,7 +308,7 @@ def _guess_summary_config(run_dir):
             "pivot_energy_GeV": 2.0,
         },
         "differential_sensitivity": {
-            "gamma_ray_effective_area_scenario": "line_spectrum",
+            "gamma_ray_effective_area_scenario": "bell_spectrum",
         },
         "on_off_measuremnent": {
             "estimator_for_critical_signal_rate": "LiMaEq17",
