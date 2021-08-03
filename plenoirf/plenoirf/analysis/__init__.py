@@ -6,7 +6,7 @@ from . import spectral_energy_distribution
 from . import integral_sensitivity
 from . import differential_sensitivity
 from . import energy
+from . import reweight
 from .integral_spectral_exclusion_zone import (
     estimate_integral_spectral_exclusion_zone,
 )
-from .reweight_energy_spectrum import reweight_energy_spectrum
