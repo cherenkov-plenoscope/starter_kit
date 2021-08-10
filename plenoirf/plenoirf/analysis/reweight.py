@@ -62,6 +62,9 @@ def geominterp(x, xp, fp):
 def estimate_relative_rates(
     energies, start_energy, stop_energy,
 ):
+    if len(energies) == 0:
+        return [start_energy, stop_energy], [0.0, 0.0]
+
     space_name, num_bins = estimate_binning(
         energies=energies, start_energy=start_energy, stop_energy=stop_energy
     )
@@ -95,7 +98,8 @@ def make_relative_rates_for_power_law(
 
 
 def histogram_with_bin_wise_power_law_reweighting(
-    a, bins, weights, target_power_law_slope, min_event_weight, max_event_weight
+    a, bins, weights, target_power_law_slope, min_event_weight, max_event_weight,
+    min_num_events_in_bin
 ):
     """
     Returns the bin-counts and bin-edges of a histogram.
@@ -119,6 +123,9 @@ def histogram_with_bin_wise_power_law_reweighting(
             The maximal acceptable weight for a power-law related weight.
     max_event_weight : float
             See min_event_weight.
+    min_num_events_in_bin : int
+            When there are not enough events in the energy-bin,
+            no reweighting is applied.
     """
     num_bins = len(bins) - 1
     assert num_bins >= 1
@@ -138,31 +145,35 @@ def histogram_with_bin_wise_power_law_reweighting(
         a_in_bin = a[bin_mask]
         weights_in_bin = weights[bin_mask]
 
-        a_in_bin_energies, a_in_bin_rates = estimate_relative_rates(
-            energies=a_in_bin,
-            start_energy=bins[ibin],
-            stop_energy=bins[ibin + 1],
-        )
+        if len(a_in_bin) < min_num_events_in_bin:
+            # Do not reweight, default histogram instead.
+            bin_counts[ibin] = np.sum(weights_in_bin)
+        else:
+            a_in_bin_energies, a_in_bin_rates = estimate_relative_rates(
+                energies=a_in_bin,
+                start_energy=bins[ibin],
+                stop_energy=bins[ibin + 1],
+            )
 
-        target_energies, target_rates = make_relative_rates_for_power_law(
-            energy_start=a_start,
-            energy_stop=a_stop,
-            num=len(a_in_bin_rates),
-            slope=target_power_law_slope,
-        )
+            target_energies, target_rates = make_relative_rates_for_power_law(
+                energy_start=a_start,
+                energy_stop=a_stop,
+                num=len(a_in_bin_rates),
+                slope=target_power_law_slope,
+            )
 
-        power_law_weights = reweight(
-            initial_energies=a_in_bin_energies,
-            initial_rates=a_in_bin_rates,
-            target_energies=target_energies,
-            target_rates=target_rates,
-            event_energies=a_in_bin,
-        )
+            power_law_weights = reweight(
+                initial_energies=a_in_bin_energies,
+                initial_rates=a_in_bin_rates,
+                target_energies=target_energies,
+                target_rates=target_rates,
+                event_energies=a_in_bin,
+            )
 
-        power_law_weights = power_law_weights / np.mean(power_law_weights)
-        assert np.all(power_law_weights < max_event_weight)
-        assert np.all(power_law_weights > min_event_weight)
+            power_law_weights = power_law_weights / np.mean(power_law_weights)
+            assert np.all(power_law_weights < max_event_weight)
+            assert np.all(power_law_weights > min_event_weight)
 
-        bin_counts[ibin] = np.sum(weights_in_bin * power_law_weights)
+            bin_counts[ibin] = np.sum(weights_in_bin * power_law_weights)
 
     return bin_counts, bins

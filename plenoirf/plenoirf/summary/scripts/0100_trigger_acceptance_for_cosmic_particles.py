@@ -38,17 +38,13 @@ trigger_modus = sum_config["trigger"]["modus"]
 def prepare_reweighting_power_law(
     particle_key, particle_config, reweighting_options
 ):
-    if options is None:
+    if reweighting_options is None:
         return None
     else:
-        rw = {
-            "power_law_slope": float(
-                particle_config[particle_key][
-                    "expected_cosmic_energy_power_law_slope"
-                ]
-            ),
-            "assert": dict(options["assert"]),
-        }
+        rw = dict(reweighting_options)
+        rw["power_law_slope"] = particle_config[particle_key][
+            "expected_cosmic_energy_power_law_slope"
+        ]
     return rw
 
 
@@ -59,7 +55,7 @@ for site_key in irf_config["config"]["sites"]:
         bin_wise_reweighting_to_power_law = prepare_reweighting_power_law(
             particle_key=particle_key,
             particle_config=irf_config["config"]["particles"],
-            options=rw_options,
+            reweighting_options=rw_options,
         )
 
         os.makedirs(site_particle_dir, exist_ok=True)
@@ -136,7 +132,7 @@ for site_key in irf_config["config"]["sites"]:
                 "unit": "m$^{2}$",
                 "mean": value,
                 "relative_uncertainty": relative_uncertainty,
-                "bin_wise_reweighting_to_power_law": reweighting,
+                "bin_wise_reweighting_to_power_law": bin_wise_reweighting_to_power_law,
             },
         )
 
@@ -178,7 +174,7 @@ for site_key in irf_config["config"]["sites"]:
                     num_grid_cells_above_lose_threshold
                 ),
                 total_num_grid_cells=total_num_grid_cells,
-                bin_wise_reweighting_to_power_law=reweighting,
+                bin_wise_reweighting_to_power_law=bin_wise_reweighting_to_power_law,
             )
             value.append(_q_eff)
             relative_uncertainty.append(_q_unc)
@@ -196,6 +192,6 @@ for site_key in irf_config["config"]["sites"]:
                 "unit": "m$^{2}$ sr",
                 "mean": value,
                 "relative_uncertainty": relative_uncertainty,
-                "bin_wise_reweighting_to_power_law": reweighting,
+                "bin_wise_reweighting_to_power_law": bin_wise_reweighting_to_power_law,
             },
         )

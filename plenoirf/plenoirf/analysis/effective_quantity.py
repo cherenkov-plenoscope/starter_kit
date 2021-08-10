@@ -15,9 +15,13 @@ def make_histogram(a, bins, weights, options):
             target_power_law_slope=options["power_law_slope"],
             min_event_weight=options["assert"]["min_event_weight"],
             max_event_weight=options["assert"]["max_event_weight"],
+            min_num_events_in_bin=options["min_num_events_in_bin"],
         )
-        assert np.all(rw_counts / counts > options["assert"]["min_bin_count_ratio"])
-        assert np.all(rw_counts / counts < options["assert"]["max_bin_count_ratio"])
+        valid_counts = counts > 0.0
+        rw_ratio = rw_counts[valid_counts] / counts[valid_counts]
+        mira = np.all(rw_ratio > options["assert"]["min_bin_count_ratio"])
+        mara = np.all(rw_ratio < options["assert"]["max_bin_count_ratio"])
+        assert mira and mara, "reweight counts / counts "+str(rw_ratio)
         counts = rw_counts
     return counts, bins
 
