@@ -109,6 +109,7 @@ EXAMPLE_CONFIG = {
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": 0.0,
             "magnetic_deflection_max_off_axis_deg": 0.25,
+            "expected_cosmic_energy_power_law_slope": -2.62,  # cta2018baseline
         },
         "electron": {
             "particle_id": 3,
@@ -120,6 +121,7 @@ EXAMPLE_CONFIG = {
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": -1.0,
             "magnetic_deflection_max_off_axis_deg": 0.5,
+            "expected_cosmic_energy_power_law_slope": -3.0,  # aguilar2014electron
         },
         "proton": {
             "particle_id": 14,
@@ -131,6 +133,7 @@ EXAMPLE_CONFIG = {
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +1.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
+            "expected_cosmic_energy_power_law_slope": -2.7,  # aguilar2015precision
         },
         "helium": {
             "particle_id": 402,
@@ -142,6 +145,7 @@ EXAMPLE_CONFIG = {
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +2.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
+            "expected_cosmic_energy_power_law_slope": -2.7,  # aguilar2015precision
         },
     },
     "grid": production.example.EXAMPLE_GRID,
