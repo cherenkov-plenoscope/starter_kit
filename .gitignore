@@ -1,5 +1,7 @@
 build
 run
+*_run
+*_lut
 examples
 .cache
 __pycache__
