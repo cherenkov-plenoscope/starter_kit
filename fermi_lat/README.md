@@ -1,3 +1,6 @@
+Use fermi-py to make some FERMI-LAT performance-figures
+-------------------------------------------------------
+
 mkdir fermi
 cd fermi
 
