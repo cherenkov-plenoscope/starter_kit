@@ -1,0 +1,158 @@
+\documentclass[a4paper,12pt,oneside]{article}
+
+\usepackage[textwidth=400pt,textheight=730pt,top=60pt,left=100pt]{geometry}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage[nolist]{acronym}
+%\usepackage[onehalfspacing]{setspace}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{cite}
+\usepackage{tikz}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{dirtree}
+\usepackage[figuresright]{rotating}
+\usepackage{subcaption}
+\usepackage{adjustbox}
+\usepackage{lineno}
+\usepackage{multicol}
+\linenumbers
+
+\usetikzlibrary{matrix,calc}
+%---------------------------
+\begin{document}
+%
+\noindent
+%
+\LARGE
+\textbf{Comparing uncertainties for effective area}
+\normalsize\\
+%
+\begin{center}
+Sebastian Achim Mueller, 2020\,March\,27
+\end{center}
+%
+We conclude that the effective area in our grid-based estimate for the Cherenkov-plenoscope is
+%
+\begin{eqnarray*}
+A_\text{eff} &=& \frac{A_G}{M\,N_G} \sum_m^M q_m\,N_{S,m}\\
+&=&\frac{A_G}{M\,N_G} \sum_\text{acc.}N_{S,m},
+\end{eqnarray*}
+%
+in an individual energy-bin.
+%
+Here $A_G$ is the area of the entire grid, $N_G$ is the number of all grid-bins, $M$ is the number of thrown air-showers, and $N_{S,m}$ is the $m$-th air-shower's number of grid-bins to pass a lose threshold of Cherenkov-photons in the field-of-view.
+%
+The sum $\sum_\text{acc.}^Q$ runs only over the $Q$ accepted of the $M$ thrown air-showers with $q_m = 1$.
+%
+\subsection*{Uncertainties}
+%
+Sebastian's estimate for $\Delta A_\text{eff}$ neglects the grid.
+%
+It assumes that all uncertainty comes from the counting-uncertainty $\Delta Q = \sqrt{Q}$ of the number of air-showers $Q$ that triggered the plenoscope in the detailed simulation.
+%
+In the source-code, Sebastian estimates $Q$ with
+%
+\begin{eqnarray*}
+Q &=& \sum_m^M q_m.
+\end{eqnarray*}
+%
+To express $A_\text{eff}$ with $Q$ here, Sebastian approximates
+%
+\begin{eqnarray*}
+\sum_\text{acc}^Q N_{S,m} &\approx& Q\,\langle N_S \rangle,
+\end{eqnarray*}
+%
+so that the effective area is
+%
+\begin{eqnarray*}
+A_\text{eff} &\approx& \frac{A_G}{M\,N_G} Q \langle N_{S} \rangle.
+\end{eqnarray*}
+%
+Using
+%
+\begin{eqnarray*}
+\Delta A_\text{eff} &=& \sqrt{\left(\frac{\partial A_\text{eff}}{\partial Q}\right)^2(\Delta Q)^2},
+\end{eqnarray*}
+%
+Sebastian finds
+%
+\begin{eqnarray*}
+\Delta A_\text{eff} &=& \frac{A_G}{N_G\,M} \langle N_S \rangle \sqrt{Q}\\
+%
+\frac{\Delta A_\text{eff}}{A_\text{eff}} &=& \frac{1}{\sqrt{Q}}
+\end{eqnarray*}
+%
+Werner on the other hand assumes the uncertainty to arise from the counting-uncertainty  $\Delta N_{S,m}$ of the $N_{S,m}$ grid-bins above the lose threshold.
+%
+Here is how I understood Werner's estimate.
+%
+He assumes all the gird-bins of the $m$-th air-shower are correlated by 100\% so that
+%
+\begin{eqnarray*}
+\Delta N_{S,m} &=& N_{S,m}.
+\end{eqnarray*}
+%
+Using the propagated uncertainty for uncorrelated air-showers $m$
+%
+\begin{eqnarray*}
+\Delta A_\text{eff} &=& \sqrt{\sum_\text{acc.} \left(\frac{\partial A_\text{eff}}{\partial N_{S,m}}\right)^2(\Delta N_{S,m})^2},
+\end{eqnarray*}
+%
+yields
+%
+\begin{eqnarray*}
+\Delta A_\text{eff} &=& \frac{A_G}{N_G\,M} \sqrt{\sum_\text{acc.}N_{S,m}^2},
+\end{eqnarray*}
+%
+and
+%
+\begin{eqnarray*}
+\frac{\Delta A_\text{eff}}{A_\text{eff}} &=& \frac{\sqrt{\sum_\text{acc.}N_{S,m}^2}}{\sum_\text{acc.}N_{S,m}}.
+\end{eqnarray*}
+%
+When we approximate
+%
+\begin{eqnarray*}
+\sum_\text{acc.}N_{S,m}^2 &\approx& Q \langle N_S^2 \rangle,
+\end{eqnarray*}
+%
+the ratio of the two estimates is
+%
+\begin{eqnarray*}
+\frac{%
+\Delta A_\text{eff}^\text{Werner}%
+}{%
+\Delta A_\text{eff}^\text{Sebastian}}%
+%
+&\approx&
+\frac{%
+\sqrt{\langle N_S^2 \rangle}
+}{%
+\langle N_S\rangle
+}
+\end{eqnarray*}
+%
+%
+%\subsection*{Questioning the grid}
+%%
+%We created the grid to estimate the plenoscope-response more efficiently for low %energetic cosmic-rays that otherwise require huge scatter-areas when their air-showers %are deflected in earth's magnetic field.
+%%
+%But the grid adds complexity to the source-code and to the estimate for the uncertainty.
+%%
+%I ask myself, if our estimate was simpler when we removed the grid, and used our %knowledge about the cosmic-ray's deflection instead.\\
+%%
+%We would not longer use the primary particle's core-position as the center for our areal %scatter, but the typical position of the Cherenkov-pool instead.
+%%
+%Of course, estimating the deflection of cosmic-rays also adds complexity, but at least %this is a rather isolated task.
+%%
+%One challenge here will be that the areal distribution of the Cherenkov-pool can have %very asymmetric shapes that might need to be corrected for to not lose too much %efficiency.
+%
+%
+\end{document}
+%
