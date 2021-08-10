@@ -95,7 +95,7 @@ def make_relative_rates_for_power_law(
 
 
 def histogram_with_bin_wise_power_law_reweighting(
-    a, bins, weights, target_power_law_slope, max_power_law_weight_factor
+    a, bins, weights, target_power_law_slope, min_event_weight, max_event_weight
 ):
     """
     Returns the bin-counts and bin-edges of a histogram.
@@ -115,9 +115,10 @@ def histogram_with_bin_wise_power_law_reweighting(
             The spectral-index of the targeted power-law spectrum.
             If target_power_law_slope == 0.0, the result is expected to equal
             numpy.histogram(a, bins, weights).
-    max_power_law_weight_factor : float
-            The maximal acceptable scaling factor for a power-law related
-            weight.
+    min_event_weight : float
+            The maximal acceptable weight for a power-law related weight.
+    max_event_weight : float
+            See min_event_weight.
     """
     num_bins = len(bins) - 1
     assert num_bins >= 1
@@ -159,8 +160,8 @@ def histogram_with_bin_wise_power_law_reweighting(
         )
 
         power_law_weights = power_law_weights / np.mean(power_law_weights)
-        assert np.all(power_law_weights < max_power_law_weight_factor)
-        assert np.all(power_law_weights > 1.0 / max_power_law_weight_factor)
+        assert np.all(power_law_weights < max_event_weight)
+        assert np.all(power_law_weights > min_event_weight)
 
         bin_counts[ibin] = np.sum(weights_in_bin * power_law_weights)
 
