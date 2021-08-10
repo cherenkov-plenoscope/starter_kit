@@ -29,12 +29,39 @@ energy_bin_edges = np.geomspace(
     sum_config["energy_binning"]["upper_edge_GeV"],
     sum_config["energy_binning"]["num_bins"]["trigger_acceptance"] + 1,
 )
+rw_options = sum_config["energy_binning"]["bin_wise_reweighting_to_power_law"]
+
 trigger_thresholds = sum_config["trigger"]["ratescan_thresholds_pe"]
 trigger_modus = sum_config["trigger"]["modus"]
+
+
+def prepare_reweighting_power_law(
+    particle_key, particle_config, reweighting_options
+):
+    if options is None:
+        return None
+    else:
+        rw = {
+            "power_law_slope": float(
+                particle_config[particle_key][
+                    "expected_cosmic_energy_power_law_slope"
+                ]
+            ),
+            "assert": dict(options["assert"]),
+        }
+    return rw
+
 
 for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
         site_particle_dir = os.path.join(pa["out_dir"], site_key, particle_key)
+
+        bin_wise_reweighting_to_power_law = prepare_reweighting_power_law(
+            particle_key=particle_key,
+            particle_config=irf_config["config"]["particles"],
+            options=rw_options,
+        )
+
         os.makedirs(site_particle_dir, exist_ok=True)
 
         diffuse_particle_table = spt.read(
@@ -92,6 +119,7 @@ for site_key in irf_config["config"]["sites"]:
                     num_grid_cells_above_lose_threshold
                 ),
                 total_num_grid_cells=total_num_grid_cells,
+                bin_wise_reweighting_to_power_law=bin_wise_reweighting_to_power_law,
             )
             value.append(_q_eff)
             relative_uncertainty.append(_q_unc)
@@ -108,6 +136,7 @@ for site_key in irf_config["config"]["sites"]:
                 "unit": "m$^{2}$",
                 "mean": value,
                 "relative_uncertainty": relative_uncertainty,
+                "bin_wise_reweighting_to_power_law": reweighting,
             },
         )
 
@@ -149,6 +178,7 @@ for site_key in irf_config["config"]["sites"]:
                     num_grid_cells_above_lose_threshold
                 ),
                 total_num_grid_cells=total_num_grid_cells,
+                bin_wise_reweighting_to_power_law=reweighting,
             )
             value.append(_q_eff)
             relative_uncertainty.append(_q_unc)
@@ -166,5 +196,6 @@ for site_key in irf_config["config"]["sites"]:
                 "unit": "m$^{2}$ sr",
                 "mean": value,
                 "relative_uncertainty": relative_uncertainty,
+                "bin_wise_reweighting_to_power_law": reweighting,
             },
         )

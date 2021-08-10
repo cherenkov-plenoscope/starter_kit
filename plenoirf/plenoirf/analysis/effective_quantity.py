@@ -12,11 +12,12 @@ def make_histogram(a, bins, weights, options):
             a=a,
             bins=bins,
             weights=weights,
-            target_power_law_slope=options["target_power_law_slope"],
-            max_power_law_weight_factor=options["max_power_law_weight_factor"],
+            target_power_law_slope=options["power_law_slope"],
+            min_event_weight=options["assert"]["min_event_weight"],
+            max_event_weight=options["assert"]["max_event_weight"],
         )
-        assert np.all(rw_counts / counts > options["min_bin_count_ratio"])
-        assert np.all(rw_counts / counts < options["max_bin_count_ratio"])
+        assert np.all(rw_counts / counts > options["assert"]["min_bin_count_ratio"])
+        assert np.all(rw_counts / counts < options["assert"]["max_bin_count_ratio"])
         counts = rw_counts
     return counts, bins
 
@@ -28,7 +29,7 @@ def effective_quantity_for_grid(
     quantity_scatter,
     num_grid_cells_above_lose_threshold,
     total_num_grid_cells,
-    energy_histogram_options=None,
+    bin_wise_reweighting_to_power_law=None,
 ):
     """
     Returns the effective quantity and its uncertainty.
@@ -101,14 +102,14 @@ def effective_quantity_for_grid(
             * num_grid_cells_above_lose_threshold
             * quantity_scatter
         ),
-        options=energy_histogram_options,
+        options=bin_wise_reweighting_to_power_law,
     )[0]
 
     count_thrown = make_histogram(
         energy_GeV,
         weights=total_num_grid_cells,
         bins=energy_bin_edges_GeV,
-        options=energy_histogram_options,
+        options=bin_wise_reweighting_to_power_law,
     )[0]
 
     effective_quantity = utils._divide_silent(
@@ -122,14 +123,14 @@ def effective_quantity_for_grid(
         energy_GeV,
         bins=energy_bin_edges_GeV,
         weights=(mask_detected * num_grid_cells_above_lose_threshold ** 2),
-        options=energy_histogram_options,
+        options=bin_wise_reweighting_to_power_law,
     )[0]
 
     A = make_histogram(
         energy_GeV,
         bins=energy_bin_edges_GeV,
         weights=(mask_detected * num_grid_cells_above_lose_threshold),
-        options=energy_histogram_options,
+        options=bin_wise_reweighting_to_power_law,
     )[0]
 
     effective_quantity_uncertainty = utils._divide_silent(
