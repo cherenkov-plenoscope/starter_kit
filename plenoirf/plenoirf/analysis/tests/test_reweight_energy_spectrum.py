@@ -151,7 +151,8 @@ def test_histogram_weights_equal_one():
         bins=bin_edges,
         weights=weights,
         target_power_law_slope=cosmic_slope,
-        max_power_law_weight_factor=3,
+        min_event_weight=0.3,
+        max_event_weight=3,
     )
 
     # When weights ~ energy, then the non reweighted histogram should
