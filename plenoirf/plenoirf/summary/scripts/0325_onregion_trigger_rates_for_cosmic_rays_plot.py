@@ -26,13 +26,9 @@ onregion_radii_deg = np.array(
 )
 num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
-energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
-
-fine_energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["interpolation"] + 1,
+fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["interpolation"]
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 
@@ -41,8 +37,11 @@ particle_colors = sum_config["plot"]["particle_colors"]
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
 
+fermi_3fgl = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+)
 _, gamma_name = irf.summary.make_gamma_ray_reference_flux(
-    summary_dir=pa["summary_dir"],
+    fermi_3fgl=fermi_3fgl,
     gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
     energy_supports_GeV=fine_energy_bin_centers,
 )
@@ -140,7 +139,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             text_y += 0.06
 
-        ax.set_xlim([energy_lower, energy_upper])
+        ax.set_xlim([fine_energy_bin_edges[0], fine_energy_bin_edges[-1]])
         ax.set_ylim([1e-5, 1e3])
         ax.loglog()
         ax.set_xlabel("Energy / GeV")

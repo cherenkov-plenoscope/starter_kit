@@ -18,20 +18,15 @@ onregion_acceptance = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
-energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
-    + 1,
+energy_bin_edges, _ = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
 )
 energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
-num_fine_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "interpolation"
-]
-fine_energy_bin_edges = np.geomspace(
-    energy_lower, energy_upper, num_fine_energy_bins + 1,
+
+fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["interpolation"]
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
@@ -43,26 +38,25 @@ num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
-    run_dir=pa["run_dir"],
-    summary_dir=pa["summary_dir"],
-    energy_bin_centers=fine_energy_bin_centers,
-    sites=irf_config["config"]["sites"],
-    geomagnetic_cutoff_fraction=sum_config["airshower_flux"][
-        "fraction_of_flux_below_geomagnetic_cutoff"
-    ],
+airshower_fluxes = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
 # gamma-ray-flux of reference source
 # ----------------------------------
+fermi_3fgl = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+)
+
 (
     gamma_differential_flux_per_m2_per_s_per_GeV,
     gamma_name,
 ) = irf.summary.make_gamma_ray_reference_flux(
-    summary_dir=pa["summary_dir"],
+    fermi_3fgl=fermi_3fgl,
     gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
     energy_supports_GeV=fine_energy_bin_centers,
 )
+
 
 comment_differential = "Differential trigger-rate, reconstructed in onregion."
 comment_integral = "Integral trigger-rate, reconstructed in onregion."
@@ -140,7 +134,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             cosmic_differential_rate_per_s_per_GeV = (
                 acceptance_m2_sr
-                * airshower_fluxes[site_key][cosmic_key]["differential_flux"]
+                * airshower_fluxes[site_key][cosmic_key]["differential_flux"]["values"]
             )
             cosmic_rate_per_s = np.sum(
                 cosmic_differential_rate_per_s_per_GeV * fine_energy_bin_width

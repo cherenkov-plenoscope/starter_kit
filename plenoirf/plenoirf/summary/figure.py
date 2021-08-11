@@ -10,7 +10,7 @@ SOURCES = {
         "unit": "m$^{2}$ sr",
         "limits": {
             "passed_trigger": [1e-1, 1e5],
-            "passed_all_cuts": [1e-1, 1e3],
+            "passed_all_cuts": [1e-1, 1e5],
         }
     },
     "point": {
@@ -18,7 +18,7 @@ SOURCES = {
         "unit": "m$^{2}$",
         "limits": {
             "passed_trigger": [1e1, 1e6],
-            "passed_all_cuts": [1e1, 1e5],
+            "passed_all_cuts": [1e1, 1e6],
         },
     }
 }
