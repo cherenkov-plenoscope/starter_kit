@@ -1,29 +1,7 @@
 import numpy as np
 import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
-from . import reweight
 from .. import utils
-
-
-def make_histogram(a, bins, weights, options):
-    counts, _ = np.histogram(a=a, bins=bins, weights=weights)
-    if options is not None:
-        rw_counts, _ = reweight.histogram_with_bin_wise_power_law_reweighting(
-            a=a,
-            bins=bins,
-            weights=weights,
-            target_power_law_slope=options["power_law_slope"],
-            min_event_weight=options["assert"]["min_event_weight"],
-            max_event_weight=options["assert"]["max_event_weight"],
-            min_num_events_in_bin=options["min_num_events_in_bin"],
-        )
-        valid_counts = counts > 0.0
-        rw_ratio = rw_counts[valid_counts] / counts[valid_counts]
-        mira = np.all(rw_ratio > options["assert"]["min_bin_count_ratio"])
-        mara = np.all(rw_ratio < options["assert"]["max_bin_count_ratio"])
-        assert mira and mara, "reweight counts / counts "+str(rw_ratio)
-        counts = rw_counts
-    return counts, bins
 
 
 def effective_quantity_for_grid(
@@ -33,7 +11,6 @@ def effective_quantity_for_grid(
     quantity_scatter,
     num_grid_cells_above_lose_threshold,
     total_num_grid_cells,
-    bin_wise_reweighting_to_power_law=None,
 ):
     """
     Returns the effective quantity and its uncertainty.
@@ -98,7 +75,7 @@ def effective_quantity_for_grid(
 
     """
 
-    quantity_detected = make_histogram(
+    quantity_detected = np.histogram(
         energy_GeV,
         bins=energy_bin_edges_GeV,
         weights=(
@@ -106,14 +83,12 @@ def effective_quantity_for_grid(
             * num_grid_cells_above_lose_threshold
             * quantity_scatter
         ),
-        options=bin_wise_reweighting_to_power_law,
     )[0]
 
-    count_thrown = make_histogram(
+    count_thrown = np.histogram(
         energy_GeV,
         weights=total_num_grid_cells,
         bins=energy_bin_edges_GeV,
-        options=bin_wise_reweighting_to_power_law,
     )[0]
 
     effective_quantity = utils._divide_silent(
@@ -123,18 +98,16 @@ def effective_quantity_for_grid(
     # uncertainty
     # according to Werner EffAreaComment.pdf 2020-03-21 17:35
 
-    A_square = make_histogram(
+    A_square = np.histogram(
         energy_GeV,
         bins=energy_bin_edges_GeV,
         weights=(mask_detected * num_grid_cells_above_lose_threshold ** 2),
-        options=bin_wise_reweighting_to_power_law,
     )[0]
 
-    A = make_histogram(
+    A = np.histogram(
         energy_GeV,
         bins=energy_bin_edges_GeV,
         weights=(mask_detected * num_grid_cells_above_lose_threshold),
-        options=bin_wise_reweighting_to_power_law,
     )[0]
 
     effective_quantity_uncertainty = utils._divide_silent(

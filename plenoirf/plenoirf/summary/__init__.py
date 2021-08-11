@@ -265,15 +265,6 @@ def _guess_summary_config(run_dir):
                 "interpolation": 1337,
                 "point_spread_function": 8,
             },
-            "bin_wise_reweighting_to_power_law": {
-                "min_num_events_in_bin": 100,
-                "assert": {
-                    "min_event_weight": 1.0 / 3.0,
-                    "max_event_weight": 3.0,
-                    "min_bin_count_ratio": 1/3,
-                    "max_bin_count_ratio": 3/1,
-                },
-            },
         },
         "direction_binning": {
             "radial_angle_deg": 35.0,
