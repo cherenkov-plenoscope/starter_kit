@@ -102,50 +102,52 @@ EXAMPLE_CONFIG = {
         "gamma": {
             "particle_id": 1,
             "energy_bin_edges_GeV": [
-                utils.power10_bin_edge(-1, 2, 5),
-                utils.power10_bin_edge(3, 1, 5)
+                utils.power10bin(decade=-1, bin=2, num_bins_per_decade=5),
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
             ],
             "max_scatter_angle_deg": 3.25,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": 0.0,
             "magnetic_deflection_max_off_axis_deg": 0.25,
-            "expected_cosmic_energy_power_law_slope": -2.62,  # cta2018baseline
         },
         "electron": {
             "particle_id": 3,
             "energy_bin_edges_GeV": [
-                utils.power10_bin_edge(-1, 3, 5),
-                utils.power10_bin_edge(3, 1, 5)
+                utils.power10bin(decade=-1, bin=3, num_bins_per_decade=5),
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
             ],
             "max_scatter_angle_deg": 6.5,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": -1.0,
             "magnetic_deflection_max_off_axis_deg": 0.5,
-            "expected_cosmic_energy_power_law_slope": -3.0,  # aguilar2014electron
         },
         "proton": {
             "particle_id": 14,
             "energy_bin_edges_GeV": [
-                max(MIN_PROTON_ENERGY_GEV, utils.power10_bin_edge(0, 3, 5)),
-                utils.power10_bin_edge(3, 1, 5)
+                max(
+                    MIN_PROTON_ENERGY_GEV,
+                    utils.power10bin(decade=0, bin=3, num_bins_per_decade=5)
+                ),
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
             ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +1.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
-            "expected_cosmic_energy_power_law_slope": -2.7,  # aguilar2015precision
         },
         "helium": {
             "particle_id": 402,
             "energy_bin_edges_GeV": [
-                max(MIN_HELIUM_ENERGY_GEV, utils.power10_bin_edge(1, 0, 5)),
-                utils.power10_bin_edge(3, 1, 5)
+                max(
+                    MIN_HELIUM_ENERGY_GEV,
+                    utils.power10bin(decade=1, bin=0, num_bins_per_decade=5)
+                ),
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
             ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +2.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
-            "expected_cosmic_energy_power_law_slope": -2.7,  # aguilar2015precision
         },
     },
     "grid": production.example.EXAMPLE_GRID,
