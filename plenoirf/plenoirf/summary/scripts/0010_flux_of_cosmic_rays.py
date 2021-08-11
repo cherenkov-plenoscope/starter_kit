@@ -37,7 +37,7 @@ cosmic_rays = {
         "original": cosmic_fluxes.helium_patrignani2017helium(),
         "extrapolation": None,
     },
-    "electron_positron": {
+    "electron": {
         "original": cosmic_fluxes.electron_positron_aguilar2014precision(),
         "extrapolation": {
             "stop_energy": 1e4,
