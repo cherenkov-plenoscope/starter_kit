@@ -34,15 +34,10 @@ reconstructed_energy = json_numpy.read_tree(
 
 # energy
 # ------
-num_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "trigger_acceptance_onregion"
-]
-energy_lower_edge = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper_edge = sum_config["energy_binning"]["upper_edge_GeV"]
-energy_bin_edges = np.geomspace(
-    energy_lower_edge, energy_upper_edge, num_energy_bins + 1
+energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
 )
-energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
 
 containment_percents = [68, 95]
 num_containment_fractions = len(containment_percents)

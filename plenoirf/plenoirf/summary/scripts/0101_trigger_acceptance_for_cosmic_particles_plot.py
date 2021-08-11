@@ -20,13 +20,12 @@ cr = json_numpy.read_tree(
     )
 )
 
-energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
-energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance"] + 1,
+energy_bin_edges, _ = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
 )
+energy_lower = energy_bin_edges[0]
+energy_upper = energy_bin_edges[-1]
 
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
 analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]

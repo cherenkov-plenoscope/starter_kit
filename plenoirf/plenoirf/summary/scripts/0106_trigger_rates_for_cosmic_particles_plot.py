@@ -18,13 +18,12 @@ cosmic_rates = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0105_trigger_rates_for_cosmic_particles")
 )
 
-energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
-fine_energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["interpolation"] + 1,
+fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["interpolation"]
 )
+energy_lower = fine_energy_bin_edges[0]
+energy_upper = fine_energy_bin_edges[-1]
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
@@ -32,8 +31,11 @@ analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
+fermi_3fgl = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+)
 _, gamma_name = irf.summary.make_gamma_ray_reference_flux(
-    summary_dir=pa["summary_dir"],
+    fermi_3fgl=fermi_3fgl,
     gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
     energy_supports_GeV=fine_energy_bin_centers,
 )

@@ -21,18 +21,15 @@ acceptance = json_numpy.read_tree(
     )
 )
 
-energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
-energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance"] + 1,
+energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
 )
 energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
-fine_energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["interpolation"] + 1,
+
+fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["interpolation"]
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
@@ -43,23 +40,21 @@ num_trigger_thresholds = len(trigger_thresholds)
 
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
-    run_dir=pa["run_dir"],
-    summary_dir=pa["summary_dir"],
-    energy_bin_centers=fine_energy_bin_centers,
-    sites=irf_config["config"]["sites"],
-    geomagnetic_cutoff_fraction=sum_config["airshower_flux"][
-        "fraction_of_flux_below_geomagnetic_cutoff"
-    ],
+airshower_fluxes = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
 # gamma-ray-flux of reference source
 # ----------------------------------
+fermi_3fgl = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+)
+
 (
     gamma_differential_flux_per_m2_per_s_per_GeV,
     gamma_name,
 ) = irf.summary.make_gamma_ray_reference_flux(
-    summary_dir=pa["summary_dir"],
+    fermi_3fgl=fermi_3fgl,
     gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
     energy_supports_GeV=fine_energy_bin_centers,
 )
@@ -73,16 +68,16 @@ comment_integral = (
     "VS trigger-ratescan-thresholds"
 )
 
-for site_key in irf_config["config"]["sites"]:
-    site_dir = os.path.join(pa["out_dir"], site_key)
-    os.makedirs(site_dir, exist_ok=True)
+for sk in irf_config["config"]["sites"]:
+    sk_dir = os.path.join(pa["out_dir"], sk)
+    os.makedirs(sk_dir, exist_ok=True)
 
     # gamma-ray
     # ---------
-    site_gamma_dir = os.path.join(site_dir, "gamma")
-    os.makedirs(site_gamma_dir, exist_ok=True)
+    sk_gamma_dir = os.path.join(sk_dir, "gamma")
+    os.makedirs(sk_gamma_dir, exist_ok=True)
 
-    _area = np.array(acceptance[site_key]["gamma"]["point"]["mean"])
+    _area = np.array(acceptance[sk]["gamma"]["point"]["mean"])
 
     T = []
     dT_dE = []
@@ -100,7 +95,7 @@ for site_key in irf_config["config"]["sites"]:
         dT_dE.append(gamma_differential_rate_per_s_per_GeV)
 
     json_numpy.write(
-        os.path.join(site_gamma_dir, "differential_rate.json"),
+        os.path.join(sk_gamma_dir, "differential_rate.json"),
         {
             "comment": comment_differential + ", " + gamma_name,
             "unit": "s$^{-1} (GeV)$^{-1}$",
@@ -108,7 +103,7 @@ for site_key in irf_config["config"]["sites"]:
         },
     )
     json_numpy.write(
-        os.path.join(site_gamma_dir, "integral_rate.json"),
+        os.path.join(sk_gamma_dir, "integral_rate.json"),
         {
             "comment": comment_integral + ", " + gamma_name,
             "unit": "s$^{-1}$",
@@ -118,14 +113,14 @@ for site_key in irf_config["config"]["sites"]:
 
     # cosmic-rays
     # -----------
-    for cosmic_key in airshower_fluxes[site_key]:
-        site_particle_dir = os.path.join(site_dir, cosmic_key)
-        os.makedirs(site_particle_dir, exist_ok=True)
+    for ck in airshower_fluxes[sk]:
+        sk_ck_dir = os.path.join(sk_dir, ck)
+        os.makedirs(sk_ck_dir, exist_ok=True)
 
         T = []
         dT_dE = []
         _acceptance = np.array(
-            acceptance[site_key][cosmic_key]["diffuse"]["mean"]
+            acceptance[sk][ck]["diffuse"]["mean"]
         )
         for tt in range(num_trigger_thresholds):
             acceptance_m2_sr = np.interp(
@@ -135,7 +130,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             cosmic_differential_rate_per_s_per_GeV = (
                 acceptance_m2_sr
-                * airshower_fluxes[site_key][cosmic_key]["differential_flux"]
+                * airshower_fluxes[sk][ck]["differential_flux"]["values"]
             )
             cosmic_rate_per_s = np.sum(
                 cosmic_differential_rate_per_s_per_GeV * fine_energy_bin_width
@@ -144,7 +139,7 @@ for site_key in irf_config["config"]["sites"]:
             dT_dE.append(cosmic_differential_rate_per_s_per_GeV)
 
         json_numpy.write(
-            os.path.join(site_particle_dir, "differential_rate.json"),
+            os.path.join(sk_ck_dir, "differential_rate.json"),
             {
                 "comment": comment_differential,
                 "unit": "s$^{-1} (GeV)$^{-1}$",
@@ -152,6 +147,6 @@ for site_key in irf_config["config"]["sites"]:
             },
         )
         json_numpy.write(
-            os.path.join(site_particle_dir, "integral_rate.json"),
+            os.path.join(sk_ck_dir, "integral_rate.json"),
             {"comment": comment_integral, "unit": "s$^{-1}$", "mean": T},
         )

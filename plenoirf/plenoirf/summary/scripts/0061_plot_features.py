@@ -28,13 +28,9 @@ passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
-num_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "trigger_acceptance"
-]
-energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    num_energy_bins + 1,
+energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
 )
 
 PARTICLES = irf_config["config"]["particles"]

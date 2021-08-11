@@ -38,11 +38,9 @@ reconstructed_energy = json_numpy.read_tree(
     ),
 )
 
-energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
-    + 1,
+energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
 )
 
 cta = irf.other_instruments.cherenkov_telescope_array_south

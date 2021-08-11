@@ -29,10 +29,9 @@ IDX_FINAL_ONREGION = 1
 A = json_numpy.read_tree(
     opj(pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles")
 )
-A_energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance"] + 1,
+A_energy_bin_edges, _ = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
 )
 
 # trigger fix onregion
@@ -40,11 +39,9 @@ A_energy_bin_edges = np.geomspace(
 G = json_numpy.read_tree(
     opj(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
-G_energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
-    + 1,
+G_energy_bin_edges, _ = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
 )
 
 onregion_radii_deg = np.array(

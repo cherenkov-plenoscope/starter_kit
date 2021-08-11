@@ -24,10 +24,10 @@ pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
     "azimuth_deg"
 ]
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
-energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance"] + 1,
+
+energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
 )
 
 trigger_thresholds = sum_config["trigger"]["ratescan_thresholds_pe"]
