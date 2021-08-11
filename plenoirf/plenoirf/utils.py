@@ -54,13 +54,62 @@ def bin_width(bin_edges):
     return bin_edges[1:] - bin_edges[:-1]
 
 
-def power10_bin_edge(decade, bin, num_bins=5):
+def power10bin(decade, bin, num_bins_per_decade=5):
     """
     returns the lower bin_edge of bin in decade.
     The binning has num_bins_per_decade.
     """
-    assert bin < num_bins
-    return 10 ** (decade + np.linspace(0, 1, num_bins + 1))[bin]
+    assert num_bins_per_decade > 0
+    assert bin < num_bins_per_decade
+    return 10 ** (decade + np.linspace(0, 1, num_bins_per_decade + 1))[bin]
+
+
+def power10space_idx(start_decade, start_bin, stop_decade, stop_bin, num_bins_per_decade=5):
+    combos = []
+    decade = start_decade
+    assert 0 <= stop_bin < num_bins_per_decade
+    assert 0 <= start_bin < num_bins_per_decade
+    assert start_decade <= stop_decade
+
+    bin = start_bin
+    while decade != stop_decade or bin <= stop_bin:
+        combos.append((decade, bin, num_bins_per_decade))
+        if bin + 1 < num_bins_per_decade:
+            bin += 1
+        else:
+            bin = 0
+            decade += 1
+    return combos
+
+
+def power10space_explicit(start_decade, start_bin, stop_decade, stop_bin, num_bins_per_decade=5):
+    combis = power10space_idx(
+        start_decade=start_decade,
+        start_bin=start_bin,
+        stop_decade=stop_decade,
+        stop_bin=stop_bin,
+        num_bins_per_decade=num_bins_per_decade
+    )
+    out = np.nan * np.ones(len(combis))
+    for i, combi in enumerate(combis):
+        out[i] = power10bin(
+            decade=combi[0],
+            bin=combi[1],
+            num_bins_per_decade=combi[2]
+        )
+    return out
+
+
+def power10space_bin_edges(binning, fine):
+    assert fine > 0
+    space = power10space_explicit(
+        start_decade=binning["start"]["decade"],
+        start_bin=binning["start"]["bin"] * fine,
+        stop_decade=binning["stop"]["decade"],
+        stop_bin=binning["stop"]["bin"] * fine,
+        num_bins_per_decade=binning["num_bins_per_decade"] * fine,
+    )
+    return space, len(space) - 1
 
 
 def _divide_silent(numerator, denominator, default):

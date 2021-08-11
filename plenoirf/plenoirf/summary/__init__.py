@@ -4,7 +4,6 @@ from os.path import join as opj
 import pandas
 import numpy as np
 import json
-import cosmic_fluxes
 import pkg_resources
 import subprocess
 import sparse_numeric_table as spt
@@ -33,22 +32,6 @@ def init(run_dir):
         fout.write(
             json.dumps(summary_config, indent=4, cls=json_numpy.Encoder)
         )
-
-    proton_flux = cosmic_fluxes.read_cosmic_proton_flux_from_resources()
-    with open(opj(summary_dir, "proton_flux.json"), "wt") as fout:
-        fout.write(json.dumps(proton_flux, indent=4))
-
-    helium_flux = cosmic_fluxes.read_cosmic_helium_flux_from_resources()
-    with open(opj(summary_dir, "helium_flux.json"), "wt") as fout:
-        fout.write(json.dumps(helium_flux, indent=4))
-
-    ep_flux = cosmic_fluxes.read_cosmic_electron_positron_flux_from_resources()
-    with open(opj(summary_dir, "electron_positron_flux.json"), "wt") as fout:
-        fout.write(json.dumps(ep_flux, indent=4))
-
-    fermi_fgl = cosmic_fluxes.read_fermi_3rd_galactic_from_resources()
-    with open(opj(summary_dir, "gamma_sources.json"), "wt") as fout:
-        fout.write(json.dumps(fermi_fgl, indent=4))
 
 
 def argv_since_py(sys_argv):
@@ -181,23 +164,6 @@ def _estimate_num_events_past_trigger(run_dir, irf_config):
     return num_events_past_trigger
 
 
-def _guess_energy_bins_lower_upper_number(irf_config, num_events):
-    particles = irf_config["config"]["particles"]
-    min_energies = []
-    max_energies = []
-    for particle_key in particles:
-        e_bins = particles[particle_key]["energy_bin_edges_GeV"]
-        min_energies.append(np.min(e_bins))
-        max_energies.append(np.max(e_bins))
-    min_energy = np.min(min_energies)
-    max_energy = np.max(max_energies)
-
-    num_energy_bins = int(np.sqrt(num_events))
-    num_energy_bins = 2 * (num_energy_bins // 2)
-    num_energy_bins = np.max([np.min([num_energy_bins, 2 ** 6]), 2 ** 2])
-    return min_energy, max_energy, num_energy_bins
-
-
 def _guess_num_direction_bins(num_events):
     num_bins = int(0.5 * np.sqrt(num_events))
     num_bins = np.max([np.min([num_bins, 2 ** 7]), 2 ** 4])
@@ -240,10 +206,6 @@ def _guess_summary_config(run_dir):
         run_dir=run_dir, irf_config=irf_config
     )
 
-    lower_E, upper_E, num_E_bins = _guess_energy_bins_lower_upper_number(
-        irf_config=irf_config, num_events=num_events_past_collection_trigger
-    )
-
     collection_trigger_threshold_pe = irf_config["config"]["sum_trigger"][
         "threshold_pe"
     ]
@@ -257,13 +219,14 @@ def _guess_summary_config(run_dir):
 
     summary_config = {
         "energy_binning": {
-            "lower_edge_GeV": lower_E,
-            "upper_edge_GeV": upper_E,
-            "num_bins": {
-                "trigger_acceptance": 48,
-                "trigger_acceptance_onregion": 18,
-                "interpolation": 1337,
-                "point_spread_function": 8,
+            "start": {"decade": -1, "bin": 2},
+            "stop": {"decade": 3, "bin": 1},
+            "num_bins_per_decade": 5,
+            "fine": {
+                "trigger_acceptance": 2,
+                "trigger_acceptance_onregion": 1,
+                "interpolation": 356,
+                "point_spread_function": 1,
             },
         },
         "direction_binning": {

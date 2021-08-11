@@ -4,7 +4,43 @@ import pkg_resources
 from astropy.io import fits as astropy_io_fits
 
 
-def read_cosmic_proton_flux_from_resources():
+def extrapolate_with_power_law(
+    original,
+    stop_energy_GeV,
+    spectral_index,
+    num_points=10,
+):
+    assert original["energy"]["unit"] == "GeV"
+    E_start = original["energy"]["values"][-1]
+    dFdE_start = original["differential_flux"]["values"][-1]
+    assert num_points > 1
+    assert stop_energy_GeV > E_start
+    extra_E = np.geomspace(
+        E_start,
+        stop_energy_GeV,
+        num_points + 1
+    )
+    extra_E = extra_E[1:]  # exclude pivot energy.
+    extra_dFdE = _power_law(
+        energy=extra_E,
+        flux_density=dFdE_start,
+        spectral_index=spectral_index,
+        pivot_energy=E_start
+    )
+    original["energy"]["values"] = np.hstack(
+        (original["energy"]["values"], extra_E)
+    )
+    original["differential_flux"]["values"] = np.hstack(
+        (original["differential_flux"]["values"], extra_dFdE)
+    )
+    info = "EXTRAPOLATED(FROM:{:e}GEV, TO:{:e}GEV, SPECTRAL_INDEX:{:e}), ".format(
+        E_start, stop_energy_GeV, spectral_index
+    )
+    original["title"] = info + original["title"]
+    return original
+
+
+def proton_aguilar2015precision():
     path = pkg_resources.resource_filename(
         'cosmic_fluxes',
         os.path.join('resources', 'proton_flux_ams02.csv'))
@@ -29,7 +65,7 @@ def read_cosmic_proton_flux_from_resources():
     }
 
 
-def read_cosmic_electron_positron_flux_from_resources():
+def electron_positron_aguilar2014precision():
     res_path = pkg_resources.resource_filename(
         'cosmic_fluxes',
         os.path.join('resources', 'electron_positron_flux_ams02.csv'))
@@ -54,7 +90,7 @@ def read_cosmic_electron_positron_flux_from_resources():
     }
 
 
-def read_cosmic_helium_flux_from_resources():
+def helium_patrignani2017helium():
     res_path = pkg_resources.resource_filename(
         'cosmic_fluxes',
         os.path.join('resources', 'helium_flux.csv'))
@@ -160,7 +196,7 @@ GAMMA_SOURCES_DTYPES = {
 }
 
 
-def read_fermi_3rd_galactic_from_resources():
+def fermi_3fgl_catalog():
     fermi_3fgl_path = pkg_resources.resource_filename(
         'cosmic_fluxes',
         os.path.join('resources', 'fermi_lat_3fgl_gll_psc_v16.fits'))

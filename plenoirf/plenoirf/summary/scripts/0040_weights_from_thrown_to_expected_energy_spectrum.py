@@ -15,13 +15,9 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-num_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "trigger_acceptance"
-]
-energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    num_energy_bins + 1,
+energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
 )
 
 PARTICLES = irf_config["config"]["particles"]
@@ -33,16 +29,12 @@ particle_colors = sum_config["plot"]["particle_colors"]
 # ===============
 
 airshower_rates = {}
-num_fine_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "interpolation"
-]
-_fine_energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    num_fine_energy_bins + 1,
+fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
+    binning=sum_config["energy_binning"],
+    fine=sum_config["energy_binning"]["fine"]["interpolation"]
 )
 airshower_rates["energy_bin_centers"] = irf.utils.bin_centers(
-    _fine_energy_bin_edges
+    fine_energy_bin_edges
 )
 
 # cosmic-ray-flux
@@ -165,7 +157,7 @@ for sk in SITES:
     ax.loglog()
     ax.set_xlabel("energy / GeV")
     ax.set_ylabel("relative re-weights/ 1")
-    ax.set_xlim([1e-1, 1e3])
+    ax.set_xlim([1e-1, 1e4])
     ax.set_ylim([1e-6, 1.0])
     fig.savefig(os.path.join(pa["out_dir"], "{:s}_weights.jpg".format(sk)))
     seb.close_figure(fig)
