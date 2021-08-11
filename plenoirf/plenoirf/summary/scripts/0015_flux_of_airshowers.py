@@ -32,7 +32,9 @@ SITES = irf_config["config"]["sites"]
 COSMICS = list(irf_config["config"]["particles"].keys())
 COSMICS.remove("gamma")
 
-geomagnetic_cutoff_fraction = 0.05
+geomagnetic_cutoff_fraction = sum_config["airshower_flux"][
+    "fraction_of_flux_below_geomagnetic_cutoff"
+]
 
 def _rigidity_to_total_energy(rigidity_GV):
     return rigidity_GV * 1.0

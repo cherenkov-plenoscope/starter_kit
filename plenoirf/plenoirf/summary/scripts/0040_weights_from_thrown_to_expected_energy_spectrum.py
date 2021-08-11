@@ -39,29 +39,29 @@ airshower_rates["energy_bin_centers"] = irf.utils.bin_centers(
 
 # cosmic-ray-flux
 # ----------------
-_airshower_differential_fluxes = irf.summary.read_airshower_differential_flux_zenith_compensated(
-    run_dir=pa["run_dir"],
-    summary_dir=pa["summary_dir"],
-    energy_bin_centers=airshower_rates["energy_bin_centers"],
-    sites=irf_config["config"]["sites"],
-    geomagnetic_cutoff_fraction=sum_config["airshower_flux"][
-        "fraction_of_flux_below_geomagnetic_cutoff"
-    ],
+_airshower_differential_fluxes = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
 # gamma-ray-flux of reference source
 # ----------------------------------
+fermi_3fgl = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+)
+
 (
     _gamma_differential_flux_per_m2_per_s_per_GeV,
     _gamma_name,
 ) = irf.summary.make_gamma_ray_reference_flux(
-    summary_dir=pa["summary_dir"],
+    fermi_3fgl=fermi_3fgl,
     gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
     energy_supports_GeV=airshower_rates["energy_bin_centers"],
 )
 for sk in SITES:
     _airshower_differential_fluxes[sk]["gamma"] = {
-        "differential_flux": _gamma_differential_flux_per_m2_per_s_per_GeV,
+        "differential_flux": {
+            "values": _gamma_differential_flux_per_m2_per_s_per_GeV,
+        },
     }
 
 airshower_rates["rates"] = {}
@@ -70,7 +70,7 @@ for sk in SITES:
     for pk in PARTICLES:
         airshower_rates["rates"][sk][pk] = (
             airshower_rates["energy_bin_centers"]
-            * _airshower_differential_fluxes[sk][pk]["differential_flux"]
+            * _airshower_differential_fluxes[sk][pk]["differential_flux"]["values"]
         )
 
 # Read features
