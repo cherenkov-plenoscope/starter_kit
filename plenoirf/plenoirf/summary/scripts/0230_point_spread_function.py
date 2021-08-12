@@ -34,10 +34,9 @@ reconstructed_energy = json_numpy.read_tree(
 
 # energy
 # ------
-energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
-)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance"]
 
 containment_percents = [68, 95]
 num_containment_fractions = len(containment_percents)
@@ -100,15 +99,15 @@ for sk in irf_config["config"]["sites"]:
     out[
         "comment"
     ] = "theta is angle between true and reco. direction of source. "
-    out["energy_bin_edges_GeV"] = energy_bin_edges
+    out["energy_bin_edges_GeV"] = energy_bin["edges"]
     for con in range(num_containment_fractions):
         tkey = "theta{:02d}".format(containment_percents[con])
-        out[tkey + "_rad"] = np.nan * np.ones(shape=num_energy_bins)
-        out[tkey + "_relunc"] = np.nan * np.ones(shape=num_energy_bins)
+        out[tkey + "_rad"] = np.nan * np.ones(shape=energy_bin["num_bins"])
+        out[tkey + "_relunc"] = np.nan * np.ones(shape=energy_bin["num_bins"])
 
-    for ebin in range(num_energy_bins):
-        energy_bin_start = energy_bin_edges[ebin]
-        energy_bin_stop = energy_bin_edges[ebin + 1]
+    for ebin in range(energy_bin["num_bins"]):
+        energy_bin_start = energy_bin["edges"][ebin]
+        energy_bin_stop = energy_bin["edges"][ebin + 1]
         energy_bin_mask = np.logical_and(
             reco_energy >= energy_bin_start, reco_energy < energy_bin_stop
         )
@@ -144,7 +143,7 @@ for sk in irf_config["config"]["sites"]:
     tt_relunc = out["theta68_relunc"]
     seb.ax_add_histogram(
         ax=ax,
-        bin_edges=energy_bin_edges,
+        bin_edges=energy_bin["edges"],
         bincounts=tt_deg,
         linestyle="-",
         linecolor="k",

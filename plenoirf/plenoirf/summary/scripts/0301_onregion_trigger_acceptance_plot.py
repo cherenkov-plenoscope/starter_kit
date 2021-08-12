@@ -29,20 +29,18 @@ IDX_FINAL_ONREGION = 1
 A = json_numpy.read_tree(
     opj(pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles")
 )
-A_energy_bin_edges, _ = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
-)
 
 # trigger fix onregion
 # --------------------
 G = json_numpy.read_tree(
     opj(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
-G_energy_bin_edges, _ = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
+
+energy_binning = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
+A_energy_bin = energy_binning["trigger_acceptance"]
+G_energy_bin = energy_binning["trigger_acceptance_onregion"]
 
 onregion_radii_deg = np.array(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
@@ -73,7 +71,7 @@ for site_key in irf_config["config"]["sites"]:
 
             seb.ax_add_histogram(
                 ax=ax,
-                bin_edges=G_energy_bin_edges,
+                bin_edges=G_energy_bin["edges"],
                 bincounts=Q,
                 linestyle="-",
                 linecolor=particle_colors[particle_key],
@@ -103,7 +101,7 @@ for site_key in irf_config["config"]["sites"]:
             irf.summary.figure.SOURCES[source_key]["limits"]["passed_all_cuts"]
         )
         ax.loglog()
-        ax.set_xlim([G_energy_bin_edges[0], G_energy_bin_edges[-1]])
+        ax.set_xlim(G_energy_bin["limits"])
 
         fig.savefig(
             os.path.join(
@@ -144,7 +142,7 @@ for site_key in irf_config["config"]["sites"]:
 
                 seb.ax_add_histogram(
                     ax=ax,
-                    bin_edges=A_energy_bin_edges,
+                    bin_edges=A_energy_bin["edges"],
                     bincounts=acc_trg,
                     linestyle="-",
                     linecolor="gray",
@@ -155,7 +153,7 @@ for site_key in irf_config["config"]["sites"]:
                 )
                 seb.ax_add_histogram(
                     ax=ax,
-                    bin_edges=G_energy_bin_edges,
+                    bin_edges=G_energy_bin["edges"],
                     bincounts=acc_trg_onregion,
                     linestyle="-",
                     linecolor=particle_colors[particle_key],
@@ -185,7 +183,7 @@ for site_key in irf_config["config"]["sites"]:
                     ]
                 )
                 ax.loglog()
-                ax.set_xlim([A_energy_bin_edges[0], A_energy_bin_edges[-1]])
+                ax.set_xlim(A_energy_bin["limits"])
                 fig.savefig(
                     opj(
                         pa["out_dir"],

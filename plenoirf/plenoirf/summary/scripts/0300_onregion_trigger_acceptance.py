@@ -39,11 +39,9 @@ pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
 ]
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
-
-energy_bin_edges, num_bins_energy = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
-)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance_onregion"]
 
 onregion_config = sum_config["on_off_measuremnent"]["onregion"]
 
@@ -127,8 +125,8 @@ for sk in irf_config["config"]["sites"]:
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
-        Qeff = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
-        Qunc = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
+        Qeff = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
+        Qunc = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
         for oridx in range(num_bins_onregion_radius):
             onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
 
@@ -166,7 +164,7 @@ for sk in irf_config["config"]["sites"]:
                 _q_eff,
                 _q_unc,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
-                energy_bin_edges_GeV=energy_bin_edges,
+                energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=point_thrown["primary"]["energy_GeV"],
                 mask_detected=mask_detected,
                 quantity_scatter=point_thrown["grid"]["area_thrown_m2"],
@@ -212,8 +210,8 @@ for sk in irf_config["config"]["sites"]:
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
-        Qeff = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
-        Qunc = np.zeros(shape=(num_bins_energy, num_bins_onregion_radius))
+        Qeff = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
+        Qunc = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
 
         for oridx in range(num_bins_onregion_radius):
             onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
@@ -260,7 +258,7 @@ for sk in irf_config["config"]["sites"]:
                 _q_eff,
                 _q_unc,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
-                energy_bin_edges_GeV=energy_bin_edges,
+                energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=diffuse_thrown["primary"]["energy_GeV"],
                 mask_detected=mask_probability_for_source_in_onregion,
                 quantity_scatter=(
