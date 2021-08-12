@@ -18,13 +18,9 @@ cosmic_rates = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0105_trigger_rates_for_cosmic_particles")
 )
 
-fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"],
-)
-energy_lower = fine_energy_bin_edges[0]
-energy_upper = fine_energy_bin_edges[-1]
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
+fine_energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["interpolation"]
 
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
 analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
@@ -49,7 +45,7 @@ for site_key in irf_config["config"]["sites"]:
         )
 
         ax.plot(
-            fine_energy_bin_centers,
+            fine_energy_bin["centers"],
             dT_dE_vs_threshold[tt, :],
             color=particle_colors[particle_key],
             label=particle_key,
@@ -75,7 +71,7 @@ for site_key in irf_config["config"]["sites"]:
     ax.set_xlabel("energy / GeV")
     ax.set_ylabel("differential trigger-rate /\ns$^{-1}$ (GeV)$^{-1}$")
     ax.loglog()
-    ax.set_xlim([energy_lower, energy_upper])
+    ax.set_xlim([fine_energy_bin["edges"][0], fine_energy_bin["edges"][-1]])
     ax.set_ylim([1e-3, 1e5])
     fig.savefig(
         os.path.join(

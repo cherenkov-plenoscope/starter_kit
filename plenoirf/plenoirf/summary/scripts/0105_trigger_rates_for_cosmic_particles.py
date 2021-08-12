@@ -21,18 +21,11 @@ acceptance = json_numpy.read_tree(
     )
 )
 
-energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
+energy_binning = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
-energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
-
-fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"],
-)
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
-fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
+energy_bin = energy_binning["trigger_acceptance"]
+fine_energy_bin = energy_binning["interpolation"]
 
 trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
 analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
@@ -79,13 +72,13 @@ for sk in irf_config["config"]["sites"]:
     dT_dE = []
     for tt in range(num_trigger_thresholds):
         area_m2 = np.interp(
-            x=fine_energy_bin_centers, xp=energy_bin_centers, fp=_area[tt, :]
+            x=fine_energy_bin["centers"], xp=energy_bin["centers"], fp=_area[tt, :]
         )
         gamma_differential_rate_per_s_per_GeV = (
             gamma_differential_flux_per_m2_per_s_per_GeV * area_m2
         )
         gamma_rate_per_s = np.sum(
-            gamma_differential_rate_per_s_per_GeV * fine_energy_bin_width
+            gamma_differential_rate_per_s_per_GeV * fine_energy_bin["width"]
         )
         T.append(gamma_rate_per_s)
         dT_dE.append(gamma_differential_rate_per_s_per_GeV)
@@ -118,8 +111,8 @@ for sk in irf_config["config"]["sites"]:
         _acceptance = np.array(acceptance[sk][ck]["diffuse"]["mean"])
         for tt in range(num_trigger_thresholds):
             acceptance_m2_sr = np.interp(
-                x=fine_energy_bin_centers,
-                xp=energy_bin_centers,
+                x=fine_energy_bin["centers"],
+                xp=energy_bin["centers"],
                 fp=_acceptance[tt, :],
             )
             cosmic_differential_rate_per_s_per_GeV = (
@@ -127,7 +120,7 @@ for sk in irf_config["config"]["sites"]:
                 * airshower_fluxes[sk][ck]["differential_flux"]["values"]
             )
             cosmic_rate_per_s = np.sum(
-                cosmic_differential_rate_per_s_per_GeV * fine_energy_bin_width
+                cosmic_differential_rate_per_s_per_GeV * fine_energy_bin["width"]
             )
             T.append(cosmic_rate_per_s)
             dT_dE.append(cosmic_differential_rate_per_s_per_GeV)
