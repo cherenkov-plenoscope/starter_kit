@@ -13,11 +13,9 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-fine_energy_bin_edges, _ = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"]
-)
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["interpolation"]
 
 # load catalog
 # ------------
@@ -36,7 +34,7 @@ with open(os.path.join(pa["out_dir"], "fermi_3fgl_catalog.json"), "wt") as f:
 ) = irf.summary.make_gamma_ray_reference_flux(
     fermi_3fgl=fermi_3fgl,
     gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
-    energy_supports_GeV=fine_energy_bin_centers,
+    energy_supports_GeV=energy_bin["centers"],
 )
 
 json_numpy.write(
@@ -49,7 +47,7 @@ json_numpy.write(
             "unit_tex": "m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$",
         },
         "energy": {
-            "values": fine_energy_bin_centers,
+            "values": energy_bin["centers"],
             "unit": "GeV",
             "unit_tex": "GeV",
         },

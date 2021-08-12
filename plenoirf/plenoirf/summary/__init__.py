@@ -224,7 +224,7 @@ def _guess_summary_config(run_dir):
             "fine": {
                 "trigger_acceptance": 2,
                 "trigger_acceptance_onregion": 1,
-                "interpolation": 356,
+                "interpolation": 73,
                 "point_spread_function": 1,
             },
         },

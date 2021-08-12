@@ -11,19 +11,19 @@ pa = irf.summary.paths_from_argv(argv)
 os.makedirs(pa["out_dir"], exist_ok=True)
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-ebin = {}
+# energy
+# ------
+energy = {}
 for scenario_key in sum_config["energy_binning"]["fine"]:
     edges, num_bins = irf.utils.power10space_bin_edges(
         binning=sum_config["energy_binning"],
-        fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
+        fine=sum_config["energy_binning"]["fine"][scenario_key]
     )
 
-    ebin[scenario_key] = {
+    energy[scenario_key] = {
         "edges": edges,
         "num_bins": num_bins,
         "centers": irf.utils.bin_centers(edges)
     }
 
-json_numpy.write(os.path.join(sk_gamma_dir, "energy.json"), ebin)
-
-
+json_numpy.write(os.path.join(pa["out_dir"], "energy.json"), energy)
