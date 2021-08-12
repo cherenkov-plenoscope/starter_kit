@@ -41,15 +41,9 @@ lo_ebin = (
     np.digitize(PIVOT_ENERGY_GEV, bins=odnde["energy_bin_edges"]["value"]) - 1
 )
 
-energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
-energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
-    + 1,
-)
-energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance_onregion"]
 
 fermi = irf.other_instruments.fermi_lat
 cta = irf.other_instruments.cherenkov_telescope_array_south
@@ -71,7 +65,7 @@ output_sed_styles = {
 oridx = 1
 
 enidx = irf.utils.find_closest_index_in_array_for_value(
-    arr=energy_bin_edges, val=PIVOT_ENERGY_GEV, max_rel_error=0.25,
+    arr=energy_bin["edges"], val=PIVOT_ENERGY_GEV, max_rel_error=0.25,
 )
 
 x_lim_s = np.array([1e0, 1e9])

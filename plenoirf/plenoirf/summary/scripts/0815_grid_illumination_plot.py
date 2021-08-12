@@ -18,11 +18,10 @@ passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
-energy_bin_edges_GeV = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    sum_config["energy_binning"]["num_bins"]["point_spread_function"] + 1,
-)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["point_spread_function"]
+
 num_grid_bins_on_edge = irf_config["grid_geometry"]["num_bins_diameter"]
 
 MAX_AIRSHOWER_PER_ENERGY_BIN = 100
@@ -85,9 +84,9 @@ for site_key in irf_config["config"]["sites"]:
         # ---------
         grid_intensities = []
         num_airshowers = []
-        for energy_idx in range(len(energy_bin_edges_GeV) - 1):
-            energy_GeV_start = energy_bin_edges_GeV[energy_idx]
-            energy_GeV_stop = energy_bin_edges_GeV[energy_idx + 1]
+        for energy_idx in range(energy_bin["num_bins"]):
+            energy_GeV_start = energy_bin["edges"][energy_idx]
+            energy_GeV_stop = energy_bin["edges"][energy_idx + 1]
             energy_mask = np.logical_and(
                 detected_events["primary"]["energy_GeV"] > energy_GeV_start,
                 detected_events["primary"]["energy_GeV"] <= energy_GeV_stop,
@@ -113,7 +112,7 @@ for site_key in irf_config["config"]["sites"]:
 
         # write
         # -----
-        for energy_idx in range(len(energy_bin_edges_GeV) - 1):
+        for energy_idx in range(energy_bin["num_bins"]):
             grid_intensity = grid_intensities[energy_idx]
             num_airshower = num_airshowers[energy_idx]
 
@@ -138,8 +137,8 @@ for site_key in irf_config["config"]["sites"]:
             ax.set_title(
                 "num. airshower {: 6d}, energy {: 7.1f} - {: 7.1f} GeV".format(
                     num_airshower,
-                    energy_bin_edges_GeV[energy_idx],
-                    energy_bin_edges_GeV[energy_idx + 1],
+                    energy_bin["edges"][energy_idx],
+                    energy_bin["edges"][energy_idx + 1],
                 ),
                 family="monospace",
             )
