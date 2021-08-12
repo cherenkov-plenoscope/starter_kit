@@ -23,8 +23,9 @@ fermi_3fgl = cosmic_fluxes.fermi_3fgl_catalog()
 
 # export catalog locally
 # ----------------------
-with open(os.path.join(pa["out_dir"], "fermi_3fgl_catalog.json"), "wt") as f:
-    f.write(json_numpy.dumps(fermi_3fgl, indent=4))
+json_numpy.write(
+    os.path.join(pa["out_dir"], "fermi_3fgl_catalog.json"), fermi_3fgl
+)
 
 # make reference source
 # ---------------------
@@ -51,9 +52,6 @@ json_numpy.write(
             "unit": "GeV",
             "unit_tex": "GeV",
         },
-        "energy_implicit": {
-            "fine": "interpolation",
-            "supports": "centers"
-        },
-    }
+        "energy_implicit": {"fine": "interpolation", "supports": "centers"},
+    },
 )
