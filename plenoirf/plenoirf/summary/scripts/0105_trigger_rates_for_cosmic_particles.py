@@ -46,18 +46,13 @@ airshower_fluxes = json_numpy.read_tree(
 
 # gamma-ray-flux of reference source
 # ----------------------------------
-fermi_3fgl = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+gamma_source = json_numpy.read(
+    os.path.join(
+        pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
+    )
 )
-
-(
-    gamma_differential_flux_per_m2_per_s_per_GeV,
-    gamma_name,
-) = irf.summary.make_gamma_ray_reference_flux(
-    fermi_3fgl=fermi_3fgl,
-    gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
-    energy_supports_GeV=fine_energy_bin_centers,
-)
+gamma_differential_flux_per_m2_per_s_per_GeV = gamma_source[
+    "differential_flux"]["values"]
 
 comment_differential = (
     "Differential trigger-rate, entire field-of-view. "
@@ -97,7 +92,7 @@ for sk in irf_config["config"]["sites"]:
     json_numpy.write(
         os.path.join(sk_gamma_dir, "differential_rate.json"),
         {
-            "comment": comment_differential + ", " + gamma_name,
+            "comment": comment_differential + ", " + gamma_source["name"],
             "unit": "s$^{-1} (GeV)$^{-1}$",
             "mean": dT_dE,
         },
@@ -105,7 +100,7 @@ for sk in irf_config["config"]["sites"]:
     json_numpy.write(
         os.path.join(sk_gamma_dir, "integral_rate.json"),
         {
-            "comment": comment_integral + ", " + gamma_name,
+            "comment": comment_integral + ", " + gamma_source["name"],
             "unit": "s$^{-1}$",
             "mean": T,
         },

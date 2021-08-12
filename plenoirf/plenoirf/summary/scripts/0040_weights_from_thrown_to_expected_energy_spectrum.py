@@ -45,24 +45,18 @@ _airshower_differential_fluxes = json_numpy.read_tree(
 
 # gamma-ray-flux of reference source
 # ----------------------------------
-fermi_3fgl = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+gamma_reference_source = json_numpy.read(
+    os.path.join(
+        pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
+    )
 )
 
-(
-    _gamma_differential_flux_per_m2_per_s_per_GeV,
-    _gamma_name,
-) = irf.summary.make_gamma_ray_reference_flux(
-    fermi_3fgl=fermi_3fgl,
-    gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
-    energy_supports_GeV=airshower_rates["energy_bin_centers"],
-)
 for sk in SITES:
-    _airshower_differential_fluxes[sk]["gamma"] = {
-        "differential_flux": {
-            "values": _gamma_differential_flux_per_m2_per_s_per_GeV,
-        },
-    }
+    _airshower_differential_fluxes[sk]["gamma"] = {}
+    _airshower_differential_fluxes[sk]["gamma"]["differential_flux"] = gamma_reference_source[
+        "differential_flux"
+    ]
+
 
 airshower_rates["rates"] = {}
 for sk in SITES:

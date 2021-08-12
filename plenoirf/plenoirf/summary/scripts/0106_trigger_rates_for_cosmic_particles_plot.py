@@ -31,15 +31,6 @@ analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
-fermi_3fgl = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
-)
-_, gamma_name = irf.summary.make_gamma_ray_reference_flux(
-    fermi_3fgl=fermi_3fgl,
-    gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
-    energy_supports_GeV=fine_energy_bin_centers,
-)
-
 for site_key in irf_config["config"]["sites"]:
 
     tt = 0

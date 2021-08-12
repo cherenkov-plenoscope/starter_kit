@@ -44,18 +44,14 @@ airshower_fluxes = json_numpy.read_tree(
 
 # gamma-ray-flux of reference source
 # ----------------------------------
-fermi_3fgl = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
+gamma_source = json_numpy.read(
+    os.path.join(
+        pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
+    )
 )
+gamma_differential_flux_per_m2_per_s_per_GeV = gamma_source[
+    "differential_flux"]["values"]
 
-(
-    gamma_differential_flux_per_m2_per_s_per_GeV,
-    gamma_name,
-) = irf.summary.make_gamma_ray_reference_flux(
-    fermi_3fgl=fermi_3fgl,
-    gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
-    energy_supports_GeV=fine_energy_bin_centers,
-)
 
 
 comment_differential = "Differential trigger-rate, reconstructed in onregion."
@@ -94,7 +90,7 @@ for site_key in irf_config["config"]["sites"]:
         {
             "comment": comment_differential
             + ", "
-            + gamma_name
+            + gamma_source["name"]
             + " VS onregion-radius",
             "unit": "s$^{-1} (GeV)$^{-1}$",
             "mean": dT_dE,
@@ -105,7 +101,7 @@ for site_key in irf_config["config"]["sites"]:
         {
             "comment": comment_integral
             + ", "
-            + gamma_name
+            + gamma_source["name"]
             + " VS onregion-radius",
             "unit": "s$^{-1}$",
             "mean": T,

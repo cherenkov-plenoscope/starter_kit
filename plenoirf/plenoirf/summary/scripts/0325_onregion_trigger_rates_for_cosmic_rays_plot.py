@@ -21,6 +21,12 @@ onregion_rates = json_numpy.read_tree(
     )
 )
 
+gamma_source = json_numpy.read(
+    os.path.join(
+        pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
+    )
+)
+
 onregion_radii_deg = np.array(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
 )
@@ -36,15 +42,6 @@ particle_colors = sum_config["plot"]["particle_colors"]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
-
-fermi_3fgl = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays", "gamma_sources.json")
-)
-_, gamma_name = irf.summary.make_gamma_ray_reference_flux(
-    fermi_3fgl=fermi_3fgl,
-    gamma_ray_reference_source=sum_config["gamma_ray_reference_source"],
-    energy_supports_GeV=fine_energy_bin_centers,
-)
 
 LiMa_alpha = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 
@@ -84,7 +81,7 @@ for site_key in irf_config["config"]["sites"]:
     ax.plot(onregion_radii_deg, LiMa_S, "ko")
     ax.plot(onregion_radii_deg, LiMa_S, "k")
     ax.set_title(
-        gamma_name
+        gamma_source["name"]
         + ", observation-time: {:d}s, ".format(int(observation_time_s))
         + r"Li and Ma Eq.17, $\alpha$: "
         + "{:.2f}".format(LiMa_alpha)

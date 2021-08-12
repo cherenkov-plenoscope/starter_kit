@@ -1,8 +1,6 @@
 #!/usr/bin/python
 import sys
-import numpy as np
 import plenoirf as irf
-import sparse_numeric_table as spt
 import os
 import json_numpy
 import cosmic_fluxes
@@ -14,13 +12,6 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
-
-
-# gamma-ray sources
-# -----------------
-fermi_catalog = cosmic_fluxes.fermi_3fgl_catalog()
-with open(os.path.join(pa["out_dir"], "gamma_sources.json"), "wt") as fout:
-    fout.write(json_numpy.dumps(fermi_catalog, indent=4))
 
 STOP_ENERGY = 1e4
 
