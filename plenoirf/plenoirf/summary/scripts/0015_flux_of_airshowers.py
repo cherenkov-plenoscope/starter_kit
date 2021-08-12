@@ -18,11 +18,9 @@ raw_cosmic_ray_fluxes = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays")
 )
 
-fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"],
-)
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["interpolation"]
 
 deflection_table = magnetic_deflection.read(
     work_dir=os.path.join(pa["run_dir"], "magnetic_deflection"),
@@ -47,7 +45,7 @@ cosmic_ray_fluxes = {}
 for pk in COSMICS:
     cosmic_ray_fluxes[pk] = {}
     cosmic_ray_fluxes[pk]["differential_flux"] = np.interp(
-        x=fine_energy_bin_centers,
+        x=energy_bin["centers"],
         xp=raw_cosmic_ray_fluxes[pk]["energy"]["values"],
         fp=raw_cosmic_ray_fluxes[pk]["differential_flux"]["values"],
     )
@@ -64,7 +62,7 @@ for sk in SITES:
                 "geomagnetic_cutoff_rigidity_GV"
             ]
         )
-        below_cutoff = fine_energy_bin_centers < cutoff_energy
+        below_cutoff = energy_bin["centers"] < cutoff_energy
         air_shower_fluxes[sk][pk]["differential_flux"] = np.array(
             cosmic_ray_fluxes[pk]["differential_flux"]
         )
@@ -80,7 +78,7 @@ for sk in SITES:
     for pk in COSMICS:
         air_shower_fluxes_zc[sk][pk] = {}
         primary_zenith_deg = np.interp(
-            x=fine_energy_bin_centers,
+            x=energy_bin["centers"],
             xp=deflection_table[sk][pk]["energy_GeV"],
             fp=deflection_table[sk][pk]["primary_zenith_deg"],
         )

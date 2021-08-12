@@ -23,10 +23,9 @@ passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
-energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["point_spread_function"],
-)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["point_spread_function"]
 
 span_hist_1_1 = [0.2, 0.15, 0.75, 0.8]
 
@@ -116,9 +115,9 @@ for sk in irf_config["config"]["sites"]:
         tprs = []
         ppvs = []
         num_events = []
-        for i in range(num_energy_bins):
-            e_start = energy_bin_edges[i]
-            e_stop = energy_bin_edges[i + 1]
+        for i in range(energy_bin["num_bins"]):
+            e_start = energy_bin["edges"][i]
+            e_stop = energy_bin["edges"][i + 1]
             e_mask = np.logical_and(
                 mrg_chc_fts["primary"]["energy_GeV"] >= e_start,
                 mrg_chc_fts["primary"]["energy_GeV"] < e_stop,
@@ -149,7 +148,7 @@ for sk in irf_config["config"]["sites"]:
         ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
         seb.ax_add_histogram(
             ax=ax,
-            bin_edges=energy_bin_edges,
+            bin_edges=energy_bin["edges"],
             bincounts=tprs,
             linestyle="-",
             linecolor="k",
@@ -160,7 +159,7 @@ for sk in irf_config["config"]["sites"]:
         )
         seb.ax_add_histogram(
             ax=ax,
-            bin_edges=energy_bin_edges,
+            bin_edges=energy_bin["edges"],
             bincounts=ppvs,
             linestyle=":",
             linecolor="k",
@@ -171,7 +170,7 @@ for sk in irf_config["config"]["sites"]:
         )
         ax.set_xlabel("energy / GeV")
         ax.set_ylabel("true-positive-rate -\npositive-predictive-value :\n")
-        ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
+        ax.set_xlim([energy_bin["edges"][0], energy_bin["edges"][-1]])
         ax.set_ylim([0, 1])
         ax.semilogx()
         fig.savefig(
@@ -182,7 +181,7 @@ for sk in irf_config["config"]["sites"]:
         json_numpy.write(
             opj(site_particle_dir, key + ".json"),
             {
-                "energy_bin_edges_GeV": energy_bin_edges,
+                "energy_bin_edges_GeV": energy_bin["edges"],
                 "num_events": num_events,
                 "true_positive_rate": tprs,
                 "positive_predictive_value": ppvs,
@@ -193,9 +192,9 @@ for sk in irf_config["config"]["sites"]:
         key = "true_size_over_extracted_size_vs_true_energy"
         true_over_reco_ratios = []
         num_events = []
-        for i in range(num_energy_bins):
-            e_start = energy_bin_edges[i]
-            e_stop = energy_bin_edges[i + 1]
+        for i in range(energy_bin["num_bins"]):
+            e_start = energy_bin["edges"][i]
+            e_stop = energy_bin["edges"][i + 1]
             e_mask = np.logical_and(
                 mrg_chc_fts["primary"]["energy_GeV"] >= e_start,
                 mrg_chc_fts["primary"]["energy_GeV"] < e_stop,
@@ -225,7 +224,7 @@ for sk in irf_config["config"]["sites"]:
         ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
         seb.ax_add_histogram(
             ax=ax,
-            bin_edges=energy_bin_edges,
+            bin_edges=energy_bin["edges"],
             bincounts=true_over_reco_ratios,
             linestyle="-",
             linecolor="k",
@@ -237,7 +236,7 @@ for sk in irf_config["config"]["sites"]:
         ax.axhline(y=1, color="k", linestyle=":")
         ax.set_xlabel("energy / GeV")
         ax.set_ylabel("Cherenkov-size true/extracted / 1")
-        ax.set_xlim([np.min(energy_bin_edges), np.max(energy_bin_edges)])
+        ax.set_xlim([energy_bin["edges"][0], energy_bin["edges"][-1]])
         ax.semilogx()
         fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
@@ -247,7 +246,7 @@ for sk in irf_config["config"]["sites"]:
         json_numpy.write(
             opj(site_particle_dir, key + ".json"),
             {
-                "energy_bin_edges_GeV": energy_bin_edges,
+                "energy_bin_edges_GeV": energy_bin["edges"],
                 "num_events": num_events,
                 "true_over_reco_ratios": true_over_reco_ratios,
             },

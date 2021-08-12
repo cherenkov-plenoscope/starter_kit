@@ -19,14 +19,9 @@ airshower_fluxes = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
-fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"],
-)
-energy_lower = fine_energy_bin_edges[0]
-energy_upper = fine_energy_bin_edges[-1]
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
-
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["interpolation"]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
@@ -35,7 +30,7 @@ for sk in irf_config["config"]["sites"]:
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for pk in airshower_fluxes[sk]:
         ax.plot(
-            fine_energy_bin_centers,
+            energy_bin["centers"],
             airshower_fluxes[sk][pk]["differential_flux"]["values"],
             label=pk,
             color=particle_colors[pk],
@@ -46,7 +41,7 @@ for sk in irf_config["config"]["sites"]:
         + "m$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$"
     )
     ax.loglog()
-    ax.set_xlim([energy_lower, energy_upper])
+    ax.set_xlim([energy_bin["edges"][0], energy_bin["edges"][-1]])
     ax.legend()
     fig.savefig(
         os.path.join(

@@ -28,11 +28,6 @@ passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
-energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
-)
-
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
 

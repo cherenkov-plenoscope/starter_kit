@@ -15,10 +15,11 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
+energy_binning = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
+energy_bin = energy_binning["trigger_acceptance"]
+fine_energy_bin = energy_binning["interpolation"]
 
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
@@ -29,13 +30,7 @@ particle_colors = sum_config["plot"]["particle_colors"]
 # ===============
 
 airshower_rates = {}
-fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"],
-)
-airshower_rates["energy_bin_centers"] = irf.utils.bin_centers(
-    fine_energy_bin_edges
-)
+airshower_rates["energy_bin_centers"] = fine_energy_bin["centers"]
 
 # cosmic-ray-flux
 # ----------------
@@ -75,10 +70,8 @@ for sk in SITES:
 tables = {}
 
 thrown_spectrum = {}
-thrown_spectrum["energy_bin_edges"] = energy_bin_edges
-thrown_spectrum["energy_bin_centers"] = irf.utils.bin_centers(
-    thrown_spectrum["energy_bin_edges"]
-)
+thrown_spectrum["energy_bin_edges"] = energy_bin["edges"]
+thrown_spectrum["energy_bin_centers"] = energy_bin["centers"]
 thrown_spectrum["rates"] = {}
 
 energy_ranges = {}
@@ -113,7 +106,7 @@ for sk in SITES:
         w_energy = np.geomspace(
             energy_ranges[sk][pk]["min"],
             energy_ranges[sk][pk]["max"],
-            num_fine_energy_bins,
+            fine_energy_bin["num_bins"],
         )
         w_weight = irf.analysis.reweight.reweight(
             initial_energies=thrown_spectrum["energy_bin_centers"],
