@@ -47,27 +47,17 @@ for sk in SITES:
 
 
 # prepare integration-intervalls
-energy_start_GeV = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_stop_GeV = sum_config["energy_binning"]["upper_edge_GeV"]
-num_fine_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "interpolation"
-]
-fine_energy_bin_edges = np.geomspace(
-    energy_start_GeV, energy_stop_GeV, num_fine_energy_bins + 1,
-)
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
-fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
+fine_energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["interpolation"]
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance_onregion"]
 
-num_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "trigger_acceptance_onregion"
-]
-energy_bin_edges = np.geomspace(
-    energy_start_GeV, energy_stop_GeV, num_energy_bins + 1,
-)
 
 fine_energy_bin_edge_matches = []
-for energy in energy_bin_edges:
-    idx_near = np.argmin(np.abs(fine_energy_bin_edges - energy))
+for energy in energy_bin["edges"]:
+    idx_near = np.argmin(np.abs(fine_energy_bin["edges"] - energy))
     fine_energy_bin_edge_matches.append(idx_near)
 
 num_bins_onregion_radius = len(
@@ -80,21 +70,21 @@ for sk in SITES:
         os.makedirs(site_particle_dir, exist_ok=True)
 
         rate_reco_energy_per_s = np.zeros(
-            shape=(num_energy_bins, num_bins_onregion_radius)
+            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
         )
         for ordix in range(num_bins_onregion_radius):
 
-            rate_true_energy_per_s = np.zeros(num_energy_bins)
-            for ee in range(num_energy_bins):
+            rate_true_energy_per_s = np.zeros(energy_bin["num_bins"])
+            for ee in range(energy_bin["num_bins"]):
                 estart = fine_energy_bin_edge_matches[ee]
                 estop = fine_energy_bin_edge_matches[ee + 1]
 
                 rate_true_energy_per_s[ee] = np.sum(
                     diff_rate_per_s_per_GeV[sk][pk][:, ordix][estart:estop]
-                    * fine_energy_bin_width[estart:estop]
+                    * fine_energy_bin["width"][estart:estop]
                 )
 
-            for ee in range(num_energy_bins):
+            for ee in range(energy_bin["num_bins"]):
                 rate_reco_energy_per_s[:, ordix] += (
                     energy_confusion[sk][pk][ee] * rate_true_energy_per_s[ee]
                 )

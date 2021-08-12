@@ -21,15 +21,9 @@ diff_sensitivity = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
 )
 
-energy_lower = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper = sum_config["energy_binning"]["upper_edge_GeV"]
-energy_bin_edges = np.geomspace(
-    energy_lower,
-    energy_upper,
-    sum_config["energy_binning"]["num_bins"]["trigger_acceptance_onregion"]
-    + 1,
-)
-energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance_onregion"]
 
 fermi = irf.other_instruments.fermi_lat
 cta = irf.other_instruments.cherenkov_telescope_array_south
@@ -139,8 +133,10 @@ for site_key in irf_config["config"]["sites"]:
     com["energy"] = []
     com["differential_flux"] = []
 
-    for ii in range(len(energy_bin_edges) - 1):
-        com["energy"].append([energy_bin_edges[ii], energy_bin_edges[ii + 1]])
+    for ii in range(energy_bin["num_bins"]):
+        com["energy"].append(
+            [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
+        )
         _dFdE_sens = np.array(
             diff_sensitivity[site_key]["differential_sensitivity"][
                 "differential_flux"

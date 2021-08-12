@@ -34,16 +34,9 @@ energy_confusion = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
 )
 
-num_bins_energy = sum_config["energy_binning"]["num_bins"][
-    "trigger_acceptance_onregion"
-]
-energy_bin_edges = np.geomspace(
-    sum_config["energy_binning"]["lower_edge_GeV"],
-    sum_config["energy_binning"]["upper_edge_GeV"],
-    num_bins_energy + 1,
-)
-energy_bin_centers = irf.utils.bin_centers(bin_edges=energy_bin_edges)
-energy_bin_widths = irf.utils.bin_width(bin_edges=energy_bin_edges)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance_onregion"]
 
 detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
@@ -77,7 +70,7 @@ for sk in SITES:
     critical_dFdE = {}
     for scenario in irf.analysis.differential_sensitivity.SCENARIOS:
         critical_dFdE[scenario] = np.nan * np.ones(
-            shape=(num_bins_energy, num_onregion_sizes, num_observation_times)
+            shape=(energy_bin["num_bins"], num_onregion_sizes, num_observation_times)
         )
 
     assert (
@@ -103,7 +96,7 @@ for sk in SITES:
 
         # background rates
         # ----------------
-        cosmic_ray_rate_per_s = np.zeros(num_bins_energy)
+        cosmic_ray_rate_per_s = np.zeros(energy_bin["num_bins"])
         for ck in COSMIC_RAYS:
             cosmic_ray_rate_per_s += rate_onregion_reco_energy[sk][ck][
                 "rate_in_onregion_and_reconstructed_energy"
@@ -133,7 +126,7 @@ for sk in SITES:
 
             for scenario in irf.analysis.differential_sensitivity.SCENARIOS:
                 dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
-                    energy_bin_edges_GeV=energy_bin_edges,
+                    energy_bin_edges_GeV=energy_bin["edges"],
                     signal_area_vs_energy_m2=signal_area_m2[scenario],
                     signal_rate_vs_energy_per_s=critical_rate_per_s,
                 )
@@ -143,7 +136,7 @@ for sk in SITES:
     json_numpy.write(
         os.path.join(pa["out_dir"], sk, "differential_sensitivity" + ".json"),
         {
-            "energy_bin_edges": energy_bin_edges,
+            "energy_bin_edges": energy_bin["edges"],
             "observation_times": observation_times,
             "differential_flux": critical_dFdE,
             "comment": (
