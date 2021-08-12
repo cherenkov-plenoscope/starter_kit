@@ -18,18 +18,11 @@ onregion_acceptance = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-energy_bin_edges, _ = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
+energy_binning = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
-energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
-
-fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"],
-)
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
-fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
+energy_bin = energy_binning["trigger_acceptance_onregion"]
+fine_energy_bin = energy_binning["interpolation"]
 
 onregion_radii_deg = np.array(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
@@ -67,20 +60,20 @@ for site_key in irf_config["config"]["sites"]:
     os.makedirs(site_gamma_dir, exist_ok=True)
 
     T = np.zeros(shape=(num_bins_onregion_radius))
-    dT_dE = np.zeros(shape=(num_fine_energy_bins, num_bins_onregion_radius))
+    dT_dE = np.zeros(shape=(fine_energy_bin["num_bins"], num_bins_onregion_radius))
     for oridx in range(num_bins_onregion_radius):
         _area = np.array(
             onregion_acceptance[site_key]["gamma"]["point"]["mean"]
         )[:, oridx]
 
         area_m2 = np.interp(
-            x=fine_energy_bin_centers, xp=energy_bin_centers, fp=_area
+            x=fine_energy_bin["centers"], xp=energy_bin["centers"], fp=_area
         )
         gamma_differential_rate_per_s_per_GeV = (
             gamma_differential_flux_per_m2_per_s_per_GeV * area_m2
         )
         gamma_rate_per_s = np.sum(
-            gamma_differential_rate_per_s_per_GeV * fine_energy_bin_width
+            gamma_differential_rate_per_s_per_GeV * fine_energy_bin["width"]
         )
         T[oridx] = gamma_rate_per_s
         dT_dE[:, oridx] = gamma_differential_rate_per_s_per_GeV
@@ -116,7 +109,7 @@ for site_key in irf_config["config"]["sites"]:
 
         T = np.zeros(shape=(num_bins_onregion_radius))
         dT_dE = np.zeros(
-            shape=(num_fine_energy_bins, num_bins_onregion_radius)
+            shape=(fine_energy_bin["num_bins"], num_bins_onregion_radius)
         )
         for oridx in range(num_bins_onregion_radius):
             _acceptance = np.array(
@@ -124,8 +117,8 @@ for site_key in irf_config["config"]["sites"]:
             )[:, oridx]
 
             acceptance_m2_sr = np.interp(
-                x=fine_energy_bin_centers,
-                xp=energy_bin_centers,
+                x=fine_energy_bin["centers"],
+                xp=energy_bin["centers"],
                 fp=_acceptance,
             )
             cosmic_differential_rate_per_s_per_GeV = (
@@ -135,7 +128,7 @@ for site_key in irf_config["config"]["sites"]:
                 ]
             )
             cosmic_rate_per_s = np.sum(
-                cosmic_differential_rate_per_s_per_GeV * fine_energy_bin_width
+                cosmic_differential_rate_per_s_per_GeV * fine_energy_bin["width"]
             )
             T[oridx] = cosmic_rate_per_s
             dT_dE[:, oridx] = cosmic_differential_rate_per_s_per_GeV

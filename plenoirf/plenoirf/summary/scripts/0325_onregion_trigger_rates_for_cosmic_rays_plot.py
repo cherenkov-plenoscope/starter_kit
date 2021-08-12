@@ -32,11 +32,9 @@ onregion_radii_deg = np.array(
 )
 num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
-fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"],
-)
-fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
+fine_energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["interpolation"]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
@@ -108,7 +106,7 @@ for site_key in irf_config["config"]["sites"]:
         text_y = 0.7
         for particle_key in irf_config["config"]["particles"]:
             ax.plot(
-                fine_energy_bin_centers,
+                fine_energy_bin["centers"],
                 np.array(
                     onregion_rates[site_key][particle_key][
                         "differential_rate"
@@ -136,7 +134,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             text_y += 0.06
 
-        ax.set_xlim([fine_energy_bin_edges[0], fine_energy_bin_edges[-1]])
+        ax.set_xlim(fine_energy_bin["limits"])
         ax.set_ylim([1e-5, 1e3])
         ax.loglog()
         ax.set_xlabel("Energy / GeV")
