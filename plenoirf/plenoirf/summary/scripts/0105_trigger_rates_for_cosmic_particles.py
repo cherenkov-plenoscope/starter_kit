@@ -72,7 +72,9 @@ for sk in irf_config["config"]["sites"]:
     dT_dE = []
     for tt in range(num_trigger_thresholds):
         area_m2 = np.interp(
-            x=fine_energy_bin["centers"], xp=energy_bin["centers"], fp=_area[tt, :]
+            x=fine_energy_bin["centers"],
+            xp=energy_bin["centers"],
+            fp=_area[tt, :],
         )
         gamma_differential_rate_per_s_per_GeV = (
             gamma_differential_flux_per_m2_per_s_per_GeV * area_m2
@@ -120,7 +122,8 @@ for sk in irf_config["config"]["sites"]:
                 * airshower_fluxes[sk][ck]["differential_flux"]["values"]
             )
             cosmic_rate_per_s = np.sum(
-                cosmic_differential_rate_per_s_per_GeV * fine_energy_bin["width"]
+                cosmic_differential_rate_per_s_per_GeV
+                * fine_energy_bin["width"]
             )
             T.append(cosmic_rate_per_s)
             dT_dE.append(cosmic_differential_rate_per_s_per_GeV)

@@ -60,7 +60,9 @@ for site_key in irf_config["config"]["sites"]:
     os.makedirs(site_gamma_dir, exist_ok=True)
 
     T = np.zeros(shape=(num_bins_onregion_radius))
-    dT_dE = np.zeros(shape=(fine_energy_bin["num_bins"], num_bins_onregion_radius))
+    dT_dE = np.zeros(
+        shape=(fine_energy_bin["num_bins"], num_bins_onregion_radius)
+    )
     for oridx in range(num_bins_onregion_radius):
         _area = np.array(
             onregion_acceptance[site_key]["gamma"]["point"]["mean"]
@@ -128,7 +130,8 @@ for site_key in irf_config["config"]["sites"]:
                 ]
             )
             cosmic_rate_per_s = np.sum(
-                cosmic_differential_rate_per_s_per_GeV * fine_energy_bin["width"]
+                cosmic_differential_rate_per_s_per_GeV
+                * fine_energy_bin["width"]
             )
             T[oridx] = cosmic_rate_per_s
             dT_dE[:, oridx] = cosmic_differential_rate_per_s_per_GeV

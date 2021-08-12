@@ -125,8 +125,12 @@ for sk in irf_config["config"]["sites"]:
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
-        Qeff = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
-        Qunc = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
+        Qeff = np.zeros(
+            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
+        )
+        Qunc = np.zeros(
+            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
+        )
         for oridx in range(num_bins_onregion_radius):
             onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
 
@@ -210,8 +214,12 @@ for sk in irf_config["config"]["sites"]:
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
-        Qeff = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
-        Qunc = np.zeros(shape=(energy_bin["num_bins"], num_bins_onregion_radius))
+        Qeff = np.zeros(
+            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
+        )
+        Qunc = np.zeros(
+            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
+        )
 
         for oridx in range(num_bins_onregion_radius):
             onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
