@@ -71,7 +71,7 @@ for site_key in irf_config["config"]["sites"]:
     ax.set_xlabel("energy / GeV")
     ax.set_ylabel("differential trigger-rate /\ns$^{-1}$ (GeV)$^{-1}$")
     ax.loglog()
-    ax.set_xlim([fine_energy_bin["edges"][0], fine_energy_bin["edges"][-1]])
+    ax.set_xlim(fine_energy_bin["limits"])
     ax.set_ylim([1e-3, 1e5])
     fig.savefig(
         os.path.join(

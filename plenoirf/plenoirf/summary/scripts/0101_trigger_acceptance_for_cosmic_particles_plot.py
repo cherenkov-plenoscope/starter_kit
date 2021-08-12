@@ -84,7 +84,7 @@ for site_key in irf_config["config"]["sites"]:
                 ]
             )
             ax.loglog()
-            ax.set_xlim([energy_bin["edges"][0], energy_bin["edges"][-1]])
+            ax.set_xlim(energy_bin["limits"])
 
             if trigger_thresholds[tt] == analysis_trigger_threshold:
                 fig.savefig(

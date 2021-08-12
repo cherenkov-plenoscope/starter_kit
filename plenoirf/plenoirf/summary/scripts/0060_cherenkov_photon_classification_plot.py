@@ -170,7 +170,7 @@ for sk in irf_config["config"]["sites"]:
         )
         ax.set_xlabel("energy / GeV")
         ax.set_ylabel("true-positive-rate -\npositive-predictive-value :\n")
-        ax.set_xlim([energy_bin["edges"][0], energy_bin["edges"][-1]])
+        ax.set_xlim(energy_bin["limits"])
         ax.set_ylim([0, 1])
         ax.semilogx()
         fig.savefig(
@@ -236,7 +236,7 @@ for sk in irf_config["config"]["sites"]:
         ax.axhline(y=1, color="k", linestyle=":")
         ax.set_xlabel("energy / GeV")
         ax.set_ylabel("Cherenkov-size true/extracted / 1")
-        ax.set_xlim([energy_bin["edges"][0], energy_bin["edges"][-1]])
+        ax.set_xlim(energy_bin["limits"])
         ax.semilogx()
         fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")

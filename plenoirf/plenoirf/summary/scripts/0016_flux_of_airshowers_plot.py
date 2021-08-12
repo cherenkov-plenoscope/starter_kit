@@ -41,7 +41,7 @@ for sk in irf_config["config"]["sites"]:
         + "m$^{-2}$ s$^{-1}$ sr$^{-1}$ (GeV)$^{-1}$"
     )
     ax.loglog()
-    ax.set_xlim([energy_bin["edges"][0], energy_bin["edges"][-1]])
+    ax.set_xlim(energy_bin["limits"])
     ax.legend()
     fig.savefig(
         os.path.join(

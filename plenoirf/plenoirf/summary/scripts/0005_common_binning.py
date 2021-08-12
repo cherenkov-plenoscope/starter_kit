@@ -20,11 +20,17 @@ for scenario_key in sum_config["energy_binning"]["fine"]:
         fine=sum_config["energy_binning"]["fine"][scenario_key],
     )
 
+    assert len(edges) >= 2
+    assert np.all(np.gradient(edges) > 0.0)
+
     energy[scenario_key] = {
         "edges": edges,
         "num_bins": num_bins,
         "centers": irf.utils.bin_centers(edges),
         "width": irf.utils.bin_width(edges),
+        "start": edges[0],
+        "stop": edges[-1],
+        "limits": [edges[0], edges[-1]],
         "unit": "GeV",
         "unit_tex": "GeV",
     }
