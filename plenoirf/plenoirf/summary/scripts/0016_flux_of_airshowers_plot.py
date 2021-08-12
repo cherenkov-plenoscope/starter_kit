@@ -21,7 +21,7 @@ airshower_fluxes = json_numpy.read_tree(
 
 fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"]
+    fine=sum_config["energy_binning"]["fine"]["interpolation"],
 )
 energy_lower = fine_energy_bin_edges[0]
 energy_upper = fine_energy_bin_edges[-1]
@@ -50,8 +50,7 @@ for sk in irf_config["config"]["sites"]:
     ax.legend()
     fig.savefig(
         os.path.join(
-            pa["out_dir"],
-            "{:s}_airshower_differential_flux.jpg".format(sk),
+            pa["out_dir"], "{:s}_airshower_differential_flux.jpg".format(sk),
         )
     )
     seb.close_figure(fig)

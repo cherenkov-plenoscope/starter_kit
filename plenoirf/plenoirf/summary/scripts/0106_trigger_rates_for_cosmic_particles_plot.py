@@ -20,7 +20,7 @@ cosmic_rates = json_numpy.read_tree(
 
 fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"]
+    fine=sum_config["energy_binning"]["fine"]["interpolation"],
 )
 energy_lower = fine_energy_bin_edges[0]
 energy_upper = fine_energy_bin_edges[-1]

@@ -20,7 +20,7 @@ raw_cosmic_ray_fluxes = json_numpy.read_tree(
 
 fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"]
+    fine=sum_config["energy_binning"]["fine"]["interpolation"],
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 
@@ -35,6 +35,7 @@ COSMICS.remove("gamma")
 geomagnetic_cutoff_fraction = sum_config["airshower_flux"][
     "fraction_of_flux_below_geomagnetic_cutoff"
 ]
+
 
 def _rigidity_to_total_energy(rigidity_GV):
     return rigidity_GV * 1.0
@@ -59,13 +60,17 @@ for sk in SITES:
     for pk in COSMICS:
         air_shower_fluxes[sk][pk] = {}
         cutoff_energy = _rigidity_to_total_energy(
-            rigidity_GV=irf_config["config"]["sites"][sk]["geomagnetic_cutoff_rigidity_GV"]
+            rigidity_GV=irf_config["config"]["sites"][sk][
+                "geomagnetic_cutoff_rigidity_GV"
+            ]
         )
         below_cutoff = fine_energy_bin_centers < cutoff_energy
         air_shower_fluxes[sk][pk]["differential_flux"] = np.array(
             cosmic_ray_fluxes[pk]["differential_flux"]
         )
-        air_shower_fluxes[sk][pk]["differential_flux"][below_cutoff] *= geomagnetic_cutoff_fraction
+        air_shower_fluxes[sk][pk]["differential_flux"][
+            below_cutoff
+        ] *= geomagnetic_cutoff_fraction
 
 # zenith compensation
 # -------------------
@@ -101,6 +106,8 @@ for sk in SITES:
                 ),
                 "values": air_shower_fluxes_zc[sk][pk]["differential_flux"],
                 "unit": raw_cosmic_ray_fluxes[pk]["differential_flux"]["unit"],
-                "unit_tex": raw_cosmic_ray_fluxes[pk]["differential_flux"]["unit_tex"],
+                "unit_tex": raw_cosmic_ray_fluxes[pk]["differential_flux"][
+                    "unit_tex"
+                ],
             },
         )

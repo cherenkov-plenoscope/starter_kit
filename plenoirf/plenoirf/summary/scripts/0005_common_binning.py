@@ -17,13 +17,13 @@ energy = {}
 for scenario_key in sum_config["energy_binning"]["fine"]:
     edges, num_bins = irf.utils.power10space_bin_edges(
         binning=sum_config["energy_binning"],
-        fine=sum_config["energy_binning"]["fine"][scenario_key]
+        fine=sum_config["energy_binning"]["fine"][scenario_key],
     )
 
     energy[scenario_key] = {
         "edges": edges,
         "num_bins": num_bins,
-        "centers": irf.utils.bin_centers(edges)
+        "centers": irf.utils.bin_centers(edges),
     }
 
 json_numpy.write(os.path.join(pa["out_dir"], "energy.json"), energy)

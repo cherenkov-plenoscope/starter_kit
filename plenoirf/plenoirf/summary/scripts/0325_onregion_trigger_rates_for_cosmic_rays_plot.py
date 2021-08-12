@@ -34,7 +34,7 @@ num_bins_onregion_radius = onregion_radii_deg.shape[0]
 
 fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"]
+    fine=sum_config["energy_binning"]["fine"]["interpolation"],
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 

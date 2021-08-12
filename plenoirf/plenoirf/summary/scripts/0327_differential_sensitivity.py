@@ -63,7 +63,9 @@ COSMIC_RAYS.remove("gamma")
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
-critical_method = sum_config["on_off_measuremnent"]["estimator_for_critical_signal_rate"]
+critical_method = sum_config["on_off_measuremnent"][
+    "estimator_for_critical_signal_rate"
+]
 
 num_onregion_sizes = len(
     sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]

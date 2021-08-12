@@ -20,13 +20,13 @@ onregion_acceptance = json_numpy.read_tree(
 
 energy_bin_edges, _ = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
 )
 energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
 
 fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"]
+    fine=sum_config["energy_binning"]["fine"]["interpolation"],
 )
 fine_energy_bin_centers = irf.utils.bin_centers(fine_energy_bin_edges)
 fine_energy_bin_width = irf.utils.bin_width(fine_energy_bin_edges)
@@ -50,8 +50,8 @@ gamma_source = json_numpy.read(
     )
 )
 gamma_differential_flux_per_m2_per_s_per_GeV = gamma_source[
-    "differential_flux"]["values"]
-
+    "differential_flux"
+]["values"]
 
 
 comment_differential = "Differential trigger-rate, reconstructed in onregion."
@@ -130,7 +130,9 @@ for site_key in irf_config["config"]["sites"]:
             )
             cosmic_differential_rate_per_s_per_GeV = (
                 acceptance_m2_sr
-                * airshower_fluxes[site_key][cosmic_key]["differential_flux"]["values"]
+                * airshower_fluxes[site_key][cosmic_key]["differential_flux"][
+                    "values"
+                ]
             )
             cosmic_rate_per_s = np.sum(
                 cosmic_differential_rate_per_s_per_GeV * fine_energy_bin_width

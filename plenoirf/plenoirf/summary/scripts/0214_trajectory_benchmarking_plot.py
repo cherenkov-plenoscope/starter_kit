@@ -50,7 +50,7 @@ def write_theta_square_figure(
         tts_label = r"$" + theta_label + r"$ / $1^\circ{}$"
         tts = np.sqrt(theta_square_bin_edges_deg2)
 
-    fig = seb.figure( {"rows": 540, "cols": 960, "fontsize": 0.5})
+    fig = seb.figure({"rows": 540, "cols": 960, "fontsize": 0.5})
     ax = seb.add_axes(fig=fig, span=(0.1, 0.12, 0.8, 0.8))
     seb.ax_add_histogram(
         ax=ax,
@@ -100,7 +100,9 @@ for site_key in psf:
 
         for theta_key in ["theta", "theta_para", "theta_perp"]:
 
-            scenario_dir = os.path.join(pa["out_dir"], site_key, particle_key, theta_key)
+            scenario_dir = os.path.join(
+                pa["out_dir"], site_key, particle_key, theta_key
+            )
             os.makedirs(scenario_dir, exist_ok=True)
 
             t2 = psf[site_key][particle_key][
@@ -153,7 +155,10 @@ for site_key in psf:
 
                     write_theta_square_figure(
                         path=os.path.join(
-                            pa["out_dir"], site_key, particle_key, theta_key,
+                            pa["out_dir"],
+                            site_key,
+                            particle_key,
+                            theta_key,
                             "{:s}_{:s}_{:s}_rad{:06d}_ene{:06d}.jpg".format(
                                 site_key, particle_key, theta_key, rad, ene,
                             ),

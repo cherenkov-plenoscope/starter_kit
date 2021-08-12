@@ -22,7 +22,8 @@ diff_sensitivity = json_numpy.read_tree(
 )
 
 diff_sens_scenario = sum_config["differential_sensitivity"][
-    "gamma_ray_effective_area_scenario"]
+    "gamma_ray_effective_area_scenario"
+]
 PIVOT_ENERGY_GEV = 25.0
 
 fls = json_numpy.read(

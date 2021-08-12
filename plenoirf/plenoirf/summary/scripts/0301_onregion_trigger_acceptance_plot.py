@@ -31,7 +31,7 @@ A = json_numpy.read_tree(
 )
 A_energy_bin_edges, _ = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
 )
 
 # trigger fix onregion
@@ -41,7 +41,7 @@ G = json_numpy.read_tree(
 )
 G_energy_bin_edges, _ = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
 )
 
 onregion_radii_deg = np.array(

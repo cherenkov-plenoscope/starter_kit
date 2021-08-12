@@ -25,7 +25,7 @@ passing_quality = json_numpy.read_tree(
 
 energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["point_spread_function"]
+    fine=sum_config["energy_binning"]["fine"]["point_spread_function"],
 )
 
 span_hist_1_1 = [0.2, 0.15, 0.75, 0.8]

@@ -36,7 +36,7 @@ reconstructed_energy = json_numpy.read_tree(
 # ------
 energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
 )
 
 containment_percents = [68, 95]

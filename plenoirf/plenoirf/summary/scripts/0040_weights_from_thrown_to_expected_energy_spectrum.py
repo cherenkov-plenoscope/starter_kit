@@ -17,7 +17,7 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 
 energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
 )
 
 PARTICLES = irf_config["config"]["particles"]
@@ -31,7 +31,7 @@ particle_colors = sum_config["plot"]["particle_colors"]
 airshower_rates = {}
 fine_energy_bin_edges, num_fine_energy_bins = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["interpolation"]
+    fine=sum_config["energy_binning"]["fine"]["interpolation"],
 )
 airshower_rates["energy_bin_centers"] = irf.utils.bin_centers(
     fine_energy_bin_edges
@@ -53,9 +53,9 @@ gamma_reference_source = json_numpy.read(
 
 for sk in SITES:
     _airshower_differential_fluxes[sk]["gamma"] = {}
-    _airshower_differential_fluxes[sk]["gamma"]["differential_flux"] = gamma_reference_source[
+    _airshower_differential_fluxes[sk]["gamma"][
         "differential_flux"
-    ]
+    ] = gamma_reference_source["differential_flux"]
 
 
 airshower_rates["rates"] = {}
@@ -64,7 +64,9 @@ for sk in SITES:
     for pk in PARTICLES:
         airshower_rates["rates"][sk][pk] = (
             airshower_rates["energy_bin_centers"]
-            * _airshower_differential_fluxes[sk][pk]["differential_flux"]["values"]
+            * _airshower_differential_fluxes[sk][pk]["differential_flux"][
+                "values"
+            ]
         )
 
 # Read features

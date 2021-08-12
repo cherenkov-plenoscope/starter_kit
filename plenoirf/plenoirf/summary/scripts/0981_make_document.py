@@ -145,9 +145,7 @@ energy_resolution_figure_path = ppath(
     site_key + "_gamma_resolution.jpg",
 )
 energy_confusion_figure_path = ppath(
-    pa["summary_dir"],
-    "0066_energy_estimate_quality",
-    site_key + "_gamma.jpg",
+    pa["summary_dir"], "0066_energy_estimate_quality", site_key + "_gamma.jpg",
 )
 
 
@@ -419,17 +417,12 @@ with doc.create(
             "Classification-power for Cherenkov-photons emitted in airshowers initiated by gamma-rays."
         )
 
-with doc.create(
-    ltx.Section("Energy", numbering=False)
-):
+with doc.create(ltx.Section("Energy", numbering=False)):
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            energy_confusion_figure_path,
-            width=noesc(r"1.0\linewidth"),
+            energy_confusion_figure_path, width=noesc(r"1.0\linewidth"),
         )
-        fig.add_caption(
-            "Energy-confusion for gamma-rays."
-        )
+        fig.add_caption("Energy-confusion for gamma-rays.")
 
 
 with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):

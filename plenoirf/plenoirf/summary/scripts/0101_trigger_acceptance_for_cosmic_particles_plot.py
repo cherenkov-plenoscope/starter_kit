@@ -22,7 +22,7 @@ cr = json_numpy.read_tree(
 
 energy_bin_edges, _ = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"]
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
 )
 energy_lower = energy_bin_edges[0]
 energy_upper = energy_bin_edges[-1]

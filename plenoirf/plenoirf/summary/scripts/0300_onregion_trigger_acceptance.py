@@ -42,7 +42,7 @@ pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
 energy_bin_edges, num_bins_energy = irf.utils.power10space_bin_edges(
     binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"]
+    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
 )
 
 onregion_config = sum_config["on_off_measuremnent"]["onregion"]
