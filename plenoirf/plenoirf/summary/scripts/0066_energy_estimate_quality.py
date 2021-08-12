@@ -37,11 +37,9 @@ reconstructed_energy = json_numpy.read_tree(
         pa["summary_dir"], "0065_learning_airshower_maximum_and_energy"
     ),
 )
-
-energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance_onregion"],
-)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance_onregion"]
 
 cta = irf.other_instruments.cherenkov_telescope_array_south
 fermi_lat = irf.other_instruments.fermi_lat
@@ -95,10 +93,10 @@ for sk in irf_config["config"]["sites"]:
         cm = irf.utils.make_confusion_matrix(
             ax0_key="true_energy",
             ax0_values=true_energy,
-            ax0_bin_edges=energy_bin_edges,
+            ax0_bin_edges=energy_bin["edges"],
             ax1_key="reco_energy",
             ax1_values=reco_energy,
-            ax1_bin_edges=energy_bin_edges,
+            ax1_bin_edges=energy_bin["edges"],
             min_exposure_ax0=min_number_samples,
             default_low_exposure=0.0,
         )
@@ -112,7 +110,7 @@ for sk in irf_config["config"]["sites"]:
             ) = irf.analysis.energy.estimate_energy_resolution_vs_reco_energy(
                 true_energy=true_energy,
                 reco_energy=reco_energy,
-                reco_energy_bin_edges=energy_bin_edges,
+                reco_energy_bin_edges=energy_bin["edges"],
                 containment_fraction=0.68,
             )
 
@@ -121,7 +119,7 @@ for sk in irf_config["config"]["sites"]:
 
             seb.ax_add_histogram(
                 ax=ax1,
-                bin_edges=energy_bin_edges,
+                bin_edges=energy_bin["edges"],
                 bincounts=delta_energy,
                 bincounts_upper=delta_energy * (1 + delta_energy_relunc),
                 bincounts_lower=delta_energy * (1 - delta_energy_relunc),

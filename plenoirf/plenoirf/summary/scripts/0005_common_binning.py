@@ -24,6 +24,7 @@ for scenario_key in sum_config["energy_binning"]["fine"]:
         "edges": edges,
         "num_bins": num_bins,
         "centers": irf.utils.bin_centers(edges),
+        "width": irf.utils.bin_width(edges)
     }
 
 json_numpy.write(os.path.join(pa["out_dir"], "energy.json"), energy)

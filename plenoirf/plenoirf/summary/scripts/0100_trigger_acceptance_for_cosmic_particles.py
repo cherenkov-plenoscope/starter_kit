@@ -5,9 +5,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import json_numpy
-import matplotlib
 
-matplotlib.use("Agg")
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -25,10 +23,9 @@ pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
 ]
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
-energy_bin_edges, num_energy_bins = irf.utils.power10space_bin_edges(
-    binning=sum_config["energy_binning"],
-    fine=sum_config["energy_binning"]["fine"]["trigger_acceptance"],
-)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["trigger_acceptance"]
 
 trigger_thresholds = sum_config["trigger"]["ratescan_thresholds_pe"]
 trigger_modus = sum_config["trigger"]["modus"]
@@ -87,7 +84,7 @@ for site_key in irf_config["config"]["sites"]:
                 _q_eff,
                 _q_unc,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
-                energy_bin_edges_GeV=energy_bin_edges,
+                energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=energy_GeV,
                 mask_detected=mask_detected,
                 quantity_scatter=quantity_scatter,
@@ -106,7 +103,7 @@ for site_key in irf_config["config"]["sites"]:
                     "Effective area for a point source. "
                     "VS trigger-ratescan-thresholds VS energy-bins"
                 ),
-                "energy_bin_edges_GeV": energy_bin_edges,
+                "energy_bin_edges_GeV": energy_bin["edges"],
                 "trigger": sum_config["trigger"],
                 "unit": "m$^{2}$",
                 "mean": value,
@@ -144,7 +141,7 @@ for site_key in irf_config["config"]["sites"]:
                 _q_eff,
                 _q_unc,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
-                energy_bin_edges_GeV=energy_bin_edges,
+                energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=energy_GeV,
                 mask_detected=mask_detected,
                 quantity_scatter=quantity_scatter,
@@ -164,7 +161,7 @@ for site_key in irf_config["config"]["sites"]:
                     "for a diffuse source. "
                     "VS trigger-ratescan-thresholds VS energy-bins"
                 ),
-                "energy_bin_edges_GeV": energy_bin_edges,
+                "energy_bin_edges_GeV": energy_bin["edges"],
                 "trigger": sum_config["trigger"],
                 "unit": "m$^{2}$ sr",
                 "mean": value,
