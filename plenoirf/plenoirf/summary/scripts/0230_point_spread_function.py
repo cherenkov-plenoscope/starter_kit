@@ -36,7 +36,7 @@ reconstructed_energy = json_numpy.read_tree(
 # ------
 energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
-)["trigger_acceptance"]
+)["trigger_acceptance_onregion"]
 
 containment_percents = [68, 95]
 num_containment_fractions = len(containment_percents)
