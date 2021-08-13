@@ -56,15 +56,9 @@ passing_trajectory_quality = json_numpy.read_tree(
 
 # energy
 # ------
-num_energy_bins = sum_config["energy_binning"]["num_bins"][
-    "point_spread_function"
-]
-energy_lower_edge = sum_config["energy_binning"]["lower_edge_GeV"]
-energy_upper_edge = sum_config["energy_binning"]["upper_edge_GeV"]
-energy_bin_edges = np.geomspace(
-    energy_lower_edge, energy_upper_edge, num_energy_bins + 1
-)
-energy_bin_centers = irf.utils.bin_centers(energy_bin_edges)
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["point_spread_function"]
 
 # core-radius bins
 # ----------------
@@ -222,26 +216,26 @@ for sk in irf_config["config"]["sites"]:
         # -------------------------------------
 
         hist_ene_rad = {
-            "energy_bin_edges_GeV": energy_bin_edges,
+            "energy_bin_edges_GeV": energy_bin["edges"],
             "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
-            "histogram": empty_dim2(num_energy_bins, num_core_radius_bins),
+            "histogram": empty_dim2(energy_bin["num_bins"], num_core_radius_bins),
         }
 
         hist_ene = {
-            "energy_bin_edges_GeV": energy_bin_edges,
-            "histogram": [None for ii in range(num_energy_bins)],
+            "energy_bin_edges_GeV": energy_bin["edges"],
+            "histogram": [None for ii in range(energy_bin["num_bins"])],
         }
 
         cont_ene_rad = {
-            "energy_bin_edges_GeV": energy_bin_edges,
+            "energy_bin_edges_GeV": energy_bin["edges"],
             "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
             "containment_fractions": containment_fractions,
-            "containment": empty_dim2(num_energy_bins, num_core_radius_bins),
+            "containment": empty_dim2(energy_bin["num_bins"], num_core_radius_bins),
         }
         cont_ene = {
-            "energy_bin_edges_GeV": energy_bin_edges,
+            "energy_bin_edges_GeV": energy_bin["edges"],
             "containment_fractions": containment_fractions,
-            "containment": [None for ii in range(num_energy_bins)],
+            "containment": [None for ii in range(energy_bin["num_bins"])],
         }
 
         for the in ["theta", "theta_para", "theta_perp"]:
@@ -252,10 +246,10 @@ for sk in irf_config["config"]["sites"]:
             c_ene_rad = dict(cont_ene_rad)
             c_ene = dict(cont_ene)
 
-            for ene in range(num_energy_bins):
+            for ene in range(energy_bin["num_bins"]):
 
-                energy_start = energy_bin_edges[ene]
-                energy_stop = energy_bin_edges[ene + 1]
+                energy_start = energy_bin["edges"][ene]
+                energy_stop = energy_bin["edges"][ene + 1]
                 ene_mask = np.logical_and(
                     rectab["primary/energy_GeV"] >= energy_start,
                     rectab["primary/energy_GeV"] < energy_stop,
@@ -385,10 +379,10 @@ for sk in irf_config["config"]["sites"]:
             - rectab["true_trajectory/cy_rad"]
         )
 
-        for ene in range(num_energy_bins):
+        for ene in range(energy_bin["num_bins"]):
 
-            ene_start = energy_bin_edges[ene]
-            ene_stop = energy_bin_edges[ene + 1]
+            ene_start = energy_bin["edges"][ene]
+            ene_stop = energy_bin["edges"][ene + 1]
 
             ene_mask = np.logical_and(
                 rectab["primary/energy_GeV"] >= ene_start,
