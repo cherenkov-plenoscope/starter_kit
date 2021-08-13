@@ -83,6 +83,7 @@ def run_parallel(run_dir, num_threads=6, polling_interval=1):
     )
     job_statii = {}
     job_handles = {}
+    job_stderr_len = {}
     for name in script_names:
         job_statii[name] = "pending"
         job_handles[name] = None
@@ -104,7 +105,11 @@ def run_parallel(run_dir, num_threads=6, polling_interval=1):
         for ii in range(num_jobs_to_submit):
             name = jobs_ready_to_run[ii]
             script_path = os.path.join(script_dir, name + ".py")
-            pii = subprocess.Popen(args=["python", script_path, run_dir])
+            pii = subprocess.Popen(
+                args=["python", script_path, run_dir],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
             job_statii[name] = "running"
             job_handles[name] = pii
 
@@ -116,6 +121,16 @@ def run_parallel(run_dir, num_threads=6, polling_interval=1):
                 if rc is None:
                     assert job_statii[name] == "running"
                 else:
+                    job_stdout, job_stderr = job_handles[name].communicate()
+                    job_stderr_len[name] = len(job_stderr)
+                    script_out_dir = os.path.join(run_dir, "summary", name)
+                    os.makedirs(script_out_dir, exist_ok=True)
+                    opath = os.path.join(script_out_dir, "stdout.md")
+                    epath = os.path.join(script_out_dir, "stderr.md")
+                    with open(opath, "wb") as fo, open(epath, "wb") as fe:
+                        fo.write(job_stdout)
+                        fe.write(job_stderr)
+
                     if rc >= 0:
                         job_statii[name] = "complete"
                         job_handles[name] = None
@@ -123,17 +138,20 @@ def run_parallel(run_dir, num_threads=6, polling_interval=1):
                         job_statii[name] = "error"
                         job_handles[name] = None
 
-        print("===============", num_polls, "[P]ending [R]unning [C]omplete")
+        print("\n\n")
+        print("[P]ending [R]unning [C]omplete len(stderr)")
+        print("------------------------------------------ Polls:", num_polls)
         for name in script_names:
             sta = job_statii[name]
             if sta == "pending":
-                print("{:<70s}     P . .".format(name))
+                print("{:<70s}    [P]. .  -".format(name))
             elif sta == "running":
-                print("{:<70s}       R .".format(name))
+                print("{:<70s}     .[R].  -".format(name))
             elif sta == "complete":
-                print("{:<70s}         C".format(name))
+                elen = job_stderr_len[name]
+                print("{:<70s}     . .[C] {:d}".format(name, elen))
             else:
-                print("{:<70s}     ?".format(name))
+                print("{:<70s}     ? ? ?".format(name))
 
         time.sleep(polling_interval)
         num_polls += 1
