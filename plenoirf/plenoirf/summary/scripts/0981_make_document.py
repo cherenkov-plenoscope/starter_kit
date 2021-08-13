@@ -156,8 +156,10 @@ angular_resolution_figure_path = ppath(
 differential_sensitivity_figure_path = ppath(
     pa["summary_dir"],
     "0330_differential_sensitivity_plot",
+    site_key,
+    "sed_style_{:s}".format(SED_STYLE_KEY),
     site_key
-    + "_differential_sensitivity_sed-style-{:s}.jpg".format(SED_STYLE_KEY),
+    + "_differential_sensitivity_sed_style_{:s}_scenario_broad_spectrum.jpg".format(SED_STYLE_KEY),
 )
 
 sens_vs_observation_time_figure_path = ppath(
@@ -231,7 +233,7 @@ with doc.create(ltx.Section("Performance", numbering=False)):
         )
         fig.add_caption(
             noesc(
-                r"Differential sensitivity for a gamma-ray-source that emitts only in the energy-range of one bin. "
+                r"Differential sensitivity for a point-like source of gamma-rays. "
                 r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
                 r"CTA-south \cite{cta2018baseline} in blue. "
             )
@@ -307,7 +309,7 @@ with doc.create(ltx.Section("Site", numbering=False)):
         fig.add_image(
             ppath(
                 pa["summary_dir"],
-                "0050_flux_of_airshowers_plot",
+                "0016_flux_of_airshowers_plot",
                 site_key + "_airshower_differential_flux.jpg",
             ),
             width=noesc(r"1.0\linewidth"),
