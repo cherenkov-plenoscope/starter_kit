@@ -36,35 +36,55 @@ def estimate_differential_sensitivity(
     return dfdE_per_s_per_m2_per_GeV
 
 
-SCENARIOS = [
-    "perfect_energy",
-    "broad_spectrum",
-    "line_spectrum",
-    "bell_spectrum",
-]
+SCENARIOS = {
+    "perfect_energy": {
+        "energy_axes_label": "true",
+    },
+    "broad_spectrum": {
+        "energy_axes_label": "reco",
+    },
+    "line_spectrum": {
+        "energy_axes_label": "reco",
+    },
+    "bell_spectrum": {
+        "energy_axes_label": "true",
+    },
+}
 
 
-def make_energy_confusion_matrix_for_scenario(
-    energy_confusion_matrix,
-    scenario="line_spectrum",
+def make_energy_confusion_matrices_for_signal_and_background(
+    signal_energy_confusion_matrix,
+    background_energy_confusion_matrices,
+    scenario_key="broad_spectrum",
 ):
-    if scenario == "perfect_energy":
-        cm = np.eye(N=energy_confusion_matrix.shape[0])
-    elif scenario == "broad_spectrum":
-        cm = np.array(energy_confusion_matrix)
-    elif scenario == "line_spectrum":
-        cm = np.eye(N=energy_confusion_matrix.shape[0]) * np.diag(
-            energy_confusion_matrix
+    s_cm = signal_energy_confusion_matrix
+    bg_cms = background_energy_confusion_matrices
+
+    if scenario_key == "perfect_energy":
+        _s_cm = np.eye(N=s_cm.shape[0])
+        _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
+
+    elif scenario_key == "broad_spectrum":
+        _s_cm = np.array(s_cm)
+        _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
+
+    elif scenario_key == "line_spectrum":
+        _s_cm = np.eye(N=s_cm.shape[0]) * np.diag(s_cm)
+        _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
+
+    elif scenario_key == "bell_spectrum":
+        containment = 0.68
+        mask = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
+            energy_confusion_matrix=s_cm,
+            containment=containment
         )
-    elif scenario == "bell_spectrum":
-        mask = make_energy_confusion_matrix_for_bell_spectrum(
-            energy_confusion_matrix=energy_confusion_matrix,
-            containment=0.68,
-        )
-        cm = mask * energy_confusion_matrix
+        _s_cm = containment * np.array(s_cm)
+        _bg_cms = {k: mask * bg_cms[k] for k in bg_cms}
+
     else:
-        raise KeyError("Unknown scenario: '{:s}'".format(scenario))
-    return cm
+        raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
+
+    return _s_cm, _bg_cms
 
 
 def estimate_critical_rate_vs_energy(
@@ -94,7 +114,7 @@ def estimate_critical_rate_vs_energy(
 
 
 
-def make_energy_confusion_matrix_for_bell_spectrum(
+def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
     energy_confusion_matrix,
     containment=0.68
 ):

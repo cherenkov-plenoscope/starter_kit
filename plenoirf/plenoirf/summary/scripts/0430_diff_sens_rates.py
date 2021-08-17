@@ -20,15 +20,9 @@ PARTICLES = irf_config["config"]["particles"]
 
 # prepare energy confusion
 # ------------------------
-_energy_confusion = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
+energy_interpretation = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0420_diff_sens_energy_interpretation"),
 )
-energy_confusion = {}
-for sk in SITES:
-    energy_confusion[sk] = {}
-    for pk in PARTICLES:
-        cm = _energy_confusion[sk][pk]["confusion_matrix"]
-        energy_confusion[sk][pk] = cm["confusion_bins_normalized_on_ax0"]
 
 # prepare onregion rates
 # ----------------------
@@ -44,7 +38,6 @@ for sk in SITES:
         diff_rate_per_s_per_GeV[sk][pk] = np.array(
             _onregion_rates[sk][pk]["differential_rate"]["mean"]
         )
-
 
 # prepare integration-intervalls
 fine_energy_bin = json_numpy.read(
