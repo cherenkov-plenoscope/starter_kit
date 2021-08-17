@@ -40,6 +40,7 @@ for sk in SITES:
         )
 
 # prepare integration-intervalls
+# ------------------------------
 fine_energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["interpolation"]
@@ -59,40 +60,38 @@ num_bins_onregion_radius = len(
 
 for sk in SITES:
     for pk in PARTICLES:
-        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
-        os.makedirs(site_particle_dir, exist_ok=True)
+        sk_pk_dir = os.path.join(pa["out_dir"], sk, pk)
+        os.makedirs(sk_pk_dir, exist_ok=True)
 
-        rate_reco_energy_per_s = np.zeros(
-            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
-        )
-        for ordix in range(num_bins_onregion_radius):
+        for dk in irf.analysis.differential_sensitivity.SCENARIOS:
+            rate_reco_energy_per_s = np.zeros(
+                shape=(energy_bin["num_bins"], num_bins_onregion_radius)
+            )
+            for ordix in range(num_bins_onregion_radius):
 
-            rate_true_energy_per_s = np.zeros(energy_bin["num_bins"])
-            for ee in range(energy_bin["num_bins"]):
-                estart = fine_energy_bin_edge_matches[ee]
-                estop = fine_energy_bin_edge_matches[ee + 1]
+                rate_true_energy_per_s = np.zeros(energy_bin["num_bins"])
+                for ee in range(energy_bin["num_bins"]):
+                    estart = fine_energy_bin_edge_matches[ee]
+                    estop = fine_energy_bin_edge_matches[ee + 1]
 
-                rate_true_energy_per_s[ee] = np.sum(
-                    diff_rate_per_s_per_GeV[sk][pk][:, ordix][estart:estop]
-                    * fine_energy_bin["width"][estart:estop]
-                )
+                    rate_true_energy_per_s[ee] = np.sum(
+                        diff_rate_per_s_per_GeV[sk][pk][:, ordix][estart:estop]
+                        * fine_energy_bin["width"][estart:estop]
+                    )
 
-            for ee in range(energy_bin["num_bins"]):
-                rate_reco_energy_per_s[:, ordix] += (
-                    energy_confusion[sk][pk][ee] * rate_true_energy_per_s[ee]
-                )
+                for ee in range(energy_bin["num_bins"]):
+                    rate_reco_energy_per_s[:, ordix] += (
+                        energy_interpretation[sk][pk][dk][ee] * rate_true_energy_per_s[ee]
+                    )
 
-        json_numpy.write(
-            os.path.join(
-                site_particle_dir,
-                "rate_in_onregion_and_reconstructed_energy.json",
-            ),
-            {
-                "comment": (
-                    "rate in onregion and reconstructed energy "
-                    "VS onregion-radius"
-                ),
-                "unit": "s$^{-1}$",
-                "rate": rate_reco_energy_per_s,
-            },
-        )
+            json_numpy.write(
+                os.path.join(sk_pk_dir, dk+".json"),
+                {
+                    "comment": (
+                        "rate in onregion and interpreted energy "
+                        "VS onregion-radius"
+                    ),
+                    "unit": "s$^{-1}$",
+                    "rate": rate_reco_energy_per_s,
+                },
+            )

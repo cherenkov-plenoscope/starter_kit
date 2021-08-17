@@ -18,7 +18,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 diff_sensitivity = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
+    os.path.join(pa["summary_dir"], "0440_diff_sens_estimate")
 )
 
 diff_sens_scenario = sum_config["differential_sensitivity"][
@@ -63,6 +63,7 @@ output_sed_styles = {
 }
 
 oridx = 1
+dk = "broad_spectrum"
 
 enidx = irf.utils.find_closest_index_in_array_for_value(
     arr=energy_bin["edges"], val=PIVOT_ENERGY_GEV, max_rel_error=0.25,
@@ -75,11 +76,7 @@ y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-10])  # np.array([1e3, 1e-16])
 
 for site_key in irf_config["config"]["sites"]:
 
-    observation_times = np.array(
-        diff_sensitivity[site_key]["differential_sensitivity"][
-            "observation_times"
-        ]
-    )
+    observation_times = diff_sensitivity[site_key][dk]["observation_times"]
 
     components = []
 
@@ -159,9 +156,7 @@ for site_key in irf_config["config"]["sites"]:
     # Plenoscope
     # ----------
 
-    portal_dFdE = diff_sensitivity[site_key]["differential_sensitivity"][
-        "differential_flux"
-    ][diff_sens_scenario]
+    portal_dFdE = diff_sensitivity[site_key][dk]["differential_flux"]
     com = {}
     com["observation_time"] = observation_times
     com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(observation_times))

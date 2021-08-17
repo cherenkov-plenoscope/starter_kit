@@ -18,7 +18,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 diff_sensitivity = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0327_differential_sensitivity")
+    os.path.join(pa["summary_dir"], "0440_diff_sens_estimate")
 )
 
 energy_bin = json_numpy.read(
@@ -69,11 +69,11 @@ x_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
 
 
-for site_key in irf_config["config"]["sites"]:
-    site_dir = os.path.join(pa["out_dir"], site_key)
-    os.makedirs(site_dir, exist_ok=True)
+for sk in irf_config["config"]["sites"]:
+    sk_dir = os.path.join(pa["out_dir"], sk)
+    os.makedirs(sk_dir, exist_ok=True)
 
-    for diff_sens_scenario in DIFF_SENS_SCENARIOS:
+    for dk in DIFF_SENS_SCENARIOS:
 
         components = []
 
@@ -125,9 +125,7 @@ for site_key in irf_config["config"]["sites"]:
         # Plenoscope diff
         # ---------------
         obstidx = find_observation_time_index(
-            observation_times=diff_sensitivity[site_key][
-                "differential_sensitivity"
-            ]["observation_times"],
+            observation_times=diff_sensitivity[sk][dk]["observation_times"],
             observation_time=observation_time,
         )
 
@@ -139,11 +137,9 @@ for site_key in irf_config["config"]["sites"]:
             com["energy"].append(
                 [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
             )
-            _dFdE_sens = np.array(
-                diff_sensitivity[site_key]["differential_sensitivity"][
-                    "differential_flux"
-                ][diff_sens_scenario]
-            )[ii, oridx, obstidx]
+            _dFdE_sens =diff_sensitivity[sk][dk]["differential_flux"][
+                ii, oridx, obstidx
+            ]
             com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
         com["label"] = (
             "Portal, " + observation_time_str + ", sys. {:.1e}".format(sys_unc)
@@ -154,7 +150,7 @@ for site_key in irf_config["config"]["sites"]:
         components.append(com)
 
         for sed_style_key in output_sed_styles:
-            sed_style_dir = os.path.join(site_dir, "sed_style_" + sed_style_key)
+            sed_style_dir = os.path.join(sk_dir, "sed_style_" + sed_style_key)
             os.makedirs(sed_style_dir, exist_ok=True)
             sed_style = output_sed_styles[sed_style_key]
 
@@ -198,7 +194,7 @@ for site_key in irf_config["config"]["sites"]:
                 os.path.join(
                     sed_style_dir,
                     "{:s}_differential_sensitivity_sed_style_{:s}_scenario_{:s}.jpg".format(
-                        site_key, sed_style_key, diff_sens_scenario
+                        sk, sed_style_key, dk
                     ),
                 )
             )
