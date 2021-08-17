@@ -299,14 +299,53 @@ def make_confusion_matrix(
                 np.ones(num_bins_ax1) * default_low_exposure
             )
 
+    cb_rel_unc, cb_abs_unc = estimate_rel_abs_uncertainty_in_confusion_bins(
+        confusion_bins=confusion_bins
+    )
     return {
         "ax0_key": ax0_key,
         "ax1_key": ax1_key,
         "ax0_bin_edges": ax0_bin_edges,
         "ax1_bin_edges": ax1_bin_edges,
         "confusion_bins": confusion_bins,
+        "confusion_bins_rel_unc": cb_rel_unc,
+        "confusion_bins_abs_unc": cb_abs_unc,
         "confusion_bins_normalized_on_ax0": confusion_bins_normalized_on_ax0,
         "exposure_bins_ax0_no_weights": np.sum(exposure_bins_no_weights, axis=1),
         "exposure_bins_ax0": np.sum(confusion_bins, axis=1),
         "min_exposure_ax0": min_exposure_ax0,
     }
+
+
+def estimate_rel_abs_uncertainty_in_confusion_bins(confusion_bins):
+    cb = confusion_bins
+    assert np.all(cb >= 0)
+    shape = cb.shape
+
+    rel_unc = np.nan * np.ones(shape=shape)
+    abs_unc = np.nan * np.ones(shape=shape)
+
+    has_expo = cb > 0
+    no_expo = cb == 0
+
+    # frequency regime
+    # ----------------
+    rel_unc[has_expo] = 1.0 / np.sqrt(cb[has_expo])
+    abs_unc[has_expo] = cb[has_expo] * rel_unc[has_expo]
+
+    # no frequency regime, have to approximate
+    # ----------------------------------------
+    _num_bins_with_exposure = np.sum(has_expo)
+    _num_bins = shape[0] * shape[1]
+
+    pseudocount = _num_bins_with_exposure / _num_bins
+    assert pseudocount <= 1.0
+
+    if pseudocount == 0:
+        # this can not be saved
+        return rel_unc, abs_unc
+
+    rel_unc[no_expo] = 1.0 / np.sqrt(pseudocount)
+    abs_unc[no_expo] = np.min(cb[has_expo]) * rel_unc[no_expo]
+
+    return rel_unc, abs_unc
