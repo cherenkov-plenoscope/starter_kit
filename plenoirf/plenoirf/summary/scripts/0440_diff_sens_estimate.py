@@ -19,10 +19,6 @@ acceptance_after_all_cuts = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-energy_migration = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
-)
-
 energy_interpretation = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0420_diff_sens_energy_interpretation"),
 )
