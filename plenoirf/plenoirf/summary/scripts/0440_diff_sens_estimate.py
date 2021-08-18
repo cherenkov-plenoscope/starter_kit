@@ -83,7 +83,7 @@ for sk in SITES:
             signal_area_vs_true_energy_m2 = acceptance_after_all_cuts[sk]["gamma"]["point"][
                 "mean"
             ][:, oridx]
-            _gamma_mm = energy_interpretation[sk]["gamma"][dk]
+            _gamma_mm = energy_interpretation[sk]["gamma"][dk]["counts_normalized_on_ax0"]
             signal_area_m2 = np.matmul(_gamma_mm.T, signal_area_vs_true_energy_m2)
 
 

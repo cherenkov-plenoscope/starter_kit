@@ -81,7 +81,8 @@ for sk in SITES:
 
                 for ee in range(energy_bin["num_bins"]):
                     rate_reco_energy_per_s[:, ordix] += (
-                        energy_interpretation[sk][pk][dk][ee] * rate_true_energy_per_s[ee]
+                        energy_interpretation[sk][pk][dk]["counts_normalized_on_ax0"][ee] *
+                        rate_true_energy_per_s[ee]
                     )
 
             json_numpy.write(
