@@ -39,22 +39,43 @@ for sk in SITES:
     for dk in irf.analysis.differential_sensitivity.SCENARIOS:
         # split in signal and background
         # ------------------------------
-        _cbn = "confusion_bins_normalized_on_ax0"
-        gamma_mm = energy_migration[sk]["gamma"]["confusion_matrix"][_cbn]
-        bg_mms = {}
+        _c = "confusion_matrix"
+        _cbn = "counts_normalized_on_ax0"
+        _cbn_u = "counts_normalized_on_ax0_abs_unc"
+
+        s_m = energy_migration[sk]["gamma"][_c][_cbn]
+        s_m_u = energy_migration[sk]["gamma"][_c][_cbn_u]
+
+        bg_ms = {}
+        bg_ms_u = {}
         for ck in COSMIC_RAYS:
-            bg_mms[ck] = energy_migration[sk][ck]["confusion_matrix"][_cbn]
+            bg_ms[ck] = energy_migration[sk][ck][_c][_cbn]
+            bg_ms_u[ck] = energy_migration[sk][ck][_c][_cbn_u]
 
         # apply scenarios
         # ---------------
-        _gamma_mm, _bg_mms = irf.analysis.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
-            signal_energy_confusion_matrix=gamma_mm,
-            background_energy_confusion_matrices=bg_mms,
+        m = irf.analysis.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
+            signal_energy_confusion_matrix=s_m,
+            signal_energy_confusion_matrix_abs_unc=s_m_u,
+            background_energy_confusion_matrices=bg_ms,
+            background_energy_confusion_matrices_abs_unc=bg_ms_u,
             scenario_key=dk,
         )
 
         # output for each particle
         # ------------------------
-        json_numpy.write(opj(sk_dir, "gamma", dk+".json"), _gamma_mm)
+        json_numpy.write(
+            opj(sk_dir, "gamma", dk+".json"),
+            {
+                _cbn: m["signal_matrix"],
+                _cbn_u: m["signal_matrix_abs_unc"],
+            }
+        )
         for ck in COSMIC_RAYS:
-            json_numpy.write(opj(sk_dir, ck, dk+".json"), _bg_mms[ck])
+            json_numpy.write(
+                opj(sk_dir, ck, dk+".json"),
+                {
+                    _cbn: m["background_matrices"][ck],
+                    _cbn_u: m["background_matrices_abs_unc"][ck],
+                }
+            )

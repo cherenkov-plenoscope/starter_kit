@@ -54,23 +54,38 @@ SCENARIOS = {
 
 def make_energy_confusion_matrices_for_signal_and_background(
     signal_energy_confusion_matrix,
+    signal_energy_confusion_matrix_abs_unc,
     background_energy_confusion_matrices,
+    background_energy_confusion_matrices_abs_unc,
     scenario_key="broad_spectrum",
 ):
     s_cm = signal_energy_confusion_matrix
     bg_cms = background_energy_confusion_matrices
 
+    s_cm_u = signal_energy_confusion_matrix_abs_unc
+    bg_cms_u = background_energy_confusion_matrices_abs_unc
+
     if scenario_key == "perfect_energy":
         _s_cm = np.eye(N=s_cm.shape[0])
+        _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
+
         _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
+        _bg_cms_u = {k: np.array(bg_cms_u[k]) for k in bg_cms_u}
 
     elif scenario_key == "broad_spectrum":
         _s_cm = np.array(s_cm)
+        _s_cm_u = np.array(s_cm_u) # adopt as is
+
         _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
+        _bg_cms_u = {k: np.array(bg_cms_u[k]) for k in bg_cms_u}
 
     elif scenario_key == "line_spectrum":
-        _s_cm = np.eye(N=s_cm.shape[0]) * np.diag(s_cm)
+        eye = np.eye(N=s_cm.shape[0])
+        _s_cm = eye * np.diag(s_cm)
+        _s_cm_u = eye * np.diag(s_cm_u) # only the diagonal
+
         _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
+        _bg_cms_u = {k: np.array(bg_cms_u[k]) for k in bg_cms_u}
 
     elif scenario_key == "bell_spectrum":
         containment = 0.68
@@ -78,13 +93,21 @@ def make_energy_confusion_matrices_for_signal_and_background(
             energy_confusion_matrix=s_cm,
             containment=containment
         )
-        _s_cm = containment * np.array(s_cm)
+        _s_cm = np.eye(N=s_cm.shape[0]) # true energy for gammas
+        _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
+
         _bg_cms = {k: mask * bg_cms[k] for k in bg_cms}
+        _bg_cms_u = {k: mask * bg_cms_u[k] for k in bg_cms_u}
 
     else:
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
 
-    return _s_cm, _bg_cms
+    return {
+        "signal_matrix": _s_cm,
+        "signal_matrix_abs_unc": _s_cm_u,
+        "background_matrices": _bg_cms,
+        "background_matrices_abs_unc": _bg_cms_u,
+    }
 
 
 def estimate_critical_rate_vs_energy(
