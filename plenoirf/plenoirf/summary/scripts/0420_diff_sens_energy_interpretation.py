@@ -41,24 +41,24 @@ for sk in SITES:
         # ------------------------------
         _c = "confusion_matrix"
         _cbn = "counts_normalized_on_ax0"
-        _cbn_u = "counts_normalized_on_ax0_abs_unc"
+        _cbn_au = "counts_normalized_on_ax0_abs_unc"
 
         s_m = energy_migration[sk]["gamma"][_c][_cbn]
-        s_m_u = energy_migration[sk]["gamma"][_c][_cbn_u]
+        s_m_au = energy_migration[sk]["gamma"][_c][_cbn_au]
 
         bg_ms = {}
-        bg_ms_u = {}
+        bg_ms_au = {}
         for ck in COSMIC_RAYS:
             bg_ms[ck] = energy_migration[sk][ck][_c][_cbn]
-            bg_ms_u[ck] = energy_migration[sk][ck][_c][_cbn_u]
+            bg_ms_au[ck] = energy_migration[sk][ck][_c][_cbn_au]
 
         # apply scenarios
         # ---------------
         m = irf.analysis.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
             signal_energy_confusion_matrix=s_m,
-            signal_energy_confusion_matrix_abs_unc=s_m_u,
+            signal_energy_confusion_matrix_abs_unc=s_m_au,
             background_energy_confusion_matrices=bg_ms,
-            background_energy_confusion_matrices_abs_unc=bg_ms_u,
+            background_energy_confusion_matrices_abs_unc=bg_ms_au,
             scenario_key=dk,
         )
 
@@ -70,7 +70,7 @@ for sk in SITES:
                 "ax0_key": energy_migration[sk]["gamma"][_c]["ax0_key"],
                 "ax1_key": energy_migration[sk]["gamma"][_c]["ax1_key"],
                 _cbn: m["signal_matrix"],
-                _cbn_u: m["signal_matrix_abs_unc"],
+                _cbn_au: m["signal_matrix_abs_unc"],
             },
         )
         for ck in COSMIC_RAYS:
@@ -80,6 +80,6 @@ for sk in SITES:
                     "ax0_key": energy_migration[sk][ck][_c]["ax0_key"],
                     "ax1_key": energy_migration[sk][ck][_c]["ax1_key"],
                     _cbn: m["background_matrices"][ck],
-                    _cbn_u: m["background_matrices_abs_unc"][ck],
+                    _cbn_au: m["background_matrices_abs_unc"][ck],
                 },
             )
