@@ -49,19 +49,6 @@ comment_differential = "Differential trigger-rate, reconstructed in onregion."
 comment_integral = "Integral trigger-rate, reconstructed in onregion."
 
 
-def integrate_rate_where_known(dRdE, dRdE_au, E_edges):
-    unknown = np.isnan(dRdE_au)
-
-    _dRdE = dRdE.copy()
-    _dRdE_au = dRdE_au.copy()
-
-    _dRdE[unknown] = 0.0
-    _dRdE_au[unknown] = 0.0
-
-    T, T_au = irf.utils.integrate(f=_dRdE, f_au=_dRdE_au, x_edges=E_edges)
-    return T, T_au
-
-
 """
 A / m^{2}
 Q / m^{2} sr
@@ -85,8 +72,8 @@ for sk in irf_config["config"]["sites"]:
     site_gamma_dir = os.path.join(site_dir, "gamma")
     os.makedirs(site_gamma_dir, exist_ok=True)
 
-    T = np.zeros(shape=(num_bins_onregion_radius))
-    T_au = np.zeros(shape=T.shape)
+    R = np.zeros(shape=(num_bins_onregion_radius))
+    R_au = np.zeros(shape=R.shape)
     dRdE = np.zeros(shape=(fenergy_bin["num_bins"], num_bins_onregion_radius))
     dRdE_au = np.zeros(shape=dRdE.shape)
     for oridx in range(num_bins_onregion_radius):
@@ -107,7 +94,7 @@ for sk in irf_config["config"]["sites"]:
             x=gamma_dKdE, x_au=gamma_dKdE_au, y=A, y_au=A_au,
         )
 
-        T[oridx], T_au[oridx] = integrate_rate_where_known(
+        R[oridx], R_au[oridx] = irf.utils.integrate_rate_where_known(
             dRdE=dRdE[:, oridx],
             dRdE_au=dRdE_au[:, oridx],
             E_edges=fenergy_bin["edges"],
@@ -133,8 +120,8 @@ for sk in irf_config["config"]["sites"]:
             + gamma_source["name"]
             + " VS onregion-radius",
             "unit": "s$^{-1}$",
-            "mean": T,
-            "absolute_uncertainty": T_au,
+            "mean": R,
+            "absolute_uncertainty": R_au,
         },
     )
 
@@ -147,8 +134,8 @@ for sk in irf_config["config"]["sites"]:
         cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]["values"]
         cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
 
-        T = np.zeros(shape=(num_bins_onregion_radius))
-        T_au = np.zeros(shape=T.shape)
+        R = np.zeros(shape=(num_bins_onregion_radius))
+        R_au = np.zeros(shape=R.shape)
         dRdE = np.zeros(
             shape=(fenergy_bin["num_bins"], num_bins_onregion_radius)
         )
@@ -171,7 +158,7 @@ for sk in irf_config["config"]["sites"]:
                 x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=Q, y_au=Q_au,
             )
 
-            T[oridx], T_au[oridx] = integrate_rate_where_known(
+            R[oridx], R_au[oridx] = irf.utils.integrate_rate_where_known(
                 dRdE=dRdE[:, oridx],
                 dRdE_au=dRdE_au[:, oridx],
                 E_edges=fenergy_bin["edges"],
@@ -191,7 +178,7 @@ for sk in irf_config["config"]["sites"]:
             {
                 "comment": comment_integral + " VS onregion-radius",
                 "unit": "s$^{-1}$",
-                "mean": T,
-                "absolute_uncertainty": T_au,
+                "mean": R,
+                "absolute_uncertainty": R_au,
             },
         )
