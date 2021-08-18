@@ -41,13 +41,11 @@ for sk in SITES:
 
 # prepare integration-intervalls
 # ------------------------------
-fine_energy_bin = json_numpy.read(
+energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
-)["interpolation"]
-energy_bin = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
-)["trigger_acceptance_onregion"]
-
+)
+fine_energy_bin = energy_binning["interpolation"]
+energy_bin = energy_binning["trigger_acceptance_onregion"]
 
 fine_energy_bin_edge_matches = []
 for energy in energy_bin["edges"]:
