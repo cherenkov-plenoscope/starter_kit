@@ -165,7 +165,7 @@ for sk in irf_config["config"]["sites"]:
         _pcm_confusion = ax_c.pcolormesh(
             cm["ax0_bin_edges"],
             cm["ax1_bin_edges"],
-            np.transpose(cm["confusion_bins_normalized_on_ax0"]),
+            np.transpose(cm["counts_normalized_on_ax0"]),
             cmap="Greys",
             norm=seb.plt_colors.PowerNorm(gamma=0.5),
         )
@@ -187,7 +187,7 @@ for sk in irf_config["config"]["sites"]:
         seb.ax_add_histogram(
             ax=ax_h,
             bin_edges=cm["ax0_bin_edges"],
-            bincounts=cm["exposure_bins_ax0_no_weights"],
+            bincounts=cm["exposure_ax0_no_weights"],
             linestyle="-",
             linecolor="k",
         )
@@ -209,8 +209,8 @@ for sk in irf_config["config"]["sites"]:
                 style=axstyle_bottom if ebin == 0 else axstyle_stack
             )
 
-            mm = cm["confusion_bins_normalized_on_ax0"][:, ebin]
-            mm_abs_unc = cm["confusion_bins_normalized_on_ax0_abs_unc"][:, ebin]
+            mm = cm["counts_normalized_on_ax0"][:, ebin]
+            mm_abs_unc = cm["counts_normalized_on_ax0_abs_unc"][:, ebin]
             seb.ax_add_histogram(
                 ax=axe,
                 bin_edges=cm["ax0_bin_edges"],

@@ -277,30 +277,30 @@ def make_confusion_matrix(
     num_bins_ax1 = len(ax1_bin_edges) - 1
     assert num_bins_ax1 >= 1
 
-    confusion_bins = np.histogram2d(
+    counts = np.histogram2d(
         ax0_values,
         ax1_values,
         weights=ax0_weights,
         bins=[ax0_bin_edges, ax1_bin_edges],
     )[0]
 
-    cb_rel_unc, cb_abs_unc = estimate_rel_abs_uncertainty_in_confusion_bins(
-        confusion_bins=confusion_bins
+    cb_rel_unc, cb_abs_unc = estimate_rel_abs_uncertainty_in_counts(
+        counts=counts
     )
 
-    exposure_bins_no_weights = np.histogram2d(
+    exposure_no_weights = np.histogram2d(
         ax0_values, ax1_values, bins=[ax0_bin_edges, ax1_bin_edges],
     )[0]
 
-    confusion_bins_normalized_on_ax0 = confusion_bins.copy()
+    counts_normalized_on_ax0 = counts.copy()
     cbn_abs_unc = cb_abs_unc.copy()
     for i0 in range(num_bins_ax0):
-        if np.sum(exposure_bins_no_weights[i0, :]) >= min_exposure_ax0:
-            axsum = np.sum(confusion_bins[i0, :])
-            confusion_bins_normalized_on_ax0[i0, :] /= axsum
+        if np.sum(exposure_no_weights[i0, :]) >= min_exposure_ax0:
+            axsum = np.sum(counts[i0, :])
+            counts_normalized_on_ax0[i0, :] /= axsum
             cbn_abs_unc[i0, :] /= axsum
         else:
-            confusion_bins_normalized_on_ax0[i0, :] = (
+            counts_normalized_on_ax0[i0, :] = (
                 np.ones(num_bins_ax1) * default_low_exposure
             )
 
@@ -309,19 +309,19 @@ def make_confusion_matrix(
         "ax1_key": ax1_key,
         "ax0_bin_edges": ax0_bin_edges,
         "ax1_bin_edges": ax1_bin_edges,
-        "confusion_bins": confusion_bins,
-        "confusion_bins_rel_unc": cb_rel_unc,
-        "confusion_bins_abs_unc": cb_abs_unc,
-        "confusion_bins_normalized_on_ax0": confusion_bins_normalized_on_ax0,
-        "confusion_bins_normalized_on_ax0_abs_unc": cbn_abs_unc,
-        "exposure_bins_ax0_no_weights": np.sum(exposure_bins_no_weights, axis=1),
-        "exposure_bins_ax0": np.sum(confusion_bins, axis=1),
+        "counts": counts,
+        "counts_rel_unc": cb_rel_unc,
+        "counts_abs_unc": cb_abs_unc,
+        "counts_normalized_on_ax0": counts_normalized_on_ax0,
+        "counts_normalized_on_ax0_abs_unc": cbn_abs_unc,
+        "exposure_ax0_no_weights": np.sum(exposure_no_weights, axis=1),
+        "exposure_ax0": np.sum(counts, axis=1),
         "min_exposure_ax0": min_exposure_ax0,
     }
 
 
-def estimate_rel_abs_uncertainty_in_confusion_bins(confusion_bins):
-    cb = confusion_bins
+def estimate_rel_abs_uncertainty_in_counts(counts):
+    cb = counts
     assert np.all(cb >= 0)
     shape = cb.shape
 
