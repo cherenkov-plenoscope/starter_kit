@@ -67,6 +67,8 @@ for sk in SITES:
         json_numpy.write(
             opj(sk_dir, "gamma", dk+".json"),
             {
+                "ax0_key": energy_migration[sk]["gamma"][_c]["ax0_key"],
+                "ax1_key": energy_migration[sk]["gamma"][_c]["ax1_key"],
                 _cbn: m["signal_matrix"],
                 _cbn_u: m["signal_matrix_abs_unc"],
             }
@@ -75,6 +77,8 @@ for sk in SITES:
             json_numpy.write(
                 opj(sk_dir, ck, dk+".json"),
                 {
+                "ax0_key": energy_migration[sk][ck][_c]["ax0_key"],
+                "ax1_key": energy_migration[sk][ck][_c]["ax1_key"],
                     _cbn: m["background_matrices"][ck],
                     _cbn_u: m["background_matrices_abs_unc"][ck],
                 }
