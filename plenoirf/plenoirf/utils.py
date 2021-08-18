@@ -352,3 +352,23 @@ def estimate_rel_abs_uncertainty_in_counts(counts):
     abs_unc[no_expo] = pseudocount
 
     return rel_unc, abs_unc
+
+
+def unc(x_au, dfdx, y_au, dfdy):
+    return np.sqrt((dfdx * x_au) ** 2 + (dfdy * y_au) ** 2)
+
+
+def add(x, x_au, y, y_au):
+    return x + y, unc(x_au=x_au, dfdx=1.0 ,y_au=y_au, dfdy=1.0)
+
+
+def multiply(x, x_au, y, y_au):
+    return x*y, unc(x_au=x_au, dfdx=y ,y_au=y_au, dfdy=x)
+
+
+def divide(x, x_au, y, y_au):
+    return x / y, unc(x_au=x_au, dfdx=1.0/y ,y_au=y_au, dfdy=(-1*x*y**(-2)))
+
+
+def sum(x, x_au):
+    return np.sum(x), np.hypot(x_au)
