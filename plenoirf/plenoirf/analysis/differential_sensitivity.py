@@ -93,7 +93,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
             energy_confusion_matrix=s_cm,
             containment=containment
         )
-        _s_cm = np.eye(N=s_cm.shape[0]) # true energy for gammas
+        _s_cm = containment * np.eye(N=s_cm.shape[0]) # true energy for gammas
         _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
 
         _bg_cms = {k: mask * bg_cms[k] for k in bg_cms}
