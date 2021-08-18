@@ -122,7 +122,7 @@ for sk in irf_config["config"]["sites"]:
             + " VS onregion-radius",
             "unit": "s$^{-1} (GeV)$^{-1}$",
             "mean": dRdE,
-            "absoulte_uncertainty": dRdE_au,
+            "absolute_uncertainty": dRdE_au,
         },
     )
     json_numpy.write(
@@ -134,7 +134,7 @@ for sk in irf_config["config"]["sites"]:
             + " VS onregion-radius",
             "unit": "s$^{-1}$",
             "mean": T,
-            "absoulte_uncertainty": T_au,
+            "absolute_uncertainty": T_au,
         },
     )
 
@@ -181,7 +181,7 @@ for sk in irf_config["config"]["sites"]:
                 "comment": comment_differential + " VS onregion-radius",
                 "unit": "s$^{-1} (GeV)$^{-1}$",
                 "mean": dRdE,
-                "absoulte_uncertainty": dRdE_au,
+                "absolute_uncertainty": dRdE_au,
             },
         )
         json_numpy.write(
@@ -190,6 +190,6 @@ for sk in irf_config["config"]["sites"]:
                 "comment": comment_integral + " VS onregion-radius",
                 "unit": "s$^{-1}$",
                 "mean": T,
-                "absoulte_uncertainty": T_au,
+                "absolute_uncertainty": T_au,
             },
         )

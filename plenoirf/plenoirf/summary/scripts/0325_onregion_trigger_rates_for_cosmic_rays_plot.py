@@ -45,19 +45,19 @@ LiMa_alpha = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
 
 observation_time_s = 60 * 5
 
-for site_key in irf_config["config"]["sites"]:
+for sk in irf_config["config"]["sites"]:
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
     signal_rate_in_onregion = np.array(
-        onregion_rates[site_key]["gamma"]["integral_rate"]["mean"]
+        onregion_rates[sk]["gamma"]["integral_rate"]["mean"]
     )
 
     background_rate_in_single_off_region = np.zeros(num_bins_onregion_radius)
     LiMa_S = np.zeros(num_bins_onregion_radius)
     for cosmic_ray_key in cosmic_ray_keys:
         background_rate_in_single_off_region += np.array(
-            onregion_rates[site_key][cosmic_ray_key]["integral_rate"]["mean"]
+            onregion_rates[sk][cosmic_ray_key]["integral_rate"]["mean"]
         )
 
     background_rate_in_all_off_regions = (
@@ -91,43 +91,50 @@ for site_key in irf_config["config"]["sites"]:
         os.path.join(
             pa["out_dir"],
             "{:s}_LiMaEq17_significance_vs_onregion_radius.jpg".format(
-                site_key
+                sk
             ),
         )
     )
     seb.close_figure(fig)
 
+mean_key = "mean"
+unc_key = "absolute_uncertainty"
 
-for site_key in irf_config["config"]["sites"]:
-    for oridx in range(num_bins_onregion_radius):
+for sk in irf_config["config"]["sites"]:
+    for ok in range(num_bins_onregion_radius):
         fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
         ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
         text_y = 0.7
-        for particle_key in irf_config["config"]["particles"]:
+        for pk in irf_config["config"]["particles"]:
+            dRdE = onregion_rates[sk][pk]["differential_rate"][mean_key][:, ok]
+            dRdE_au = onregion_rates[sk][pk]["differential_rate"][unc_key][:, ok]
             ax.plot(
                 fine_energy_bin["centers"],
-                np.array(
-                    onregion_rates[site_key][particle_key][
-                        "differential_rate"
-                    ]["mean"]
-                )[:, oridx],
-                color=sum_config["plot"]["particle_colors"][particle_key],
+                dRdE,
+                color=sum_config["plot"]["particle_colors"][pk],
+            )
+            ax.fill_between(
+                x=fine_energy_bin["centers"],
+                y1=dRdE - dRdE_au,
+                y2=dRdE + dRdE_au,
+                facecolor=sum_config["plot"]["particle_colors"][pk],
+                alpha=0.2,
+                linewidth=0.,
             )
             ax.text(
                 0.6,
                 0.1 + text_y,
-                particle_key,
-                color=particle_colors[particle_key],
+                pk,
+                color=particle_colors[pk],
                 transform=ax.transAxes,
             )
-            ir = onregion_rates[site_key][particle_key]["integral_rate"][
-                "mean"
-            ][oridx]
+            ir = onregion_rates[sk][pk]["integral_rate"][mean_key][ok]
+            ir_abs_unc = onregion_rates[sk][pk]["integral_rate"][unc_key][ok]
             ax.text(
                 0.7,
                 0.1 + text_y,
-                "{: 8.1f} s$^{{-1}}$".format(ir),
+                r"{: 8.1f}$\pm{:.1f}$ s$^{{-1}}$".format(ir, ir_abs_unc),
                 color="k",
                 family="monospace",
                 transform=ax.transAxes,
@@ -143,7 +150,7 @@ for site_key in irf_config["config"]["sites"]:
             os.path.join(
                 pa["out_dir"],
                 "{:s}_differential_event_rates_in_onregion_onr{:06d}.jpg".format(
-                    site_key, oridx
+                    sk, ok
                 ),
             )
         )
