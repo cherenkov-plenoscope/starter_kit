@@ -284,24 +284,26 @@ def make_confusion_matrix(
         bins=[ax0_bin_edges, ax1_bin_edges],
     )[0]
 
+    cb_rel_unc, cb_abs_unc = estimate_rel_abs_uncertainty_in_confusion_bins(
+        confusion_bins=confusion_bins
+    )
+
     exposure_bins_no_weights = np.histogram2d(
         ax0_values, ax1_values, bins=[ax0_bin_edges, ax1_bin_edges],
     )[0]
 
     confusion_bins_normalized_on_ax0 = confusion_bins.copy()
+    cbn_abs_unc = cb_abs_unc.copy()
     for i0 in range(num_bins_ax0):
         if np.sum(exposure_bins_no_weights[i0, :]) >= min_exposure_ax0:
-            confusion_bins_normalized_on_ax0[i0, :] /= np.sum(
-                confusion_bins[i0, :]
-            )
+            axsum = np.sum(confusion_bins[i0, :])
+            confusion_bins_normalized_on_ax0[i0, :] /= axsum
+            cbn_abs_unc[i0, :] /= axsum
         else:
             confusion_bins_normalized_on_ax0[i0, :] = (
                 np.ones(num_bins_ax1) * default_low_exposure
             )
 
-    cb_rel_unc, cb_abs_unc = estimate_rel_abs_uncertainty_in_confusion_bins(
-        confusion_bins=confusion_bins
-    )
     return {
         "ax0_key": ax0_key,
         "ax1_key": ax1_key,
@@ -311,6 +313,7 @@ def make_confusion_matrix(
         "confusion_bins_rel_unc": cb_rel_unc,
         "confusion_bins_abs_unc": cb_abs_unc,
         "confusion_bins_normalized_on_ax0": confusion_bins_normalized_on_ax0,
+        "confusion_bins_normalized_on_ax0_abs_unc": cbn_abs_unc,
         "exposure_bins_ax0_no_weights": np.sum(exposure_bins_no_weights, axis=1),
         "exposure_bins_ax0": np.sum(confusion_bins, axis=1),
         "min_exposure_ax0": min_exposure_ax0,
@@ -338,7 +341,7 @@ def estimate_rel_abs_uncertainty_in_confusion_bins(confusion_bins):
     _num_bins_with_exposure = np.sum(has_expo)
     _num_bins = shape[0] * shape[1]
 
-    pseudocount = _num_bins_with_exposure / _num_bins
+    pseudocount = np.sqrt(_num_bins_with_exposure / _num_bins)
     assert pseudocount <= 1.0
 
     if pseudocount == 0:
@@ -346,6 +349,6 @@ def estimate_rel_abs_uncertainty_in_confusion_bins(confusion_bins):
         return rel_unc, abs_unc
 
     rel_unc[no_expo] = 1.0 / np.sqrt(pseudocount)
-    abs_unc[no_expo] = np.min(cb[has_expo]) * rel_unc[no_expo]
+    abs_unc[no_expo] = pseudocount
 
     return rel_unc, abs_unc
