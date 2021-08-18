@@ -60,7 +60,7 @@ for sk in SITES:
     sk_dir = os.path.join(pa["out_dir"], sk)
     os.makedirs(sk_dir, exist_ok=True)
     for dk in irf.analysis.differential_sensitivity.SCENARIOS:
-        critical_dFdE = np.nan * np.ones(
+        critical_dKdE = np.nan * np.ones(
             shape=(
                 energy_bin["num_bins"],
                 num_onregion_sizes,
@@ -115,14 +115,14 @@ for sk in SITES:
                     signal_rate_vs_energy_per_s=critical_rate_per_s,
                 )
 
-                critical_dFdE[:, oridx, obstix] = dFdE
+                critical_dKdE[:, oridx, obstix] = dFdE
 
         json_numpy.write(
             os.path.join(pa["out_dir"], sk, dk + ".json"),
             {
                 "energy_bin_edges": energy_bin["edges"],
                 "observation_times": observation_times,
-                "differential_flux": critical_dFdE,
+                "differential_flux": critical_dKdE,
                 "comment": (
                     "Critical differential flux-sensitivity "
                     "VS energy VS onregion-size VS observation-time"
