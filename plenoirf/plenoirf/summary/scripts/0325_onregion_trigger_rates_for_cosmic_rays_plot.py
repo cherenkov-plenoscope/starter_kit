@@ -90,9 +90,7 @@ for sk in irf_config["config"]["sites"]:
     fig.savefig(
         os.path.join(
             pa["out_dir"],
-            "{:s}_LiMaEq17_significance_vs_onregion_radius.jpg".format(
-                sk
-            ),
+            "{:s}_LiMaEq17_significance_vs_onregion_radius.jpg".format(sk),
         )
     )
     seb.close_figure(fig)
@@ -108,7 +106,9 @@ for sk in irf_config["config"]["sites"]:
         text_y = 0.7
         for pk in irf_config["config"]["particles"]:
             dRdE = onregion_rates[sk][pk]["differential_rate"][mean_key][:, ok]
-            dRdE_au = onregion_rates[sk][pk]["differential_rate"][unc_key][:, ok]
+            dRdE_au = onregion_rates[sk][pk]["differential_rate"][unc_key][
+                :, ok
+            ]
             ax.plot(
                 fine_energy_bin["centers"],
                 dRdE,
@@ -120,7 +120,7 @@ for sk in irf_config["config"]["sites"]:
                 y2=dRdE + dRdE_au,
                 facecolor=sum_config["plot"]["particle_colors"][pk],
                 alpha=0.2,
-                linewidth=0.,
+                linewidth=0.0,
             )
             ax.text(
                 0.6,

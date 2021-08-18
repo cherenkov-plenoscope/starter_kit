@@ -66,7 +66,8 @@ for site_key in irf_config["config"]["sites"]:
         num_events_stack = []
         for ex in range(energy_bin["num_bins"]):
             energy_mask = np.logical_and(
-                event_table["primary"]["energy_GeV"] >= energy_bin["edges"][ex],
+                event_table["primary"]["energy_GeV"]
+                >= energy_bin["edges"][ex],
                 event_table["primary"]["energy_GeV"]
                 < energy_bin["edges"][ex + 1],
             )

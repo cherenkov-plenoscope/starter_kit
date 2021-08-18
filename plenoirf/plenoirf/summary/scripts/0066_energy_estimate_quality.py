@@ -196,7 +196,7 @@ for sk in irf_config["config"]["sites"]:
 
         # unc
         numE = energy_bin["num_bins"]
-        ax_step = 0.8 * 1/numE
+        ax_step = 0.8 * 1 / numE
         fig = seb.figure(seb.FIGURE_1_1)
         axstyle_stack = {"spines": ["bottom"], "axes": [], "grid": False}
         axstyle_bottom = {"spines": ["bottom"], "axes": ["x"], "grid": False}
@@ -205,8 +205,8 @@ for sk in irf_config["config"]["sites"]:
 
             axe = seb.add_axes(
                 fig=fig,
-                span=[0.1, 0.1 + ax_step*ebin, 0.8, ax_step],
-                style=axstyle_bottom if ebin == 0 else axstyle_stack
+                span=[0.1, 0.1 + ax_step * ebin, 0.8, ax_step],
+                style=axstyle_bottom if ebin == 0 else axstyle_stack,
             )
 
             mm = cm["counts_normalized_on_ax0"][:, ebin]

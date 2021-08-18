@@ -87,13 +87,13 @@ for sk in irf_config["config"]["sites"]:
 
     T = np.zeros(shape=(num_bins_onregion_radius))
     T_au = np.zeros(shape=T.shape)
-    dRdE = np.zeros(
-        shape=(fenergy_bin["num_bins"], num_bins_onregion_radius)
-    )
+    dRdE = np.zeros(shape=(fenergy_bin["num_bins"], num_bins_onregion_radius))
     dRdE_au = np.zeros(shape=dRdE.shape)
     for oridx in range(num_bins_onregion_radius):
         _A = onregion_acceptance[sk]["gamma"]["point"]["mean"][:, oridx]
-        _A_ru = onregion_acceptance[sk]["gamma"]["point"]["relative_uncertainty"][:, oridx]
+        _A_ru = onregion_acceptance[sk]["gamma"]["point"][
+            "relative_uncertainty"
+        ][:, oridx]
         _A_au = _A * _A_ru
 
         A = np.interp(
@@ -155,7 +155,9 @@ for sk in irf_config["config"]["sites"]:
         dRdE_au = np.zeros(shape=dRdE.shape)
         for oridx in range(num_bins_onregion_radius):
             _Q = onregion_acceptance[sk][ck]["diffuse"]["mean"][:, oridx]
-            _Q_ru = onregion_acceptance[sk][ck]["diffuse"]["relative_uncertainty"][:, oridx]
+            _Q_ru = onregion_acceptance[sk][ck]["diffuse"][
+                "relative_uncertainty"
+            ][:, oridx]
             _Q_au = _Q * _Q_ru
 
             Q = np.interp(

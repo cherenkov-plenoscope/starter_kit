@@ -81,12 +81,14 @@ for sk in SITES:
 
                 for ee in range(energy_bin["num_bins"]):
                     rate_reco_energy_per_s[:, ordix] += (
-                        energy_interpretation[sk][pk][dk]["counts_normalized_on_ax0"][ee] *
-                        rate_true_energy_per_s[ee]
+                        energy_interpretation[sk][pk][dk][
+                            "counts_normalized_on_ax0"
+                        ][ee]
+                        * rate_true_energy_per_s[ee]
                     )
 
             json_numpy.write(
-                os.path.join(sk_pk_dir, dk+".json"),
+                os.path.join(sk_pk_dir, dk + ".json"),
                 {
                     "comment": (
                         "rate in onregion and interpreted energy "

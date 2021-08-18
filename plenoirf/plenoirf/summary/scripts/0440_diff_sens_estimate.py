@@ -64,7 +64,7 @@ for sk in SITES:
             shape=(
                 energy_bin["num_bins"],
                 num_onregion_sizes,
-                num_observation_times
+                num_observation_times,
             )
         )
 
@@ -74,18 +74,29 @@ for sk in SITES:
 
             cosmic_ray_rate_per_s = np.zeros(energy_bin["num_bins"])
             for ck in COSMIC_RAYS:
-                cosmic_ray_rate_per_s += (
-                    rates_after_all_cuts_in_interpreted_energy[sk][ck][dk]["rate"][:, oridx]
-                )
+                cosmic_ray_rate_per_s += rates_after_all_cuts_in_interpreted_energy[
+                    sk
+                ][
+                    ck
+                ][
+                    dk
+                ][
+                    "rate"
+                ][
+                    :, oridx
+                ]
 
             # estimate gamma eff. area
             # ------------------------
-            signal_area_vs_true_energy_m2 = acceptance_after_all_cuts[sk]["gamma"]["point"][
-                "mean"
-            ][:, oridx]
-            _gamma_mm = energy_interpretation[sk]["gamma"][dk]["counts_normalized_on_ax0"]
-            signal_area_m2 = np.matmul(_gamma_mm.T, signal_area_vs_true_energy_m2)
-
+            signal_area_vs_true_energy_m2 = acceptance_after_all_cuts[sk][
+                "gamma"
+            ]["point"]["mean"][:, oridx]
+            _gamma_mm = energy_interpretation[sk]["gamma"][dk][
+                "counts_normalized_on_ax0"
+            ]
+            signal_area_m2 = np.matmul(
+                _gamma_mm.T, signal_area_vs_true_energy_m2
+            )
 
             for obstix in range(num_observation_times):
                 print(sk, dk, oridx, obstix)

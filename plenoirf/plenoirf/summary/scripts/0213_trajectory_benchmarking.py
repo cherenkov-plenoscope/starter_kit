@@ -218,7 +218,9 @@ for sk in irf_config["config"]["sites"]:
         hist_ene_rad = {
             "energy_bin_edges_GeV": energy_bin["edges"],
             "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
-            "histogram": empty_dim2(energy_bin["num_bins"], num_core_radius_bins),
+            "histogram": empty_dim2(
+                energy_bin["num_bins"], num_core_radius_bins
+            ),
         }
 
         hist_ene = {
@@ -230,7 +232,9 @@ for sk in irf_config["config"]["sites"]:
             "energy_bin_edges_GeV": energy_bin["edges"],
             "core_radius_square_bin_edges_m2": core_radius_square_bin_edges_m2,
             "containment_fractions": containment_fractions,
-            "containment": empty_dim2(energy_bin["num_bins"], num_core_radius_bins),
+            "containment": empty_dim2(
+                energy_bin["num_bins"], num_core_radius_bins
+            ),
         }
         cont_ene = {
             "energy_bin_edges_GeV": energy_bin["edges"],

@@ -57,6 +57,7 @@ def find_observation_time_index(
         max_rel_error=max_rel_error,
     )
 
+
 DIFF_SENS_SCENARIOS = irf.analysis.differential_sensitivity.SCENARIOS
 
 oridx = 1
@@ -84,7 +85,8 @@ for sk in irf_config["config"]["sites"]:
             scale_factor = np.power(10.0, (-1) * i)
             com["energy"] = [np.array(crab_flux["energy"]["values"])]
             com["differential_flux"] = [
-                scale_factor * np.array(crab_flux["differential_flux"]["values"])
+                scale_factor
+                * np.array(crab_flux["differential_flux"]["values"])
             ]
             com[
                 "label"
@@ -110,7 +112,9 @@ for sk in irf_config["config"]["sites"]:
 
         # CTA South 30min
         # ---------------
-        cta_diff = cta.differential_sensitivity(observation_time=observation_time)
+        cta_diff = cta.differential_sensitivity(
+            observation_time=observation_time
+        )
         com = {}
         com["energy"] = [np.array(cta_diff["energy"]["values"])]
         com["differential_flux"] = [
@@ -137,7 +141,7 @@ for sk in irf_config["config"]["sites"]:
             com["energy"].append(
                 [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
             )
-            _dFdE_sens =diff_sensitivity[sk][dk]["differential_flux"][
+            _dFdE_sens = diff_sensitivity[sk][dk]["differential_flux"][
                 ii, oridx, obstidx
             ]
             com["differential_flux"].append([_dFdE_sens, _dFdE_sens])

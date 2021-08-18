@@ -159,7 +159,9 @@ differential_sensitivity_figure_path = ppath(
     site_key,
     "sed_style_{:s}".format(SED_STYLE_KEY),
     site_key
-    + "_differential_sensitivity_sed_style_{:s}_scenario_broad_spectrum.jpg".format(SED_STYLE_KEY),
+    + "_differential_sensitivity_sed_style_{:s}_scenario_broad_spectrum.jpg".format(
+        SED_STYLE_KEY
+    ),
 )
 
 sens_vs_observation_time_figure_path = ppath(
