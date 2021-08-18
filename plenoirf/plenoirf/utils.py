@@ -385,3 +385,16 @@ def integrate(f, f_au, x_edges):
         a[i] = _a
         a_au[i] = _a_au
     return sum(x=a, x_au=a_au)
+
+
+def integrate_rate_where_known(dRdE, dRdE_au, E_edges):
+    unknown = np.isnan(dRdE_au)
+
+    _dRdE = dRdE.copy()
+    _dRdE_au = dRdE_au.copy()
+
+    _dRdE[unknown] = 0.0
+    _dRdE_au[unknown] = 0.0
+
+    T, T_au = integrate(f=_dRdE, f_au=_dRdE_au, x_edges=E_edges)
+    return T, T_au

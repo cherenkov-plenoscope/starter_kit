@@ -44,9 +44,8 @@ gamma_source = json_numpy.read(
         pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
     )
 )
-gamma_differential_flux_per_m2_per_s_per_GeV = gamma_source[
-    "differential_flux"
-]["values"]
+gamma_dKdE = gamma_source["differential_flux"]["values"]
+gamma_dKdE_au = np.zeros(gamma_dKdE.shape)
 
 comment_differential = (
     "Differential trigger-rate, entire field-of-view. "
@@ -57,6 +56,21 @@ comment_integral = (
     "VS trigger-ratescan-thresholds"
 )
 
+"""
+A / m^{2}
+Q / m^{2} sr
+
+R / s^{-1}
+dRdE / s^{-1} (GeV)^{-1}
+
+F / s^{-1} m^{-2} (sr)^{-1}
+dFdE / s^{-1} m^{-2} (sr)^{-1} (GeV)^{-1}
+
+K / s^{-1} m^{-2}
+dKdE / s^{-1} m^{-2} (GeV)^{-1}
+"""
+
+
 for sk in irf_config["config"]["sites"]:
     sk_dir = os.path.join(pa["out_dir"], sk)
     os.makedirs(sk_dir, exist_ok=True)
@@ -66,31 +80,45 @@ for sk in irf_config["config"]["sites"]:
     sk_gamma_dir = os.path.join(sk_dir, "gamma")
     os.makedirs(sk_gamma_dir, exist_ok=True)
 
-    _area = np.array(acceptance[sk]["gamma"]["point"]["mean"])
+    _A = acceptance[sk]["gamma"]["point"]["mean"]
+    _A_ru = acceptance[sk]["gamma"]["point"]["relative_uncertainty"]
+    _A_au = _A * _A_ru
 
-    T = []
-    dT_dE = []
+    R = np.zeros(num_trigger_thresholds)
+    R_au = np.zeros(R.shape)
+    dRdE = np.zeros(
+        shape=(num_trigger_thresholds, fine_energy_bin["num_bins"])
+    )
+    dRdE_au = np.zeros(shape=dRdE.shape)
     for tt in range(num_trigger_thresholds):
-        area_m2 = np.interp(
+        A = np.interp(
             x=fine_energy_bin["centers"],
             xp=energy_bin["centers"],
-            fp=_area[tt, :],
+            fp=_A[tt, :],
         )
-        gamma_differential_rate_per_s_per_GeV = (
-            gamma_differential_flux_per_m2_per_s_per_GeV * area_m2
+        A_au = np.interp(
+            x=fine_energy_bin["centers"],
+            xp=energy_bin["centers"],
+            fp=_A_au[tt, :],
         )
-        gamma_rate_per_s = np.sum(
-            gamma_differential_rate_per_s_per_GeV * fine_energy_bin["width"]
+
+        dRdE[tt, :], dRdE_au[tt, :] = irf.utils.multiply(
+            x=gamma_dKdE, x_au=gamma_dKdE_au, y=A, y_au=A_au,
         )
-        T.append(gamma_rate_per_s)
-        dT_dE.append(gamma_differential_rate_per_s_per_GeV)
+
+        R[tt], R_au[tt] = irf.utils.integrate_rate_where_known(
+            dRdE=dRdE[tt, :],
+            dRdE_au=dRdE_au[tt, :],
+            E_edges=fine_energy_bin["edges"],
+        )
 
     json_numpy.write(
         os.path.join(sk_gamma_dir, "differential_rate.json"),
         {
             "comment": comment_differential + ", " + gamma_source["name"],
             "unit": "s$^{-1} (GeV)$^{-1}$",
-            "mean": dT_dE,
+            "mean": dRdE,
+            "absolute_uncertainty": dRdE_au,
         },
     )
     json_numpy.write(
@@ -98,7 +126,8 @@ for sk in irf_config["config"]["sites"]:
         {
             "comment": comment_integral + ", " + gamma_source["name"],
             "unit": "s$^{-1}$",
-            "mean": T,
+            "mean": R,
+            "absolute_uncertainty": R_au,
         },
     )
 
@@ -108,35 +137,57 @@ for sk in irf_config["config"]["sites"]:
         sk_ck_dir = os.path.join(sk_dir, ck)
         os.makedirs(sk_ck_dir, exist_ok=True)
 
-        T = []
-        dT_dE = []
-        _acceptance = np.array(acceptance[sk][ck]["diffuse"]["mean"])
+        _Q = acceptance[sk][ck]["diffuse"]["mean"]
+        _Q_ru = acceptance[sk][ck]["diffuse"]["relative_uncertainty"]
+        _Q_au = _A * _A_ru
+
+        R = np.zeros(num_trigger_thresholds)
+        R_au = np.zeros(R.shape)
+        dRdE = np.zeros(
+            shape=(num_trigger_thresholds, fine_energy_bin["num_bins"])
+        )
+        dRdE_au = np.zeros(shape=dRdE.shape)
+
+        cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]["values"]
+        cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
+
         for tt in range(num_trigger_thresholds):
-            acceptance_m2_sr = np.interp(
+            Q = np.interp(
                 x=fine_energy_bin["centers"],
                 xp=energy_bin["centers"],
-                fp=_acceptance[tt, :],
+                fp=_Q[tt, :],
             )
-            cosmic_differential_rate_per_s_per_GeV = (
-                acceptance_m2_sr
-                * airshower_fluxes[sk][ck]["differential_flux"]["values"]
+            Q_au = np.interp(
+                x=fine_energy_bin["centers"],
+                xp=energy_bin["centers"],
+                fp=_Q_au[tt, :],
             )
-            cosmic_rate_per_s = np.sum(
-                cosmic_differential_rate_per_s_per_GeV
-                * fine_energy_bin["width"]
+
+            dRdE[tt, :], dRdE_au[tt, :] = irf.utils.multiply(
+                x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=A, y_au=A_au,
             )
-            T.append(cosmic_rate_per_s)
-            dT_dE.append(cosmic_differential_rate_per_s_per_GeV)
+
+            R[tt], R_au[tt] = irf.utils.integrate_rate_where_known(
+                dRdE=dRdE[tt, :],
+                dRdE_au=dRdE_au[tt, :],
+                E_edges=fine_energy_bin["edges"],
+            )
 
         json_numpy.write(
             os.path.join(sk_ck_dir, "differential_rate.json"),
             {
                 "comment": comment_differential,
                 "unit": "s$^{-1} (GeV)$^{-1}$",
-                "mean": dT_dE,
+                "mean": dRdE,
+                "absolute_uncertainty": dRdE_au,
             },
         )
         json_numpy.write(
             os.path.join(sk_ck_dir, "integral_rate.json"),
-            {"comment": comment_integral, "unit": "s$^{-1}$", "mean": T},
+            {
+                "comment": comment_integral,
+                "unit": "s$^{-1}$",
+                "mean": R,
+                "absolute_uncertainty": R_au,
+            },
         )
