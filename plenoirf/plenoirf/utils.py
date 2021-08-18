@@ -371,4 +371,17 @@ def divide(x, x_au, y, y_au):
 
 
 def sum(x, x_au):
-    return np.sum(x), np.hypot(x_au)
+    return np.sum(x), np.sqrt(np.sum(x_au ** 2))
+
+
+def integrate(f, f_au, x_edges):
+    I = 0.0
+    num_bins = len(x_edges) - 1
+    a = np.zeros(num_bins)
+    a_au = np.zeros(num_bins)
+    for i in range(num_bins):
+        step = x_edges[i + 1] - x_edges[i]
+        _a, _a_au = multiply(x=f[i], x_au=f_au[i], y=step, y_au=0.0)
+        a[i] = _a
+        a_au[i] = _a_au
+    return sum(x=a, x_au=a_au)
