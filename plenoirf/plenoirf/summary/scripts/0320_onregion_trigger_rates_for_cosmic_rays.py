@@ -50,8 +50,8 @@ gamma_differential_flux_per_m2_per_s_per_GeV = gamma_source[
 comment_differential = "Differential trigger-rate, reconstructed in onregion."
 comment_integral = "Integral trigger-rate, reconstructed in onregion."
 
-for site_key in irf_config["config"]["sites"]:
-    site_dir = os.path.join(pa["out_dir"], site_key)
+for sk in irf_config["config"]["sites"]:
+    site_dir = os.path.join(pa["out_dir"], sk)
     os.makedirs(site_dir, exist_ok=True)
 
     # gamma-ray
@@ -65,7 +65,7 @@ for site_key in irf_config["config"]["sites"]:
     )
     for oridx in range(num_bins_onregion_radius):
         _area = np.array(
-            onregion_acceptance[site_key]["gamma"]["point"]["mean"]
+            onregion_acceptance[sk]["gamma"]["point"]["mean"]
         )[:, oridx]
 
         area_m2 = np.interp(
@@ -105,8 +105,8 @@ for site_key in irf_config["config"]["sites"]:
 
     # cosmic-rays
     # -----------
-    for cosmic_key in airshower_fluxes[site_key]:
-        site_particle_dir = os.path.join(site_dir, cosmic_key)
+    for ck in airshower_fluxes[sk]:
+        site_particle_dir = os.path.join(site_dir, ck)
         os.makedirs(site_particle_dir, exist_ok=True)
 
         T = np.zeros(shape=(num_bins_onregion_radius))
@@ -115,7 +115,7 @@ for site_key in irf_config["config"]["sites"]:
         )
         for oridx in range(num_bins_onregion_radius):
             _acceptance = np.array(
-                onregion_acceptance[site_key][cosmic_key]["diffuse"]["mean"]
+                onregion_acceptance[sk][ck]["diffuse"]["mean"]
             )[:, oridx]
 
             acceptance_m2_sr = np.interp(
@@ -125,7 +125,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             cosmic_differential_rate_per_s_per_GeV = (
                 acceptance_m2_sr
-                * airshower_fluxes[site_key][cosmic_key]["differential_flux"][
+                * airshower_fluxes[sk][ck]["differential_flux"][
                     "values"
                 ]
             )
