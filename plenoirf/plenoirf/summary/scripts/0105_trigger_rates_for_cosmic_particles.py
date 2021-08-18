@@ -139,7 +139,7 @@ for sk in irf_config["config"]["sites"]:
 
         _Q = acceptance[sk][ck]["diffuse"]["mean"]
         _Q_ru = acceptance[sk][ck]["diffuse"]["relative_uncertainty"]
-        _Q_au = _A * _A_ru
+        _Q_au = _Q * _Q_ru
 
         R = np.zeros(num_trigger_thresholds)
         R_au = np.zeros(R.shape)
@@ -164,7 +164,7 @@ for sk in irf_config["config"]["sites"]:
             )
 
             dRdE[tt, :], dRdE_au[tt, :] = irf.utils.multiply(
-                x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=A, y_au=A_au,
+                x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=Q, y_au=Q_au,
             )
 
             R[tt], R_au[tt] = irf.utils.integrate_rate_where_known(

@@ -27,7 +27,10 @@ analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
-for site_key in irf_config["config"]["sites"]:
+mean_key = "mean"
+unc_key = "absolute_uncertainty"
+
+for sk in irf_config["config"]["sites"]:
 
     tt = 0
     for tt, trigger_threshold in enumerate(trigger_thresholds):
@@ -38,30 +41,37 @@ for site_key in irf_config["config"]["sites"]:
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
     text_y = 0.7
-    for particle_key in irf_config["config"]["particles"]:
-
-        dT_dE_vs_threshold = np.array(
-            cosmic_rates[site_key][particle_key]["differential_rate"]["mean"]
-        )
+    for pk in irf_config["config"]["particles"]:
+        dRdE = cosmic_rates[sk][pk]["differential_rate"][mean_key]
+        dRdE_au = cosmic_rates[sk][pk]["differential_rate"][unc_key]
 
         ax.plot(
             fine_energy_bin["centers"],
-            dT_dE_vs_threshold[tt, :],
-            color=particle_colors[particle_key],
-            label=particle_key,
+            dRdE[tt, :],
+            color=particle_colors[pk],
+            label=pk,
+        )
+        ax.fill_between(
+            x=fine_energy_bin["centers"],
+            y1=dRdE[tt, :] - dRdE_au[tt, :],
+            y2=dRdE[tt, :] + dRdE_au[tt, :],
+            facecolor=particle_colors[pk],
+            alpha=0.2,
+            linewidth=0.0,
         )
         ax.text(
-            0.6,
+            0.5,
             0.1 + text_y,
-            particle_key,
-            color=particle_colors[particle_key],
+            pk,
+            color=particle_colors[pk],
             transform=ax.transAxes,
         )
-        ir = cosmic_rates[site_key][particle_key]["integral_rate"]["mean"][tt]
+        ir = cosmic_rates[sk][pk]["integral_rate"][mean_key][tt]
+        ir_abs_unc = cosmic_rates[sk][pk]["integral_rate"][unc_key][tt]
         ax.text(
             0.7,
             0.1 + text_y,
-            "{: 12.1f} s$^{{-1}}$".format(ir),
+            r"{: 8.0f}$\pm{:4.0f}$ s$^{{-1}}$".format(ir, np.ceil(ir_abs_unc)),
             color="k",
             family="monospace",
             transform=ax.transAxes,
@@ -76,7 +86,7 @@ for site_key in irf_config["config"]["sites"]:
     fig.savefig(
         os.path.join(
             pa["out_dir"],
-            "{:s}_differential_trigger_rate.jpg".format(site_key),
+            "{:s}_differential_trigger_rate.jpg".format(sk),
         )
     )
     seb.close_figure(fig)
