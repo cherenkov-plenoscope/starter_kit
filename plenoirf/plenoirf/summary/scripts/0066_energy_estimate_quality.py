@@ -44,7 +44,7 @@ energy_bin = json_numpy.read(
 cta = irf.other_instruments.cherenkov_telescope_array_south
 fermi_lat = irf.other_instruments.fermi_lat
 
-min_number_samples = 10
+min_number_samples = 1
 mk = "energy"
 
 
@@ -192,4 +192,44 @@ for sk in irf_config["config"]["sites"]:
             linecolor="k",
         )
         fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + ".jpg"))
+        seb.close_figure(fig)
+
+        # unc
+        numE = energy_bin["num_bins"]
+        ax_step = 0.8 * 1/numE
+        fig = seb.figure(seb.FIGURE_1_1)
+        axstyle_stack = {"spines": ["bottom"], "axes": [], "grid": False}
+        axstyle_bottom = {"spines": ["bottom"], "axes": ["x"], "grid": False}
+
+        for ebin in range(numE):
+
+            axe = seb.add_axes(
+                fig=fig,
+                span=[0.1, 0.1 + ax_step*ebin, 0.8, ax_step],
+                style=axstyle_bottom if ebin == 0 else axstyle_stack
+            )
+
+            mm = cm["confusion_bins_normalized_on_ax0"][:, ebin]
+            mm_abs_unc = cm["confusion_bins_normalized_on_ax0_abs_unc"][:, ebin]
+            seb.ax_add_histogram(
+                ax=axe,
+                bin_edges=cm["ax0_bin_edges"],
+                bincounts=mm,
+                bincounts_upper=mm + mm_abs_unc,
+                bincounts_lower=mm - mm_abs_unc,
+                face_color="k",
+                face_alpha=0.25,
+                linestyle="-",
+                linecolor="k",
+            )
+            axe.set_ylim([0, 1])
+            axe.set_xlim(energy_bin["limits"])
+            axe.semilogx()
+            if ebin == 0:
+                axe.set_xlabel("true energy / GeV")
+        fig.savefig(
+            os.path.join(
+                pa["out_dir"], sk + "_" + pk + "_confusion_matrix_unc.jpg"
+            )
+        )
         seb.close_figure(fig)
