@@ -15,15 +15,12 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-acceptance_after_all_cuts = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
+iAcceptance = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0425_diff_sens_acceptance_interpretation")
 )
 
-energy_interpretation = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0420_diff_sens_energy_interpretation"),
-)
-rates_after_all_cuts_in_interpreted_energy = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0430_diff_sens_rates"),
+iRate = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0428_diff_sens_rate_interpretation"),
 )
 
 energy_binning = json_numpy.read(
@@ -72,36 +69,19 @@ for sk in SITES:
         # -------------------------
         for oridx in range(num_onregion_sizes):
 
-            cosmic_ray_rate_per_s = np.zeros(energy_bin["num_bins"])
+            R = np.zeros(energy_bin["num_bins"])
             for ck in COSMIC_RAYS:
-                cosmic_ray_rate_per_s += rates_after_all_cuts_in_interpreted_energy[
-                    sk
-                ][
-                    ck
-                ][
-                    dk
-                ][
-                    "rate"
-                ][
-                    :, oridx
-                ]
+                cosmic_R = iRate[sk][ck][dk]["rate"]["mean"][:, oridx]
+            R += cosmic_R
 
             # estimate gamma eff. area
             # ------------------------
-            signal_area_vs_true_energy_m2 = acceptance_after_all_cuts[sk][
-                "gamma"
-            ]["point"]["mean"][:, oridx]
-            _gamma_mm = energy_interpretation[sk]["gamma"][dk][
-                "counts_normalized_on_ax0"
-            ]
-            signal_area_m2 = np.matmul(
-                _gamma_mm.T, signal_area_vs_true_energy_m2
-            )
+            A = iAcceptance[sk]["gamma"]["point"][dk]["mean"][:, oridx]
 
             for obstix in range(num_observation_times):
                 print(sk, dk, oridx, obstix)
                 critical_rate_per_s = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
-                    background_rate_in_onregion_vs_energy_per_s=cosmic_ray_rate_per_s,
+                    background_rate_in_onregion_vs_energy_per_s=R,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty=systematic_uncertainty,
@@ -111,7 +91,7 @@ for sk in SITES:
 
                 dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_area_vs_energy_m2=signal_area_m2,
+                    signal_area_vs_energy_m2=A,
                     signal_rate_vs_energy_per_s=critical_rate_per_s,
                 )
 

@@ -28,7 +28,7 @@ ONREGIONS = range(num_bins_onregion_radius)
 
 interpreted_rates = json_numpy.read_tree(
     os.path.join(
-        pa["summary_dir"], "0428_diff_sens_background_rates"
+        pa["summary_dir"], "0428_diff_sens_rate_interpretation"
     )
 )
 
