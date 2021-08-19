@@ -63,19 +63,18 @@ for sk in SITES:
                 for ok in ONREGIONS:
                     for ereco in range(energy_bin["num_bins"]):
 
-                        _I = np.zeros(energy_bin["num_bins"])
-                        _I_au = np.zeros(energy_bin["num_bins"])
-
+                        _integral = np.zeros(energy_bin["num_bins"])
+                        _integral_au = np.zeros(energy_bin["num_bins"])
                         for etrue in range(energy_bin["num_bins"]):
-                            _I[etrue], _I_au[etrue] = irf.utils.multiply(
+                            _integral[etrue], _integral_au[etrue] = irf.utils.multiply(
                                 x=mm[etrue, ereco],
                                 x_au=mm_au[etrue, ereco],
                                 y=Q[etrue, ok],
                                 y_au=Q_au[etrue, ok]
                             )
                         iQ[ereco, ok], iQ_au[ereco, ok] = irf.utils.sum(
-                            x=_I,
-                            x_au=_I_au
+                            x=_integral,
+                            x_au=_integral_au
                         )
 
                 json_numpy.write(
