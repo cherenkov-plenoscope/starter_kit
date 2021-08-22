@@ -18,7 +18,7 @@ PARTICLES = irf_config["config"]["particles"]
 
 # prepare energy confusion
 # ------------------------
-energy_interpretation = json_numpy.read_tree(
+iEnergy = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0420_diff_sens_energy_interpretation"),
 )
 
@@ -49,17 +49,25 @@ for sk in SITES:
             os.makedirs(sk_pk_gk_dir, exist_ok=True)
 
             for dk in irf.analysis.differential_sensitivity.SCENARIOS:
-                mm = energy_interpretation[sk][pk][dk]["counts_normalized_on_ax0"]
-                mm_au = energy_interpretation[sk][pk][dk]["counts_normalized_on_ax0_abs_unc"]
+                mm = iEnergy[sk][pk][dk]["counts_normalized_on_ax0"]
+                mm_au = iEnergy[sk][pk][dk]["counts_normalized_on_ax0_abs_unc"]
+                if "integral_mask" in iEnergy[sk][pk][dk]:
+                    _integral_mask = iEnergy[sk][pk][dk]["integral_mask"]
+                else:
+                    _integral_mask = np.eye(mm.shape[0])
 
                 Q = acceptance[sk][pk][gk]["mean"]
                 Q_ru = acceptance[sk][pk][gk]["relative_uncertainty"]
                 Q_ru[np.isnan(Q_ru)] = 0.0
                 Q_au = Q * Q_ru
 
+                _iQ = np.zeros(shape=(energy_bin["num_bins"], len(ONREGIONS)))
+                _iQ_au = np.zeros(_iQ.shape)
+
                 iQ = np.zeros(shape=(energy_bin["num_bins"], len(ONREGIONS)))
                 iQ_au = np.zeros(iQ.shape)
 
+                print(sk, pk, gk, dk, _integral_mask)
                 for ok in ONREGIONS:
                     for ereco in range(energy_bin["num_bins"]):
 
@@ -72,9 +80,24 @@ for sk in SITES:
                                 y=Q[etrue, ok],
                                 y_au=Q_au[etrue, ok]
                             )
-                        iQ[ereco, ok], iQ_au[ereco, ok] = irf.utils.sum(
+                        _iQ[ereco, ok], _iQ_au[ereco, ok] = irf.utils.sum(
                             x=_integral,
                             x_au=_integral_au
+                        )
+
+                    for eout in range(energy_bin["num_bins"]):
+                        _integral2 = np.zeros(energy_bin["num_bins"])
+                        _integral2_au = np.zeros(energy_bin["num_bins"])
+                        for ereco in range(energy_bin["num_bins"]):
+                            _integral2[ereco], _integral2_au[ereco] = irf.utils.multiply(
+                                x=_integral_mask[eout, ereco],
+                                x_au=0.0,
+                                y=_iQ[ereco, ok],
+                                y_au=_iQ_au[ereco, ok],
+                            )
+                        iQ[eout, ok], iQ_au[eout, ok] = irf.utils.sum(
+                            x=_integral2,
+                            x_au=_integral2_au
                         )
 
                 json_numpy.write(

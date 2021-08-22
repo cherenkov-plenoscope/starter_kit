@@ -81,5 +81,6 @@ for sk in SITES:
                     "ax1_key": energy_migration[sk][ck][_c]["ax1_key"],
                     _cbn: m["background_matrices"][ck],
                     _cbn_au: m["background_matrices_abs_unc"][ck],
+                    "integral_mask": m["background_integral_mask"],
                 },
             )

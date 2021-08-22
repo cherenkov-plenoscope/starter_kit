@@ -154,7 +154,9 @@ def estimate_critical_rate(
         sig_count_stat_on = lima1983analysis.estimate_N_s_eq17(
             N_off=bg_count_off,
             alpha=onregion_over_offregion_ratio,
-            S=detection_threshold_std)
+            S=detection_threshold_std,
+            margin=1e-4,
+            max_num_iterations=10*1000)
     else:
         raise KeyError("Unknown method: '{:s}'".format(method))
 

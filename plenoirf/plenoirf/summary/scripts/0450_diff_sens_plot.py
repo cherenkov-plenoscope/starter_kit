@@ -190,8 +190,9 @@ for sk in irf_config["config"]["sites"]:
             ax.set_ylim(np.sort(_y_lim))
             ax.loglog()
             ax.legend(loc="best", fontsize=10)
+            etype = irf.analysis.differential_sensitivity.SCENARIOS[dk]["energy_axes_label"]
             ax.set_xlabel(
-                "reco. " + sed_style["x_label"] + " /" + sed_style["x_unit"]
+                etype + " " + sed_style["x_label"] + " /" + sed_style["x_unit"]
             )
             ax.set_ylabel(sed_style["y_label"] + " /\n " + sed_style["y_unit"])
             fig.savefig(
