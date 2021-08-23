@@ -32,9 +32,7 @@ _energy_migration = json_numpy.read_tree(
 )
 
 _acceptance = json_numpy.read_tree(
-    os.path.join(
-        pa["summary_dir"], "0300_onregion_trigger_acceptance"
-    )
+    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
 airshower_fluxes = json_numpy.read_tree(
@@ -60,8 +58,12 @@ for sk in SITES:
     acceptance[sk] = {}
     acceptance_au[sk] = {}
     for pk in COSMIC_RAYS:
-        acceptance[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
-        acceptance_au[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
+        acceptance[sk][pk] = np.zeros(
+            (fine_energy_bin["num_bins"], num_onregion_sizes)
+        )
+        acceptance_au[sk][pk] = np.zeros(
+            (fine_energy_bin["num_bins"], num_onregion_sizes)
+        )
         for ok in range(num_onregion_sizes):
             print("acceptance", sk, pk, ok)
             _Q = _acceptance[sk][pk][gk]["mean"][:, ok]
@@ -69,9 +71,7 @@ for sk in SITES:
             _Q_ru[np.isnan(_Q_ru)] = 0.0
             _Q_au = _Q * _Q_ru
             acceptance[sk][pk][:, ok] = irf.utils.log10interp(
-                x=fine_energy_bin["centers"],
-                xp=energy_bin["centers"],
-                fp=_Q,
+                x=fine_energy_bin["centers"], xp=energy_bin["centers"], fp=_Q,
             )
             acceptance_au[sk][pk][:, ok] = irf.utils.log10interp(
                 x=fine_energy_bin["centers"],
@@ -79,7 +79,7 @@ for sk in SITES:
                 fp=_Q_au,
             )
 
-    Ok  = 2
+    Ok = 2
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for pk in COSMIC_RAYS:
@@ -92,7 +92,7 @@ for sk in SITES:
             energy_bin["centers"],
             _acceptance[sk][pk][gk]["mean"][:, Ok],
             color=sum_config["plot"]["particle_colors"][pk],
-            marker="o"
+            marker="o",
         )
         ax.fill_between(
             x=fine_energy_bin["centers"],
@@ -105,7 +105,11 @@ for sk in SITES:
     ax.set_ylabel("acceptance / m$^{2}$ sr")
     ax.set_xlabel("energy / GeV")
     ax.loglog()
-    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_acceptance_interpolated.jpg"))
+    fig.savefig(
+        os.path.join(
+            pa["out_dir"], sk + "_" + pk + "_acceptance_interpolated.jpg"
+        )
+    )
     seb.close_figure(fig)
 
 
@@ -151,14 +155,16 @@ for sk in SITES:
                 M_au[etrue, :] /= sumetru
 
         # differentiate
-        #--------------
+        # --------------
         dMdE = np.zeros(M.shape)
         dMdE_au = np.zeros(M.shape)
         for etrue in range(fine_energy_bin["num_bins"]):
             sumetru = np.sum(M[etrue, :])
             if sumetru > 0.0:
                 dMdE[etrue, :] = M[etrue, :] / fine_energy_bin["width"][:]
-                dMdE_au[etrue, :] = M_au[etrue, :] / fine_energy_bin["width"][:]
+                dMdE_au[etrue, :] = (
+                    M_au[etrue, :] / fine_energy_bin["width"][:]
+                )
 
         diff_energy_migration[sk][pk] = dMdE
         diff_energy_migration_au[sk][pk] = dMdE_au
@@ -184,7 +190,12 @@ for sk in SITES:
         ax_c.set_ylabel("reco. energy / GeV")
         ax_c.set_xlabel("energy / GeV")
         ax_c.loglog()
-        fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_energy_migration_interpolated.jpg"))
+        fig.savefig(
+            os.path.join(
+                pa["out_dir"],
+                sk + "_" + pk + "_energy_migration_interpolated.jpg",
+            )
+        )
         seb.close_figure(fig)
 
 
@@ -194,7 +205,9 @@ diff_flux = {}
 for sk in SITES:
     diff_flux[sk] = {}
     for pk in COSMIC_RAYS:
-        diff_flux[sk][pk] = airshower_fluxes[sk][pk]["differential_flux"]["values"]
+        diff_flux[sk][pk] = airshower_fluxes[sk][pk]["differential_flux"][
+            "values"
+        ]
 
 dRtdEt = {}
 dRtdEt_au = {}
@@ -208,11 +221,19 @@ for sk in SITES:
     dRdE[sk] = {}
     dRdE_au[sk] = {}
     for pk in COSMIC_RAYS:
-        dRtdEt[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
-        dRdE[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
+        dRtdEt[sk][pk] = np.zeros(
+            (fine_energy_bin["num_bins"], num_onregion_sizes)
+        )
+        dRdE[sk][pk] = np.zeros(
+            (fine_energy_bin["num_bins"], num_onregion_sizes)
+        )
 
-        dRtdEt_au[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
-        dRdE_au[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
+        dRtdEt_au[sk][pk] = np.zeros(
+            (fine_energy_bin["num_bins"], num_onregion_sizes)
+        )
+        dRdE_au[sk][pk] = np.zeros(
+            (fine_energy_bin["num_bins"], num_onregion_sizes)
+        )
 
         for ok in range(num_onregion_sizes):
             print("apply", sk, pk, ok)
@@ -232,7 +253,10 @@ for sk in SITES:
                 _P_au = np.zeros(fine_energy_bin["num_bins"])
                 for etrue in range(fine_energy_bin["num_bins"]):
 
-                    _P[etrue], _P_au[etrue] = irf.utils.multiply_elemnetwise_au(
+                    (
+                        _P[etrue],
+                        _P_au[etrue],
+                    ) = irf.utils.multiply_elemnetwise_au(
                         x=[
                             dFdE[etrue],
                             dMdE[etrue, ereco],
@@ -249,24 +273,24 @@ for sk in SITES:
 
                 (
                     dRtdEt[sk][pk][ereco, ok],
-                    dRtdEt_au[sk][pk][ereco, ok]
-                )= irf.utils.sum_elemnetwise_au(
-                    x=_P, x_au=_P_au,
-                )
+                    dRtdEt_au[sk][pk][ereco, ok],
+                ) = irf.utils.sum_elemnetwise_au(x=_P, x_au=_P_au,)
 
             for ee in range(fine_energy_bin["num_bins"]):
                 (
-                    dRdE[sk][pk][ee, ok], dRdE_au[sk][pk][ee, ok]
+                    dRdE[sk][pk][ee, ok],
+                    dRdE_au[sk][pk][ee, ok],
                 ) = irf.utils.multiply_elemnetwise_au(
-                        x=[dFdE[ee], Q[ee]],
-                        x_au=[dFdE_au[ee], Q_au[ee]],
-                    )
+                    x=[dFdE[ee], Q[ee]], x_au=[dFdE_au[ee], Q_au[ee]],
+                )
 
             # cross check
             # -----------
             # total rate must not change under energy migration
             total_R = np.sum(dRdE[sk][pk][:, ok] * fine_energy_bin["width"][:])
-            total_Rt = np.sum(dRtdEt[sk][pk][:, ok] * fine_energy_bin["width"][:])
+            total_Rt = np.sum(
+                dRtdEt[sk][pk][:, ok] * fine_energy_bin["width"][:]
+            )
 
             assert 0.9 < total_R / total_Rt < 1.1
 
@@ -328,5 +352,10 @@ for sk in SITES:
     ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
     ax.set_xlabel("reco. energy / GeV")
     ax.loglog()
-    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_differential_rates_vs_reco_energy.jpg"))
+    fig.savefig(
+        os.path.join(
+            pa["out_dir"],
+            sk + "_" + pk + "_differential_rates_vs_reco_energy.jpg",
+        )
+    )
     seb.close_figure(fig)

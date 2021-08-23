@@ -72,13 +72,18 @@ for sk in SITES:
             R = np.zeros(energy_bin["num_bins"])
             R_abs_unc = np.zeros(energy_bin["num_bins"])
             _Rsum = np.zeros((len(COSMIC_RAYS), energy_bin["num_bins"]))
-            _Rsum_abs_unc = np.zeros((len(COSMIC_RAYS), energy_bin["num_bins"]))
+            _Rsum_abs_unc = np.zeros(
+                (len(COSMIC_RAYS), energy_bin["num_bins"])
+            )
             for ick, ck in enumerate(COSMIC_RAYS):
                 _Rsum[ick, :] = iRate[sk][ck][dk]["rate"]["mean"][:, oridx]
-                _Rsum_abs_unc[ick, :] = iRate[sk][ck][dk]["rate"]["absolute_uncertainty"][:, oridx]
+                _Rsum_abs_unc[ick, :] = iRate[sk][ck][dk]["rate"][
+                    "absolute_uncertainty"
+                ][:, oridx]
             for ee in range(energy_bin["num_bins"]):
-                R[ee], R_abs_unc[ee] = irf.utils.sum(x=_Rsum[:, ee], x_au=_Rsum_abs_unc[:, ee])
-
+                R[ee], R_abs_unc[ee] = irf.utils.sum(
+                    x=_Rsum[:, ee], x_au=_Rsum_abs_unc[:, ee]
+                )
 
             # estimate gamma eff. area
             # ------------------------
