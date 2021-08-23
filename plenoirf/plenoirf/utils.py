@@ -2,6 +2,7 @@ import numpy as np
 import datetime
 import io
 import tarfile
+import scipy.interpolate
 
 
 def cone_solid_angle(cone_radial_opening_angle_rad):
@@ -434,3 +435,24 @@ def sum_elemnetwise_au(x, x_au):
     dfdxs = np.ones(len(x))
     S_au = _abs_unc(dfdx=dfdxs, x_au=x_au)
     return S, S_au
+
+
+def log10interp(x, xp, fp):
+    return 10 ** (np.interp(x=np.log10(x), xp=np.log10(xp), fp=np.log10(fp)))
+
+
+def log10interp2d(
+    x,
+    y,
+    fp,
+    xp,
+    yp,
+):
+    mm_f = scipy.interpolate.interp2d(
+        x=np.log10(xp),
+        y=np.log10(yp),
+        z=fp,
+        kind="linear"
+    )
+
+    return mm_f(np.log10(x), np.log10(y))

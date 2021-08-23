@@ -5,7 +5,6 @@ import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
 import json_numpy
-import scipy.interpolate
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -53,31 +52,6 @@ for energy in energy_bin["edges"]:
     fine_energy_bin_edge_matches.append(idx_near)
 
 
-def log10interp(x, xp, fp):
-    return 10 ** (np.interp(x=np.log10(x), xp=np.log10(xp), fp=np.log10(fp)))
-
-
-
-
-def log10interp2d(
-    x,
-    y,
-    fp,
-    xp,
-    yp,
-):
-    mm_f = scipy.interpolate.interp2d(
-        x=np.log10(xp),
-        y=np.log10(yp),
-        z=fp,
-        kind="linear"
-    )
-
-    return mm_f(np.log10(x), np.log10(y))
-
-
-
-
 # prepare acceptances
 # -------------------
 acceptance = {}
@@ -94,20 +68,20 @@ for sk in SITES:
             _Q_ru = _acceptance[sk][pk][gk]["relative_uncertainty"][:, ok]
             _Q_ru[np.isnan(_Q_ru)] = 0.0
             _Q_au = _Q * _Q_ru
-            acceptance[sk][pk][:, ok] = log10interp(
+            acceptance[sk][pk][:, ok] = irf.utils.log10interp(
                 x=fine_energy_bin["centers"],
                 xp=energy_bin["centers"],
                 fp=_Q,
             )
-            acceptance_au[sk][pk][:, ok] = log10interp(
+            acceptance_au[sk][pk][:, ok] = irf.utils.log10interp(
                 x=fine_energy_bin["centers"],
                 xp=energy_bin["centers"],
                 fp=_Q_au,
             )
 
     Ok  = 2
-    fig = seb.figure(seb.FIGURE_16_9)
-    ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for pk in COSMIC_RAYS:
         ax.plot(
             fine_energy_bin["centers"],
@@ -143,9 +117,9 @@ for sk in SITES:
     diff_energy_migration[sk] = {}
     diff_energy_migration_au[sk] = {}
     for pk in COSMIC_RAYS:
-        print("diff_energy_migration", sk, pk)
+        print("energy_migration", sk, pk)
 
-        M = log10interp2d(
+        M = irf.utils.log10interp2d(
             xp=energy_bin["centers"],
             x=fine_energy_bin["centers"],
             yp=energy_bin["centers"],
@@ -157,13 +131,16 @@ for sk in SITES:
             counts=_energy_migration[sk][pk]["confusion_matrix"]["counts"]
         )
 
-        M_au = log10interp2d(
+        M_au = irf.utils.log10interp2d(
             xp=energy_bin["centers"],
             x=fine_energy_bin["centers"],
             yp=energy_bin["centers"],
             y=fine_energy_bin["centers"],
             fp=counts_abs_unc,
         )
+        # account for lower statistics in smaller bins
+        # --------------------------------------------
+        M_au *= fine_energy_bin["num_bins"] / energy_bin["num_bins"]
 
         # normalize probability
         # ---------------------
@@ -174,6 +151,7 @@ for sk in SITES:
                 M_au[etrue, :] /= sumetru
 
         # differentiate
+        #--------------
         dMdE = np.zeros(M.shape)
         dMdE_au = np.zeros(M.shape)
         for etrue in range(fine_energy_bin["num_bins"]):
@@ -253,6 +231,7 @@ for sk in SITES:
                 _P = np.zeros(fine_energy_bin["num_bins"])
                 _P_au = np.zeros(fine_energy_bin["num_bins"])
                 for etrue in range(fine_energy_bin["num_bins"]):
+
                     _P[etrue], _P_au[etrue] = irf.utils.multiply_elemnetwise_au(
                         x=[
                             dFdE[etrue],
@@ -292,10 +271,28 @@ for sk in SITES:
             assert 0.9 < total_R / total_Rt < 1.1
 
 
+for sk in SITES:
+    sk_dir = os.path.join(pa["out_dir"], sk)
+    os.makedirs(sk_dir, exist_ok=True)
+    for pk in COSMIC_RAYS:
+        json_numpy.write(
+            os.path.join(sk_dir, pk + ".json"),
+            {
+                "comment": (
+                    "differential rate after all cuts "
+                    "VS reco. energy VS onregion"
+                ),
+                "unit": "s$^{-1} (GeV)$^{-1}$",
+                "mean": dRtdEt[sk][pk],
+                "absolute_uncertainty": dRtdEt_au[sk][pk],
+            },
+        )
+
+
 Ok = 2
 for sk in SITES:
-    fig = seb.figure(seb.FIGURE_16_9)
-    ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for pk in COSMIC_RAYS:
         ax.plot(
             fine_energy_bin["centers"],
@@ -331,5 +328,5 @@ for sk in SITES:
     ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
     ax.set_xlabel("reco. energy / GeV")
     ax.loglog()
-    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_diff_rates_in_reco_energy.jpg"))
+    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_differential_rates_vs_reco_energy.jpg"))
     seb.close_figure(fig)
