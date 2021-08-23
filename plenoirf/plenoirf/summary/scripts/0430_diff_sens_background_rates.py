@@ -110,7 +110,7 @@ for sk in SITES:
     ax.set_ylabel("acceptance / m$^{2}$ sr")
     ax.set_xlabel("energy / GeV")
     ax.loglog()
-    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_acceptance.jpg"))
+    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_acceptance_interpolated.jpg"))
     seb.close_figure(fig)
 
 
@@ -193,11 +193,11 @@ for sk in SITES:
         ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
         seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
         ax_c.set_aspect("equal")
-        ax_c.set_title("normalized in each row")
+        ax_c.set_title("normalized in each column")
         ax_c.set_ylabel("reco. energy / GeV")
         ax_c.set_xlabel("energy / GeV")
         ax_c.loglog()
-        fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_energy_migration_interpolation.jpg"))
+        fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_energy_migration_interpolated.jpg"))
         seb.close_figure(fig)
 
 
@@ -267,8 +267,8 @@ for sk in SITES:
             linestyle=":",
             alpha=0.5,
         )
-    ax.set_ylabel("diff. rate / s$^{-1}$ (GeV)$^{-1}$")
-    ax.set_xlabel("energy / GeV")
+    ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
+    ax.set_xlabel("reco. energy / GeV")
     ax.loglog()
-    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_diff_rates.jpg"))
+    fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + "_diff_rates_in_reco_energy.jpg"))
     seb.close_figure(fig)

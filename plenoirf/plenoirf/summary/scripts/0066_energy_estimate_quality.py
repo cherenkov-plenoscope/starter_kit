@@ -173,7 +173,7 @@ for sk in irf_config["config"]["sites"]:
         seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
         irf.summary.figure.mark_ax_thrown_spectrum(ax=ax_c)
         ax_c.set_aspect("equal")
-        ax_c.set_title("normalized for each column")
+        ax_c.set_title("normalized in each column")
         ax_c.set_ylabel("reco. energy / GeV")
         ax_c.loglog()
         ax_h.semilogx()
