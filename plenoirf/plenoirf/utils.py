@@ -398,3 +398,39 @@ def integrate_rate_where_known(dRdE, dRdE_au, E_edges):
 
     T, T_au = integrate(f=_dRdE, f_au=_dRdE_au, x_edges=E_edges)
     return T, T_au
+
+
+def _abs_unc(dfdx, x_au):
+    dfdx = np.array(dfdx)
+    x_au = np.array(x_au)
+    assert len(dfdx) == len(x_au)
+    S = 0.0
+    for i in range(len(x_au)):
+        S += (dfdx[i] * x_au[i]) ** 2.0
+    return np.sqrt(S)
+
+
+def multiply_elemnetwise_au(x, x_au):
+    x = np.array(x)
+    x_au = np.array(x_au)
+    assert len(x) == len(x_au)
+    P = np.prod(x)
+    dfdxs = []
+    for i in range(len(x)):
+        mask_i = np.ones(len(x), dtype=np.bool)
+        mask_i[i] = False
+        dfdxi = np.prod(x[mask_i])
+        dfdxs.append(dfdxi)
+
+    Pau = _abs_unc(dfdx=dfdxs, x_au=x_au)
+    return P, Pau
+
+
+def sum_elemnetwise_au(x, x_au):
+    x = np.array(x)
+    x_au = np.array(x_au)
+    assert len(x) == len(x_au)
+    S = np.sum(x)
+    dfdxs = np.ones(len(x))
+    S_au = _abs_unc(dfdx=dfdxs, x_au=x_au)
+    return S, S_au

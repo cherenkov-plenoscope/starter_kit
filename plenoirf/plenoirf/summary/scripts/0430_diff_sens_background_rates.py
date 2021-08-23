@@ -57,6 +57,27 @@ def log10interp(x, xp, fp):
     return 10 ** (np.interp(x=np.log10(x), xp=np.log10(xp), fp=np.log10(fp)))
 
 
+
+
+def log10interp2d(
+    x,
+    y,
+    fp,
+    xp,
+    yp,
+):
+    mm_f = scipy.interpolate.interp2d(
+        x=np.log10(xp),
+        y=np.log10(yp),
+        z=fp,
+        kind="linear"
+    )
+
+    return mm_f(np.log10(x), np.log10(y))
+
+
+
+
 # prepare acceptances
 # -------------------
 acceptance = {}
@@ -114,34 +135,6 @@ for sk in SITES:
     seb.close_figure(fig)
 
 
-
-
-def interpolate_migration_matrix(
-    ax0_bin_centers,
-    ax1_bin_centers,
-    migration_matrix_counts,
-    new_ax0_bin_centers,
-    new_ax1_bin_centers,
-):
-    mm_f = scipy.interpolate.interp2d(
-        x=ax0_bin_centers,
-        y=ax1_bin_centers,
-        z=migration_matrix,
-        kind="linear"
-    )
-
-    mm = mm_f(new_ax0_bin_centers, new_ax1_bin_centers)
-
-    # normalize probability
-    for i0 in range(len(ax0_bin_centers)):
-        sum1 = np.sum(mm[i0, :])
-        if sum1 > 0.0:
-            mm[i0, :] /= sum1
-    return mm
-
-
-
-
 # prepare energy_migration
 # ------------------------
 diff_energy_migration = {}
@@ -151,34 +144,50 @@ for sk in SITES:
     diff_energy_migration_au[sk] = {}
     for pk in COSMIC_RAYS:
         print("diff_energy_migration", sk, pk)
-        em_f = scipy.interpolate.interp2d(
-            x=energy_bin["centers"],
-            y=energy_bin["centers"],
-            z=_energy_migration[sk][pk]["confusion_matrix"]["counts"],
-            kind="linear"
+
+        M = log10interp2d(
+            xp=energy_bin["centers"],
+            x=fine_energy_bin["centers"],
+            yp=energy_bin["centers"],
+            y=fine_energy_bin["centers"],
+            fp=_energy_migration[sk][pk]["confusion_matrix"]["counts"],
         )
 
-        em_au_f = scipy.interpolate.interp2d(
-            x=energy_bin["centers"],
-            y=energy_bin["centers"],
-            z=_energy_migration[sk][pk]["confusion_matrix"]["counts_normalized_on_ax0_abs_unc"],
-            kind="linear"
+        _, counts_abs_unc = irf.utils.estimate_rel_abs_uncertainty_in_counts(
+            counts=_energy_migration[sk][pk]["confusion_matrix"]["counts"]
         )
 
-        diff_energy_migration[sk][pk] = em_f(fine_energy_bin["centers"], fine_energy_bin["centers"])
-        diff_energy_migration_au[sk][pk] = em_au_f(fine_energy_bin["centers"], fine_energy_bin["centers"])
+        M_au = log10interp2d(
+            xp=energy_bin["centers"],
+            x=fine_energy_bin["centers"],
+            yp=energy_bin["centers"],
+            y=fine_energy_bin["centers"],
+            fp=counts_abs_unc,
+        )
 
         # normalize probability
+        # ---------------------
         for etrue in range(fine_energy_bin["num_bins"]):
-            sumetru = np.sum(diff_energy_migration[sk][pk][etrue, :])
+            sumetru = np.sum(M[etrue, :])
             if sumetru > 0.0:
-                diff_energy_migration[sk][pk][etrue, :] /= sumetru
-                diff_energy_migration[sk][pk][etrue, :] /= fine_energy_bin["width"][:]
+                M[etrue, :] /= sumetru
+                M_au[etrue, :] /= sumetru
 
-
-        M = np.array(diff_energy_migration[sk][pk])
+        # differentiate
+        dMdE = np.zeros(M.shape)
+        dMdE_au = np.zeros(M.shape)
         for etrue in range(fine_energy_bin["num_bins"]):
-            M[etrue, :] *= fine_energy_bin["width"]
+            sumetru = np.sum(M[etrue, :])
+            if sumetru > 0.0:
+                dMdE[etrue, :] = M[etrue, :] / fine_energy_bin["width"][:]
+                dMdE_au[etrue, :] = M_au[etrue, :] / fine_energy_bin["width"][:]
+
+        diff_energy_migration[sk][pk] = dMdE
+        diff_energy_migration_au[sk][pk] = dMdE_au
+
+        M_back = np.array(diff_energy_migration[sk][pk])
+        for etrue in range(fine_energy_bin["num_bins"]):
+            M_back[etrue, :] *= fine_energy_bin["width"]
 
         fig = seb.figure(seb.FIGURE_1_1)
         ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
@@ -186,7 +195,7 @@ for sk in SITES:
         _pcm_confusion = ax_c.pcolormesh(
             fine_energy_bin["edges"],
             fine_energy_bin["edges"],
-            np.transpose(M),
+            np.transpose(M_back),
             cmap="Greys",
             norm=seb.plt_colors.PowerNorm(gamma=0.5),
         )
@@ -210,13 +219,22 @@ for sk in SITES:
         diff_flux[sk][pk] = airshower_fluxes[sk][pk]["differential_flux"]["values"]
 
 dRtdEt = {}
+dRtdEt_au = {}
+
 dRdE = {}
+dRdE_au = {}
+
 for sk in SITES:
     dRtdEt[sk] = {}
+    dRtdEt_au[sk] = {}
     dRdE[sk] = {}
+    dRdE_au[sk] = {}
     for pk in COSMIC_RAYS:
         dRtdEt[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
         dRdE[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
+
+        dRtdEt_au[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
+        dRdE_au[sk][pk] = np.zeros((fine_energy_bin["num_bins"], num_onregion_sizes))
 
         for ok in range(num_onregion_sizes):
             print("apply", sk, pk, ok)
@@ -229,16 +247,41 @@ for sk in SITES:
             Q = acceptance[sk][pk][:, ok]
             Q_au = acceptance_au[sk][pk][:, ok]
 
+            fine_energy_bin_width_au = np.zeros(fine_energy_bin["width"].shape)
+
             for ereco in range(fine_energy_bin["num_bins"]):
+                _P = np.zeros(fine_energy_bin["num_bins"])
+                _P_au = np.zeros(fine_energy_bin["num_bins"])
                 for etrue in range(fine_energy_bin["num_bins"]):
-                    dRtdEt[sk][pk][ereco, ok] += (
-                        dFdE[etrue] *
-                        dMdE[etrue, ereco] *
-                        Q[etrue] *
-                        fine_energy_bin["width"][etrue]
+                    _P[etrue], _P_au[etrue] = irf.utils.multiply_elemnetwise_au(
+                        x=[
+                            dFdE[etrue],
+                            dMdE[etrue, ereco],
+                            Q[etrue],
+                            fine_energy_bin["width"][etrue],
+                        ],
+                        x_au=[
+                            dFdE_au[etrue],
+                            dMdE_au[etrue, ereco],
+                            Q_au[etrue],
+                            fine_energy_bin_width_au[etrue],
+                        ],
                     )
 
-            dRdE[sk][pk][:, ok] = dFdE[:] * Q[:]
+                (
+                    dRtdEt[sk][pk][ereco, ok],
+                    dRtdEt_au[sk][pk][ereco, ok]
+                )= irf.utils.sum_elemnetwise_au(
+                    x=_P, x_au=_P_au,
+                )
+
+            for ee in range(fine_energy_bin["num_bins"]):
+                (
+                    dRdE[sk][pk][ee, ok], dRdE_au[sk][pk][ee, ok]
+                ) = irf.utils.multiply_elemnetwise_au(
+                        x=[dFdE[ee], Q[ee]],
+                        x_au=[dFdE_au[ee], Q_au[ee]],
+                    )
 
             # cross check
             # -----------
@@ -258,15 +301,33 @@ for sk in SITES:
             fine_energy_bin["centers"],
             dRtdEt[sk][pk][:, Ok],
             color=sum_config["plot"]["particle_colors"][pk],
-            alpha=0.5,
         )
+
+        ax.fill_between(
+            x=fine_energy_bin["centers"],
+            y1=dRtdEt[sk][pk][:, Ok] - dRtdEt_au[sk][pk][:, Ok],
+            y2=dRtdEt[sk][pk][:, Ok] + dRtdEt_au[sk][pk][:, Ok],
+            color=sum_config["plot"]["particle_colors"][pk],
+            alpha=0.2,
+            linewidth=0.0,
+        )
+
         ax.plot(
             fine_energy_bin["centers"],
             dRdE[sk][pk][:, Ok],
             color=sum_config["plot"]["particle_colors"][pk],
             linestyle=":",
-            alpha=0.5,
+            alpha=0.1,
         )
+        ax.fill_between(
+            x=fine_energy_bin["centers"],
+            y1=dRdE[sk][pk][:, Ok] - dRdE_au[sk][pk][:, Ok],
+            y2=dRdE[sk][pk][:, Ok] + dRdE_au[sk][pk][:, Ok],
+            color=sum_config["plot"]["particle_colors"][pk],
+            alpha=0.05,
+            linewidth=0.0,
+        )
+
     ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
     ax.set_xlabel("reco. energy / GeV")
     ax.loglog()
