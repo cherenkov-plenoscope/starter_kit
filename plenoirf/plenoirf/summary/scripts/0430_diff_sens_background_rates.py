@@ -136,7 +136,7 @@ def interpolate_migration_matrix(
     )
     # account for lower statistics in smaller bins
     # --------------------------------------------
-    M_abs_unc *= len(new_bin_centers) / len(bin_centers)
+    M_abs_unc *= np.sqrt(len(new_bin_centers) / len(bin_centers))
 
     # normalize probability
     # ---------------------
@@ -167,6 +167,41 @@ def derive_migration_matrix_by_ax0(
     return dMdE, dMdE_au
 
 
+def write_figure_diff_energy_migration_matrix(
+    dMdE,
+    dMdE_au,
+    energy_bin_edges,
+    path,
+):
+    energy_bin_width = np.diff(energy_bin_edges)
+
+    # integrate probability along ax1
+    # -------------------------------
+    M_back = np.array(dMdE)
+    for i_ax0 in range(len(energy_bin_width)):
+        M_back[i_ax0, :] *= energy_bin_width
+
+    fig = seb.figure(seb.FIGURE_1_1)
+    ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
+    ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
+    _pcm_confusion = ax_c.pcolormesh(
+        energy_bin_edges,
+        energy_bin_edges,
+        np.transpose(M_back),
+        cmap="Greys",
+        norm=seb.plt_colors.PowerNorm(gamma=0.5),
+    )
+    ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+    seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
+    ax_c.set_aspect("equal")
+    ax_c.set_title("normalized in each column")
+    ax_c.set_ylabel("reco. energy / GeV")
+    ax_c.set_xlabel("energy / GeV")
+    ax_c.loglog()
+    fig.savefig(path)
+    seb.close_figure(fig)
+
+
 
 # prepare energy_migration
 # ------------------------
@@ -175,7 +210,7 @@ diff_energy_migration_au = {}
 for sk in SITES:
     diff_energy_migration[sk] = {}
     diff_energy_migration_au[sk] = {}
-    for pk in COSMIC_RAYS:
+    for pk in PARTICLES:
         print("energy_migration", sk, pk)
 
         M, M_au = interpolate_migration_matrix(
@@ -191,37 +226,31 @@ for sk in SITES:
             ax0_bin_widths=fine_energy_bin["width"],
         )
 
+        write_figure_diff_energy_migration_matrix(
+            dMdE=dMdE,
+            dMdE_au=dMdE_au,
+            energy_bin_edges=fine_energy_bin["edges"],
+            path=os.path.join(
+                pa["out_dir"],
+                sk + "_" + pk + "_energy_migration_interpolated.jpg",
+            ),
+        )
+
+        json_numpy.write(
+            os.path.join(
+                pa["out_dir"],
+                sk + "_" + pk + "_differential_energy_migration_interpolated.json",
+            ),
+            {
+                "unit": "(GeV)$^{-1}$",
+                "mean": dMdE,
+                "absolute_uncertainty": dMdE_au,
+            },
+        )
+
         diff_energy_migration[sk][pk] = dMdE
         diff_energy_migration_au[sk][pk] = dMdE_au
 
-        M_back = np.array(diff_energy_migration[sk][pk])
-        for etrue in range(fine_energy_bin["num_bins"]):
-            M_back[etrue, :] *= fine_energy_bin["width"]
-
-        fig = seb.figure(seb.FIGURE_1_1)
-        ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
-        ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
-        _pcm_confusion = ax_c.pcolormesh(
-            fine_energy_bin["edges"],
-            fine_energy_bin["edges"],
-            np.transpose(M_back),
-            cmap="Greys",
-            norm=seb.plt_colors.PowerNorm(gamma=0.5),
-        )
-        ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
-        seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
-        ax_c.set_aspect("equal")
-        ax_c.set_title("normalized in each column")
-        ax_c.set_ylabel("reco. energy / GeV")
-        ax_c.set_xlabel("energy / GeV")
-        ax_c.loglog()
-        fig.savefig(
-            os.path.join(
-                pa["out_dir"],
-                sk + "_" + pk + "_energy_migration_interpolated.jpg",
-            )
-        )
-        seb.close_figure(fig)
 
 
 # prepare diff-flux
