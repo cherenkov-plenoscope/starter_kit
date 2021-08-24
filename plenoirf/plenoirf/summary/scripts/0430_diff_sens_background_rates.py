@@ -113,6 +113,61 @@ for sk in SITES:
     seb.close_figure(fig)
 
 
+def interpolate_migration_matrix(
+    migration_matrix_counts,
+    migration_matrix_counts_abs_unc,
+    bin_centers,
+    new_bin_centers,
+):
+    M = irf.utils.log10interp2d(
+        xp=bin_centers,
+        yp=bin_centers,
+        x=new_bin_centers,
+        y=new_bin_centers,
+        fp=migration_matrix_counts,
+    )
+
+    M_abs_unc = irf.utils.log10interp2d(
+        xp=bin_centers,
+        yp=bin_centers,
+        x=new_bin_centers,
+        y=new_bin_centers,
+        fp=migration_matrix_counts_abs_unc,
+    )
+    # account for lower statistics in smaller bins
+    # --------------------------------------------
+    M_abs_unc *= len(new_bin_centers) / len(bin_centers)
+
+    # normalize probability
+    # ---------------------
+    for i_ax0 in range(len(new_bin_centers)):
+        _sum = np.sum(M[i_ax0, :])
+        if _sum > 0.0:
+            M[i_ax0, :] /= _sum
+            M_abs_unc[i_ax0, :] /= _sum
+
+    return M, M_abs_unc
+
+
+def derive_migration_matrix_by_ax0(
+    migration_matrix_counts,
+    migration_matrix_counts_abs_unc,
+    ax0_bin_widths,
+):
+    M = migration_matrix_counts
+    M_au = migration_matrix_counts_abs_unc
+
+    dMdE = np.zeros(M.shape)
+    dMdE_au = np.zeros(M.shape)
+    for i_ax0 in range(len(ax0_bin_widths)):
+        _sum = np.sum(M[i_ax0, :])
+        if _sum > 0.0:
+            dMdE[i_ax0, :] = M[i_ax0, :] / ax0_bin_widths[:]
+            dMdE_au[i_ax0, :] = M_au[i_ax0, :] / ax0_bin_widths[:]
+    return dMdE, dMdE_au
+
+
+
 # prepare energy_migration
 # ------------------------
 diff_energy_migration = {}
@@ -123,48 +178,18 @@ for sk in SITES:
     for pk in COSMIC_RAYS:
         print("energy_migration", sk, pk)
 
-        M = irf.utils.log10interp2d(
-            xp=energy_bin["centers"],
-            x=fine_energy_bin["centers"],
-            yp=energy_bin["centers"],
-            y=fine_energy_bin["centers"],
-            fp=_energy_migration[sk][pk]["confusion_matrix"]["counts"],
+        M, M_au = interpolate_migration_matrix(
+            migration_matrix_counts=_energy_migration[sk][pk]["confusion_matrix"]["counts"],
+            migration_matrix_counts_abs_unc=_energy_migration[sk][pk]["confusion_matrix"]["counts_abs_unc"],
+            bin_centers=energy_bin["centers"],
+            new_bin_centers=fine_energy_bin["centers"],
         )
 
-        _, counts_abs_unc = irf.utils.estimate_rel_abs_uncertainty_in_counts(
-            counts=_energy_migration[sk][pk]["confusion_matrix"]["counts"]
+        dMdE, dMdE_au = derive_migration_matrix_by_ax0(
+            migration_matrix_counts=M,
+            migration_matrix_counts_abs_unc=M_au,
+            ax0_bin_widths=fine_energy_bin["width"],
         )
-
-        M_au = irf.utils.log10interp2d(
-            xp=energy_bin["centers"],
-            x=fine_energy_bin["centers"],
-            yp=energy_bin["centers"],
-            y=fine_energy_bin["centers"],
-            fp=counts_abs_unc,
-        )
-        # account for lower statistics in smaller bins
-        # --------------------------------------------
-        M_au *= fine_energy_bin["num_bins"] / energy_bin["num_bins"]
-
-        # normalize probability
-        # ---------------------
-        for etrue in range(fine_energy_bin["num_bins"]):
-            sumetru = np.sum(M[etrue, :])
-            if sumetru > 0.0:
-                M[etrue, :] /= sumetru
-                M_au[etrue, :] /= sumetru
-
-        # differentiate
-        # --------------
-        dMdE = np.zeros(M.shape)
-        dMdE_au = np.zeros(M.shape)
-        for etrue in range(fine_energy_bin["num_bins"]):
-            sumetru = np.sum(M[etrue, :])
-            if sumetru > 0.0:
-                dMdE[etrue, :] = M[etrue, :] / fine_energy_bin["width"][:]
-                dMdE_au[etrue, :] = (
-                    M_au[etrue, :] / fine_energy_bin["width"][:]
-                )
 
         diff_energy_migration[sk][pk] = dMdE
         diff_energy_migration_au[sk][pk] = dMdE_au
