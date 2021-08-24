@@ -44,11 +44,6 @@ energy_binning = json_numpy.read(
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 fine_energy_bin = energy_binning["interpolation"]
-fine_energy_bin_edge_matches = []
-for energy in energy_bin["edges"]:
-    idx_near = np.argmin(np.abs(fine_energy_bin["edges"] - energy))
-    fine_energy_bin_edge_matches.append(idx_near)
-
 
 # prepare diff-flux
 # -----------------
