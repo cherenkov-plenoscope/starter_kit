@@ -157,6 +157,7 @@ for sk in SITES:
                 "unit": "s$^{-1} (GeV)$^{-1}$",
                 "mean": dRtdEt[sk][pk],
                 "absolute_uncertainty": dRtdEt_au[sk][pk],
+                "energy_binning_key": "interpolation",
             },
         )
 

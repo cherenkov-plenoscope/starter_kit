@@ -15,18 +15,22 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-iAcceptance = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0425_diff_sens_acceptance_interpretation")
+iacceptance = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0410_interpolate_acceptance")
 )
 
-iRate = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0428_diff_sens_rate_interpretation"),
+ienergy_migration = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0420_interpolate_energy_migration_matrix")
+)
+
+cosmic_background_diff_rate = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0430_diff_sens_background_rates")
 )
 
 energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
-energy_bin = energy_binning["trigger_acceptance_onregion"]
+fenergy_bin = energy_binning["interpolation"]
 
 detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
@@ -59,7 +63,7 @@ for sk in SITES:
     for dk in irf.analysis.differential_sensitivity.SCENARIOS:
         critical_dKdE = np.nan * np.ones(
             shape=(
-                energy_bin["num_bins"],
+                fenergy_bin["num_bins"],
                 num_onregion_sizes,
                 num_observation_times,
             )
@@ -69,30 +73,35 @@ for sk in SITES:
         # -------------------------
         for oridx in range(num_onregion_sizes):
 
-            R = np.zeros(energy_bin["num_bins"])
-            R_abs_unc = np.zeros(energy_bin["num_bins"])
-            _Rsum = np.zeros((len(COSMIC_RAYS), energy_bin["num_bins"]))
-            _Rsum_abs_unc = np.zeros(
-                (len(COSMIC_RAYS), energy_bin["num_bins"])
-            )
+            Rt = np.zeros(fenergy_bin["num_bins"])
+            Rt_au = np.zeros(fenergy_bin["num_bins"])
+
+            _Rtsum = np.zeros((len(COSMIC_RAYS), fenergy_bin["num_bins"]))
+            _Rtsum_au = np.zeros((len(COSMIC_RAYS), fenergy_bin["num_bins"]))
+
             for ick, ck in enumerate(COSMIC_RAYS):
-                _Rsum[ick, :] = iRate[sk][ck][dk]["rate"]["mean"][:, oridx]
-                _Rsum_abs_unc[ick, :] = iRate[sk][ck][dk]["rate"][
+                dRtdEt = cosmic_background_diff_rate[sk][ck]["mean"][:, oridx]
+                dRtdEt_au = cosmic_background_diff_rate[sk][ck][
                     "absolute_uncertainty"
                 ][:, oridx]
-            for ee in range(energy_bin["num_bins"]):
-                R[ee], R_abs_unc[ee] = irf.utils.sum(
-                    x=_Rsum[:, ee], x_au=_Rsum_abs_unc[:, ee]
+
+                _Rtsum[ick, :] = dRtdEt * fenergy_bin["width"]
+                _Rtsum_au[ick, :] = dRtdEt_au * fenergy_bin["width"]
+
+            for ee in range(fenergy_bin["num_bins"]):
+                Rt[ee], Rt_au[ee] = irf.utils.sum(
+                    x=_Rtsum[:, ee], x_au=_Rtsum_au[:, ee]
                 )
 
             # estimate gamma eff. area
             # ------------------------
-            A = iAcceptance[sk]["gamma"]["point"][dk]["mean"][:, oridx]
+            A = iacceptance[sk]["gamma"]["point"]["mean"][:, oridx]
+            A_au = iacceptance[sk]["gamma"]["point"]["absolute_uncertainty"][:, oridx]
 
             for obstix in range(num_observation_times):
                 print(sk, dk, oridx, obstix)
                 critical_rate_per_s = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
-                    background_rate_in_onregion_vs_energy_per_s=R,
+                    background_rate_in_onregion_vs_energy_per_s=Rt,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty=systematic_uncertainty,
@@ -101,7 +110,7 @@ for sk in SITES:
                 )
 
                 dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
-                    energy_bin_edges_GeV=energy_bin["edges"],
+                    energy_bin_edges_GeV=fenergy_bin["edges"],
                     signal_area_vs_energy_m2=A,
                     signal_rate_vs_energy_per_s=critical_rate_per_s,
                 )
@@ -111,7 +120,7 @@ for sk in SITES:
         json_numpy.write(
             os.path.join(pa["out_dir"], sk, dk + ".json"),
             {
-                "energy_bin_edges": energy_bin["edges"],
+                "energy_bin_edges": fenergy_bin["edges"],
                 "observation_times": observation_times,
                 "differential_flux": critical_dKdE,
                 "comment": (
