@@ -31,8 +31,8 @@ _energy_migration = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality"),
 )
 
-_acceptance = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
+iacceptance = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0410_interpolate_acceptance")
 )
 
 airshower_fluxes = json_numpy.read_tree(
@@ -48,69 +48,6 @@ fine_energy_bin_edge_matches = []
 for energy in energy_bin["edges"]:
     idx_near = np.argmin(np.abs(fine_energy_bin["edges"] - energy))
     fine_energy_bin_edge_matches.append(idx_near)
-
-
-# prepare acceptances
-# -------------------
-acceptance = {}
-acceptance_au = {}
-for sk in SITES:
-    acceptance[sk] = {}
-    acceptance_au[sk] = {}
-    for pk in COSMIC_RAYS:
-        acceptance[sk][pk] = np.zeros(
-            (fine_energy_bin["num_bins"], num_onregion_sizes)
-        )
-        acceptance_au[sk][pk] = np.zeros(
-            (fine_energy_bin["num_bins"], num_onregion_sizes)
-        )
-        for ok in range(num_onregion_sizes):
-            print("acceptance", sk, pk, ok)
-            _Q = _acceptance[sk][pk][gk]["mean"][:, ok]
-            _Q_ru = _acceptance[sk][pk][gk]["relative_uncertainty"][:, ok]
-            _Q_ru[np.isnan(_Q_ru)] = 0.0
-            _Q_au = _Q * _Q_ru
-            acceptance[sk][pk][:, ok] = irf.utils.log10interp(
-                x=fine_energy_bin["centers"], xp=energy_bin["centers"], fp=_Q,
-            )
-            acceptance_au[sk][pk][:, ok] = irf.utils.log10interp(
-                x=fine_energy_bin["centers"],
-                xp=energy_bin["centers"],
-                fp=_Q_au,
-            )
-
-    Ok = 2
-    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
-    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
-    for pk in COSMIC_RAYS:
-        ax.plot(
-            fine_energy_bin["centers"],
-            acceptance[sk][pk][:, Ok],
-            color=sum_config["plot"]["particle_colors"][pk],
-        )
-        ax.plot(
-            energy_bin["centers"],
-            _acceptance[sk][pk][gk]["mean"][:, Ok],
-            color=sum_config["plot"]["particle_colors"][pk],
-            marker="o",
-        )
-        ax.fill_between(
-            x=fine_energy_bin["centers"],
-            y1=acceptance[sk][pk][:, Ok] - acceptance_au[sk][pk][:, Ok],
-            y2=acceptance[sk][pk][:, Ok] + acceptance_au[sk][pk][:, Ok],
-            color=sum_config["plot"]["particle_colors"][pk],
-            alpha=0.2,
-            linewidth=0.0,
-        )
-    ax.set_ylabel("acceptance / m$^{2}$ sr")
-    ax.set_xlabel("energy / GeV")
-    ax.loglog()
-    fig.savefig(
-        os.path.join(
-            pa["out_dir"], sk + "_" + pk + "_acceptance_interpolated.jpg"
-        )
-    )
-    seb.close_figure(fig)
 
 
 def interpolate_migration_matrix(
@@ -297,8 +234,8 @@ for sk in SITES:
             dMdE = diff_energy_migration[sk][pk]
             dMdE_au = diff_energy_migration_au[sk][pk]
 
-            Q = acceptance[sk][pk][:, ok]
-            Q_au = acceptance_au[sk][pk][:, ok]
+            Q = iacceptance[sk][pk][gk]["mean"][:, ok]
+            Q_au = iacceptance[sk][pk][gk]["absolute_uncertainty"][:, ok]
 
             fine_energy_bin_width_au = np.zeros(fine_energy_bin["width"].shape)
 
