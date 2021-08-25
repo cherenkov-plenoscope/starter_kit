@@ -89,8 +89,8 @@ for sk in irf_config["config"]["sites"]:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(site_particle_dir, exist_ok=True)
 
-        # SCENARIO: point source
-        # ----------------------
+        # point source
+        # -------------
         diffuse_thrown = spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
@@ -195,8 +195,8 @@ for sk in irf_config["config"]["sites"]:
             },
         )
 
-        # SCENARIO: diffuse source
-        # ------------------------
+        # diffuse source
+        # --------------
 
         # thrown
         diffuse_thrown = diffuse_thrown
