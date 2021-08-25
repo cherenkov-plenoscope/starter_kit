@@ -65,24 +65,6 @@ def interpolate_migration_matrix(
     return M, M_abs_unc
 
 
-def derive_migration_matrix_by_ax0(
-    migration_matrix_counts,
-    migration_matrix_counts_abs_unc,
-    ax0_bin_widths,
-):
-    M = migration_matrix_counts
-    M_au = migration_matrix_counts_abs_unc
-
-    dMdE = np.zeros(M.shape)
-    dMdE_au = np.zeros(M.shape)
-    for i_ax0 in range(len(ax0_bin_widths)):
-        _sum = np.sum(M[i_ax0, :])
-        if _sum > 0.0:
-            dMdE[i_ax0, :] = M[i_ax0, :] / ax0_bin_widths[:]
-            dMdE_au[i_ax0, :] = M_au[i_ax0, :] / ax0_bin_widths[:]
-    return dMdE, dMdE_au
-
-
 def write_figure_diffenergy_migration_matrix(
     dMdE,
     dMdE_au,
@@ -130,7 +112,7 @@ for sk in SITES:
             new_bin_centers=fine_energy_bin["centers"],
         )
 
-        dMdE, dMdE_au = derive_migration_matrix_by_ax0(
+        dMdE, dMdE_au = irf.analysis.differential_sensitivity.derive_migration_matrix_by_ax0(
             migration_matrix_counts=M,
             migration_matrix_counts_abs_unc=M_au,
             ax0_bin_widths=fine_energy_bin["width"],

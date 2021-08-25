@@ -177,3 +177,21 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
                 if start == 0 and stop + 1 == num_bins:
                     break
     return mask
+
+
+def derive_migration_matrix_by_ax0(
+    migration_matrix_counts,
+    migration_matrix_counts_abs_unc,
+    ax0_bin_widths,
+):
+    M = migration_matrix_counts
+    M_au = migration_matrix_counts_abs_unc
+
+    dMdE = np.zeros(M.shape)
+    dMdE_au = np.zeros(M.shape)
+    for i_ax0 in range(len(ax0_bin_widths)):
+        _sum = np.sum(M[i_ax0, :])
+        if _sum > 0.0:
+            dMdE[i_ax0, :] = M[i_ax0, :] / ax0_bin_widths[:]
+            dMdE_au[i_ax0, :] = M_au[i_ax0, :] / ax0_bin_widths[:]
+    return dMdE, dMdE_au
