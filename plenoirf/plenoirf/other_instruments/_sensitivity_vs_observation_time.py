@@ -117,17 +117,14 @@ def sensitivity_vs_observation_time(energy_GeV=25.0, instrument="cta_south"):
     return {
         "pivot_energy": {
             "values": PIVOT_ENERGY_GEV,
-            "unit_tex": "GeV",
             "unit": "GeV",
         },
         "differential_flux": {
             "values": dfdE,
-            "unit_tex": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
-            "unit": "per_m2_per_s_per_GeV",
+            "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
         },
         "observation_time": {
             "values": obstime_s,
-            "unit_tex": "s",
             "unit": "s",
         },
         "reference": {

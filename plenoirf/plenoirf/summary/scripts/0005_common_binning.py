@@ -33,7 +33,6 @@ for scenario_key in sum_config["energy_binning"]["fine"]:
         "stop": edges[-1],
         "limits": [edges[0], edges[-1]],
         "unit": "GeV",
-        "unit_tex": "GeV",
     }
 
 json_numpy.write(os.path.join(pa["out_dir"], "energy.json"), energy)

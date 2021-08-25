@@ -144,11 +144,10 @@ def differential_sensitivity(observation_time=1800):
     )
 
     return {
-        "energy": {"values": energy, "unit_tex": "GeV", "unit": "GeV",},
+        "energy": {"values": energy, "unit": "GeV", "unit": "GeV",},
         "differential_flux": {
             "values": dfdE,
-            "unit_tex": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
-            "unit": "per_m2_per_s_per_GeV",
+            "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
         },
         "comment": "www.cta-observatory.org/science/cta-performance/ (prod3b-v2)",
         "title": "CTA-South, observation-time: {:d}s".format(observation_time)
@@ -231,13 +230,11 @@ def energy_resolution():
         "reconstructed_energy": {
             "values": 1e3 * reco_energy_TeV,
             "label": "reco. energy",
-            "unit_tex": "GeV",
             "unit": "GeV",
         },
         "energy_resolution_68": {
             "values": resolution_68,
             "label": "energy (reco. - true) / true (68% containment)",
-            "unit_tex": "1",
             "unit": "1",
         },
         "reference": {
@@ -382,13 +379,11 @@ def angular_resolution():
         "reconstructed_energy": {
             "values": 1e3 * reco_energy_TeV,
             "label": "reco. energy",
-            "unit_tex": "GeV",
             "unit": "GeV",
         },
         "angular_resolution_68" :{
             "values": np.deg2rad(direction_resolution_deg),
             "unit": "rad",
-            "unit_tex": "rad",
             "label": "angular resolution 68%"
         },
         "reference": {

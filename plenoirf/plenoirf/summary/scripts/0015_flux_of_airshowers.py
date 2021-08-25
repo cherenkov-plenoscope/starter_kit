@@ -104,8 +104,5 @@ for sk in SITES:
                 ),
                 "values": air_shower_fluxes_zc[sk][pk]["differential_flux"],
                 "unit": raw_cosmic_ray_fluxes[pk]["differential_flux"]["unit"],
-                "unit_tex": raw_cosmic_ray_fluxes[pk]["differential_flux"][
-                    "unit_tex"
-                ],
             },
         )

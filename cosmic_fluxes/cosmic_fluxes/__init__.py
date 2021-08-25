@@ -50,13 +50,11 @@ def proton_aguilar2015precision():
     return {
         "energy": {
             "values": proton_flux[:, 0].tolist(),
-            "unit_tex": "GeV",
             "unit": "GeV",
         },
         "differential_flux": {
             "values": proton_flux[:, 1].tolist(),
-            "unit_tex": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
-            "unit": "per_m2_per_s_per_sr_per_GeV"
+            "unit": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
         },
         "title": "Precision measurement of the proton flux in primary cosmic "
         "rays from rigidity 1 GV to 1.8 TV with the Alpha Magnetic "
@@ -75,13 +73,11 @@ def electron_positron_aguilar2014precision():
     return {
         "energy": {
             "values": electron_flux[:, 0].tolist(),
-            "unit_tex": "GeV",
             "unit": "GeV",
         },
         "differential_flux": {
             "values": electron_flux[:, 1].tolist(),
-            "unit_tex": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
-            "unit": "per_m2_per_s_per_sr_per_GeV"
+            "unit": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
         },
         "title": "Precision measurement of the (e++ e-) flux in primary "
         "cosmic rays from 0.5 GeV to 1 TeV with the Alpha Magnetic "
@@ -98,13 +94,11 @@ def helium_patrignani2017helium():
     return {
         "energy": {
             "values": helium_flux[:, 0].tolist(),
-            "unit_tex": "GeV",
             "unit": "GeV",
         },
         "differential_flux": {
             "values": helium_flux[:, 1].tolist(),
-            "unit_tex": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
-            "unit": "per_m2_per_s_per_sr_per_GeV"
+            "unit": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
         },
         "title": "Cosmic-ray primary spectra "
         "Revised October 2017 by J.J. Beatty (Ohio State Univ.), J. Matthews "
@@ -148,13 +142,11 @@ def read_crab_nebula_flux_from_resources():
     return {
         "energy": {
             "values": _energy_GeV.tolist(),
-            "unit_tex": "GeV",
             "unit": "GeV",
         },
         "differential_flux": {
             "values": _differential_flux_per_GeV_per_m2_per_s.tolist(),
-            "unit_tex": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
-            "unit": "per_m2_per_s_per_GeV"
+            "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
         },
         "title": "Crab-nebula, Fermi-LAT and MAGIC. ",
         "citekey": "aleksic2015measurement"
