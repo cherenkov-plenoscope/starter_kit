@@ -20,10 +20,7 @@ PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = list(PARTICLES)
 COSMIC_RAYS.remove("gamma")
 
-num_onregion_sizes = len(
-    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
-)
-ONREGIONS = range(num_onregion_sizes)
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 gk = "diffuse"
 
@@ -66,23 +63,19 @@ for sk in SITES:
     dRtdEt_au[sk] = {}
     dRdE[sk] = {}
     dRdE_au[sk] = {}
-    for pk in COSMIC_RAYS:
-        dRtdEt[sk][pk] = np.zeros(
-            (fine_energy_bin["num_bins"], num_onregion_sizes)
-        )
-        dRdE[sk][pk] = np.zeros(
-            (fine_energy_bin["num_bins"], num_onregion_sizes)
-        )
+    for ok in ONREGION_TYPES:
+        dRtdEt[sk][ok] = {}
+        dRtdEt_au[sk][ok] = {}
+        dRdE[sk][ok] = {}
+        dRdE_au[sk][ok] = {}
+        for pk in COSMIC_RAYS:
+            dRtdEt[sk][ok][pk] = np.zeros(fine_energy_bin["num_bins"])
+            dRtdEt_au[sk][ok][pk] = np.zeros(fine_energy_bin["num_bins"])
 
-        dRtdEt_au[sk][pk] = np.zeros(
-            (fine_energy_bin["num_bins"], num_onregion_sizes)
-        )
-        dRdE_au[sk][pk] = np.zeros(
-            (fine_energy_bin["num_bins"], num_onregion_sizes)
-        )
+            dRdE[sk][ok][pk] = np.zeros(fine_energy_bin["num_bins"])
+            dRdE_au[sk][ok][pk] = np.zeros(fine_energy_bin["num_bins"])
 
-        for ok in range(num_onregion_sizes):
-            print("apply", sk, pk, ok)
+            print("apply", sk, ok, pk)
             dFdE = diff_flux[sk][pk]
             dFdE_au = np.zeros(dFdE.shape)
 
@@ -91,8 +84,8 @@ for sk in SITES:
             dMdE = ienergy_migration[sk][pk]["counts"]
             dMdE_au = ienergy_migration[sk][pk]["counts_abs_unc"]
 
-            Q = iacceptance[sk][pk][gk]["mean"][:, ok]
-            Q_au = iacceptance[sk][pk][gk]["absolute_uncertainty"][:, ok]
+            Q = iacceptance[sk][pk][ok][gk]["mean"]
+            Q_au = iacceptance[sk][pk][ok][gk]["absolute_uncertainty"]
 
             fine_energy_bin_width_au = np.zeros(fine_energy_bin["width"].shape)
 
@@ -120,14 +113,14 @@ for sk in SITES:
                     )
 
                 (
-                    dRtdEt[sk][pk][ereco, ok],
-                    dRtdEt_au[sk][pk][ereco, ok],
+                    dRtdEt[sk][ok][pk][ereco],
+                    dRtdEt_au[sk][ok][pk][ereco],
                 ) = irf.utils.sum_elemnetwise_au(x=_P, x_au=_P_au,)
 
             for ee in range(fine_energy_bin["num_bins"]):
                 (
-                    dRdE[sk][pk][ee, ok],
-                    dRdE_au[sk][pk][ee, ok],
+                    dRdE[sk][ok][pk][ee],
+                    dRdE_au[sk][ok][pk][ee],
                 ) = irf.utils.multiply_elemnetwise_au(
                     x=[dFdE[ee], Q[ee]], x_au=[dFdE_au[ee], Q_au[ee]],
                 )
@@ -135,73 +128,73 @@ for sk in SITES:
             # cross check
             # -----------
             # total rate must not change under energy migration
-            total_R = np.sum(dRdE[sk][pk][:, ok] * fine_energy_bin["width"][:])
+            total_R = np.sum(dRdE[sk][ok][pk][:] * fine_energy_bin["width"][:])
             total_Rt = np.sum(
-                dRtdEt[sk][pk][:, ok] * fine_energy_bin["width"][:]
+                dRtdEt[sk][ok][pk][:] * fine_energy_bin["width"][:]
             )
 
             assert 0.9 < total_R / total_Rt < 1.1
 
 
 for sk in SITES:
-    sk_dir = os.path.join(pa["out_dir"], sk)
-    os.makedirs(sk_dir, exist_ok=True)
-    for pk in COSMIC_RAYS:
-        json_numpy.write(
-            os.path.join(sk_dir, pk + ".json"),
-            {
-                "comment": (
-                    "differential rate after all cuts "
-                    "VS reco. energy VS onregion"
-                ),
-                "unit": "s$^{-1} (GeV)$^{-1}$",
-                "mean": dRtdEt[sk][pk],
-                "absolute_uncertainty": dRtdEt_au[sk][pk],
-                "energy_binning_key": "interpolation",
-            },
-        )
+    for ok in ONREGION_TYPES:
+        sk_ok_dir = os.path.join(pa["out_dir"], sk, ok)
+        os.makedirs(sk_ok_dir, exist_ok=True)
+        for pk in COSMIC_RAYS:
+            json_numpy.write(
+                os.path.join(sk_ok_dir, pk + ".json"),
+                {
+                    "comment": (
+                        "differential rate after all cuts "
+                        "VS reco. energy VS onregion"
+                    ),
+                    "unit": "s$^{-1} (GeV)$^{-1}$",
+                    "mean": dRtdEt[sk][ok][pk],
+                    "absolute_uncertainty": dRtdEt_au[sk][ok][pk],
+                    "energy_binning_key": fine_energy_bin["key"],
+                },
+            )
 
 
-Ok = 2
 for sk in SITES:
-    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
-    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
-    for pk in COSMIC_RAYS:
+    for ok in ONREGION_TYPES:
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+        for pk in COSMIC_RAYS:
+            seb.ax_add_histogram(
+                ax=ax,
+                bin_edges=fine_energy_bin["edges"],
+                bincounts=dRtdEt[sk][ok][pk],
+                bincounts_upper=dRtdEt[sk][ok][pk] - dRtdEt_au[sk][ok][pk],
+                bincounts_lower=dRtdEt[sk][ok][pk] + dRtdEt_au[sk][ok][pk],
+                linestyle="-",
+                linecolor=sum_config["plot"]["particle_colors"][pk],
+                face_color=sum_config["plot"]["particle_colors"][pk],
+                face_alpha=0.25,
+            )
 
-        seb.ax_add_histogram(
-            ax=ax,
-            bin_edges=fine_energy_bin["edges"],
-            bincounts=dRtdEt[sk][pk][:, Ok],
-            bincounts_upper=dRtdEt[sk][pk][:, Ok] - dRtdEt_au[sk][pk][:, Ok],
-            bincounts_lower=dRtdEt[sk][pk][:, Ok] + dRtdEt_au[sk][pk][:, Ok],
-            linestyle="-",
-            linecolor=sum_config["plot"]["particle_colors"][pk],
-            face_color=sum_config["plot"]["particle_colors"][pk],
-            face_alpha=0.25,
-        )
+            alpha = 0.25
+            seb.ax_add_histogram(
+                ax=ax,
+                bin_edges=fine_energy_bin["edges"],
+                bincounts=dRdE[sk][ok][pk],
+                bincounts_upper=dRdE[sk][ok][pk] - dRdE_au[sk][ok][pk],
+                bincounts_lower=dRdE[sk][ok][pk] + dRdE_au[sk][ok][pk],
+                linecolor=sum_config["plot"]["particle_colors"][pk],
+                linealpha=alpha,
+                linestyle=":",
+                face_color=sum_config["plot"]["particle_colors"][pk],
+                face_alpha=alpha*0.25,
+            )
 
-        alpha = 0.25
-        seb.ax_add_histogram(
-            ax=ax,
-            bin_edges=fine_energy_bin["edges"],
-            bincounts=dRdE[sk][pk][:, Ok],
-            bincounts_upper=dRdE[sk][pk][:, Ok] - dRdE_au[sk][pk][:, Ok],
-            bincounts_lower=dRdE[sk][pk][:, Ok] + dRdE_au[sk][pk][:, Ok],
-            linecolor=sum_config["plot"]["particle_colors"][pk],
-            linealpha=alpha,
-            linestyle=":",
-            face_color=sum_config["plot"]["particle_colors"][pk],
-            face_alpha=alpha*0.25,
+        ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
+        ax.set_xlabel("reco. energy / GeV")
+        ax.set_ylim([1e-6, 1e4])
+        ax.loglog()
+        fig.savefig(
+            os.path.join(
+                pa["out_dir"],
+                sk + "_" + ok + "_" + pk + "_differential_rates_vs_reco_energy.jpg",
+            )
         )
-
-    ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
-    ax.set_xlabel("reco. energy / GeV")
-    ax.set_ylim([1e-6, 1e4])
-    ax.loglog()
-    fig.savefig(
-        os.path.join(
-            pa["out_dir"],
-            sk + "_" + pk + "_differential_rates_vs_reco_energy.jpg",
-        )
-    )
-    seb.close_figure(fig)
+        seb.close_figure(fig)

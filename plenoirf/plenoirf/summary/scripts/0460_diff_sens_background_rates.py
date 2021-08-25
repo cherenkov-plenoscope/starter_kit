@@ -19,51 +19,27 @@ SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = list(PARTICLES)
 COSMIC_RAYS.remove("gamma")
-
-num_onregion_sizes = len(
-    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
-)
-ONREGIONS = range(num_onregion_sizes)
-
-_energy_migration = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
-)
-
-_acceptance = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
-)
-
-airshower_fluxes = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0405_average_flux_of_airshowers")
-)
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 
+energy_migration = irf.analysis.differential_sensitivity.derive_all_energy_migration(
+    energy_migration=json_numpy.read_tree(
+        os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
+    ),
+    energy_bin_width=energy_bin["width"],
+)
 
-# prepare energy_migration
-# ------------------------
-energy_migration = {}
-for sk in SITES:
-    energy_migration[sk] = {}
-    for pk in COSMIC_RAYS:
-        energy_migration[sk][pk] = {}
-        M = _energy_migration[sk][pk]["confusion_matrix"]
-        dMdE = {}
-        dMdE["ax0_key"] = M["ax0_key"]
-        dMdE["ax1_key"] = M["ax1_key"]
+acceptance = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
+)
 
-        counts = M["counts"]
-        counts_abs_unc = M["counts_abs_unc"]
-
-        dMdE["counts"], dMdE["counts_abs_unc"] = irf.analysis.differential_sensitivity.derive_migration_matrix_by_ax0(
-            migration_matrix_counts=M["counts_normalized_on_ax0"],
-            migration_matrix_counts_abs_unc=M["counts_normalized_on_ax0_abs_unc"],
-            ax0_bin_widths=energy_bin["width"],
-        )
-        energy_migration[sk][pk] = dMdE
+airshower_fluxes = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0405_average_flux_of_airshowers")
+)
 
 
 # prepare diff-flux
@@ -76,18 +52,6 @@ for sk in SITES:
 
 
 gk = "diffuse"
-# prepare acceptance
-# ------------------
-acceptance = {}
-for sk in SITES:
-    acceptance[sk] = {}
-    for pk in COSMIC_RAYS:
-        acceptance[sk][pk] = {gk: {}}
-        Q = _acceptance[sk][pk][gk]["mean"]
-        Q_au = _acceptance[sk][pk][gk]["absolute_uncertainty"]
-        acceptance[sk][pk][gk]["mean"] = Q
-        acceptance[sk][pk][gk]["absolute_uncertainty"] = Q_au
-
 
 dRtdEt = {}
 dRtdEt_au = {}
@@ -100,22 +64,18 @@ for sk in SITES:
     dRtdEt_au[sk] = {}
     dRdE[sk] = {}
     dRdE_au[sk] = {}
-    for pk in COSMIC_RAYS:
-        dRtdEt[sk][pk] = np.zeros(
-            (energy_bin["num_bins"], num_onregion_sizes)
-        )
-        dRdE[sk][pk] = np.zeros(
-            (energy_bin["num_bins"], num_onregion_sizes)
-        )
+    for ok in ONREGION_TYPES:
+        dRtdEt[sk][ok] = {}
+        dRtdEt_au[sk][ok] = {}
+        dRdE[sk][ok] = {}
+        dRdE_au[sk][ok] = {}
+        for pk in COSMIC_RAYS:
+            dRtdEt[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            dRdE[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
 
-        dRtdEt_au[sk][pk] = np.zeros(
-            (energy_bin["num_bins"], num_onregion_sizes)
-        )
-        dRdE_au[sk][pk] = np.zeros(
-            (energy_bin["num_bins"], num_onregion_sizes)
-        )
+            dRtdEt_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            dRdE_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
 
-        for ok in range(num_onregion_sizes):
             print("apply", sk, pk, ok)
             dFdE = diff_flux[sk][pk]
             dFdE_au = np.zeros(dFdE.shape)
@@ -125,8 +85,8 @@ for sk in SITES:
             dMdE = energy_migration[sk][pk]["counts"]
             dMdE_au = energy_migration[sk][pk]["counts_abs_unc"]
 
-            Q = acceptance[sk][pk][gk]["mean"][:, ok]
-            Q_au = acceptance[sk][pk][gk]["absolute_uncertainty"][:, ok]
+            Q = acceptance[sk][pk][ok][gk]["mean"]
+            Q_au = acceptance[sk][pk][ok][gk]["absolute_uncertainty"]
 
             energy_bin_width_au = np.zeros(energy_bin["width"].shape)
 
@@ -154,14 +114,14 @@ for sk in SITES:
                     )
 
                 (
-                    dRtdEt[sk][pk][ereco, ok],
-                    dRtdEt_au[sk][pk][ereco, ok],
+                    dRtdEt[sk][ok][pk][ereco],
+                    dRtdEt_au[sk][ok][pk][ereco],
                 ) = irf.utils.sum_elemnetwise_au(x=_P, x_au=_P_au,)
 
             for ee in range(energy_bin["num_bins"]):
                 (
-                    dRdE[sk][pk][ee, ok],
-                    dRdE_au[sk][pk][ee, ok],
+                    dRdE[sk][ok][pk][ee],
+                    dRdE_au[sk][ok][pk][ee],
                 ) = irf.utils.multiply_elemnetwise_au(
                     x=[dFdE[ee], Q[ee]], x_au=[dFdE_au[ee], Q_au[ee]],
                 )
@@ -169,9 +129,9 @@ for sk in SITES:
             # cross check
             # -----------
             # total rate must not change under energy migration
-            total_R = np.sum(dRdE[sk][pk][:, ok] * energy_bin["width"][:])
+            total_R = np.sum(dRdE[sk][ok][pk][:] * energy_bin["width"][:])
             total_Rt = np.sum(
-                dRtdEt[sk][pk][:, ok] * energy_bin["width"][:]
+                dRtdEt[sk][ok][pk][:] * energy_bin["width"][:]
             )
 
             assert 0.9 < total_R / total_Rt < 1.1

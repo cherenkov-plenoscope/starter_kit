@@ -22,8 +22,6 @@ idx_trigger_threshold = np.where(
 )[0][0]
 assert trigger_threshold in trigger_thresholds
 
-IDX_FINAL_ONREGION = 1
-
 # trigger
 # -------
 A = json_numpy.read_tree(
@@ -42,94 +40,84 @@ energy_binning = json_numpy.read(
 A_energy_bin = energy_binning["trigger_acceptance"]
 G_energy_bin = energy_binning["trigger_acceptance_onregion"]
 
-onregion_radii_deg = np.array(
-    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
-)
-num_bins_onregion_radius = onregion_radii_deg.shape[0]
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 
 
-for site_key in irf_config["config"]["sites"]:
-    for source_key in irf.summary.figure.SOURCES:
+for sk in irf_config["config"]["sites"]:
+    for ok in ONREGION_TYPES:
+        for gk in irf.summary.figure.SOURCES:
 
-        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
-        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+            fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+            ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
-        text_y = 0
-        for particle_key in irf_config["config"]["particles"]:
+            text_y = 0
+            for pk in irf_config["config"]["particles"]:
 
-            Q = G[site_key][particle_key][source_key]["mean"][
-                :, IDX_FINAL_ONREGION
-            ]
-            Q_au = G[site_key][particle_key][source_key]["absolute_uncertainty"][
-                :, IDX_FINAL_ONREGION
-            ]
+                Q = G[sk][pk][ok][gk]["mean"]
+                Q_au = G[sk][pk][ok][gk]["absolute_uncertainty"]
 
-            seb.ax_add_histogram(
-                ax=ax,
-                bin_edges=G_energy_bin["edges"],
-                bincounts=Q,
-                linestyle="-",
-                linecolor=particle_colors[particle_key],
-                bincounts_upper=Q + Q_au,
-                bincounts_lower=Q - Q_au,
-                face_color=particle_colors[particle_key],
-                face_alpha=0.25,
+                seb.ax_add_histogram(
+                    ax=ax,
+                    bin_edges=G_energy_bin["edges"],
+                    bincounts=Q,
+                    linestyle="-",
+                    linecolor=particle_colors[pk],
+                    bincounts_upper=Q + Q_au,
+                    bincounts_lower=Q - Q_au,
+                    face_color=particle_colors[pk],
+                    face_alpha=0.25,
+                )
+
+                ax.text(
+                    0.9,
+                    0.1 + text_y,
+                    pk,
+                    color=particle_colors[pk],
+                    transform=ax.transAxes,
+                )
+                text_y += 0.06
+
+            ax.set_xlabel("energy / GeV")
+            ax.set_ylabel(
+                "{:s} /\n{:s}".format(
+                    irf.summary.figure.SOURCES[gk]["label"],
+                    irf.summary.figure.SOURCES[gk]["unit"],
+                )
             )
-
-            ax.text(
-                0.9,
-                0.1 + text_y,
-                particle_key,
-                color=particle_colors[particle_key],
-                transform=ax.transAxes,
+            ax.set_ylim(
+                irf.summary.figure.SOURCES[gk]["limits"]["passed_all_cuts"]
             )
-            text_y += 0.06
+            ax.loglog()
+            ax.set_xlim(G_energy_bin["limits"])
 
-        ax.set_xlabel("energy / GeV")
-        ax.set_ylabel(
-            "{:s} / {:s}".format(
-                irf.summary.figure.SOURCES[source_key]["label"],
-                irf.summary.figure.SOURCES[source_key]["unit"],
+            fig.savefig(
+                os.path.join(
+                    pa["out_dir"], "{:s}_{:s}_{:s}.jpg".format(sk, gk, ok),
+                )
             )
-        )
-        ax.set_ylim(
-            irf.summary.figure.SOURCES[source_key]["limits"]["passed_all_cuts"]
-        )
-        ax.loglog()
-        ax.set_xlim(G_energy_bin["limits"])
-
-        fig.savefig(
-            os.path.join(
-                pa["out_dir"], "{:s}_{:s}.jpg".format(site_key, source_key,),
-            )
-        )
-        seb.close_figure(fig)
+            seb.close_figure(fig)
 
 
-for site_key in irf_config["config"]["sites"]:
-    for particle_key in irf_config["config"]["particles"]:
-        for source_key in irf.summary.figure.SOURCES:
+for sk in irf_config["config"]["sites"]:
+    for pk in irf_config["config"]["particles"]:
+        for gk in irf.summary.figure.SOURCES:
 
-            acc_trg = A[site_key][particle_key][source_key]["mean"][
+            acc_trg = A[sk][pk][gk]["mean"][
                 idx_trigger_threshold
             ]
 
-            acc_trg_au = A[site_key][particle_key][source_key]["absolute_uncertainty"][
+            acc_trg_au = A[sk][pk][gk]["absolute_uncertainty"][
                 idx_trigger_threshold
             ]
 
-            acc_trg_onregions = G[site_key][particle_key][source_key]["mean"]
+            for ok in ONREGION_TYPES:
+                acc_trg_onregion = G[sk][pk][ok][gk]["mean"]
+                acc_trg_onregion_au = G[sk][pk][ok][gk]["absolute_uncertainty"]
 
-            acc_trg_onregions_au = G[site_key][particle_key][source_key]["absolute_uncertainty"]
-
-            for oridx in range(num_bins_onregion_radius):
-                acc_trg_onregion = acc_trg_onregions[:, oridx]
-                acc_trg_onregion_au = acc_trg_onregions_au[:, oridx]
-
-                fig = seb.figure(seb.FIGURE_16_9)
-                ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
+                fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+                ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
                 seb.ax_add_histogram(
                     ax=ax,
@@ -139,7 +127,7 @@ for site_key in irf_config["config"]["sites"]:
                     linecolor="gray",
                     bincounts_upper=acc_trg + acc_trg_au,
                     bincounts_lower=acc_trg - acc_trg_au,
-                    face_color=particle_colors[particle_key],
+                    face_color=particle_colors[pk],
                     face_alpha=0.05,
                 )
                 seb.ax_add_histogram(
@@ -147,27 +135,31 @@ for site_key in irf_config["config"]["sites"]:
                     bin_edges=G_energy_bin["edges"],
                     bincounts=acc_trg_onregion,
                     linestyle="-",
-                    linecolor=particle_colors[particle_key],
+                    linecolor=particle_colors[pk],
                     bincounts_upper=acc_trg_onregion + acc_trg_onregion_au,
                     bincounts_lower=acc_trg_onregion - acc_trg_onregion_au,
-                    face_color=particle_colors[particle_key],
+                    face_color=particle_colors[pk],
                     face_alpha=0.25,
                 )
 
-                ax.set_title(
-                    "onregion-radius at 100p.e.: {:.3f}".format(
-                        onregion_radii_deg[oridx]
+                ax.text(
+                    s="onregion-radius at 100p.e.: {:.3f}".format(
+                        ONREGION_TYPES[ok]["opening_angle_deg"]
                     )
-                    + r"$^{\circ}$"
+                    + r"$^{\circ}$",
+                    x=0.1,
+                    y=0.1,
+                    transform=ax.transAxes,
                 )
                 ax.set_xlabel("energy / GeV")
                 ax.set_ylabel(
-                    irf.summary.figure.SOURCES[source_key]["label"]
-                    + " / "
-                    + irf.summary.figure.SOURCES[source_key]["unit"]
+                    "{:s} /\n{:s}".format(
+                        irf.summary.figure.SOURCES[gk]["label"],
+                        irf.summary.figure.SOURCES[gk]["unit"],
+                    )
                 )
                 ax.set_ylim(
-                    irf.summary.figure.SOURCES[source_key]["limits"][
+                    irf.summary.figure.SOURCES[gk]["limits"][
                         "passed_trigger"
                     ]
                 )
@@ -176,8 +168,8 @@ for site_key in irf_config["config"]["sites"]:
                 fig.savefig(
                     opj(
                         pa["out_dir"],
-                        "{:s}_{:s}_{:s}_onregion_onr{:06d}.jpg".format(
-                            site_key, particle_key, source_key, oridx
+                        "{:s}_{:s}_{:s}_{:s}.jpg".format(
+                            sk, pk, gk, ok
                         ),
                     )
                 )

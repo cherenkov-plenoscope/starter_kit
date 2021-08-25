@@ -1,4 +1,6 @@
 import numpy as np
+import json_numpy
+import os
 from . import integral_sensitivity
 
 
@@ -55,52 +57,43 @@ SCENARIOS = {
 def make_energy_confusion_matrices_for_signal_and_background(
     signal_energy_confusion_matrix,
     signal_energy_confusion_matrix_abs_unc,
-    background_energy_confusion_matrices,
-    background_energy_confusion_matrices_abs_unc,
     scenario_key="broad_spectrum",
 ):
     s_cm = signal_energy_confusion_matrix
     bg_cms = background_energy_confusion_matrices
 
-    s_cm_u = signal_energy_confusion_matrix_abs_unc
-    bg_cms_u = background_energy_confusion_matrices_abs_unc
-
     if scenario_key == "perfect_energy":
         _s_cm = np.eye(N=s_cm.shape[0])
         _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
 
-        _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
-        _bg_cms_u = {k: np.array(bg_cms_u[k]) for k in bg_cms_u}
         _bg_integral_mask = np.eye(N=s_cm.shape[0])
+        _energy_axes_label = ""
 
     elif scenario_key == "broad_spectrum":
         _s_cm = np.array(s_cm)
         _s_cm_u = np.array(s_cm_u) # adopt as is
 
-        _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
-        _bg_cms_u = {k: np.array(bg_cms_u[k]) for k in bg_cms_u}
         _bg_integral_mask = np.eye(N=s_cm.shape[0])
+        _energy_axes_label = "reco."
 
     elif scenario_key == "line_spectrum":
         eye = np.eye(N=s_cm.shape[0])
         _s_cm = eye * np.diag(s_cm)
         _s_cm_u = eye * np.diag(s_cm_u) # only the diagonal
 
-        _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
-        _bg_cms_u = {k: np.array(bg_cms_u[k]) for k in bg_cms_u}
         _bg_integral_mask = np.eye(N=s_cm.shape[0])
+        _energy_axes_label = "reco."
 
     elif scenario_key == "bell_spectrum":
         containment = 0.68
         _s_cm = containment * np.eye(N=s_cm.shape[0]) # true energy for gammas
         _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
 
-        _bg_cms = {k: np.array(bg_cms[k]) for k in bg_cms}
-        _bg_cms_u = {k: np.array(bg_cms_u[k]) for k in bg_cms_u}
         _bg_integral_mask = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
             energy_confusion_matrix=s_cm,
             containment=containment
         )
+        _energy_axes_label = ""
 
     else:
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
@@ -108,9 +101,8 @@ def make_energy_confusion_matrices_for_signal_and_background(
     return {
         "signal_matrix": _s_cm,
         "signal_matrix_abs_unc": _s_cm_u,
-        "background_matrices": _bg_cms,
-        "background_matrices_abs_unc": _bg_cms_u,
         "background_integral_mask": _bg_integral_mask,
+        "energy_axes_label": _energy_axes_label,
     }
 
 
@@ -195,3 +187,33 @@ def derive_migration_matrix_by_ax0(
             dMdE[i_ax0, :] = M[i_ax0, :] / ax0_bin_widths[:]
             dMdE_au[i_ax0, :] = M_au[i_ax0, :] / ax0_bin_widths[:]
     return dMdE, dMdE_au
+
+
+
+def derive_all_energy_migration(energy_migration, energy_bin_width):
+    SITES = list(energy_migration.keys())
+
+    out = {}
+    for sk in SITES:
+        out[sk] = {}
+        PARTICLES = list(energy_migration[sk].keys())
+        for pk in PARTICLES:
+            out[sk][pk] = {}
+            M = energy_migration[sk][pk]["confusion_matrix"]
+            dMdE = {}
+            dMdE["ax0_key"] = M["ax0_key"]
+            dMdE["ax1_key"] = M["ax1_key"]
+
+            counts = M["counts"]
+            counts_abs_unc = M["counts_abs_unc"]
+
+            (
+                dMdE["counts"], dMdE["counts_abs_unc"]
+            ) = derive_migration_matrix_by_ax0(
+                migration_matrix_counts=M["counts_normalized_on_ax0"],
+                migration_matrix_counts_abs_unc=M["counts_normalized_on_ax0_abs_unc"],
+                ax0_bin_widths=energy_bin_width,
+            )
+            out[sk][pk] = dMdE
+
+    return out

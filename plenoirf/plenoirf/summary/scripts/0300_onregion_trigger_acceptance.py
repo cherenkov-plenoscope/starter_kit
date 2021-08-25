@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+import copy
 import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
@@ -43,13 +44,7 @@ energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
-onregion_config = sum_config["on_off_measuremnent"]["onregion"]
-
-onregion_radii_deg = np.array(
-    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
-)
-num_bins_onregion_radius = onregion_radii_deg.shape[0]
-
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
@@ -86,8 +81,8 @@ def make_wighted_mask_wrt_primary_table(
 
 for sk in irf_config["config"]["sites"]:
     for pk in irf_config["config"]["particles"]:
-        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
-        os.makedirs(site_particle_dir, exist_ok=True)
+        sk_pk_dir = os.path.join(pa["out_dir"], sk, pk)
+        os.makedirs(sk_pk_dir, exist_ok=True)
 
         # point source
         # -------------
@@ -125,14 +120,9 @@ for sk in irf_config["config"]["sites"]:
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
-        Qeff = np.zeros(
-            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
-        )
-        Qeff_au = np.zeros(
-            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
-        )
-        for oridx in range(num_bins_onregion_radius):
-            onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
+        for ok in ONREGION_TYPES:
+            os.makedirs(os.path.join(sk_pk_dir, ok), exist_ok=True)
+            onregion_config = copy.deepcopy(ONREGION_TYPES[ok])
 
             idx_dict_source_in_onregion = {}
             for ii in range(poicanarr[spt.IDX].shape[0]):
@@ -165,8 +155,8 @@ for sk in irf_config["config"]["sites"]:
             )
 
             (
-                _q_eff,
-                _q_eff_au,
+                Qeff,
+                Qeff_au,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=point_thrown["primary"]["energy_GeV"],
@@ -178,22 +168,19 @@ for sk in irf_config["config"]["sites"]:
                 total_num_grid_cells=point_thrown["grid"]["num_bins_thrown"],
             )
 
-            Qeff[:, oridx] = _q_eff
-            Qeff_au[:, oridx] = _q_eff_au
-
-        json_numpy.write(
-            os.path.join(site_particle_dir, "point.json"),
-            {
-                "comment": (
-                    "Effective area "
-                    "for a point source, reconstructed in onregion. "
-                    "VS energy-bins VS onregion-radii"
-                ),
-                "unit": "m$^{2}$",
-                "mean": Qeff,
-                "absolute_uncertainty": Qeff_au,
-            },
-        )
+            json_numpy.write(
+                os.path.join(sk_pk_dir, ok, "point.json"),
+                {
+                    "comment": (
+                        "Effective area "
+                        "for a point source, reconstructed in onregion. "
+                        "VS energy"
+                    ),
+                    "unit": "m$^{2}$",
+                    "mean": Qeff,
+                    "absolute_uncertainty": Qeff_au,
+                },
+            )
 
         # diffuse source
         # --------------
@@ -214,15 +201,9 @@ for sk in irf_config["config"]["sites"]:
             plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
         )
 
-        Qeff = np.zeros(
-            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
-        )
-        Qeff_au = np.zeros(
-            shape=(energy_bin["num_bins"], num_bins_onregion_radius)
-        )
-
-        for oridx in range(num_bins_onregion_radius):
-            onregion_config["opening_angle_deg"] = onregion_radii_deg[oridx]
+        for ok in ONREGION_TYPES:
+            sk_pk_ok_dir = os.path.join(sk_pk_dir, ok)
+            onregion_config = copy.deepcopy(ONREGION_TYPES[ok])
 
             idx_dict_probability_for_source_in_onregion = {}
             for ii in range(difcanarr[spt.IDX].shape[0]):
@@ -263,8 +244,8 @@ for sk in irf_config["config"]["sites"]:
             )
 
             (
-                _q_eff,
-                _q_eff_au,
+                Qeff,
+                Qeff_au,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=diffuse_thrown["primary"]["energy_GeV"],
@@ -279,19 +260,16 @@ for sk in irf_config["config"]["sites"]:
                 total_num_grid_cells=diffuse_thrown["grid"]["num_bins_thrown"],
             )
 
-            Qeff[:, oridx] = _q_eff
-            Qeff_au[:, oridx] = _q_eff_au
-
-        json_numpy.write(
-            os.path.join(site_particle_dir, "diffuse.json"),
-            {
-                "comment": (
-                    "Effective acceptance (area x solid angle) "
-                    "for a diffuse source, reconstructed in onregion. "
-                    "VS energy-bins VS onregion-radii"
-                ),
-                "unit": "m$^{2}$ sr",
-                "mean": Qeff,
-                "absolute_uncertainty": Qeff_au,
-            },
-        )
+            json_numpy.write(
+                os.path.join(sk_pk_dir, ok, "diffuse.json"),
+                {
+                    "comment": (
+                        "Effective acceptance (area x solid angle) "
+                        "for a diffuse source, reconstructed in onregion. "
+                        "VS energy"
+                    ),
+                    "unit": "m$^{2}$ sr",
+                    "mean": Qeff,
+                    "absolute_uncertainty": Qeff_au,
+                },
+            )

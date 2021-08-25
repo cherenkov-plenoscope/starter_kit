@@ -28,58 +28,51 @@ PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = list(PARTICLES)
 COSMIC_RAYS.remove("gamma")
 
-num_onregion_sizes = len(
-    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
-)
-
-Rt = {}
-Rt_au = {}
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 for sk in SITES:
+    for ok in ONREGION_TYPES:
+        sk_dir = os.path.join(pa["out_dir"], sk)
+        os.makedirs(sk_dir, exist_ok=True)
 
-    Rt[sk] = np.zeros((fenergy_bin["num_bins"], num_onregion_sizes))
-    Rt_au[sk] = np.zeros((fenergy_bin["num_bins"], num_onregion_sizes))
-
-    for ok in range(num_onregion_sizes):
+        Rt = np.zeros(fenergy_bin["num_bins"])
+        Rt_au = np.zeros(fenergy_bin["num_bins"])
 
         _Rtsum = np.zeros((len(COSMIC_RAYS), fenergy_bin["num_bins"]))
         _Rtsum_au = np.zeros((len(COSMIC_RAYS), fenergy_bin["num_bins"]))
 
         for ick, ck in enumerate(COSMIC_RAYS):
-            dRtdEt = cosmic_diff_rate[sk][ck]["mean"][:, ok]
-            dRtdEt_au = cosmic_diff_rate[sk][ck][
-                "absolute_uncertainty"
-            ][:, ok]
+            dRtdEt = cosmic_diff_rate[sk][ok][ck]["mean"]
+            dRtdEt_au = cosmic_diff_rate[sk][ok][ck]["absolute_uncertainty"]
 
             _Rtsum[ick, :] = dRtdEt * fenergy_bin["width"]
             _Rtsum_au[ick, :] = dRtdEt_au * fenergy_bin["width"]
 
         for ee in range(fenergy_bin["num_bins"]):
-            Rt[sk][ee, ok], Rt_au[sk][ee, ok] = irf.utils.sum(
+            Rt[ee], Rt_au[ee] = irf.utils.sum(
                 x=_Rtsum[:, ee], x_au=_Rtsum_au[:, ee]
             )
 
-    json_numpy.write(
-        os.path.join(pa["out_dir"], sk + ".json"),
-        {
-            "comment": "rate of all cosmic-ray-background VS reco. energy",
-            "unit": "s$^{-1}$",
-            "mean": Rt[sk],
-            "absolute_uncertainty": Rt_au[sk],
-        }
-    )
+        json_numpy.write(
+            os.path.join(pa["out_dir"], sk, ok + ".json"),
+            {
+                "comment": "rate of all cosmic-ray-background VS reco. energy",
+                "unit": "s$^{-1}$",
+                "mean": Rt,
+                "absolute_uncertainty": Rt_au,
+            }
+        )
 
+Rt = json_numpy.read_tree(os.path.join(pa["out_dir"]))
 
 for sk in SITES:
-    for ok in range(num_onregion_sizes):
+    for ok in ONREGION_TYPES:
         fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
         ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
         for ck in COSMIC_RAYS:
 
-            ck_dRtdEt = cosmic_diff_rate[sk][ck]["mean"][:, ok]
-            ck_dRtdEt_au = cosmic_diff_rate[sk][ck][
-                "absolute_uncertainty"
-            ][:, ok]
+            ck_dRtdEt = cosmic_diff_rate[sk][ok][ck]["mean"]
+            ck_dRtdEt_au = cosmic_diff_rate[sk][ok][ck]["absolute_uncertainty"]
 
             ck_Rt = ck_dRtdEt * fenergy_bin["width"]
             ck_Rt_au = ck_dRtdEt_au * fenergy_bin["width"]
@@ -103,13 +96,13 @@ for sk in SITES:
 
         ax.plot(
             fenergy_bin["centers"],
-            Rt[sk][:, ok],
+            Rt[sk][ok]["mean"],
             ":k",
         )
         ax.fill_between(
             x=fenergy_bin["centers"],
-            y1=Rt[sk][:, ok] - Rt_au[sk][:, ok],
-            y2=Rt[sk][:, ok] + Rt_au[sk][:, ok],
+            y1=Rt[sk][ok]["mean"] - Rt[sk][ok]["absolute_uncertainty"],
+            y2=Rt[sk][ok]["mean"] + Rt[sk][ok]["absolute_uncertainty"],
             color="k",
             alpha=0.2,
             linewidth=0.0,
@@ -123,8 +116,7 @@ for sk in SITES:
         ax.loglog()
         fig.savefig(
             os.path.join(
-                pa["out_dir"],
-                sk + "_rate_vs_reco_energy_onregion{:06d}.jpg".format(ok),
+                pa["out_dir"], sk + "_" + ok + "_rate_vs_reco_energy.jpg",
             )
         )
         seb.close_figure(fig)

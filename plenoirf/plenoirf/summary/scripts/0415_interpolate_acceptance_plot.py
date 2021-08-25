@@ -18,9 +18,7 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
-num_onregion_sizes = len(
-    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
-)
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 iacceptance = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0410_interpolate_acceptance")
@@ -36,16 +34,16 @@ energy_bin = energy_binning["trigger_acceptance_onregion"]
 fine_energy_bin = energy_binning["interpolation"]
 
 for sk in SITES:
-    for gk in ["diffuse", "point"]:
-        for ok in range(num_onregion_sizes):
+    for ok in ONREGION_TYPES:
+        for gk in ["diffuse", "point"]:
 
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
             for pk in PARTICLES:
-                iQ = iacceptance[sk][pk][gk]["mean"][:, ok]
-                iQ_au = iacceptance[sk][pk][gk]["absolute_uncertainty"][:, ok]
-                Q = acceptance[sk][pk][gk]["mean"][:, ok]
+                iQ = iacceptance[sk][pk][ok][gk]["mean"]
+                iQ_au = iacceptance[sk][pk][ok][gk]["absolute_uncertainty"]
+                Q = acceptance[sk][pk][ok][gk]["mean"]
 
                 ax.plot(
                     fine_energy_bin["centers"],
@@ -82,9 +80,8 @@ for sk in SITES:
             ax.loglog()
             fig.savefig(
                 os.path.join(
-                    pa["out_dir"], sk + "_" + gk + "_onregion{:06d}_acceptance_interpolated.jpg".format(ok)
+                    pa["out_dir"],
+                    sk + "_" + gk + "_" + ok + "_acceptance_interpolated.jpg"
                 )
             )
             seb.close_figure(fig)
-
-

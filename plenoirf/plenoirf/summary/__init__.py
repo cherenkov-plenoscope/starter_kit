@@ -216,6 +216,17 @@ def _guess_summary_config(run_dir):
         0.5 * irf_config["light_field_sensor_geometry"]["max_FoV_diameter_deg"]
     )
 
+    _onoff = {
+        "opening_angle_scaling": {
+            "reco_num_photons_pe": [1e1, 1e2, 1e3, 1e4, 1e5],
+            "scale": [1.0, 1.0, 1.0, 1.0, 1.0],
+        },
+        "ellipticity_scaling": {
+            "reco_core_radius_m": [0.0, 2.5e2, 5e2, 1e3],
+            "scale": [1.0, 1.0, 1.0, 1.0],
+        }
+    }
+
     summary_config = {
         "energy_binning": {
             "start": {"decade": -1, "bin": 2},
@@ -277,15 +288,21 @@ def _guess_summary_config(run_dir):
             "on_over_off_ratio": 1 / 5,
             "detection_threshold_std": 5.0,
             "systematic_uncertainty": 1e-2,
-            "onregion": {
-                "loop_opening_angle_deg": np.linspace(0.2, 0.8, 4),
-                "opening_angle_scaling": {
-                    "reco_num_photons_pe": [1e1, 1e2, 1e3, 1e4, 1e5],
-                    "scale": [1.0, 1.0, 1.0, 1.0, 1.0],
+            "onregion_types": {
+                "small": {
+                    "opening_angle_deg": 0.2,
+                    "opening_angle_scaling": _onoff["opening_angle_scaling"],
+                    "ellipticity_scaling": _onoff["ellipticity_scaling"],
                 },
-                "ellipticity_scaling": {
-                    "reco_core_radius_m": [0.0, 2.5e2, 5e2, 1e3],
-                    "scale": [1.0, 1.0, 1.0, 1.0],
+                "medium": {
+                    "opening_angle_deg": 0.4,
+                    "opening_angle_scaling": _onoff["opening_angle_scaling"],
+                    "ellipticity_scaling": _onoff["ellipticity_scaling"],
+                },
+                "large": {
+                    "opening_angle_deg": 0.8,
+                    "opening_angle_scaling": _onoff["opening_angle_scaling"],
+                    "ellipticity_scaling": _onoff["ellipticity_scaling"],
                 },
             },
         },

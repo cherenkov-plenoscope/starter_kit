@@ -24,10 +24,7 @@ energy_binning = json_numpy.read(
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 fenergy_bin = energy_binning["interpolation"]
 
-onregion_radii_deg = np.array(
-    sum_config["on_off_measuremnent"]["onregion"]["loop_opening_angle_deg"]
-)
-num_bins_onregion_radius = onregion_radii_deg.shape[0]
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 # cosmic-ray-flux
 # ----------------
@@ -64,23 +61,18 @@ dKdE / s^{-1} m^{-2} (GeV)^{-1}
 """
 
 for sk in irf_config["config"]["sites"]:
-    site_dir = os.path.join(pa["out_dir"], sk)
-    os.makedirs(site_dir, exist_ok=True)
+    sk_dir = os.path.join(pa["out_dir"], sk)
+    os.makedirs(sk_dir, exist_ok=True)
 
     # gamma-ray
     # ---------
-    site_gamma_dir = os.path.join(site_dir, "gamma")
-    os.makedirs(site_gamma_dir, exist_ok=True)
+    os.makedirs(os.path.join(sk_dir, "gamma"), exist_ok=True)
 
-    R = np.zeros(shape=(num_bins_onregion_radius))
-    R_au = np.zeros(shape=R.shape)
-    dRdE = np.zeros(shape=(fenergy_bin["num_bins"], num_bins_onregion_radius))
-    dRdE_au = np.zeros(shape=dRdE.shape)
-    for oridx in range(num_bins_onregion_radius):
-        _A = onregion_acceptance[sk]["gamma"]["point"]["mean"][:, oridx]
-        _A_au = onregion_acceptance[sk]["gamma"]["point"][
-            "absolute_uncertainty"
-        ][:, oridx]
+    for ok in ONREGION_TYPES:
+        os.makedirs(os.path.join(sk_dir, "gamma", ok), exist_ok=True)
+
+        _A = onregion_acceptance[sk]["gamma"][ok]["point"]["mean"]
+        _A_au = onregion_acceptance[sk]["gamma"][ok]["point"]["absolute_uncertainty"]
 
         A = np.interp(
             x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_A
@@ -89,61 +81,56 @@ for sk in irf_config["config"]["sites"]:
             x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_A_au
         )
 
-        dRdE[:, oridx], dRdE_au[:, oridx] = irf.utils.multiply(
+        dRdE, dRdE_au = irf.utils.multiply(
             x=gamma_dKdE, x_au=gamma_dKdE_au, y=A, y_au=A_au,
         )
 
-        R[oridx], R_au[oridx] = irf.utils.integrate_rate_where_known(
-            dRdE=dRdE[:, oridx],
-            dRdE_au=dRdE_au[:, oridx],
+        R, R_au = irf.utils.integrate_rate_where_known(
+            dRdE=dRdE,
+            dRdE_au=dRdE_au,
             E_edges=fenergy_bin["edges"],
         )
 
-    json_numpy.write(
-        os.path.join(site_gamma_dir, "differential_rate.json"),
-        {
-            "comment": comment_differential
-            + ", "
-            + gamma_source["name"]
-            + " VS onregion-radius",
-            "unit": "s$^{-1} (GeV)$^{-1}$",
-            "mean": dRdE,
-            "absolute_uncertainty": dRdE_au,
-        },
-    )
-    json_numpy.write(
-        os.path.join(site_gamma_dir, "integral_rate.json"),
-        {
-            "comment": comment_integral
-            + ", "
-            + gamma_source["name"]
-            + " VS onregion-radius",
-            "unit": "s$^{-1}$",
-            "mean": R,
-            "absolute_uncertainty": R_au,
-        },
-    )
+        json_numpy.write(
+            os.path.join(sk_dir, "gamma", ok, "differential_rate.json"),
+            {
+                "comment": comment_differential
+                + ", "
+                + gamma_source["name"]
+                + " VS onregion-radius",
+                "unit": "s$^{-1} (GeV)$^{-1}$",
+                "mean": dRdE,
+                "absolute_uncertainty": dRdE_au,
+            },
+        )
+        json_numpy.write(
+            os.path.join(sk_dir, "gamma", ok, "integral_rate.json"),
+            {
+                "comment": comment_integral
+                + ", "
+                + gamma_source["name"]
+                + " VS onregion-radius",
+                "unit": "s$^{-1}$",
+                "mean": R,
+                "absolute_uncertainty": R_au,
+            },
+        )
 
     # cosmic-rays
     # -----------
     for ck in airshower_fluxes[sk]:
-        site_particle_dir = os.path.join(site_dir, ck)
-        os.makedirs(site_particle_dir, exist_ok=True)
+        os.makedirs(os.path.join(sk_dir, ck), exist_ok=True)
 
         cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]["values"]
         cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
 
-        R = np.zeros(shape=(num_bins_onregion_radius))
-        R_au = np.zeros(shape=R.shape)
-        dRdE = np.zeros(
-            shape=(fenergy_bin["num_bins"], num_bins_onregion_radius)
-        )
-        dRdE_au = np.zeros(shape=dRdE.shape)
-        for oridx in range(num_bins_onregion_radius):
-            _Q = onregion_acceptance[sk][ck]["diffuse"]["mean"][:, oridx]
-            _Q_au = onregion_acceptance[sk][ck]["diffuse"][
+        for ok in ONREGION_TYPES:
+            os.makedirs(os.path.join(sk_dir, ck, ok), exist_ok=True)
+
+            _Q = onregion_acceptance[sk][ck][ok]["diffuse"]["mean"]
+            _Q_au = onregion_acceptance[sk][ck][ok]["diffuse"][
                 "absolute_uncertainty"
-            ][:, oridx]
+            ]
 
             Q = np.interp(
                 x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q,
@@ -152,31 +139,31 @@ for sk in irf_config["config"]["sites"]:
                 x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q_au,
             )
 
-            dRdE[:, oridx], dRdE_au[:, oridx] = irf.utils.multiply(
+            dRdE, dRdE_au = irf.utils.multiply(
                 x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=Q, y_au=Q_au,
             )
 
-            R[oridx], R_au[oridx] = irf.utils.integrate_rate_where_known(
-                dRdE=dRdE[:, oridx],
-                dRdE_au=dRdE_au[:, oridx],
+            R, R_au = irf.utils.integrate_rate_where_known(
+                dRdE=dRdE,
+                dRdE_au=dRdE_au,
                 E_edges=fenergy_bin["edges"],
             )
 
-        json_numpy.write(
-            os.path.join(site_particle_dir, "differential_rate.json"),
-            {
-                "comment": comment_differential + " VS onregion-radius",
-                "unit": "s$^{-1} (GeV)$^{-1}$",
-                "mean": dRdE,
-                "absolute_uncertainty": dRdE_au,
-            },
-        )
-        json_numpy.write(
-            os.path.join(site_particle_dir, "integral_rate.json"),
-            {
-                "comment": comment_integral + " VS onregion-radius",
-                "unit": "s$^{-1}$",
-                "mean": R,
-                "absolute_uncertainty": R_au,
-            },
-        )
+            json_numpy.write(
+                os.path.join(sk_dir, ck, ok, "differential_rate.json"),
+                {
+                    "comment": comment_differential + " VS onregion-radius",
+                    "unit": "s$^{-1} (GeV)$^{-1}$",
+                    "mean": dRdE,
+                    "absolute_uncertainty": dRdE_au,
+                },
+            )
+            json_numpy.write(
+                os.path.join(sk_dir, ck, ok, "integral_rate.json"),
+                {
+                    "comment": comment_integral + " VS onregion-radius",
+                    "unit": "s$^{-1}$",
+                    "mean": R,
+                    "absolute_uncertainty": R_au,
+                },
+            )
