@@ -125,8 +125,8 @@ for site_key in irf_config["config"]["sites"]:
             ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.1, 0.02, 0.8])
             ax.set_aspect("equal")
             _pcm_grid = ax.pcolormesh(
-                np.array(irf_config["grid_geometry"]["xy_bin_edges"]) * 1e-3,
-                np.array(irf_config["grid_geometry"]["xy_bin_edges"]) * 1e-3,
+                irf_config["grid_geometry"]["xy_bin_edges"] * 1e-3,
+                irf_config["grid_geometry"]["xy_bin_edges"] * 1e-3,
                 np.transpose(normalized_grid_intensity),
                 norm=seb.plt_colors.PowerNorm(gamma=1.0 / 4.0),
                 cmap="Blues",

@@ -59,12 +59,12 @@ for site_key in irf_config["config"]["sites"]:
         text_y = 0
         for particle_key in irf_config["config"]["particles"]:
 
-            Q = np.array(G[site_key][particle_key][source_key]["mean"])[
+            Q = G[site_key][particle_key][source_key]["mean"][
                 :, IDX_FINAL_ONREGION
             ]
-            Q_au = np.array(
-                G[site_key][particle_key][source_key]["absolute_uncertainty"]
-            )[:, IDX_FINAL_ONREGION]
+            Q_au = G[site_key][particle_key][source_key]["absolute_uncertainty"][
+                :, IDX_FINAL_ONREGION
+            ]
 
             seb.ax_add_histogram(
                 ax=ax,
@@ -112,23 +112,17 @@ for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
         for source_key in irf.summary.figure.SOURCES:
 
-            acc_trg = np.array(
-                A[site_key][particle_key][source_key]["mean"][
-                    idx_trigger_threshold
-                ]
-            )
-            acc_trg_au = np.array(
-                A[site_key][particle_key][source_key]["absolute_uncertainty"][
-                    idx_trigger_threshold
-                ]
-            )
+            acc_trg = A[site_key][particle_key][source_key]["mean"][
+                idx_trigger_threshold
+            ]
 
-            acc_trg_onregions = np.array(
-                G[site_key][particle_key][source_key]["mean"]
-            )
-            acc_trg_onregions_au = np.array(
-                G[site_key][particle_key][source_key]["absolute_uncertainty"]
-            )
+            acc_trg_au = A[site_key][particle_key][source_key]["absolute_uncertainty"][
+                idx_trigger_threshold
+            ]
+
+            acc_trg_onregions = G[site_key][particle_key][source_key]["mean"]
+
+            acc_trg_onregions_au = G[site_key][particle_key][source_key]["absolute_uncertainty"]
 
             for oridx in range(num_bins_onregion_radius):
                 acc_trg_onregion = acc_trg_onregions[:, oridx]

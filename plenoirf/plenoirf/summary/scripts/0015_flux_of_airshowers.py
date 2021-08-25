@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+import copy
 import numpy as np
 import plenoirf as irf
 import os
@@ -63,7 +64,7 @@ for sk in SITES:
             ]
         )
         below_cutoff = energy_bin["centers"] < cutoff_energy
-        air_shower_fluxes[sk][pk]["differential_flux"] = np.array(
+        air_shower_fluxes[sk][pk]["differential_flux"] = copy.deepcopy(
             cosmic_ray_fluxes[pk]["differential_flux"]
         )
         air_shower_fluxes[sk][pk]["differential_flux"][
