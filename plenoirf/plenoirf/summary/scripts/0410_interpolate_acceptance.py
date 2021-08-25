@@ -43,9 +43,7 @@ for sk in SITES:
             for ok in range(num_onregion_sizes):
                 print("acceptance", sk, pk, ok)
                 _Q = acceptance[sk][pk][gk]["mean"][:, ok]
-                _Q_ru = acceptance[sk][pk][gk]["relative_uncertainty"][:, ok]
-                _Q_ru[np.isnan(_Q_ru)] = 0.0
-                _Q_au = _Q * _Q_ru
+                _Q_au = acceptance[sk][pk][gk]["absolute_uncertainty"][:, ok]
 
                 Q[:, ok] = irf.utils.log10interp(
                     x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q,

@@ -81,8 +81,7 @@ for sk in irf_config["config"]["sites"]:
     os.makedirs(sk_gamma_dir, exist_ok=True)
 
     _A = acceptance[sk]["gamma"]["point"]["mean"]
-    _A_ru = acceptance[sk]["gamma"]["point"]["relative_uncertainty"]
-    _A_au = _A * _A_ru
+    _A_au = acceptance[sk]["gamma"]["point"]["absolute_uncertainty"]
 
     R = np.zeros(num_trigger_thresholds)
     R_au = np.zeros(R.shape)
@@ -138,8 +137,7 @@ for sk in irf_config["config"]["sites"]:
         os.makedirs(sk_ck_dir, exist_ok=True)
 
         _Q = acceptance[sk][ck]["diffuse"]["mean"]
-        _Q_ru = acceptance[sk][ck]["diffuse"]["relative_uncertainty"]
-        _Q_au = _Q * _Q_ru
+        _Q_au = acceptance[sk][ck]["diffuse"]["absolute_uncertainty"]
 
         R = np.zeros(num_trigger_thresholds)
         R_au = np.zeros(R.shape)

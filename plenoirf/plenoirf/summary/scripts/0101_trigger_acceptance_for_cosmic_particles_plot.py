@@ -42,13 +42,11 @@ for site_key in irf_config["config"]["sites"]:
                 Q = np.array(
                     cr[site_key][particle_key][source_key]["mean"][tt]
                 )
-                delta_Q = np.array(
+                Q_au = np.array(
                     cr[site_key][particle_key][source_key][
-                        "relative_uncertainty"
+                        "absolute_uncertainty"
                     ][tt]
                 )
-                Q_lower = (1 - delta_Q) * Q
-                Q_upper = (1 + delta_Q) * Q
 
                 seb.ax_add_histogram(
                     ax=ax,
@@ -56,8 +54,8 @@ for site_key in irf_config["config"]["sites"]:
                     bincounts=Q,
                     linestyle="-",
                     linecolor=particle_colors[particle_key],
-                    bincounts_upper=Q_upper,
-                    bincounts_lower=Q_lower,
+                    bincounts_upper=Q + Q_au,
+                    bincounts_lower=Q - Q_au,
                     face_color=particle_colors[particle_key],
                     face_alpha=0.25,
                 )

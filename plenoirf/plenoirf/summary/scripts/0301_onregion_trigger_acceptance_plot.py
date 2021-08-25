@@ -62,12 +62,9 @@ for site_key in irf_config["config"]["sites"]:
             Q = np.array(G[site_key][particle_key][source_key]["mean"])[
                 :, IDX_FINAL_ONREGION
             ]
-            delta_Q = np.array(
-                G[site_key][particle_key][source_key]["relative_uncertainty"]
+            Q_au = np.array(
+                G[site_key][particle_key][source_key]["absolute_uncertainty"]
             )[:, IDX_FINAL_ONREGION]
-
-            Q_lower = (1 - delta_Q) * Q
-            Q_upper = (1 + delta_Q) * Q
 
             seb.ax_add_histogram(
                 ax=ax,
@@ -75,8 +72,8 @@ for site_key in irf_config["config"]["sites"]:
                 bincounts=Q,
                 linestyle="-",
                 linecolor=particle_colors[particle_key],
-                bincounts_upper=Q_upper,
-                bincounts_lower=Q_lower,
+                bincounts_upper=Q + Q_au,
+                bincounts_lower=Q - Q_au,
                 face_color=particle_colors[particle_key],
                 face_alpha=0.25,
             )
@@ -120,8 +117,8 @@ for site_key in irf_config["config"]["sites"]:
                     idx_trigger_threshold
                 ]
             )
-            acc_trg_unc = np.array(
-                A[site_key][particle_key][source_key]["relative_uncertainty"][
+            acc_trg_au = np.array(
+                A[site_key][particle_key][source_key]["absolute_uncertainty"][
                     idx_trigger_threshold
                 ]
             )
@@ -129,13 +126,13 @@ for site_key in irf_config["config"]["sites"]:
             acc_trg_onregions = np.array(
                 G[site_key][particle_key][source_key]["mean"]
             )
-            acc_trg_onregions_unc = np.array(
-                G[site_key][particle_key][source_key]["relative_uncertainty"]
+            acc_trg_onregions_au = np.array(
+                G[site_key][particle_key][source_key]["absolute_uncertainty"]
             )
 
             for oridx in range(num_bins_onregion_radius):
                 acc_trg_onregion = acc_trg_onregions[:, oridx]
-                acc_trg_onregion_unc = acc_trg_onregions_unc[:, oridx]
+                acc_trg_onregion_au = acc_trg_onregions_au[:, oridx]
 
                 fig = seb.figure(seb.FIGURE_16_9)
                 ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
@@ -146,8 +143,8 @@ for site_key in irf_config["config"]["sites"]:
                     bincounts=acc_trg,
                     linestyle="-",
                     linecolor="gray",
-                    bincounts_upper=acc_trg * (1 + acc_trg_unc),
-                    bincounts_lower=acc_trg * (1 - acc_trg_unc),
+                    bincounts_upper=acc_trg + acc_trg_au,
+                    bincounts_lower=acc_trg - acc_trg_au,
                     face_color=particle_colors[particle_key],
                     face_alpha=0.05,
                 )
@@ -157,10 +154,8 @@ for site_key in irf_config["config"]["sites"]:
                     bincounts=acc_trg_onregion,
                     linestyle="-",
                     linecolor=particle_colors[particle_key],
-                    bincounts_upper=acc_trg_onregion
-                    * (1 + acc_trg_onregion_unc),
-                    bincounts_lower=acc_trg_onregion
-                    * (1 - acc_trg_onregion_unc),
+                    bincounts_upper=acc_trg_onregion + acc_trg_onregion_au,
+                    bincounts_lower=acc_trg_onregion - acc_trg_onregion_au,
                     face_color=particle_colors[particle_key],
                     face_alpha=0.25,
                 )

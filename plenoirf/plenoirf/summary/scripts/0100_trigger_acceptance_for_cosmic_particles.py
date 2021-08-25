@@ -69,7 +69,7 @@ for site_key in irf_config["config"]["sites"]:
         total_num_grid_cells = point_particle_table["grid"]["num_bins_thrown"]
 
         value = []
-        relative_uncertainty = []
+        absolute_uncertainty = []
         for threshold in trigger_thresholds:
             idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
                 trigger_table=point_particle_table["trigger"],
@@ -82,7 +82,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             (
                 _q_eff,
-                _q_unc,
+                _q_eff_au,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=energy_GeV,
@@ -94,7 +94,7 @@ for site_key in irf_config["config"]["sites"]:
                 total_num_grid_cells=total_num_grid_cells,
             )
             value.append(_q_eff)
-            relative_uncertainty.append(_q_unc)
+            absolute_uncertainty.append(_q_eff_au)
 
         json_numpy.write(
             os.path.join(site_particle_dir, "point.json"),
@@ -107,7 +107,7 @@ for site_key in irf_config["config"]["sites"]:
                 "trigger": sum_config["trigger"],
                 "unit": "m$^{2}$",
                 "mean": value,
-                "relative_uncertainty": relative_uncertainty,
+                "absolute_uncertainty": absolute_uncertainty,
             },
         )
 
@@ -126,7 +126,7 @@ for site_key in irf_config["config"]["sites"]:
         ]
 
         value = []
-        relative_uncertainty = []
+        absolute_uncertainty = []
         for threshold in trigger_thresholds:
             idx_detected = irf.analysis.light_field_trigger_modi.make_indices(
                 trigger_table=diffuse_particle_table["trigger"],
@@ -139,7 +139,7 @@ for site_key in irf_config["config"]["sites"]:
             )
             (
                 _q_eff,
-                _q_unc,
+                _q_eff_au,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=energy_GeV,
@@ -151,7 +151,7 @@ for site_key in irf_config["config"]["sites"]:
                 total_num_grid_cells=total_num_grid_cells,
             )
             value.append(_q_eff)
-            relative_uncertainty.append(_q_unc)
+            absolute_uncertainty.append(_q_eff_au)
 
         json_numpy.write(
             os.path.join(site_particle_dir, "diffuse.json"),
@@ -165,6 +165,6 @@ for site_key in irf_config["config"]["sites"]:
                 "trigger": sum_config["trigger"],
                 "unit": "m$^{2}$ sr",
                 "mean": value,
-                "relative_uncertainty": relative_uncertainty,
+                "absolute_uncertainty": absolute_uncertainty,
             },
         )

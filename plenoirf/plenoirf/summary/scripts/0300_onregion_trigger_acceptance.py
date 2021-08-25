@@ -128,7 +128,7 @@ for sk in irf_config["config"]["sites"]:
         Qeff = np.zeros(
             shape=(energy_bin["num_bins"], num_bins_onregion_radius)
         )
-        Qunc = np.zeros(
+        Qeff_au = np.zeros(
             shape=(energy_bin["num_bins"], num_bins_onregion_radius)
         )
         for oridx in range(num_bins_onregion_radius):
@@ -166,7 +166,7 @@ for sk in irf_config["config"]["sites"]:
 
             (
                 _q_eff,
-                _q_unc,
+                _q_eff_au,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=point_thrown["primary"]["energy_GeV"],
@@ -179,7 +179,7 @@ for sk in irf_config["config"]["sites"]:
             )
 
             Qeff[:, oridx] = _q_eff
-            Qunc[:, oridx] = _q_unc
+            Qeff_au[:, oridx] = _q_eff_au
 
         json_numpy.write(
             os.path.join(site_particle_dir, "point.json"),
@@ -191,7 +191,7 @@ for sk in irf_config["config"]["sites"]:
                 ),
                 "unit": "m$^{2}$",
                 "mean": Qeff,
-                "relative_uncertainty": Qunc,
+                "absolute_uncertainty": Qeff_au,
             },
         )
 
@@ -217,7 +217,7 @@ for sk in irf_config["config"]["sites"]:
         Qeff = np.zeros(
             shape=(energy_bin["num_bins"], num_bins_onregion_radius)
         )
-        Qunc = np.zeros(
+        Qeff_au = np.zeros(
             shape=(energy_bin["num_bins"], num_bins_onregion_radius)
         )
 
@@ -264,7 +264,7 @@ for sk in irf_config["config"]["sites"]:
 
             (
                 _q_eff,
-                _q_unc,
+                _q_eff_au,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=diffuse_thrown["primary"]["energy_GeV"],
@@ -280,7 +280,7 @@ for sk in irf_config["config"]["sites"]:
             )
 
             Qeff[:, oridx] = _q_eff
-            Qunc[:, oridx] = _q_unc
+            Qeff_au[:, oridx] = _q_eff_au
 
         json_numpy.write(
             os.path.join(site_particle_dir, "diffuse.json"),
@@ -292,6 +292,6 @@ for sk in irf_config["config"]["sites"]:
                 ),
                 "unit": "m$^{2}$ sr",
                 "mean": Qeff,
-                "relative_uncertainty": Qunc,
+                "absolute_uncertainty": Qeff_au,
             },
         )

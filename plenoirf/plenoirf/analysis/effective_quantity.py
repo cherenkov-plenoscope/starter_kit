@@ -13,7 +13,7 @@ def effective_quantity_for_grid(
     total_num_grid_cells,
 ):
     """
-    Returns the effective quantity and its uncertainty.
+    Returns the effective quantity and its absolute uncertainty.
 
     Parameters
     ----------
@@ -110,8 +110,12 @@ def effective_quantity_for_grid(
         weights=(mask_detected * num_grid_cells_above_lose_threshold),
     )[0]
 
-    effective_quantity_uncertainty = utils._divide_silent(
-        numerator=np.sqrt(A_square), denominator=A, default=np.nan
+    effective_quantity_relative_uncertainty = utils._divide_silent(
+        numerator=np.sqrt(A_square), denominator=A, default=0.0
     )
 
-    return effective_quantity, effective_quantity_uncertainty
+    effective_quantity_absolute_uncertainty = (
+        effective_quantity * effective_quantity_relative_uncertainty
+    )
+
+    return effective_quantity, effective_quantity_absolute_uncertainty

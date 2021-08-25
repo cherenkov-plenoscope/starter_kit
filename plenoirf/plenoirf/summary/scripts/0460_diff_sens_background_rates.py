@@ -84,9 +84,7 @@ for sk in SITES:
     for pk in COSMIC_RAYS:
         acceptance[sk][pk] = {gk: {}}
         Q = _acceptance[sk][pk][gk]["mean"]
-        Q_ru = _acceptance[sk][pk][gk]["relative_uncertainty"]
-        Q_ru[np.isnan(Q_ru)] = 0.0
-        Q_au = Q * Q_ru
+        Q_au = _acceptance[sk][pk][gk]["absolute_uncertainty"]
         acceptance[sk][pk][gk]["mean"] = Q
         acceptance[sk][pk][gk]["absolute_uncertainty"] = Q_au
 

@@ -24,7 +24,7 @@ ienergy_migration = json_numpy.read_tree(
 )
 
 cosmic_background_diff_rate = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0430_diff_sens_background_rates")
+    os.path.join(pa["summary_dir"], "0430_interpolate_background_diff_rates")
 )
 
 energy_binning = json_numpy.read(
