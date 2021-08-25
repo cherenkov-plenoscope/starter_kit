@@ -24,6 +24,7 @@ for scenario_key in sum_config["energy_binning"]["fine"]:
     assert np.all(np.gradient(edges) > 0.0)
 
     energy[scenario_key] = {
+        "key": scenario_key,
         "edges": edges,
         "num_bins": num_bins,
         "centers": irf.utils.bin_centers(edges),
