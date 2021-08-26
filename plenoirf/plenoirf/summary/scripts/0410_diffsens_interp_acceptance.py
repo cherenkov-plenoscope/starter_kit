@@ -29,15 +29,15 @@ energy_bin = energy_binning["trigger_acceptance_onregion"]
 fenergy_bin = energy_binning["interpolation"]
 
 for sk in SITES:
-    for pk in PARTICLES:
-        for ok in ONREGION_TYPES:
-            sk_pk_ok_dir = os.path.join(pa["out_dir"], sk, pk, ok)
-            os.makedirs(sk_pk_ok_dir, exist_ok=True)
+    for ok in ONREGION_TYPES:
+        for pk in PARTICLES:
+            sk_ok_pk_dir = os.path.join(pa["out_dir"], sk, ok, pk)
+            os.makedirs(sk_ok_pk_dir, exist_ok=True)
             for gk in ["diffuse", "point"]:
 
 
-                _Q = acceptance[sk][pk][ok][gk]["mean"]
-                _Q_au = acceptance[sk][pk][ok][gk]["absolute_uncertainty"]
+                _Q = acceptance[sk][ok][pk][gk]["mean"]
+                _Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
 
                 Q = irf.utils.log10interp(
                     x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q,
@@ -47,12 +47,12 @@ for sk in SITES:
                 )
 
                 json_numpy.write(
-                    os.path.join(sk_pk_ok_dir, gk + ".json"),
+                    os.path.join(sk_ok_pk_dir, gk + ".json"),
                     {
-                        "comment": acceptance[sk][pk][ok][gk]["comment"],
+                        "comment": acceptance[sk][ok][pk][gk]["comment"],
                         "mean": Q,
                         "absolute_uncertainty": Q_au,
-                        "unit": acceptance[sk][pk][ok][gk]["unit"],
+                        "unit": acceptance[sk][ok][pk][gk]["unit"],
                         "energy_binning_key": "interpolation"
                     },
                 )

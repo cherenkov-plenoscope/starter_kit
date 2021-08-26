@@ -19,7 +19,6 @@ SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = list(PARTICLES)
 COSMIC_RAYS.remove("gamma")
-
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 gk = "diffuse"
@@ -84,8 +83,8 @@ for sk in SITES:
             dMdE = ienergy_migration[sk][pk]["counts"]
             dMdE_au = ienergy_migration[sk][pk]["counts_abs_unc"]
 
-            Q = iacceptance[sk][pk][ok][gk]["mean"]
-            Q_au = iacceptance[sk][pk][ok][gk]["absolute_uncertainty"]
+            Q = iacceptance[sk][ok][pk][gk]["mean"]
+            Q_au = iacceptance[sk][ok][pk][gk]["absolute_uncertainty"]
 
             fine_energy_bin_width_au = np.zeros(fine_energy_bin["width"].shape)
 

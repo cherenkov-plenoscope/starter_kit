@@ -38,7 +38,7 @@ acceptance = json_numpy.read_tree(
 )
 
 airshower_fluxes = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0505_diff_sens_rebin_flux_of_airshowers.py")
+    os.path.join(pa["summary_dir"], "0505_diffsens_rebin_flux_of_airshowers")
 )
 
 
@@ -85,8 +85,8 @@ for sk in SITES:
             dMdE = energy_migration[sk][pk]["counts"]
             dMdE_au = energy_migration[sk][pk]["counts_abs_unc"]
 
-            Q = acceptance[sk][pk][ok][gk]["mean"]
-            Q_au = acceptance[sk][pk][ok][gk]["absolute_uncertainty"]
+            Q = acceptance[sk][ok][pk][gk]["mean"]
+            Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
 
             energy_bin_width_au = np.zeros(energy_bin["width"].shape)
 
@@ -136,14 +136,15 @@ for sk in SITES:
 
             assert 0.9 < total_R / total_Rt < 1.1
 
+for sk in SITES:
+    for ok in ONREGION_TYPES:
+        os.makedirs(os.path.join(pa["out_dir"], sk, ok), exist_ok=True)
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        sk_ok_dir = os.path.join(pa["out_dir"], sk, ok)
-        os.makedirs(sk_ok_dir, exist_ok=True)
         for pk in COSMIC_RAYS:
             json_numpy.write(
-                os.path.join(sk_ok_dir, pk + ".json"),
+                os.path.join(pa["out_dir"], sk, ok, pk + ".json"),
                 {
                     "comment": (
                         "differential rate after all cuts "

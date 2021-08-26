@@ -55,8 +55,8 @@ for sk in irf_config["config"]["sites"]:
             text_y = 0
             for pk in irf_config["config"]["particles"]:
 
-                Q = G[sk][pk][ok][gk]["mean"]
-                Q_au = G[sk][pk][ok][gk]["absolute_uncertainty"]
+                Q = G[sk][ok][pk][gk]["mean"]
+                Q_au = G[sk][ok][pk][gk]["absolute_uncertainty"]
 
                 seb.ax_add_histogram(
                     ax=ax,
@@ -81,7 +81,7 @@ for sk in irf_config["config"]["sites"]:
 
             ax.set_xlabel("energy / GeV")
             ax.set_ylabel(
-                "{:s} /\n{:s}".format(
+                "{:s} / {:s}".format(
                     irf.summary.figure.SOURCES[gk]["label"],
                     irf.summary.figure.SOURCES[gk]["unit"],
                 )
@@ -94,7 +94,7 @@ for sk in irf_config["config"]["sites"]:
 
             fig.savefig(
                 os.path.join(
-                    pa["out_dir"], "{:s}_{:s}_{:s}.jpg".format(sk, gk, ok),
+                    pa["out_dir"], "{:s}_{:s}_{:s}.jpg".format(sk, ok, gk),
                 )
             )
             seb.close_figure(fig)
@@ -113,8 +113,8 @@ for sk in irf_config["config"]["sites"]:
             ]
 
             for ok in ONREGION_TYPES:
-                acc_trg_onregion = G[sk][pk][ok][gk]["mean"]
-                acc_trg_onregion_au = G[sk][pk][ok][gk]["absolute_uncertainty"]
+                acc_trg_onregion = G[sk][ok][pk][gk]["mean"]
+                acc_trg_onregion_au = G[sk][ok][pk][gk]["absolute_uncertainty"]
 
                 fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
                 ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
@@ -153,7 +153,7 @@ for sk in irf_config["config"]["sites"]:
                 )
                 ax.set_xlabel("energy / GeV")
                 ax.set_ylabel(
-                    "{:s} /\n{:s}".format(
+                    "{:s} / {:s}".format(
                         irf.summary.figure.SOURCES[gk]["label"],
                         irf.summary.figure.SOURCES[gk]["unit"],
                     )
@@ -169,7 +169,7 @@ for sk in irf_config["config"]["sites"]:
                     opj(
                         pa["out_dir"],
                         "{:s}_{:s}_{:s}_{:s}.jpg".format(
-                            sk, pk, gk, ok
+                            sk, ok, pk, gk
                         ),
                     )
                 )

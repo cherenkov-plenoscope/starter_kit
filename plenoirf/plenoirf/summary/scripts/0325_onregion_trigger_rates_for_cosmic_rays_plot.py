@@ -15,13 +15,15 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
+
 onregion_rates = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0320_onregion_trigger_rates_for_cosmic_rays"
     )
 )
-
-ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 fine_energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
@@ -32,15 +34,16 @@ particle_colors = sum_config["plot"]["particle_colors"]
 mean_key = "mean"
 unc_key = "absolute_uncertainty"
 
-for sk in irf_config["config"]["sites"]:
+for sk in SITES:
     for ok in ONREGION_TYPES:
         fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
         ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
         text_y = 0.7
-        for pk in irf_config["config"]["particles"]:
-            dRdE = onregion_rates[sk][pk][ok]["differential_rate"][mean_key]
-            dRdE_au = onregion_rates[sk][pk][ok]["differential_rate"][unc_key]
+
+        for pk in PARTICLES:
+            dRdE = onregion_rates[sk][ok][pk]["differential_rate"][mean_key]
+            dRdE_au = onregion_rates[sk][ok][pk]["differential_rate"][unc_key]
             ax.plot(
                 fine_energy_bin["centers"],
                 dRdE,
@@ -61,8 +64,8 @@ for sk in irf_config["config"]["sites"]:
                 color=particle_colors[pk],
                 transform=ax.transAxes,
             )
-            ir = onregion_rates[sk][pk][ok]["integral_rate"][mean_key]
-            ir_abs_unc = onregion_rates[sk][pk][ok]["integral_rate"][unc_key]
+            ir = onregion_rates[sk][ok][pk]["integral_rate"][mean_key]
+            ir_abs_unc = onregion_rates[sk][ok][pk]["integral_rate"][unc_key]
             ax.text(
                 0.7,
                 0.1 + text_y,

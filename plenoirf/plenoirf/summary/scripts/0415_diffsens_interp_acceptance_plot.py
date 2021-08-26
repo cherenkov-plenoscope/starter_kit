@@ -17,7 +17,6 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
-
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 iacceptance = json_numpy.read_tree(
@@ -41,9 +40,9 @@ for sk in SITES:
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
             for pk in PARTICLES:
-                iQ = iacceptance[sk][pk][ok][gk]["mean"]
-                iQ_au = iacceptance[sk][pk][ok][gk]["absolute_uncertainty"]
-                Q = acceptance[sk][pk][ok][gk]["mean"]
+                iQ = iacceptance[sk][ok][pk][gk]["mean"]
+                iQ_au = iacceptance[sk][ok][pk][gk]["absolute_uncertainty"]
+                Q = acceptance[sk][ok][pk][gk]["mean"]
 
                 ax.plot(
                     fine_energy_bin["centers"],
@@ -81,7 +80,7 @@ for sk in SITES:
             fig.savefig(
                 os.path.join(
                     pa["out_dir"],
-                    sk + "_" + gk + "_" + ok + "_acceptance_interpolated.jpg"
+                    sk + "_" + ok + "_" + gk + "_acceptance_interpolated.jpg"
                 )
             )
             seb.close_figure(fig)

@@ -16,14 +16,20 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
+
+opj = os.path.join
+
 passing_trigger = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0055_passing_trigger")
+    opj(pa["summary_dir"], "0055_passing_trigger")
 )
 passing_quality = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
+    opj(pa["summary_dir"], "0056_passing_basic_quality")
 )
 passing_trajectory_quality = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
+    opj(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
 MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
@@ -41,10 +47,8 @@ pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
 energy_bin = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+    opj(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
-
-ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
@@ -78,16 +82,17 @@ def make_wighted_mask_wrt_primary_table(
             mask[ii] = default_weight
     return mask
 
+for sk in SITES:
+    for ok in ONREGION_TYPES:
+        for pk in PARTICLES:
+            os.makedirs(opj(pa["out_dir"], sk, ok, pk), exist_ok=True)
 
-for sk in irf_config["config"]["sites"]:
-    for pk in irf_config["config"]["particles"]:
-        sk_pk_dir = os.path.join(pa["out_dir"], sk, pk)
-        os.makedirs(sk_pk_dir, exist_ok=True)
-
+for sk in SITES:
+    for pk in PARTICLES:
         # point source
         # -------------
         diffuse_thrown = spt.read(
-            path=os.path.join(
+            path=opj(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
@@ -121,9 +126,7 @@ for sk in irf_config["config"]["sites"]:
         )
 
         for ok in ONREGION_TYPES:
-            os.makedirs(os.path.join(sk_pk_dir, ok), exist_ok=True)
             onregion_config = copy.deepcopy(ONREGION_TYPES[ok])
-
             idx_dict_source_in_onregion = {}
             for ii in range(poicanarr[spt.IDX].shape[0]):
 
@@ -169,7 +172,7 @@ for sk in irf_config["config"]["sites"]:
             )
 
             json_numpy.write(
-                os.path.join(sk_pk_dir, ok, "point.json"),
+                opj(pa["out_dir"], sk, ok, pk, "point.json"),
                 {
                     "comment": (
                         "Effective area "
@@ -202,7 +205,6 @@ for sk in irf_config["config"]["sites"]:
         )
 
         for ok in ONREGION_TYPES:
-            sk_pk_ok_dir = os.path.join(sk_pk_dir, ok)
             onregion_config = copy.deepcopy(ONREGION_TYPES[ok])
 
             idx_dict_probability_for_source_in_onregion = {}
@@ -261,7 +263,7 @@ for sk in irf_config["config"]["sites"]:
             )
 
             json_numpy.write(
-                os.path.join(sk_pk_dir, ok, "diffuse.json"),
+                opj(pa["out_dir"], sk, ok, pk, "diffuse.json"),
                 {
                     "comment": (
                         "Effective acceptance (area x solid angle) "

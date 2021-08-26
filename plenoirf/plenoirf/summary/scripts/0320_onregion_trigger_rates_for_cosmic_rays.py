@@ -14,6 +14,10 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
+
 onregion_acceptance = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
@@ -23,8 +27,6 @@ energy_binning = json_numpy.read(
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 fenergy_bin = energy_binning["interpolation"]
-
-ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 # cosmic-ray-flux
 # ----------------
@@ -60,19 +62,17 @@ K / s^{-1} m^{-2}
 dKdE / s^{-1} m^{-2} (GeV)^{-1}
 """
 
-for sk in irf_config["config"]["sites"]:
-    sk_dir = os.path.join(pa["out_dir"], sk)
-    os.makedirs(sk_dir, exist_ok=True)
+for sk in SITES:
+    for ok in ONREGION_TYPES:
+        for pk in PARTICLES:
+            os.makedirs(os.path.join(pa["out_dir"], sk, ok, pk), exist_ok=True)
 
+for sk in SITES:
     # gamma-ray
     # ---------
-    os.makedirs(os.path.join(sk_dir, "gamma"), exist_ok=True)
-
     for ok in ONREGION_TYPES:
-        os.makedirs(os.path.join(sk_dir, "gamma", ok), exist_ok=True)
-
-        _A = onregion_acceptance[sk]["gamma"][ok]["point"]["mean"]
-        _A_au = onregion_acceptance[sk]["gamma"][ok]["point"]["absolute_uncertainty"]
+        _A = onregion_acceptance[sk][ok]["gamma"]["point"]["mean"]
+        _A_au = onregion_acceptance[sk][ok]["gamma"]["point"]["absolute_uncertainty"]
 
         A = np.interp(
             x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_A
@@ -92,7 +92,7 @@ for sk in irf_config["config"]["sites"]:
         )
 
         json_numpy.write(
-            os.path.join(sk_dir, "gamma", ok, "differential_rate.json"),
+            os.path.join(pa["out_dir"], sk, ok, "gamma", "differential_rate.json"),
             {
                 "comment": comment_differential
                 + ", "
@@ -104,7 +104,7 @@ for sk in irf_config["config"]["sites"]:
             },
         )
         json_numpy.write(
-            os.path.join(sk_dir, "gamma", ok, "integral_rate.json"),
+            os.path.join(pa["out_dir"], sk, ok, "gamma", "integral_rate.json"),
             {
                 "comment": comment_integral
                 + ", "
@@ -116,19 +116,15 @@ for sk in irf_config["config"]["sites"]:
             },
         )
 
-    # cosmic-rays
-    # -----------
-    for ck in airshower_fluxes[sk]:
-        os.makedirs(os.path.join(sk_dir, ck), exist_ok=True)
+        # cosmic-rays
+        # -----------
+        for ck in airshower_fluxes[sk]:
+            cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]["values"]
+            cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
 
-        cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]["values"]
-        cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
 
-        for ok in ONREGION_TYPES:
-            os.makedirs(os.path.join(sk_dir, ck, ok), exist_ok=True)
-
-            _Q = onregion_acceptance[sk][ck][ok]["diffuse"]["mean"]
-            _Q_au = onregion_acceptance[sk][ck][ok]["diffuse"][
+            _Q = onregion_acceptance[sk][ok][ck]["diffuse"]["mean"]
+            _Q_au = onregion_acceptance[sk][ok][ck]["diffuse"][
                 "absolute_uncertainty"
             ]
 
@@ -150,7 +146,7 @@ for sk in irf_config["config"]["sites"]:
             )
 
             json_numpy.write(
-                os.path.join(sk_dir, ck, ok, "differential_rate.json"),
+                os.path.join(pa["out_dir"], sk, ok, ck, "differential_rate.json"),
                 {
                     "comment": comment_differential + " VS onregion-radius",
                     "unit": "s$^{-1} (GeV)$^{-1}$",
@@ -159,7 +155,7 @@ for sk in irf_config["config"]["sites"]:
                 },
             )
             json_numpy.write(
-                os.path.join(sk_dir, ck, ok, "integral_rate.json"),
+                os.path.join(pa["out_dir"], sk, ok, ck, "integral_rate.json"),
                 {
                     "comment": comment_integral + " VS onregion-radius",
                     "unit": "s$^{-1}$",
