@@ -25,7 +25,7 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 gk = "diffuse"
 
 ienergy_migration = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0420_diffsens_interp_energy_migration.py")
+    os.path.join(pa["summary_dir"], "0420_diffsens_interp_energy_migration")
 )
 
 iacceptance = json_numpy.read_tree(

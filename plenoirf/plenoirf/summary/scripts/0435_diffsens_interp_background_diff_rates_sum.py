@@ -15,7 +15,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 cosmic_diff_rate = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0430_interpolate_background_diff_rates")
+    os.path.join(pa["summary_dir"], "0430_diffsens_interp_background_diff_rates")
 )
 
 energy_binning = json_numpy.read(
