@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+import copy
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
@@ -18,10 +19,13 @@ import sebastians_matplotlib_addons as seb
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
-os.makedirs(pa["out_dir"], exist_ok=True)
-
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
+
+os.makedirs(pa["out_dir"], exist_ok=True)
+
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
 
 passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
@@ -101,6 +105,34 @@ for sk in irf_config["config"]["sites"]:
             default_low_exposure=0.0,
         )
 
+        # normalize conditional probabilities
+        # -----------------------------------
+        N = energy_bin["num_bins"]
+        cm["reco_given_true"] = copy.deepcopy(cm["counts"])
+        cm["reco_given_true_abs_unc"] = copy.deepcopy(cm["counts_abs_unc"])
+        for true in range(N):
+            _sum = 0.0
+            for reco in range(N):
+                _sum += cm["counts"][true, reco]
+            if _sum == 0:
+                continue
+            for reco in range(N):
+                cm["reco_given_true"][true, reco] /= _sum
+                cm["reco_given_true_abs_unc"][true, reco] /= _sum
+
+        cm["true_given_reco"] = copy.deepcopy(cm["counts"])
+        cm["true_given_reco_abs_unc"] = copy.deepcopy(cm["counts_abs_unc"])
+        for reco in range(N):
+            _sum = 0.0
+            for true in range(N):
+                _sum += cm["counts"][true, reco]
+            if _sum == 0:
+                continue
+            for true in range(N):
+                cm["true_given_reco"][true, reco] /= _sum
+                cm["true_given_reco_abs_unc"][true, reco] /= _sum
+
+
         # performace
         if pk == "gamma":
 
@@ -165,7 +197,7 @@ for sk in irf_config["config"]["sites"]:
         _pcm_confusion = ax_c.pcolormesh(
             cm["ax0_bin_edges"],
             cm["ax1_bin_edges"],
-            np.transpose(cm["counts_normalized_on_ax0"]),
+            np.transpose(cm["reco_given_true"]),
             cmap="Greys",
             norm=seb.plt_colors.PowerNorm(gamma=0.5),
         )
@@ -173,7 +205,7 @@ for sk in irf_config["config"]["sites"]:
         seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
         irf.summary.figure.mark_ax_thrown_spectrum(ax=ax_c)
         ax_c.set_aspect("equal")
-        ax_c.set_title("normalized in each column")
+        ax_c.set_title(r"$P(E_\mathrm{reco} \vert E_\mathrm{true})$")
         ax_c.set_ylabel("reco. energy / GeV")
         ax_c.loglog()
         ax_h.semilogx()
@@ -200,7 +232,6 @@ for sk in irf_config["config"]["sites"]:
         fig = seb.figure(seb.FIGURE_1_1)
         axstyle_stack = {"spines": ["bottom"], "axes": [], "grid": False}
         axstyle_bottom = {"spines": ["bottom"], "axes": ["x"], "grid": False}
-
         for ebin in range(numE):
 
             axe = seb.add_axes(
@@ -208,9 +239,8 @@ for sk in irf_config["config"]["sites"]:
                 span=[0.1, 0.1 + ax_step * ebin, 0.8, ax_step],
                 style=axstyle_bottom if ebin == 0 else axstyle_stack,
             )
-
-            mm = cm["counts_normalized_on_ax0"][:, ebin]
-            mm_abs_unc = cm["counts_normalized_on_ax0_abs_unc"][:, ebin]
+            mm = cm["true_given_reco"][:, ebin]
+            mm_abs_unc = cm["true_given_reco_abs_unc"][:, ebin]
             seb.ax_add_histogram(
                 ax=axe,
                 bin_edges=cm["ax0_bin_edges"],
@@ -226,6 +256,7 @@ for sk in irf_config["config"]["sites"]:
             axe.set_xlim(energy_bin["limits"])
             axe.semilogx()
             if ebin == 0:
+                axe.set_title(r"$P(E_\mathrm{true} \vert E_\mathrm{reco})$")
                 axe.set_xlabel("true energy / GeV")
         fig.savefig(
             os.path.join(
