@@ -25,11 +25,11 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 gk = "diffuse"
 
 ienergy_migration = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0420_interpolate_energy_migration_matrix")
+    os.path.join(pa["summary_dir"], "0420_diffsens_interp_energy_migration.py")
 )
 
 iacceptance = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0410_interpolate_acceptance")
+    os.path.join(pa["summary_dir"], "0410_diffsens_interp_acceptance")
 )
 
 airshower_fluxes = json_numpy.read_tree(
