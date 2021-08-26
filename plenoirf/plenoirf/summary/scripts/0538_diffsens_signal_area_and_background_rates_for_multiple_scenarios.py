@@ -40,6 +40,12 @@ dRtdEt = json_numpy.read_tree(
 
 
 def make_area_in_reco_energy(A, A_au, dMdE, dMdE_au, E_bin_width):
+    A = copy.deepcopy(A)
+    A_au = copy.deepcopy(A_au)
+    dMdE = copy.deepcopy(dMdE)
+    dMdE_au = copy.deepcopy(dMdE_au)
+    E_bin_width = copy.deepcopy(E_bin_width)
+
     num_bins = len(E_bin_width)
     A_out = np.zeros(num_bins)
     A_out_au = np.zeros(num_bins)
@@ -136,6 +142,24 @@ for sk in SITES:
                     "energy_binning_key": energy_bin["key"],
                     "mean": A_gamma_scenario,
                     "absolute_uncertainty": A_gamma_scenario_au,
+                },
+            )
+
+            json_numpy.write(
+                os.path.join(pa["out_dir"], sk, ok, dk, "gamma", "M.json"),
+                {
+                    "energy_binning_key": energy_bin["key"],
+                    "mean": M_gamma_scenario,
+                    "absolute_uncertainty": M_gamma_scenario_au,
+                },
+            )
+
+            json_numpy.write(
+                os.path.join(pa["out_dir"], sk, ok, dk, "gamma", "dMdE.json"),
+                {
+                    "energy_binning_key": energy_bin["key"],
+                    "mean": dMdE_scenario_gamma,
+                    "absolute_uncertainty": dMdE_scenario_gamma_au,
                 },
             )
 
