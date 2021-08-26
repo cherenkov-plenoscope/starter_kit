@@ -99,15 +99,15 @@ for sk in SITES:
 
                 critical_dKdE[:, obstix] = dFdE
 
-        json_numpy.write(
-            os.path.join(pa["out_dir"], sk, ok, dk + ".json"),
-            {
-                "energy_binning_key": energy_bin["key"],
-                "observation_times": observation_times,
-                "differential_flux": critical_dKdE,
-                "comment": (
-                    "Critical differential flux-sensitivity "
-                    "VS energy VS onregion-size VS observation-time"
-                ),
-            },
-        )
+            json_numpy.write(
+                os.path.join(pa["out_dir"], sk, ok, dk + ".json"),
+                {
+                    "energy_binning_key": energy_bin["key"],
+                    "observation_times": observation_times,
+                    "differential_flux": critical_dKdE,
+                    "comment": (
+                        "Critical differential flux-sensitivity "
+                        "VS energy VS onregion-size VS observation-time"
+                    ),
+                },
+            )
