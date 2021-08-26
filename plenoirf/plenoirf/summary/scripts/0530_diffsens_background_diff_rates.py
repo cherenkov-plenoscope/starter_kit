@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+import copy
 import numpy as np
 import plenoirf as irf
 import os
@@ -26,11 +27,8 @@ energy_binning = json_numpy.read(
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 
-energy_migration = irf.analysis.differential_sensitivity.derive_all_energy_migration(
-    energy_migration=json_numpy.read_tree(
-        os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
-    ),
-    energy_bin_width=energy_bin["width"],
+energy_migration = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
 )
 
 acceptance = json_numpy.read_tree(
@@ -80,24 +78,29 @@ for sk in SITES:
             dFdE = diff_flux[sk][pk]
             dFdE_au = np.zeros(dFdE.shape)
 
-            assert energy_migration[sk][pk]["ax0_key"] == "true_energy"
-            assert energy_migration[sk][pk]["ax1_key"] == "reco_energy"
-            dMdE = energy_migration[sk][pk]["counts"]
-            dMdE_au = energy_migration[sk][pk]["counts_abs_unc"]
+            M = copy.deepcopy(energy_migration[sk][pk])
+
+            assert M["ax0_key"] == "true_energy"
+            assert M["ax1_key"] == "reco_energy"
+
+            dMdE = copy.deepcopy(M["reco_given_true"])
+            dMdE_au = copy.deepcopy(M["reco_given_true_abs_unc"])
+            for ereco in range(energy_bin["num_bins"]):
+                dMdE[:, ereco] /= energy_bin["width"][ereco]
+                dMdE_au[:, ereco] /= energy_bin["width"][ereco]
 
             Q = acceptance[sk][ok][pk][gk]["mean"]
             Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
 
-            energy_bin_width_au = np.zeros(energy_bin["width"].shape)
-
+            energy_bin__width__au = np.zeros(energy_bin["num_bins"])
             for ereco in range(energy_bin["num_bins"]):
-                _P = np.zeros(energy_bin["num_bins"])
-                _P_au = np.zeros(energy_bin["num_bins"])
+                _tmp_sum = np.zeros(energy_bin["num_bins"])
+                _tmp_sum_au = np.zeros(energy_bin["num_bins"])
                 for etrue in range(energy_bin["num_bins"]):
 
                     (
-                        _P[etrue],
-                        _P_au[etrue],
+                        _tmp_sum[etrue],
+                        _tmp_sum_au[etrue],
                     ) = irf.utils.multiply_elemnetwise_au(
                         x=[
                             dFdE[etrue],
@@ -109,21 +112,22 @@ for sk in SITES:
                             dFdE_au[etrue],
                             dMdE_au[etrue, ereco],
                             Q_au[etrue],
-                            energy_bin_width_au[etrue],
+                            energy_bin__width__au[etrue],
                         ],
                     )
 
                 (
                     dRtdEt[sk][ok][pk][ereco],
                     dRtdEt_au[sk][ok][pk][ereco],
-                ) = irf.utils.sum_elemnetwise_au(x=_P, x_au=_P_au,)
+                ) = irf.utils.sum_elemnetwise_au(x=_tmp_sum, x_au=_tmp_sum_au,)
 
-            for ee in range(energy_bin["num_bins"]):
+            for etrue in range(energy_bin["num_bins"]):
                 (
-                    dRdE[sk][ok][pk][ee],
-                    dRdE_au[sk][ok][pk][ee],
+                    dRdE[sk][ok][pk][etrue],
+                    dRdE_au[sk][ok][pk][etrue],
                 ) = irf.utils.multiply_elemnetwise_au(
-                    x=[dFdE[ee], Q[ee]], x_au=[dFdE_au[ee], Q_au[ee]],
+                    x=[dFdE[etrue], Q[etrue]],
+                    x_au=[dFdE_au[etrue], Q_au[etrue]],
                 )
 
             # cross check
@@ -131,7 +135,7 @@ for sk in SITES:
             # total rate must not change under energy migration
             total_R = np.sum(dRdE[sk][ok][pk][:] * energy_bin["width"][:])
             total_Rt = np.sum(dRtdEt[sk][ok][pk][:] * energy_bin["width"][:])
-
+            print("total_R", total_R, "total_Rt", total_Rt)
             assert 0.9 < total_R / total_Rt < 1.1
 
 for sk in SITES:

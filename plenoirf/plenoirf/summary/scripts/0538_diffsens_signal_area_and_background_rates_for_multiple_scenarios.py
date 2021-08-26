@@ -54,11 +54,16 @@ def make_area_in_reco_energy(A, A_au, dMdE, dMdE_au, E_bin_width):
     for er in range(num_bins):
         Ar = np.zeros(num_bins)
         Ar_au = np.zeros(num_bins)
+        checksum = 0.0
         for et in range(num_bins):
             Ar[et], Ar_au[et] = irf.utils.multiply_elemnetwise_au(
                 x=[dMdE[et, er], A[et], E_bin_width[et],],
                 x_au=[dMdE_au[et, er], A_au[et], E_bin_width_au[et],],
             )
+            checksum += dMdE[et, er] * E_bin_width[et]
+        if checksum > 0.0:
+            print(checksum)
+            assert checksum < 1.01
         A_out[er], A_out_au[er] = irf.utils.sum_elemnetwise_au(
             x=Ar, x_au=Ar_au
         )
@@ -101,23 +106,21 @@ for sk in SITES:
     A_gamma = Q[sk][ok]["gamma"]["point"]["mean"]
     A_gamma_au = Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"]
 
-    M_gamma = M[sk]["gamma"]["confusion_matrix"]["counts_normalized_on_ax0"]
-    M_gamma_au = M[sk]["gamma"]["confusion_matrix"][
-        "counts_normalized_on_ax0_abs_unc"
-    ]
+    M_gamma = M[sk]["gamma"]
 
     for ok in ONREGION_TYPES:
         for dk in irf.analysis.differential_sensitivity.SCENARIOS:
             print(sk, ok, dk)
 
             scenario = irf.analysis.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
-                signal_energy_confusion_matrix=M_gamma,
-                signal_energy_confusion_matrix_abs_unc=M_gamma_au,
+                probability_reco_given_true=M_gamma["reco_given_true"],
+                probability_reco_given_true_abs_unc=M_gamma["reco_given_true_abs_unc"],
+                probability_true_given_reco=M_gamma["true_given_reco"],
                 scenario_key=dk,
             )
 
-            M_gamma_scenario = scenario["signal_matrix"]
-            M_gamma_scenario_au = scenario["signal_matrix_abs_unc"]
+            M_gamma_scenario = scenario["probability_reco_given_true"]
+            M_gamma_scenario_au = scenario["probability_reco_given_true_abs_unc"]
 
             (
                 dMdE_scenario_gamma,

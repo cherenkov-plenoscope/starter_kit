@@ -62,11 +62,9 @@ def align_on_idx(input_idx, input_values, target_idxs):
     return aligned_values
 
 
-for sk in irf_config["config"]["sites"]:
-    for pk in irf_config["config"]["particles"]:
-        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
-        os.makedirs(site_particle_dir, exist_ok=True)
-
+for sk in SITES:
+    os.makedirs(os.path.join(pa["out_dir"], sk), exist_ok=True)
+    for pk in PARTICLES:
         event_table = spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
@@ -132,6 +130,7 @@ for sk in irf_config["config"]["sites"]:
                 cm["true_given_reco"][true, reco] /= _sum
                 cm["true_given_reco_abs_unc"][true, reco] /= _sum
 
+        json_numpy.write(os.path.join(pa["out_dir"], sk, pk + ".json"), cm)
 
         # performace
         if pk == "gamma":
@@ -186,9 +185,6 @@ for sk in irf_config["config"]["sites"]:
             )
             seb.close_figure(fig)
 
-        json_numpy.write(
-            os.path.join(site_particle_dir, "confusion_matrix" + ".json"), cm
-        )
 
         fig = seb.figure(seb.FIGURE_1_1)
         ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])

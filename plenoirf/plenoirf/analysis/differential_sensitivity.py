@@ -55,12 +55,13 @@ SCENARIOS = {
 
 
 def make_energy_confusion_matrices_for_signal_and_background(
-    signal_energy_confusion_matrix,
-    signal_energy_confusion_matrix_abs_unc,
+    probability_reco_given_true,
+    probability_reco_given_true_abs_unc,
+    probability_true_given_reco,
     scenario_key="broad_spectrum",
 ):
-    s_cm = signal_energy_confusion_matrix
-    s_cm_u = signal_energy_confusion_matrix_abs_unc
+    s_cm = probability_reco_given_true
+    s_cm_u = probability_reco_given_true_abs_unc
 
     if scenario_key == "perfect_energy":
         _s_cm = np.eye(N=s_cm.shape[0])
@@ -90,7 +91,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
         _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
 
         _bg_integral_mask = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
-            energy_confusion_matrix=s_cm,
+            probability_true_given_reco=probability_true_given_reco,
             containment=containment
         )
         _energy_axes_label = ""
@@ -99,8 +100,8 @@ def make_energy_confusion_matrices_for_signal_and_background(
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
 
     return {
-        "signal_matrix": _s_cm,
-        "signal_matrix_abs_unc": _s_cm_u,
+        "probability_reco_given_true": _s_cm,
+        "probability_reco_given_true_abs_unc": _s_cm_u,
         "background_integral_mask": _bg_integral_mask,
         "energy_axes_label": _energy_axes_label,
     }
@@ -147,57 +148,62 @@ def next_containment_and_weight(
 
 
 def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
-    energy_confusion_matrix,
+    probability_true_given_reco,
     containment=0.68
 ):
     # ax0 -> true
     # ax1 -> reco
-    num_bins = energy_confusion_matrix.shape[0]
-    M = energy_confusion_matrix
+    num_bins = probability_true_given_reco.shape[0]
+    M = probability_true_given_reco
     mask = np.zeros(shape=(num_bins, num_bins))
 
     # estimate containment regions:
-    for etrue in range(num_bins):
-        if np.sum(M[etrue, :]) > 0.0:
-            assert 0.99 < np.sum(M[etrue, :]) < 1.01
+    for reco in range(num_bins):
+        if np.sum(M[:, reco]) > 0.0:
+            assert 0.99 < np.sum(M[:, reco]) < 1.01
 
             accumulated_containment = 0.0
-            ereco_best = np.argmax(M[etrue, :])
+            true_best = np.argmax(M[:, reco])
 
             accumulated_containment, weight = next_containment_and_weight(
                 accumulated_containment=accumulated_containment,
-                bin_containment=M[etrue, ereco_best],
+                bin_containment=M[true_best, reco],
                 target_containment=containment
             )
 
-            mask[etrue, ereco_best] = weight
-            start = ereco_best - 1
-            stop = ereco_best + 1
+            mask[true_best, reco] = weight
+            start = true_best - 1
+            stop = true_best + 1
+            i = 0
             while accumulated_containment < containment:
-                if start > 0 and M[etrue, start] > 0:
+                print(i, ")", start, true_best, stop, accumulated_containment)
+                if start > 0:
                     accumulated_containment, w = next_containment_and_weight(
                         accumulated_containment=accumulated_containment,
-                        bin_containment=M[etrue, start],
+                        bin_containment=M[start, reco],
                         target_containment=containment
                     )
-                    mask[etrue, start] = w
+                    mask[start, reco] = w
                     start -= 1
                 if accumulated_containment == containment:
                     break
 
-                if stop + 1 < num_bins and M[etrue, stop] > 0:
+                if stop + 1 < num_bins:
                     accumulated_containment, w = next_containment_and_weight(
                         accumulated_containment=accumulated_containment,
-                        bin_containment=M[etrue, stop],
+                        bin_containment=M[stop, reco],
                         target_containment=containment
                     )
-                    mask[etrue, stop] = w
+                    mask[stop, reco] = w
                     stop += 1
                 if accumulated_containment == containment:
                     break
 
                 if start == 0 and stop + 1 == num_bins:
                     break
+
+                i += 1
+                assert i < 2*num_bins
     return mask
 
 
@@ -211,11 +217,11 @@ def derive_migration_matrix_by_ax0(
 
     dMdE = np.zeros(M.shape)
     dMdE_au = np.zeros(M.shape)
-    for i_ax0 in range(len(ax0_bin_widths)):
-        _sum = np.sum(M[i_ax0, :])
+    for i1 in range(len(ax0_bin_widths)):
+        _sum = np.sum(M[:, i1])
         if _sum > 0.0:
-            dMdE[i_ax0, :] = M[i_ax0, :] / ax0_bin_widths[:]
-            dMdE_au[i_ax0, :] = M_au[i_ax0, :] / ax0_bin_widths[:]
+            dMdE[:, i1] = M[:, i1] / ax0_bin_widths[:]
+            dMdE_au[:, i1] = M_au[:, i1] / ax0_bin_widths[:]
     return dMdE, dMdE_au
 
 
