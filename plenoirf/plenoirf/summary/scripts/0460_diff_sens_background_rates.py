@@ -138,64 +138,65 @@ for sk in SITES:
 
 
 for sk in SITES:
-    sk_dir = os.path.join(pa["out_dir"], sk)
-    os.makedirs(sk_dir, exist_ok=True)
-    for pk in COSMIC_RAYS:
-        json_numpy.write(
-            os.path.join(sk_dir, pk + ".json"),
-            {
-                "comment": (
-                    "differential rate after all cuts "
-                    "VS reco. energy VS onregion"
-                ),
-                "unit": "s$^{-1} (GeV)$^{-1}$",
-                "mean": dRtdEt[sk][pk],
-                "absolute_uncertainty": dRtdEt_au[sk][pk],
-                "energy_binning_key": energy_bin["key"],
-            },
-        )
+    for ok in ONREGION_TYPES:
+        sk_ok_dir = os.path.join(pa["out_dir"], sk, ok)
+        os.makedirs(sk_ok_dir, exist_ok=True)
+        for pk in COSMIC_RAYS:
+            json_numpy.write(
+                os.path.join(sk_ok_dir, pk + ".json"),
+                {
+                    "comment": (
+                        "differential rate after all cuts "
+                        "VS reco. energy"
+                    ),
+                    "unit": "s$^{-1} (GeV)$^{-1}$",
+                    "mean": dRtdEt[sk][ok][pk],
+                    "absolute_uncertainty": dRtdEt_au[sk][ok][pk],
+                    "energy_binning_key": energy_bin["key"],
+                },
+            )
 
 
-Ok = 2
 for sk in SITES:
-    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
-    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
-    for pk in COSMIC_RAYS:
+    for ok in ONREGION_TYPES:
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+        for pk in COSMIC_RAYS:
 
-        seb.ax_add_histogram(
-            ax=ax,
-            bin_edges=energy_bin["edges"],
-            bincounts=dRtdEt[sk][pk][:, Ok],
-            bincounts_upper=dRtdEt[sk][pk][:, Ok] - dRtdEt_au[sk][pk][:, Ok],
-            bincounts_lower=dRtdEt[sk][pk][:, Ok] + dRtdEt_au[sk][pk][:, Ok],
-            linestyle="-",
-            linecolor=sum_config["plot"]["particle_colors"][pk],
-            face_color=sum_config["plot"]["particle_colors"][pk],
-            face_alpha=0.25,
-        )
+            seb.ax_add_histogram(
+                ax=ax,
+                bin_edges=energy_bin["edges"],
+                bincounts=dRtdEt[sk][ok][pk],
+                bincounts_upper=dRtdEt[sk][ok][pk] - dRtdEt_au[sk][ok][pk],
+                bincounts_lower=dRtdEt[sk][ok][pk] + dRtdEt_au[sk][ok][pk],
+                linestyle="-",
+                linecolor=sum_config["plot"]["particle_colors"][pk],
+                face_color=sum_config["plot"]["particle_colors"][pk],
+                face_alpha=0.25,
+            )
 
-        alpha = 0.25
-        seb.ax_add_histogram(
-            ax=ax,
-            bin_edges=energy_bin["edges"],
-            bincounts=dRdE[sk][pk][:, Ok],
-            bincounts_upper=dRdE[sk][pk][:, Ok] - dRdE_au[sk][pk][:, Ok],
-            bincounts_lower=dRdE[sk][pk][:, Ok] + dRdE_au[sk][pk][:, Ok],
-            linecolor=sum_config["plot"]["particle_colors"][pk],
-            linealpha=alpha,
-            linestyle=":",
-            face_color=sum_config["plot"]["particle_colors"][pk],
-            face_alpha=alpha*0.25,
-        )
+            alpha = 0.25
+            seb.ax_add_histogram(
+                ax=ax,
+                bin_edges=energy_bin["edges"],
+                bincounts=dRdE[sk][ok][pk],
+                bincounts_upper=dRdE[sk][ok][pk] - dRdE_au[sk][ok][pk],
+                bincounts_lower=dRdE[sk][ok][pk] + dRdE_au[sk][ok][pk],
+                linecolor=sum_config["plot"]["particle_colors"][pk],
+                linealpha=alpha,
+                linestyle=":",
+                face_color=sum_config["plot"]["particle_colors"][pk],
+                face_alpha=alpha*0.25,
+            )
 
-    ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
-    ax.set_xlabel("reco. energy / GeV")
-    ax.set_ylim([1e-6, 1e4])
-    ax.loglog()
-    fig.savefig(
-        os.path.join(
-            pa["out_dir"],
-            sk + "_" + pk + "_differential_rates_vs_reco_energy.jpg",
+        ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
+        ax.set_xlabel("reco. energy / GeV")
+        ax.set_ylim([1e-6, 1e4])
+        ax.loglog()
+        fig.savefig(
+            os.path.join(
+                pa["out_dir"],
+                sk + "_" + ok + "_differential_rates_vs_reco_energy.jpg",
+            )
         )
-    )
-    seb.close_figure(fig)
+        seb.close_figure(fig)
