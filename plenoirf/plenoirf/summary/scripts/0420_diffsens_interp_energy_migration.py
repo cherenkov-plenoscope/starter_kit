@@ -66,10 +66,7 @@ def interpolate_migration_matrix(
 
 
 def write_figure_diffenergy_migration_matrix(
-    dMdE,
-    dMdE_au,
-    energy_bin_edges,
-    path,
+    dMdE, dMdE_au, energy_bin_edges, path,
 ):
     energy_bin_width = np.diff(energy_bin_edges)
 
@@ -106,13 +103,20 @@ for sk in SITES:
     for pk in PARTICLES:
 
         M, M_au = interpolate_migration_matrix(
-            migration_matrix_counts=energy_migration[sk][pk]["confusion_matrix"]["counts"],
-            migration_matrix_counts_abs_unc=energy_migration[sk][pk]["confusion_matrix"]["counts_abs_unc"],
+            migration_matrix_counts=energy_migration[sk][pk][
+                "confusion_matrix"
+            ]["counts"],
+            migration_matrix_counts_abs_unc=energy_migration[sk][pk][
+                "confusion_matrix"
+            ]["counts_abs_unc"],
             bin_centers=energy_bin["centers"],
             new_bin_centers=fine_energy_bin["centers"],
         )
 
-        dMdE, dMdE_au = irf.analysis.differential_sensitivity.derive_migration_matrix_by_ax0(
+        (
+            dMdE,
+            dMdE_au,
+        ) = irf.analysis.differential_sensitivity.derive_migration_matrix_by_ax0(
             migration_matrix_counts=M,
             migration_matrix_counts_abs_unc=M_au,
             ax0_bin_widths=fine_energy_bin["width"],
@@ -129,8 +133,12 @@ for sk in SITES:
             os.path.join(sk_dir, pk + ".json"),
             {
                 "comment": "dM(E'|E)/dE, diff. energy-migration-matrix.",
-                "ax0_key": energy_migration[sk][pk]["confusion_matrix"]["ax0_key"],
-                "ax1_key": energy_migration[sk][pk]["confusion_matrix"]["ax1_key"],
+                "ax0_key": energy_migration[sk][pk]["confusion_matrix"][
+                    "ax0_key"
+                ],
+                "ax1_key": energy_migration[sk][pk]["confusion_matrix"][
+                    "ax1_key"
+                ],
                 "unit": "(GeV)$^{-1}$",
                 "counts": dMdE,
                 "counts_abs_unc": dMdE_au,

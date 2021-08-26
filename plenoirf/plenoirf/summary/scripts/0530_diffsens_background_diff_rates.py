@@ -130,9 +130,7 @@ for sk in SITES:
             # -----------
             # total rate must not change under energy migration
             total_R = np.sum(dRdE[sk][ok][pk][:] * energy_bin["width"][:])
-            total_Rt = np.sum(
-                dRtdEt[sk][ok][pk][:] * energy_bin["width"][:]
-            )
+            total_Rt = np.sum(dRtdEt[sk][ok][pk][:] * energy_bin["width"][:])
 
             assert 0.9 < total_R / total_Rt < 1.1
 
@@ -147,8 +145,7 @@ for sk in SITES:
                 os.path.join(pa["out_dir"], sk, ok, pk + ".json"),
                 {
                     "comment": (
-                        "differential rate after all cuts "
-                        "VS reco. energy"
+                        "differential rate after all cuts " "VS reco. energy"
                     ),
                     "unit": "s$^{-1} (GeV)$^{-1}$",
                     "mean": dRtdEt[sk][ok][pk],
@@ -187,7 +184,7 @@ for sk in SITES:
                 linealpha=alpha,
                 linestyle=":",
                 face_color=sum_config["plot"]["particle_colors"][pk],
-                face_alpha=alpha*0.25,
+                face_alpha=alpha * 0.25,
             )
 
         ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")

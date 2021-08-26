@@ -72,15 +72,13 @@ for sk in SITES:
                 )
             )
             ax.set_ylim(
-                irf.summary.figure.SOURCES[gk]["limits"][
-                    "passed_trigger"
-                ]
+                irf.summary.figure.SOURCES[gk]["limits"]["passed_trigger"]
             )
             ax.loglog()
             fig.savefig(
                 os.path.join(
                     pa["out_dir"],
-                    sk + "_" + ok + "_" + gk + "_acceptance_interpolated.jpg"
+                    sk + "_" + ok + "_" + gk + "_acceptance_interpolated.jpg",
                 )
             )
             seb.close_figure(fig)

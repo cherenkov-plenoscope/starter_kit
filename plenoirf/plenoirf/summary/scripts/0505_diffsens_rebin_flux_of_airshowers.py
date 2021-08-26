@@ -55,7 +55,7 @@ for sk in SITES:
             {
                 "energy_binning_key": energy_bin["key"],
                 "differential_flux": dFdE,
-                "unit": "m$^{-2}$ sr$^{-1}$ s$^{-1}$ (GeV)$^{-1}$"
+                "unit": "m$^{-2}$ sr$^{-1}$ s$^{-1}$ (GeV)$^{-1}$",
             },
         )
 
@@ -72,9 +72,11 @@ for sk in SITES:
             ax=ax,
             bin_edges=energy_bin["edges"],
             bincounts=diff_flux[sk][pk],
-            linecolor=sum_config["plot"]["particle_colors"][pk]
+            linecolor=sum_config["plot"]["particle_colors"][pk],
         )
-    ax.set_ylabel("differential flux /\nm$^{-2}$ sr$^{-1}$ s$^{-1}$ (GeV)$^{-1}$")
+    ax.set_ylabel(
+        "differential flux /\nm$^{-2}$ sr$^{-1}$ s$^{-1}$ (GeV)$^{-1}$"
+    )
     ax.set_xlabel("energy / GeV")
     ax.set_ylim([1e-6, 1e2])
     ax.loglog()

@@ -24,7 +24,9 @@ ienergy_migration = json_numpy.read_tree(
 )
 
 cosmic_background_diff_rate = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0430_diffsens_interp_background_diff_rates")
+    os.path.join(
+        pa["summary_dir"], "0430_diffsens_interp_background_diff_rates"
+    )
 )
 
 energy_binning = json_numpy.read(
@@ -89,7 +91,9 @@ for sk in SITES:
             # estimate gamma eff. area
             # ------------------------
             A = iacceptance[sk][ok]["gamma"]["point"]["mean"]
-            A_au = iacceptance[sk][ok]["gamma"]["point"]["absolute_uncertainty"]
+            A_au = iacceptance[sk][ok]["gamma"]["point"][
+                "absolute_uncertainty"
+            ]
 
             for obstix in range(num_observation_times):
                 print(sk, dk, oridx, obstix)

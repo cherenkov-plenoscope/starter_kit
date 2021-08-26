@@ -104,9 +104,7 @@ for sk in irf_config["config"]["sites"]:
     for pk in irf_config["config"]["particles"]:
         for gk in irf.summary.figure.SOURCES:
 
-            acc_trg = A[sk][pk][gk]["mean"][
-                idx_trigger_threshold
-            ]
+            acc_trg = A[sk][pk][gk]["mean"][idx_trigger_threshold]
 
             acc_trg_au = A[sk][pk][gk]["absolute_uncertainty"][
                 idx_trigger_threshold
@@ -159,18 +157,14 @@ for sk in irf_config["config"]["sites"]:
                     )
                 )
                 ax.set_ylim(
-                    irf.summary.figure.SOURCES[gk]["limits"][
-                        "passed_trigger"
-                    ]
+                    irf.summary.figure.SOURCES[gk]["limits"]["passed_trigger"]
                 )
                 ax.loglog()
                 ax.set_xlim(A_energy_bin["limits"])
                 fig.savefig(
                     opj(
                         pa["out_dir"],
-                        "{:s}_{:s}_{:s}_{:s}.jpg".format(
-                            sk, ok, pk, gk
-                        ),
+                        "{:s}_{:s}_{:s}_{:s}.jpg".format(sk, ok, pk, gk),
                     )
                 )
                 seb.close_figure(fig)

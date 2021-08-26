@@ -72,7 +72,9 @@ for sk in SITES:
     # ---------
     for ok in ONREGION_TYPES:
         _A = onregion_acceptance[sk][ok]["gamma"]["point"]["mean"]
-        _A_au = onregion_acceptance[sk][ok]["gamma"]["point"]["absolute_uncertainty"]
+        _A_au = onregion_acceptance[sk][ok]["gamma"]["point"][
+            "absolute_uncertainty"
+        ]
 
         A = np.interp(
             x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_A
@@ -86,13 +88,13 @@ for sk in SITES:
         )
 
         R, R_au = irf.utils.integrate_rate_where_known(
-            dRdE=dRdE,
-            dRdE_au=dRdE_au,
-            E_edges=fenergy_bin["edges"],
+            dRdE=dRdE, dRdE_au=dRdE_au, E_edges=fenergy_bin["edges"],
         )
 
         json_numpy.write(
-            os.path.join(pa["out_dir"], sk, ok, "gamma", "differential_rate.json"),
+            os.path.join(
+                pa["out_dir"], sk, ok, "gamma", "differential_rate.json"
+            ),
             {
                 "comment": comment_differential
                 + ", "
@@ -119,9 +121,10 @@ for sk in SITES:
         # cosmic-rays
         # -----------
         for ck in airshower_fluxes[sk]:
-            cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]["values"]
+            cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"][
+                "values"
+            ]
             cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
-
 
             _Q = onregion_acceptance[sk][ok][ck]["diffuse"]["mean"]
             _Q_au = onregion_acceptance[sk][ok][ck]["diffuse"][
@@ -140,13 +143,13 @@ for sk in SITES:
             )
 
             R, R_au = irf.utils.integrate_rate_where_known(
-                dRdE=dRdE,
-                dRdE_au=dRdE_au,
-                E_edges=fenergy_bin["edges"],
+                dRdE=dRdE, dRdE_au=dRdE_au, E_edges=fenergy_bin["edges"],
             )
 
             json_numpy.write(
-                os.path.join(pa["out_dir"], sk, ok, ck, "differential_rate.json"),
+                os.path.join(
+                    pa["out_dir"], sk, ok, ck, "differential_rate.json"
+                ),
                 {
                     "comment": comment_differential + " VS onregion-radius",
                     "unit": "s$^{-1} (GeV)$^{-1}$",

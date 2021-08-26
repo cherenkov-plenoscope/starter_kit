@@ -35,7 +35,6 @@ for sk in SITES:
             os.makedirs(sk_ok_pk_dir, exist_ok=True)
             for gk in ["diffuse", "point"]:
 
-
                 _Q = acceptance[sk][ok][pk][gk]["mean"]
                 _Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
 
@@ -43,7 +42,9 @@ for sk in SITES:
                     x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q,
                 )
                 Q_au = irf.utils.log10interp(
-                    x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q_au,
+                    x=fenergy_bin["centers"],
+                    xp=energy_bin["centers"],
+                    fp=_Q_au,
                 )
 
                 json_numpy.write(
@@ -53,6 +54,6 @@ for sk in SITES:
                         "mean": Q,
                         "absolute_uncertainty": Q_au,
                         "unit": acceptance[sk][ok][pk][gk]["unit"],
-                        "energy_binning_key": "interpolation"
+                        "energy_binning_key": "interpolation",
                     },
                 )

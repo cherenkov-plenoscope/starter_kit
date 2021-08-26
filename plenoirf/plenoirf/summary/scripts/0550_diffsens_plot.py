@@ -63,6 +63,7 @@ def find_observation_time_index(
         max_rel_error=max_rel_error,
     )
 
+
 sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
 
 x_lim_GeV = np.array([1e-1, 1e4])
@@ -72,7 +73,9 @@ y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
 for sk in SITES:
     for ok in ONREGION_TYPES:
         for sedk in SED_STYLES:
-            os.makedirs(os.path.join(pa["out_dir"], sk, ok, sedk), exist_ok=True)
+            os.makedirs(
+                os.path.join(pa["out_dir"], sk, ok, sedk), exist_ok=True
+            )
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
@@ -130,7 +133,9 @@ for sk in SITES:
             # Plenoscope diff
             # ---------------
             obstidx = find_observation_time_index(
-                observation_times=diff_sensitivity[sk][ok][dk]["observation_times"],
+                observation_times=diff_sensitivity[sk][ok][dk][
+                    "observation_times"
+                ],
                 observation_time=observation_time,
             )
 
@@ -143,19 +148,20 @@ for sk in SITES:
                 com["energy"].append(
                     [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
                 )
-                _dFdE_sens = diff_sensitivity[sk][ok][dk]["mean"][
-                    ii, obstidx
-                ]
+                _dFdE_sens = diff_sensitivity[sk][ok][dk]["mean"][ii, obstidx]
                 com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
 
-
-                _dFdE_sens_au = diff_sensitivity[sk][ok][dk]["absolute_uncertainty"][
-                    ii, obstidx
-                ]
-                com["differential_flux_au"].append([_dFdE_sens_au, _dFdE_sens_au])
+                _dFdE_sens_au = diff_sensitivity[sk][ok][dk][
+                    "absolute_uncertainty"
+                ][ii, obstidx]
+                com["differential_flux_au"].append(
+                    [_dFdE_sens_au, _dFdE_sens_au]
+                )
 
             com["label"] = (
-                "Portal, " + observation_time_str + ", sys. {:.1e}".format(sys_unc)
+                "Portal, "
+                + observation_time_str
+                + ", sys. {:.1e}".format(sys_unc)
             )
             com["color"] = "black"
             com["alpha"] = 1.0
@@ -203,11 +209,9 @@ for sk in SITES:
                                 y2=_dFdE_uu,
                                 label=None,
                                 color=com["color"],
-                                alpha=com["alpha"]*0.15,
+                                alpha=com["alpha"] * 0.15,
                                 linewidth=0.0,
                             )
-
-
 
                 _x_lim, _y_lim = sed.convert_units_with_style(
                     x=x_lim_GeV,
@@ -224,12 +228,21 @@ for sk in SITES:
                     "energy_axes_label"
                 ]
                 ax.set_xlabel(
-                    etype + " " + sed_style["x_label"] + " /" + sed_style["x_unit"]
+                    etype
+                    + " "
+                    + sed_style["x_label"]
+                    + " /"
+                    + sed_style["x_unit"]
                 )
-                ax.set_ylabel(sed_style["y_label"] + " /\n " + sed_style["y_unit"])
+                ax.set_ylabel(
+                    sed_style["y_label"] + " /\n " + sed_style["y_unit"]
+                )
                 fig.savefig(
                     os.path.join(
-                        pa["out_dir"], sk, ok, sedk,
+                        pa["out_dir"],
+                        sk,
+                        ok,
+                        sedk,
                         "{:s}_{:s}_{:s}_differential_sensitivity_sed_style_{:s}.jpg".format(
                             sk, ok, dk, sedk,
                         ),

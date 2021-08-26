@@ -82,6 +82,7 @@ def make_wighted_mask_wrt_primary_table(
             mask[ii] = default_weight
     return mask
 
+
 for sk in SITES:
     for ok in ONREGION_TYPES:
         for pk in PARTICLES:
@@ -92,9 +93,7 @@ for sk in SITES:
         # point source
         # -------------
         diffuse_thrown = spt.read(
-            path=opj(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
-            ),
+            path=opj(pa["run_dir"], "event_table", sk, pk, "event_table.tar",),
             structure=irf.table.STRUCTURE,
         )
 

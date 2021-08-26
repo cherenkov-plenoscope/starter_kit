@@ -46,10 +46,7 @@ json_numpy.write(
             "values": differential_flux_per_m2_per_s_per_GeV,
             "unit": "m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$",
         },
-        "energy": {
-            "values": energy_bin["centers"],
-            "unit": "GeV",
-        },
+        "energy": {"values": energy_bin["centers"], "unit": "GeV",},
         "energy_implicit": {"fine": "interpolation", "supports": "centers"},
     },
 )

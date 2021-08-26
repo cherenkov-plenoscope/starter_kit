@@ -36,10 +36,14 @@ trigger_rates = {}
 for sk in SITES:
     os.makedirs(os.path.join(pa["out_dir"], sk), exist_ok=True)
     trigger_rates[sk] = {}
-    trigger_rates[sk]["night_sky_background"] = nsb_rates[sk]["night_sky_background_rates"]["mean"]
+    trigger_rates[sk]["night_sky_background"] = nsb_rates[sk][
+        "night_sky_background_rates"
+    ]["mean"]
 
     for cosmic_key in irf_config["config"]["particles"]:
-        trigger_rates[sk][cosmic_key] = cosmic_rates[sk][cosmic_key]["integral_rate"]["mean"]
+        trigger_rates[sk][cosmic_key] = cosmic_rates[sk][cosmic_key][
+            "integral_rate"
+        ]["mean"]
 
     json_numpy.write(
         os.path.join(pa["out_dir"], sk, "trigger_rates_by_origin.json"),

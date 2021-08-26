@@ -43,12 +43,10 @@ for sk in SITES:
         _Rtsum_au = np.zeros((len(COSMIC_RAYS), energy_bin["num_bins"]))
 
         for ick, ck in enumerate(COSMIC_RAYS):
-            _Rtsum[ick, :] = (
-                dRtdEt[sk][ok][ck]["mean"] * energy_bin["width"]
-            )
+            _Rtsum[ick, :] = dRtdEt[sk][ok][ck]["mean"] * energy_bin["width"]
             _Rtsum_au[ick, :] = (
-                dRtdEt[sk][ok][ck]["absolute_uncertainty"] *
-                energy_bin["width"]
+                dRtdEt[sk][ok][ck]["absolute_uncertainty"]
+                * energy_bin["width"]
             )
 
         for ee in range(energy_bin["num_bins"]):
@@ -87,21 +85,19 @@ for sk in SITES:
                 energy_bin["centers"],
                 ck_Rt,
                 color=sum_config["plot"]["particle_colors"][ck],
-                alpha=ck_alpha
+                alpha=ck_alpha,
             )
             ax.fill_between(
                 x=energy_bin["centers"],
                 y1=ck_Rt - ck_Rt_au,
                 y2=ck_Rt + ck_Rt_au,
                 color=sum_config["plot"]["particle_colors"][ck],
-                alpha=ck_alpha*0.2,
+                alpha=ck_alpha * 0.2,
                 linewidth=0.0,
             )
 
         ax.plot(
-            energy_bin["centers"],
-            Rt[sk][ok]["mean"],
-            ":k",
+            energy_bin["centers"], Rt[sk][ok]["mean"], ":k",
         )
         ax.fill_between(
             x=energy_bin["centers"],

@@ -84,9 +84,7 @@ for sk in SITES:
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
-                "{:s}_{:s}_differential_event_rates.jpg".format(
-                    sk, ok
-                ),
+                "{:s}_{:s}_differential_event_rates.jpg".format(sk, ok),
             )
         )
         seb.close_figure(fig)

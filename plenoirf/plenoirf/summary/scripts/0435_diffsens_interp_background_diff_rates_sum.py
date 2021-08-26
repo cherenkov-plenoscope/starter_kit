@@ -15,7 +15,9 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 cosmic_diff_rate = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0430_diffsens_interp_background_diff_rates")
+    os.path.join(
+        pa["summary_dir"], "0430_diffsens_interp_background_diff_rates"
+    )
 )
 
 energy_binning = json_numpy.read(
@@ -59,7 +61,7 @@ for sk in SITES:
                 "unit": "s$^{-1}$",
                 "mean": Rt,
                 "absolute_uncertainty": Rt_au,
-            }
+            },
         )
 
 Rt = json_numpy.read_tree(os.path.join(pa["out_dir"]))
@@ -82,21 +84,19 @@ for sk in SITES:
                 fenergy_bin["centers"],
                 ck_Rt,
                 color=sum_config["plot"]["particle_colors"][ck],
-                alpha=ck_alpha
+                alpha=ck_alpha,
             )
             ax.fill_between(
                 x=fenergy_bin["centers"],
                 y1=ck_Rt - ck_Rt_au,
                 y2=ck_Rt + ck_Rt_au,
                 color=sum_config["plot"]["particle_colors"][ck],
-                alpha=ck_alpha*0.2,
+                alpha=ck_alpha * 0.2,
                 linewidth=0.0,
             )
 
         ax.plot(
-            fenergy_bin["centers"],
-            Rt[sk][ok]["mean"],
-            ":k",
+            fenergy_bin["centers"], Rt[sk][ok]["mean"], ":k",
         )
         ax.fill_between(
             x=fenergy_bin["centers"],

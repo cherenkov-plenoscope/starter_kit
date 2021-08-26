@@ -183,7 +183,7 @@ for sk in SITES:
                 linealpha=alpha,
                 linestyle=":",
                 face_color=sum_config["plot"]["particle_colors"][pk],
-                face_alpha=alpha*0.25,
+                face_alpha=alpha * 0.25,
             )
 
         ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
@@ -193,7 +193,12 @@ for sk in SITES:
         fig.savefig(
             os.path.join(
                 pa["out_dir"],
-                sk + "_" + ok + "_" + pk + "_differential_rates_vs_reco_energy.jpg",
+                sk
+                + "_"
+                + ok
+                + "_"
+                + pk
+                + "_differential_rates_vs_reco_energy.jpg",
             )
         )
         seb.close_figure(fig)

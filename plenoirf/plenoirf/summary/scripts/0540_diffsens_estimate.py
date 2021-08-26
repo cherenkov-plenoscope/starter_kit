@@ -70,13 +70,19 @@ for sk in SITES:
             print(sk, ok, dk)
 
             A = copy.deepcopy(Q[sk][ok]["gamma"]["point"]["mean"])
-            A_au = copy.deepcopy(Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"])
+            A_au = copy.deepcopy(
+                Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"]
+            )
 
             # Gamma-ray eff. Area
             # -------------------
 
-            M_gamma = M[sk]["gamma"]["confusion_matrix"]["counts_normalized_on_ax0"]
-            M_gamma_au = M[sk]["gamma"]["confusion_matrix"]["counts_normalized_on_ax0_abs_unc"]
+            M_gamma = M[sk]["gamma"]["confusion_matrix"][
+                "counts_normalized_on_ax0"
+            ]
+            M_gamma_au = M[sk]["gamma"]["confusion_matrix"][
+                "counts_normalized_on_ax0_abs_unc"
+            ]
 
             scn = irf.analysis.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
                 signal_energy_confusion_matrix=M_gamma,
@@ -87,7 +93,10 @@ for sk in SITES:
             M_gamma_scenario = scn["signal_matrix"]
             M_gamma_scenario_au = scn["signal_matrix_abs_unc"]
 
-            dMdE_scenario_gamma, dMdE_scenario_gamma_au = irf.analysis.differential_sensitivity.derive_migration_matrix_by_ax0(
+            (
+                dMdE_scenario_gamma,
+                dMdE_scenario_gamma_au,
+            ) = irf.analysis.differential_sensitivity.derive_migration_matrix_by_ax0(
                 migration_matrix_counts=M_gamma_scenario,
                 migration_matrix_counts_abs_unc=M_gamma_scenario_au,
                 ax0_bin_widths=energy_bin["width"],
@@ -163,7 +172,6 @@ for sk in SITES:
                     detection_threshold_std=detection_threshold_std,
                     method=critical_method,
                 )
-
 
                 dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
