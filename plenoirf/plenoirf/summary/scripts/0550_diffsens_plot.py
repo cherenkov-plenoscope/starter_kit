@@ -137,15 +137,23 @@ for sk in SITES:
             com = {}
             com["energy"] = []
             com["differential_flux"] = []
+            com["differential_flux_au"] = []
 
             for ii in range(energy_bin["num_bins"]):
                 com["energy"].append(
                     [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
                 )
-                _dFdE_sens = diff_sensitivity[sk][ok][dk]["differential_flux"][
+                _dFdE_sens = diff_sensitivity[sk][ok][dk]["mean"][
                     ii, obstidx
                 ]
                 com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
+
+
+                _dFdE_sens_au = diff_sensitivity[sk][ok][dk]["absolute_uncertainty"][
+                    ii, obstidx
+                ]
+                com["differential_flux_au"].append([_dFdE_sens_au, _dFdE_sens_au])
+
             com["label"] = (
                 "Portal, " + observation_time_str + ", sys. {:.1e}".format(sys_unc)
             )
@@ -169,6 +177,7 @@ for sk in SITES:
                             input_style=internal_sed_style,
                             target_style=sed_style,
                         )
+
                         ax.plot(
                             _energy,
                             _dFdE,
@@ -177,6 +186,28 @@ for sk in SITES:
                             alpha=com["alpha"],
                             linestyle=com["linestyle"],
                         )
+
+                        if "differential_flux_au" in com:
+                            _, _dFdE_au = sed.convert_units_with_style(
+                                x=com["energy"][ii],
+                                y=com["differential_flux_au"][ii],
+                                input_style=internal_sed_style,
+                                target_style=sed_style,
+                            )
+                            _d_ru = _dFdE_au / _dFdE
+                            _dFdE_lu = _dFdE - _dFdE_au
+                            _dFdE_uu = _dFdE + _dFdE_au
+                            ax.fill_between(
+                                x=_energy,
+                                y1=_dFdE_lu,
+                                y2=_dFdE_uu,
+                                label=None,
+                                color=com["color"],
+                                alpha=com["alpha"]*0.15,
+                                linewidth=0.0,
+                            )
+
+
 
                 _x_lim, _y_lim = sed.convert_units_with_style(
                     x=x_lim_GeV,
