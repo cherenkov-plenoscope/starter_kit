@@ -166,7 +166,7 @@ differential_sensitivity_figure_path = ppath(
 
 sens_vs_observation_time_figure_path = ppath(
     pa["summary_dir"],
-    "0331_sensitivity_vs_observation_time",
+    "0610_sensitivity_vs_observation_time",
     site_key
     + "_sensitivity_vs_obseravtion_time_{:s}.jpg".format(SED_STYLE_KEY),
 )
