@@ -38,7 +38,7 @@ acceptance = json_numpy.read_tree(
 )
 
 airshower_fluxes = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0505_diffsens_rebin_flux_of_airshowers.py")
+    os.path.join(pa["summary_dir"], "0505_diff_sens_rebin_flux_of_airshowers.py")
 )
 
 
