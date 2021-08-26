@@ -21,7 +21,7 @@ PARTICLES = irf_config["config"]["particles"]
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 iacceptance = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0410_interpolate_acceptance")
+    os.path.join(pa["summary_dir"], "0410_diffsens_interp_acceptance")
 )
 acceptance = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
