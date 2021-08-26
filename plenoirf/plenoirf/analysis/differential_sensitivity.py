@@ -60,7 +60,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
     scenario_key="broad_spectrum",
 ):
     s_cm = signal_energy_confusion_matrix
-    bg_cms = background_energy_confusion_matrices
+    s_cm_u = signal_energy_confusion_matrix_abs_unc
 
     if scenario_key == "perfect_energy":
         _s_cm = np.eye(N=s_cm.shape[0])
@@ -132,6 +132,19 @@ def estimate_critical_rate_vs_energy(
     return rate_per_s
 
 
+def next_containment_and_weight(
+    accumulated_containment,
+    bin_containment,
+    target_containment,
+):
+    missing_containment = target_containment - accumulated_containment
+    assert missing_containment > 0
+    weight = np.min([missing_containment / bin_containment, 1])
+    if weight == 1:
+        return accumulated_containment + bin_containment, 1
+    else:
+        return target_containment, weight
+
 
 def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
     energy_confusion_matrix,
@@ -140,32 +153,49 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
     # ax0 -> true
     # ax1 -> reco
     num_bins = energy_confusion_matrix.shape[0]
-    mask = np.zeros(shape=(num_bins, num_bins), dtype=np.int)
+    M = energy_confusion_matrix
+    mask = np.zeros(shape=(num_bins, num_bins))
 
     # estimate containment regions:
     for etrue in range(num_bins):
-        prob = energy_confusion_matrix[etrue, :]
-        if np.sum(prob) > 0.0:
-            assert 0.99 < np.sum(prob) < 1.01
-            ereco_best = np.argmax(prob)
-            cont = prob[ereco_best]
-            mask[etrue, ereco_best] = 1
+        if np.sum(M[etrue, :]) > 0.0:
+            assert 0.99 < np.sum(M[etrue, :]) < 1.01
 
+            accumulated_containment = 0.0
+            ereco_best = np.argmax(M[etrue, :])
+
+            accumulated_containment, weight = next_containment_and_weight(
+                accumulated_containment=accumulated_containment,
+                bin_containment=M[etrue, ereco_best],
+                target_containment=containment
+            )
+
+            mask[etrue, ereco_best] = weight
             start = ereco_best - 1
             stop = ereco_best + 1
-            while True:
-                if start > 0:
-                    cont += prob[start]
-                    mask[etrue, start] = 1
+            while accumulated_containment < containment:
+                if start > 0 and M[etrue, start] > 0:
+                    accumulated_containment, w = next_containment_and_weight(
+                        accumulated_containment=accumulated_containment,
+                        bin_containment=M[etrue, start],
+                        target_containment=containment
+                    )
+                    mask[etrue, start] = w
                     start -= 1
-                if cont > containment:
+                if accumulated_containment == containment:
                     break
-                if stop + 1 < num_bins:
-                    cont += prob[stop]
-                    mask[etrue, stop] = 1
+
+                if stop + 1 < num_bins and M[etrue, stop] > 0:
+                    accumulated_containment, w = next_containment_and_weight(
+                        accumulated_containment=accumulated_containment,
+                        bin_containment=M[etrue, stop],
+                        target_containment=containment
+                    )
+                    mask[etrue, stop] = w
                     stop += 1
-                if cont > containment:
+                if accumulated_containment == containment:
                     break
+
                 if start == 0 and stop + 1 == num_bins:
                     break
     return mask
