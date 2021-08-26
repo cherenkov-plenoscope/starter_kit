@@ -51,28 +51,28 @@ for sk in SITES:
 
 gk = "diffuse"
 
-dRtdEt = {}
-dRtdEt_au = {}
+Rt = {}
+Rt_au = {}
 
-dRdE = {}
-dRdE_au = {}
+R = {}
+R_au = {}
 
 for sk in SITES:
-    dRtdEt[sk] = {}
-    dRtdEt_au[sk] = {}
-    dRdE[sk] = {}
-    dRdE_au[sk] = {}
+    Rt[sk] = {}
+    Rt_au[sk] = {}
+    R[sk] = {}
+    R_au[sk] = {}
     for ok in ONREGION_TYPES:
-        dRtdEt[sk][ok] = {}
-        dRtdEt_au[sk][ok] = {}
-        dRdE[sk][ok] = {}
-        dRdE_au[sk][ok] = {}
+        Rt[sk][ok] = {}
+        Rt_au[sk][ok] = {}
+        R[sk][ok] = {}
+        R_au[sk][ok] = {}
         for pk in COSMIC_RAYS:
-            dRtdEt[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
-            dRdE[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            Rt[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            R[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
 
-            dRtdEt_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
-            dRdE_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            Rt_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            R_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
 
             print("apply", sk, pk, ok)
             dFdE = diff_flux[sk][pk]
@@ -83,11 +83,10 @@ for sk in SITES:
             assert M["ax0_key"] == "true_energy"
             assert M["ax1_key"] == "reco_energy"
 
-            dMdE = copy.deepcopy(M["reco_given_true"])
-            dMdE_au = copy.deepcopy(M["reco_given_true_abs_unc"])
             for ereco in range(energy_bin["num_bins"]):
-                dMdE[:, ereco] /= energy_bin["width"][ereco]
-                dMdE_au[:, ereco] /= energy_bin["width"][ereco]
+                check = np.sum(M["true_given_reco"][:, ereco])
+                if check > 0:
+                    assert 0.99 < check < 1.01
 
             Q = acceptance[sk][ok][pk][gk]["mean"]
             Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
@@ -96,6 +95,7 @@ for sk in SITES:
             for ereco in range(energy_bin["num_bins"]):
                 _tmp_sum = np.zeros(energy_bin["num_bins"])
                 _tmp_sum_au = np.zeros(energy_bin["num_bins"])
+                checksum = 0.0
                 for etrue in range(energy_bin["num_bins"]):
 
                     (
@@ -104,39 +104,41 @@ for sk in SITES:
                     ) = irf.utils.multiply_elemnetwise_au(
                         x=[
                             dFdE[etrue],
-                            dMdE[etrue, ereco],
+                            M["true_given_reco"][etrue, ereco],
                             Q[etrue],
                             energy_bin["width"][etrue],
                         ],
                         x_au=[
                             dFdE_au[etrue],
-                            dMdE_au[etrue, ereco],
+                            M["true_given_reco_abs_unc"][etrue, ereco],
                             Q_au[etrue],
                             energy_bin__width__au[etrue],
                         ],
                     )
-
+                    checksum += M["true_given_reco"][etrue, ereco]
+                if checksum > 0:
+                    assert 0.99 < checksum < 1.01
                 (
-                    dRtdEt[sk][ok][pk][ereco],
-                    dRtdEt_au[sk][ok][pk][ereco],
+                    Rt[sk][ok][pk][ereco],
+                    Rt_au[sk][ok][pk][ereco],
                 ) = irf.utils.sum_elemnetwise_au(x=_tmp_sum, x_au=_tmp_sum_au,)
 
             for etrue in range(energy_bin["num_bins"]):
                 (
-                    dRdE[sk][ok][pk][etrue],
-                    dRdE_au[sk][ok][pk][etrue],
+                    R[sk][ok][pk][etrue],
+                    R_au[sk][ok][pk][etrue],
                 ) = irf.utils.multiply_elemnetwise_au(
-                    x=[dFdE[etrue], Q[etrue]],
-                    x_au=[dFdE_au[etrue], Q_au[etrue]],
+                    x=[dFdE[etrue], Q[etrue], energy_bin["width"][etrue]],
+                    x_au=[dFdE_au[etrue], Q_au[etrue], 0.0],
                 )
 
             # cross check
             # -----------
             # total rate must not change under energy migration
-            total_R = np.sum(dRdE[sk][ok][pk][:] * energy_bin["width"][:])
-            total_Rt = np.sum(dRtdEt[sk][ok][pk][:] * energy_bin["width"][:])
+            total_R = np.sum(R[sk][ok][pk][:])
+            total_Rt = np.sum(Rt[sk][ok][pk][:])
             print("total_R", total_R, "total_Rt", total_Rt)
-            assert 0.9 < total_R / total_Rt < 1.1
+            assert 0.7 < total_R / total_Rt < 1.3
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
@@ -149,11 +151,11 @@ for sk in SITES:
                 os.path.join(pa["out_dir"], sk, ok, pk + ".json"),
                 {
                     "comment": (
-                        "differential rate after all cuts " "VS reco. energy"
+                        "rate after all cuts " "VS reco. energy"
                     ),
-                    "unit": "s$^{-1} (GeV)$^{-1}$",
-                    "mean": dRtdEt[sk][ok][pk],
-                    "absolute_uncertainty": dRtdEt_au[sk][ok][pk],
+                    "unit": "s$^{-1}$",
+                    "mean": Rt[sk][ok][pk],
+                    "absolute_uncertainty": Rt_au[sk][ok][pk],
                     "energy_binning_key": energy_bin["key"],
                 },
             )
@@ -168,9 +170,9 @@ for sk in SITES:
             seb.ax_add_histogram(
                 ax=ax,
                 bin_edges=energy_bin["edges"],
-                bincounts=dRtdEt[sk][ok][pk],
-                bincounts_upper=dRtdEt[sk][ok][pk] - dRtdEt_au[sk][ok][pk],
-                bincounts_lower=dRtdEt[sk][ok][pk] + dRtdEt_au[sk][ok][pk],
+                bincounts=Rt[sk][ok][pk],
+                bincounts_upper=Rt[sk][ok][pk] - Rt_au[sk][ok][pk],
+                bincounts_lower=Rt[sk][ok][pk] + Rt_au[sk][ok][pk],
                 linestyle="-",
                 linecolor=sum_config["plot"]["particle_colors"][pk],
                 face_color=sum_config["plot"]["particle_colors"][pk],
@@ -181,9 +183,9 @@ for sk in SITES:
             seb.ax_add_histogram(
                 ax=ax,
                 bin_edges=energy_bin["edges"],
-                bincounts=dRdE[sk][ok][pk],
-                bincounts_upper=dRdE[sk][ok][pk] - dRdE_au[sk][ok][pk],
-                bincounts_lower=dRdE[sk][ok][pk] + dRdE_au[sk][ok][pk],
+                bincounts=R[sk][ok][pk],
+                bincounts_upper=R[sk][ok][pk] - R_au[sk][ok][pk],
+                bincounts_lower=R[sk][ok][pk] + R_au[sk][ok][pk],
                 linecolor=sum_config["plot"]["particle_colors"][pk],
                 linealpha=alpha,
                 linestyle=":",
@@ -191,7 +193,7 @@ for sk in SITES:
                 face_alpha=alpha * 0.25,
             )
 
-        ax.set_ylabel("differential rate / s$^{-1}$ (GeV)$^{-1}$")
+        ax.set_ylabel("rate / s$^{-1}$")
         ax.set_xlabel("reco. energy / GeV")
         ax.set_ylim([1e-6, 1e4])
         ax.loglog()
