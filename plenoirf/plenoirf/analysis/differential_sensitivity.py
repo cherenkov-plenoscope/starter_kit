@@ -55,13 +55,13 @@ SCENARIOS = {
 
 
 def make_energy_confusion_matrices_for_signal_and_background(
-    probability_reco_given_true,
-    probability_reco_given_true_abs_unc,
     probability_true_given_reco,
+    probability_true_given_reco_abs_unc,
+    probability_reco_given_true,
     scenario_key="broad_spectrum",
 ):
-    s_cm = probability_reco_given_true
-    s_cm_u = probability_reco_given_true_abs_unc
+    s_cm = probability_true_given_reco
+    s_cm_u = probability_true_given_reco_abs_unc
 
     if scenario_key == "perfect_energy":
         _s_cm = np.eye(N=s_cm.shape[0])
@@ -100,8 +100,8 @@ def make_energy_confusion_matrices_for_signal_and_background(
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
 
     return {
-        "probability_reco_given_true": _s_cm,
-        "probability_reco_given_true_abs_unc": _s_cm_u,
+        "probability_true_given_reco": _s_cm,
+        "probability_true_given_reco_abs_unc": _s_cm_u,
         "background_integral_mask": _bg_integral_mask,
         "energy_axes_label": _energy_axes_label,
     }
@@ -160,6 +160,7 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
     # estimate containment regions:
     for reco in range(num_bins):
         if np.sum(M[:, reco]) > 0.0:
+            print(np.sum(M[:, reco]))
             assert 0.99 < np.sum(M[:, reco]) < 1.01
 
             accumulated_containment = 0.0
