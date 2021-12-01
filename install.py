@@ -84,7 +84,6 @@ def main():
             "json_numpy",
             "cosmic_fluxes",
             "plenopy",
-            "corsika_wrapper",
             "cable_robo_mount",
             "simpleio",
             "gamma_ray_reconstructions",

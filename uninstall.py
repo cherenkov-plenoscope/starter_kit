@@ -6,7 +6,6 @@ tools = [
     "corsika_primary_wrapper",
     "cosmic_fluxes",
     "plenopy",
-    "corsika_wrapper",
     "cable_robo_mount",
     "simpleio",
     "plenoirf",
