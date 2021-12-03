@@ -2,8 +2,11 @@ import os
 import subprocess as sp
 import tempfile
 import numpy as np
-import corsika_wrapper as cw
-import simpleio
+import corsika_primary_wrapper as cpw
+
+
+MERLICT_EVENTIO_CONVERTER = os.path.join('..', 'build','merlict', 'merlict-eventio-converter')
+CORSIKA_VANILLA = os.path.join('..', 'build','corsika', 'original', 'corsika-7.56', 'run', 'sth')
 
 
 def steering_card(obslevel_in_cm, atmospheric_absorbtion):
@@ -41,25 +44,22 @@ def steering_card(obslevel_in_cm, atmospheric_absorbtion):
 
 def evaluate_steering_card(steering_card):
     with tempfile.TemporaryDirectory (prefix='test_corsika_') as tmp:
-        corsika_steering_card_path = os.path.join(tmp, "steering.txt")
-        with open(corsika_steering_card_path, "wt") as fout:
-            fout.write(steering_card)
-
         eventio_path = os.path.join(tmp, "shower.eventio")
-        cw.corsika(
-            steering_card=cw.read_steering_card(corsika_steering_card_path),
+        simpleio_path = os.path.join(tmp, "shower.simpleio")
+        cpw.corsika_vanilla(
+            corsika_path=CORSIKA_VANILLA,
+            steering_card=steering_card,
             output_path=eventio_path,
-            save_stdout=True)
-
-        simpleio_path = os.path.join(tmp, "shower.saneio")
-        sp.call([
-            os.path.join('..', 'build','merlict', 'merlict-eventio-converter'),
-            '-i', eventio_path,
-            '-o', simpleio_path])
-
-        run = simpleio.SimpleIoRun(simpleio_path)
-        event = run[0]
-        cpb = event.cherenkov_photon_bunches
+            stdout_path=eventio_path + ".stdout",
+            stderr_path=eventio_path + ".stderr",
+        )
+        cpw.testing.eventio_to_simpleio(
+            merlict_eventio_converter=MERLICT_EVENTIO_CONVERTER,
+            eventio_path=eventio_path,
+            simpleio_path=simpleio_path,
+        )
+        run = cpw.testing.SimpleIoRun(path=simpleio_path)
+        evth, cpb = next(run)
 
         return {
             "mean_prob_to_reach_obslevel":

@@ -2,8 +2,7 @@ import os
 import subprocess as sp
 import tempfile
 import numpy as np
-import corsika_wrapper as cw
-import simpleio
+import corsika_primary_wrapper as cpw
 import toy_air_shower as tas
 
 
@@ -55,31 +54,24 @@ cor_num_cherenkov_photons = []
 cor_first_interaction_altitude = []
 
 with tempfile.TemporaryDirectory (prefix='test_corsika_') as tmp:
-    corsika_steering_card_path = os.path.join(tmp, "steering.txt")
-    with open(corsika_steering_card_path, "wt") as fout:
-        fout.write(
-            steering_card(
-                atmospheric_absorbtion=False,
-                num_shower=num_shower))
-
     eventio_path = os.path.join(tmp, "shower.eventio")
-    cw.corsika(
-        steering_card=cw.read_steering_card(corsika_steering_card_path),
-        output_path=eventio_path,
-        save_stdout=True)
-
     simpleio_path = os.path.join(tmp, "shower.simpleio")
-    sp.call([
-        os.path.join('build','merlict', 'merlict-eventio-converter'),
-        '-i', eventio_path,
-        '-o', simpleio_path])
+    cpw.corsika_vanilla(
+        steering_card=steering_card(atmospheric_absorbtion=False, num_shower=num_shower),
+        output_path=eventio_path,
+        save_stdout=True
+    )
+    cpw.testing.eventio_to_simpleio(
+        merlict_eventio_converter=os.path.join('build','merlict', 'merlict-eventio-converter'),
+        eventio_path=eventio_path,
+        simpleio_path=simpleio_path,
+    )
 
-    run = simpleio.SimpleIoRun(simpleio_path)
-    for idx in range(len(run)):
-        event = run[idx]
-        cpb = event.cherenkov_photon_bunches
+    run = cpw.testing.SimpleIoRun(path=simpleio_path)
+    for event in run:
+        evth, cpb = event
 
-        cor_first_interaction_altitude.append(-1.*event.header.raw[7 - 1]*1e-2)
+        cor_first_interaction_altitude.append(-1.*evth[cpw.I.EVTH.Z_FIRST_INTERACTION_CM]*1e-2)
 
         assert(np.sum(cpb.probability_to_reach_observation_level < 0.) == 0)
         assert(np.sum(cpb.probability_to_reach_observation_level > 1.) == 0)
