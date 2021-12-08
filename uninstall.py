@@ -3,11 +3,10 @@ import os
 from subprocess import call
 
 tools = [
-    "corsika_primary_wrapper",
+    "corsika_primary",
     "cosmic_fluxes",
     "plenopy",
     "cable_robo_mount",
-    "simpleio",
     "plenoirf",
     "magnetic_deflection",
     "sparse_numeric_table",

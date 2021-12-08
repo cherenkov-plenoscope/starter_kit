@@ -29,7 +29,13 @@ def main():
         # -----------
         call(
             [
-                join(".", "corsika_install", "install.py"),
+                join(
+                    ".",
+                    "corsika_install",
+                    "corsika_primary",
+                    "scripts",
+                    "install.py",
+                ),
                 "--install_path",
                 join(".", "build", "corsika"),
                 "--username",
@@ -41,12 +47,7 @@ def main():
             ]
         )
         call(
-            [
-                "pip",
-                "install",
-                "-e",
-                join(".", "corsika_install", "corsika_primary_wrapper"),
-            ]
+            ["pip", "install", "-e", join(".", "corsika_install"),]
         )
 
         # Photon-propagator merlict
@@ -85,7 +86,6 @@ def main():
             "cosmic_fluxes",
             "plenopy",
             "cable_robo_mount",
-            "simpleio",
             "gamma_ray_reconstructions",
             "plenoirf",
             "magnetic_deflection",
