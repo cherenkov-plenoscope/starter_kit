@@ -6,8 +6,7 @@ import tarfile
 import shutil
 import json
 import json_numpy
-import corsika_primary_wrapper as cpw
-from . import random_seed
+import corsika_primary as cpw
 
 
 def init_geometry(
@@ -102,7 +101,8 @@ def cut_cherenkov_bunches_in_field_of_view(
     cherenkov_bunches, field_of_view_radius_deg, pointing_direction,
 ):
     bunch_directions = _make_bunch_direction(
-        cx=cherenkov_bunches[:, cpw.ICX], cy=cherenkov_bunches[:, cpw.ICY]
+        cx=cherenkov_bunches[:, cpw.I.BUNCH.CX],
+        cy=cherenkov_bunches[:, cpw.I.BUNCH.ICY]
     )
     bunch_incidents = -1.0 * bunch_directions
     angle_bunch_pointing = _make_angle_between(
@@ -159,9 +159,11 @@ def assign(
 
     # Supports
     # --------
-    bunch_x_wrt_grid_m = cpw.CM2M * bunches_in_fov[:, cpw.IX] + shift_x
-    bunch_y_wrt_grid_m = cpw.CM2M * bunches_in_fov[:, cpw.IY] + shift_y
-    bunch_weight = bunches_in_fov[:, cpw.IBSIZE]
+    CM2M = 1e-2
+    M2CM = 1e2
+    bunch_x_wrt_grid_m = CM2M * bunches_in_fov[:, cpw.I.BUNCH.X] + shift_x
+    bunch_y_wrt_grid_m = CM2M * bunches_in_fov[:, cpw.I.BUNCH.Y] + shift_y
+    bunch_weight = bunches_in_fov[:, cpw.I.BUNCH.BSIZE]
 
     (
         grid_histogram,
@@ -201,7 +203,7 @@ def assign(
         match_bin_idx_y = bunch_y_bin_idxs - 1 == bin_idx_y
         match_bin = np.logical_and(match_bin_idx_x, match_bin_idx_y)
         num_photons_in_recovered_bin = np.sum(
-            bunches_in_fov[match_bin, cpw.IBSIZE]
+            bunches_in_fov[match_bin, cpw.I.BUNCH.BSIZE]
         )
         abs_diff_num_photons = np.abs(
             num_photons_in_recovered_bin - num_photons_in_bin
@@ -223,8 +225,8 @@ def assign(
             )
             assert False, msg
         choice["cherenkov_bunches"] = bunches_in_fov[match_bin, :].copy()
-        choice["cherenkov_bunches"][:, cpw.IX] -= cpw.M2CM * choice["core_x_m"]
-        choice["cherenkov_bunches"][:, cpw.IY] -= cpw.M2CM * choice["core_y_m"]
+        choice["cherenkov_bunches"][:, cpw.I.BUNCH.X] -= M2CM * choice["core_x_m"]
+        choice["cherenkov_bunches"][:, cpw.I.BUNCH.Y] -= M2CM * choice["core_y_m"]
 
     out = {}
     out["random_choice"] = choice

@@ -2,7 +2,6 @@ from . import summary
 from . import analysis
 from . import features
 from . import table
-from . import random_seed
 from . import grid
 from . import merlict
 from . import logging
@@ -222,21 +221,6 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
         opj(out_absdir, "input", "config.json"),
     )
 
-    with open(opj(out_absdir, "input", "max_seed.json" + "tmp"), "wt") as fout:
-        fout.write(
-            json.dumps(
-                {
-                    "NUM_DIGITS_RUN_ID": random_seed.STRUCTURE.NUM_DIGITS_RUN_ID,
-                    "NUM_DIGITS_AIRSHOWER_ID": random_seed.STRUCTURE.NUM_DIGITS_AIRSHOWER_ID,
-                },
-                indent=4,
-            )
-        )
-    shutil.move(
-        opj(out_absdir, "input", "max_seed.json" + "tmp"),
-        opj(out_absdir, "input", "max_seed.json"),
-    )
-
     network_file_system.copy(
         src=cfg_files["plenoscope_scenery_path"],
         dst=opj(out_absdir, "input", "scenery"),
@@ -431,7 +415,7 @@ def _populate_table_of_thrown_air_showers(
 
             run_id = cfg["runs"][particle_key]["first_run_id"]
             for job_idx in np.arange(cfg["runs"][particle_key]["num"]):
-                assert random_seed.STRUCTURE.is_valid_run_id(run_id)
+                assert run_id > 0
 
                 irf_job = {
                     "run_id": run_id,

@@ -3,7 +3,7 @@ import subprocess
 import datetime
 import warnings
 import shutil
-import corsika_primary_wrapper
+import corsika_primary as cpw
 
 
 IMPORTANT_PROGRAMS = {
@@ -93,8 +93,8 @@ def which(programname):
 
 
 def starter_kit_abspath():
-    # Expect the corsika_primary_wrapper to be in the "starter_kit"
-    _p = os.path.abspath(corsika_primary_wrapper.__file__)
+    # Expect the corsika_primary to be in the "starter_kit"
+    _p = os.path.abspath(corsika_primary.__file__)
     for i in range(4):
         _p = os.path.split(_p)[0]
     return _p
@@ -144,5 +144,5 @@ def add_corsika_provenance(prov, corsika_primary_path):
         prov["starter_kit"] = {}
     prov["starter_kit"]["corsika"] = {}
     prov["starter_kit"]["corsika"]["path"] = corsika_primary_path
-    prov["starter_kit"]["corsika"]["config"] = corsika_primary_wrapper.collect_version_information.get_coconut_config_header(corsika_primary_path, strip=True)
+    prov["starter_kit"]["corsika"]["config"] = corsika_primary.collect_version_information.get_coconut_config_header(corsika_primary_path, strip=True)
     return prov

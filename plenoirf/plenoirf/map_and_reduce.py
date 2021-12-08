@@ -19,7 +19,7 @@ import tempfile
 import pandas
 import json
 import tarfile
-import corsika_primary_wrapper as cpw
+import corsika_primary as cpw
 import plenopy as pl
 import sparse_numeric_table as spt
 import gamma_ray_reconstruction as gamrec
@@ -143,7 +143,7 @@ def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = cherenkovsise_dict
     ase["num_bunches"] = cb.shape[0]
-    ase["num_photons"] = np.sum(cb[:, cpw.IBSIZE])
+    ase["num_photons"] = np.sum(cb[:, cpw.I.BUNCH.BSIZE])
     return ase
 
 
@@ -151,13 +151,14 @@ def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = airshower_dict
     assert cb.shape[0] > 0
-    ase["maximum_asl_m"] = cpw.CM2M * np.median(cb[:, cpw.IZEM])
-    ase["wavelength_median_nm"] = np.abs(np.median(cb[:, cpw.IWVL]))
-    ase["cx_median_rad"] = np.median(cb[:, cpw.ICX])
-    ase["cy_median_rad"] = np.median(cb[:, cpw.ICY])
-    ase["x_median_m"] = cpw.CM2M * np.median(cb[:, cpw.IX])
-    ase["y_median_m"] = cpw.CM2M * np.median(cb[:, cpw.IY])
-    ase["bunch_size_median"] = np.median(cb[:, cpw.IBSIZE])
+    CM2M = 1e2
+    ase["maximum_asl_m"] = CM2M * np.median(cb[:, cpw.I.BUNCH.ZEM])
+    ase["wavelength_median_nm"] = np.abs(np.median(cb[:, cpw.I.BUNCH.WVL]))
+    ase["cx_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CX])
+    ase["cy_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CY])
+    ase["x_median_m"] = CM2M * np.median(cb[:, cpw.I.BUNCH.X])
+    ase["y_median_m"] = CM2M * np.median(cb[:, cpw.I.BUNCH.Y])
+    ase["bunch_size_median"] = np.median(cb[:, cpw.I.BUNCH.BSIZE])
     return ase
 
 
@@ -238,10 +239,10 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             event_header, cherenkov_bunches = corsika_airshower
 
             # assert match
-            run_id = int(event_header[cpw.I_EVTH_RUN_NUMBER])
+            run_id = int(event_header[cpw.I.EVTH.RUN_NUMBER])
             assert run_id == corsika_primary_steering["run"]["run_id"]
             event_id = event_idx + 1
-            assert event_id == event_header[cpw.I_EVTH_EVENT_NUMBER]
+            assert event_id == event_header[cpw.I.EVTH.EVENT_NUMBER]
             primary = corsika_primary_steering["primaries"][event_idx]
             event_seed = primary["random_seed"][0]["SEED"]
             ide = {spt.IDX: event_seed}
@@ -262,21 +263,21 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             )
             prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]
             prim["momentum_x_GeV_per_c"] = event_header[
-                cpw.I_EVTH_PX_MOMENTUM_GEV_PER_C
+                cpw.I.EVTH.PX_MOMENTUM_GEV_PER_C
             ]
             prim["momentum_y_GeV_per_c"] = event_header[
-                cpw.I_EVTH_PY_MOMENTUM_GEV_PER_C
+                cpw.I.EVTH.PY_MOMENTUM_GEV_PER_C
             ]
             prim["momentum_z_GeV_per_c"] = (
-                -1.0 * event_header[cpw.I_EVTH_PZ_MOMENTUM_GEV_PER_C]
+                -1.0 * event_header[cpw.I.EVTH.PZ_MOMENTUM_GEV_PER_C]
             )
             prim["first_interaction_height_asl_m"] = (
                 -1.0
                 * cpw.CM2M
-                * event_header[cpw.I_EVTH_Z_FIRST_INTERACTION_CM]
+                * event_header[cpw.I.EVTH.Z_FIRST_INTERACTION_CM]
             )
             prim["starting_height_asl_m"] = (
-                cpw.CM2M * event_header[cpw.I_EVTH_STARTING_HEIGHT_CM]
+                cpw.CM2M * event_header[cpw.I.EVTH.STARTING_HEIGHT_CM]
             )
             obs_lvl_intersection = utils.ray_plane_x_y_intersection(
                 support=[0, 0, prim["starting_height_asl_m"]],
@@ -415,11 +416,11 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             reuse_event = grid_result["random_choice"]
             if reuse_event is not None:
                 reuse_evth = event_header.copy()
-                reuse_evth[cpw.I_EVTH_NUM_REUSES_OF_CHERENKOV_EVENT] = 1.0
-                reuse_evth[cpw.I_EVTH_X_CORE_CM(reuse=1)] = (
+                reuse_evth[cpw.I.EVTH.NUM_REUSES_OF_CHERENKOV_EVENT] = 1.0
+                reuse_evth[cpw.I.EVTH.X_CORE_CM(reuse=1)] = (
                     cpw.M2CM * reuse_event["core_x_m"]
                 )
-                reuse_evth[cpw.I_EVTH_Y_CORE_CM(reuse=1)] = (
+                reuse_evth[cpw.I.EVTH.Y_CORE_CM(reuse=1)] = (
                     cpw.M2CM * reuse_event["core_y_m"]
                 )
                 utils.tar_append(
@@ -517,8 +518,8 @@ def _run_loose_trigger(
         # id
         # --
         cevth = event.simulation_truth.event.corsika_event_header.raw
-        run_id = int(cevth[cpw.I_EVTH_RUN_NUMBER])
-        airshower_id = int(cevth[cpw.I_EVTH_EVENT_NUMBER])
+        run_id = int(cevth[cpw.I.EVTH.RUN_NUMBER])
+        airshower_id = int(cevth[cpw.I.EVTH.EVENT_NUMBER])
         ide = {
             spt.IDX: random_seed.STRUCTURE.random_seed_based_on(
                 run_id=run_id, airshower_id=airshower_id

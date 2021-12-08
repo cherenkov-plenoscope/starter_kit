@@ -1,6 +1,6 @@
 import numpy as np
 import sparse_numeric_table as spt
-import corsika_primary_wrapper as cpw
+import corsika_primary as cpw
 import pandas
 
 from . import table
@@ -75,7 +75,7 @@ def create_dummy_table(
 
     # primary
     # -------
-    _energies = cpw.random_distributions.draw_power_law(
+    _energies = cpw.random.distributions.draw_power_law(
         prng=prng,
         lower_limit=config["energy"]["lower"],
         upper_limit=config["energy"]["upper"],
@@ -125,7 +125,7 @@ def create_dummy_table(
     _az = []
     _zd = []
     for i in range(lvl["num"]):
-        _az_, _zd_ = cpw.random_distributions.draw_azimuth_zenith_in_viewcone(
+        _az_, _zd_ = cpw.random.distributions.draw_azimuth_zenith_in_viewcone(
             prng=prng,
             azimuth_rad=primary["magnet_azimuth_rad"][i],
             zenith_rad=primary["magnet_zenith_rad"][i],

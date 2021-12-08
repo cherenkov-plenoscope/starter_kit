@@ -1,8 +1,7 @@
 import numpy as np
-import corsika_primary_wrapper as cpw
+import corsika_primary as cpw
 
 from . import example
-from .. import random_seed
 
 
 def _assert_deflection(site_particle_deflection):
@@ -44,78 +43,83 @@ def draw_corsika_primary_steering(
     _assert_site(site)
     _assert_particle(particle)
     _assert_deflection(site_particle_deflection)
-    assert num_events <= random_seed.STRUCTURE.NUM_AIRSHOWER_IDS_IN_RUN
+    assert num_events > 0
 
     max_scatter_rad = np.deg2rad(particle["max_scatter_angle_deg"])
 
-    min_common_energy = np.max(
+    start_energy_GeV = np.max(
         [
             np.min(particle["energy_bin_edges_GeV"]),
             np.min(site_particle_deflection["energy_GeV"]),
         ]
     )
+    stop_energy_GeV = np.max(particle["energy_bin_edges_GeV"])
 
-    energies = cpw.random_distributions.draw_power_law(
+    energies_GeV = cpw.random.distributions.draw_power_law(
         prng=prng,
-        lower_limit=min_common_energy,
-        upper_limit=np.max(particle["energy_bin_edges_GeV"]),
+        lower_limit=start_energy_GeV,
+        upper_limit=stop_energy_GeV,
         power_slope=particle["energy_power_law_slope"],
         num_samples=num_events,
     )
-    steering = {}
-    steering["run"] = {"run_id": int(run_id), "event_id_of_first_event": 1}
-    for key in site:
-        steering["run"][key] = site[key]
 
-    steering["primaries"] = []
-    for e in range(energies.shape[0]):
-        event_id = e + 1
-        primary = {}
-        primary["particle_id"] = particle["particle_id"]
-        primary["energy_GeV"] = energies[e]
+    i8 = np.int64
+    f8 = np.float64
 
-        primary["magnet_azimuth_rad"] = np.deg2rad(
+    run = {
+        "run_id": i8(run_id),
+        "event_id_of_first_event": i8(1),
+        "observation_level_asl_m": f8(site["observation_level_asl_m"]),
+        "earth_magnetic_field_x_muT": f8(site["earth_magnetic_field_x_muT"]),
+        "earth_magnetic_field_z_muT": f8(site["earth_magnetic_field_z_muT"]),
+        "atmosphere_id": i8(site["atmosphere_id"]),
+        "energy_range": {
+            "start_GeV": f8(start_energy_GeV),
+            "stop_GeV": f8(stop_energy_GeV)
+        },
+        "random_seed": cpw.random.seed.make_simple_seed(run_id),
+    }
+
+    primaries = []
+    for e in range(num_events):
+        prm = {}
+        prm["particle_id"] = f8(particle["particle_id"])
+        prm["energy_GeV"] = f8(energies_GeV[e])
+        prm["magnet_azimuth_rad"] = np.deg2rad(
             np.interp(
-                x=primary["energy_GeV"],
+                x=prm["energy_GeV"],
                 xp=site_particle_deflection["energy_GeV"],
                 fp=site_particle_deflection["primary_azimuth_deg"],
             )
         )
-        primary["magnet_zenith_rad"] = np.deg2rad(
+        prm["magnet_zenith_rad"] = np.deg2rad(
             np.interp(
-                x=primary["energy_GeV"],
+                x=prm["energy_GeV"],
                 xp=site_particle_deflection["energy_GeV"],
                 fp=site_particle_deflection["primary_zenith_deg"],
             )
         )
-        primary["magnet_cherenkov_pool_x_m"] = np.interp(
+        prm["magnet_cherenkov_pool_x_m"] = np.interp(
             x=primary["energy_GeV"],
             xp=site_particle_deflection["energy_GeV"],
             fp=site_particle_deflection["cherenkov_pool_x_m"],
         )
-        primary["magnet_cherenkov_pool_y_m"] = np.interp(
+        prm["magnet_cherenkov_pool_y_m"] = np.interp(
             x=primary["energy_GeV"],
             xp=site_particle_deflection["energy_GeV"],
             fp=site_particle_deflection["cherenkov_pool_y_m"],
         )
-
-        az, zd = cpw.random_distributions.draw_azimuth_zenith_in_viewcone(
+        az, zd = cpw.random.distributions.draw_azimuth_zenith_in_viewcone(
             prng=prng,
-            azimuth_rad=primary["magnet_azimuth_rad"],
-            zenith_rad=primary["magnet_zenith_rad"],
+            azimuth_rad=prm["magnet_azimuth_rad"],
+            zenith_rad=prm["magnet_zenith_rad"],
             min_scatter_opening_angle_rad=0.0,
             max_scatter_opening_angle_rad=max_scatter_rad,
         )
+        prm["max_scatter_rad"] = f8(max_scatter_rad)
+        prm["zenith_rad"] = f8(zd)
+        prm["azimuth_rad"] = f8(az)
+        prm["depth_g_per_cm2"] = f8(0.0)
+        primaries.append(prm)
 
-        primary["max_scatter_rad"] = max_scatter_rad
-        primary["zenith_rad"] = zd
-        primary["azimuth_rad"] = az
-        primary["depth_g_per_cm2"] = 0.0
-        primary["random_seed"] = cpw.simple_seed(
-            random_seed.STRUCTURE.random_seed_based_on(
-                run_id=run_id, airshower_id=event_id
-            )
-        )
-
-        steering["primaries"].append(primary)
-    return steering
+    return {"run": run, "primaries": primaries,}
