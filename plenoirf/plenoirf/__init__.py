@@ -16,6 +16,7 @@ from . import utils
 from . import production
 from . import other_instruments
 from . import single_thread_dummy
+from . import unique
 
 import os
 import numpy as np

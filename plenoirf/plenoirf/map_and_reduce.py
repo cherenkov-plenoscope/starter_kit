@@ -1,5 +1,5 @@
 from . import table
-from . import random_seed
+from . import unique
 from . import grid
 from . import merlict
 from . import logging
@@ -170,7 +170,7 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
 
 
 def _run_id_str(job):
-    form = "{:0" + str(random_seed.STRUCTURE.NUM_DIGITS_RUN_ID) + "d}"
+    form = "{:06d}"
     return form.format(job["run_id"])
 
 
@@ -219,9 +219,9 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     cherenkov_pools_path = op.join(tmp_dir, "cherenkov_pools.tar")
     tmp_grid_histogram_path = op.join(tmp_dir, "grid.tar")
 
-    with tarfile.open(cherenkov_pools_path, "w") as tarout, tarfile.open(
-        tmp_grid_histogram_path, "w"
-    ) as imgtar:
+    with cpw.event_tape.EventTapeWriter(
+        path=cherenkov_pools_path
+    ) as evttar, tarfile.open(tmp_grid_histogram_path, "w") as imgtar:
 
         corsika_run = cpw.CorsikaPrimary(
             corsika_path=job["corsika_primary_path"],
@@ -229,12 +229,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             stdout_path=op.join(tmp_dir, "corsika.stdout"),
             stderr_path=op.join(tmp_dir, "corsika.stderr"),
         )
+        evttar.write_runh(runh=corsika_run.runh)
 
-        utils.tar_append(
-            tarout=tarout,
-            file_name=cpw.TARIO_RUNH_FILENAME,
-            file_bytes=corsika_run.runh.tobytes(),
-        )
         for event_idx, corsika_airshower in enumerate(corsika_run):
             event_header, cherenkov_bunches = corsika_airshower
 
@@ -243,12 +239,14 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             assert run_id == corsika_primary_steering["run"]["run_id"]
             event_id = event_idx + 1
             assert event_id == event_header[cpw.I.EVTH.EVENT_NUMBER]
-            primary = corsika_primary_steering["primaries"][event_idx]
-            event_seed = primary["random_seed"][0]["SEED"]
-            ide = {spt.IDX: event_seed}
-            assert event_seed == random_seed.STRUCTURE.random_seed_based_on(
-                run_id=run_id, airshower_id=event_id
+            shower_id = unique.make_shower_id(run_id=run_id, event_id=event_id)
+            shower_id_str = unique.make_shower_id_str(
+                run_id=run_id, event_id=event_id
             )
+
+            ide = {spt.IDX: shower_id}
+
+            primary = corsika_primary_steering["primaries"][event_idx]
 
             # export primary table
             # --------------------
@@ -383,11 +381,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             )
             if event_idx % GRID_SKIP == 0:
                 utils.tar_append(
-                    tarout=imgtar,
-                    file_name=random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
-                        seed=event_seed
-                    )
-                    + ".f4.gz",
+                    evttar=imgtar,
+                    file_name=shower_id_str + ".f4.gz",
                     file_bytes=grid.histogram_to_bytes(
                         grid_result["histogram"]
                     ),
@@ -423,16 +418,10 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 reuse_evth[cpw.I.EVTH.Y_CORE_CM(reuse=1)] = (
                     cpw.M2CM * reuse_event["core_y_m"]
                 )
-                utils.tar_append(
-                    tarout=tarout,
-                    file_name=cpw.TARIO_EVTH_FILENAME.format(event_id),
-                    file_bytes=reuse_evth.tobytes(),
-                )
-                utils.tar_append(
-                    tarout=tarout,
-                    file_name=cpw.TARIO_BUNCHES_FILENAME.format(event_id),
-                    file_bytes=reuse_event["cherenkov_bunches"].tobytes(),
-                )
+
+                evttar.write_evth(evth=reuse_evth)
+                evttar.write_bunches(bunches=reuse_event["cherenkov_bunches"])
+
                 crszp = ide.copy()
                 crszp = _append_bunch_ssize(crszp, cherenkov_bunches)
                 tabrec["cherenkovsizepart"].append(crszp)
@@ -519,12 +508,8 @@ def _run_loose_trigger(
         # --
         cevth = event.simulation_truth.event.corsika_event_header.raw
         run_id = int(cevth[cpw.I.EVTH.RUN_NUMBER])
-        airshower_id = int(cevth[cpw.I.EVTH.EVENT_NUMBER])
-        ide = {
-            spt.IDX: random_seed.STRUCTURE.random_seed_based_on(
-                run_id=run_id, airshower_id=airshower_id
-            )
-        }
+        event_id = int(cevth[cpw.I.EVTH.EVENT_NUMBER])
+        ide = {spt.IDX: unique.make_shower_id(run_id, event_id)}
 
         # apply loose trigger
         # -------------------
@@ -570,11 +555,7 @@ def _run_loose_trigger(
         if trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]:
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp[
-                "unique_id_str"
-            ] = random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(
-                seed=ptp[spt.IDX]
-            )
+            ptp["unique_id_str"] = "{:012d}".format(ptp[spt.IDX])
             table_past_trigger.append(ptp)
 
             ptrg = ide.copy()
@@ -587,7 +568,9 @@ def _run_loose_trigger(
                 final_tarname = ptp["unique_id_str"] + ".tar"
                 plenoscope_event_dir_to_tar(
                     event_dir=ptp["tmp_path"],
-                    output_tar_path=op.join(tmp_past_trigger_dir, final_tarname),
+                    output_tar_path=op.join(
+                        tmp_past_trigger_dir, final_tarname
+                    ),
                 )
                 nfs.copy(
                     src=op.join(tmp_past_trigger_dir, final_tarname),
@@ -610,7 +593,7 @@ def _classify_cherenkov_photons(
 
     with pl.photon_stream.loph.LopfTarWriter(
         path=os.path.join(tmp_dir, "reconstructed_cherenkov.tar"),
-        id_num_digits=random_seed.STRUCTURE.NUM_DIGITS_SEED,
+        id_num_digits=6+6,
     ) as cer_phs_run:
         for ptp in table_past_trigger:
             event = pl.Event(
@@ -737,7 +720,9 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
                 model_fit_config=MODEL_FIT_CONFIG,
             )
 
-            if gamrec.trajectory.v2020dec04iron0b.is_valid_estimate(estimate=estimate):
+            if gamrec.trajectory.v2020dec04iron0b.is_valid_estimate(
+                estimate=estimate
+            ):
                 rec = {}
                 rec[spt.IDX] = airshower_id
 
