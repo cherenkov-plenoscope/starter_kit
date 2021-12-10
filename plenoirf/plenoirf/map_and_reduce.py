@@ -170,7 +170,7 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
 
 
 def _run_id_str(job):
-    form = "{:0" + unique.RUN_ID_NUM_DIGITS + "d}"
+    form = "{:0" + str(unique.RUN_ID_NUM_DIGITS) + "d}"
     return form.format(job["run_id"])
 
 
@@ -242,7 +242,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             uid = unique.make_uid(run_id=run_id, event_id=event_id)
             uid_str = unique.make_uid_str(run_id=run_id, event_id=event_id)
 
-            ide = {spt.IDX: shower_id}
+            ide = {spt.IDX: uid}
 
             primary = corsika_primary_steering["primaries"][event_idx]
 
@@ -379,8 +379,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
             )
             if event_idx % GRID_SKIP == 0:
                 utils.tar_append(
-                    evttar=imgtar,
-                    file_name=shower_id_str + ".f4.gz",
+                    tarout=imgtar,
+                    file_name=uid_str + ".f4.gz",
                     file_bytes=grid.histogram_to_bytes(
                         grid_result["histogram"]
                     ),
@@ -504,7 +504,7 @@ def _run_loose_trigger(
     for event in merlict_run:
         # id
         # --
-        cevth = event.simulation_truth.event.corsika_corsika_evth.raw
+        cevth = event.simulation_truth.event.corsika_event_header.raw
         run_id = int(cevth[cpw.I.EVTH.RUN_NUMBER])
         event_id = int(cevth[cpw.I.EVTH.EVENT_NUMBER])
         ide = {spt.IDX: unique.make_uid(run_id=run_id, event_id=event_id)}
@@ -591,7 +591,7 @@ def _classify_cherenkov_photons(
 
     with pl.photon_stream.loph.LopfTarWriter(
         path=os.path.join(tmp_dir, "reconstructed_cherenkov.tar"),
-        id_num_digits=6+6,
+        uid_num_digits=unique.UID_NUM_DIGITS,
     ) as cer_phs_run:
         for ptp in table_past_trigger:
             event = pl.Event(
@@ -705,14 +705,14 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
         op.join(tmp_dir, "reconstructed_cherenkov.tar")
     )
     for event in run:
-        airshower_id, loph_record = event
+        uid, loph_record = event
 
-        if airshower_id in shower_maximum_object_distance:
+        if uid in shower_maximum_object_distance:
             estimate, debug = gamrec.trajectory.v2020dec04iron0b.estimate(
                 loph_record=loph_record,
                 light_field_geometry=light_field_geometry,
                 shower_maximum_object_distance=shower_maximum_object_distance[
-                    airshower_id
+                    uid
                 ],
                 fuzzy_config=FUZZY_CONFIG,
                 model_fit_config=MODEL_FIT_CONFIG,
@@ -722,7 +722,7 @@ def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
                 estimate=estimate
             ):
                 rec = {}
-                rec[spt.IDX] = airshower_id
+                rec[spt.IDX] = uid
 
                 rec["cx_rad"] = estimate["primary_particle_cx"]
                 rec["cy_rad"] = estimate["primary_particle_cy"]

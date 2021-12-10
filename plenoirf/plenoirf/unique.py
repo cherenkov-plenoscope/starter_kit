@@ -20,11 +20,11 @@ def split_uid(udi):
     return run_id, event_id
 
 
-def make_udi_str(run_id, event_id):
+def make_uid_str(run_id, event_id):
     uid = make_uid(run_id, event_id)
     return UID_FOTMAT_STR.format(uid)
 
 
-def split_udi_str(s):
+def split_uid_str(s):
     uid = int(s)
     return split_uid(uid)

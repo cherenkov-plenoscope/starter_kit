@@ -215,8 +215,10 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
     os.makedirs(out_absdir)
     os.makedirs(opj(out_absdir, "input"))
 
-    with open(opj(out_absdir, "input", "config.json" + "tmp"), "wt") as fout:
-        fout.write(json.dumps(config, indent=4))
+    json_numpy.write(
+        path=opj(out_absdir, "input", "config.json" + "tmp"),
+        out_dict=config,
+    )
     shutil.move(
         opj(out_absdir, "input", "config.json" + "tmp"),
         opj(out_absdir, "input", "config.json"),
@@ -226,7 +228,6 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
         src=cfg_files["plenoscope_scenery_path"],
         dst=opj(out_absdir, "input", "scenery"),
     )
-
     network_file_system.copy(
         src=cfg_files["merlict_plenoscope_propagator_config_path"],
         dst=opj(out_absdir, "input", "merlict_propagation_config.json"),
@@ -235,29 +236,28 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
 
 def _estimate_magnetic_deflection_of_air_showers(cfg, out_absdir, pool):
     qmrlog("Estimating magnetic deflection.")
-    mdfl_absdir = opj(out_absdir, "magnetic_deflection")
+    mdfl_dir = opj(out_absdir, "magnetic_deflection")
 
-    if op.exists(mdfl_absdir):
-        sites = mdfl.read_json(opj(mdfl_absdir, "sites.json"))
-        particles = mdfl.read_json(opj(mdfl_absdir, "particles.json"))
-        pointing = mdfl.read_json(opj(mdfl_absdir, "pointing.json"))
+    if op.exists(mdfl_dir):
+        mdflcfg = mdfl.read_config(work_dir=mdfl_dir)
 
         for particle in cfg["particles"]:
-            assert particle in particles
+            assert particle in mdflcfg["particles"]
         for site in cfg["sites"]:
-            assert site in sites
+            assert site in mdflcfg["sites"]
         np.testing.assert_almost_equal(
             cfg["plenoscope_pointing"]["azimuth_deg"],
-            pointing["azimuth_deg"],
+            mdflcfg["pointing"]["azimuth_deg"],
             decimal=2,
         )
         np.testing.assert_almost_equal(
             cfg["plenoscope_pointing"]["zenith_deg"],
-            pointing["zenith_deg"],
+            mdflcfg["pointing"]["zenith_deg"],
             decimal=2,
         )
     else:
-        mdfl.A_init_work_dir(
+        mdfl.init(
+            work_dir=mdfl_dir,
             particles=cfg["particles"],
             sites=cfg["sites"],
             plenoscope_pointing=cfg["plenoscope_pointing"],
@@ -265,22 +265,11 @@ def _estimate_magnetic_deflection_of_air_showers(cfg, out_absdir, pool):
             num_energy_supports=cfg["magnetic_deflection"][
                 "num_energy_supports"
             ],
-            work_dir=mdfl_absdir,
         )
 
-        mdfl_jobs = mdfl.B_make_jobs_from_work_dir(work_dir=mdfl_absdir)
-
-        _ = pool.map(mdfl.map_and_reduce.run_job, mdfl_jobs)
-
-        mdfl_job_results = mdfl.B2_read_job_results_from_work_dir(
-            work_dir=mdfl_absdir
-        )
-
-        mdfl.C_reduce_job_results_in_work_dir(
-            job_results=mdfl_job_results, work_dir=mdfl_absdir
-        )
-
-        mdfl.D_summarize_raw_deflection(work_dir=mdfl_absdir)
+        jobs = mdfl.make_jobs(work_dir=mdfl_dir)
+        _ = pool.map(mdfl.map_and_reduce.run_job, jobs)
+        mdfl.reduce(work_dir=mdfl_dir)
 
 
 def _estimate_light_field_geometry_of_plenoscope(
@@ -397,7 +386,7 @@ def _populate_table_of_thrown_air_showers(
         out_dict=prov,
     )
 
-    deflection = mdfl.read(
+    deflection = mdfl.read_deflection(
         work_dir=opj(out_absdir, "magnetic_deflection"), style="dict",
     )
 
@@ -591,7 +580,7 @@ def run(
         )
 
     qmrlog("Read config")
-    cfg = mdfl.read_json(opj(out_absdir, "input", "config.json"))
+    cfg = json_numpy.read(opj(out_absdir, "input", "config.json"))
 
     _estimate_magnetic_deflection_of_air_showers(
         cfg=cfg, out_absdir=out_absdir, pool=pool

@@ -41,11 +41,11 @@ EXAMPLE_PARTICLE = {
 }
 
 EXAMPLE_SITE_PARTICLE_DEFLECTION = {
-    "energy_GeV": [5, 1000],
-    "primary_azimuth_deg": [0.0, 0.0],
-    "primary_zenith_deg": [0.0, 0.0],
-    "cherenkov_pool_x_m": [0.0, 0.0],
-    "cherenkov_pool_y_m": [0.0, 0.0],
+    "particle_energy_GeV": [5, 1000],
+    "particle_azimuth_deg": [0.0, 0.0],
+    "particle_zenith_deg": [0.0, 0.0],
+    "cherenkov_x_m": [0.0, 0.0],
+    "cherenkov_y_m": [0.0, 0.0],
 }
 
 EXAMPLE_GRID = {
@@ -120,7 +120,7 @@ def make_example_job(
     site_key="namibia",
     artificial_core_limitation=None,
 ):
-    deflection_table = magnetic_deflection.read(
+    deflection_table = magnetic_deflection.read_deflection(
         work_dir=op.join(run_dir, "magnetic_deflection"), style="dict",
     )
     test_dir = op.join(run_dir, example_dirname)

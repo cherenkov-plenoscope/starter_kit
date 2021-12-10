@@ -5,18 +5,17 @@ from . import example
 
 
 def _assert_deflection(site_particle_deflection):
+    spd = site_particle_deflection
     for example_key in example.EXAMPLE_SITE_PARTICLE_DEFLECTION:
-        assert example_key in site_particle_deflection
-    assert len(site_particle_deflection["energy_GeV"]) >= 2
-    for _key in site_particle_deflection:
-        assert len(site_particle_deflection["energy_GeV"]) == len(
-            site_particle_deflection[_key]
-        )
-    for energy in site_particle_deflection["energy_GeV"]:
+        assert example_key in spd
+    assert len(spd["particle_energy_GeV"]) >= 2
+    for _key in spd:
+        assert len(spd["particle_energy_GeV"]) == len(spd[_key])
+    for energy in spd["particle_energy_GeV"]:
         assert energy > 0.0
-    for zenith_deg in site_particle_deflection["primary_zenith_deg"]:
+    for zenith_deg in spd["particle_zenith_deg"]:
         assert zenith_deg >= 0.0
-    assert np.all(np.diff(site_particle_deflection["energy_GeV"]) >= 0)
+    assert np.all(np.diff(spd["particle_energy_GeV"]) >= 0)
 
 
 def _assert_site(site):
@@ -50,7 +49,7 @@ def draw_corsika_primary_steering(
     start_energy_GeV = np.max(
         [
             np.min(particle["energy_bin_edges_GeV"]),
-            np.min(site_particle_deflection["energy_GeV"]),
+            np.min(site_particle_deflection["particle_energy_GeV"]),
         ]
     )
     stop_energy_GeV = np.max(particle["energy_bin_edges_GeV"])
@@ -88,26 +87,26 @@ def draw_corsika_primary_steering(
         prm["magnet_azimuth_rad"] = np.deg2rad(
             np.interp(
                 x=prm["energy_GeV"],
-                xp=site_particle_deflection["energy_GeV"],
-                fp=site_particle_deflection["primary_azimuth_deg"],
+                xp=site_particle_deflection["particle_energy_GeV"],
+                fp=site_particle_deflection["particle_azimuth_deg"],
             )
         )
         prm["magnet_zenith_rad"] = np.deg2rad(
             np.interp(
                 x=prm["energy_GeV"],
-                xp=site_particle_deflection["energy_GeV"],
-                fp=site_particle_deflection["primary_zenith_deg"],
+                xp=site_particle_deflection["particle_energy_GeV"],
+                fp=site_particle_deflection["particle_zenith_deg"],
             )
         )
         prm["magnet_cherenkov_pool_x_m"] = np.interp(
-            x=primary["energy_GeV"],
-            xp=site_particle_deflection["energy_GeV"],
-            fp=site_particle_deflection["cherenkov_pool_x_m"],
+            x=prm["energy_GeV"],
+            xp=site_particle_deflection["particle_energy_GeV"],
+            fp=site_particle_deflection["cherenkov_x_m"],
         )
         prm["magnet_cherenkov_pool_y_m"] = np.interp(
-            x=primary["energy_GeV"],
-            xp=site_particle_deflection["energy_GeV"],
-            fp=site_particle_deflection["cherenkov_pool_y_m"],
+            x=prm["energy_GeV"],
+            xp=site_particle_deflection["particle_energy_GeV"],
+            fp=site_particle_deflection["cherenkov_y_m"],
         )
         az, zd = cpw.random.distributions.draw_azimuth_zenith_in_viewcone(
             prng=prng,
