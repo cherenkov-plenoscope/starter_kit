@@ -170,7 +170,7 @@ def plenoscope_event_dir_to_tar(event_dir, output_tar_path=None):
 
 
 def _run_id_str(job):
-    form = "{:06d}"
+    form = "{:0" + unique.RUN_ID_NUM_DIGITS + "d}"
     return form.format(job["run_id"])
 
 
@@ -231,18 +231,16 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         )
         evttar.write_runh(runh=corsika_run.runh)
 
-        for event_idx, corsika_airshower in enumerate(corsika_run):
-            event_header, cherenkov_bunches = corsika_airshower
+        for event_idx, corsika_event in enumerate(corsika_run):
+            corsika_evth, cherenkov_bunches = corsika_event
 
             # assert match
-            run_id = int(event_header[cpw.I.EVTH.RUN_NUMBER])
+            run_id = int(corsika_evth[cpw.I.EVTH.RUN_NUMBER])
             assert run_id == corsika_primary_steering["run"]["run_id"]
             event_id = event_idx + 1
-            assert event_id == event_header[cpw.I.EVTH.EVENT_NUMBER]
-            shower_id = unique.make_shower_id(run_id=run_id, event_id=event_id)
-            shower_id_str = unique.make_shower_id_str(
-                run_id=run_id, event_id=event_id
-            )
+            assert event_id == corsika_evth[cpw.I.EVTH.EVENT_NUMBER]
+            uid = unique.make_uid(run_id=run_id, event_id=event_id)
+            uid_str = unique.make_uid_str(run_id=run_id, event_id=event_id)
 
             ide = {spt.IDX: shower_id}
 
@@ -260,22 +258,22 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 prim["max_scatter_rad"]
             )
             prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]
-            prim["momentum_x_GeV_per_c"] = event_header[
+            prim["momentum_x_GeV_per_c"] = corsika_evth[
                 cpw.I.EVTH.PX_MOMENTUM_GEV_PER_C
             ]
-            prim["momentum_y_GeV_per_c"] = event_header[
+            prim["momentum_y_GeV_per_c"] = corsika_evth[
                 cpw.I.EVTH.PY_MOMENTUM_GEV_PER_C
             ]
             prim["momentum_z_GeV_per_c"] = (
-                -1.0 * event_header[cpw.I.EVTH.PZ_MOMENTUM_GEV_PER_C]
+                -1.0 * corsika_evth[cpw.I.EVTH.PZ_MOMENTUM_GEV_PER_C]
             )
             prim["first_interaction_height_asl_m"] = (
                 -1.0
                 * cpw.CM2M
-                * event_header[cpw.I.EVTH.Z_FIRST_INTERACTION_CM]
+                * corsika_evth[cpw.I.EVTH.Z_FIRST_INTERACTION_CM]
             )
             prim["starting_height_asl_m"] = (
-                cpw.CM2M * event_header[cpw.I.EVTH.STARTING_HEIGHT_CM]
+                cpw.CM2M * corsika_evth[cpw.I.EVTH.STARTING_HEIGHT_CM]
             )
             obs_lvl_intersection = utils.ray_plane_x_y_intersection(
                 support=[0, 0, prim["starting_height_asl_m"]],
@@ -410,7 +408,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
 
             reuse_event = grid_result["random_choice"]
             if reuse_event is not None:
-                reuse_evth = event_header.copy()
+                reuse_evth = corsika_evth.copy()
                 reuse_evth[cpw.I.EVTH.NUM_REUSES_OF_CHERENKOV_EVENT] = 1.0
                 reuse_evth[cpw.I.EVTH.X_CORE_CM(reuse=1)] = (
                     cpw.M2CM * reuse_event["core_x_m"]
@@ -506,10 +504,10 @@ def _run_loose_trigger(
     for event in merlict_run:
         # id
         # --
-        cevth = event.simulation_truth.event.corsika_event_header.raw
+        cevth = event.simulation_truth.event.corsika_corsika_evth.raw
         run_id = int(cevth[cpw.I.EVTH.RUN_NUMBER])
         event_id = int(cevth[cpw.I.EVTH.EVENT_NUMBER])
-        ide = {spt.IDX: unique.make_shower_id(run_id, event_id)}
+        ide = {spt.IDX: unique.make_uid(run_id=run_id, event_id=event_id)}
 
         # apply loose trigger
         # -------------------
@@ -555,7 +553,7 @@ def _run_loose_trigger(
         if trgtru["response_pe"] >= job["sum_trigger"]["threshold_pe"]:
             ptp = ide.copy()
             ptp["tmp_path"] = event._path
-            ptp["unique_id_str"] = "{:012d}".format(ptp[spt.IDX])
+            ptp["unique_id_str"] = unique.UID_FOTMAT_STR.format(ptp[spt.IDX])
             table_past_trigger.append(ptp)
 
             ptrg = ide.copy()
@@ -646,7 +644,7 @@ def _classify_cherenkov_photons(
                 raw_sensor_response=event.raw_sensor_response,
                 cherenkov_photon_ids=cherenkov_photons.photon_ids,
             )
-            cer_phs_run.add(identity=ptp[spt.IDX], phs=cer_phs)
+            cer_phs_run.add(uid=ptp[spt.IDX], phs=cer_phs)
 
     nfs.copy(
         src=op.join(tmp_dir, "reconstructed_cherenkov.tar"),

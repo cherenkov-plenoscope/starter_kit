@@ -1,23 +1,30 @@
+RUN_ID_NUM_DIGITS = 6
+EVENT_ID_NUM_DIGITS = 6
+UID_NUM_DIGITS = RUN_ID_NUM_DIGITS + EVENT_ID_NUM_DIGITS
 
-def make_shower_id(run_id, event_id):
-    assert 0 <= run_id < 1000*1000
-    assert 0 <= event_id < 1000*1000
-    return 1000*1000 * run_id + event_id
+RUN_ID_UPPER = 10 ** RUN_ID_NUM_DIGITS
+EVENT_ID_UPPER = 10 ** EVENT_ID_NUM_DIGITS
+
+UID_FOTMAT_STR = "{:0" + str(UID_NUM_DIGITS) + "d}"
 
 
-def split_shower_id(shower_id):
-    run_id = shower_id // (1000*1000)
-    event_id = shower_id % (1000*1000) 
+def make_uid(run_id, event_id):
+    assert 0 <= run_id < RUN_ID_UPPER
+    assert 0 <= event_id < EVENT_ID_UPPER
+    return RUN_ID_UPPER * run_id + event_id
+
+
+def split_uid(udi):
+    run_id = udi // RUN_ID_UPPER
+    event_id = udi % RUN_ID_UPPER
     return run_id, event_id
 
 
-def make_shower_id_str(run_id, event_id):
-    assert 0 <= run_id < 1000*1000
-    assert 0 <= event_id < 1000*1000
-    return "{:06d}{:06d}".format(run_id, event_id)
+def make_udi_str(run_id, event_id):
+    uid = make_uid(run_id, event_id)
+    return UID_FOTMAT_STR.format(uid)
 
 
-def split_shower_id_str(s):
-    run_id = int(s[0:6])
-    event_id = int(s[6:12])
-    return run_id, event_id
+def split_udi_str(s):
+    uid = int(s)
+    return split_uid(uid)
