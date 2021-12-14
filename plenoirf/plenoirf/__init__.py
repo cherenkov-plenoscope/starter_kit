@@ -15,7 +15,7 @@ from . import reconstruction
 from . import utils
 from . import production
 from . import other_instruments
-from . import single_thread_dummy
+from . import single_thread_map_and_reduce
 from . import unique
 
 import os
@@ -103,7 +103,7 @@ EXAMPLE_CONFIG = {
             "particle_id": 1,
             "energy_bin_edges_GeV": [
                 utils.power10bin(decade=-1, bin=2, num_bins_per_decade=5),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 3.25,
             "energy_power_law_slope": -1.5,
@@ -114,7 +114,7 @@ EXAMPLE_CONFIG = {
             "particle_id": 3,
             "energy_bin_edges_GeV": [
                 utils.power10bin(decade=-1, bin=3, num_bins_per_decade=5),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 6.5,
             "energy_power_law_slope": -1.5,
@@ -126,9 +126,9 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [
                 max(
                     MIN_PROTON_ENERGY_GEV,
-                    utils.power10bin(decade=0, bin=3, num_bins_per_decade=5)
+                    utils.power10bin(decade=0, bin=3, num_bins_per_decade=5),
                 ),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
@@ -140,9 +140,9 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [
                 max(
                     MIN_HELIUM_ENERGY_GEV,
-                    utils.power10bin(decade=1, bin=0, num_bins_per_decade=5)
+                    utils.power10bin(decade=1, bin=0, num_bins_per_decade=5),
                 ),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
+                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
@@ -188,11 +188,10 @@ EXAMPLE_CONFIG = {
     },
     "reconstruction": {
         "trajectory": gamrec.trajectory.v2020dec04iron0b.config.make_example_config_for_71m_plenoscope(
-            fov_radius_deg=3.25),
+            fov_radius_deg=3.25
+        ),
     },
-    "raw_sensor_response": {
-        "skip_num_events": 50,
-    },
+    "raw_sensor_response": {"skip_num_events": 50,},
     "runs": {
         "gamma": {"num": 64, "first_run_id": 1},
         "electron": {"num": 64, "first_run_id": 1},
@@ -216,8 +215,7 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
     os.makedirs(opj(out_absdir, "input"))
 
     json_numpy.write(
-        path=opj(out_absdir, "input", "config.json" + "tmp"),
-        out_dict=config,
+        path=opj(out_absdir, "input", "config.json" + "tmp"), out_dict=config,
     )
     network_file_system.move(
         opj(out_absdir, "input", "config.json" + "tmp"),
@@ -234,7 +232,9 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
     )
 
 
-def _estimate_magnetic_deflection_of_air_showers(cfg, out_absdir, pool):
+def _estimate_magnetic_deflection_of_air_showers(
+    cfg, out_absdir, map_and_reduce_pool
+):
     qmrlog("Estimating magnetic deflection.")
     mdfl_dir = opj(out_absdir, "magnetic_deflection")
 
@@ -268,12 +268,12 @@ def _estimate_magnetic_deflection_of_air_showers(cfg, out_absdir, pool):
         )
 
         jobs = mdfl.make_jobs(work_dir=mdfl_dir)
-        _ = pool.map(mdfl.map_and_reduce.run_job, jobs)
+        _ = map_and_reduce_pool.map(mdfl.map_and_reduce.run_job, jobs)
         mdfl.reduce(work_dir=mdfl_dir)
 
 
 def _estimate_light_field_geometry_of_plenoscope(
-    cfg, out_absdir, pool, executables
+    cfg, out_absdir, map_and_reduce_pool, executables
 ):
     qmrlog("Estimating light-field-geometry.")
 
@@ -304,7 +304,9 @@ def _estimate_light_field_geometry_of_plenoscope(
                 num_blocks=cfg["light_field_geometry"]["num_blocks"],
                 random_seed=0,
             )
-            _ = pool.map(map_and_reduce_light_field_geometry.run_job, lfg_jobs)
+            _ = map_and_reduce_pool.map(
+                map_and_reduce_light_field_geometry.run_job, lfg_jobs
+            )
             subprocess.call(
                 [
                     executables["merlict_plenoscope_calibration_reduce_path"],
@@ -364,7 +366,7 @@ def _estimate_trigger_geometry_of_plenoscope(
 def _populate_table_of_thrown_air_showers(
     cfg,
     out_absdir,
-    pool,
+    map_and_reduce_pool,
     executables,
     tmp_absdir,
     date_dict_now,
@@ -378,12 +380,12 @@ def _populate_table_of_thrown_air_showers(
 
     prov = provenance.make_provenance()
     prov = provenance.add_corsika(
-        prov=prov, corsika_primary_path=corsika_primary_path)
+        prov=prov, corsika_primary_path=corsika_primary_path
+    )
 
     qmrlog("Write provenance.")
     json_numpy.write(
-        path=opj(table_absdir, "provenance.json"),
-        out_dict=prov,
+        path=opj(table_absdir, "provenance.json"), out_dict=prov,
     )
 
     deflection = mdfl.read_deflection(
@@ -466,7 +468,7 @@ def _populate_table_of_thrown_air_showers(
         jobs=irf_jobs, desired_num_bunbles=num_parallel_jobs
     )
 
-    _ = pool.map(map_and_reduce.run_bundle, irf_bundles)
+    _ = map_and_reduce_pool.map(map_and_reduce.run_bundle, irf_bundles)
 
     qmrlog("Reduce instrument-response.")
 
@@ -544,7 +546,7 @@ def _populate_table_of_thrown_air_showers(
 
 def run(
     path,
-    MULTIPROCESSING_POOL="sun_grid_engine",
+    map_and_reduce_pool=single_thread_map_and_reduce,
     num_parallel_jobs=2000,
     executables=EXAMPLE_EXECUTABLES,
     TMP_DIR_ON_WORKERNODE=True,
@@ -566,28 +568,18 @@ def run(
         os.makedirs(tmp_absdir, exist_ok=True)
         qmrlog("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
 
-    if MULTIPROCESSING_POOL == "sun_grid_engine":
-        pool = queue_map_reduce
-        qmrlog("Use sun-grid-engine multiprocessing-pool.")
-    elif MULTIPROCESSING_POOL == "local":
-        pool = multiprocessing.Pool(4)
-        qmrlog("Use local multiprocessing-pool.")
-    elif MULTIPROCESSING_POOL == "single_thread":
-        pool = single_thread_dummy
-    else:
-        raise KeyError(
-            "Unknown MULTIPROCESSING_POOL: {:s}".format(MULTIPROCESSING_POOL)
-        )
-
     qmrlog("Read config")
     cfg = json_numpy.read(opj(out_absdir, "input", "config.json"))
 
     _estimate_magnetic_deflection_of_air_showers(
-        cfg=cfg, out_absdir=out_absdir, pool=pool
+        cfg=cfg, out_absdir=out_absdir, map_and_reduce_pool=map_and_reduce_pool
     )
 
     _estimate_light_field_geometry_of_plenoscope(
-        cfg=cfg, out_absdir=out_absdir, pool=pool, executables=executables
+        cfg=cfg,
+        out_absdir=out_absdir,
+        map_and_reduce_pool=map_and_reduce_pool,
+        executables=executables,
     )
 
     _estimate_trigger_geometry_of_plenoscope(cfg=cfg, out_absdir=out_absdir)
@@ -595,7 +587,7 @@ def run(
     _populate_table_of_thrown_air_showers(
         cfg=cfg,
         out_absdir=out_absdir,
-        pool=pool,
+        map_and_reduce_pool=map_and_reduce_pool,
         executables=executables,
         tmp_absdir=tmp_absdir,
         KEEP_TMP=KEEP_TMP,
