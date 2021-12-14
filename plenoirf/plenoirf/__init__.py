@@ -219,7 +219,7 @@ def init(out_dir, config=EXAMPLE_CONFIG, cfg_files=EXAMPLE_CONFIG_FILES):
         path=opj(out_absdir, "input", "config.json" + "tmp"),
         out_dict=config,
     )
-    shutil.move(
+    network_file_system.move(
         opj(out_absdir, "input", "config.json" + "tmp"),
         opj(out_absdir, "input", "config.json"),
     )
