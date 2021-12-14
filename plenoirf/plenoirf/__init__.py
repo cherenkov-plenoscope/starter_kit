@@ -260,7 +260,7 @@ def _estimate_magnetic_deflection_of_air_showers(cfg, out_absdir, pool):
             work_dir=mdfl_dir,
             particles=cfg["particles"],
             sites=cfg["sites"],
-            plenoscope_pointing=cfg["plenoscope_pointing"],
+            pointing=cfg["plenoscope_pointing"],
             max_energy=cfg["magnetic_deflection"]["max_energy_GeV"],
             num_energy_supports=cfg["magnetic_deflection"][
                 "num_energy_supports"
@@ -570,7 +570,7 @@ def run(
         pool = queue_map_reduce
         qmrlog("Use sun-grid-engine multiprocessing-pool.")
     elif MULTIPROCESSING_POOL == "local":
-        pool = multiprocessing.Pool(8)
+        pool = multiprocessing.Pool(4)
         qmrlog("Use local multiprocessing-pool.")
     elif MULTIPROCESSING_POOL == "single_thread":
         pool = single_thread_dummy
