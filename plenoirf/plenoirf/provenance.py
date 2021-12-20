@@ -3,7 +3,7 @@ import subprocess
 import datetime
 import warnings
 import shutil
-import corsika_primary as cpw
+import corsika_primary
 
 
 IMPORTANT_PROGRAMS = {
