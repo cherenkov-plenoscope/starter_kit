@@ -351,9 +351,6 @@ def _estimate_trigger_geometry_of_plenoscope(
             trigger_geometry=trigger_geometry,
             path=opj(out_absdir, "trigger_geometry"),
         )
-
-    qmrlog("Plot trigger-geometry.")
-    if not op.exists(opj(out_absdir, "trigger_geometry", "plot")):
         tss = pl.trigger.geometry.init_summation_statistics(
             trigger_geometry=trigger_geometry
         )
