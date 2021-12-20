@@ -378,7 +378,7 @@ def _populate_table_of_thrown_air_showers(
 
     prov = provenance.make_provenance()
     prov = provenance.add_corsika(
-        prov=prov, corsika_primary_path=corsika_primary_path
+        prov=prov, corsika_primary_path=executables["corsika_primary_path"]
     )
 
     qmrlog("Write provenance.")
