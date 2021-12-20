@@ -22,8 +22,7 @@ passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
-onreion_config = sum_config["on_off_measuremnent"]["onregion"]
-onreion_config["opening_angle_deg"] = 0.8
+onreion_config = sum_config["on_off_measuremnent"]["onregion_types"]["large"]
 
 # READ light-field-geometry
 # =========================
