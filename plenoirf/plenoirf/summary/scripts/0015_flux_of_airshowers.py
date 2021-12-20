@@ -80,8 +80,8 @@ for sk in SITES:
         air_shower_fluxes_zc[sk][pk] = {}
         primary_zenith_deg = np.interp(
             x=energy_bin["centers"],
-            xp=deflection_table[sk][pk]["energy_GeV"],
-            fp=deflection_table[sk][pk]["primary_zenith_deg"],
+            xp=deflection_table[sk][pk]["particle_energy_GeV"],
+            fp=deflection_table[sk][pk]["particle_zenith_deg"],
         )
         scaling = np.cos(np.deg2rad(primary_zenith_deg))
         zc_flux = scaling * air_shower_fluxes[sk][pk]["differential_flux"]
