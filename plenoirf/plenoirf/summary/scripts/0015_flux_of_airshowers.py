@@ -23,7 +23,7 @@ energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["interpolation"]
 
-deflection_table = magnetic_deflection.read(
+deflection_table = magnetic_deflection.read_deflection(
     work_dir=os.path.join(pa["run_dir"], "magnetic_deflection"),
 )
 

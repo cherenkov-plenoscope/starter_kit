@@ -56,7 +56,7 @@ for site_key in irf_config["config"]["sites"]:
             left_indices=event_table["primary"][spt.IDX],
             right_indices=passing_trigger[site_key][particle_key]["idx"],
         )
-        (primary_cx, primary_cy) = mdfl.discovery._az_zd_to_cx_cy(
+        (primary_cx, primary_cy) = mdfl.spherical_coordinates._az_zd_to_cx_cy(
             azimuth_deg=np.rad2deg(event_table["primary"]["azimuth_rad"]),
             zenith_deg=np.rad2deg(event_table["primary"]["zenith_rad"]),
         )

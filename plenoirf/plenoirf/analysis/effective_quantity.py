@@ -1,6 +1,5 @@
 import numpy as np
 import sparse_numeric_table as spt
-import magnetic_deflection as mdfl
 from .. import utils
 
 

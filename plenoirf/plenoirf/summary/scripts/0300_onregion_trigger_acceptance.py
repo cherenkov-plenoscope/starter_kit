@@ -4,7 +4,6 @@ import copy
 import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
-import magnetic_deflection as mdfl
 import os
 import json_numpy
 

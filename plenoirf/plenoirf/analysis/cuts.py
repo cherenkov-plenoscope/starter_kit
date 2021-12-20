@@ -6,7 +6,7 @@ import numpy as np
 def cut_primary_direction_within_angle(
     primary_table, radial_angle_deg, azimuth_deg, zenith_deg,
 ):
-    delta_deg = mdfl.discovery._angle_between_az_zd_deg(
+    delta_deg = mdfl.spherical_coordinates._angle_between_az_zd_deg(
         az1_deg=np.rad2deg(primary_table["azimuth_rad"]),
         zd1_deg=np.rad2deg(primary_table["zenith_rad"]),
         az2_deg=azimuth_deg,
