@@ -88,4 +88,4 @@ for sk in irf_config["config"]["sites"]:
             pa["out_dir"], "{:s}_differential_trigger_rate.jpg".format(sk),
         )
     )
-    seb.close_figure(fig)
+    seb.close(fig)

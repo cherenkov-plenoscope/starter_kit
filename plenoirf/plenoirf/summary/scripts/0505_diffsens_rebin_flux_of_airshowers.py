@@ -81,4 +81,4 @@ for sk in SITES:
     ax.set_ylim([1e-6, 1e2])
     ax.loglog()
     fig.savefig(os.path.join(pa["out_dir"], sk + ".jpg"))
-    seb.close_figure(fig)
+    seb.close(fig)

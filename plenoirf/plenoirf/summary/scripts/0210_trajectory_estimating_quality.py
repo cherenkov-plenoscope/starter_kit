@@ -151,7 +151,7 @@ def write_correlation_figure(
         ax_h.semilogy()
 
     fig.savefig(path)
-    seb.close_figure(fig)
+    seb.close(fig)
 
 
 def align_values_with_event_frame(event_frame, idxs, values):
@@ -303,4 +303,4 @@ for sk in SITES:
     ax.set_xlabel("trajectory-quality-cut / 1")
     ax.set_ylabel("passing cut / 1")
     fig.savefig(os.path.join(pa["out_dir"], "{:s}_passing.jpg".format(sk)))
-    seb.close_figure(fig)
+    seb.close(fig)

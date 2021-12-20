@@ -189,4 +189,4 @@ for fk in Sfeatures:
         fig.savefig(
             os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, fk))
         )
-        seb.close_figure(fig)
+        seb.close(fig)

@@ -100,4 +100,4 @@ for site_key in irf_config["config"]["sites"]:
                     "{:s}_{:s}_{:06d}.jpg".format(site_key, source_key, tt,),
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)

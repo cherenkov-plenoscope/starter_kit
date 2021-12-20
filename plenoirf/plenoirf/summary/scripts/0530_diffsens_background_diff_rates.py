@@ -203,4 +203,4 @@ for sk in SITES:
                 sk + "_" + ok + "_differential_rates_vs_reco_energy.jpg",
             )
         )
-        seb.close_figure(fig)
+        seb.close(fig)

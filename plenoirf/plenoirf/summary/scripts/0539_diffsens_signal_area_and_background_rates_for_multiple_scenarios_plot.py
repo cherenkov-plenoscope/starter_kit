@@ -70,7 +70,7 @@ for sk in SITES:
                     pa["out_dir"], sk , ok , dk +"_rate_vs_reco_energy.jpg",
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)
 
 
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
@@ -109,7 +109,7 @@ for sk in SITES:
                     pa["out_dir"], sk , ok , dk +"_area.jpg",
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)
 
 
             M = scenarios[sk][ok][dk]["gamma"]["M"]["mean"]
@@ -135,4 +135,4 @@ for sk in SITES:
                     pa["out_dir"], sk , ok , dk +"_M.jpg",
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)

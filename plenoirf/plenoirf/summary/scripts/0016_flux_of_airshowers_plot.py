@@ -48,4 +48,4 @@ for sk in irf_config["config"]["sites"]:
             pa["out_dir"], "{:s}_airshower_differential_flux.jpg".format(sk),
         )
     )
-    seb.close_figure(fig)
+    seb.close(fig)

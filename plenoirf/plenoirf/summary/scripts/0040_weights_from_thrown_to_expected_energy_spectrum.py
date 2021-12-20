@@ -149,4 +149,4 @@ for sk in SITES:
     ax.set_xlim([1e-1, 1e4])
     ax.set_ylim([1e-6, 1.0])
     fig.savefig(os.path.join(pa["out_dir"], "{:s}_weights.jpg".format(sk)))
-    seb.close_figure(fig)
+    seb.close(fig)

@@ -118,4 +118,4 @@ for sk in SITES:
                 pa["out_dir"], sk + "_" + ok + "_rate_vs_reco_energy.jpg",
             )
         )
-        seb.close_figure(fig)
+        seb.close(fig)

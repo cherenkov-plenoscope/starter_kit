@@ -127,4 +127,4 @@ for sk in irf_config["config"]["sites"]:
             linecolor="k",
         )
         fig.savefig(opj(pa["out_dir"], sk + "_" + pk + "_maximum.jpg"))
-        seb.close_figure(fig)
+        seb.close(fig)

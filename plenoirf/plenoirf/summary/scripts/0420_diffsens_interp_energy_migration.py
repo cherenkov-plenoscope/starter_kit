@@ -94,7 +94,7 @@ def write_figure_diffenergy_migration_matrix(
     ax_c.set_xlabel("energy / GeV")
     ax_c.loglog()
     fig.savefig(path)
-    seb.close_figure(fig)
+    seb.close(fig)
 
 
 for sk in SITES:

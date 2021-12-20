@@ -87,4 +87,4 @@ for sk in SITES:
                 "{:s}_{:s}_differential_event_rates.jpg".format(sk, ok),
             )
         )
-        seb.close_figure(fig)
+        seb.close(fig)

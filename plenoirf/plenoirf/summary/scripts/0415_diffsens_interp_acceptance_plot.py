@@ -81,4 +81,4 @@ for sk in SITES:
                     sk + "_" + ok + "_" + gk + "_acceptance_interpolated.jpg",
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)

@@ -108,7 +108,7 @@ for sk in irf_config["config"]["sites"]:
         fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        seb.close_figure(fig)
+        seb.close(fig)
 
         # ---------------------------------------------------------------------
         key = "sensitivity_vs_true_energy"
@@ -176,7 +176,7 @@ for sk in irf_config["config"]["sites"]:
         fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        seb.close_figure(fig)
+        seb.close(fig)
 
         json_numpy.write(
             opj(site_particle_dir, key + ".json"),
@@ -241,7 +241,7 @@ for sk in irf_config["config"]["sites"]:
         fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        seb.close_figure(fig)
+        seb.close(fig)
 
         json_numpy.write(
             opj(site_particle_dir, key + ".json"),
@@ -305,7 +305,7 @@ for sk in irf_config["config"]["sites"]:
         fig.savefig(
             opj(pa["out_dir"], site_particle_prefix + "_" + key + ".jpg")
         )
-        seb.close_figure(fig)
+        seb.close(fig)
 
         json_numpy.write(
             opj(site_particle_dir, key + ".json"),

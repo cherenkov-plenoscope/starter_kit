@@ -149,4 +149,4 @@ for sk in SITES:
             ax.set_xlim([start, stop])
             ax.set_ylim([1e-5, 1.0])
             fig.savefig(fig_path)
-            seb.close_figure(fig)
+            seb.close(fig)

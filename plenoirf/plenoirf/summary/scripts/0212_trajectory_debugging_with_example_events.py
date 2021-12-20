@@ -220,7 +220,7 @@ for sk in irf_config["config"]["sites"]:
                     "{:09d}_ring.jpg".format(airshower_id,),
                 )
                 fig.savefig(path)
-                seb.close_figure(fig)
+                seb.close(fig)
 
             if PLOT_OVERVIEW:
 
@@ -347,4 +347,4 @@ for sk in irf_config["config"]["sites"]:
                 )
 
                 fig.savefig(path)
-                seb.close_figure(fig)
+                seb.close(fig)

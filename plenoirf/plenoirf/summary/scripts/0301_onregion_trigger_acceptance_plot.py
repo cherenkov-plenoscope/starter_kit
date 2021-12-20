@@ -97,7 +97,7 @@ for sk in irf_config["config"]["sites"]:
                     pa["out_dir"], "{:s}_{:s}_{:s}.jpg".format(sk, ok, gk),
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)
 
 
 for sk in irf_config["config"]["sites"]:
@@ -167,4 +167,4 @@ for sk in irf_config["config"]["sites"]:
                         "{:s}_{:s}_{:s}_{:s}.jpg".format(sk, ok, pk, gk),
                     )
                 )
-                seb.close_figure(fig)
+                seb.close(fig)

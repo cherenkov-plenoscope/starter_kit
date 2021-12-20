@@ -182,7 +182,7 @@ for sk in SITES:
             fig.savefig(
                 os.path.join(pa["out_dir"], sk + "_" + pk + "_resolution.jpg")
             )
-            seb.close_figure(fig)
+            seb.close(fig)
 
 
         fig = seb.figure(seb.FIGURE_1_1)
@@ -219,7 +219,7 @@ for sk in SITES:
             linecolor="k",
         )
         fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + ".jpg"))
-        seb.close_figure(fig)
+        seb.close(fig)
 
         # unc
         numE = energy_bin["num_bins"]
@@ -258,4 +258,4 @@ for sk in SITES:
                 pa["out_dir"], sk + "_" + pk + "_confusion_matrix_unc.jpg"
             )
         )
-        seb.close_figure(fig)
+        seb.close(fig)

@@ -248,4 +248,4 @@ for sk in SITES:
                         ),
                     )
                 )
-                seb.close_figure(fig)
+                seb.close(fig)

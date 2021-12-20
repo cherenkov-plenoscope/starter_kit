@@ -477,4 +477,4 @@ for sk in irf_config["config"]["sites"]:
                     "{:s}_{:s}_psf_image_ene{:06d}.jpg".format(sk, pk, ene),
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)

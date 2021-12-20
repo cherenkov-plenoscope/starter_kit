@@ -205,4 +205,4 @@ for sk in irf_config["config"]["sites"]:
                     ),
                 )
             )
-            seb.close_figure(fig)
+            seb.close(fig)

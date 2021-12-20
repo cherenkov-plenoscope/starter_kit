@@ -89,7 +89,7 @@ def write_theta_square_figure(
     ax.set_ylim([0.0, ylim_stop])
     ax.set_xlim([0.0, np.max(tts)])
     fig.savefig(path)
-    seb.close_figure(fig)
+    seb.close(fig)
 
 
 for site_key in psf:

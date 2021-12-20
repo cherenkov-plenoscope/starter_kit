@@ -79,4 +79,4 @@ for site_key in irf_config["config"]["sites"]:
     fig.savefig(
         os.path.join(pa["out_dir"], "{:s}_ratescan.jpg".format(site_key))
     )
-    seb.close_figure(fig)
+    seb.close(fig)

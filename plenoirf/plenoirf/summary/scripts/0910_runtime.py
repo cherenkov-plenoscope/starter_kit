@@ -112,7 +112,7 @@ def write_relative_runtime(table, out_path, figure_style):
     out_path_jpg = out_path + ".jpg"
     fig.savefig(out_path_jpg + ".tmp.jpg")
     os.rename(out_path_jpg + ".tmp.jpg", out_path_jpg)
-    seb.close_figure(fig)
+    seb.close(fig)
     out_path_json = out_path + ".json"
     with open(out_path_json + ".tmp", "wt") as fout:
         fout.write(json_numpy.dumps(relative_times))
@@ -160,7 +160,7 @@ def write_speed(table, out_path, figure_style):
     ax.set_xlim([0, np.max(sizes[valid]) * 1.1])
     fig.savefig(out_path + ".tmp" + ".jpg")
     os.rename(out_path + ".tmp" + ".jpg", out_path + ".jpg")
-    seb.close_figure(fig)
+    seb.close(fig)
     with open(out_path + ".json" + ".tmp", "wt") as fout:
         fout.write(json_numpy.dumps(speeds))
     os.rename(out_path + ".json" + ".tmp", out_path + ".json")

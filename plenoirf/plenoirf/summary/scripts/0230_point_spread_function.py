@@ -180,4 +180,4 @@ for sk in irf_config["config"]["sites"]:
     ax.set_ylabel(r"$\Theta{}$ 68% / 1$^\circ{}$")
 
     fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + ".jpg"))
-    seb.close_figure(fig)
+    seb.close(fig)
