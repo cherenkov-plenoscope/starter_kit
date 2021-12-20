@@ -139,7 +139,7 @@ def make_provenance():
     return p
 
 
-def add_corsika_provenance(prov, corsika_primary_path):
+def add_corsika(prov, corsika_primary_path):
     if not "starter_kit" in prov:
         prov["starter_kit"] = {}
     prov["starter_kit"]["corsika"] = {}
