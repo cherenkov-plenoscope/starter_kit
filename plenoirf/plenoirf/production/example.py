@@ -1,6 +1,6 @@
 import os
 from os import path as op
-import json
+import json_numpy
 
 import magnetic_deflection
 from .. import utils
@@ -125,7 +125,7 @@ def make_example_job(
     )
     test_dir = op.join(run_dir, example_dirname)
     with open(op.join(run_dir, "input", "config.json"), "rt") as fin:
-        config = json.loads(fin.read())
+        config = json_numpy.loads(fin.read())
 
     job = {
         "run_id": 1,

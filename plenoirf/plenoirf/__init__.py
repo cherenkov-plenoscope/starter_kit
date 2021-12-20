@@ -25,7 +25,6 @@ from os.path import join as opj
 import shutil
 import subprocess
 import random
-import json
 import glob
 import tempfile
 import pandas as pd

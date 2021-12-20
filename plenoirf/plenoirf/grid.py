@@ -4,7 +4,6 @@ import os
 import io
 import tarfile
 import shutil
-import json
 import json_numpy
 import corsika_primary as cpw
 
@@ -391,6 +390,6 @@ def apply_bin_limitation_and_warn(
             bin_idxs_above_threshold_and_in_limits[0]
         ),
     }
-    print(json.dumps(msg, cls=json_numpy.Encoder))
+    print(json_numpy.dumps(msg))
 
     return bin_idxs_above_threshold_and_in_limits

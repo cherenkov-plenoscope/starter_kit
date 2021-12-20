@@ -3,7 +3,6 @@ import copy
 from os.path import join as opj
 import pandas
 import numpy as np
-import json
 import pkg_resources
 import subprocess
 import sparse_numeric_table as spt
@@ -28,9 +27,7 @@ def init(run_dir):
     os.makedirs(summary_dir, exist_ok=True)
 
     with open(opj(summary_dir, "summary_config.json"), "wt") as fout:
-        fout.write(
-            json.dumps(summary_config, indent=4, cls=json_numpy.Encoder)
-        )
+        fout.write(json_numpy.dumps(summary_config, indent=4))
 
 
 def argv_since_py(sys_argv):
@@ -62,13 +59,13 @@ def production_name_from_run_dir(path):
 
 def read_summary_config(summary_dir):
     with open(opj(summary_dir, "summary_config.json"), "rt") as fin:
-        config = json.loads(fin.read())
+        config = json_numpy.loads(fin.read())
     return config
 
 
 def read_instrument_response_config(run_dir):
     with open(opj(run_dir, "input", "config.json"), "rt") as f:
-        config = json.loads(f.read())
+        config = json_numpy.loads(f.read())
     light_field_sensor_geometry = merlict.read_plenoscope_geometry(
         opj(run_dir, "input", "scenery", "scenery.json")
     )
@@ -90,10 +87,10 @@ def read_instrument_response_config(run_dir):
     )
 
     with open(opj(run_dir, "input", "scenery", "scenery.json"), "rt") as f:
-        plenoscope_scenery = json.loads(f.read())
+        plenoscope_scenery = json_numpy.loads(f.read())
     _prop_cfg_path = opj(run_dir, "input", "merlict_propagation_config.json")
     with open(_prop_cfg_path, "rt") as f:
-        merlict_propagation_config = json.loads(f.read())
+        merlict_propagation_config = json_numpy.loads(f.read())
     bundle = {
         "config": config,
         "light_field_sensor_geometry": light_field_sensor_geometry,

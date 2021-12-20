@@ -4,7 +4,7 @@ from os.path import join as opj
 import os
 import pandas as pd
 import numpy as np
-import json
+import json_numpy
 import plenoirf as irf
 import sparse_numeric_table as spt
 import sebastians_matplotlib_addons as seb
@@ -115,7 +115,7 @@ def write_relative_runtime(table, out_path, figure_style):
     seb.close_figure(fig)
     out_path_json = out_path + ".json"
     with open(out_path_json + ".tmp", "wt") as fout:
-        fout.write(json.dumps(relative_times))
+        fout.write(json_numpy.dumps(relative_times))
     os.rename(out_path_json + ".tmp", out_path_json)
 
 
@@ -162,7 +162,7 @@ def write_speed(table, out_path, figure_style):
     os.rename(out_path + ".tmp" + ".jpg", out_path + ".jpg")
     seb.close_figure(fig)
     with open(out_path + ".json" + ".tmp", "wt") as fout:
-        fout.write(json.dumps(speeds))
+        fout.write(json_numpy.dumps(speeds))
     os.rename(out_path + ".json" + ".tmp", out_path + ".json")
 
 

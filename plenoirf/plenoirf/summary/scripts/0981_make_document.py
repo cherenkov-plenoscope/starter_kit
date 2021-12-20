@@ -7,9 +7,10 @@ import os
 import sebastians_matplotlib_addons as seb
 import pylatex as ltx
 import warnings
-import json
+import json_numpy
 import yaml
 import json_numpy
+
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -49,7 +50,7 @@ def noesc(text):
 def read_json_but_forgive(path, default={}):
     try:
         with open(path, "rt") as f:
-            out = json.loads(f.read())
+            out = json_numpy.loads(f.read())
     except Exception as e:
         print(e)
         warnings.warn("Failed to load '{:s}'".format(path))

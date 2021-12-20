@@ -17,7 +17,7 @@ import time
 
 import tempfile
 import pandas
-import json
+import json_numpy
 import tarfile
 import corsika_primary as cpw
 import plenopy as pl
@@ -525,7 +525,7 @@ def _run_loose_trigger(
 
         trg_resp_path = op.join(event._path, "refocus_sum_trigger.json")
         with open(trg_resp_path, "wt") as f:
-            f.write(json.dumps(trigger_responses, indent=4))
+            f.write(json_numpy.dumps(trigger_responses, indent=4))
 
         trg_maxr_path = op.join(
             event._path, "refocus_sum_trigger.focii_x_time_slices.uint32"
@@ -793,7 +793,7 @@ def _init_table_records():
 def _export_job_to_log_dir(job):
     job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
     with open(job_path + ".tmp", "wt") as f:
-        f.write(json.dumps(job, indent=4))
+        f.write(json_numpy.dumps(job, indent=4))
     nfs.move(job_path + ".tmp", job_path)
 
 

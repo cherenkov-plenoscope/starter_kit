@@ -7,7 +7,6 @@ import pandas
 import numpy as np
 import sklearn
 import pickle
-import json
 import json_numpy
 from sklearn import neural_network
 from sklearn import ensemble

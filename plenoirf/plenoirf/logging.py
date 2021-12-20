@@ -1,6 +1,6 @@
 import datetime
 import time
-import json
+import json_numpy
 import os
 import pandas as pd
 import shutil
@@ -21,7 +21,7 @@ class JsonlLog:
             }
             if delta:
                 d["delta"] = delta
-            f.write(json.dumps(d) + "\n")
+            f.write(json_numpy.dumps(d) + "\n")
 
 
 class TimeDelta:
@@ -58,7 +58,7 @@ def reduce_into_records(list_of_log_paths):
 
         with open(log_path, "rt") as fin:
             for line in fin:
-                logline = json.loads(line)
+                logline = json_numpy.loads(line)
                 if "delta" in logline:
                     name = logline["msg"].replace(":stop", "")
                     run[name] = logline["delta"]
