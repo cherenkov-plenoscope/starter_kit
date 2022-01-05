@@ -4,6 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import json_numpy
+import warnings
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -38,14 +39,21 @@ for sk in SITES:
                 _Q = acceptance[sk][ok][pk][gk]["mean"]
                 _Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
 
-                Q = irf.utils.log10interp(
-                    x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q,
-                )
-                Q_au = irf.utils.log10interp(
-                    x=fenergy_bin["centers"],
-                    xp=energy_bin["centers"],
-                    fp=_Q_au,
-                )
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="divide by zero encountered in log10"
+                    )
+                    Q = irf.utils.log10interp(
+                        x=fenergy_bin["centers"],
+                        xp=energy_bin["centers"],
+                        fp=_Q,
+                    )
+                    Q_au = irf.utils.log10interp(
+                        x=fenergy_bin["centers"],
+                        xp=energy_bin["centers"],
+                        fp=_Q_au,
+                    )
 
                 json_numpy.write(
                     os.path.join(sk_ok_pk_dir, gk + ".json"),

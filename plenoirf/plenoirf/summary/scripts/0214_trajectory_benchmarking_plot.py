@@ -144,9 +144,9 @@ for site_key in psf:
                         rad_start, rad_stop
                     )
 
-                    bin_count = t2_ene_rad["intensity"]
-                    bin_count = np.array(bin_count)
-                    bin_count = bin_count / np.max(bin_count)
+                    bin_count = np.array(t2_ene_rad["intensity"])
+                    if np.max(bin_count) > 0:
+                        bin_count = bin_count / np.max(bin_count)
 
                     bin_count_relunc = t2_ene_rad[
                         "intensity_relative_uncertainty"
