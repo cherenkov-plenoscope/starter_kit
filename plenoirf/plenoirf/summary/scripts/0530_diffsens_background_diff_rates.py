@@ -40,6 +40,19 @@ airshower_fluxes = json_numpy.read_tree(
 )
 
 
+def assert_energy_migration_is_valid(M):
+    Mshape = M["counts"].shape
+    assert Mshape[0] == Mshape[1]
+    num_energy_bins = Mshape[0]
+
+    assert M["ax0_key"] == "true_energy"
+    assert M["ax1_key"] == "reco_energy"
+
+    for ereco in range(num_energy_bins):
+        check = np.sum(M["true_given_reco"][:, ereco])
+        if check > 0:
+            assert 0.99 < check < 1.01
+
 # prepare diff-flux
 # -----------------
 diff_flux = {}
@@ -79,14 +92,7 @@ for sk in SITES:
             dFdE_au = np.zeros(dFdE.shape)
 
             M = copy.deepcopy(energy_migration[sk][pk])
-
-            assert M["ax0_key"] == "true_energy"
-            assert M["ax1_key"] == "reco_energy"
-
-            for ereco in range(energy_bin["num_bins"]):
-                check = np.sum(M["true_given_reco"][:, ereco])
-                if check > 0:
-                    assert 0.99 < check < 1.01
+            assert_energy_migration_is_valid(M=M)
 
             Q = acceptance[sk][ok][pk][gk]["mean"]
             Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
