@@ -27,8 +27,7 @@ fenergy_bin = energy_binning["interpolation"]
 
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
-COSMIC_RAYS = list(PARTICLES)
-COSMIC_RAYS.remove("gamma")
+COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 for sk in SITES:
