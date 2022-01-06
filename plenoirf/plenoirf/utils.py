@@ -450,3 +450,11 @@ def log10interp2d(x, y, fp, xp, yp):
         x=np.log10(xp), y=np.log10(yp), z=fp, kind="linear"
     )
     return mm_f(np.log10(x), np.log10(y))
+
+
+def filter_particles_with_electric_charge(particles):
+    out = {}
+    for pk in particles:
+        if np.abs(particles[pk]["electric_charge_qe"]) > 0:
+            out[pk] = dict(particles[pk])
+    return out

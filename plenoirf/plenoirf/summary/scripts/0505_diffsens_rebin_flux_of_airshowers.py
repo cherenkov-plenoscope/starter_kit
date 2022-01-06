@@ -7,6 +7,15 @@ import sebastians_matplotlib_addons as seb
 import json_numpy
 
 
+"""
+differential sensitivity w.r.t. energy
+======================================
+
+A series (500s) of scripts to estimate the diff. sensitivity.
+
+
+"""
+
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
@@ -17,8 +26,7 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
-COSMIC_RAYS = list(PARTICLES)
-COSMIC_RAYS.remove("gamma")
+COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 
 airshower_fluxes = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
