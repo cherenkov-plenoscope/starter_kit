@@ -92,11 +92,12 @@ def which(programname):
         return ""
 
 
-def starter_kit_abspath():
+def get_starter_kit_abspath():
     # Expect the corsika_primary to be in the "starter_kit"
     _p = os.path.abspath(corsika_primary.__file__)
-    for i in range(4):
-        _p = os.path.split(_p)[0]
+    for ii in ["__init__.py", "corsika_primary", "corsika_install"]:
+        _p, jj = os.path.split(_p)
+        assert jj == ii
     return _p
 
 
@@ -122,7 +123,7 @@ def make_provenance():
         p["version"][prg] = _o
 
     p["starter_kit"] = {}
-    p["starter_kit"]["path"] = starter_kit_abspath()
+    p["starter_kit"]["path"] = get_starter_kit_abspath()
 
     p["starter_kit"]["git"] = {}
     p["starter_kit"]["git"]["commit"] = git_last_commit_hash(
