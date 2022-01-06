@@ -27,6 +27,7 @@ energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
+energy_bin__width__au = np.zeros(energy_bin["num_bins"])  # abs. uncertainty
 
 energy_migration = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
@@ -64,40 +65,48 @@ for sk in SITES:
 # ----
 gk = "diffuse"  # geometry-key (gk) for source.
 
-R = {}  # cosmic-ray-rate in reconstructed energy (Rt)
-Rt_au = {}  # absolute uncertainty
+# cosmic-ray-rate
+# in reconstructed energy
+Rreco = {}
+Rreco_au = {}  # absolute uncertainty
 
-R = {}  # cosmic-ray-rate in true energy (R)
-R_au = {}  # absolute uncertainty
+# in true energy
+Rtrue = {}
+Rtrue_au = {}
 
 for sk in SITES:
-    Rt[sk] = {}
-    Rt_au[sk] = {}
-    R[sk] = {}
-    R_au[sk] = {}
+    Rreco[sk] = {}
+    Rreco_au[sk] = {}
+    Rtrue[sk] = {}
+    Rtrue_au[sk] = {}
     for ok in ONREGION_TYPES:
-        Rt[sk][ok] = {}
-        Rt_au[sk][ok] = {}
-        R[sk][ok] = {}
-        R_au[sk][ok] = {}
+        Rreco[sk][ok] = {}
+        Rreco_au[sk][ok] = {}
+        Rtrue[sk][ok] = {}
+        Rtrue_au[sk][ok] = {}
         for pk in COSMIC_RAYS:
-            Rt[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
-            R[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            print(sk, pk, ok)
 
-            Rt_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
-            R_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            # init rates to zero
+            Rreco[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            Rtrue[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
 
-            print("apply", sk, pk, ok)
+            Rreco_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            Rtrue_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+
+            # Get cosmic-ray's diff. flux dFdE
             dFdE = diff_flux[sk][pk]
             dFdE_au = np.zeros(dFdE.shape)
 
+            # Get instrument's energy migration M
             M = copy.deepcopy(energy_migration[sk][pk])
             assert_energy_migration_is_valid(M=M)
 
+            # Get instrument's acceptance Q
             Q = acceptance[sk][ok][pk][gk]["mean"]
             Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
 
-            energy_bin__width__au = np.zeros(energy_bin["num_bins"])
+            # Compute cosmic-ray-rate in reco energy Rreco
             for ereco in range(energy_bin["num_bins"]):
                 _tmp_sum = np.zeros(energy_bin["num_bins"])
                 _tmp_sum_au = np.zeros(energy_bin["num_bins"])
@@ -125,14 +134,15 @@ for sk in SITES:
                 if checksum > 0:
                     assert 0.99 < checksum < 1.01
                 (
-                    Rt[sk][ok][pk][ereco],
-                    Rt_au[sk][ok][pk][ereco],
+                    Rreco[sk][ok][pk][ereco],
+                    Rreco_au[sk][ok][pk][ereco],
                 ) = irf.utils.sum_elemnetwise_au(x=_tmp_sum, x_au=_tmp_sum_au,)
 
+            # Compute cosmic-ray-rate in true energy Rtrue
             for etrue in range(energy_bin["num_bins"]):
                 (
-                    R[sk][ok][pk][etrue],
-                    R_au[sk][ok][pk][etrue],
+                    Rtrue[sk][ok][pk][etrue],
+                    Rtrue_au[sk][ok][pk][etrue],
                 ) = irf.utils.multiply_elemnetwise_au(
                     x=[dFdE[etrue], Q[etrue], energy_bin["width"][etrue]],
                     x_au=[dFdE_au[etrue], Q_au[etrue], 0.0],
@@ -140,29 +150,43 @@ for sk in SITES:
 
             # cross check
             # -----------
-            # total rate must not change under energy migration
-            total_R = np.sum(R[sk][ok][pk][:])
-            total_Rt = np.sum(Rt[sk][ok][pk][:])
-            print("total_R", total_R, "total_Rt", total_Rt)
-            assert 0.7 < total_R / total_Rt < 1.3
+            # Integral rate over all energy-bins must not change (much) under
+            # energy migration.
+            total_Rtrue = np.sum(Rtrue[sk][ok][pk][:])
+            total_Rreco = np.sum(Rreco[sk][ok][pk][:])
+            assert 0.7 < total_Rtrue / total_Rreco < 1.3
 
+# export
+# ------
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        os.makedirs(os.path.join(pa["out_dir"], sk, ok), exist_ok=True)
+        for pk in COSMIC_RAYS:
+            os.makedirs(os.path.join(pa["out_dir"], sk, ok, pk), exist_ok=True)
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
         for pk in COSMIC_RAYS:
             json_numpy.write(
-                os.path.join(pa["out_dir"], sk, ok, pk + ".json"),
+                os.path.join(pa["out_dir"], sk, ok, pk, "reco" + ".json"),
                 {
-                    "comment": (
-                        "rate after all cuts " "VS reco. energy"
-                    ),
+                    "comment": "Rate after all cuts VS reco energy",
                     "unit": "s$^{-1}$",
-                    "mean": Rt[sk][ok][pk],
-                    "absolute_uncertainty": Rt_au[sk][ok][pk],
+                    "mean": Rreco[sk][ok][pk],
+                    "absolute_uncertainty": Rreco_au[sk][ok][pk],
                     "energy_binning_key": energy_bin["key"],
+                    "symbol": "Rreco",
+                },
+            )
+
+            json_numpy.write(
+                os.path.join(pa["out_dir"], sk, ok, pk, "true" + ".json"),
+                {
+                    "comment": "Rate after all cuts VS true energy",
+                    "unit": "s$^{-1}$",
+                    "mean": Rtrue[sk][ok][pk],
+                    "absolute_uncertainty": Rtrue[sk][ok][pk],
+                    "energy_binning_key": energy_bin["key"],
+                    "symbol": "Rtrue",
                 },
             )
 
@@ -177,9 +201,9 @@ for sk in SITES:
             seb.ax_add_histogram(
                 ax=ax,
                 bin_edges=energy_bin["edges"],
-                bincounts=Rt[sk][ok][pk],
-                bincounts_upper=Rt[sk][ok][pk] - Rt_au[sk][ok][pk],
-                bincounts_lower=Rt[sk][ok][pk] + Rt_au[sk][ok][pk],
+                bincounts=Rreco[sk][ok][pk],
+                bincounts_upper=Rreco[sk][ok][pk] - Rreco_au[sk][ok][pk],
+                bincounts_lower=Rreco[sk][ok][pk] + Rreco_au[sk][ok][pk],
                 linestyle="-",
                 linecolor=sum_config["plot"]["particle_colors"][pk],
                 face_color=sum_config["plot"]["particle_colors"][pk],
@@ -190,9 +214,9 @@ for sk in SITES:
             seb.ax_add_histogram(
                 ax=ax,
                 bin_edges=energy_bin["edges"],
-                bincounts=R[sk][ok][pk],
-                bincounts_upper=R[sk][ok][pk] - R_au[sk][ok][pk],
-                bincounts_lower=R[sk][ok][pk] + R_au[sk][ok][pk],
+                bincounts=Rtrue[sk][ok][pk],
+                bincounts_upper=Rtrue[sk][ok][pk] - Rtrue_au[sk][ok][pk],
+                bincounts_lower=Rtrue[sk][ok][pk] + Rtrue_au[sk][ok][pk],
                 linecolor=sum_config["plot"]["particle_colors"][pk],
                 linealpha=alpha,
                 linestyle=":",
