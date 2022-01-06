@@ -65,7 +65,9 @@ def power10bin(decade, bin, num_bins_per_decade=5):
     return 10 ** (decade + np.linspace(0, 1, num_bins_per_decade + 1))[bin]
 
 
-def power10space_idx(start_decade, start_bin, stop_decade, stop_bin, num_bins_per_decade=5):
+def power10space_idx(
+    start_decade, start_bin, stop_decade, stop_bin, num_bins_per_decade=5
+):
     combos = []
     decade = start_decade
     assert 0 <= stop_bin < num_bins_per_decade
@@ -83,20 +85,20 @@ def power10space_idx(start_decade, start_bin, stop_decade, stop_bin, num_bins_pe
     return combos
 
 
-def power10space_explicit(start_decade, start_bin, stop_decade, stop_bin, num_bins_per_decade=5):
+def power10space_explicit(
+    start_decade, start_bin, stop_decade, stop_bin, num_bins_per_decade=5
+):
     combis = power10space_idx(
         start_decade=start_decade,
         start_bin=start_bin,
         stop_decade=stop_decade,
         stop_bin=stop_bin,
-        num_bins_per_decade=num_bins_per_decade
+        num_bins_per_decade=num_bins_per_decade,
     )
     out = np.nan * np.ones(len(combis))
     for i, combi in enumerate(combis):
         out[i] = power10bin(
-            decade=combi[0],
-            bin=combi[1],
-            num_bins_per_decade=combi[2]
+            decade=combi[0], bin=combi[1], num_bins_per_decade=combi[2]
         )
     return out
 
@@ -210,7 +212,6 @@ def latex_scientific(real, format_template="{:e}", nan_template="nan"):
     return out
 
 
-
 def apply_confusion_matrix(x, confusion_matrix, x_unc=None):
     """
     Parameters
@@ -230,7 +231,7 @@ def apply_confusion_matrix(x, confusion_matrix, x_unc=None):
     # assert confusion matrix is normalized
     for i in range(n):
         s = np.sum(cm[i, :])
-        assert np.abs(s-1) < 1e-3 or s < 1e-3
+        assert np.abs(s - 1) < 1e-3 or s < 1e-3
 
     y = np.zeros(shape=(n))
     for r in range(n):
@@ -360,15 +361,18 @@ def unc(x_au, dfdx, y_au, dfdy):
 
 
 def add(x, x_au, y, y_au):
-    return x + y, unc(x_au=x_au, dfdx=1.0 ,y_au=y_au, dfdy=1.0)
+    return x + y, unc(x_au=x_au, dfdx=1.0, y_au=y_au, dfdy=1.0)
 
 
 def multiply(x, x_au, y, y_au):
-    return x*y, unc(x_au=x_au, dfdx=y ,y_au=y_au, dfdy=x)
+    return x * y, unc(x_au=x_au, dfdx=y, y_au=y_au, dfdy=x)
 
 
 def divide(x, x_au, y, y_au):
-    return x / y, unc(x_au=x_au, dfdx=1.0/y ,y_au=y_au, dfdy=(-1*x*y**(-2)))
+    return (
+        x / y,
+        unc(x_au=x_au, dfdx=1.0 / y, y_au=y_au, dfdy=(-1 * x * y ** (-2))),
+    )
 
 
 def sum(x, x_au):
@@ -441,18 +445,8 @@ def log10interp(x, xp, fp):
     return 10 ** (np.interp(x=np.log10(x), xp=np.log10(xp), fp=np.log10(fp)))
 
 
-def log10interp2d(
-    x,
-    y,
-    fp,
-    xp,
-    yp,
-):
+def log10interp2d(x, y, fp, xp, yp):
     mm_f = scipy.interpolate.interp2d(
-        x=np.log10(xp),
-        y=np.log10(yp),
-        z=fp,
-        kind="linear"
+        x=np.log10(xp), y=np.log10(yp), z=fp, kind="linear"
     )
-
     return mm_f(np.log10(x), np.log10(y))
