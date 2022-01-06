@@ -121,7 +121,6 @@ for sk in SITES:
                 A_au=A_gamma_au,
                 Mtgr=Mtgr_gamma_scenario,
                 Mtgr_au=Mtgr_gamma_scenario_au,
-                E_bin_width=energy_bin["width"],
             )
 
             json_numpy.write(

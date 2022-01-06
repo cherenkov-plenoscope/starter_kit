@@ -77,21 +77,17 @@ for sk in SITES:
             # Gamma-ray eff. Area
             # -------------------
 
-            M_gamma = M[sk]["gamma"]["confusion_matrix"][
-                "counts_normalized_on_ax0"
-            ]
-            M_gamma_au = M[sk]["gamma"]["confusion_matrix"][
-                "counts_normalized_on_ax0_abs_unc"
-            ]
+            M_gamma = M[sk]["gamma"]
 
-            scn = irf.analysis.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
-                signal_energy_confusion_matrix=M_gamma,
-                signal_energy_confusion_matrix_abs_unc=M_gamma_au,
+            scenario = irf.analysis.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
+                probability_true_given_reco=M_gamma["true_given_reco"],
+                probability_true_given_reco_abs_unc=M_gamma["true_given_reco_abs_unc"],
+                probability_reco_given_true=M_gamma["reco_given_true"],
                 scenario_key=dk,
             )
 
-            M_gamma_scenario = scn["signal_matrix"]
-            M_gamma_scenario_au = scn["signal_matrix_abs_unc"]
+            M_gamma_scenario = scenario["probability_true_given_reco"]
+            M_gamma_scenario_au = scenario["probability_true_given_reco_abs_unc"]
 
             (
                 dMdE_scenario_gamma,
@@ -133,7 +129,7 @@ for sk in SITES:
 
             # background rates
             # ----------------
-            bg_mask = scn["background_integral_mask"]
+            bg_mask = scenario["background_integral_mask"]
 
             Rt_full = copy.deepcopy(Rt[sk][ok]["mean"])
             Rt_full_au = copy.deepcopy(Rt[sk][ok]["absolute_uncertainty"])
