@@ -103,12 +103,8 @@ for sk in SITES:
     for pk in PARTICLES:
 
         M, M_au = interpolate_migration_matrix(
-            migration_matrix_counts=energy_migration[sk][pk][
-                "confusion_matrix"
-            ]["counts"],
-            migration_matrix_counts_abs_unc=energy_migration[sk][pk][
-                "confusion_matrix"
-            ]["counts_abs_unc"],
+            migration_matrix_counts=energy_migration[sk][pk]["counts"],
+            migration_matrix_counts_abs_unc=energy_migration[sk][pk]["counts_abs_unc"],
             bin_centers=energy_bin["centers"],
             new_bin_centers=fine_energy_bin["centers"],
         )
@@ -133,12 +129,8 @@ for sk in SITES:
             os.path.join(sk_dir, pk + ".json"),
             {
                 "comment": "dM(E'|E)/dE, diff. energy-migration-matrix.",
-                "ax0_key": energy_migration[sk][pk]["confusion_matrix"][
-                    "ax0_key"
-                ],
-                "ax1_key": energy_migration[sk][pk]["confusion_matrix"][
-                    "ax1_key"
-                ],
+                "ax0_key": energy_migration[sk][pk]["ax0_key"],
+                "ax1_key": energy_migration[sk][pk]["ax1_key"],
                 "unit": "(GeV)$^{-1}$",
                 "counts": dMdE,
                 "counts_abs_unc": dMdE_au,
