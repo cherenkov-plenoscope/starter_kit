@@ -21,6 +21,8 @@ PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
+# load
+# ----
 energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
@@ -38,36 +40,35 @@ airshower_fluxes = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0505_diffsens_rebin_flux_of_airshowers")
 )
 
-
+# prepare
+# -------
 def assert_energy_migration_is_valid(M):
-    Mshape = M["counts"].shape
-    assert Mshape[0] == Mshape[1]
-    num_energy_bins = Mshape[0]
-
     assert M["ax0_key"] == "true_energy"
     assert M["ax1_key"] == "reco_energy"
+
+    assert M["counts"].shape[0] == M["counts"].shape[1]
+    num_energy_bins = M["counts"].shape[0]
 
     for ereco in range(num_energy_bins):
         check = np.sum(M["true_given_reco"][:, ereco])
         if check > 0:
             assert 0.99 < check < 1.01
 
-# prepare diff-flux
-# -----------------
 diff_flux = {}
 for sk in SITES:
     diff_flux[sk] = {}
     for pk in COSMIC_RAYS:
         diff_flux[sk][pk] = airshower_fluxes[sk][pk]["differential_flux"]
 
+# work
+# ----
+gk = "diffuse"  # geometry-key (gk) for source.
 
-gk = "diffuse"
+R = {}  # cosmic-ray-rate in reconstructed energy (Rt)
+Rt_au = {}  # absolute uncertainty
 
-Rt = {}
-Rt_au = {}
-
-R = {}
-R_au = {}
+R = {}  # cosmic-ray-rate in true energy (R)
+R_au = {}  # absolute uncertainty
 
 for sk in SITES:
     Rt[sk] = {}
@@ -165,7 +166,8 @@ for sk in SITES:
                 },
             )
 
-
+# plot
+# ----
 for sk in SITES:
     for ok in ONREGION_TYPES:
         fig = seb.figure(irf.summary.figure.FIGURE_STYLE)

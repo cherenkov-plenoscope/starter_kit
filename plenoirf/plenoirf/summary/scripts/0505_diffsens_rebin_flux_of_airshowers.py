@@ -13,6 +13,8 @@ differential sensitivity w.r.t. energy
 
 A series (500s) of scripts to estimate the diff. sensitivity.
 
+1)  Rebin the diff. flux of cosmic-rays dFdE in the energy-binning used
+    for the diff. sensitivity.
 
 """
 
@@ -28,6 +30,8 @@ SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 
+# load
+# ----
 airshower_fluxes = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
@@ -35,6 +39,9 @@ airshower_fluxes = json_numpy.read_tree(
 energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
+
+# prepare
+# -------
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 fine_energy_bin = energy_binning["interpolation"]
 fine_energy_bin_matches = []
@@ -42,6 +49,8 @@ for E in energy_bin["edges"]:
     match = np.argmin(np.abs(fine_energy_bin["edges"] - E))
     fine_energy_bin_matches.append(match)
 
+# work
+# ----
 diff_flux = {}
 for sk in SITES:
     diff_flux[sk] = {}
@@ -67,6 +76,8 @@ for sk in SITES:
             },
         )
 
+# plot
+# ----
 for sk in SITES:
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
