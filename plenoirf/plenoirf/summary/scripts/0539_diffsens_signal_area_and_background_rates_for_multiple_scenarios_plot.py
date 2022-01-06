@@ -19,6 +19,8 @@ PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
+# load
+# ----
 energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
@@ -32,6 +34,8 @@ scenarios = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0538_diffsens_signal_area_and_background_rates_for_multiple_scenarios")
 )
 
+# plot
+# ----
 for sk in SITES:
     for ok in ONREGION_TYPES:
         os.makedirs(os.path.join(pa["out_dir"], sk, ok), exist_ok=True)
@@ -110,8 +114,9 @@ for sk in SITES:
             )
             seb.close(fig)
 
-
-            M = scenarios[sk][ok][dk]["gamma"]["M"]["mean"]
+            # probability_true_given_reco
+            # ---------------------------
+            M = scenarios[sk][ok][dk]["gamma"]["scenario"]["probability_true_given_reco"]
             fig = seb.figure(seb.FIGURE_1_1)
             ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
             ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
@@ -132,6 +137,32 @@ for sk in SITES:
             fig.savefig(
                 os.path.join(
                     pa["out_dir"], sk , ok , dk +"_M.jpg",
+                )
+            )
+            seb.close(fig)
+
+            # background_integral_mask
+            # ------------------------
+            M = scenarios[sk][ok][dk]["gamma"]["scenario"]["background_integral_mask"]
+            fig = seb.figure(seb.FIGURE_1_1)
+            ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
+            ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
+            _pcm_confusion = ax_c.pcolormesh(
+                energy_bin["edges"],
+                energy_bin["edges"],
+                np.transpose(M),
+                cmap="Greys",
+                norm=seb.plt_colors.PowerNorm(gamma=1.0),
+            )
+            ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
+            seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
+            ax_c.set_aspect("equal")
+            ax_c.set_ylabel("reco. energy / GeV")
+            ax_c.loglog()
+            ax_c.set_xlabel("energy / GeV")
+            fig.savefig(
+                os.path.join(
+                    pa["out_dir"], sk , ok , dk +"_background_integral_mask.jpg",
                 )
             )
             seb.close(fig)
