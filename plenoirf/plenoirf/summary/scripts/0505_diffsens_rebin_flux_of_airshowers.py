@@ -16,6 +16,8 @@ A series (500s) of scripts to estimate the diff. sensitivity.
 1)  Rebin the diff. flux of cosmic-rays dFdE in the energy-binning used
     for the diff. sensitivity.
 
+2) Estimate the cosmic-ray-rates in reconstructed energy Rreco(E).
+
 """
 
 argv = irf.summary.argv_since_py(sys.argv)

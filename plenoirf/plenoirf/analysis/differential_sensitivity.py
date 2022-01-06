@@ -2,6 +2,7 @@ import numpy as np
 import json_numpy
 import os
 from . import integral_sensitivity
+from .. import utils
 
 
 def estimate_differential_sensitivity(
@@ -254,3 +255,83 @@ def derive_all_energy_migration(energy_migration, energy_bin_width):
             out[sk][pk] = dMdE
 
     return out
+
+
+def make_area_in_reco_energy(
+    area,
+    area_au,
+    probability_true_given_reco,
+    probability_true_given_reco_au,
+):
+    A = area
+    A_au = area_au
+    Mtgr = probability_true_given_reco
+    Mtgr_au = probability_true_given_reco_au
+    assert len(A) == len(A_au)
+    assert np.all(A >= 0)
+    assert np.all(A_au >= 0)
+
+    assert Mtgr.shape == Mtgr_au.shape
+    assert Mtgr.shape[0] == Mtgr.shape[1]
+    assert np.all(Mtgr >= 0)
+    assert np.all(Mtgr_au >= 0)
+
+    assert len(A) == Mtgr.shape[0]
+
+    num_bins = len(A)
+    A_out = np.zeros(num_bins)
+    A_out_au = np.zeros(num_bins)
+
+    for er in range(num_bins):
+        tmp = np.zeros(num_bins)
+        tmp_au = np.zeros(num_bins)
+        checksum = 0.0
+
+        for et in range(num_bins):
+            tmp[et], tmp_au[et] = utils.multiply_elemnetwise_au(
+                x=[Mtgr[et, er], A[et],],
+                x_au=[Mtgr_au[et, er], A_au[et],],
+            )
+            checksum += Mtgr[et, er]
+        if checksum > 0.0:
+            assert checksum < 1.01
+
+        A_out[er], A_out_au[er] = utils.sum_elemnetwise_au(
+            x=tmp, x_au=tmp_au
+        )
+    return A_out, A_out_au
+
+
+def integrate_rates_in_reco_energy_with_mask(
+    Rreco, Rreco_au, integration_mask, integration_mask_au
+):
+    assert len(Rreco) == len(Rreco_au)
+    assert np.all(Rreco >= 0)
+    assert np.all(Rreco_au >= 0)
+    num_energy_bins = len(Rreco)
+
+    assert integration_mask.shape == integration_mask_au.shape
+    assert np.all(integration_mask >= 0)
+    assert np.all(integration_mask_au >= 0)
+
+    assert integration_mask.shape[0] == integration_mask.shape[1]
+    assert integration_mask.shape[0] == num_energy_bins
+
+    imask = integration_mask
+    imask_au = integration_mask_au
+
+    Rreco_total = np.zeros(num_energy_bins)
+    Rreco_total_au = np.zeros(num_energy_bins)
+
+    for ereco in range(num_energy_bins):
+        tmp_sum = np.zeros(num_energy_bins)
+        tmp_sum_au = np.zeros(num_energy_bins)
+        for etrue in range(num_energy_bins):
+            tmp_sum[etrue], tmp_sum_au[etrue] = utils.multiply_elemnetwise_au(
+                x=[imask[ereco, etrue], Rreco[etrue],],
+                x_au=[imask_au[ereco, etrue], Rreco_au[etrue],],
+            )
+        Rreco_total[ereco], Rreco_total_au[ereco] = utils.sum_elemnetwise_au(
+            x=tmp_sum, x_au=tmp_sum_au
+        )
+    return Rreco_total, Rreco_total_au
