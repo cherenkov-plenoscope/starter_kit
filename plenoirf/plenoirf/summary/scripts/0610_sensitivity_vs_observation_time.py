@@ -17,8 +17,13 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-diff_sensitivity = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0440_diff_sens_estimate")
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+
+# load
+# ----
+dS = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0540_diffsens_estimate")
 )
 
 diff_sens_scenario = sum_config["differential_sensitivity"][
@@ -62,7 +67,7 @@ output_sed_styles = {
     "cta": sed_styles.CHERENKOV_TELESCOPE_ARRAY_SED_STYLE,
 }
 
-oridx = 1
+ok = "large"
 dk = "broad_spectrum"
 
 enidx = irf.utils.find_closest_index_in_array_for_value(
@@ -74,9 +79,9 @@ e_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-10])  # np.array([1e3, 1e-16])
 
 
-for site_key in irf_config["config"]["sites"]:
+for sk in SITES:
 
-    observation_times = diff_sensitivity[site_key][dk]["observation_times"]
+    observation_times = dS[sk][ok][dk]["observation_times"]
 
     components = []
 
@@ -156,11 +161,11 @@ for site_key in irf_config["config"]["sites"]:
     # Plenoscope
     # ----------
 
-    portal_dFdE = diff_sensitivity[site_key][dk]["differential_flux"]
+    portal_dFdE = dS[sk][ok][dk]["differential_flux"]
     com = {}
     com["observation_time"] = observation_times
     com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(observation_times))
-    com["differential_flux"] = portal_dFdE[enidx, oridx, :]
+    com["differential_flux"] = portal_dFdE[enidx, :]
     com["label"] = "Portal"
     com["color"] = "black"
     com["alpha"] = 1.0
@@ -209,7 +214,7 @@ for site_key in irf_config["config"]["sites"]:
             os.path.join(
                 pa["out_dir"],
                 "{:s}_sensitivity_vs_obseravtion_time_{:s}.jpg".format(
-                    site_key, sed_style_key
+                    sk, sed_style_key
                 ),
             )
         )
