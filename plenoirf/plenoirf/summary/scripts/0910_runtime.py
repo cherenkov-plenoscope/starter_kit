@@ -31,9 +31,7 @@ def _num_events_in_runs(event_table, level_key, run_ids, key):
     num_events_in_run = {}
     for run_id in run_ids:
         num_events_in_run[run_id] = 0
-    event_run_ids = irf.random_seed.STRUCTURE.run_id_from_seed(
-        seed=event_table[level_key][spt.IDX]
-    )
+    event_run_ids, _ = irf.unique.split_uid(uid=event_table[level_key][spt.IDX])
     for event_run_id in event_run_ids:
         try:
             num_events_in_run[event_run_id] += 1
