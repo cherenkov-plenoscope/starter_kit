@@ -22,7 +22,7 @@ PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
-diff_sensitivity = json_numpy.read_tree(
+dS = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0540_diffsens_estimate")
 )
 
@@ -132,9 +132,7 @@ for sk in SITES:
             # Plenoscope diff
             # ---------------
             obstidx = find_observation_time_index(
-                observation_times=diff_sensitivity[sk][ok][dk][
-                    "observation_times"
-                ],
+                observation_times=dS[sk][ok][dk]["observation_times"],
                 observation_time=observation_time,
             )
 
@@ -147,12 +145,11 @@ for sk in SITES:
                 com["energy"].append(
                     [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
                 )
-                _dFdE_sens = diff_sensitivity[sk][ok][dk]["mean"][ii, obstidx]
+                _dFdE_sens = dS[sk][ok][dk]["differential_flux"][ii, obstidx]
                 com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
 
-                _dFdE_sens_au = diff_sensitivity[sk][ok][dk][
-                    "absolute_uncertainty"
-                ][ii, obstidx]
+                _dFdE_sens_au = dS[sk][ok][dk]["differential_flux_au"][
+                    ii, obstidx]
                 com["differential_flux_au"].append(
                     [_dFdE_sens_au, _dFdE_sens_au]
                 )

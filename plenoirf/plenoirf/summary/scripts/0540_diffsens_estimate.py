@@ -131,11 +131,11 @@ for sk in SITES:
                 {
                     "energy_binning_key": energy_bin["key"],
                     "observation_times": observation_times,
-                    "mean": critical_dKdE,
-                    "absolute_uncertainty": critical_dKdE_au,
+                    "differential_flux": critical_dKdE,
+                    "differential_flux_au": critical_dKdE_au,
                     "comment": (
-                        "Critical differential flux-sensitivity "
-                        "VS energy VS onregion-size VS observation-time"
+                        "Critical, differential flux-sensitivity "
+                        "VS energy VS observation-time"
                     ),
                 },
             )
