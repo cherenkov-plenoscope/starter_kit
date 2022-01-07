@@ -145,5 +145,9 @@ def add_corsika(prov, corsika_primary_path):
         prov["starter_kit"] = {}
     prov["starter_kit"]["corsika"] = {}
     prov["starter_kit"]["corsika"]["path"] = corsika_primary_path
-    prov["starter_kit"]["corsika"]["config"] = corsika_primary.collect_version_information.get_coconut_config_header(corsika_primary_path, strip=True)
+    prov["starter_kit"]["corsika"][
+        "config"
+    ] = corsika_primary.collect_version_information.get_coconut_config_header(
+        corsika_primary_path, strip=True
+    )
     return prov

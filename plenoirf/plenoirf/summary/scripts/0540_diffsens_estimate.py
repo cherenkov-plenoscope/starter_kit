@@ -34,7 +34,10 @@ R = json_numpy.read_tree(
 )
 
 S = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0538_diffsens_signal_area_and_background_rates_for_multiple_scenarios")
+    os.path.join(
+        pa["summary_dir"],
+        "0538_diffsens_signal_area_and_background_rates_for_multiple_scenarios",
+    )
 )
 
 detection_threshold_std = sum_config["on_off_measuremnent"][
@@ -67,7 +70,7 @@ for sk in SITES:
             print(sk, ok, dk)
 
             Areco = S[sk][ok][dk]["gamma"]["area"]["mean"]
-            Areco_au =S[sk][ok][dk]["gamma"]["area"]["absolute_uncertainty"]
+            Areco_au = S[sk][ok][dk]["gamma"]["area"]["absolute_uncertainty"]
 
             # total background rate in reco energy
             # -------------------------------------
@@ -78,10 +81,13 @@ for sk in SITES:
                 tmp_au = []
                 for ck in COSMIC_RAYS:
                     tmp.append(R[sk][ok][ck]["reco"]["mean"][ereco])
-                    tmp_au.append(R[sk][ok][ck]["reco"]["absolute_uncertainty"][ereco])
-                Rreco_total[ereco], Rreco_total_au[ereco] = irf.utils.sum_elemnetwise_au(
-                    x=tmp, x_au=tmp_au
-                )
+                    tmp_au.append(
+                        R[sk][ok][ck]["reco"]["absolute_uncertainty"][ereco]
+                    )
+                (
+                    Rreco_total[ereco],
+                    Rreco_total_au[ereco],
+                ) = irf.utils.sum_elemnetwise_au(x=tmp, x_au=tmp_au)
 
             Rreco_total_uu = Rreco_total + Rreco_total_au
             Areco_lu = Areco - Areco_au

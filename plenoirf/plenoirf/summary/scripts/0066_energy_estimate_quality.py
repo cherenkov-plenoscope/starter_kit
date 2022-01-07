@@ -184,7 +184,6 @@ for sk in SITES:
             )
             seb.close(fig)
 
-
         fig = seb.figure(seb.FIGURE_1_1)
         ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
         ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])

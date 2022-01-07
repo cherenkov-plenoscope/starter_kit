@@ -149,7 +149,8 @@ for sk in SITES:
                 com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
 
                 _dFdE_sens_au = dS[sk][ok][dk]["differential_flux_au"][
-                    ii, obstidx]
+                    ii, obstidx
+                ]
                 com["differential_flux_au"].append(
                     [_dFdE_sens_au, _dFdE_sens_au]
                 )

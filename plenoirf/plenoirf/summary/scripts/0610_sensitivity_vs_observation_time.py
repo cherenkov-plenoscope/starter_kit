@@ -99,9 +99,15 @@ for sk in SITES:
                 )
                 com = {}
                 com["observation_time"] = observation_times
-                com["energy"] = PIVOT_ENERGY_GEV * np.ones(len(observation_times))
-                com["differential_flux"] = _flux * np.ones(len(observation_times))
-                com["label"] = "{:1.1e} Crab".format(scale_factor) if i == 0 else None
+                com["energy"] = PIVOT_ENERGY_GEV * np.ones(
+                    len(observation_times)
+                )
+                com["differential_flux"] = _flux * np.ones(
+                    len(observation_times)
+                )
+                com["label"] = (
+                    "{:1.1e} Crab".format(scale_factor) if i == 0 else None
+                )
                 com["color"] = "k"
                 com["alpha"] = 0.25 / (1.0 + i)
                 com["linestyle"] = "--"
@@ -155,8 +161,12 @@ for sk in SITES:
             com["differential_flux"] = np.array(
                 cta_s_vs_t["differential_flux"]["values"]
             )
-            com["label"] = irf.other_instruments.cherenkov_telescope_array_south.LABEL
-            com["color"] = irf.other_instruments.cherenkov_telescope_array_south.COLOR
+            com[
+                "label"
+            ] = irf.other_instruments.cherenkov_telescope_array_south.LABEL
+            com[
+                "color"
+            ] = irf.other_instruments.cherenkov_telescope_array_south.COLOR
             com["alpha"] = 1.0
             com["linestyle"] = "-"
             components.append(com)
@@ -212,10 +222,15 @@ for sk in SITES:
                 ax.loglog()
                 # ax.legend(loc="best", fontsize=10)
                 ax.set_xlabel("observation-time / s")
-                ax.set_ylabel(sed_style["y_label"] + " /\n " + sed_style["y_unit"])
+                ax.set_ylabel(
+                    sed_style["y_label"] + " /\n " + sed_style["y_unit"]
+                )
                 fig.savefig(
                     os.path.join(
-                        pa["out_dir"], sk, ok, dk,
+                        pa["out_dir"],
+                        sk,
+                        ok,
+                        dk,
                         "sensitivity_vs_obseravtion_time_{:s}.jpg".format(
                             sed_style_key
                         ),

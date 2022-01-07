@@ -55,6 +55,7 @@ def assert_energy_migration_is_valid(M):
         if check > 0:
             assert 0.99 < check < 1.01
 
+
 diff_flux = {}
 for sk in SITES:
     diff_flux[sk] = {}

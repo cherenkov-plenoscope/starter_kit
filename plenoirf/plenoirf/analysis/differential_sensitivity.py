@@ -40,18 +40,10 @@ def estimate_differential_sensitivity(
 
 
 SCENARIOS = {
-    "perfect_energy": {
-        "energy_axes_label": "",
-    },
-    "broad_spectrum": {
-        "energy_axes_label": "reco.",
-    },
-    "line_spectrum": {
-        "energy_axes_label": "reco.",
-    },
-    "bell_spectrum": {
-        "energy_axes_label": "",
-    },
+    "perfect_energy": {"energy_axes_label": "",},
+    "broad_spectrum": {"energy_axes_label": "reco.",},
+    "line_spectrum": {"energy_axes_label": "reco.",},
+    "bell_spectrum": {"energy_axes_label": "",},
 }
 
 
@@ -66,14 +58,14 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
     if scenario_key == "perfect_energy":
         _s_cm = np.eye(N=s_cm.shape[0])
-        _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
+        _s_cm_u = np.zeros(shape=s_cm.shape)  # zero uncertainty
 
         _bg_integral_mask = np.eye(N=s_cm.shape[0])
         _energy_axes_label = ""
 
     elif scenario_key == "broad_spectrum":
         _s_cm = np.array(s_cm)
-        _s_cm_u = np.array(s_cm_u) # adopt as is
+        _s_cm_u = np.array(s_cm_u)  # adopt as is
 
         _bg_integral_mask = np.eye(N=s_cm.shape[0])
         _energy_axes_label = "reco."
@@ -81,19 +73,19 @@ def make_energy_confusion_matrices_for_signal_and_background(
     elif scenario_key == "line_spectrum":
         eye = np.eye(N=s_cm.shape[0])
         _s_cm = eye * np.diag(s_cm)
-        _s_cm_u = eye * np.diag(s_cm_u) # only the diagonal
+        _s_cm_u = eye * np.diag(s_cm_u)  # only the diagonal
 
         _bg_integral_mask = np.eye(N=s_cm.shape[0])
         _energy_axes_label = "reco."
 
     elif scenario_key == "bell_spectrum":
         containment = 0.68
-        _s_cm = containment * np.eye(N=s_cm.shape[0]) # true energy for gammas
-        _s_cm_u = np.zeros(shape=s_cm.shape) # zero uncertainty
+        _s_cm = containment * np.eye(N=s_cm.shape[0])  # true energy for gammas
+        _s_cm_u = np.zeros(shape=s_cm.shape)  # zero uncertainty
 
         _bg_integral_mask = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
             probability_true_given_reco=probability_true_given_reco,
-            containment=containment
+            containment=containment,
         )
         _energy_axes_label = ""
 
@@ -135,9 +127,7 @@ def estimate_critical_rate_vs_energy(
 
 
 def next_containment_and_weight(
-    accumulated_containment,
-    bin_containment,
-    target_containment,
+    accumulated_containment, bin_containment, target_containment,
 ):
     assert 0 <= accumulated_containment <= 1
     assert 0 <= bin_containment <= 1
@@ -158,8 +148,7 @@ def next_containment_and_weight(
 
 
 def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
-    probability_true_given_reco,
-    containment=0.68
+    probability_true_given_reco, containment=0.68
 ):
     # ax0 -> true
     # ax1 -> reco
@@ -178,7 +167,7 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
             accumulated_containment, weight = next_containment_and_weight(
                 accumulated_containment=accumulated_containment,
                 bin_containment=M[true_best, reco],
-                target_containment=containment
+                target_containment=containment,
             )
 
             mask[true_best, reco] = weight
@@ -190,7 +179,7 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
                     accumulated_containment, w = next_containment_and_weight(
                         accumulated_containment=accumulated_containment,
                         bin_containment=M[start, reco],
-                        target_containment=containment
+                        target_containment=containment,
                     )
                     mask[start, reco] = w
                     start -= 1
@@ -201,7 +190,7 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
                     accumulated_containment, w = next_containment_and_weight(
                         accumulated_containment=accumulated_containment,
                         bin_containment=M[stop, reco],
-                        target_containment=containment
+                        target_containment=containment,
                     )
                     mask[stop, reco] = w
                     stop += 1
@@ -212,14 +201,12 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
                     break
 
                 i += 1
-                assert i < 2*num_bins
+                assert i < 2 * num_bins
     return mask
 
 
 def derive_migration_matrix_by_ax0(
-    migration_matrix_counts,
-    migration_matrix_counts_abs_unc,
-    ax0_bin_widths,
+    migration_matrix_counts, migration_matrix_counts_abs_unc, ax0_bin_widths,
 ):
     M = migration_matrix_counts
     M_au = migration_matrix_counts_abs_unc
@@ -232,7 +219,6 @@ def derive_migration_matrix_by_ax0(
             dMdE[:, i1] = M[:, i1] / ax0_bin_widths[:]
             dMdE_au[:, i1] = M_au[:, i1] / ax0_bin_widths[:]
     return dMdE, dMdE_au
-
 
 
 def derive_all_energy_migration(energy_migration, energy_bin_width):
@@ -253,10 +239,13 @@ def derive_all_energy_migration(energy_migration, energy_bin_width):
             counts_abs_unc = M["counts_abs_unc"]
 
             (
-                dMdE["counts"], dMdE["counts_abs_unc"]
+                dMdE["counts"],
+                dMdE["counts_abs_unc"],
             ) = derive_migration_matrix_by_ax0(
                 migration_matrix_counts=M["counts_normalized_on_ax0"],
-                migration_matrix_counts_abs_unc=M["counts_normalized_on_ax0_abs_unc"],
+                migration_matrix_counts_abs_unc=M[
+                    "counts_normalized_on_ax0_abs_unc"
+                ],
                 ax0_bin_widths=energy_bin_width,
             )
             out[sk][pk] = dMdE
@@ -265,10 +254,7 @@ def derive_all_energy_migration(energy_migration, energy_bin_width):
 
 
 def make_area_in_reco_energy(
-    area,
-    area_au,
-    probability_true_given_reco,
-    probability_true_given_reco_au,
+    area, area_au, probability_true_given_reco, probability_true_given_reco_au,
 ):
     A = area
     A_au = area_au
@@ -296,16 +282,13 @@ def make_area_in_reco_energy(
 
         for et in range(num_bins):
             tmp[et], tmp_au[et] = utils.multiply_elemnetwise_au(
-                x=[Mtgr[et, er], A[et],],
-                x_au=[Mtgr_au[et, er], A_au[et],],
+                x=[Mtgr[et, er], A[et],], x_au=[Mtgr_au[et, er], A_au[et],],
             )
             checksum += Mtgr[et, er]
         if checksum > 0.0:
             assert checksum < 1.01
 
-        A_out[er], A_out_au[er] = utils.sum_elemnetwise_au(
-            x=tmp, x_au=tmp_au
-        )
+        A_out[er], A_out_au[er] = utils.sum_elemnetwise_au(x=tmp, x_au=tmp_au)
     return A_out, A_out_au
 
 

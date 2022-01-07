@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 from . import integral_sensitivity
 
+
 def estimate_integral_spectral_exclusion_zone(
     effective_area_bins_m2,
     effective_area_energy_bin_edges_GeV,
@@ -27,9 +28,7 @@ def estimate_integral_spectral_exclusion_zone(
         effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
         critical_rate_per_s=critical_rate_per_s,
         power_law_spectral_indices=np.linspace(
-            gamma_range[0],
-            gamma_range[1],
-            num_points
+            gamma_range[0], gamma_range[1], num_points
         ),
     )
 

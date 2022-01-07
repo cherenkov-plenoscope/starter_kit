@@ -3,6 +3,7 @@ import cosmic_fluxes
 import lima1983analysis
 from .. import utils
 
+
 def estimate_detection_rate_per_s_for_power_law(
     effective_area_bins_m2,
     effective_area_energy_bin_centers_GeV,
@@ -29,7 +30,7 @@ def estimate_detection_rate_per_s_for_power_law(
 
 
 def relative_ratio(a, b):
-    return np.abs(a - b)/(0.5 * (a + b))
+    return np.abs(a - b) / (0.5 * (a + b))
 
 
 def find_intersection_two_lines(sup1, slope1, sup2, slope2):
@@ -54,7 +55,7 @@ def estimate_tangent_of_critical_power_laws(critical_power_laws):
             slope2=slopes[ll + 1],
         )
         _E = 10 ** log10_E
-        log10_F = supports[ll] + slopes[ll]*(log10_E)
+        log10_F = supports[ll] + slopes[ll] * (log10_E)
         _F = 10 ** log10_F
         energy_GeV.append(_E)
         flux_density_per_m2_per_GeV_per_s.append(_F)
@@ -72,8 +73,8 @@ def estimate_critical_power_laws(
     max_num_iterations=10000,
 ):
     assert (
-        len(effective_area_energy_bin_edges_GeV) ==
-        len(effective_area_bins_m2) + 1
+        len(effective_area_energy_bin_edges_GeV)
+        == len(effective_area_bins_m2) + 1
     )
 
     assert np.all(effective_area_bins_m2 >= 0.0)
@@ -111,11 +112,11 @@ def estimate_critical_power_laws(
             if ratio < margin:
                 break
 
-            rr = ratio/3
+            rr = ratio / 3
             if detection_rate_per_s > critical_rate_per_s:
-                flux *= (1-rr)
+                flux *= 1 - rr
             else:
-                flux *= (1+rr)
+                flux *= 1 + rr
 
             iteration += 1
 
@@ -149,26 +150,27 @@ def estimate_critical_rate(
         sig_count_stat_on = lima1983analysis.estimate_N_s_eq9(
             N_off=bg_count_off,
             alpha=onregion_over_offregion_ratio,
-            S=detection_threshold_std)
+            S=detection_threshold_std,
+        )
     elif method == "LiMaEq17":
         sig_count_stat_on = lima1983analysis.estimate_N_s_eq17(
             N_off=bg_count_off,
             alpha=onregion_over_offregion_ratio,
             S=detection_threshold_std,
             margin=1e-4,
-            max_num_iterations=10*1000)
+            max_num_iterations=10 * 1000,
+        )
     else:
         raise KeyError("Unknown method: '{:s}'".format(method))
 
     sig_count_sys_on = (
-        detection_threshold_std *
-        instrument_systematic_uncertainty *
-        background_rate_in_onregion_per_s *
-        observation_time_s
+        detection_threshold_std
+        * instrument_systematic_uncertainty
+        * background_rate_in_onregion_per_s
+        * observation_time_s
     )
 
     sig_count_on = np.max([sig_count_stat_on, sig_count_sys_on])
-
 
     sig_rate_on_per_s = sig_count_on / observation_time_s
     return sig_rate_on_per_s

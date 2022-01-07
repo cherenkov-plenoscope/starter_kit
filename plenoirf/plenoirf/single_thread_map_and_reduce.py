@@ -1,4 +1,3 @@
-
 def map(func, iterable):
     """
     Retunrs list with results of 'func' for 'iterable'.

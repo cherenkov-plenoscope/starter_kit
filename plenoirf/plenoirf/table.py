@@ -386,7 +386,9 @@ STRUCTURE["features"]["image_num_islands"] = {
 
 _traj = {}
 
-_traj_xy_comment = "Primary particle's core-position w.r.t. principal aperture-plane."
+_traj_xy_comment = (
+    "Primary particle's core-position w.r.t. principal aperture-plane."
+)
 _traj["x_m"] = {
     "dtype": "<f8",
     "comment": _traj_xy_comment,
@@ -411,8 +413,8 @@ _traj["cy_rad"] = {
 }
 
 _traj_cxy_comment_fuzzy = (
-    "Primary particle's direction w.r.t. " +
-    "pointing according to fuzzy-estimator."
+    "Primary particle's direction w.r.t. "
+    + "pointing according to fuzzy-estimator."
 )
 _traj["fuzzy_cx_rad"] = {
     "dtype": "<f8",

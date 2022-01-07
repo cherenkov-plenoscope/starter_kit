@@ -114,9 +114,9 @@ def make_trigger_modus_str(analysis_trigger, production_trigger):
 
 def dict_to_pretty_str(dictionary):
     ss = json_numpy.dumps(dictionary, indent=2)
-    ss = ss.replace('"', '')
-    ss = ss.replace('{', '')
-    ss = ss.replace('}', '')
+    ss = ss.replace('"', "")
+    ss = ss.replace("{", "")
+    ss = ss.replace("}", "")
     oss = io.StringIO()
     for line in ss.splitlines():
         if len(line) > 0:
@@ -309,11 +309,7 @@ with doc.create(ltx.Section("Performance", numbering=False)):
 with doc.create(ltx.Section("Site", numbering=False)):
     doc.append(sk)
     doc.append(
-        noesc(
-            Verbatim(
-                dict_to_pretty_str(irf_config["config"]["sites"][sk])
-            )
-        )
+        noesc(Verbatim(dict_to_pretty_str(irf_config["config"]["sites"][sk])))
     )
     doc.append(
         noesc(

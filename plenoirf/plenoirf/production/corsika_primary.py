@@ -31,12 +31,7 @@ def _assert_particle(particle):
 
 
 def draw_corsika_primary_steering(
-    run_id,
-    site,
-    particle,
-    site_particle_deflection,
-    num_events,
-    prng,
+    run_id, site, particle, site_particle_deflection, num_events, prng,
 ):
     assert run_id > 0
     _assert_site(site)
@@ -74,7 +69,7 @@ def draw_corsika_primary_steering(
         "atmosphere_id": i8(site["atmosphere_id"]),
         "energy_range": {
             "start_GeV": f8(start_energy_GeV),
-            "stop_GeV": f8(stop_energy_GeV)
+            "stop_GeV": f8(stop_energy_GeV),
         },
         "random_seed": cpw.random.seed.make_simple_seed(run_id),
     }
@@ -121,4 +116,7 @@ def draw_corsika_primary_steering(
         prm["depth_g_per_cm2"] = f8(0.0)
         primaries.append(prm)
 
-    return {"run": run, "primaries": primaries,}
+    return {
+        "run": run,
+        "primaries": primaries,
+    }

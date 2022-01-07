@@ -31,7 +31,10 @@ acceptance = json_numpy.read_tree(
 )
 
 scenarios = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0538_diffsens_signal_area_and_background_rates_for_multiple_scenarios")
+    os.path.join(
+        pa["summary_dir"],
+        "0538_diffsens_signal_area_and_background_rates_for_multiple_scenarios",
+    )
 )
 
 # plot
@@ -49,7 +52,9 @@ for sk in SITES:
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
             for ck in COSMIC_RAYS:
                 ck_Rt = scenarios[sk][ok][dk][ck]["rate"]["mean"]
-                ck_Rt_au = scenarios[sk][ok][dk][ck]["rate"]["absolute_uncertainty"]
+                ck_Rt_au = scenarios[sk][ok][dk][ck]["rate"][
+                    "absolute_uncertainty"
+                ]
                 seb.ax_add_histogram(
                     ax=ax,
                     bin_edges=energy_bin["edges"],
@@ -70,19 +75,22 @@ for sk in SITES:
             ax.loglog()
             fig.savefig(
                 os.path.join(
-                    pa["out_dir"], sk , ok , dk +"_rate_vs_reco_energy.jpg",
+                    pa["out_dir"], sk, ok, dk + "_rate_vs_reco_energy.jpg",
                 )
             )
             seb.close(fig)
 
-
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
             A_gamma_scenario = scenarios[sk][ok][dk]["gamma"]["area"]["mean"]
-            A_gamma_scenario_au = scenarios[sk][ok][dk]["gamma"]["area"]["absolute_uncertainty"]
+            A_gamma_scenario_au = scenarios[sk][ok][dk]["gamma"]["area"][
+                "absolute_uncertainty"
+            ]
 
             A_gamma = acceptance[sk][ok]["gamma"]["point"]["mean"]
-            A_gamma_au = acceptance[sk][ok]["gamma"]["point"]["absolute_uncertainty"]
+            A_gamma_au = acceptance[sk][ok]["gamma"]["point"][
+                "absolute_uncertainty"
+            ]
 
             seb.ax_add_histogram(
                 ax=ax,
@@ -98,25 +106,19 @@ for sk in SITES:
                 label=None,
                 draw_bin_walls=False,
             )
-            ax.plot(
-                energy_bin["centers"],
-                A_gamma,
-                "+k"
-            )
+            ax.plot(energy_bin["centers"], A_gamma, "+k")
             ax.set_ylabel("area / m$^{2}$")
             ax.set_xlabel("reco. energy / GeV")
             ax.set_ylim([1e0, 1e6])
             ax.loglog()
-            fig.savefig(
-                os.path.join(
-                    pa["out_dir"], sk , ok , dk +"_area.jpg",
-                )
-            )
+            fig.savefig(os.path.join(pa["out_dir"], sk, ok, dk + "_area.jpg",))
             seb.close(fig)
 
             # probability_true_given_reco
             # ---------------------------
-            M = scenarios[sk][ok][dk]["gamma"]["scenario"]["probability_true_given_reco"]
+            M = scenarios[sk][ok][dk]["gamma"]["scenario"][
+                "probability_true_given_reco"
+            ]
             fig = seb.figure(seb.FIGURE_1_1)
             ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
             ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
@@ -134,16 +136,14 @@ for sk in SITES:
             ax_c.set_ylabel("reco. energy / GeV")
             ax_c.loglog()
             ax_c.set_xlabel("energy / GeV")
-            fig.savefig(
-                os.path.join(
-                    pa["out_dir"], sk , ok , dk +"_M.jpg",
-                )
-            )
+            fig.savefig(os.path.join(pa["out_dir"], sk, ok, dk + "_M.jpg",))
             seb.close(fig)
 
             # background_integral_mask
             # ------------------------
-            M = scenarios[sk][ok][dk]["gamma"]["scenario"]["background_integral_mask"]
+            M = scenarios[sk][ok][dk]["gamma"]["scenario"][
+                "background_integral_mask"
+            ]
             fig = seb.figure(seb.FIGURE_1_1)
             ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
             ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
@@ -162,7 +162,10 @@ for sk in SITES:
             ax_c.set_xlabel("energy / GeV")
             fig.savefig(
                 os.path.join(
-                    pa["out_dir"], sk , ok , dk +"_background_integral_mask.jpg",
+                    pa["out_dir"],
+                    sk,
+                    ok,
+                    dk + "_background_integral_mask.jpg",
                 )
             )
             seb.close(fig)

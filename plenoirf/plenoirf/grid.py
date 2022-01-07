@@ -102,7 +102,7 @@ def cut_cherenkov_bunches_in_field_of_view(
 ):
     bunch_directions = _make_bunch_direction(
         cx=cherenkov_bunches[:, cpw.I.BUNCH.CX],
-        cy=cherenkov_bunches[:, cpw.I.BUNCH.CY]
+        cy=cherenkov_bunches[:, cpw.I.BUNCH.CY],
     )
     bunch_incidents = -1.0 * bunch_directions
     angle_bunch_pointing = _make_angle_between(
@@ -225,8 +225,12 @@ def assign(
             )
             assert False, msg
         choice["cherenkov_bunches"] = bunches_in_fov[match_bin, :].copy()
-        choice["cherenkov_bunches"][:, cpw.I.BUNCH.X] -= M2CM * choice["core_x_m"]
-        choice["cherenkov_bunches"][:, cpw.I.BUNCH.Y] -= M2CM * choice["core_y_m"]
+        choice["cherenkov_bunches"][:, cpw.I.BUNCH.X] -= (
+            M2CM * choice["core_x_m"]
+        )
+        choice["cherenkov_bunches"][:, cpw.I.BUNCH.Y] -= (
+            M2CM * choice["core_y_m"]
+        )
 
     out = {}
     out["random_choice"] = choice
@@ -277,9 +281,7 @@ def read_histograms(path, indices=None):
         grids = {}
         with tarfile.open(path, "r") as tarfin:
             for tarinfo in tarfin:
-                idx = int(
-                    tarinfo.name[0 : unique.UID_NUM_DIGITS]
-                )
+                idx = int(tarinfo.name[0 : unique.UID_NUM_DIGITS])
                 if idx in indices_set:
                     grids[idx] = tarfin.extractfile(tarinfo).read()
         return grids

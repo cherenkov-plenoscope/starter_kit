@@ -85,9 +85,7 @@ def effective_quantity_for_grid(
     )[0]
 
     count_thrown = np.histogram(
-        energy_GeV,
-        weights=total_num_grid_cells,
-        bins=energy_bin_edges_GeV,
+        energy_GeV, weights=total_num_grid_cells, bins=energy_bin_edges_GeV,
     )[0]
 
     effective_quantity = utils._divide_silent(

@@ -11,7 +11,7 @@ SOURCES = {
         "limits": {
             "passed_trigger": [1e-1, 1e5],
             "passed_all_cuts": [1e-1, 1e5],
-        }
+        },
     },
     "point": {
         "label": "area",
@@ -20,8 +20,9 @@ SOURCES = {
             "passed_trigger": [1e1, 1e6],
             "passed_all_cuts": [1e1, 1e6],
         },
-    }
+    },
 }
+
 
 def mark_ax_airshower_spectrum(ax, x=0.93, y=0.93, fontsize=42):
     ax.text(

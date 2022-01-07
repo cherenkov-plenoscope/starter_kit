@@ -221,7 +221,7 @@ def _guess_summary_config(run_dir):
         "ellipticity_scaling": {
             "reco_core_radius_m": [0.0, 2.5e2, 5e2, 1e3],
             "scale": [1.0, 1.0, 1.0, 1.0],
-        }
+        },
     }
 
     summary_config = {

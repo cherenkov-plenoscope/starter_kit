@@ -18,6 +18,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
+
 def read_csv_records(path):
     return pd.read_csv(path).to_records(index=False)
 
@@ -33,7 +34,9 @@ def _num_events_in_runs(event_table, level_key, run_ids, key):
     num_events_in_run = {}
     for run_id in run_ids:
         num_events_in_run[run_id] = 0
-    event_run_ids, _ = irf.unique.split_uid(uid=event_table[level_key][spt.IDX])
+    event_run_ids, _ = irf.unique.split_uid(
+        uid=event_table[level_key][spt.IDX]
+    )
     for event_run_id in event_run_ids:
         try:
             num_events_in_run[event_run_id] += 1
@@ -178,22 +181,12 @@ for sk in SITES:
         else:
             event_table = spt.read(
                 path=os.path.join(
-                    pa["run_dir"],
-                    "event_table",
-                    sk,
-                    pk,
-                    "event_table.tar",
+                    pa["run_dir"], "event_table", sk, pk, "event_table.tar",
                 ),
                 structure=irf.table.STRUCTURE,
             )
             runtime_table = read_csv_records(
-                opj(
-                    pa["run_dir"],
-                    "event_table",
-                    sk,
-                    pk,
-                    "runtime.csv",
-                )
+                opj(pa["run_dir"], "event_table", sk, pk, "runtime.csv",)
             )
             extended_runtime_table = merge_event_table(
                 runtime_table=runtime_table, event_table=event_table

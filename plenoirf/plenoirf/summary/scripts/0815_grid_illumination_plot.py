@@ -44,13 +44,7 @@ for sk in SITES:
         # read
         # ----
         detected_grid_histograms = irf.grid.read_histograms(
-            path=opj(
-                pa["run_dir"],
-                "event_table",
-                sk,
-                pk,
-                "grid.tar",
-            ),
+            path=opj(pa["run_dir"], "event_table", sk, pk, "grid.tar",),
             indices=passing_trigger[sk][pk]["idx"],
         )
         idx_passed_trigger_and_in_debug_output = np.array(
@@ -59,11 +53,7 @@ for sk in SITES:
 
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"],
-                "event_table",
-                sk,
-                pk,
-                "event_table.tar",
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )

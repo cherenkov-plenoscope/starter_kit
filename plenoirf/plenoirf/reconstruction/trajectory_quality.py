@@ -24,13 +24,11 @@ def make_rectangular_table(event_table, plenoscope_pointing):
     df["true_trajectory/x_m"] = -df["core/core_x_m"]
     df["true_trajectory/y_m"] = -df["core/core_y_m"]
     df["true_trajectory/r_m"] = np.hypot(
-        df["true_trajectory/x_m"],
-        df["true_trajectory/y_m"]
+        df["true_trajectory/x_m"], df["true_trajectory/y_m"]
     )
 
     df["reconstructed_trajectory/r_m"] = np.hypot(
-        df["reconstructed_trajectory/x_m"],
-        df["reconstructed_trajectory/y_m"]
+        df["reconstructed_trajectory/x_m"], df["reconstructed_trajectory/y_m"]
     )
 
     # w.r.t. source
