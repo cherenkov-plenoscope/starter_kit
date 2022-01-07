@@ -17,7 +17,6 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-
 production_dirname = irf.summary.production_name_from_run_dir(pa["run_dir"])
 fname = os.path.join(pa["summary_dir"], "{:s}_ltx".format(production_dirname))
 
@@ -25,7 +24,10 @@ BIB_REFERENCES_PATH = os.path.join(
     os.getcwd(), "sebastians_references", "references"
 )
 
-site_key = "namibia"
+sk = "namibia"
+ok = "large"
+dk = "bell_spectrum"
+
 SED_STYLE_KEY = "portal"
 
 geometry_options = {
@@ -130,10 +132,10 @@ def ppath(*args):
     return os.path.abspath(p2)
 
 
-def get_total_trigger_rate_at_analysis_threshold(site_key):
+def get_total_trigger_rate_at_analysis_threshold(sk):
     trigger_rates_by_origin = json_numpy.read_tree(
         ppath(pa["summary_dir"], "0131_trigger_rates_total")
-    )[site_key]["trigger_rates_by_origin"]
+    )[sk]["trigger_rates_by_origin"]
 
     idx = trigger_rates_by_origin["analysis_trigger_threshold_idx"]
     total_rate_per_s = 0.0
@@ -152,48 +154,54 @@ analysis_provenance = read_json_but_forgive(
 energy_resolution_figure_path = ppath(
     pa["summary_dir"],
     "0066_energy_estimate_quality",
-    site_key + "_gamma_resolution.jpg",
+    sk + "_gamma_resolution.jpg",
 )
-energy_confusion_figure_path = ppath(
-    pa["summary_dir"], "0066_energy_estimate_quality", site_key + "_gamma.jpg",
-)
+assert os.path.exists(energy_resolution_figure_path)
 
+energy_confusion_figure_path = ppath(
+    pa["summary_dir"], "0066_energy_estimate_quality", sk + "_gamma.jpg",
+)
+assert os.path.exists(energy_confusion_figure_path)
 
 angular_resolution_figure_path = ppath(
-    pa["summary_dir"], "0230_point_spread_function", site_key + "_gamma.jpg"
+    pa["summary_dir"], "0230_point_spread_function", sk + "_gamma.jpg"
 )
+assert os.path.exists(angular_resolution_figure_path)
 
 differential_sensitivity_figure_path = ppath(
     pa["summary_dir"],
-    "0330_differential_sensitivity_plot",
-    site_key,
-    "sed_style_{:s}".format(SED_STYLE_KEY),
-    site_key
-    + "_differential_sensitivity_sed_style_{:s}_scenario_broad_spectrum.jpg".format(
-        SED_STYLE_KEY
+    "0550_diffsens_plot",
+    sk,
+    ok,
+    SED_STYLE_KEY,
+    "{:s}_{:s}_{:s}_differential_sensitivity_sed_style_{:s}.jpg".format(
+        sk, ok, dk, SED_STYLE_KEY
     ),
 )
+assert os.path.exists(differential_sensitivity_figure_path)
 
 sens_vs_observation_time_figure_path = ppath(
     pa["summary_dir"],
     "0610_sensitivity_vs_observation_time",
-    site_key
-    + "_sensitivity_vs_obseravtion_time_{:s}.jpg".format(SED_STYLE_KEY),
+    sk,
+    ok,
+    dk,
+    "sensitivity_vs_obseravtion_time_{:s}.jpg".format(SED_STYLE_KEY),
 )
+assert os.path.exists(sens_vs_observation_time_figure_path)
 
 ratescan_figure_path = ppath(
-    pa["summary_dir"], "0130_trigger_ratescan_plot", site_key + "_ratescan.jpg"
+    pa["summary_dir"], "0130_trigger_ratescan_plot", sk + "_ratescan.jpg"
 )
+assert os.path.exists(ratescan_figure_path)
 
 diff_trigger_rates_figure_path = ppath(
     pa["summary_dir"],
     "0106_trigger_rates_for_cosmic_particles_plot",
-    site_key + "_differential_trigger_rate.jpg",
+    sk + "_differential_trigger_rate.jpg",
 )
 
-total_trigger_rate_per_s = get_total_trigger_rate_at_analysis_threshold(
-    site_key
-)
+total_trigger_rate_per_s = get_total_trigger_rate_at_analysis_threshold(sk)
 total_trigger_rate_per_s_ltx = irf.utils.latex_scientific(
     real=total_trigger_rate_per_s, format_template="{:.3e}"
 )
@@ -299,11 +307,11 @@ with doc.create(ltx.Section("Performance", numbering=False)):
 # doc.append(noesc(r"\columnbreak"))
 
 with doc.create(ltx.Section("Site", numbering=False)):
-    doc.append(site_key)
+    doc.append(sk)
     doc.append(
         noesc(
             Verbatim(
-                dict_to_pretty_str(irf_config["config"]["sites"][site_key])
+                dict_to_pretty_str(irf_config["config"]["sites"][sk])
             )
         )
     )
@@ -322,7 +330,7 @@ with doc.create(ltx.Section("Site", numbering=False)):
             ppath(
                 pa["summary_dir"],
                 "0016_flux_of_airshowers_plot",
-                site_key + "_airshower_differential_flux.jpg",
+                sk + "_airshower_differential_flux.jpg",
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -360,7 +368,7 @@ with doc.create(ltx.Section("Trigger", numbering=False)):
             ppath(
                 pa["summary_dir"],
                 "0071_trigger_probability_vs_cherenkov_size_plot",
-                site_key + "_trigger_probability_vs_cherenkov_size.jpg",
+                sk + "_trigger_probability_vs_cherenkov_size.jpg",
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -372,7 +380,7 @@ with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
             ppath(
                 pa["summary_dir"],
                 "0101_trigger_acceptance_for_cosmic_particles_plot",
-                site_key + "_diffuse.jpg",
+                sk + "_diffuse.jpg",
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -382,7 +390,7 @@ with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
             ppath(
                 pa["summary_dir"],
                 "0101_trigger_acceptance_for_cosmic_particles_plot",
-                site_key + "_point.jpg",
+                sk + "_point.jpg",
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -410,7 +418,7 @@ with doc.create(
             ppath(
                 pa["summary_dir"],
                 "0060_cherenkov_photon_classification_plot",
-                site_key + "_gamma_confusion.jpg",
+                sk + "_gamma_confusion.jpg",
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -423,7 +431,7 @@ with doc.create(
             ppath(
                 pa["summary_dir"],
                 "0060_cherenkov_photon_classification_plot",
-                site_key + "_gamma_sensitivity_vs_true_energy.jpg",
+                sk + "_gamma_sensitivity_vs_true_energy.jpg",
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -445,7 +453,7 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
             ppath(
                 pa["summary_dir"],
                 "0301_onregion_trigger_acceptance_plot",
-                site_key + "_diffuse.jpg",
+                "{:s}_{:s}_diffuse.jpg".format(sk, ok),
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -456,7 +464,7 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
             ppath(
                 pa["summary_dir"],
                 "0301_onregion_trigger_acceptance_plot",
-                site_key + "_point.jpg",
+                "{:s}_{:s}_point.jpg".format(sk, ok),
             ),
             width=noesc(r"1.0\linewidth"),
         )
@@ -467,8 +475,7 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
             ppath(
                 pa["summary_dir"],
                 "0325_onregion_trigger_rates_for_cosmic_rays_plot",
-                site_key
-                + "_differential_event_rates_in_onregion_onr000001.jpg",
+                "{:s}_{:s}_differential_event_rates.jpg".format(sk, ok),
             ),
             width=noesc(r"1.0\linewidth"),
         )
