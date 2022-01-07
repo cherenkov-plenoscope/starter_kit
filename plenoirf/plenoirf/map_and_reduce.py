@@ -151,13 +151,12 @@ def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = airshower_dict
     assert cb.shape[0] > 0
-    CM2M = 1e2
-    ase["maximum_asl_m"] = CM2M * np.median(cb[:, cpw.I.BUNCH.ZEM])
+    ase["maximum_asl_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.ZEM])
     ase["wavelength_median_nm"] = np.abs(np.median(cb[:, cpw.I.BUNCH.WVL]))
     ase["cx_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CX])
     ase["cy_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CY])
-    ase["x_median_m"] = CM2M * np.median(cb[:, cpw.I.BUNCH.X])
-    ase["y_median_m"] = CM2M * np.median(cb[:, cpw.I.BUNCH.Y])
+    ase["x_median_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.X])
+    ase["y_median_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.Y])
     ase["bunch_size_median"] = np.median(cb[:, cpw.I.BUNCH.BSIZE])
     return ase
 

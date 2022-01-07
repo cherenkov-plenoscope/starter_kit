@@ -16,6 +16,9 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+
 weights_thrown2expected = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"],
@@ -38,8 +41,8 @@ min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
 
 distance_bin_edges = np.geomspace(5e3, 25e3, num_bins + 1)
 
-for sk in irf_config["config"]["sites"]:
-    for pk in irf_config["config"]["particles"]:
+for sk in SITES:
+    for pk in PARTICLES:
         event_table = spt.read(
             path=os.path.join(
                 pa["run_dir"], "event_table", sk, pk, "event_table.tar",
