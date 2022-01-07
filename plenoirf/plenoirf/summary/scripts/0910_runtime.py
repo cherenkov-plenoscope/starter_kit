@@ -15,6 +15,8 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
 
 def read_csv_records(path):
     return pd.read_csv(path).to_records(index=False)
@@ -166,9 +168,9 @@ def write_speed(table, out_path, figure_style):
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-for site_key in irf_config["config"]["sites"]:
-    for particle_key in irf_config["config"]["particles"]:
-        prefix_str = "{:s}_{:s}".format(site_key, particle_key)
+for sk in SITES:
+    for pk in PARTICLES:
+        prefix_str = "{:s}_{:s}".format(sk, pk)
 
         extended_runtime_path = opj(pa["out_dir"], prefix_str + "_runtime.csv")
         if os.path.exists(extended_runtime_path):
@@ -178,8 +180,8 @@ for site_key in irf_config["config"]["sites"]:
                 path=os.path.join(
                     pa["run_dir"],
                     "event_table",
-                    site_key,
-                    particle_key,
+                    sk,
+                    pk,
                     "event_table.tar",
                 ),
                 structure=irf.table.STRUCTURE,
@@ -188,8 +190,8 @@ for site_key in irf_config["config"]["sites"]:
                 opj(
                     pa["run_dir"],
                     "event_table",
-                    site_key,
-                    particle_key,
+                    sk,
+                    pk,
                     "runtime.csv",
                 )
             )
