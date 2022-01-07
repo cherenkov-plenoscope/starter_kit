@@ -14,6 +14,11 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
+os.makedirs(pa["out_dir"], exist_ok=True)
+
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+
 passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
@@ -32,11 +37,9 @@ MAX_CHERENKOV_INTENSITY = (
 
 FIGURE_STYLE = {"rows": 1080, "cols": 1350, "fontsize": 1}
 
-os.makedirs(pa["out_dir"], exist_ok=True)
-
-for site_key in irf_config["config"]["sites"]:
-    for particle_key in irf_config["config"]["particles"]:
-        prefix_str = "{:s}_{:s}".format(site_key, particle_key)
+for sk in SITES:
+    for pk in PARTICLES:
+        prefix_str = "{:s}_{:s}".format(sk, pk)
 
         # read
         # ----
@@ -44,11 +47,11 @@ for site_key in irf_config["config"]["sites"]:
             path=opj(
                 pa["run_dir"],
                 "event_table",
-                site_key,
-                particle_key,
+                sk,
+                pk,
                 "grid.tar",
             ),
-            indices=passing_trigger[site_key][particle_key]["idx"],
+            indices=passing_trigger[sk][pk]["idx"],
         )
         idx_passed_trigger_and_in_debug_output = np.array(
             list(detected_grid_histograms.keys())
@@ -58,8 +61,8 @@ for site_key in irf_config["config"]["sites"]:
             path=os.path.join(
                 pa["run_dir"],
                 "event_table",
-                site_key,
-                particle_key,
+                sk,
+                pk,
                 "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,

@@ -6,6 +6,7 @@ import tarfile
 import shutil
 import json_numpy
 import corsika_primary as cpw
+from . import unique
 
 
 def init_geometry(
@@ -255,7 +256,7 @@ def bytes_to_histogram(img_bytes_gz):
 
 # histograms
 # ----------
-# A dict with the random_seed as key for the airshowers, containing the
+# A dict with the unique-id (uid) as key for the airshowers, containing the
 # gzip-bytes to be read with bytes_to_histogram()
 
 
@@ -263,7 +264,7 @@ def read_all_histograms(path):
     grids = {}
     with tarfile.open(path, "r") as tarfin:
         for tarinfo in tarfin:
-            idx = int(tarinfo.name[0 : random_seed.STRUCTURE.NUM_DIGITS_SEED])
+            idx = int(tarinfo.name[0 : unique.UID_NUM_DIGITS])
             grids[idx] = tarfin.extractfile(tarinfo).read()
     return grids
 
@@ -277,7 +278,7 @@ def read_histograms(path, indices=None):
         with tarfile.open(path, "r") as tarfin:
             for tarinfo in tarfin:
                 idx = int(
-                    tarinfo.name[0 : random_seed.STRUCTURE.NUM_DIGITS_SEED]
+                    tarinfo.name[0 : unique.UID_NUM_DIGITS]
                 )
                 if idx in indices_set:
                     grids[idx] = tarfin.extractfile(tarinfo).read()
@@ -287,10 +288,7 @@ def read_histograms(path, indices=None):
 def write_histograms(path, grid_histograms):
     with tarfile.open(path + ".tmp", "w") as tarfout:
         for idx in grid_histograms:
-            filename = (
-                random_seed.STRUCTURE.SEED_TEMPLATE_STR.format(seed=idx)
-                + ".f4.gz"
-            )
+            filename = unique.UID_FOTMAT_STR.format(seed=idx) + ".f4.gz"
             with io.BytesIO() as buff:
                 info = tarfile.TarInfo(filename)
                 info.size = buff.write(grid_histograms[idx])
