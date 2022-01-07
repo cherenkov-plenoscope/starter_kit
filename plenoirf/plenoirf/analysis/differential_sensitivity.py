@@ -139,9 +139,18 @@ def next_containment_and_weight(
     bin_containment,
     target_containment,
 ):
+    assert 0 <= accumulated_containment <= 1
+    assert 0 <= bin_containment <= 1
+    assert 0 < target_containment <= 1
+
     missing_containment = target_containment - accumulated_containment
     assert missing_containment > 0
-    weight = np.min([missing_containment / bin_containment, 1])
+
+    if bin_containment > 0:
+        weight = np.min([missing_containment / bin_containment, 1])
+    else:
+        weight = 0
+
     if weight == 1:
         return accumulated_containment + bin_containment, 1
     else:
@@ -177,7 +186,6 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
             stop = true_best + 1
             i = 0
             while accumulated_containment < containment:
-                print(i, ")", start, true_best, stop, accumulated_containment)
                 if start > 0:
                     accumulated_containment, w = next_containment_and_weight(
                         accumulated_containment=accumulated_containment,
