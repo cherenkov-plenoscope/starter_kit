@@ -94,11 +94,11 @@ def which(programname):
 
 def get_starter_kit_abspath():
     # Expect the corsika_primary to be in the "starter_kit"
-    _p = os.path.abspath(corsika_primary.__file__)
-    for ii in ["__init__.py", "corsika_primary", "corsika_install"]:
-        _p, jj = os.path.split(_p)
-        assert jj == ii
-    return _p
+    path = os.path.abspath(corsika_primary.__file__)
+    for expected_name in ["__init__.py", "corsika_primary", "corsika_install"]:
+        path, actual_name = os.path.split(path)
+        assert actual_name == expected_name
+    return path
 
 
 def get_current_working_directory():
