@@ -8,8 +8,7 @@ import sebastians_matplotlib_addons as seb
 import pylatex as ltx
 import warnings
 import json_numpy
-import yaml
-import json_numpy
+import io
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -112,7 +111,17 @@ def make_trigger_modus_str(analysis_trigger, production_trigger):
 
 
 def dict_to_pretty_str(dictionary):
-    return yaml.dump(dictionary, default_flow_style=False)
+    ss = json_numpy.dumps(dictionary, indent=2)
+    ss = ss.replace('"', '')
+    ss = ss.replace('{', '')
+    ss = ss.replace('}', '')
+    oss = io.StringIO()
+    for line in ss.splitlines():
+        if len(line) > 0:
+            oss.write(line)
+            oss.write("\n")
+    oss.seek(0)
+    return oss.read()
 
 
 def ppath(*args):
