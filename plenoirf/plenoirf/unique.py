@@ -14,9 +14,9 @@ def make_uid(run_id, event_id):
     return RUN_ID_UPPER * run_id + event_id
 
 
-def split_uid(udi):
-    run_id = udi // RUN_ID_UPPER
-    event_id = udi % RUN_ID_UPPER
+def split_uid(uid):
+    run_id = uid // RUN_ID_UPPER
+    event_id = uid % RUN_ID_UPPER
     return run_id, event_id
 
 
