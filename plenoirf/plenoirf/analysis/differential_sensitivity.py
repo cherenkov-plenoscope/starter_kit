@@ -161,7 +161,6 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
     # estimate containment regions:
     for reco in range(num_bins):
         if np.sum(M[:, reco]) > 0.0:
-            print(np.sum(M[:, reco]))
             assert 0.99 < np.sum(M[:, reco]) < 1.01
 
             accumulated_containment = 0.0
