@@ -28,8 +28,8 @@ deflection_table = magnetic_deflection.read_deflection(
 )
 
 SITES = irf_config["config"]["sites"]
-COSMICS = list(irf_config["config"]["particles"].keys())
-COSMICS.remove("gamma")
+PARTICLES = irf_config["config"]["particles"]
+COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 
 geomagnetic_cutoff_fraction = sum_config["airshower_flux"][
     "fraction_of_flux_below_geomagnetic_cutoff"
@@ -43,7 +43,7 @@ def _rigidity_to_total_energy(rigidity_GV):
 # interpolate
 # -----------
 cosmic_ray_fluxes = {}
-for pk in COSMICS:
+for pk in COSMIC_RAYS:
     cosmic_ray_fluxes[pk] = {}
     cosmic_ray_fluxes[pk]["differential_flux"] = np.interp(
         x=energy_bin["centers"],
@@ -56,7 +56,7 @@ for pk in COSMICS:
 air_shower_fluxes = {}
 for sk in SITES:
     air_shower_fluxes[sk] = {}
-    for pk in COSMICS:
+    for pk in COSMIC_RAYS:
         air_shower_fluxes[sk][pk] = {}
         cutoff_energy = _rigidity_to_total_energy(
             rigidity_GV=irf_config["config"]["sites"][sk][
@@ -76,7 +76,7 @@ for sk in SITES:
 air_shower_fluxes_zc = {}
 for sk in SITES:
     air_shower_fluxes_zc[sk] = {}
-    for pk in COSMICS:
+    for pk in COSMIC_RAYS:
         air_shower_fluxes_zc[sk][pk] = {}
         primary_zenith_deg = np.interp(
             x=energy_bin["centers"],
@@ -91,7 +91,7 @@ for sk in SITES:
 # export
 # ------
 for sk in SITES:
-    for pk in COSMICS:
+    for pk in COSMIC_RAYS:
         sk_pk_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(sk_pk_dir, exist_ok=True)
         json_numpy.write(
