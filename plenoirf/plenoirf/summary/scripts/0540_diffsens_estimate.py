@@ -29,10 +29,6 @@ energy_binning = json_numpy.read(
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 energy_bin_width_au = np.zeros(energy_bin["num_bins"])
 
-R = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0530_diffsens_background_diff_rates")
-)
-
 S = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"],
@@ -80,9 +76,9 @@ for sk in SITES:
                 tmp = []
                 tmp_au = []
                 for ck in COSMIC_RAYS:
-                    tmp.append(R[sk][ok][ck]["reco"]["mean"][ereco])
+                    tmp.append(S[sk][ok][dk][ck]["rate"]["mean"][ereco])
                     tmp_au.append(
-                        R[sk][ok][ck]["reco"]["absolute_uncertainty"][ereco]
+                        S[sk][ok][dk][ck]["rate"]["absolute_uncertainty"][ereco]
                     )
                 (
                     Rreco_total[ereco],
