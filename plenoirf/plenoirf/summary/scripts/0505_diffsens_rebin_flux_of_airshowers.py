@@ -13,10 +13,10 @@ differential sensitivity w.r.t. energy
 
 A series (500s) of scripts to estimate the diff. sensitivity.
 
-1)  Rebin the diff. flux of cosmic-rays dFdE in the energy-binning used
-    for the diff. sensitivity.
+505) Rebin the diff. flux of cosmic-rays dFdE into the energy-binning used
+     for the diff. sensitivity.
 
-2) Estimate the cosmic-ray-rates in reconstructed energy Rreco(E).
+530) Estimate the rates of cosmic-ray in reconstructed energy Rreco(E).
 
 """
 
