@@ -101,9 +101,7 @@ for sk in SITES:
                     Rreco=R[sk][ok][ck]["reco"]["mean"],
                     Rreco_au=R[sk][ok][ck]["reco"]["absolute_uncertainty"],
                     integration_mask=scenario["B_matrix"],
-                    integration_mask_au=np.zeros(
-                        shape=scenario["B_matrix"].shape
-                    ),
+                    integration_mask_au=scenario["B_matrix_au"],
                 )
 
                 json_numpy.write(

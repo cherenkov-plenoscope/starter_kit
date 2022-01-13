@@ -96,6 +96,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
         "S_matrix": _s_cm,
         "S_matrix_au": _s_cm_u,
         "B_matrix": _bg_integral_mask,
+        "B_matrix_au": np.zeros(shape=_bg_integral_mask.shape),
         "energy_axes_label": _energy_axes_label,
     }
 
