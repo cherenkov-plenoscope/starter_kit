@@ -50,10 +50,10 @@ def assert_energy_migration_is_valid(M):
     assert M["counts"].shape[0] == M["counts"].shape[1]
     num_energy_bins = M["counts"].shape[0]
 
-    for ereco in range(num_energy_bins):
-        check = np.sum(M["true_given_reco"][:, ereco])
+    for etrue in range(num_energy_bins):
+        check = np.sum(M["reco_given_true"][etrue, :])
         if check > 0:
-            assert 0.99 < check < 1.01
+            assert 0.99 < check < 1.01, "sum(P(reco|true)) = {:f}".format(check)
 
 
 diff_flux = {}
@@ -111,29 +111,24 @@ for sk in SITES:
             for ereco in range(energy_bin["num_bins"]):
                 _tmp_sum = np.zeros(energy_bin["num_bins"])
                 _tmp_sum_au = np.zeros(energy_bin["num_bins"])
-                checksum = 0.0
                 for etrue in range(energy_bin["num_bins"]):
-
                     (
                         _tmp_sum[etrue],
                         _tmp_sum_au[etrue],
                     ) = irf.utils.multiply_elemnetwise_au(
                         x=[
                             dFdE[etrue],
-                            M["true_given_reco"][etrue, ereco],
+                            M["reco_given_true"][etrue, ereco],
                             Q[etrue],
                             energy_bin["width"][etrue],
                         ],
                         x_au=[
                             dFdE_au[etrue],
-                            M["true_given_reco_abs_unc"][etrue, ereco],
+                            M["reco_given_true_abs_unc"][etrue, ereco],
                             Q_au[etrue],
                             energy_bin__width__au[etrue],
                         ],
                     )
-                    checksum += M["true_given_reco"][etrue, ereco]
-                if checksum > 0:
-                    assert 0.99 < checksum < 1.01
                 (
                     Rreco[sk][ok][pk][ereco],
                     Rreco_au[sk][ok][pk][ereco],
