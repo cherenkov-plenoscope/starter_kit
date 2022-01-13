@@ -345,7 +345,7 @@ Here $c$ is a containment-factor, e.g. $c = 0.68$,
 %
 and $\mathrm{bellmask}(M_{\gamma}, c)$ is a matrix with the shape of $M_{\gamma}$ containing weights in range $[0$ to $1]$.
 %
-For each bin in $e'$, $\mathrm{bellmask}()$ gives weights to the bins along $e$ so that
+For each bin in true energy $e$, $\mathrm{bellmask}()[:, e]$ marks the bins in reconstructed energy $e'$ over which we have to integrate in order to obtain at least a fraction of $c$ of the events belong to true energy $e$.
 %
 \begin{eqnarray}
 c &=& \sum_e \mathrm{bellmask}[e',e] \times M_{\gamma}[e', e], \, \, \, \forall e'.

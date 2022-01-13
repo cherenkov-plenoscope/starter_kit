@@ -48,13 +48,13 @@ SCENARIOS = {
 
 
 def make_energy_confusion_matrices_for_signal_and_background(
-    probability_true_given_reco,
-    probability_true_given_reco_abs_unc,
     probability_reco_given_true,
+    probability_reco_given_true_abs_unc,
+    probability_true_given_reco,
     scenario_key="broad_spectrum",
 ):
-    s_cm = probability_true_given_reco
-    s_cm_u = probability_true_given_reco_abs_unc
+    s_cm = probability_reco_given_true
+    s_cm_u = probability_reco_given_true_abs_unc
 
     if scenario_key == "perfect_energy":
         _s_cm = np.eye(N=s_cm.shape[0])
@@ -93,9 +93,9 @@ def make_energy_confusion_matrices_for_signal_and_background(
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
 
     return {
-        "probability_true_given_reco": _s_cm,
-        "probability_true_given_reco_abs_unc": _s_cm_u,
-        "background_integral_mask": _bg_integral_mask,
+        "S_matrix": _s_cm,
+        "S_matrix_au": _s_cm_u,
+        "B_matrix": _bg_integral_mask,
         "energy_axes_label": _energy_axes_label,
     }
 
@@ -254,22 +254,22 @@ def derive_all_energy_migration(energy_migration, energy_bin_width):
 
 
 def make_area_in_reco_energy(
-    area, area_au, probability_true_given_reco, probability_true_given_reco_au,
+    area, area_au, S_matrix, S_matrix_au,
 ):
     A = area
     A_au = area_au
-    Mtgr = probability_true_given_reco
-    Mtgr_au = probability_true_given_reco_au
+    S = S_matrix
+    S_au = S_matrix_au
     assert len(A) == len(A_au)
     assert np.all(A >= 0)
     assert np.all(A_au >= 0)
 
-    assert Mtgr.shape == Mtgr_au.shape
-    assert Mtgr.shape[0] == Mtgr.shape[1]
-    assert np.all(Mtgr >= 0)
-    assert np.all(Mtgr_au >= 0)
+    assert S.shape == S_au.shape
+    assert S.shape[0] == S.shape[1]
+    assert np.all(S >= 0)
+    assert np.all(S_au >= 0)
 
-    assert len(A) == Mtgr.shape[0]
+    assert len(A) == S.shape[0]
 
     num_bins = len(A)
     A_out = np.zeros(num_bins)
@@ -278,15 +278,11 @@ def make_area_in_reco_energy(
     for er in range(num_bins):
         tmp = np.zeros(num_bins)
         tmp_au = np.zeros(num_bins)
-        checksum = 0.0
 
         for et in range(num_bins):
             tmp[et], tmp_au[et] = utils.multiply_elemnetwise_au(
-                x=[Mtgr[et, er], A[et],], x_au=[Mtgr_au[et, er], A_au[et],],
+                x=[S[et, er], A[et],], x_au=[S_au[et, er], A_au[et],],
             )
-            checksum += Mtgr[et, er]
-        if checksum > 0.0:
-            assert checksum < 1.01
 
         A_out[er], A_out_au[er] = utils.sum_elemnetwise_au(x=tmp, x_au=tmp_au)
     return A_out, A_out_au

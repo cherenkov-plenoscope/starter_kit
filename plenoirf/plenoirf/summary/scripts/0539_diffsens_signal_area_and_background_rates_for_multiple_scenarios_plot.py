@@ -114,43 +114,38 @@ for sk in SITES:
             fig.savefig(os.path.join(pa["out_dir"], sk, ok, dk + "_area.jpg",))
             seb.close(fig)
 
-            # probability_true_given_reco
+            # S_matrix
             # ---------------------------
-            M = scenarios[sk][ok][dk]["gamma"]["scenario"][
-                "probability_true_given_reco"
-            ]
+            S_matrix = scenarios[sk][ok][dk]["gamma"]["scenario"]["S_matrix"]
             fig = seb.figure(seb.FIGURE_1_1)
             ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
             ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
             _pcm_confusion = ax_c.pcolormesh(
                 energy_bin["edges"],
                 energy_bin["edges"],
-                np.transpose(M),
+                np.transpose(S_matrix),
                 cmap="Greys",
                 norm=seb.plt_colors.PowerNorm(gamma=0.5),
             )
             ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
             seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
             ax_c.set_aspect("equal")
-            ax_c.set_title("normalized in each column")
             ax_c.set_ylabel("reco. energy / GeV")
             ax_c.loglog()
             ax_c.set_xlabel("energy / GeV")
-            fig.savefig(os.path.join(pa["out_dir"], sk, ok, dk + "_M.jpg",))
+            fig.savefig(os.path.join(pa["out_dir"], sk, ok, dk + "_S.jpg",))
             seb.close(fig)
 
-            # background_integral_mask
-            # ------------------------
-            M = scenarios[sk][ok][dk]["gamma"]["scenario"][
-                "background_integral_mask"
-            ]
+            # B_matrix
+            # --------
+            B_matrix = scenarios[sk][ok][dk]["gamma"]["scenario"]["B_matrix"]
             fig = seb.figure(seb.FIGURE_1_1)
             ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
             ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
             _pcm_confusion = ax_c.pcolormesh(
                 energy_bin["edges"],
                 energy_bin["edges"],
-                np.transpose(M),
+                np.transpose(B_matrix),
                 cmap="Greys",
                 norm=seb.plt_colors.PowerNorm(gamma=1.0),
             )
@@ -165,7 +160,7 @@ for sk in SITES:
                     pa["out_dir"],
                     sk,
                     ok,
-                    dk + "_background_integral_mask.jpg",
+                    dk + "_B.jpg",
                 )
             )
             seb.close(fig)
