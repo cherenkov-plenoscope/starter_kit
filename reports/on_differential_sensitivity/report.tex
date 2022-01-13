@@ -61,7 +61,7 @@ For every air-shower, the atmospheric Cherenkov-method reconstructs the primary 
 %
 The prime (') indicates a reconstructed quantity, such as reconstructed energy $E'$.
 %
-Based on the statistics of multiple air-shower, the atmospheric Cherenkov-method can answer astronomical questions.
+Based on the statistics of multiple air-showers, the atmospheric Cherenkov-method can answer astronomical questions.
 %
 However, the atmospheric Cherenkov-method suffers from a large irreducible background caused by air-showers induced by cosmic-rays.
 %
@@ -260,7 +260,7 @@ W[e] &=& V[e+1] - V[e].
 Accordingly we represent the probability $\mathcal{M}_p$ using a discrete matrix
 %
 \begin{eqnarray*}
-M_p[e', e] &=&
+M_p[e, e'] &=&
   \left[ {\begin{array}{cccc}
     m_{11} & m_{12} & \cdots & m_{1n}\\
     m_{21} & m_{22} & \cdots & m_{2n}\\
@@ -272,7 +272,7 @@ M_p[e', e] &=&
 and conserving the probability
 %
 \begin{eqnarray*}
-\sum_{e} M_p[e', e] &=& 1, \, \, \, \forall e'
+\sum_{e} M_p[e, e'] &=& 1, \, \, \, \forall e'
 \end{eqnarray*}
 %
 We represent $\mathcal{A}_\gamma$ using a discrete vector
@@ -305,27 +305,27 @@ The matrix $B$ marks the bins for integrating the background and matrix $S$ mark
 %
 \subsection{broad spectrum}
 \begin{eqnarray}
-S[e', e] &=& M_{\gamma}[e',e]
+S[e, e'] &=& M_{\gamma}[e, e']
 \\
-B[e', e] &=& \mathrm{eye}()
+B[e, e'] &=& \mathrm{eye}()
 \end{eqnarray}
 %
 Energy-label: Reconstructed.
 %
 \subsection{perfect energy}
 \begin{eqnarray}
-S[e', e] &=& \mathrm{eye}()
+S[e, e'] &=& \mathrm{eye}()
 \\
-B[e', e] &=& \mathrm{eye}()
+B[e, e'] &=& \mathrm{eye}()
 \end{eqnarray}
 %
 Energy-label: True.
 %
 \subsection{line-spectrum}
 \begin{eqnarray}
-S[e', e] &=& \mathrm{diag}(M_{\gamma}[e',e])
+S[e, e'] &=& \mathrm{diag}(M_{\gamma}[e, e'])
 \\
-B[e', e] &=& \mathrm{eye}()
+B[e, e'] &=& \mathrm{eye}()
 \end{eqnarray}
 %
 Energy-label: Reconstructed.
@@ -336,19 +336,19 @@ In order to show true energy the bell-spectrum
 %
 Proposed by Werner Hofmann.
 \begin{eqnarray}
-S[e', e] &=& c \, \, \mathrm{eye}()
+S[e, e'] &=& c \, \, \mathrm{eye}()
 \\
-B[e', e] &=& \mathrm{bellmask}(M_{\gamma}[e',e], c)
+B[e, e'] &=& \mathrm{bellmask}(M_{\gamma}[e, e'], c)
 \end{eqnarray}
 %
 Here $c$ is a containment-factor, e.g. $c = 0.68$,
 %
 and $\mathrm{bellmask}(M_{\gamma}, c)$ is a matrix with the shape of $M_{\gamma}$ containing weights in range $[0$ to $1]$.
 %
-For each bin in true energy $e$, $\mathrm{bellmask}()[:, e]$ marks the bins in reconstructed energy $e'$ over which we have to integrate in order to obtain at least a fraction of $c$ of the events belong to true energy $e$.
+For each bin in true energy $e$, $\mathrm{bellmask}()[e, :]$ marks the bins in reconstructed energy $e'$ over which we have to integrate in order to obtain at least a fraction of $c$ of the events belong to true energy $e$.
 %
 \begin{eqnarray}
-c &=& \sum_e \mathrm{bellmask}[e',e] \times M_{\gamma}[e', e], \, \, \, \forall e'.
+c &=& \sum_e \mathrm{bellmask}[e ,e'] \times M_{\gamma}[e', e], \, \, \, \forall e'.
 \end{eqnarray}
 %
 Energy-label: True.
@@ -358,7 +358,13 @@ Energy-label: True.
 The rate of events caused by the background's contribution $p$ which got reconstructed to be in the energy-bin $e'$.
 %
 \begin{eqnarray}
-R_p[e'] &=& \sum_{e} W[e] \, dF_p[e] \, Q_p[e] \, M_p[e', e]
+\frac{R_p[e']}{\text{s}^{-1}}
+&=&
+\sum_{e}
+\frac{W[e]}{\text{GeV}} \,
+\frac{dF_p[e]}{\text{s}^{-1}\text{m}^{-2}\text{sr}^{-1}\text{GeV}^{-1}} \,
+\frac{Q_p[e]}{\text{m}^2\text{sr}} \,
+\frac{M_p[e, e']}{1}
 \end{eqnarray}
 %
 \section{Rate of background in $E'$ for scenario $K$}
@@ -366,7 +372,11 @@ R_p[e'] &=& \sum_{e} W[e] \, dF_p[e] \, Q_p[e] \, M_p[e', e]
 The rate of events caused by background contribution $p$ which got reconstructed to be in the energy-bin $e'$.
 %
 \begin{eqnarray}
-R^k_p[e'] &=& \sum_{i} B^k[e', i] \, R_p[i]
+\frac{R^k_p[e']}{\text{s}^{-1}}
+&=&
+\sum_{i}
+\frac{B^k[i, e']}{1} \,
+\frac{R_p[i]}{\text{s}^{-1}}
 \end{eqnarray}
 %
 \section{Total rate of all background contributions $p$ in $E'$ for scenario $K$}
@@ -374,7 +384,22 @@ R^k_p[e'] &=& \sum_{i} B^k[e', i] \, R_p[i]
 Summing up all contributions $p$ of the background to obtain the total rate
 %
 \begin{eqnarray}
-R^k[e'] &=& \sum_{p} R^k_p[e']
+\frac{R^k[e']}{\text{s}^{-1}}
+&=&
+\sum_{p}
+\frac{R^k_p[e']}{\text{s}^{-1}}
+\end{eqnarray}
+%
+of irriducible background in the on-region.
+%
+\section{Effective Area for gamma-rays in $E'$ for scenario $K$}
+%
+\begin{eqnarray}
+\frac{A^k[e']}{\text{m}^2}
+&=&
+\sum_{e}
+\frac{S^k[e, e']}{1} \,\,
+\frac{A[e]}{\text{m}^2}
 \end{eqnarray}
 %
 of irriducible background in the on-region.
