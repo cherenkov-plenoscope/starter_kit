@@ -53,51 +53,57 @@ def make_energy_confusion_matrices_for_signal_and_background(
     probability_true_given_reco,
     scenario_key="broad_spectrum",
 ):
-    s_cm = probability_reco_given_true
-    s_cm_u = probability_reco_given_true_abs_unc
+    shape = probability_reco_given_true.shape
+    assert probability_reco_given_true_abs_unc.shape == shape
+    assert probability_true_given_reco.shape == shape
 
     if scenario_key == "perfect_energy":
-        _s_cm = np.eye(N=s_cm.shape[0])
-        _s_cm_u = np.zeros(shape=s_cm.shape)  # zero uncertainty
+        S = np.eye(N=shape[0])
+        S_au = np.zeros(shape=shape)  # zero uncertainty
 
-        _bg_integral_mask = np.eye(N=s_cm.shape[0])
-        _energy_axes_label = ""
+        B = np.eye(N=shape[0])
+        B_au = np.zeros(shape=shape)
+        energy_label = ""
 
     elif scenario_key == "broad_spectrum":
-        _s_cm = np.array(s_cm)
-        _s_cm_u = np.array(s_cm_u)  # adopt as is
+        S = np.array(probability_reco_given_true)
+        S_au = np.array(probability_reco_given_true_abs_unc)  # adopt as is
 
-        _bg_integral_mask = np.eye(N=s_cm.shape[0])
-        _energy_axes_label = "reco."
+        B = np.eye(N=shape[0])
+        B_au = np.zeros(shape=shape)
+        energy_label = "reco."
 
     elif scenario_key == "line_spectrum":
-        eye = np.eye(N=s_cm.shape[0])
-        _s_cm = eye * np.diag(s_cm)
-        _s_cm_u = eye * np.diag(s_cm_u)  # only the diagonal
+        # only the diagonal
+        eye = np.eye(N=shape[0])
+        S = eye * np.diag(probability_reco_given_true)
+        S_au = eye * np.diag(probability_reco_given_true_abs_unc)
 
-        _bg_integral_mask = np.eye(N=s_cm.shape[0])
-        _energy_axes_label = "reco."
+        B = np.eye(N=shape[0])
+        B_au = np.zeros(shape=shape)
+        energy_label = "reco."
 
     elif scenario_key == "bell_spectrum":
         containment = 0.68
-        _s_cm = containment * np.eye(N=s_cm.shape[0])  # true energy for gammas
-        _s_cm_u = np.zeros(shape=s_cm.shape)  # zero uncertainty
+        S = containment * np.eye(N=shape[0])  # true energy for gammas
+        S_au = np.zeros(shape=shape)  # zero uncertainty
 
-        _bg_integral_mask = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
+        B = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
             probability_true_given_reco=probability_true_given_reco,
             containment=containment,
         )
-        _energy_axes_label = ""
+        B_au = np.zeros(shape=shape)
+        energy_label = ""
 
     else:
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
 
     return {
-        "S_matrix": _s_cm,
-        "S_matrix_au": _s_cm_u,
-        "B_matrix": _bg_integral_mask,
-        "B_matrix_au": np.zeros(shape=_bg_integral_mask.shape),
-        "energy_axes_label": _energy_axes_label,
+        "S_matrix": S,
+        "S_matrix_au": S_au,
+        "B_matrix": B,
+        "B_matrix_au": B_au,
+        "energy_axes_label": energy_label,
     }
 
 
