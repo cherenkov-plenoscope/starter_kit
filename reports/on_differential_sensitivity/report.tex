@@ -7,6 +7,7 @@
 \usepackage{lastpage}%
 \usepackage{geometry}%
 \usepackage{amsmath}%
+\usepackage{amssymb}%
 \geometry{
     paper=a4paper,
     head=0cm,
@@ -35,48 +36,36 @@
 \newcommand{\dd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
 %
 \subsection*{Abstract}
-The 'differential sensitivity' is a common performance-figure in the atmospheric Cherenkov-method.
+The 'differential sensitivity' is a common measure for performance in the atmospheric Cherenkov-method.
 %
-When I estimated it myself, I realized that with a non perfect energy-reconstruction this estimate might be done in multiple reasonable ways.
+However, when the reconstruction of energy in our instrument is not perfect there can be multiple reasonable ways to express differential sensitivity.
 %
-In this report, I want to explore this important performance-figure for myself.
-%
-\section{Outline}
-%
-In Section \ref{SecObservablesAndOnOff}, I briefly describe the observables and how the on-off-measurement is commonly used and applied to answer astronomical questions in the atmospheric Cherenkov-method.
-%
-In Section \ref{SecAstronomicalQuastion}, I try to frame the astronomical question which differential sensitivity is the answer to.
-%
-In Section \ref{SecCommonGround} I list, what I think, is the common ground of all estimates for differential sensitivity in the atmospheric Cherenkov-method.
-%
-In Section \ref{SecEstimatingTheBackgroundCount} I show how I would estimate the background-counts in an estimate of differential sensitivity.
-%
-In the following, still missing Sections I will show how one might estimate the required gamma-ray-flux.
+Here I want to explore these different ways for myself.
 %
 \section{Observables, Background and the On-Off-Measurement}
 \label{SecObservablesAndOnOff}
-\subsection*{Observables}
+\subsection*{Observables and Background}
 %
-For every air-shower, the atmospheric Cherenkov-method reconstructs the primary particle's type $p'$, trajectory $(\Theta', \phi')$, energy $E'$, and arrival-time $t'$.
+For every air-shower, our instrument reconstructs the primary particle's type $p'$, trajectory $(\Theta', \phi')$, energy $E'$, and arrival-time $t'$.
 %
-The prime (') indicates a reconstructed quantity, such as reconstructed energy $E'$.
+The prime ($'$) indicates a reconstructed quantity, such as reconstructed energy $E'$.
 %
-Based on the statistics of multiple air-showers, the atmospheric Cherenkov-method can answer astronomical questions.
+Based on the statistics of multiple reconstructed air-showers, the atmospheric Cherenkov-method can answer astronomical questions.
 %
 However, the atmospheric Cherenkov-method suffers from a large irreducible background caused by air-showers induced by cosmic-rays.
 %
-Therefore, to answer astronomical questions we run on-off-measurements where a signal has to emerge out of the background.
+Therefore, to answer astronomical questions we run on-off-measurements where a signal has to emerge out of the irreducible background.
 %
-\subsection*{Different astronomical questions}
+\subsection*{On-Off-measurements to Answer Different Astronomical Questions}
 Depending on the astronomical question, the space of observables is divided into on- and off-regions in order to maximize signal over background.
 %
 For example, when the astronomical question asks for the existence of a pulsar emitting gamma-rays at a certain energy we divide the space of directions, energy, and time accordingly.
 %
 When we ask for the very existence of a point-source, we only divide the space of directions.
 %
-When we ask for the existence of a spectral emission line in a large solid angle, such as the galactic plane, we only divide the space of energy, and so on.
+When we ask for the existence of a spectral line in energy over a large solid angle, such as the galactic plane, we only divide the space of energy, and so on.
 %
-When we look for gamma-rays, we always divide the space of particle-type to favor gamma-rays.
+When we look for gamma-rays, we always divide the space of particle-type $p'$ to favor gamma-rays.
 %
 However, when we ask for e.g. the moon-shadow of leptons, we will shift the on-region in the space of particle-type accordingly.
 %
@@ -84,60 +73,83 @@ However, when we ask for e.g. the moon-shadow of leptons, we will shift the on-r
 \label{SecAstronomicalQuastion}
 % point-source [cta2018baseline, cortina2016machete, ]
 % LiMa 17      [cortina2016machete]
-The differential sensitivity commonly discussed in the atmospheric Cherenkov-method shows how much gamma-rays, coming from a point-source, and being emitted in a specific energy-range, are required to claim a detection within a given observation-time $t_\text{obs}$.
+The differential sensitivity commonly discussed in the atmospheric Cherenkov-method shows how many gamma-rays, coming from a point-source, and being emitted in a specific range of energies, are required to claim a detection within a given observation-time $T_\text{obs}$.
 %
-This can also be discussed as the performance of an instrument to estimate a sources spectrum of emissions.\\
+This can also be discussed as the performance of an instrument to estimate a source's spectrum of emissions.\\
 %
-However, as we will see this formulation is not very specific and might result in different scenarios with slightly different rooms for interpretation.
+However, as we will see this formulation is not very specific and might result in different scenarios with different rooms for interpretation.
 %
-Anyhow commonly we place on-off-regions in the space of directions and energy.
-%
-We commonly neglect the observable's space of arrival-times, and we implicitly put on-off-regions in the space of particle-type to favor gamma-rays.
+Anyhow, we commonly put on-off-regions in the space of directions and energy.
 %
 \subsection*{Space of Directions}
 %
-Often \cite{cta2018baseline,cortina2016machete} the term 'point-source' is given in the context of differential sensitivity.
+Depending on the branch of astronomy 'differential sensitivity' might be about different astronomic questions.
 %
-Also space-born instruments for gamma-rays show differential sensitivity for point-sources \cite{wood2016fermiperformance}.
+In gamma-ray astronomy this is often implicitly about point-sources, be it in the atmospheric Cherenkov-method \cite{cta2018baseline,cortina2016machete} or in space born instruments \cite{wood2016fermiperformance}.
 %
-But in other fields, such as neutrino-astronomy, differential sensitivity might be about diffuse sources \cite{marinelli2021km3netarca}.
+But for example in neutrino-astronomy, differential sensitivity might be about diffuse sources \cite{marinelli2021km3netarca}.
 %
 \subsection*{Space of Energy}
 %
 The term 'differential' is about showing the flux $F$ derived by energy, so $\dd{F}{E}$.
 %
-I assume this is done to easily integrate over an intervall of energy to aquire the flux $F$.
+I assume this is done to easily integrate over an interval of energy to acquire the flux $F$.
 %
-As statistics are limited the energy-range covered by an instrument and shown in the differential sensitivity is divided into multiple, narrow, neighboring, and not overlapping energy-bins.
+As statistics are limited the range of energy is divided into multiple, neighboring, and not overlapping \footnote{The term 'not overlapping' is sometimes explicitly stated \cite{cta2018baseline}.} energy-bins.
 %
-The width of the energy-bins $\Delta E$ is commonly 5 bins per decade what is believed to be fine enough for the energy-resolution of todays instruments.
+Commonly we find 5 bins per decade what is believed to be sufficient for todays instruments.
 %
-The term 'not overlapping' is sometimes explicitly stated \cite{cta2018baseline}.
+Inside a bin in energy, I suspect the rest of the estimate to be the same as for integral sensitivity.
 %
-I expect the estimate of the differential sensitivity to reduce into the estimate of multiple integral sensitivities in multiple energy-bins.
 \section{Common Ground}
 \label{SecCommonGround}
 %
-Here I list what I believe is the common starting point, for all flavors of differential sensitivity in the atmospheric Cherenkov-method.
+Here I list what I believe is the common ground, for all scenarios of differential sensitivity in the atmospheric Cherenkov-method.
+%
+\subsection{Output}
+%
+Let's start with the output of the estimate of differential sensitivity.
+%
+This is always a differential flux of gamma-rays
+%
+\begin{eqnarray*}
+\dd{F_\gamma}{E} &/&
+\text{area}^{-1}\,\text{time}^{-1}\,\text{energy}^{-1} /
+\text{m}^{-2}\,\text{s}^{-1}\,\text{GeV}^{-1}
+\end{eqnarray*}
+%
+that is the minimal required flux in order to claim a detection.
 %
 \subsection{Input}
+%
+On the input side we got more and already some options and room for different flavors.
+%
 \subsubsection*{Observation-time}
 %
 \begin{eqnarray*}
 T_\text{obs} &/& \text{time} / \text{s}
 \end{eqnarray*}
 %
-The observation-time $T_\text{obs}$ is the duration we expose the instrument.
+The observation-time $T_\text{obs}$ is the accumulated duration our instrument was ready to trigger and record an event.
 %
-Commonly, Cherenkov-telescopes show differential sensitivity for $T_\text{obs} = 50\,$h.
+Commonly, Cherenkov-telescopes show $T_\text{obs} = 50\,$h or $T_\text{obs} = 1800\,$s. for todays quickest transients.
 %
-\subsubsection*{The set of cosmic-rays relevant for background}
+\subsubsection*{The set of contributions to the background}
 %
 \begin{eqnarray*}
-P_\text{cosmic} &=& \{ {_1^1}\text{H},\,\,{_2^4}\text{He},\,\,\text{e}^{+},\,\,\text{e}^{-},\,\,\dots{}\}
+\mathbb{P}_\text{background} &=& \{
+{_1^1}\text{H},\,\,
+{_2^4}\text{He},\,\,
+\text{e}^{+},\,\,
+\text{e}^{-},\,\,
+\dots{}\,\,
+\text{night-sky},\,\,
+\dots{}\,\,
+\text{artifacts}
+\}
 \end{eqnarray*}
 %
-Often, the relevant causes for background are the cosmic-rays. Some instruments might also willingly have and accept a contribution of accidental triggers caused by fluctuations in the light from the night-sky.
+The relevant contributions to the background are the cosmic-rays. Some instruments might also have a relevant contribution of accidental triggers, and artifacts related to the instrument.
 %
 \subsubsection*{Flux of cosmic-rays}
 %
@@ -146,9 +158,9 @@ Often, the relevant causes for background are the cosmic-rays. Some instruments 
 \text{area}^{-1}\,\text{(solid angle)}^{-1}\,\text{time}^{-1}\,\text{energy}^{-1} /
 \text{m}^{-2}\,\text{sr}^{-1}\,\text{s}^{-1}\,\text{GeV}^{-1}
 \end{eqnarray*}
-The diffuse, differential flux for every cosmic-ray $p$ in $P_\text{cosmic}$. This might be taken from measurements of space-born instruments e.g. \cite{aguilar2014precision,aguilar2015precision}.
+The diffuse, differential flux for every cosmic-ray $p$ in $\mathbb{P}_\text{background}$. This might be taken from measurements of space-born instruments e.g. \cite{aguilar2014precision,aguilar2015precision}.
 %
-More precisely: For Cherenkov-instruments observing at energies at and below the geomagnetic cutoff this is not the flux of particles, but the flux of air-showers.
+More precisely: For Cherenkov-instruments observing at energies at and below the geomagnetic cutoff this is not the flux of cosmic particles, but the flux of air-showers.
 %
 For such instruments this includes the geomagnetic cutoff, and the flux of air-showers induced by terrestrial, 'secondary' particles \cite{lipari2002fluxes}.
 %
@@ -159,7 +171,7 @@ For such instruments this includes the geomagnetic cutoff, and the flux of air-s
 \text{m}^{2}\,\text{sr}
 \end{eqnarray*}
 %
-The effective acceptance of our instrument to detect an air-shower induced by cosmic-ray $p$ with energy $E$ that was falsely classified to be a gamma-ray.
+The effective acceptance of our instrument to detect an air-shower induced by cosmic-ray $p$ with true energy $E$ that was falsely classified to be a gamma-ray.
 %
 This product of area and solid angle is also often called etendue.
 %
@@ -190,22 +202,27 @@ We need this for every particle $p$ in $\gamma \cup P_\text{cosmic}$.
 %
 Here only events which are classified to be gamma-rays contribute, i.e. same cuts as in $Q_p(E)$ and $A_\gamma(E)$.
 %
-\subsubsection*{Algorithm $C()$ to estimate critical signal-counts $N_S$}
+\subsubsection*{Algorithm $C$ to estimate the critical number of signal-counts $N_S$}
 %
-After we have estimated the background-count in the on-region $\hat{N}_B$ (see Section \ref{SecEstimatingTheBackgroundCount}), we use an algorithm $C()$ to estimate the minimal, i.e. critical number of signal-counts in the on-region
+After we will have estimated the number of background-counts in the on-region $\hat{N}_B$, we use an algorithm $C$ to estimate the minimal number of signal-counts in the on-region
 %
 \begin{eqnarray*}
 N_S &=& C(\hat{N}_B,\,\,S,\,\,\dots)
 \end{eqnarray*}
 %
-which are required to claim a detection.
+which is required to claim a detection.
 %
-A sub-input to $C()$ might be:
+There exist multiple flavors of $C$.
+%
+A minimal input to $C$ might be:
 %
 \begin{itemize}
-\item{} The minimal significance $S$ a signal has to have in order to be considered unlikely to be a background-fluctuation.
 %
-$S$ is commonly chosen to be $5\sigma$, (std.\,dev.) of background-fluctuations.
+\item{} The number of background-counts in the on-region $\hat{N}_B$.
+%
+\item{} The minimal significance $S$ a signal has to have in order to be considered unlikely to be a fluctuation in the background.
+%
+$S$ is commonly chosen to be $5\sigma$, (std.\,dev.).
 %
 \item{} A method to estimate $S$ based on the counts in the on- and off-regions. Here commonly Equation\,17 in \cite{li1983analysis} is used.
 %
@@ -220,24 +237,14 @@ This might require the counts in the on- and off-regions to be above a minimal t
 %
 \end{itemize}
 %
-\subsection{Output}
-%
-\begin{eqnarray*}
-\dd{\dot{F}_p(E)}{E} &/&
-\text{area}^{-1}\,\text{time}^{-1}\,\text{energy}^{-1} /
-\text{m}^{-2}\,\text{s}^{-1}\,\text{GeV}^{-1}
-\end{eqnarray*}
-%
-The minimal required differential flux of cosmic gamma-rays, coming from a point-source, in order to claim a detection within observation-time $T_\text{obs}$.
-%
 \subsection{Procedure}
 %
 \begin{enumerate}
-\item We estimate the background-counts $\hat{N}_B(E')$ using the fluxes of cosmic-rays $\dd{F_p(E)}{E}$, our instruments acceptance for cosmic-rays $Q_p(E)$, and our instruments energy-confusion $M_p(E'\vert E)$, see Section \ref{SecEstimatingTheBackgroundCount}.
+\item We estimate the background-counts $\hat{N}_B(E')$ using the fluxes of cosmic-rays $\dd{F_p(E)}{E}$, our instruments acceptance for cosmic-rays $\mathcal{Q}_p(E)$, and our instruments energy-confusion $\mathcal{M}_p(E'\vert E)$.
 %
-\item We estimate the required signal-counts in each energy-bin. This might include assumptions on statistical- and systematic limits.
+\item We estimate the required, critical number of signal-counts in each energy-bin. This might include assumptions on statistical- and systematic limits, see the algorithm $C$.
 %
-\item We finally estimate the minimal flux of gamma-rays required to claim a detection. This involves our instrument's effective area for gamma-rays and our instrument's energy-confusion $M_{\gamma}(E'\vert E)$. 
+\item We finally estimate the minimal flux of gamma-rays required to claim a detection. This involves at least our instrument's effective area for gamma-rays $\mathcal{A}_\gamma(E)$ and possibly our instrument's energy-confusion $\mathcal{M}_{\gamma}(E'\vert E)$.
 %
 \end{enumerate}
 %
@@ -293,19 +300,19 @@ We represent $\dd{F_p(E)}{E}$ using a discrete vector
 dF[e] &=& [df_1, df_2, \cdots, df_n].
 \end{eqnarray*}
 %
-Further, all the quantities $A_\gamma$, $Q_p$, $dF_p$, and $M_p$ do have their cooresponding uncertainties $\Delta A_\gamma$, $\Delta Q_p$, $\Delta dF_p$, and $\Delta M_p$ which also have the cooresponding dimensionality.
+Further, all the quantities $A_\gamma$, $Q_p$, $dF_p$, and $M_p$ do have their corresponding uncertainties $\Delta A_\gamma$, $\Delta Q_p$, $\Delta dF_p$, and $\Delta M_p$ which also have the corresponding dimensionality.
 %
 \section{Scenarios}
 %
-So far I collected four possible scenarios to frame the deifferential sensitivity which answer slightly different astronomical questions.
+So far I collected four possible scenarios to frame the differential sensitivity which answer slightly different astronomical questions.
 %
-At least this set of four scenarios can be represented by two matrices $S$ and $B$.
+At least this set of four scenarios can be represented by two matrices $G$ and $B$.
 %
-The matrix $B$ marks the bins for integrating the background and matrix $S$ marks the bins for integrating the signal.
+The matrix $B$ marks the bins for integrating the background and matrix $G$ marks the bins for integrating the signal.
 %
 \subsection{broad spectrum}
 \begin{eqnarray}
-S[e, e'] &=& M_{\gamma}[e, e']
+G[e, e'] &=& M_{\gamma}[e, e']
 \\
 B[e, e'] &=& \mathrm{eye}()
 \end{eqnarray}
@@ -314,7 +321,7 @@ Energy-label: Reconstructed.
 %
 \subsection{perfect energy}
 \begin{eqnarray}
-S[e, e'] &=& \mathrm{eye}()
+G[e, e'] &=& \mathrm{eye}()
 \\
 B[e, e'] &=& \mathrm{eye}()
 \end{eqnarray}
@@ -323,7 +330,7 @@ Energy-label: True.
 %
 \subsection{line-spectrum}
 \begin{eqnarray}
-S[e, e'] &=& \mathrm{diag}(M_{\gamma}[e, e'])
+G[e, e'] &=& \mathrm{diag}(M_{\gamma}[e, e'])
 \\
 B[e, e'] &=& \mathrm{eye}()
 \end{eqnarray}
@@ -336,7 +343,7 @@ In order to show true energy the bell-spectrum
 %
 Proposed by Werner Hofmann.
 \begin{eqnarray}
-S[e, e'] &=& c \, \, \mathrm{eye}()
+G[e, e'] &=& c \, \, \mathrm{eye}()
 \\
 B[e, e'] &=& \mathrm{bellmask}(M_{\gamma}[e, e'], c)
 \end{eqnarray}
@@ -390,7 +397,7 @@ Summing up all contributions $p$ of the background to obtain the total rate
 \frac{R^k_p[e']}{\text{s}^{-1}}
 \end{eqnarray}
 %
-of irriducible background in the on-region.
+of irreducible background in the on-region.
 %
 \section{Effective Area for gamma-rays in $E'$ for scenario $K$}
 %
@@ -398,11 +405,11 @@ of irriducible background in the on-region.
 \frac{A^k[e']}{\text{m}^2}
 &=&
 \sum_{e}
-\frac{S^k[e, e']}{1} \,\,
+\frac{G^k[e, e']}{1} \,\,
 \frac{A[e]}{\text{m}^2}
 \end{eqnarray}
 %
-of irriducible background in the on-region.
+of irreducible background in the on-region.
 %
 %
 \bibliographystyle{apalike}%
