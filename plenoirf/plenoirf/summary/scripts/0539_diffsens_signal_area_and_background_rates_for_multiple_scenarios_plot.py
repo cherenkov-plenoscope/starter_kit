@@ -126,6 +126,8 @@ for sk in SITES:
                 np.transpose(S_matrix),
                 cmap="Greys",
                 norm=seb.plt_colors.PowerNorm(gamma=0.5),
+                vmin=0,
+                vmax=1,
             )
             ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
             seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
@@ -148,6 +150,8 @@ for sk in SITES:
                 np.transpose(B_matrix),
                 cmap="Greys",
                 norm=seb.plt_colors.PowerNorm(gamma=1.0),
+                vmin=0,
+                vmax=1,
             )
             ax_c.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
             seb.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
