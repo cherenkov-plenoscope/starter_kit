@@ -61,7 +61,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
-        energy_label = ""
+        energy_label = SCENARIOS[scenario_key]
 
     elif scenario_key == "broad_spectrum":
         G = np.array(probability_reco_given_true)
@@ -69,7 +69,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
-        energy_label = "reco."
+        energy_label = SCENARIOS[scenario_key]
 
     elif scenario_key == "line_spectrum":
         # only the diagonal
@@ -79,7 +79,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
-        energy_label = "reco."
+        energy_label = SCENARIOS[scenario_key]
 
     elif scenario_key == "bell_spectrum":
         containment = 0.68
@@ -91,7 +91,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
             containment=containment,
         )
         B_au = np.zeros(shape=shape)
-        energy_label = ""
+        energy_label = SCENARIOS[scenario_key]
 
     else:
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
