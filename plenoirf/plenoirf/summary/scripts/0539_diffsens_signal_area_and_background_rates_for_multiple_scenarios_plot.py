@@ -111,19 +111,21 @@ for sk in SITES:
             ax.set_xlabel("reco. energy / GeV")
             ax.set_ylim([1e0, 1e6])
             ax.loglog()
-            fig.savefig(os.path.join(pa["out_dir"], sk, ok, dk + "_area.jpg",))
+            fig.savefig(
+                os.path.join(pa["out_dir"], sk, ok, dk + "_area_gamma.jpg",)
+            )
             seb.close(fig)
 
-            # S_matrix
+            # G_matrix
             # ---------------------------
-            S_matrix = scenarios[sk][ok][dk]["gamma"]["scenario"]["S_matrix"]
+            G_matrix = scenarios[sk][ok][dk]["gamma"]["scenario"]["G_matrix"]
             fig = seb.figure(seb.FIGURE_1_1)
             ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
             ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
             _pcm_confusion = ax_c.pcolormesh(
                 energy_bin["edges"],
                 energy_bin["edges"],
-                np.transpose(S_matrix),
+                np.transpose(G_matrix),
                 cmap="Greys",
                 norm=seb.plt_colors.PowerNorm(gamma=0.5),
                 vmin=0,
@@ -135,7 +137,9 @@ for sk in SITES:
             ax_c.set_ylabel("reco. energy / GeV")
             ax_c.loglog()
             ax_c.set_xlabel("energy / GeV")
-            fig.savefig(os.path.join(pa["out_dir"], sk, ok, dk + "_S.jpg",))
+            fig.savefig(
+                os.path.join(pa["out_dir"], sk, ok, dk + "_G_matrix.jpg",)
+            )
             seb.close(fig)
 
             # B_matrix
@@ -164,7 +168,7 @@ for sk in SITES:
                     pa["out_dir"],
                     sk,
                     ok,
-                    dk + "_B.jpg",
+                    dk + "_B_matrix.jpg",
                 )
             )
             seb.close(fig)
