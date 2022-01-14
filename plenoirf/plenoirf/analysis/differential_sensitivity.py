@@ -56,16 +56,16 @@ def make_energy_confusion_matrices_for_signal_and_background(
     assert probability_reco_given_true_abs_unc.shape == shape
 
     if scenario_key == "perfect_energy":
-        S = np.eye(N=shape[0])
-        S_au = np.zeros(shape=shape)  # zero uncertainty
+        G = np.eye(N=shape[0])
+        G_au = np.zeros(shape=shape)  # zero uncertainty
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
         energy_label = ""
 
     elif scenario_key == "broad_spectrum":
-        S = np.array(probability_reco_given_true)
-        S_au = np.array(probability_reco_given_true_abs_unc)  # adopt as is
+        G = np.array(probability_reco_given_true)
+        G_au = np.array(probability_reco_given_true_abs_unc)  # adopt as is
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
@@ -74,8 +74,8 @@ def make_energy_confusion_matrices_for_signal_and_background(
     elif scenario_key == "line_spectrum":
         # only the diagonal
         eye = np.eye(N=shape[0])
-        S = eye * np.diag(probability_reco_given_true)
-        S_au = eye * np.diag(probability_reco_given_true_abs_unc)
+        G = eye * np.diag(probability_reco_given_true)
+        G_au = eye * np.diag(probability_reco_given_true_abs_unc)
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
@@ -83,8 +83,8 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
     elif scenario_key == "bell_spectrum":
         containment = 0.68
-        S = containment * np.eye(N=shape[0])  # true energy for gammas
-        S_au = np.zeros(shape=shape)  # zero uncertainty
+        G = containment * np.eye(N=shape[0])  # true energy for gammas
+        G_au = np.zeros(shape=shape)  # zero uncertainty
 
         B = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
             probability_reco_given_true=probability_reco_given_true,
@@ -97,8 +97,8 @@ def make_energy_confusion_matrices_for_signal_and_background(
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
 
     return {
-        "S_matrix": S,
-        "S_matrix_au": S_au,
+        "G_matrix": G,
+        "G_matrix_au": G_au,
         "B_matrix": B,
         "B_matrix_au": B_au,
         "energy_axes_label": energy_label,
@@ -259,22 +259,22 @@ def derive_all_energy_migration(energy_migration, energy_bin_width):
 
 
 def make_area_in_reco_energy(
-    area, area_au, S_matrix, S_matrix_au,
+    area, area_au, G_matrix, G_matrix_au,
 ):
     A = area
     A_au = area_au
-    S = S_matrix
-    S_au = S_matrix_au
+    G = G_matrix
+    G_au = G_matrix_au
     assert len(A) == len(A_au)
     assert np.all(A >= 0)
     assert np.all(A_au >= 0)
 
-    assert S.shape == S_au.shape
-    assert S.shape[0] == S.shape[1]
-    assert np.all(S >= 0)
-    assert np.all(S_au >= 0)
+    assert G.shape == G_au.shape
+    assert G.shape[0] == G.shape[1]
+    assert np.all(G >= 0)
+    assert np.all(G_au >= 0)
 
-    assert len(A) == S.shape[0]
+    assert len(A) == G.shape[0]
 
     num_bins = len(A)
     A_out = np.zeros(num_bins)
@@ -286,7 +286,7 @@ def make_area_in_reco_energy(
 
         for et in range(num_bins):
             tmp[et], tmp_au[et] = utils.multiply_elemnetwise_au(
-                x=[S[et, er], A[et],], x_au=[S_au[et, er], A_au[et],],
+                x=[G[et, er], A[et],], x_au=[G_au[et, er], A_au[et],],
             )
 
         A_out[er], A_out_au[er] = utils.sum_elemnetwise_au(x=tmp, x_au=tmp_au)

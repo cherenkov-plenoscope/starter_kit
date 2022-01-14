@@ -77,8 +77,8 @@ for sk in SITES:
             ) = irf.analysis.differential_sensitivity.make_area_in_reco_energy(
                 area=Q[sk][ok]["gamma"]["point"]["mean"],
                 area_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
-                S_matrix=scenario["S_matrix"],
-                S_matrix_au=scenario["S_matrix_au"],
+                G_matrix=scenario["G_matrix"],
+                G_matrix_au=scenario["G_matrix_au"],
             )
 
             json_numpy.write(
