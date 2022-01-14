@@ -47,6 +47,7 @@ for sk in SITES:
 for sk in SITES:
     for ok in ONREGION_TYPES:
         for dk in irf.analysis.differential_sensitivity.SCENARIOS:
+            elabel = irf.analysis.differential_sensitivity.SCENARIOS[dk]["energy_axes_label"]
 
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
@@ -75,7 +76,7 @@ for sk in SITES:
             ax.loglog()
             fig.savefig(
                 os.path.join(
-                    pa["out_dir"], sk, ok, dk + "_rate_vs_reco_energy.jpg",
+                    pa["out_dir"], sk, ok, dk + "_background_rate_vs_reco_energy.jpg",
                 )
             )
             seb.close(fig)
@@ -108,7 +109,7 @@ for sk in SITES:
             )
             ax.plot(energy_bin["centers"], A_gamma, "+k")
             ax.set_ylabel("area / m$^{2}$")
-            ax.set_xlabel("reco. energy / GeV")
+            ax.set_xlabel(elabel + "energy / GeV")
             ax.set_ylim([1e0, 1e6])
             ax.loglog()
             fig.savefig(
@@ -120,8 +121,8 @@ for sk in SITES:
             # ---------------------------
             G_matrix = scenarios[sk][ok][dk]["gamma"]["scenario"]["G_matrix"]
             fig = seb.figure(seb.FIGURE_1_1)
-            ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
-            ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
+            ax_c = seb.add_axes(fig=fig, span=[0.16, 0.16, 0.7, 0.7])
+            ax_cb = seb.add_axes(fig=fig, span=[0.88, 0.16, 0.02, 0.7])
             _pcm_confusion = ax_c.pcolormesh(
                 energy_bin["edges"],
                 energy_bin["edges"],
@@ -146,14 +147,14 @@ for sk in SITES:
             # --------
             B_matrix = scenarios[sk][ok][dk]["gamma"]["scenario"]["B_matrix"]
             fig = seb.figure(seb.FIGURE_1_1)
-            ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
-            ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
+            ax_c = seb.add_axes(fig=fig, span=[0.16, 0.16, 0.7, 0.7])
+            ax_cb = seb.add_axes(fig=fig, span=[0.88, 0.16, 0.02, 0.7])
             _pcm_confusion = ax_c.pcolormesh(
                 energy_bin["edges"],
                 energy_bin["edges"],
                 np.transpose(B_matrix),
                 cmap="Greys",
-                norm=seb.plt_colors.PowerNorm(gamma=1.0),
+                norm=seb.plt_colors.PowerNorm(gamma=0.5),
                 vmin=0,
                 vmax=1,
             )

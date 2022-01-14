@@ -41,8 +41,8 @@ def estimate_differential_sensitivity(
 
 SCENARIOS = {
     "perfect_energy": {"energy_axes_label": "",},
-    "broad_spectrum": {"energy_axes_label": "reco.",},
-    "line_spectrum": {"energy_axes_label": "reco.",},
+    "broad_spectrum": {"energy_axes_label": "reco. ",},
+    "line_spectrum": {"energy_axes_label": "reco. ",},
     "bell_spectrum": {"energy_axes_label": "",},
 }
 
@@ -61,7 +61,6 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
-        energy_label = SCENARIOS[scenario_key]
 
     elif scenario_key == "broad_spectrum":
         G = np.array(probability_reco_given_true)
@@ -69,7 +68,6 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
-        energy_label = SCENARIOS[scenario_key]
 
     elif scenario_key == "line_spectrum":
         # only the diagonal
@@ -79,7 +77,6 @@ def make_energy_confusion_matrices_for_signal_and_background(
 
         B = np.eye(N=shape[0])
         B_au = np.zeros(shape=shape)
-        energy_label = SCENARIOS[scenario_key]
 
     elif scenario_key == "bell_spectrum":
         containment = 0.68
@@ -91,7 +88,6 @@ def make_energy_confusion_matrices_for_signal_and_background(
             containment=containment,
         )
         B_au = np.zeros(shape=shape)
-        energy_label = SCENARIOS[scenario_key]
 
     else:
         raise KeyError("Unknown scenario_key: '{:s}'".format(scenario_key))
@@ -101,7 +97,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
         "G_matrix_au": G_au,
         "B_matrix": B,
         "B_matrix_au": B_au,
-        "energy_axes_label": energy_label,
+        "energy_axes_label": SCENARIOS[scenario_key]["energy_axes_label"],
     }
 
 

@@ -40,7 +40,9 @@ The 'differential sensitivity' is a common measure for performance in the atmosp
 %
 However, when the reconstruction of energy in our instrument is not perfect there can be multiple reasonable ways to express differential sensitivity.
 %
-Here I want to explore these different ways for myself.
+Each way describes a slightly different astronomical scenario.
+%
+Here I want to explore these different scenarios for myself.
 %
 \section{Observables, Background and the On-Off-Measurement}
 \label{SecObservablesAndOnOff}
@@ -56,7 +58,7 @@ However, the atmospheric Cherenkov-method suffers from a large irreducible backg
 %
 Therefore, to answer astronomical questions we run on-off-measurements where a signal has to emerge out of the irreducible background.
 %
-\subsection*{On-Off-measurements to Answer Different Astronomical Questions}
+\subsection*{On-Off-measurements to Answer Astronomical Questions}
 Depending on the astronomical question, the space of observables is divided into on- and off-regions in order to maximize signal over background.
 %
 For example, when the astronomical question asks for the existence of a pulsar emitting gamma-rays at a certain energy we divide the space of directions, energy, and time accordingly.
@@ -75,29 +77,19 @@ And when we ask for e.g. the moon-shadow of leptons, we will shift the on-region
 % LiMa 17      [cortina2016machete]
 The differential sensitivity commonly discussed in the atmospheric Cherenkov-method shows how much flux of gamma-rays, coming from a point-source and at a specific energy, is required to claim a detection within a given time of observation.
 %
-This can also be discussed as the performance of an instrument.\\
+This can also be discussed as the performance of an instrument.
+%
+\\
 %
 However, this formulation is not very specific and might be discussed in different scenarios with different rooms for interpretation.
 %
-\subsection*{Space of Directions}
+\\
 %
 Depending on the branch of astronomy 'differential sensitivity' might be about different astronomic questions.
 %
 In gamma-ray astronomy this is often implicitly about point-sources, be it in the atmospheric Cherenkov-method \cite{cta2018baseline,cortina2016machete} or in space born instruments \cite{wood2016fermiperformance}.
 %
 But for neutrinos the differential sensitivity is about a diffuse source \cite{marinelli2021km3netarca}.
-%
-\subsection*{Space of Energy}
-%
-The term 'differential' is about showing the flux $F$ derived by energy, so $\dd{F}{E}$.
-%
-I assume this is done to easily integrate over an interval of energy to acquire the flux $F$.
-%
-As statistics are limited the range of energy is divided into multiple, neighboring, and not overlapping \footnote{The term 'not overlapping' is sometimes explicitly stated \cite{cta2018baseline}.} energy-bins.
-%
-Commonly we find 5 bins per decade what is believed to be sufficient for todays instruments.
-%
-Inside a bin in energy, I suspect the rest of the estimate to be the same as for integral sensitivity.
 %
 \section{A brief detour into reality}
 %
@@ -143,7 +135,7 @@ in order to claim a detection.
 %
 \subsection{Input}
 %
-On the input side we got more and already some options and room for different flavors.
+On the input side we got some room for different scenarios.
 %
 \subsubsection*{Observation-Time}
 %
@@ -181,6 +173,7 @@ The relevant contributions to the background are the cosmic-rays. Some instrumen
 \text{unit} &:& \text{area}^{-1} \text{(solid angle)}^{-1} \text{time}^{-1} \text{energy}^{-1} / \text{m}^{-2}\, \text{sr}^{-1}\,\text{s}^{-1}\,\text{GeV}^{-1}\\
 \text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
+%
 The diffuse, differential flux for every cosmic-ray $p$ in $\mathbb{P}_\text{background}$. This might be taken from measurements of space-born instruments e.g. \cite{aguilar2014precision,aguilar2015precision}.
 %
 More precisely: For Cherenkov-instruments observing at energies at and below the geomagnetic cutoff this is not the flux of cosmic particles, but the flux of air-showers.
@@ -271,7 +264,9 @@ This might require the counts in the on- and off-regions to be above a minimal t
 \subsection{Procedure}
 \label{SubSecProcedure}
 %
-There are three basic steps.
+There are three basic steps to compute the differential sensitivity.
+%
+The names of variables are adopted from \cite{li1983analysis}.
 %
 \subsubsection*{1) Computing the number of background-counts $\hat{N}_B[e']$}
 %
@@ -479,8 +474,10 @@ For each bin in true energy $e$, the row $\mathrm{bellmask}()[e, :]$ marks the b
 The actual implementation of $\mathrm{bellmask}$ might differ, as it is not straight forward how to treat multiple maxima in $M_\gamma(E'\vert E)$, or how to handle discrete binning, but it has to fulfill
 %
 \begin{eqnarray}
-c &=& \sum_{e'} \mathrm{bellmask}[e ,e'] \, M_{\gamma}[e', e]\\ &\forall& e.
+c &=& \sum_{e'} \mathrm{bellmask}[e ,e'] \, M_{\gamma}[e', e], \,\,\,\,\,\, \forall e.
 \end{eqnarray}
+%
+I named it bell-spectrum as the mask in $B$ is a bell when $M_\gamma$ is a bell itself. But this name is misleading as it suggests the source of gamma-rays has a bell like spectrum.
 %
 \bibliographystyle{apalike}%
 \bibliography{references}%
