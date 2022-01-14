@@ -67,19 +67,17 @@ When we ask for the existence of a spectral line in energy over a large solid an
 %
 When we look for gamma-rays, we always divide the space of particle-type $p'$ to favor gamma-rays.
 %
-However, when we ask for e.g. the moon-shadow of leptons, we will shift the on-region in the space of particle-type accordingly.
+And when we ask for e.g. the moon-shadow of leptons, we will shift the on-region in the space of particle-type accordingly.
 %
 \section{The Astronomical Question answered by Differential Sensitivity}
 \label{SecAstronomicalQuastion}
 % point-source [cta2018baseline, cortina2016machete, ]
 % LiMa 17      [cortina2016machete]
-The differential sensitivity commonly discussed in the atmospheric Cherenkov-method shows how many gamma-rays, coming from a point-source, and being emitted in a specific range of energies, are required to claim a detection within a given observation-time $T_\text{obs}$.
+The differential sensitivity commonly discussed in the atmospheric Cherenkov-method shows how much flux of gamma-rays, coming from a point-source and at a specific energy, is required to claim a detection within a given time of observation.
 %
-This can also be discussed as the performance of an instrument to estimate a source's spectrum of emissions.\\
+This can also be discussed as the performance of an instrument.\\
 %
-However, as we will see this formulation is not very specific and might result in different scenarios with different rooms for interpretation.
-%
-Anyhow, we commonly put on-off-regions in the space of directions and energy.
+However, this formulation is not very specific and might be discussed in different scenarios with different rooms for interpretation.
 %
 \subsection*{Space of Directions}
 %
@@ -87,7 +85,7 @@ Depending on the branch of astronomy 'differential sensitivity' might be about d
 %
 In gamma-ray astronomy this is often implicitly about point-sources, be it in the atmospheric Cherenkov-method \cite{cta2018baseline,cortina2016machete} or in space born instruments \cite{wood2016fermiperformance}.
 %
-But for example in neutrino-astronomy, differential sensitivity might be about diffuse sources \cite{marinelli2021km3netarca}.
+But for neutrinos the differential sensitivity is about a diffuse source \cite{marinelli2021km3netarca}.
 %
 \subsection*{Space of Energy}
 %
@@ -101,6 +99,29 @@ Commonly we find 5 bins per decade what is believed to be sufficient for todays 
 %
 Inside a bin in energy, I suspect the rest of the estimate to be the same as for integral sensitivity.
 %
+\section{A brief detour into reality}
+%
+In practice, we use $(n+1)$ edges for $n$ bins in energy
+%
+\begin{eqnarray*}
+E[e] &=& [e_1, e_2, \cdots, e_{n+1}]\\
+\text{unit} &:& \text{energy} / \text{GeV}\\
+\text{dim} &:& \text{vector}(n)
+\end{eqnarray*}
+%
+and denote the width of the bins as
+%
+\begin{eqnarray*}
+\text{d}E[e] &=& E[e+1] - E[e]\\
+&=& [e_2-e_1, e_3-e_2, \cdots, e_{n+1}-e_n]\\
+\text{unit} &:& \text{energy} / \text{GeV}\\
+\text{dim} &:& \text{vector}(n).
+\end{eqnarray*}
+%
+I will represent all the following quantities as discrete vectors or matrices.
+%
+I can not effort the mental mapping from infinitesimal representations to the actual implementation in the code.
+%
 \section{Common Ground}
 \label{SecCommonGround}
 %
@@ -108,33 +129,35 @@ Here I list what I believe is the common ground, for all scenarios of differenti
 %
 \subsection{Output}
 %
-Let's start with the output of the estimate of differential sensitivity.
+Let's start with the common output of differential sensitivity in the atmospheric Cherenkov-method.
 %
-This is always a differential flux of gamma-rays
+This is the minimal required flux of gamma-rays coming from a point-source
 %
 \begin{eqnarray*}
-\dd{F_\gamma}{E} &/&
-\text{area}^{-1}\,\text{time}^{-1}\,\text{energy}^{-1} /
-\text{m}^{-2}\,\text{s}^{-1}\,\text{GeV}^{-1}
+\dd{V_\gamma}{E}[E] &=& [dv_1, \, dv_2, \, \cdots, \, dv_n]\\
+\text{unit} &:& \text{area}^{-1} \text{time}^{-1} \text{energy}^{-1} / \text{m}^{-2}\,\text{s}^{-1}\,\text{GeV}^{-1}\\
+\text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
 %
-that is the minimal required flux in order to claim a detection.
+in order to claim a detection.
 %
 \subsection{Input}
 %
 On the input side we got more and already some options and room for different flavors.
 %
-\subsubsection*{Observation-time}
+\subsubsection*{Observation-Time}
 %
 \begin{eqnarray*}
-T_\text{obs} &/& \text{time} / \text{s}
+T_\text{obs} && \\
+\text{unit} &:& \text{time} / s\\
+\text{dim} &:& \text{scalar}
 \end{eqnarray*}
 %
 The observation-time $T_\text{obs}$ is the accumulated duration our instrument was ready to trigger and record an event.
 %
 Commonly, Cherenkov-telescopes show $T_\text{obs} = 50\,$h or $T_\text{obs} = 1800\,$s. for todays quickest transients.
 %
-\subsubsection*{The set of contributions to the background}
+\subsubsection*{The Set of Contributions to the Background}
 %
 \begin{eqnarray*}
 \mathbb{P}_\text{background} &=& \{
@@ -151,12 +174,12 @@ Commonly, Cherenkov-telescopes show $T_\text{obs} = 50\,$h or $T_\text{obs} = 18
 %
 The relevant contributions to the background are the cosmic-rays. Some instruments might also have a relevant contribution of accidental triggers, and artifacts related to the instrument.
 %
-\subsubsection*{Flux of cosmic-rays}
+\subsubsection*{Flux of Cosmic-Rays}
 %
 \begin{eqnarray*}
-\dd{F_p}{E} &/&
-\text{area}^{-1}\,\text{(solid angle)}^{-1}\,\text{time}^{-1}\,\text{energy}^{-1} /
-\text{m}^{-2}\,\text{sr}^{-1}\,\text{s}^{-1}\,\text{GeV}^{-1}
+\dd{F_p}{E}[e] &=& [dFp_1, dFp_2, \cdots, dFp_n]\\
+\text{unit} &:& \text{area}^{-1} \text{(solid angle)}^{-1} \text{time}^{-1} \text{energy}^{-1} / \text{m}^{-2}\, \text{sr}^{-1}\,\text{s}^{-1}\,\text{GeV}^{-1}\\
+\text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
 The diffuse, differential flux for every cosmic-ray $p$ in $\mathbb{P}_\text{background}$. This might be taken from measurements of space-born instruments e.g. \cite{aguilar2014precision,aguilar2015precision}.
 %
@@ -164,50 +187,58 @@ More precisely: For Cherenkov-instruments observing at energies at and below the
 %
 For such instruments this includes the geomagnetic cutoff, and the flux of air-showers induced by terrestrial, 'secondary' particles \cite{lipari2002fluxes}.
 %
-\subsubsection*{Effective acceptance for cosmic-rays after all cuts}
+\subsubsection*{Effective Acceptance for Cosmic-Rays After All Cuts}
 \begin{eqnarray*}
-\mathcal{Q}_p(E) &/&
-\text{area} \times{} \text{solid angle} /
-\text{m}^{2}\,\text{sr}
+Q_p[e] &=& [q_1, q_2, \cdots, q_n]\\
+\text{unit} &:& \text{area} \, \text{(solid angle)} / \text{m}^{2}\,\text{sr}\\
+\text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
-%
-The effective acceptance of our instrument to detect an air-shower induced by cosmic-ray $p$ with true energy $E$ that was falsely classified to be a gamma-ray.
 %
 This product of area and solid angle is also often called etendue.
 %
-\subsubsection*{Effective Area for gamma-rays after all cuts}
+The effective acceptance of our instrument to detect an air-shower induced by cosmic-ray $p$ with true energy $E$ that was falsely classified to be a gamma-ray.
+%
+\subsubsection*{Effective Area for Gamma-Rays After All Cuts}
 \begin{eqnarray*}
-\mathcal{A}_\gamma(E) &/&
-\text{area} /
-\text{m}^{2}
+A_\gamma[e] &=& [a_1, a_2, \cdots, a_n]\\
+\text{unit} &:& \text{area} / \text{m}^{2}\\
+\text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
 %
-The effective area of our instrument to detect a gamma-ray with energy $E$ which the instrument positively classifies to be a gamma-ray.
+The effective area of our instrument to detect a gamma-ray with true energy $E$ which the instrument positively classifies to be a gamma-ray.
 %
 $A_\gamma$ is estimated in simulations applying the same cuts as in $Q_p$.
 %
-Gamma-rays are thrown within a direction-range which can reasonable be used by the instrument to look for a point-source.
-%
-\subsubsection*{Conditional Probability to confuse energy}
+\subsubsection*{Conditional Probability to Confuse Energy}
 %
 Our instrument's conditional probability
 %
 \begin{eqnarray*}
-\mathcal{M}_p(E' \vert E) &/& 1
+M_p[e, e'] &=& M_p(E' \vert E)\\
+&=&
+  \left[ {\begin{array}{ccc}
+    m_{11} & \cdots & m_{1n}\\
+    \vdots & \ddots & \vdots\\
+    m_{n1} & \cdots & m_{nn}\\
+  \end{array} } \right]\\
+\text{unit} &:& \text{probability}/1\\
+\text{dim} &:& \text{matrix}(n,n)
 \end{eqnarray*}
 %
-to reconstruct cosmic particle $p$ to have energy $E'$ given the particle has energy $E$.
+to reconstruct cosmic particle $p$ to have reconstructed energy $E'$ given the particle has true energy $E$.
 %
-We need this for every particle $p$ in $\gamma \cup P_\text{cosmic}$.
+We need this for every particle $p$ in $\gamma \cup P_\text{background}$.
 %
-Here only events which are classified to be gamma-rays contribute, i.e. same cuts as in $Q_p(E)$ and $A_\gamma(E)$.
+Here only events which are classified to be gamma-rays contribute, i.e. same cuts as in $Q_p$ and $A_\gamma$.
 %
-\subsubsection*{Algorithm $C$ to estimate the critical number of signal-counts $N_S$}
+\subsubsection*{Algorithm $C$ to Estimate the Critical Number of Signal-Counts $N_S$}
 %
 After we will have estimated the number of background-counts in the on-region $\hat{N}_B$, we use an algorithm $C$ to estimate the minimal number of signal-counts in the on-region
 %
 \begin{eqnarray*}
-N_S &=& C(\hat{N}_B,\,\,S,\,\,\dots)
+N_S[e'] &=& C(\hat{N}_B[e'],\,\,S,\,\,\dots)\\
+\text{unit} &:& \text{intensity}/1\\
+\text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
 %
 which is required to claim a detection.
@@ -238,115 +269,201 @@ This might require the counts in the on- and off-regions to be above a minimal t
 \end{itemize}
 %
 \subsection{Procedure}
+\label{SubSecProcedure}
 %
-\begin{enumerate}
-\item We estimate the background-counts $\hat{N}_B(E')$ using the fluxes of cosmic-rays $\dd{F_p(E)}{E}$, our instruments acceptance for cosmic-rays $\mathcal{Q}_p(E)$, and our instruments energy-confusion $\mathcal{M}_p(E'\vert E)$.
+There are three basic steps.
 %
-\item We estimate the required, critical number of signal-counts in each energy-bin. This might include assumptions on statistical- and systematic limits, see the algorithm $C$.
+\subsubsection*{1) Computing the number of background-counts $\hat{N}_B[e']$}
 %
-\item We finally estimate the minimal flux of gamma-rays required to claim a detection. This involves at least our instrument's effective area for gamma-rays $\mathcal{A}_\gamma(E)$ and possibly our instrument's energy-confusion $\mathcal{M}_{\gamma}(E'\vert E)$.
+The total number of background-counts in the on-region is
 %
-\end{enumerate}
+\begin{eqnarray}
+\hat{N}_B[e'] &=& R^k[e'] \, T_\text{obs}
+\end{eqnarray}
 %
-The first and last step might be done in multiple, yet reasonable ways.
+is the total rate $R^k[e']$ of background times the observation-time $T_\text{obs}$.
 %
-\subsubsection*{Binning the energy in practical use}
+And the total rate of background is
 %
-In practice, we use $(n+1)$ edges for $n$ bins in energy
+\begin{eqnarray}
+R^k[e'] &=& \sum_{p} R^k_p[e']
+\end{eqnarray}
+%
+the sum of the individual rates $R^k_p[e']$ from each contribution $p$.
+%
+Now the individual rates $R^k_p[e']$ depend on the scenario $k$.
+%
+\subsubsection*{2) Computing the number of required signal-counts $N_S[e']$}
+%
+We estimate the required number of signal-counts
+\begin{eqnarray}
+N_S[e'] &=& C^k(\hat{N}_B[e'],\,\,S,\,\,\dots)
+\end{eqnarray}
+in each energy-bin $e'$. As discussed before, the algorithm $C^k$ might depend on the scenario $k$.
+%
+\subsubsection*{3) Computing the flux $\dd{V}{E}[e']$}
+%
+We finally estimate the minimal flux of gamma-rays required to claim a detection
+%
+\begin{eqnarray}
+\dd{V}{E}[e'] &=& \frac{N_S[e']}{{T_\text{obs}}\,{A^k_\gamma}[e']\,\text{d}E[e']}.
+\end{eqnarray}
+%
+This involves at least the required number of signal-counts $N_S[e']$, the observation-time $T_\text{obs}$.
+%
+The effective area for gamma-rays $A^k_\gamma[e']$ depends on the scenario $k$.
+%
+\section{Representing and Applying different Scenarios}
+%
+So far I encountered four scenarios which answer different astronomical questions.
+%
+Each scenario gives a different pair of $A^k_\gamma[e']$, and $R^k_p[e']$ what is the missing input to the procedure in Section \ref{SubSecProcedure}.
+%
+At least the four scenarios which I encountered so far can be represented using two matrices
 %
 \begin{eqnarray*}
-V[e] &=& [v_1, v_2, \cdots, v_{n+1}]
+G^k[e, e'] &=&
+  \left[ {\begin{array}{ccc}
+    g_{11} & \cdots & g_{1n}\\
+    \vdots & \ddots & \vdots\\
+    g_{n1} & \cdots & g_{nn}\\
+  \end{array} } \right]\\
+\text{unit} &:& \text{weights for signal}/1\\
+\text{dim} &:& \text{matrix}(n,n),
 \end{eqnarray*}
 %
-and denote the width of the bins as
+and
 %
 \begin{eqnarray*}
-W[e] &=& V[e+1] - V[e].
-\end{eqnarray*}
-%
-Accordingly we represent the probability $\mathcal{M}_p$ using a discrete matrix
-%
-\begin{eqnarray*}
-M_p[e, e'] &=&
+B^k[e, e'] &=&
   \left[ {\begin{array}{cccc}
-    m_{11} & m_{12} & \cdots & m_{1n}\\
-    m_{21} & m_{22} & \cdots & m_{2n}\\
-    \vdots & \vdots & \ddots & \vdots\\
-    m_{n1} & m_{n2} & \cdots & m_{nn}\\
-  \end{array} } \right],
+    b_{11} & \cdots & b_{1n}\\
+    \vdots & \ddots & \vdots\\
+    b_{n1} & \cdots & b_{nn}\\
+  \end{array} } \right]\\
+\text{unit} &:& \text{weights for background}/1\\
+\text{dim} &:& \text{matrix}(n,n).
 \end{eqnarray*}
 %
-and conserving the probability
+Here, I use the same algorithm $C$ to compute the minimal number of signal-counts for all scenarios, so the differences discussed here are only in $G$ and $B$.
 %
-\begin{eqnarray*}
-\sum_{e} M_p[e, e'] &=& 1, \, \, \, \forall e'
-\end{eqnarray*}
+\subsection{Applying a Scenario $k$}
 %
-We represent $\mathcal{A}_\gamma$ using a discrete vector
+\subsubsection*{Applying $G$, to get Effective Area for Gamma-Rays}
 %
-\begin{eqnarray*}
-A_\gamma[e] &=& [a_1, a_2, \cdots, a_n].
-\end{eqnarray*}
+The scenario's effective area for gamma-rays
 %
-We represent $\mathcal{Q}_p$ using a discrete vector
+\begin{eqnarray}
+A^k[e'] &=& \sum_{e} \, G^k[e, e'] \, A[e]
+\end{eqnarray}
 %
-\begin{eqnarray*}
-Q_p[e] &=& [q_1, q_2, \cdots, q_n].
-\end{eqnarray*}
+will be used to compute the critical flux $\dd{V}{E}[e']$ based on the critical number of signal-counts $N_s[e']$.
 %
-We represent $\dd{F_p(E)}{E}$ using a discrete vector
+\subsubsection*{Applying $B$, to Integrate over Background}
 %
-\begin{eqnarray*}
-dF[e] &=& [df_1, df_2, \cdots, df_n].
-\end{eqnarray*}
+The rate of background in the on-region which is caused by contribution $p$ is
 %
-Further, all the quantities $A_\gamma$, $Q_p$, $dF_p$, and $M_p$ do have their corresponding uncertainties $\Delta A_\gamma$, $\Delta Q_p$, $\Delta dF_p$, and $\Delta M_p$ which also have the corresponding dimensionality.
+\begin{eqnarray}
+R^k_p[e'] &=& \sum_{e} B^k[e, e'] \, R_p[e]
+\end{eqnarray}
+%
+where $R_p[e]$ is the rate of background coming from contribution $p$ in reconstructed energy.
+%
+This rate
+%
+\begin{eqnarray}
+R_p[e'] &=& \sum_{e} \text{d}E[e] \, \dd{F_p}{E}[e] \, Q_p[e] \, M_p[e, e']
+\label{EqRp}
+\end{eqnarray}
+%
+ is independent of the scenario and only depends on the contributions flux $\dd{F_p}{E}[e]$, the instrument's acceptance for this contribution $Q_p[e]$, and the instrument's confusion in energy $M_p[e, e']$ for this contribution.
 %
 \section{Scenarios}
 %
-So far I collected four possible scenarios to frame the differential sensitivity which answer slightly different astronomical questions.
+I am happy to receive suggestions for more meaningful names to these scenarios.
 %
-At least this set of four scenarios can be represented by two matrices $G$ and $B$.
+\subsection{Perfect Energy}
 %
-The matrix $B$ marks the bins for integrating the background and matrix $G$ marks the bins for integrating the signal.
+This is not realistic. This simply assumes that the instrument's reconstruction for true gamma-rays is perfect.
 %
-\subsection{broad spectrum}
+The true cosmic-rays are still confused in energy, see Equation \ref{EqRp}.
+%
+\begin{eqnarray}
+G[e, e'] &=& \mathrm{eye}(n)
+\\
+B[e, e'] &=& \mathrm{eye}(n)
+\end{eqnarray}
+%
+\begin{center}
+\begin{tabular}{ll}
+spectrum of source & sharp line\\
+energy-label & true\\
+\end{tabular}
+\end{center}
+%
+\subsection{Broad Spectrum}
+%
+This assumes that the source emits gamma-rays in all bins of true energy.
+%
+True gamma-rays which have their energy confused to wrong bins can still contribute to the signal and are not cut away.
+%
+This means the that the elements off the diagonal in $G$ can be larger than zero.
+%
+This might be interesting for a general detection of a source which is assumed to have a broad spectrum, and actual shape of the spectrum does not matter too much.
+%
+It is also a common choice when the reconstruction of energy is 'good', thus $M_\gamma \approx \mathrm{eye}(n)$.
+%
 \begin{eqnarray}
 G[e, e'] &=& M_{\gamma}[e, e']
 \\
-B[e, e'] &=& \mathrm{eye}()
+B[e, e'] &=& \mathrm{eye}(n)
 \end{eqnarray}
 %
-Energy-label: Reconstructed.
+\begin{center}
+\begin{tabular}{ll}
+spectrum of source & broad\\
+energy-label & reconstructed\\
+\end{tabular}
+\end{center}
 %
-\subsection{perfect energy}
-\begin{eqnarray}
-G[e, e'] &=& \mathrm{eye}()
-\\
-B[e, e'] &=& \mathrm{eye}()
-\end{eqnarray}
+\subsection{Line-Spectrum}
 %
-Energy-label: True.
+This assumes that the source emits gamma-rays only in a single bin of energy, i.e. the source's spectrum is a sharp line.
 %
-\subsection{line-spectrum}
+Here we only take true gamma-rays into account which end inside the bin of reconstructed energy which equals the true, and expected energy.
+%
+However, we still respect that $M_{\gamma} \neq \mathrm{eye}(n)$ and thus reduce the probability according to the diagonal of the confusion-matrix $M_{\gamma}$.
+%
 \begin{eqnarray}
 G[e, e'] &=& \mathrm{diag}(M_{\gamma}[e, e'])
 \\
-B[e, e'] &=& \mathrm{eye}()
+B[e, e'] &=& \mathrm{eye}(n)
 \end{eqnarray}
 %
-Energy-label: Reconstructed.
+\begin{center}
+\begin{tabular}{ll}
+spectrum of source & sharp line\\
+energy-label & reconstructed\\
+\end{tabular}
+\end{center}
 %
-\subsection{bell-spectrum}
+\subsection{Bell-Spectrum}
 %
-In order to show true energy the bell-spectrum
+We assume the source emits gamma-rays only in a single bin of energy, i.e. the source has a line spectrum.
 %
 Proposed by Werner Hofmann.
 \begin{eqnarray}
-G[e, e'] &=& c \, \, \mathrm{eye}()
+G[e, e'] &=& c \, \, \mathrm{eye}(n)
 \\
 B[e, e'] &=& \mathrm{bellmask}(M_{\gamma}[e, e'], c)
 \end{eqnarray}
+%
+\begin{center}
+\begin{tabular}{ll}
+spectrum of source & sharp line\\
+energy-label & true\\
+\end{tabular}
+\end{center}
 %
 Here $c$ is a containment-factor, e.g. $c = 0.68$,
 %
@@ -359,58 +476,6 @@ c &=& \sum_e \mathrm{bellmask}[e ,e'] \times M_{\gamma}[e', e], \, \, \, \forall
 \end{eqnarray}
 %
 Energy-label: True.
-%
-\section{Rate of background in $E'$}
-%
-The rate of events caused by the background's contribution $p$ which got reconstructed to be in the energy-bin $e'$.
-%
-\begin{eqnarray}
-\frac{R_p[e']}{\text{s}^{-1}}
-&=&
-\sum_{e}
-\frac{W[e]}{\text{GeV}} \,
-\frac{dF_p[e]}{\text{s}^{-1}\text{m}^{-2}\text{sr}^{-1}\text{GeV}^{-1}} \,
-\frac{Q_p[e]}{\text{m}^2\text{sr}} \,
-\frac{M_p[e, e']}{1}
-\end{eqnarray}
-%
-\section{Rate of background in $E'$ for scenario $K$}
-%
-The rate of events caused by background contribution $p$ which got reconstructed to be in the energy-bin $e'$.
-%
-\begin{eqnarray}
-\frac{R^k_p[e']}{\text{s}^{-1}}
-&=&
-\sum_{i}
-\frac{B^k[i, e']}{1} \,
-\frac{R_p[i]}{\text{s}^{-1}}
-\end{eqnarray}
-%
-\section{Total rate of all background contributions $p$ in $E'$ for scenario $K$}
-%
-Summing up all contributions $p$ of the background to obtain the total rate
-%
-\begin{eqnarray}
-\frac{R^k[e']}{\text{s}^{-1}}
-&=&
-\sum_{p}
-\frac{R^k_p[e']}{\text{s}^{-1}}
-\end{eqnarray}
-%
-of irreducible background in the on-region.
-%
-\section{Effective Area for gamma-rays in $E'$ for scenario $K$}
-%
-\begin{eqnarray}
-\frac{A^k[e']}{\text{m}^2}
-&=&
-\sum_{e}
-\frac{G^k[e, e']}{1} \,\,
-\frac{A[e]}{\text{m}^2}
-\end{eqnarray}
-%
-of irreducible background in the on-region.
-%
 %
 \bibliographystyle{apalike}%
 \bibliography{references}%
