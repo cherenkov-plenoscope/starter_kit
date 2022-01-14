@@ -376,7 +376,7 @@ R_p[e'] &=& \sum_{e} \text{d}E[e] \, \dd{F_p}{E}[e] \, Q_p[e] \, M_p[e, e']
 \label{EqRp}
 \end{eqnarray}
 %
- is independent of the scenario and only depends on the contributions flux $\dd{F_p}{E}[e]$, the instrument's acceptance for this contribution $Q_p[e]$, and the instrument's confusion in energy $M_p[e, e']$ for this contribution.
+ is independent of the scenario and only depends on the contribution's $p$'s flux $\dd{F_p}{E}[e]$, the instrument's acceptance for this contribution $Q_p[e]$, and the instrument's confusion in energy $M_p[e, e']$ for this contribution.
 %
 \section{Scenarios}
 %
@@ -449,13 +449,18 @@ energy-label & reconstructed\\
 %
 \subsection{Bell-Spectrum}
 %
-We assume the source emits gamma-rays only in a single bin of energy, i.e. the source has a line spectrum.
+This assumes the same spectrum of the source as the Line-Spectrum.
 %
-Proposed by Werner Hofmann.
+Now unlike in all other scenarios, here we widen the range of background over which we have to integrate in order to collect a certain fraction $c$ of the signal.
+%
+This method is proposed by Werner Hofmann.
+%
+It can be done with an actual instrument without further assumptions, and it can show the true energy in the differential sensitivity what makes this scenario both safe and meaningful for astronomy.
+%
 \begin{eqnarray}
 G[e, e'] &=& c \, \, \mathrm{eye}(n)
 \\
-B[e, e'] &=& \mathrm{bellmask}(M_{\gamma}[e, e'], c)
+B[e, e'] &=& \mathrm{bellmask}(M_{\gamma}[e, e'], \, c)
 \end{eqnarray}
 %
 \begin{center}
@@ -465,17 +470,17 @@ energy-label & true\\
 \end{tabular}
 \end{center}
 %
-Here $c$ is a containment-factor, e.g. $c = 0.68$,
+The $\mathrm{bellmask}(M_{\gamma}, c)$ is a matrix with the shape $(n,n)$ containing weights in range $[0$ to $1]$.
 %
-and $\mathrm{bellmask}(M_{\gamma}, c)$ is a matrix with the shape of $M_{\gamma}$ containing weights in range $[0$ to $1]$.
+The $\mathrm{bellmask}$ only depends on the energy confusion $M_{\gamma}$ and the containment $c$.
 %
-For each bin in true energy $e$, $\mathrm{bellmask}()[e, :]$ marks the bins in reconstructed energy $e'$ over which we have to integrate in order to obtain at least a fraction of $c$ of the events belong to true energy $e$.
+For each bin in true energy $e$, the row $\mathrm{bellmask}()[e, :]$ marks the bins in reconstructed energy $e'$ over which we have to integrate in order to contain the fraction $c$ of the events with true energy $e$.
+%
+The actual implementation of $\mathrm{bellmask}$ might differ, as it is not straight forward how to treat e.g. multiple maxima, or how to handle discrete binning, but it has to fulfill
 %
 \begin{eqnarray}
-c &=& \sum_e \mathrm{bellmask}[e ,e'] \times M_{\gamma}[e', e], \, \, \, \forall e'.
+c &=& \sum_{e'} \mathrm{bellmask}[e ,e'] \, M_{\gamma}[e', e]\\ &\forall& e.
 \end{eqnarray}
-%
-Energy-label: True.
 %
 \bibliographystyle{apalike}%
 \bibliography{references}%
