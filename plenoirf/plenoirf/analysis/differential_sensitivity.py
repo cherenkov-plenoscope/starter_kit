@@ -50,12 +50,10 @@ SCENARIOS = {
 def make_energy_confusion_matrices_for_signal_and_background(
     probability_reco_given_true,
     probability_reco_given_true_abs_unc,
-    probability_true_given_reco,
     scenario_key="broad_spectrum",
 ):
     shape = probability_reco_given_true.shape
     assert probability_reco_given_true_abs_unc.shape == shape
-    assert probability_true_given_reco.shape == shape
 
     if scenario_key == "perfect_energy":
         S = np.eye(N=shape[0])
@@ -89,7 +87,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
         S_au = np.zeros(shape=shape)  # zero uncertainty
 
         B = make_mask_for_energy_confusion_matrix_for_bell_spectrum(
-            probability_true_given_reco=probability_true_given_reco,
+            probability_reco_given_true=probability_reco_given_true,
             containment=containment,
         )
         B_au = np.zeros(shape=shape)
@@ -155,40 +153,40 @@ def next_containment_and_weight(
 
 
 def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
-    probability_true_given_reco, containment=0.68
+    probability_reco_given_true, containment=0.68
 ):
     # ax0 -> true
     # ax1 -> reco
-    num_bins = probability_true_given_reco.shape[0]
-    M = probability_true_given_reco
+    num_bins = probability_reco_given_true.shape[0]
+    M = probability_reco_given_true
     mask = np.zeros(shape=(num_bins, num_bins))
 
     # estimate containment regions:
-    for reco in range(num_bins):
-        if np.sum(M[:, reco]) > 0.0:
-            assert 0.99 < np.sum(M[:, reco]) < 1.01
+    for etrue in range(num_bins):
+        if np.sum(M[etrue, :]) > 0.0:
+            assert 0.99 < np.sum(M[etrue, :]) < 1.01
 
             accumulated_containment = 0.0
-            true_best = np.argmax(M[:, reco])
+            reco_best = np.argmax(M[etrue, :])
 
             accumulated_containment, weight = next_containment_and_weight(
                 accumulated_containment=accumulated_containment,
-                bin_containment=M[true_best, reco],
+                bin_containment=M[etrue, reco_best],
                 target_containment=containment,
             )
 
-            mask[true_best, reco] = weight
-            start = true_best - 1
-            stop = true_best + 1
+            mask[etrue, reco_best] = weight
+            start = reco_best - 1
+            stop = reco_best + 1
             i = 0
             while accumulated_containment < containment:
                 if start > 0:
                     accumulated_containment, w = next_containment_and_weight(
                         accumulated_containment=accumulated_containment,
-                        bin_containment=M[start, reco],
+                        bin_containment=M[etrue, start],
                         target_containment=containment,
                     )
-                    mask[start, reco] = w
+                    mask[etrue, start] = w
                     start -= 1
                 if accumulated_containment == containment:
                     break
@@ -196,10 +194,10 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
                 if stop + 1 < num_bins:
                     accumulated_containment, w = next_containment_and_weight(
                         accumulated_containment=accumulated_containment,
-                        bin_containment=M[stop, reco],
+                        bin_containment=M[etrue, stop],
                         target_containment=containment,
                     )
-                    mask[stop, reco] = w
+                    mask[etrue, stop] = w
                     stop += 1
                 if accumulated_containment == containment:
                     break

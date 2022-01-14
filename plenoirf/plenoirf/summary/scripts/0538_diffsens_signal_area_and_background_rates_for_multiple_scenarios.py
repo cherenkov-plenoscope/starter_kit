@@ -61,7 +61,6 @@ for sk in SITES:
                 probability_reco_given_true_abs_unc=M_gamma[
                     "reco_given_true_abs_unc"
                 ],
-                probability_true_given_reco=M_gamma["true_given_reco"],
                 scenario_key=dk,
             )
 

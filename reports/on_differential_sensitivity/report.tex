@@ -476,7 +476,7 @@ The $\mathrm{bellmask}$ only depends on the energy confusion $M_{\gamma}$ and th
 %
 For each bin in true energy $e$, the row $\mathrm{bellmask}()[e, :]$ marks the bins in reconstructed energy $e'$ over which we have to integrate in order to contain the fraction $c$ of the events with true energy $e$.
 %
-The actual implementation of $\mathrm{bellmask}$ might differ, as it is not straight forward how to treat e.g. multiple maxima, or how to handle discrete binning, but it has to fulfill
+The actual implementation of $\mathrm{bellmask}$ might differ, as it is not straight forward how to treat multiple maxima in $M_\gamma(E'\vert E)$, or how to handle discrete binning, but it has to fulfill
 %
 \begin{eqnarray}
 c &=& \sum_{e'} \mathrm{bellmask}[e ,e'] \, M_{\gamma}[e', e]\\ &\forall& e.
