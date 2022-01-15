@@ -123,15 +123,17 @@ Here I list what I believe is the common ground, for all scenarios of differenti
 %
 Let's start with the common output of differential sensitivity in the atmospheric Cherenkov-method.
 %
-This is the minimal required flux of gamma-rays coming from a point-source
+This is the minimal required parallel flux of gamma-rays
 %
 \begin{eqnarray*}
-\dd{V_\gamma}{E}[E] &=& [dv_1, \, dv_2, \, \cdots, \, dv_n]\\
+\dd{V_\gamma}{E}[e] &=& [dv_1, \, dv_2, \, \cdots, \, dv_n]\\
 \text{unit} &:& \text{area}^{-1} \text{time}^{-1} \text{energy}^{-1} / \text{m}^{-2}\,\text{s}^{-1}\,\text{GeV}^{-1}\\
 \text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
 %
 in order to claim a detection.
+%
+The property of the flux being parallel is about what the flux of a point-source looks like to a far distant observer.
 %
 \subsection{Input}
 %
@@ -166,10 +168,10 @@ Commonly, Cherenkov-telescopes show $T_\text{obs} = 50\,$h or $T_\text{obs} = 18
 %
 The relevant contributions to the background are the cosmic-rays. Some instruments might also have a relevant contribution of accidental triggers, and artifacts related to the instrument.
 %
-\subsubsection*{Flux of Cosmic-Rays}
+\subsubsection*{Diffuse Flux of Cosmic-Rays}
 %
 \begin{eqnarray*}
-\dd{F_p}{E}[e] &=& [dFp_1, dFp_2, \cdots, dFp_n]\\
+\dd{F_p}{E}[e] &=& [df_{p1}, df_{p2}, \cdots, df_{pn}]\\
 \text{unit} &:& \text{area}^{-1} \text{(solid angle)}^{-1} \text{time}^{-1} \text{energy}^{-1} / \text{m}^{-2}\, \text{sr}^{-1}\,\text{s}^{-1}\,\text{GeV}^{-1}\\
 \text{dim} &:& \text{vector}(n)
 \end{eqnarray*}
@@ -223,6 +225,12 @@ to reconstruct cosmic particle $p$ to have reconstructed energy $E'$ given the p
 We need this for every particle $p$ in $\gamma \cup P_\text{background}$.
 %
 Here only events which are classified to be gamma-rays contribute, i.e. same cuts as in $Q_p$ and $A_\gamma$.
+%
+All particles $p$ have to fulfill
+%
+\begin{eqnarray*}
+\sum_{e'} M_p[e, e'] = 1.
+\end{eqnarray*}
 %
 \subsubsection*{Algorithm $C$ to Estimate the Critical Number of Signal-Counts $N_S$}
 %
