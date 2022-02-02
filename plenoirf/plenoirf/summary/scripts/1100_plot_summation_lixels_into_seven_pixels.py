@@ -5,6 +5,7 @@ import plenopy as pl
 import os
 import json_numpy
 import sebastians_matplotlib_addons as seb
+import matplotlib
 from matplotlib.collections import PolyCollection
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -12,16 +13,23 @@ pa = irf.summary.paths_from_argv(argv)
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+rcParams = {"mathtext.fontset": "cm", "font.family": "STIXGeneral",}
+matplotlib.rcParams["mathtext.fontset"] = rcParams["mathtext.fontset"]
+matplotlib.rcParams["font.family"] = rcParams["font.family"]
+FIG_STYLE = {'rows': 540, 'cols': 720, 'fontsize': 1.2}
+FIG_STYLE["fontsize"] = 0.6
+
 light_field_geometry = pl.LightFieldGeometry(
     os.path.join(pa["run_dir"], "light_field_geometry")
 )
+
+region_of_interest_on_sensor_plane = {"x": [-0.35, 0.35], "y": [-0.35, 0.35]}
 
 object_distances = [21e3, 29e3, 999e3]
 central_seven_pixel_ids = [4221, 4124, 4222, 4220, 4125, 4317, 4318]
 colors = ["k", "g", "b", "r", "c", "m", "orange"]
 
-edgecolors = "none"
-linewidths = None
+linewidths = 0.25
 
 pixel_spacing_rad = (
     light_field_geometry.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat
@@ -38,18 +46,36 @@ image_geometry = pl.trigger.geometry.init_trigger_image_geometry(
     max_number_nearest_lixel_in_pixel=7,
 )
 
-for obj, object_distance in enumerate(object_distances):
-    if obj == 0:
-        fig = seb.figure(style=seb.FIGURE_1_1)
-        ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
+def lixel_in_region_of_interest(
+    light_field_geometry,
+    lixel_id,
+    roi,
+    margin=0.1
+):
+    x0 = roi["x"][0] - margin
+    x1 = roi["x"][1] + margin
+    y0 = roi["y"][0] - margin
+    y1 = roi["y"][1] + margin
+
+    lx = light_field_geometry.lixel_positions_x[lixel_id]
+    ly = light_field_geometry.lixel_positions_y[lixel_id]
+
+    if x0 <= lx < x1 and y0 <= ly < y1:
+        return True
     else:
-        fig = seb.figure(style=seb.FIGURE_1_1)
-        ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
+        return False
+
+
+for obj, object_distance in enumerate(object_distances):
+    fig = seb.figure(style=FIG_STYLE)
+    ax = seb.add_axes(fig=fig, span=[0.12, 0.12, 0.9*(3/4), 0.9])
+    ax2 = seb.add_axes(fig=fig, span=[0.83, 0.12, 0.2*(3/4), 0.9])
 
     cpath = os.path.join(
         pa["out_dir"], "lixel_to_pixel_{:06d}.json".format(obj)
     )
 
+    # compute a list of pixels where a lixel contributes to.
     if not os.path.exists(cpath):
         lixel_to_pixel = pl.trigger.geometry.estimate_projection_of_light_field_to_image(
             light_field_geometry=light_field_geometry,
@@ -81,8 +107,8 @@ for obj, object_distance in enumerate(object_distances):
         coll = PolyCollection(
             valid_polygons,
             facecolors=[colors[i] for _ in range(len(valid_polygons))],
-            edgecolors=edgecolors,
-            linewidths=linewidths,
+            edgecolors="none",
+            linewidths=None,
         )
         ax.add_collection(coll)
 
@@ -92,50 +118,49 @@ for obj, object_distance in enumerate(object_distances):
     not_colored_polygons = []
     for j, poly in enumerate(light_field_geometry.lixel_polygons):
         if not_colored[j]:
-            not_colored_polygons.append(poly)
+
+            if lixel_in_region_of_interest(
+                light_field_geometry=light_field_geometry,
+                lixel_id=j,
+                roi=region_of_interest_on_sensor_plane,
+                margin=0.1
+            ):
+                not_colored_polygons.append(poly)
 
     coll = PolyCollection(
         not_colored_polygons,
         facecolors=["w" for _ in range(len(not_colored_polygons))],
-        edgecolors="k",
+        edgecolors="gray",
         linewidths=linewidths,
     )
     ax.add_collection(coll)
 
-    ax.set_aspect("equal")
-    if obj == 0:
-        ax.set_xlabel("photo-sensor-plane-x/m")
-        ax.set_ylabel("photo-sensor-plane-y/m")
-    else:
-        ax.get_xaxis().set_visible(False)
-    ax.set_xlim([-0.35, 0.35])
-    ax.set_ylim([-0.35, 0.35])
+    ax.set_xlabel("$x\\,/\\,$m")
+    ax.set_ylabel("$y\\,/\\,$m")
 
-    if obj == 0:
-        ax2 = fig.add_axes([0.66, 0.1, 0.33, 1])
-    else:
-        ax2 = fig.add_axes([0.66, 0.0, 0.33, 1])
+    ax.set_xlim(region_of_interest_on_sensor_plane["x"])
+    ax.set_ylim(region_of_interest_on_sensor_plane["y"])
 
-    ax2.set_aspect("equal")
     ax2.set_axis_off()
     irf.summary.figure.add_aperture_plane_to_ax(ax=ax2)
     ax2.set_xlim([-1, 1])
     ax2.set_ylim([-0.05, 3.95])
     t = object_distance / 1e3 / 20
-    irf.summary.figure.add_rays_to_ax(ax=ax2, object_distance=t, linewidth=0.5)
+    irf.summary.figure.add_rays_to_ax(ax=ax2, object_distance=t, linewidth=0.5, color="gray")
+
     ax2.text(
         x=0.1,
         y=2 * t,
-        s="{:0.0f}km".format(object_distance / 1e3),
+        s="{:0.0f}$\\,$km".format(object_distance / 1e3),
         fontsize=12,
     )
     if obj + 1 == len(object_distances):
-        ax2.text(x=0.1, y=3.7, s="infinity", fontsize=12)
+        ax2.text(x=-0.2, y=3.7, s="infinity", fontsize=12)
 
     fig.savefig(
         os.path.join(
             pa["out_dir"],
-            "refocus_lixel_summation_7_{obj:d}.png".format(obj=obj),
+            "refocus_lixel_summation_7_{obj:d}.jpg".format(obj=obj),
         )
     )
     seb.close("all")
