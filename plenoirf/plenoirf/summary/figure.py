@@ -44,3 +44,31 @@ def mark_ax_thrown_spectrum(ax, x=0.93, y=0.93, fontsize=42):
         transform=ax.transAxes,
         fontsize=fontsize,
     )
+
+
+def add_aperture_plane_to_ax(ax, color='k'):
+    c = color
+    ax.plot([-1, 1], [0, 0], color=c)
+    N = 25
+    s = 1/N
+    x_starts = np.linspace(-1, 1, N) - s
+    x_ends = np.linspace(-1, 1, N)
+    for i in range(N):
+        ax.plot([x_starts[i], x_ends[i]], [-s, 0], color=c)
+
+
+def add_rays_to_ax(ax, object_distance, color='k', linewidth=1):
+    c = color
+    N = 4
+    x_starts = np.linspace(-0.9, 0.9, N)
+    y_starts = np.zeros(N)
+
+    x_ends = -x_starts*100
+    y_ends = 2*object_distance*np.ones(N)*100
+
+    for i in range(N):
+        ax.plot(
+            [x_starts[i], x_ends[i]],
+            [y_starts[i], y_ends[i]],
+            color=c,
+            linewidth=linewidth)
