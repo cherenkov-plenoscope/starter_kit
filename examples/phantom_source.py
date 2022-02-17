@@ -10,6 +10,7 @@ plt.rc('font', family='serif')
 out_dir = os.path.join('examples', 'phantom')
 os.makedirs(out_dir, exist_ok=True)
 
+prng = np.random.Generator(np.random.MT19937(seed=42))
 
 def length_of_wire(vertices, edges):
     length = 0
@@ -308,7 +309,9 @@ tri_sups, tri_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     disc_x=disc_x,
     disc_y=disc_y,
     disc_z=disc_z,
-    disc_radius=disc_radius)
+    disc_radius=disc_radius,
+    prng=prng,
+)
 
 spi_sups, spi_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     number_photons=number_photons_spi,
@@ -317,7 +320,9 @@ spi_sups, spi_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     disc_x=disc_x,
     disc_y=disc_y,
     disc_z=disc_z,
-    disc_radius=disc_radius)
+    disc_radius=disc_radius,
+    prng=prng,
+)
 
 sun_sups, sun_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     number_photons=number_photons_sun,
@@ -326,7 +331,9 @@ sun_sups, sun_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     disc_x=disc_x,
     disc_y=disc_y,
     disc_z=disc_z,
-    disc_radius=disc_radius)
+    disc_radius=disc_radius,
+    prng=prng,
+)
 
 smi_sups, smi_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     number_photons=number_photons_smi,
@@ -335,7 +342,9 @@ smi_sups, smi_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     disc_x=disc_x,
     disc_y=disc_y,
     disc_z=disc_z,
-    disc_radius=disc_radius)
+    disc_radius=disc_radius,
+    prng=prng,
+)
 
 cro_sups, cro_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     number_photons=number_photons_cro,
@@ -344,7 +353,9 @@ cro_sups, cro_dirs = mctw.vertex_wire_source_illuminating_xy_disc(
     disc_x=disc_x,
     disc_y=disc_y,
     disc_z=disc_z,
-    disc_radius=disc_radius)
+    disc_radius=disc_radius,
+    prng=prng,
+)
 
 sups = np.vstack([tri_sups, spi_sups, sun_sups, smi_sups, cro_sups])
 dirs = np.vstack([tri_dirs, spi_dirs, sun_dirs, smi_dirs, cro_dirs])
