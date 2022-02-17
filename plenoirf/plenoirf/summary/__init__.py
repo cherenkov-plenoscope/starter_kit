@@ -321,6 +321,12 @@ def _guess_summary_config(run_dir):
             "proton": "red",
             "helium": "orange",
         },
+        "matplotlib": {
+            "rcParams": {
+                "mathtext.fontset": "cm",
+                "font.family": "STIXGeneral",
+            }
+        },
     }
 
     return summary_config

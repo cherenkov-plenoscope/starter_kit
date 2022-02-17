@@ -11,13 +11,11 @@ from matplotlib.collections import PolyCollection
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
+sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
+
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-rcParams = {"mathtext.fontset": "cm", "font.family": "STIXGeneral",}
-matplotlib.rcParams["mathtext.fontset"] = rcParams["mathtext.fontset"]
-matplotlib.rcParams["font.family"] = rcParams["font.family"]
-FIG_STYLE = {'rows': 540, 'cols': 720, 'fontsize': 1.2}
-FIG_STYLE["fontsize"] = 0.6
+seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"]["rcParams"])
 
 light_field_geometry = pl.LightFieldGeometry(
     os.path.join(pa["run_dir"], "light_field_geometry")
@@ -46,11 +44,9 @@ image_geometry = pl.trigger.geometry.init_trigger_image_geometry(
     max_number_nearest_lixel_in_pixel=7,
 )
 
+
 def lixel_in_region_of_interest(
-    light_field_geometry,
-    lixel_id,
-    roi,
-    margin=0.1
+    light_field_geometry, lixel_id, roi, margin=0.1
 ):
     x0 = roi["x"][0] - margin
     x1 = roi["x"][1] + margin
@@ -67,9 +63,9 @@ def lixel_in_region_of_interest(
 
 
 for obj, object_distance in enumerate(object_distances):
-    fig = seb.figure(style=FIG_STYLE)
-    ax = seb.add_axes(fig=fig, span=[0.12, 0.12, 0.9*(3/4), 0.9])
-    ax2 = seb.add_axes(fig=fig, span=[0.83, 0.12, 0.2*(3/4), 0.9])
+    fig = seb.figure(style={"rows": 540, "cols": 720, "fontsize": 0.7})
+    ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.85 * (3 / 4), 0.85])
+    ax2 = seb.add_axes(fig=fig, span=[0.82, 0.15, 0.2 * (3 / 4), 0.85])
 
     cpath = os.path.join(
         pa["out_dir"], "lixel_to_pixel_{:06d}.json".format(obj)
@@ -123,7 +119,7 @@ for obj, object_distance in enumerate(object_distances):
                 light_field_geometry=light_field_geometry,
                 lixel_id=j,
                 roi=region_of_interest_on_sensor_plane,
-                margin=0.1
+                margin=0.1,
             ):
                 not_colored_polygons.append(poly)
 
@@ -135,8 +131,9 @@ for obj, object_distance in enumerate(object_distances):
     )
     ax.add_collection(coll)
 
-    ax.set_xlabel("$x\\,/\\,$m")
-    ax.set_ylabel("$y\\,/\\,$m")
+    if obj == 0:
+        ax.set_xlabel("$x_\\mathrm{sensors}\\,/\\,$m")
+        ax.set_ylabel("$y_\\mathrm{sensors}\\,/\\,$m")
 
     ax.set_xlim(region_of_interest_on_sensor_plane["x"])
     ax.set_ylim(region_of_interest_on_sensor_plane["y"])
@@ -146,10 +143,12 @@ for obj, object_distance in enumerate(object_distances):
     ax2.set_xlim([-1, 1])
     ax2.set_ylim([-0.05, 3.95])
     t = object_distance / 1e3 / 20
-    irf.summary.figure.add_rays_to_ax(ax=ax2, object_distance=t, linewidth=0.5, color="gray")
+    irf.summary.figure.add_rays_to_ax(
+        ax=ax2, object_distance=t, linewidth=0.3, color="gray"
+    )
 
     ax2.text(
-        x=0.1,
+        x=-0.1,
         y=2 * t,
         s="{:0.0f}$\\,$km".format(object_distance / 1e3),
         fontsize=12,
