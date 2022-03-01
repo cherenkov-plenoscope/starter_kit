@@ -377,6 +377,68 @@ def histogram_image(cy, cy_std, edges):
     return counts
 
 
+def make_isochron_light_front_from_point_source(
+    true_incident_direction,
+    point_source_spread,
+    aperture_diameter,
+    emission_distance,
+    aperture_distance,
+    num_rays,
+):
+    """
+                                             /\ (0)
+                    \                        |
+                     \                       |
+                      \                      |
+    ------------------hh---ww------------- __0----------------------------> (1)
+                        \  |   theta __---
+                    bb   \ |ll  __---   aa
+                          \|_---
+                          PP
+
+    sin(t) = geg/hyp
+
+    cos(t) = ank/hyp
+
+    """
+    hh = prng.uniform(
+        low=-aperture_diameter / 2,
+        high=aperture_diameter / 2,
+        size=num_rays,
+    )
+
+    thetas = prng.normal(
+        loc=true_incident_direction,
+        scale=point_source_spread,
+        size=num_rays,
+    )
+
+    support_positions = np.zeros(shape=(num_rays, 2))
+    support_positions[:, 0] = aperture_distance
+    support_positions[:, 1] = hh
+
+    directions = np.zeros(shape=(num_rays, 2))
+    directions[:, 0] = np.cos(thetas)
+    directions[:, 1] = np.sin(thetas)
+
+    # hyp = hh
+    # ank = aa
+    aa = hh * np.cos(thetas)
+
+    # hyp = aa
+    # geg = ll
+    # ank = ww
+    ll = aa * np.sin(thetas)
+
+    ww = aa * np.cos(thetas)
+
+    emission_positions = np.zeros(shape=(num_rays, 2))
+    emission_positions[:, 0] = ll
+    emission_positions[:, 1] = ww
+    emission_positions = support_positions + directions * emission_distance
+    return emission_positions, support_positions
+
+
 def simulate_point_source(
     plenoscope_geometry, true_incident_direction, num_rays, prng
 ):
@@ -385,6 +447,21 @@ def simulate_point_source(
         "direction", np.round(np.rad2deg(true_incident_direction), 2), "deg",
     )
 
+
+
+    (
+        emission_positions,
+        support_positions
+    ) = make_isochron_light_front_from_point_source(
+        true_incident_direction=true_incident_direction,
+        point_source_spread=np.deg2rad(POINT_SOURCE_SPREAD_DEG),
+        aperture_diameter=pg["mirror"]["diameter"],
+        emission_distance=pg["sensor"]["distance"] * 1.25,
+        aperture_distance=-pg["mirror"]["curvature_radius"],
+        num_rays=num_rays,
+    )
+
+    """
     support_positions = np.zeros(shape=(num_rays, 2))
     support_positions[:, 0] = -pg["mirror"]["curvature_radius"]
 
@@ -408,6 +485,7 @@ def simulate_point_source(
     emission_positions[:, 1] = support_positions[
         :, 1
     ] + emission_distance * np.tan(true_incident_directions)
+    """
 
     directions = support_positions - emission_positions
     for i in range(num_rays):
@@ -485,6 +563,16 @@ def simulate_point_source(
     return light_and_image
 
 
+"""
+
+
+ princ. aperture           sensor
+--------|---------------------|---------------------|--------> x
+      -2.5                  -1.25                   0
+
+"""
+
+
 RANDOM_SEED = 42
 prng = np.random.Generator(np.random.MT19937(seed=RANDOM_SEED))
 
@@ -498,13 +586,13 @@ NUM_SMALL_CAMERAS = 340
 MIRROR_DIAMETER = 1.0
 CURVATURE_RADIUS = 2.5
 SENSOR_DISTANCE = 1.25
-OFF_AXIS_ANGLES = np.deg2rad(np.linspace(0, 8.5, 4))
+OFF_AXIS_ANGLES = np.deg2rad(np.linspace(0, 8.5, 3))
 POINT_SOURCE_SPREAD_DEG = 0.025
 PLENOSCOPES = [
     {"num_paxel": 1, "plot_image": True},
-    {"num_paxel": 3, "plot_image": False},
-    {"num_paxel": 9, "plot_image": True},
-    {"num_paxel": 27, "plot_image": False},
+    {"num_paxel": 3, "plot_image": True},
+    #{"num_paxel": 9, "plot_image": True},
+    #{"num_paxel": 27, "plot_image": False},
 ]
 
 res = []
