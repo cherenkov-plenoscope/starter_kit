@@ -1,6 +1,6 @@
 import os
 import numpy as np
-
+import collections
 import matplotlib
 
 matplotlib.use("Agg")
@@ -86,7 +86,7 @@ def propagate_photon(
 def _light_field_geometry_init(plenoscope_geometry):
     pg = plenoscope_geometry
     lfg = {}
-    for key in ["y", "cy"]:
+    for key in ["y", "cy", "t"]:
         lfg[key] = []
         for pa in range(pg["paxel"]["num"]):
             pixs = []
@@ -94,6 +94,108 @@ def _light_field_geometry_init(plenoscope_geometry):
                 pixs.append([])
             lfg[key].append(pixs)
     return lfg
+
+
+def make_isochron_light_front_from_diffuse_source(
+    incident_direction_start,
+    incident_direction_stop,
+    aperture_diameter,
+    emission_distance,
+    aperture_distance,
+    num_rays,
+):
+    thetas = prng.uniform(
+        low=incident_direction_start,
+        high=incident_direction_stop,
+        size=num_rays,
+    )
+
+    return _make_isochron_light_front(
+        thetas=thetas,
+        aperture_diameter=aperture_diameter,
+        emission_distance=emission_distance,
+        aperture_distance=aperture_distance,
+    )
+
+
+def make_isochron_light_front_from_point_source(
+    true_incident_direction,
+    point_source_spread,
+    aperture_diameter,
+    emission_distance,
+    aperture_distance,
+    num_rays,
+):
+    thetas = prng.normal(
+        loc=true_incident_direction,
+        scale=point_source_spread,
+        size=num_rays,
+    )
+
+    return _make_isochron_light_front(
+        thetas=thetas,
+        aperture_diameter=aperture_diameter,
+        emission_distance=emission_distance,
+        aperture_distance=aperture_distance,
+    )
+
+
+def _make_isochron_light_front(
+    thetas,
+    aperture_diameter,
+    emission_distance,
+    aperture_distance,
+):
+    """
+                                            /\ (0)
+                    \                       |
+                     \                      |
+                      \                     |
+    ------------------hh---ww-------------__0----------------------------> (1)
+                        \  |   theta __---
+                    bb   \ |ll  __---   aa
+                          \|_---
+                          PP
+
+    sin(t) = geg/hyp
+
+    cos(t) = ank/hyp
+
+    """
+    num_rays = len(thetas)
+
+    hh = prng.uniform(
+        low=-aperture_diameter / 2,
+        high=aperture_diameter / 2,
+        size=num_rays,
+    )
+
+    support_positions = np.zeros(shape=(num_rays, 2))
+    support_positions[:, 0] = aperture_distance
+    support_positions[:, 1] = hh
+
+    directions = np.zeros(shape=(num_rays, 2))
+    directions[:, 0] = np.cos(thetas)
+    directions[:, 1] = np.sin(thetas)
+
+    # hyp = hh
+    # ank = aa
+    aa = hh * np.cos(thetas)
+
+    # hyp = aa
+    # geg = ll
+    # ank = ww
+    ll = aa * np.sin(thetas)
+
+    ww = aa * np.cos(thetas)
+
+    emission_positions = np.zeros(shape=(num_rays, 2))
+    emission_positions[:, 0] = ll
+    emission_positions[:, 1] = ww
+    emission_positions = support_positions + directions * emission_distance
+    return emission_positions, support_positions
+
+
 
 
 def _light_field_geometry_add_rays(
@@ -107,6 +209,29 @@ def _light_field_geometry_add_rays(
     lfg = light_field_geometry
     pg = plenoscope_geometry
 
+    emission_positions, support_positions = make_isochron_light_front_from_diffuse_source(
+        incident_direction_start=-np.deg2rad(max_off_axis_angle_deg),
+        incident_direction_stop=np.deg2rad(max_off_axis_angle_deg),
+        aperture_diameter=pg["mirror"]["diameter"],
+        emission_distance=pg["sensor"]["distance"] * 1.25,
+        aperture_distance=-pg["mirror"]["curvature_radius"],
+        num_rays=num_rays,
+    )
+
+    incident_directions = emission_positions - support_positions
+    incident_direction_norms = np.linalg.norm(incident_directions, axis=1)
+
+    for ii in range(len(incident_directions)):
+        incident_directions[ii] = (
+            incident_directions[ii] / incident_direction_norms[ii]
+        )
+
+    sxs = support_positions[:, 0]
+    sys = support_positions[:, 1]
+    dxs = incident_directions[:, 0]
+    dys = incident_directions[:, 1]
+
+    """
     sxs = -pg["mirror"]["curvature_radius"] * np.ones(num_rays)
 
     sys = prng.uniform(
@@ -126,6 +251,7 @@ def _light_field_geometry_add_rays(
     _norms = np.sqrt(dxs ** 2 + dys ** 2)
     dxs /= _norms
     dys /= _norms
+    """
 
     for r in range(num_rays):
 
@@ -150,12 +276,17 @@ def _light_field_geometry_add_rays(
 
         paxel_id = np.digitize(sys[r], bins=pg["paxel"]["edges"]) - 1
 
+        ddx = (sensor_plane_intersection_position[0])
+        ddy = (sys[r] - sensor_plane_intersection_position[1])
+        dd = np.hypot(ddx, ddy)
+
         if pixel_id >= 0 and pixel_id < pg["sensor"]["smallcameras"]["num"]:
             if paxel_id >= 0 and paxel_id < pg["paxel"]["num"]:
                 num_rays_per_sensor = len(lfg["y"][paxel_id][pixel_id])
                 if num_rays_per_sensor <= max_num_rays_per_sensor:
                     lfg["y"][paxel_id][pixel_id].append(sys[r])
                     lfg["cy"][paxel_id][pixel_id].append(dys[r])
+                    lfg["t"][paxel_id][pixel_id].append(dd)
     return lfg
 
 
@@ -189,8 +320,10 @@ def _light_field_geometry_condense(light_field_geometry):
         "cy": np.nan * np.ones(shape=(num_paxel, num_smallcameras)),
         "y_std": np.nan * np.ones(shape=(num_paxel, num_smallcameras)),
         "cy_std": np.nan * np.ones(shape=(num_paxel, num_smallcameras)),
+        "t": np.nan * np.ones(shape=(num_paxel, num_smallcameras)),
+        "t_std": np.nan * np.ones(shape=(num_paxel, num_smallcameras)),
     }
-    for key in ["y", "cy"]:
+    for key in ["y", "cy", "t"]:
         for pa in range(num_paxel):
             for pi in range(num_smallcameras):
                 arr = np.array(lfg[key][pa][pi])
@@ -200,7 +333,10 @@ def _light_field_geometry_condense(light_field_geometry):
 
 
 def estimate_light_field_geometry(
-    plenoscope_geometry, max_off_axis_angle_deg, num_rays, prng,
+    plenoscope_geometry,
+    max_off_axis_angle_deg,
+    num_rays,
+    prng,
     max_num_loops=100,
     max_num_rays_per_sensor=1000,
     min_num_rays_per_sensor=25,
@@ -377,68 +513,6 @@ def histogram_image(cy, cy_std, edges):
     return counts
 
 
-def make_isochron_light_front_from_point_source(
-    true_incident_direction,
-    point_source_spread,
-    aperture_diameter,
-    emission_distance,
-    aperture_distance,
-    num_rays,
-):
-    """
-                                             /\ (0)
-                    \                        |
-                     \                       |
-                      \                      |
-    ------------------hh---ww------------- __0----------------------------> (1)
-                        \  |   theta __---
-                    bb   \ |ll  __---   aa
-                          \|_---
-                          PP
-
-    sin(t) = geg/hyp
-
-    cos(t) = ank/hyp
-
-    """
-    hh = prng.uniform(
-        low=-aperture_diameter / 2,
-        high=aperture_diameter / 2,
-        size=num_rays,
-    )
-
-    thetas = prng.normal(
-        loc=true_incident_direction,
-        scale=point_source_spread,
-        size=num_rays,
-    )
-
-    support_positions = np.zeros(shape=(num_rays, 2))
-    support_positions[:, 0] = aperture_distance
-    support_positions[:, 1] = hh
-
-    directions = np.zeros(shape=(num_rays, 2))
-    directions[:, 0] = np.cos(thetas)
-    directions[:, 1] = np.sin(thetas)
-
-    # hyp = hh
-    # ank = aa
-    aa = hh * np.cos(thetas)
-
-    # hyp = aa
-    # geg = ll
-    # ank = ww
-    ll = aa * np.sin(thetas)
-
-    ww = aa * np.cos(thetas)
-
-    emission_positions = np.zeros(shape=(num_rays, 2))
-    emission_positions[:, 0] = ll
-    emission_positions[:, 1] = ww
-    emission_positions = support_positions + directions * emission_distance
-    return emission_positions, support_positions
-
-
 def simulate_point_source(
     plenoscope_geometry, true_incident_direction, num_rays, prng
 ):
@@ -446,8 +520,6 @@ def simulate_point_source(
     print(
         "direction", np.round(np.rad2deg(true_incident_direction), 2), "deg",
     )
-
-
 
     (
         emission_positions,
@@ -496,6 +568,7 @@ def simulate_point_source(
 
     sphere_intersection_positions = np.zeros(shape=(num_rays, 2))
     sensor_plane_intersection_positions = np.zeros(shape=(num_rays, 2))
+    path_length_emission_to_absorption = np.zeros(num_rays)
 
     for i in range(num_rays):
 
@@ -528,8 +601,18 @@ def simulate_point_source(
             i, :
         ] = sensor_plane_intersection_position
 
+        emi_to_sph = np.linalg.norm(
+            emission_positions[i] - sphere_intersection_positions[i]
+        )
+        sph_to_sen = np.linalg.norm(
+            sphere_intersection_positions[i] - sensor_plane_intersection_positions[i]
+        )
+        path_length_emission_to_absorption[i] = emi_to_sph + sph_to_sen
+
     light_field_calibrated_cy = []
     light_field_calibrated_cy_std = []
+    light_field_calibrated_t = []
+    light_field_calibrated_t_std = []
     for ray in range(num_rays):
         if (
             pixel_ids[ray] >= 0
@@ -538,14 +621,29 @@ def simulate_point_source(
             if paxel_ids[ray] >= 0 and paxel_ids[ray] < num_paxel:
                 cy = -lfg["cy"][paxel_ids[ray], pixel_ids[ray]]
                 cy_std = lfg["cy_std"][paxel_ids[ray], pixel_ids[ray]]
+
+                # time
+                # ----
+                t = (
+                    path_length_emission_to_absorption[ray]
+                    - lfg["t"][paxel_ids[ray], pixel_ids[ray]]
+                )
+                t_std = lfg["t_std"][paxel_ids[ray], pixel_ids[ray]]
                 if not np.isnan(cy):
                     light_field_calibrated_cy.append(cy)
                     light_field_calibrated_cy_std.append(cy_std)
+                    light_field_calibrated_t.append(t)
+                    light_field_calibrated_t_std.append(t_std)
 
     light_field_calibrated_image = histogram_image(
         cy=light_field_calibrated_cy,
         cy_std=light_field_calibrated_cy_std,
         edges=pg["computed_pixels"]["edges"],
+    )
+    light_field_calibrated_image_time = histogram_image(
+        cy=light_field_calibrated_t,
+        cy_std=light_field_calibrated_t_std,
+        edges=pg["computed_timebins"]["edges"],
     )
 
     light_and_image = {
@@ -554,10 +652,12 @@ def simulate_point_source(
         "emission_positions": emission_positions,
         "sphere_intersection_positions": sphere_intersection_positions,
         "sensor_plane_intersection_positions": sensor_plane_intersection_positions,
+        "path_length_emission_to_absorption": path_length_emission_to_absorption,
         "pixel_ids": pixel_ids,
         "paxel_ids": paxel_ids,
         "light_field_calibrated_directions": light_field_calibrated_cy,
         "light_field_calibrated_image": light_field_calibrated_image,
+        "light_field_calibrated_image_time": light_field_calibrated_image_time,
     }
 
     return light_and_image
@@ -581,6 +681,7 @@ DPI = 320
 OUT_DIR = "results"
 os.makedirs(OUT_DIR, exist_ok=True)
 
+PLOT_LIGHT_RAYS = False
 SENSOR_DIAMETER = 0.5
 NUM_SMALL_CAMERAS = 340
 MIRROR_DIAMETER = 1.0
@@ -588,6 +689,7 @@ CURVATURE_RADIUS = 2.5
 SENSOR_DISTANCE = 1.25
 OFF_AXIS_ANGLES = np.deg2rad(np.linspace(0, 8.5, 3))
 POINT_SOURCE_SPREAD_DEG = 0.025
+NUM_TIME_BINS = 1000
 PLENOSCOPES = [
     {"num_paxel": 1, "plot_image": True},
     {"num_paxel": 3, "plot_image": True},
@@ -634,6 +736,18 @@ for plenoscop_config in PLENOSCOPES:
         + pg["computed_pixels"]["edges"][1:]
     ) / 2
 
+    pg["computed_timebins"] = {}
+    pg["computed_timebins"]["edges"] = np.linspace(
+        -10,
+        10,
+        NUM_TIME_BINS + 1,
+    )
+    pg["computed_timebins"]["centers"] = (
+        pg["computed_timebins"]["edges"][:-1]
+        + pg["computed_timebins"]["edges"][1:]
+    ) / 2
+
+
     pg["paxel"] = {}
     pg["paxel"]["num"] = num_paxel
     pg["paxel"]["edges"] = np.linspace(
@@ -673,73 +787,75 @@ for plenoscop_config in PLENOSCOPES:
     )
 
 
-# plot light-rays, (can use any num paxel)
-# ========================================
 any_plenoscope_result = res[0]
 for idir in range(len(any_plenoscope_result["images"])):
-
     pg = any_plenoscope_result["plenoscope_geometry"]
     images = any_plenoscope_result["images"]
 
-    # overview
-    # --------
-    fig = plt.figure(figsize=(1080 / DPI, 1080 / DPI))
-    ax = fig.add_axes([0, 0, 1, 1])
-    add2ax_optics_and_photons(
-        ax=ax, plenoscope_geometry=pg, rc=images[idir], max_num_rays=1000,
-    )
-    xlim, ylim = roi_limits(
-        curvature_radius=pg["mirror"]["curvature_radius"],
-        roi_radius=0.05,
-        incident_direction=images[idir]["incident_direction"],
-    )
-    ax.plot(
-        [xlim[0], xlim[1], xlim[1], xlim[0], xlim[0]],
-        [ylim[0], ylim[0], ylim[1], ylim[1], ylim[0]],
-        "k-",
-        alpha=1,
-        linewidth=0.3,
-    )
-    ax.set_xlim(
-        [
-            -pg["mirror"]["curvature_radius"] - 0.05,
-            -pg["mirror"]["curvature_radius"]
-            + pg["sensor"]["distance"]
-            + 0.05,
-        ]
-    )
-    ax.set_ylim(
-        [-pg["mirror"]["diameter"] / 1.5, pg["mirror"]["diameter"] / 1.5]
-    )
-    fig.savefig(
-        os.path.join(
-            OUT_DIR, "spherical_aberrations_overview_{:01d}.jpg".format(idir),
-        ),
-        dpi=DPI,
-    )
-    plt.close("all")
 
-    # close up
-    # --------
-    fig = plt.figure(figsize=(1080 / DPI, 1080 / DPI))
-    ax = fig.add_axes([0, 0, 1, 1])
-    add2ax_optics_and_photons(
-        ax=ax, plenoscope_geometry=pg, rc=images[idir], max_num_rays=1000,
-    )
-    xlim, ylim = roi_limits(
-        curvature_radius=pg["mirror"]["curvature_radius"],
-        roi_radius=0.05,
-        incident_direction=images[idir]["incident_direction"],
-    )
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    fig.savefig(
-        os.path.join(
-            OUT_DIR, "spherical_aberrations_close_up_{:01d}.jpg".format(idir),
-        ),
-        dpi=DPI,
-    )
-    plt.close("all")
+# plot light-rays, (can use any num paxel)
+# ========================================
+if PLOT_LIGHT_RAYS:
+    for idir in range(len(any_plenoscope_result["images"])):
+        # overview
+        # --------
+        fig = plt.figure(figsize=(1080 / DPI, 1080 / DPI))
+        ax = fig.add_axes([0, 0, 1, 1])
+        add2ax_optics_and_photons(
+            ax=ax, plenoscope_geometry=pg, rc=images[idir], max_num_rays=1000,
+        )
+        xlim, ylim = roi_limits(
+            curvature_radius=pg["mirror"]["curvature_radius"],
+            roi_radius=0.05,
+            incident_direction=images[idir]["incident_direction"],
+        )
+        ax.plot(
+            [xlim[0], xlim[1], xlim[1], xlim[0], xlim[0]],
+            [ylim[0], ylim[0], ylim[1], ylim[1], ylim[0]],
+            "k-",
+            alpha=1,
+            linewidth=0.3,
+        )
+        ax.set_xlim(
+            [
+                -pg["mirror"]["curvature_radius"] - 0.05,
+                -pg["mirror"]["curvature_radius"]
+                + pg["sensor"]["distance"]
+                + 0.05,
+            ]
+        )
+        ax.set_ylim(
+            [-pg["mirror"]["diameter"] / 1.5, pg["mirror"]["diameter"] / 1.5]
+        )
+        fig.savefig(
+            os.path.join(
+                OUT_DIR, "spherical_aberrations_overview_{:01d}.jpg".format(idir),
+            ),
+            dpi=DPI,
+        )
+        plt.close("all")
+
+        # close up
+        # --------
+        fig = plt.figure(figsize=(1080 / DPI, 1080 / DPI))
+        ax = fig.add_axes([0, 0, 1, 1])
+        add2ax_optics_and_photons(
+            ax=ax, plenoscope_geometry=pg, rc=images[idir], max_num_rays=1000,
+        )
+        xlim, ylim = roi_limits(
+            curvature_radius=pg["mirror"]["curvature_radius"],
+            roi_radius=0.05,
+            incident_direction=images[idir]["incident_direction"],
+        )
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        fig.savefig(
+            os.path.join(
+                OUT_DIR, "spherical_aberrations_close_up_{:01d}.jpg".format(idir),
+            ),
+            dpi=DPI,
+        )
+        plt.close("all")
 
 
 # plot images
