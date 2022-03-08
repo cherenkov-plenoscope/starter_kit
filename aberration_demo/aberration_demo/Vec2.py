@@ -10,6 +10,10 @@ def add(a, b):
     return Vec2(x=(a.x + b.x), y=(a.y + b.y))
 
 
+def subtract(a, b):
+    return Vec2(x=(a.x - b.x), y=(a.y - b.y))
+
+
 def multiply(v, scalar):
     return Vec2(x=(v.x*scalar), y=(v.y*scalar))
 
