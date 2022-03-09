@@ -11,15 +11,15 @@ from . import merlict
 
 
 EXECUTABLES = {
-    "merlict_plenoscope_propagator_path": os.path.join(
+    "merlict_plenoscope_propagator_path": os.path.abspath(os.path.join(
         "build", "merlict", "merlict-plenoscope-propagation"
-    ),
-    "merlict_plenoscope_calibration_map_path": os.path.join(
+    )),
+    "merlict_plenoscope_calibration_map_path": os.path.abspath(os.path.join(
         "build", "merlict", "merlict-plenoscope-calibration-map"
-    ),
-    "merlict_plenoscope_calibration_reduce_path": os.path.join(
+    )),
+    "merlict_plenoscope_calibration_reduce_path": os.path.abspath(os.path.join(
         "build", "merlict", "merlict-plenoscope-calibration-reduce"
-    ),
+    )),
 }
 
 CFG = {}
