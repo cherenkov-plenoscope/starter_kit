@@ -256,11 +256,11 @@ merlict_visual_config = {
 json_numpy.write(VISUAL_CONFIG_PATH, merlict_visual_config)
 
 image_general_config = {
-    "sensor_size": 0.06,
+    "sensor_size": 0.3,
     "f_stop": 0.95,
-    "num_columns": 512,
-    "num_rows": 288,
-    "noise_level": 128
+    "num_columns": 512*2,
+    "num_rows": 288*2,
+    "noise_level": 200
 }
 
 image_configs = {
@@ -288,6 +288,12 @@ image_configs = {
         "object_distance": 150,
         "field_of_view": np.deg2rad(5.909e+01),
     },
+    "side_total_from_distance": {
+        "position": [2.182e+03,  6.191e+02,  8.434e+00 ],
+        "orientation": np.deg2rad([0 ,-8.759e+01, -1.959e+02]),
+        "object_distance": 2300,
+        "field_of_view": np.deg2rad(1.063e+01),
+    },
 }
 
 call = [
@@ -300,8 +306,9 @@ call = [
 
 merlict = sp.Popen(call, stdin=sp.PIPE, stdout=sp.PIPE)
 for imgkey in image_configs:
-    imgpath = os.path.join(WORKD_DIR, '{:s}.tiff'.format(imgkey))
-    imgcfgpath = os.path.join(WORKD_DIR, '{:s}.json'.format(imgkey))
+    imgstempath = os.path.join(WORKD_DIR, '{:s}'.format(imgkey))
+    imgpath = imgstempath + ".tiff"
+    imgcfgpath = imgstempath + ".json"
 
     if not os.path.exists(imgpath):
         full_config = dict(image_general_config)
@@ -311,5 +318,8 @@ for imgkey in image_configs:
         img = read_ppm_image(merlict.stdout)
         io.imsave(imgpath, img)
         json_numpy.write(imgcfgpath, full_config)
+
+
+    sp.call(["convert", imgpath, imgstempath + ".jpg"])
 
 merlict.kill()
