@@ -27,6 +27,7 @@ def main():
 
         # KIT-CORSIKA
         # -----------
+        call(["pip", "install", "-e", join(".", "corsika_install")])
         call(
             [
                 join(
@@ -45,9 +46,6 @@ def main():
                 "--resource_path",
                 join(".", "corsika_install", "resources"),
             ]
-        )
-        call(
-            ["pip", "install", "-e", join(".", "corsika_install"),]
         )
 
         # Photon-propagator merlict
@@ -83,16 +81,16 @@ def main():
         # -----
         tools = [
             "json_numpy",
+            "sebastians_matplotlib_addons",
+            "sparse_numeric_table",
             "cosmic_fluxes",
             "plenopy",
             "cable_robo_mount",
-            "gamma_ray_reconstructions",
+            "gamma_ray_reconstruction",
             "plenoirf",
             "magnetic_deflection",
-            "sparse_numeric_table",
             "spectral_energy_distribution_units",
             "lima1983analysis",
-            "sebastians_matplotlib_addons",
         ]
         for tool in tools:
             call(["pip", "install", "-e", join(".", tool)])
