@@ -1,6 +1,80 @@
 #! /usr/bin/env python
 import cable_robo_mount as rs
 import os
+import subprocess as sp
+import numpy as np
+from io import BytesIO
+from skimage import io
+import json_numpy
+
+WORKD_DIR = os.path.join("examples", "visual")
+SCENERY_PATH = os.path.join(WORKD_DIR, "scenery.json")
+VISUAL_CONFIG_PATH = os.path.join(WORKD_DIR, "visual_config.json")
+MERLICT_CAMERA_SERVER = os.path.join("build", "merlict", "merlict-cameraserver")
+os.makedirs(WORKD_DIR, exist_ok=True)
+
+def read_ppm_image(fstream):
+    magic = fstream.readline()
+    assert magic[0] == 80
+    assert magic[1] == 54
+    comment = fstream.readline()
+    image_size = fstream.readline()
+    num_columns, num_rows = image_size.decode().split()
+    num_columns = int(num_columns)
+    num_rows = int(num_rows)
+    max_color = int(fstream.readline().decode())
+    assert max_color == 255
+    count = num_columns*num_rows*3
+    raw = np.frombuffer(fstream.read(count), dtype=np.uint8)
+    img = raw.reshape((num_rows, num_columns, 3))
+    return img
+
+
+def camera_command(
+    position,
+    orientation,
+    object_distance,
+    sensor_size,
+    field_of_view,
+    f_stop,
+    num_columns,
+    num_rows,
+    noise_level,
+):
+    """
+    Returns a binary command-string to be fed into merlict's cmaera-server via
+    std-in.
+
+    Parameters
+    ----------
+
+        noise_level             From 0 (no noise) to 255 (strong noise).
+                                Lower noise_levels give better looking images
+                                but take longer to be computed. Strong
+                                noise_levels are fast to compute.
+    """
+    fout = BytesIO()
+    fout.write(np.uint64(645).tobytes())  # MAGIC
+
+    fout.write(np.float64(position[0]).tobytes())  # position
+    fout.write(np.float64(position[1]).tobytes())
+    fout.write(np.float64(position[2]).tobytes())
+
+    fout.write(np.float64(orientation[0]).tobytes())  # Tait–Bryan-angles
+    fout.write(np.float64(orientation[1]).tobytes())
+    fout.write(np.float64(orientation[2]).tobytes())
+
+    fout.write(np.float64(object_distance).tobytes())
+    fout.write(np.float64(sensor_size).tobytes())  # sensor-size
+    fout.write(np.float64(field_of_view).tobytes())  # fov
+    fout.write(np.float64(f_stop).tobytes())  # f-stop
+
+    fout.write(np.uint64(num_columns).tobytes())
+    fout.write(np.uint64(num_rows).tobytes())
+    fout.write(np.uint64(noise_level).tobytes())
+
+    fout.seek(0)
+    return fout.read()
 
 
 acp_config = {
@@ -42,7 +116,7 @@ acp_config = {
         },
     'reflector': {
         'main': {
-            'max_outer_radius': 35.35,
+            'max_outer_radius': 40.8187,
             'min_inner_radius': 2.5,
             'number_of_layers': 3,
             'x_over_z_ratio': 1.66,
@@ -144,13 +218,98 @@ acp_config = {
         }
     }
 
+if not os.path.exists(SCENERY_PATH):
+    geometry = rs.Geometry(acp_config)
+    reflector = rs.factory.generate_reflector(geometry)
+    out = rs.mctracer_bridge.merlict_json.visual_scenery(reflector)
+    rs.mctracer_bridge.merlict_json.write_json(out, SCENERY_PATH)
+    json_numpy.write(SCENERY_PATH, out)
 
-geometry = rs.Geometry(acp_config)
-reflector = rs.factory.generate_reflector(geometry)
 
-out = rs.mctracer_bridge.merlict_json.visual_scenery(reflector)
+merlict_visual_config = {
+    "max_interaction_depth": 41,
+    "preview": {
+        "cols": 128,
+        "rows": 72,
+        "scale": 10
+    },
+    "snapshot": {
+        "cols": 1920,
+        "rows":  1080,
+        "noise_level": 25,
+        "focal_length_over_aperture_diameter": 0.95,
+        "image_sensor_size_along_a_row": 0.07
+    },
+    "global_illumination": {
+        "on": True,
+        "incoming_direction": [-0.15, -0.2, 1.0]
+    },
+    "sky_dome": {
+        "path": "",
+        "color": [255, 255, 255]
+    },
+    "photon_trajectories": {
+        "radius": 0.15
+    }
+}
 
-os.makedirs(os.path.join('examples', 'visual') , exist_ok=True)
-rs.mctracer_bridge.merlict_json.write_json(
-    out,
-    os.path.join('examples', 'visual', 'acp_71m_visual.json'))
+json_numpy.write(VISUAL_CONFIG_PATH, merlict_visual_config)
+
+image_general_config = {
+    "sensor_size": 0.06,
+    "f_stop": 0.95,
+    "num_columns": 512,
+    "num_rows": 288,
+    "noise_level": 128
+}
+
+image_configs = {
+    "top": {
+        "position": [-1.256e+00, 0.000e+00, 1.200e+03],
+        "orientation": np.deg2rad([0 ,-1.800e+02, -7.249e+01]),
+        "object_distance": 1200,
+        "field_of_view": np.deg2rad(14),
+    },
+    "top_total": {
+        "position": [-1.256e+00, 0.000e+00, 1.200e+03],
+        "orientation": np.deg2rad([0 ,-1.800e+02, 45.0]),
+        "object_distance": 1200,
+        "field_of_view": np.deg2rad(30),
+    },
+    "mirror_closeup": {
+        "position": [3.609e+00,  9.980e+01,  1.825e+01],
+        "orientation": np.deg2rad([0 ,-8.508e+01,  1.032e+02]),
+        "object_distance": 90,
+        "field_of_view": np.deg2rad(44.4),
+    },
+    "sensor_closeup_mirror_background": {
+        "position": [5.431e+01,  3.093e+00,  1.530e+02],
+        "orientation": np.deg2rad([0 ,-1.461e+02,  1.726e+02]),
+        "object_distance": 150,
+        "field_of_view": np.deg2rad(5.909e+01),
+    },
+}
+
+call = [
+    MERLICT_CAMERA_SERVER,
+    '--scenery',
+    SCENERY_PATH,
+    '--config',
+    VISUAL_CONFIG_PATH
+]
+
+merlict = sp.Popen(call, stdin=sp.PIPE, stdout=sp.PIPE)
+for imgkey in image_configs:
+    imgpath = os.path.join(WORKD_DIR, '{:s}.tiff'.format(imgkey))
+    imgcfgpath = os.path.join(WORKD_DIR, '{:s}.json'.format(imgkey))
+
+    if not os.path.exists(imgpath):
+        full_config = dict(image_general_config)
+        full_config.update(image_configs[imgkey])
+        w = merlict.stdin.write(camera_command(**full_config))
+        w = merlict.stdin.flush()
+        img = read_ppm_image(merlict.stdout)
+        io.imsave(imgpath, img)
+        json_numpy.write(imgcfgpath, full_config)
+
+merlict.kill()
