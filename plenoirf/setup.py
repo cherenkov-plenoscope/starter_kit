@@ -16,7 +16,7 @@ setuptools.setup(
     packages=["plenoirf",],
     install_requires=[
         "cosmic_fluxes",
-        "corsika_primary_wrapper",
+        "corsika_primary",
         "iminuit==1.4.9",
         "shapely",
     ],
