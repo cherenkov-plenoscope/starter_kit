@@ -37,3 +37,6 @@
 [submodule "gamma_ray_reconstruction"]
 	path = gamma_ray_reconstruction
 	url = git@github.com:cherenkov-plenoscope/gamma_ray_reconstruction.git
+[submodule "portal-corporate-identity"]
+	path = portal-corporate-identity
+	url = git@github.com:cherenkov-plenoscope/portal-corporate-identity.git
