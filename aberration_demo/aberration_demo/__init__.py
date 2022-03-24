@@ -342,14 +342,9 @@ def make_light_field_geometires(work_dir, map_and_reduce_pool):
                 )
 
 
-
-
-def make_plots(work_dir):
+def read_analysis(work_dir):
     with open(os.path.join(work_dir, "config.json"), "rt") as f:
         config = json_numpy.loads(f.read())
-
-    plot_dir = os.path.join(work_dir, "plot")
-    os.makedirs(plot_dir, exist_ok=True)
 
     coll = {}
     for mkey in config["mirror"]["keys"]:
@@ -360,7 +355,6 @@ def make_plots(work_dir):
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
                 ofakey = "{:03d}".format(ofa)
 
-
                 summary_path = os.path.join(
                     work_dir,
                     "analysis",
@@ -369,18 +363,33 @@ def make_plots(work_dir):
                     ofakey,
                     "summary.json",
                 )
-                print(mkey, paxkey, ofakey)
                 if not os.path.exists(summary_path):
+                    print("Expected summary:", summary_path)
                     continue
 
                 with open(summary_path, "rt") as f:
                     out = json_numpy.loads(f.read())
                 coll[mkey][paxkey][ofakey] = out
+    return coll
 
+
+def make_plots(work_dir):
+    with open(os.path.join(work_dir, "config.json"), "rt") as f:
+        config = json_numpy.loads(f.read())
+
+    plot_dir = os.path.join(work_dir, "plot")
+    os.makedirs(plot_dir, exist_ok=True)
+
+    coll = read_analysis(work_dir=work_dir)
+    for mkey in coll:
+        for paxkey in coll[mkey]:
+            for ofakey in coll[mkey][paxkey]:
+
+                tcoll = coll[mkey][paxkey][ofakey]
                 scenario_key = mkey + "_" + paxkey + "_" + ofakey
 
                 bin_edges_cx, bin_edges_cy = analysis.binning_image_bin_edges(
-                    binning=out["image"]["binning"]
+                    binning=tcoll["image"]["binning"]
                 )
 
                 img_path = os.path.join(plot_dir, "image_" + scenario_key + ".jpg")
@@ -388,7 +397,7 @@ def make_plots(work_dir):
                     fig = sebplt.figure(sebplt.FIGURE_4_3)
                     ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
                     ax_cb = sebplt.add_axes(fig=fig, span=[0.85, 0.1, 0.02, 0.8])
-                    img_raw_norm = out["image"]["raw"] / np.max(out["image"]["raw"])
+                    img_raw_norm = tcoll["image"]["raw"] / np.max(tcoll["image"]["raw"])
                     cmap_psf = ax.pcolormesh(
                         np.rad2deg(bin_edges_cx),
                         np.rad2deg(bin_edges_cy),
@@ -401,9 +410,9 @@ def make_plots(work_dir):
                     ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.33)
                     sebplt.ax_add_circle(
                         ax=ax,
-                        x=out["image"]["binning"]["image"]["center"]["cx_deg"],
-                        y=out["image"]["binning"]["image"]["center"]["cy_deg"],
-                        r=np.rad2deg(out["image"]["angle80"]),
+                        x=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
+                        y=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
+                        r=np.rad2deg(tcoll["image"]["angle80"]),
                         linewidth=0.5,
                         linestyle='-',
                         color='r',
@@ -422,14 +431,14 @@ def make_plots(work_dir):
                     ax = sebplt.add_axes(fig, [0.1, 0.1, 0.8, 0.8])
                     sebplt.ax_add_histogram(
                         ax=ax,
-                        bin_edges=out["time"]["bin_edges"],
-                        bincounts=out["time"]["weights"] / np.max(out["time"]["weights"]),
+                        bin_edges=tcoll["time"]["bin_edges"],
+                        bincounts=tcoll["time"]["weights"] / np.max(tcoll["time"]["weights"]),
                         face_color="k",
                         face_alpha=0.1,
                         draw_bin_walls=True,
                     )
                     ax.plot(
-                        [out["time"]["fwhm"]["start"], out["time"]["fwhm"]["stop"]],
+                        [tcoll["time"]["fwhm"]["start"], tcoll["time"]["fwhm"]["stop"]],
                         [0.5, 0.5],
                         "r-"
                     )
@@ -438,8 +447,4 @@ def make_plots(work_dir):
                     fig.savefig(time_path)
                     sebplt.close(fig)
 
-    with open(os.path.join(plot_dir, "summary.json") , "wt") as f:
-        f.write(json_numpy.dumps(coll))
-
-
-def make_summary_plots(work_dir):
+#def make_summary_plots(work_dir):
