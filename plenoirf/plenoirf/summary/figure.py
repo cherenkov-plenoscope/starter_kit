@@ -23,6 +23,17 @@ SOURCES = {
     },
 }
 
+PARTICLE_COLORS = {
+    "gamma": "black",
+    "electron": "blue",
+    "proton": "red",
+    "helium": "orange",
+}
+
+MATPLOTLIB_RCPARAMS = {
+    "mathtext.fontset": "cm",
+    "font.family": "STIXGeneral",
+}
 
 def mark_ax_airshower_spectrum(ax, x=0.93, y=0.93, fontsize=42):
     ax.text(

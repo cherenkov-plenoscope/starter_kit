@@ -314,18 +314,12 @@ def _guess_summary_config(run_dir):
         },
     }
 
-    summary_config["plot"] = {
-        "particle_colors": {
-            "gamma": "black",
-            "electron": "blue",
-            "proton": "red",
-            "helium": "orange",
-        },
+    summary_config["plot"] = figure.MATPLOTLIB_RCPARAMS
+
+    {
+        "particle_colors": figure.PARTICLE_COLORS,
         "matplotlib": {
-            "rcParams": {
-                "mathtext.fontset": "cm",
-                "font.family": "STIXGeneral",
-            }
+            "rcParams": figure.MATPLOTLIB_RCPARAMS,
         },
     }
 
