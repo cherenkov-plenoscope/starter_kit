@@ -42,6 +42,32 @@ def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
     return ticks
 
 
+def _ax_add_paxel_and_off_axis_labels(ax):
+    for isens, paxkey in enumerate(coll[mkey]):
+        num_paxel_on_diagonal = config["sensor"]["num_paxel_on_diagonal"][isens]
+
+        ax_psf_labels.text(
+            0.01,
+            0.13 + ax_vert_start + ax_margin_height_rel + ax_height_rel * (num_sensors - isens - 1),
+            r"{:d}".format(num_paxel_on_diagonal),
+            rotation=0,
+            fontsize=10,
+        )
+
+        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
+
+            off_axis_cx_deg = config["sources"]["off_axis_angles_deg"][iofa][0]
+            off_axis_cy_deg = config["sources"]["off_axis_angles_deg"][iofa][1]
+
+            ax_psf_labels.text(
+                0.12 + ax_hori_start + ax_margin_width_rel + ax_width_rel * iofa,
+                0.01,
+                r"{:1.1f}".format(off_axis_cx_deg) + r"$^\circ$",
+                rotation=0,
+                fontsize=10,
+            )
+
+
 num_mirrors = len(coll)
 for mkey in coll:
     num_sensors = len(coll[mkey])
@@ -66,33 +92,7 @@ for mkey in coll:
     )
     ax_psf_labels.text(0.04, 0.55, r"$c_y$ / 1$^\circ$", rotation=90, fontsize=12)
     ax_psf_labels.text(0.55, 0.05, r"$c_x$ / 1$^\circ$", rotation=0, fontsize=12)
-
-
-    for isens, paxkey in enumerate(coll[mkey]):
-        num_paxel_on_diagonal = config["sensor"]["num_paxel_on_diagonal"][isens]
-
-        ax_psf_labels.text(
-            0.01,
-            0.1 + ax_vert_start + ax_margin_height_rel + ax_height_rel * (num_sensors - isens - 1),
-            r"{:d}".format(num_paxel_on_diagonal),
-            rotation=0,
-            fontsize=10,
-        )
-
-        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
-
-            off_axis_cx_deg = config["sources"]["off_axis_angles_deg"][iofa][0]
-            off_axis_cy_deg = config["sources"]["off_axis_angles_deg"][iofa][1]
-
-            ax_psf_labels.text(
-                0.1 + ax_hori_start + ax_margin_width_rel + ax_width_rel * iofa,
-                0.01,
-                r"{:1.1f}".format(off_axis_cx_deg) + r"$^\circ$",
-                rotation=0,
-                fontsize=10,
-            )
-
-
+    _ax_add_paxel_and_off_axis_labels(ax=ax_psf_labels)
 
     for isens, paxkey in enumerate(coll[mkey]):
         for iofa, ofakey in enumerate(coll[mkey][paxkey]):
@@ -135,13 +135,13 @@ for mkey in coll:
                 cmap="Greys",
                 norm=sebplt.plt_colors.PowerNorm(gamma=0.5),
             )
-            ax_add_grid(
+            sebplt.ax_add_grid_with_explicit_ticks(
                 xticks=ticks_cx_deg,
                 yticks=ticks_cy_deg,
                 ax=ax_pax_off,
                 color="k",
                 linestyle="-",
-                linewidth=0.66,
+                linewidth=0.33,
                 alpha=0.33,
             )
             sebplt.ax_add_circle(
@@ -220,34 +220,9 @@ for mkey in coll:
         span=[0,0,1,1],
         style={"spines": [], "axes": [], "grid": False},
     )
-    ax_tsf_labels.text(0.06, 0.45, r"rel. intensity / %", rotation=90, fontsize=12)
+    ax_tsf_labels.text(0.06, 0.45, r"intensity / %", rotation=90, fontsize=12)
     ax_tsf_labels.text(0.5, 0.05, r"time / ns", rotation=0, fontsize=12)
-
-
-    for isens, paxkey in enumerate(coll[mkey]):
-        num_paxel_on_diagonal = config["sensor"]["num_paxel_on_diagonal"][isens]
-
-        ax_tsf_labels.text(
-            0.01,
-            0.1 + ax_vert_start + ax_margin_height_rel + ax_height_rel * (num_sensors - isens - 1),
-            r"{:d}".format(num_paxel_on_diagonal),
-            rotation=0,
-            fontsize=10,
-        )
-
-        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
-
-            off_axis_cx_deg = config["sources"]["off_axis_angles_deg"][iofa][0]
-            off_axis_cy_deg = config["sources"]["off_axis_angles_deg"][iofa][1]
-
-            ax_tsf_labels.text(
-                0.1 + ax_hori_start + ax_margin_width_rel + ax_width_rel * iofa,
-                0.01,
-                r"{:1.1f}".format(off_axis_cx_deg) + r"$^\circ$",
-                rotation=0,
-                fontsize=10,
-            )
-
+    _ax_add_paxel_and_off_axis_labels(ax=ax_psf_labels)
 
     for isens, paxkey in enumerate(coll[mkey]):
         for iofa, ofakey in enumerate(coll[mkey][paxkey]):
@@ -278,13 +253,13 @@ for mkey in coll:
             ax_pax_off.set_ylim([time_weight_start_perc, time_weight_stop_perc])
             #ax_pax_off.semilogy()
 
-            ax_add_grid(
+            sebplt.ax_add_grid_with_explicit_ticks(
                 xticks=time_xticks_ns,
                 yticks=time_grid_yticks,
                 ax=ax_pax_off,
                 color="k",
                 linestyle="-",
-                linewidth=0.66,
+                linewidth=0.33,
                 alpha=0.33,
             )
 
@@ -334,7 +309,7 @@ for mkey in MIRROR_COLORS:
             cxs_deg, theta80_deg, PAXEL_STYLE[paxkey], color=MIRROR_COLORS[mkey]
         )
 ax_psf_sum.set_xlabel(r"off axis angle / 1$^\circ$")
-ax_psf_sum.set_ylabel(r"containment 80% / 1$^\circ$")
+ax_psf_sum.set_ylabel(r"radial containment 80% / 1$^\circ$")
 fig_psf_sum.savefig(os.path.join(work_dir, "plot", "psf_overview.jpg"))
 sebplt.close(fig_psf_sum)
 
