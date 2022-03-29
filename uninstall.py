@@ -15,6 +15,7 @@ tools = [
     "sebastians_matplotlib_addons",
     "json_numpy",
     "gamma_ray_reconstruction",
+    "merlict_camera_server",
 ]
 for tool in tools:
     call(["pip", "uninstall", tool])

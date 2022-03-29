@@ -91,6 +91,7 @@ def main():
             "magnetic_deflection",
             "spectral_energy_distribution_units",
             "lima1983analysis",
+            "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
         ]
         for tool in tools:
             call(["pip", "install", "-e", join(".", tool)])
