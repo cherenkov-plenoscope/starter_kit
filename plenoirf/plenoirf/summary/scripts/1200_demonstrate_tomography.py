@@ -5,6 +5,7 @@ import plenopy as pl
 import scipy
 import os
 import json_numpy
+import sparse_numeric_table as spt
 import sebastians_matplotlib_addons as seb
 import glob
 import tempfile
@@ -18,8 +19,10 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
-NUM_EVENTS_PER_PARTICLE = 3
-MIN_NUM_CHERENKOV_PHOTONS = 500
+NUM_EVENTS_PER_PARTICLE = 10
+MIN_NUM_CHERENKOV_PHOTONS = 200
+MAX_CORE_DISTANCE = 400
+TOMO_NUM_ITERATIONS = 50
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
@@ -50,7 +53,7 @@ def read_simulation_truth_for_tomography(
             event = pl.Event(
                 path=response_path, light_field_geometry=light_field_geometry,
             )
-            simulation_truth = pl.tomography.image_domain.simulation_truth.init(
+            simulation_truth = pl.Tomography.Image_Domain.Simulation_Truth.init(
                 event=event, binning=tomography_binning,
             )
     return simulation_truth
@@ -65,7 +68,7 @@ def make_binning_from_ligh_field_geometry(light_field_geometry):
     )
     NUM_CAMERAS_ON_DIAGONAL = 2 * (NUM_CAMERAS_ON_DIAGONAL // 2)
 
-    binning = pl.tomography.image_domain.binning.init(
+    binning = pl.Tomography.Image_Domain.Binning.init(
         focal_length=design.expected_imaging_system_focal_length,
         cx_min=-0.5 * design.max_FoV_diameter,
         cx_max=+0.5 * design.max_FoV_diameter,
@@ -84,7 +87,7 @@ binning = make_binning_from_ligh_field_geometry(
     light_field_geometry=light_field_geometry
 )
 
-pl.tomography.image_domain.binning.write(
+pl.Tomography.Image_Domain.Binning.write(
     binning=binning,
     path=os.path.join(
         pa["out_dir"], "binning_for_tomography_in_image_domain.json"
@@ -97,7 +100,7 @@ system_matrix_path = os.path.join(
 
 if not os.path.exists(system_matrix_path):
 
-    jobs = pl.tomography.system_matrix.make_jobs(
+    jobs = pl.Tomography.System_Matrix.make_jobs(
         light_field_geometry=light_field_geometry,
         sen_x_bin_edges=binning["sen_x_bin_edges"],
         sen_y_bin_edges=binning["sen_y_bin_edges"],
@@ -110,31 +113,41 @@ if not os.path.exists(system_matrix_path):
     results = []
     for ijob, job in enumerate(jobs):
         print("system_matrix: job", ijob)
-        job_result = pl.tomography.system_matrix.run_job(job)
+        job_result = pl.Tomography.System_Matrix.run_job(job)
         results.append(job_result)
 
-    sparse_system_matrix = pl.tomography.system_matrix.reduce_results(results)
-    pl.tomography.system_matrix.write(
+    sparse_system_matrix = pl.Tomography.System_Matrix.reduce_results(results)
+    pl.Tomography.System_Matrix.write(
         sparse_system_matrix=sparse_system_matrix, path=system_matrix_path
     )
 
-sparse_system_matrix = pl.tomography.system_matrix.read(
+sparse_system_matrix = pl.Tomography.System_Matrix.read(
     path=system_matrix_path
 )
 
-tomo_psf = pl.tomography.image_domain.point_spread_function.init(
+tomo_psf = pl.Tomography.Image_Domain.Point_Spread_Function.init(
     sparse_system_matrix=sparse_system_matrix
 )
 
 for sk in irf_config["config"]["sites"]:
-    for pk in ["proton", "helium"]:
+    for pk in irf_config["config"]["particles"]:
         sk_pk_dir = os.path.join(pa["run_dir"], "event_table", sk, pk)
 
+        print("===", sk, pk, "===")
+
+        print("- read event_table")
+        event_table = spt.read(
+            path=os.path.join(sk_pk_dir, "event_table.tar",),
+            structure=irf.table.STRUCTURE,
+        )
+
+        print("- find events with full output")
         raw_sensor_response_dir = os.path.join(sk_pk_dir, "past_trigger.map")
         have_raw_sensor_response_uids = get_airshower_uids_in_directory(
             directory=raw_sensor_response_dir
         )
 
+        print("- read list-of-photons")
         run = pl.photon_stream.loph.LopfTarReader(
             os.path.join(sk_pk_dir, "cherenkov.phs.loph.tar")
         )
@@ -151,14 +164,30 @@ for sk in irf_config["config"]["sites"]:
 
             num_cherenkov_photons = len(loph_record["photons"]["channels"])
             if num_cherenkov_photons < MIN_NUM_CHERENKOV_PHOTONS:
+                print(uid, "not enough photons")
                 continue
 
             if uid not in have_raw_sensor_response_uids:
+                print(uid, "no full output avaiable")
+                continue
+
+            event_primary = spt.cut_and_sort_table_on_indices(
+                table=event_table,
+                common_indices=np.array([uid]),
+                level_keys=["primary"],
+            )["primary"]
+            event_core_distance = np.hypot(
+                event_primary["magnet_cherenkov_pool_x_m"][0],
+                event_primary["magnet_cherenkov_pool_y_m"][0],
+            )
+
+            if event_core_distance > MAX_CORE_DISTANCE:
+                print(uid, "distance to core too large")
                 continue
 
             event_counter += 1
 
-            print(sk, pk, uid)
+            print(sk, pk, uid, event_core_distance)
 
             simulation_truth = read_simulation_truth_for_tomography(
                 raw_sensor_response_dir=raw_sensor_response_dir,
@@ -179,14 +208,14 @@ for sk in irf_config["config"]["sites"]:
             )
 
             if not os.path.exists(reconstruction_path):
-                reconstruction = pl.tomography.image_domain.reconstruction.init(
+                reconstruction = pl.Tomography.Image_Domain.Reconstruction.init(
                     light_field_geometry=light_field_geometry,
                     photon_lixel_ids=loph_record["photons"]["channels"],
                     binning=binning,
                 )
 
-                for i in range(25):
-                    reconstruction = pl.tomography.image_domain.reconstruction.iterate(
+                for i in range(TOMO_NUM_ITERATIONS):
+                    reconstruction = pl.Tomography.Image_Domain.Reconstruction.iterate(
                         reconstruction=reconstruction,
                         point_spread_function=tomo_psf,
                     )
@@ -197,7 +226,7 @@ for sk in irf_config["config"]["sites"]:
             with open(reconstruction_path, "rt") as f:
                 reconstruction = json_numpy.loads(f.read())
 
-            pl.tomography.image_domain.save_imgae_slice_stack(
+            pl.Tomography.Image_Domain.save_imgae_slice_stack(
                 binning=binning,
                 reconstruction=reconstruction,
                 simulation_truth=simulation_truth,
@@ -211,12 +240,12 @@ for sk in irf_config["config"]["sites"]:
             # uid 000008000100
 
             """
-            ivolrec = pl.tomography.image_domain.reconstructed_volume_intensity_as_cube(
+            ivolrec = pl.Tomography.Image_Domain.reconstructed_volume_intensity_as_cube(
                 reconstructed_volume_intensity=reconstruction['reconstructed_volume_intensity'],
                 binning=binning,
             )
 
-            ivoltru = pl.tomography.image_domain.reconstructed_volume_intensity_as_cube(
+            ivoltru = pl.Tomography.Image_Domain.reconstructed_volume_intensity_as_cube(
                 reconstructed_volume_intensity=simulation_truth['true_volume_intensity'],
                 binning=binning,
             )
