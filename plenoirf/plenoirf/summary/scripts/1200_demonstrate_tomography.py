@@ -227,25 +227,30 @@ for sk in irf_config["config"]["sites"]:
             with open(reconstruction_path, "rt") as f:
                 reconstruction = json_numpy.loads(f.read())
 
-
             ivolrec = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
-                volume_intensity=reconstruction['reconstructed_volume_intensity'],
+                volume_intensity=reconstruction[
+                    "reconstructed_volume_intensity"
+                ],
                 binning=binning,
             )
             ivolrec = ivolrec / np.sum(ivolrec)
 
             ivoltru = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
-                volume_intensity=simulation_truth['true_volume_intensity'],
+                volume_intensity=simulation_truth["true_volume_intensity"],
                 binning=binning,
             )
             ivoltru = ivoltru / np.sum(ivoltru)
             if np.any(np.isnan(ivoltru)):
-                print(uid, "Failed to construct volume of true Cherenkov-emission.")
+                print(
+                    uid,
+                    "Failed to construct volume of true Cherenkov-emission.",
+                )
                 continue
 
             imax = np.max([np.max(ivolrec), np.max(ivoltru)])
-            imin = np.min([np.min(ivolrec[ivolrec > 0]), np.min(ivoltru[ivoltru > 0])])
-
+            imin = np.min(
+                [np.min(ivolrec[ivolrec > 0]), np.min(ivoltru[ivoltru > 0])]
+            )
 
             stack_path = os.path.join(result_dir, "stack.jpg")
 
@@ -254,11 +259,9 @@ for sk in irf_config["config"]["sites"]:
                 RRR = 1280
 
                 axes_style = {"spines": [], "axes": [], "grid": False}
-                fig = seb.figure({"rows": 4*RRR, "cols": RRR, "fontsize": 1})
+                fig = seb.figure({"rows": 4 * RRR, "cols": RRR, "fontsize": 1})
                 ax = seb.add_axes(
-                    fig=fig,
-                    span=[0.0, 0.0, 1., 1.],
-                    style=axes_style
+                    fig=fig, span=[0.0, 0.0, 1.0, 1.0], style=axes_style
                 )
 
                 UU = 0.2
@@ -269,7 +272,7 @@ for sk in irf_config["config"]["sites"]:
                         [
                             [np.cos(the), -np.sin(the) * (1.0 / UU), 0],
                             [np.sin(the), np.cos(the) * UU, 5.3 * iz],
-                            [0, 0, 1]
+                            [0, 0, 1],
                         ]
                     )
                     intensity_rgb = np.zeros(
@@ -278,10 +281,10 @@ for sk in irf_config["config"]["sites"]:
                             binning["number_cy_bins"],
                             4,
                         ),
-                        dtype=np.float
+                        dtype=np.float,
                     )
-                    intensity_rgb[:, :, 0] = (ivolrec[:, :, iz]/imax)
-                    intensity_rgb[:, :, 1] = (ivoltru[:, :, iz]/imax)
+                    intensity_rgb[:, :, 0] = ivolrec[:, :, iz] / imax
+                    intensity_rgb[:, :, 1] = ivoltru[:, :, iz] / imax
 
                     seb.pseudo3d.ax_add_mesh_intensity_to_alpha(
                         ax=ax,
