@@ -239,90 +239,40 @@ for sk in irf_config["config"]["sites"]:
                 binning=binning,
             )
             ivoltru = ivoltru / np.sum(ivoltru)
+            if np.any(np.isnan(ivoltru)):
+                print(uid, "Failed to construct volume of true Cherenkov-emission.")
+                continue
+
             imax = np.max([np.max(ivolrec), np.max(ivoltru)])
             imin = np.min([np.min(ivolrec[ivolrec > 0]), np.min(ivoltru[ivoltru > 0])])
 
 
-            image_slices_path = os.path.join(result_dir, "image_slices")
+            stack_path = os.path.join(result_dir, "stack.jpg")
 
-            if True: #not os.path.exists(image_slices_path):
-                #os.makedirs(image_slices_path)
+            if not os.path.exists(stack_path):
 
+                RRR = 1280
 
-                """
-                xyzIrec = pl.plot.xyzI.hist3D_to_xyzI(
-                    xyz_hist=ivolrec,
-                    x_bin_centers=np.rad2deg(binning["cx_bin_centers"]),
-                    y_bin_centers=np.rad2deg(binning["cy_bin_centers"]),
-                    z_bin_centers=binning["sen_z_bin_centers"],
-                    threshold=imin,
-                )
-                xyzItru = pl.plot.xyzI.hist3D_to_xyzI(
-                    xyz_hist=ivoltru,
-                    x_bin_centers=np.rad2deg(binning["cx_bin_centers"]),
-                    y_bin_centers=np.rad2deg(binning["cy_bin_centers"]),
-                    z_bin_centers=binning["sen_z_bin_centers"],
-                    threshold=imin,
+                axes_style = {"spines": [], "axes": [], "grid": False}
+                fig = seb.figure({"rows": 4*RRR, "cols": RRR, "fontsize": 1})
+                ax = seb.add_axes(
+                    fig=fig,
+                    span=[0.0, 0.0, 1., 1.],
+                    style=axes_style
                 )
 
-                fig3 = plt.figure()
-                ax3 = fig3.add_subplot(111, projection='3d')
-
-                pl.plot.xyzI.add2ax_xyzI(
-                    ax=ax3,
-                    xyzIs=xyzIrec,
-                    color='b',
-                    steps=32,
-                    alpha_max=0.2,
-                    ball_size=50.0,
-                )
-
-                pl.plot.xyzI.add2ax_xyzI(
-                    ax=ax3,
-                    xyzIs=xyzItru,
-                    color='r',
-                    steps=32,
-                    alpha_max=0.2,
-                    ball_size=50.0,
-                )
-                fig3.savefig(os.path.join(image_slices_path, "3d.png"))
-                seb.close(fig3)
-                """
-
+                UU = 0.2
+                the = np.deg2rad(50)
 
                 for iz in range(binning["number_sen_z_bins"]):
-
-
-                    ONLY_LOWEST_SLICE_HAS_AXES = True
-                    axes_style_lowest = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
-                    axes_style_upper = {"spines": [], "axes": [], "grid": False}
-
-                    if iz + 1 == binning["number_sen_z_bins"]:
-                        axes_style = axes_style_lowest
-                    else:
-                        axes_style = axes_style_upper
-
-                    RRR = 720
-                    fig = seb.figure({"rows": RRR, "cols": RRR, "fontsize": 1})
-                    ax = seb.add_axes(
-                        fig=fig,
-                        span=[0.0, 0.0, 1., 1.],
-                        style=axes_style
+                    projection = np.array(
+                        [
+                            [np.cos(the), -np.sin(the) * (1.0 / UU), 0],
+                            [np.sin(the), np.cos(the) * UU, 5.3 * iz],
+                            [0, 0, 1]
+                        ]
                     )
-                    """
-                    seb.ax_add_circle(
-                        ax=ax,
-                        x=0.0,
-                        y=0.0,
-                        r=FIELD_OF_VIEW_RADIUS_DEG,
-                        linewidth=1.0,
-                        linestyle="-",
-                        color="k",
-                        alpha=1,
-                        num_steps=180,
-                    )
-                    """
-                    colorimg = np.zeros(
+                    intensity_rgb = np.zeros(
                         shape=(
                             binning["number_cx_bins"],
                             binning["number_cy_bins"],
@@ -330,104 +280,39 @@ for sk in irf_config["config"]["sites"]:
                         ),
                         dtype=np.float
                     )
-                    colorimg[:, :, 0] = (ivolrec[:, :, iz]/imax)
-                    colorimg[:, :, 1] = (ivoltru[:, :, iz]/imax)
-                    """
-                    colorimg *= 255.0
-                    ax.imshow(
-                        X=colorimg.astype(np.uint8),
-                        extent=(
-                            np.rad2deg(binning["cx_bin_edges"][0]),
-                            np.rad2deg(binning["cx_bin_edges"][-1]),
-                            np.rad2deg(binning["cy_bin_edges"][0]),
-                            np.rad2deg(binning["cy_bin_edges"][-1]),
-                        ),
-                    )
-                    """
-                    UU = 0.5
-                    transform = np.array(
-                        [
-                            [1,0],
-                            [0,1]
-                        ]
-                    )
-                    seb.ax_pcolormesh_fill(
+                    intensity_rgb[:, :, 0] = (ivolrec[:, :, iz]/imax)
+                    intensity_rgb[:, :, 1] = (ivoltru[:, :, iz]/imax)
+
+                    seb.pseudo3d.ax_add_mesh_intensity_to_alpha(
                         ax=ax,
+                        projection=projection,
                         x_bin_edges=np.rad2deg(binning["cx_bin_edges"]),
                         y_bin_edges=np.rad2deg(binning["cy_bin_edges"]),
-                        intensity_rgba=colorimg,
-                        transform=transform,
-                        edgecolor='none',
-                        linewidth=0.0,
-                        threshold=0.1,
-                        circle_radius=3.25,
+                        intensity_rgb=intensity_rgb,
+                        threshold=0.01,
+                        gamma=0.5,
                     )
-
-                    ax.set_xlim([np.rad2deg(binning["cx_bin_edges"][0]), np.rad2deg(binning["cx_bin_edges"][-1])])
-                    ax.set_ylim([np.rad2deg(binning["cy_bin_edges"][0]), np.rad2deg(binning["cy_bin_edges"][-1])])
-
-
-                    """
-                    seb.ax_add_grid_with_explicit_ticks(
+                    seb.pseudo3d.ax_add_grid(
                         ax=ax,
-                        xticks=np.arange(-3, 4, 1),
-                        yticks=np.arange(-3, 4, 1),
+                        projection=projection,
+                        x_bin_edges=np.rad2deg(binning["cx_bin_edges"]),
+                        y_bin_edges=np.rad2deg(binning["cy_bin_edges"]),
+                        alpha=0.22,
+                        linewidth=0.1,
                         color="k",
                         linestyle="-",
-                        linewidth=0.66,
-                        alpha=0.33,
                     )
-                    """
-                    ax.set_aspect("equal")
-                    fig.savefig(
-                        os.path.join(image_slices_path, "grid{:03d}.png".format(iz)),
-                        transparent=True,
+                    seb.pseudo3d.ax_add_circle(
+                        ax=ax,
+                        projection=projection,
+                        x=0.0,
+                        y=0.0,
+                        r=3.25,
+                        alpha=0.66,
+                        linewidth=0.1,
+                        color="k",
+                        linestyle="-",
                     )
-                    seb.close(fig)
-
-                SKEW = 2
-                WWW = RRR + RRR//SKEW
-                HHH = RRR//SKEW
-                full = np.zeros(
-                    shape=(binning["number_sen_z_bins"]*HHH, WWW, 4),
-                    dtype=np.uint8,
-                )
-                for iz in range(binning["number_sen_z_bins"]):
-
-                    gskimg = skimage.io.imread(
-                        fname=os.path.join(image_slices_path, "grid{:03d}.png".format(iz)),
-                    )
-                    gskimg_wide = np.zeros(shape=(RRR, WWW , 4), dtype=np.uint8)
-                    gskimg_wide[0:RRR, 0:RRR] = gskimg
-
-                    matrix_skew = skimage.transform.FundamentalMatrixTransform(
-                        np.array([
-                            [1.0, 0.0, -RRR//SKEW],
-                            [0.0, SKEW, 0],
-                            [0.0, 0.0, 1.0]
-                        ])
-                    )
-                    gskimg_wide_skew = skimage.transform.warp(
-                        gskimg_wide,
-                        inverse_map=matrix_skew,
-                    )
-                    gskimg_wide_skew_cut = gskimg_wide_skew[0:HHH,:]
-                    skimage.io.imsave(
-                        fname=os.path.join(image_slices_path, "skew_grid{:03d}.png".format(iz)),
-                        arr=gskimg_wide_skew_cut,
-                        check_contrast=False,
-                    )
-
-                    off = iz*HHH//4
-                    xoff = 0
-                    yoff = 0
-                    full[xoff+off:HHH+xoff+off, yoff:WWW+yoff, :] += (255*gskimg_wide_skew_cut).astype(np.uint8)
-
-                skimage.io.imsave(
-                    fname=os.path.join(image_slices_path, "skew_grid_full.png"),
-                    arr=full,
-                    check_contrast=False,
-                )
-            break
-        break
-    break
+                ax.set_aspect("equal")
+                fig.savefig(stack_path, transparent=True)
+                seb.close(fig)
