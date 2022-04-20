@@ -406,56 +406,26 @@ def _populate_table_of_thrown_air_showers(
             for job_idx in np.arange(cfg["runs"][particle_key]["num"]):
                 assert run_id > 0
 
-                irf_job = {
-                    "run_id": run_id,
-                    "num_air_showers": cfg["num_airshowers_per_run"],
-                    "plenoscope_pointing": cfg["plenoscope_pointing"],
-                    "particle": cfg["particles"][particle_key],
-                    "site": cfg["sites"][site_key],
-                    "site_particle_deflection": deflection[site_key][
-                        particle_key
-                    ],
-                    "grid": cfg["grid"],
-                    "raw_sensor_response": cfg["raw_sensor_response"],
-                    "sum_trigger": cfg["sum_trigger"],
-                    "cherenkov_classification": cfg[
-                        "cherenkov_classification"
-                    ],
-                    "corsika_primary_path": executables[
+                irf_job = map_and_reduce.make_job_dict(
+                    run_dir=out_absdir,
+                    production_key="event_table",
+                    run_id=run_id,
+                    site_key=site_key,
+                    particle_key=particle_key,
+                    config=cfg,
+                    deflection_table=deflection,
+                    num_air_showers=cfg["num_airshowers_per_run"],
+                    corsika_primary_path=executables[
                         "corsika_primary_path"
                     ],
-                    "plenoscope_scenery_path": opj(
-                        out_absdir, "input", "scenery"
-                    ),
-                    "merlict_plenoscope_propagator_path": executables[
+                    merlict_plenoscope_propagator_path=executables[
                         "merlict_plenoscope_propagator_path"
                     ],
-                    "light_field_geometry_path": opj(
-                        out_absdir, "light_field_geometry"
-                    ),
-                    "trigger_geometry_path": opj(
-                        out_absdir, "trigger_geometry"
-                    ),
-                    "merlict_plenoscope_propagator_config_path": opj(
-                        out_absdir, "input", "merlict_propagation_config.json"
-                    ),
-                    "log_dir": opj(site_particle_absdir, "log.map"),
-                    "past_trigger_dir": opj(
-                        site_particle_absdir, "past_trigger.map"
-                    ),
-                    "past_trigger_reconstructed_cherenkov_dir": opj(
-                        site_particle_absdir,
-                        "past_trigger_reconstructed_cherenkov_dir.map",
-                    ),
-                    "feature_dir": opj(site_particle_absdir, "features.map"),
-                    "keep_tmp": KEEP_TMP,
-                    "tmp_dir": tmp_absdir,
-                    "date": date_dict_now,
-                    "artificial_core_limitation": cfg[
-                        "artificial_core_limitation"
-                    ][particle_key],
-                    "reconstruction": cfg["reconstruction"],
-                }
+                    tmp_dir=tmp_absdir,
+                    keep_tmp_dir=KEEP_TMP,
+                    date_dict_now=date_dict_now,
+                )
+
                 run_id += 1
                 irf_jobs.append(irf_job)
 
@@ -470,76 +440,14 @@ def _populate_table_of_thrown_air_showers(
     qmrlog("Reduce instrument-response.")
 
     for site_key in cfg["sites"]:
-        site_absdir = opj(table_absdir, site_key)
         for particle_key in cfg["particles"]:
-            site_particle_absdir = opj(site_absdir, particle_key)
-            log_absdir = opj(site_particle_absdir, "log.map")
-            feature_absdir = opj(site_particle_absdir, "features.map")
-
-            # run-time
-            # ========
-            log_abspath = opj(site_particle_absdir, "runtime.csv")
-            if not op.exists(log_abspath) or not LAZY_REDUCTION:
-                _lop_paths = glob.glob(opj(log_absdir, "*_runtime.jsonl"))
-                logging.reduce(
-                    list_of_log_paths=_lop_paths, out_path=log_abspath
-                )
-            qmrlog("Reduce {:s} {:s} run-time.".format(site_key, particle_key))
-
-            # event table
-            # ===========
-            event_table_abspath = opj(site_particle_absdir, "event_table.tar")
-            if not op.exists(event_table_abspath) or not LAZY_REDUCTION:
-                _feature_paths = glob.glob(
-                    opj(feature_absdir, "*_event_table.tar")
-                )
-                event_table = spt.concatenate_files(
-                    list_of_table_paths=_feature_paths,
-                    structure=table.STRUCTURE,
-                )
-                spt.write(
-                    path=event_table_abspath,
-                    table=event_table,
-                    structure=table.STRUCTURE,
-                )
-            qmrlog(
-                "Reduce {:s} {:s} event_table.".format(site_key, particle_key)
+            map_and_reduce.reduce(
+                run_dir=out_absdir,
+                production_key="event_table",
+                site_key=site_key,
+                particle_key=particle_key,
+                LAZY=LAZY_REDUCTION,
             )
-
-            # grid images
-            # ===========
-            grid_abspath = opj(site_particle_absdir, "grid.tar")
-            if not op.exists(grid_abspath) or not LAZY_REDUCTION:
-                _grid_paths = glob.glob(opj(feature_absdir, "*_grid.tar"))
-                grid.reduce(
-                    list_of_grid_paths=_grid_paths, out_path=grid_abspath
-                )
-            qmrlog("Reduce {:s} {:s} grid.".format(site_key, particle_key))
-
-            # cherenkov-photon-stream
-            # =======================
-            loph_abspath = opj(site_particle_absdir, "cherenkov.phs.loph.tar")
-            tmp_loph_abspath = loph_abspath + ".tmp"
-            qmrlog(
-                "Reduce {:s} {:s} cherenkov phs.".format(
-                    site_key, particle_key
-                )
-            )
-            if not op.exists(loph_abspath) or not LAZY_REDUCTION:
-                qmrlog("compile ", loph_abspath)
-                _cer_run_paths = glob.glob(
-                    opj(
-                        site_particle_absdir,
-                        "past_trigger_reconstructed_cherenkov_dir.map",
-                        "*_reconstructed_cherenkov.tar",
-                    )
-                )
-                _cer_run_paths.sort()
-                pl.photon_stream.loph.concatenate_tars(
-                    in_paths=_cer_run_paths, out_path=tmp_loph_abspath
-                )
-                network_file_system.move(tmp_loph_abspath, loph_abspath)
-
 
 def run(
     path,

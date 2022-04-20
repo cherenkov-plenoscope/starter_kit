@@ -21,6 +21,27 @@ pa = irf.summary.paths_from_argv(argv)
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
+production_key = "demo_helium_for_tomography"
+demo_helium_dir = os.path.join(pa["run_dir"], production_key)
+
+if not os.path.exists(demo_helium_dir):
+    job = irf.production.example.make_helium_demo_for_tomography(
+        run_dir=pa["run_dir"],
+        num_air_showers=5,
+        production_key=production_key,
+        site_key="namibia",
+        max_scatter_radius_m=250,
+    )
+    plenoirf.map_and_reduce.run_job(job)
+    plenoirf.map_and_reduce.reduce(
+        run_dir=pa["run_dir"],
+        production_key=production_key,
+        site_key="namibia",
+        particle_key="helium",
+        LAZY=False,
+    )
+
+
 NUM_EVENTS_PER_PARTICLE = 10
 MIN_NUM_CHERENKOV_PHOTONS = 200
 MAX_CORE_DISTANCE = 400
@@ -133,9 +154,9 @@ tomo_psf = pl.Tomography.Image_Domain.Point_Spread_Function.init(
     sparse_system_matrix=sparse_system_matrix
 )
 
-for sk in irf_config["config"]["sites"]:
-    for pk in irf_config["config"]["particles"]:
-        sk_pk_dir = os.path.join(pa["run_dir"], "event_table", sk, pk)
+for sk in ["namibia"]:
+    for pk in ["helium"]:
+        sk_pk_dir = os.path.join(pa["run_dir"], production_key, sk, pk)
 
         print("===", sk, pk, "===")
 
@@ -175,18 +196,18 @@ for sk in irf_config["config"]["sites"]:
                 print(uid, "no full output avaiable")
                 continue
 
-            event_primary = spt.cut_and_sort_table_on_indices(
+            event_core = spt.cut_and_sort_table_on_indices(
                 table=event_table,
                 common_indices=np.array([uid]),
-                level_keys=["primary"],
-            )["primary"]
+                level_keys=["core"],
+            )["core"]
             event_core_distance = np.hypot(
-                event_primary["magnet_cherenkov_pool_x_m"][0],
-                event_primary["magnet_cherenkov_pool_y_m"][0],
+                event_core["core_x_m"][0],
+                event_core["core_y_m"][0],
             )
 
             if event_core_distance > MAX_CORE_DISTANCE:
-                print(uid, "distance to core too large")
+                print(uid, "distance to core too large", event_core_distance)
                 continue
 
             event_counter += 1

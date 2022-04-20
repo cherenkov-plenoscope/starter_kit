@@ -14,6 +14,7 @@ import os
 from os import path as op
 import shutil
 import time
+import glob
 
 import tempfile
 import pandas
@@ -23,6 +24,8 @@ import corsika_primary as cpw
 import plenopy as pl
 import sparse_numeric_table as spt
 import gamma_ray_reconstruction as gamrec
+import queue_map_reduce
+from queue_map_reduce.tools import _log as qmrlog
 
 
 """
@@ -137,6 +140,149 @@ altitude -  -2/-  -  -  -  /  -  -X-----/  <-shift y /            /        |
                         / y
 Drawn by Sebastian
 """
+
+
+def make_job_dict(
+    run_dir,
+    production_key,
+    run_id,
+    site_key,
+    particle_key,
+    config,
+    deflection_table,
+    num_air_showers,
+    corsika_primary_path,
+    merlict_plenoscope_propagator_path,
+    tmp_dir,
+    keep_tmp_dir,
+    date_dict_now
+):
+    job = {
+        "run_id": run_id,
+        "production_key": production_key,
+        "site_key": site_key,
+        "particle_key": particle_key,
+        "num_air_showers": num_air_showers,
+        "plenoscope_pointing": config["plenoscope_pointing"],
+        "particle": config["particles"][particle_key],
+        "site": config["sites"][site_key],
+        "site_particle_deflection": deflection_table[site_key][particle_key],
+        "grid": config["grid"],
+        "raw_sensor_response": config["raw_sensor_response"],
+        "sum_trigger": config["sum_trigger"],
+        "cherenkov_classification": config["cherenkov_classification"],
+        "reconstruction": config["reconstruction"],
+        "corsika_primary_path": str(corsika_primary_path),
+        "merlict_plenoscope_propagator_path": str(merlict_plenoscope_propagator_path),
+        "plenoscope_scenery_path": os.path.join(
+            run_dir, "light_field_geometry", "input", "scenery"
+        ),
+        "light_field_geometry_path": os.path.join(
+            run_dir, "light_field_geometry"
+        ),
+        "trigger_geometry_path": os.path.join(
+            run_dir, "trigger_geometry"
+        ),
+        "merlict_plenoscope_propagator_config_path": os.path.join(
+            run_dir, "input", "merlict_propagation_config.json"
+        ),
+        "log_dir": os.path.join(
+            run_dir, production_key, site_key, particle_key, "log.map"
+        ),
+        "past_trigger_dir": os.path.join(
+            run_dir, production_key, site_key, particle_key, "past_trigger.map"
+        ),
+        "past_trigger_reconstructed_cherenkov_dir": os.path.join(
+            run_dir, production_key, site_key, particle_key,
+            "past_trigger_reconstructed_cherenkov_dir.map",
+        ),
+        "feature_dir": os.path.join(
+            run_dir, production_key, site_key, particle_key, "features.map"
+        ),
+        "keep_tmp": keep_tmp_dir,
+        "tmp_dir": tmp_dir,
+        "date": date_dict_now,
+        "artificial_core_limitation": config["artificial_core_limitation"][particle_key],
+    }
+    return job
+
+
+def reduce(
+    run_dir,
+    production_key,
+    site_key,
+    particle_key,
+    LAZY,
+):
+    production_dir = os.path.join(run_dir, production_key)
+    site_dir = os.path.join(production_dir, site_key)
+    site_particle_dir = os.path.join(site_dir, particle_key)
+    log_dir = os.path.join(site_particle_dir, "log.map")
+    features_dir = os.path.join(site_particle_dir, "features.map")
+
+    # run-time
+    # ========
+    log_path = os.path.join(site_particle_dir, "runtime.csv")
+    if not op.exists(log_path) or not LAZY:
+        _lop_paths = glob.glob(os.path.join(log_dir, "*_runtime.jsonl"))
+        logging.reduce(
+            list_of_log_paths=_lop_paths, out_path=log_path
+        )
+    qmrlog("Reduce {:s} {:s} run-time.".format(site_key, particle_key))
+
+    # event table
+    # ===========
+    event_table_path = os.path.join(site_particle_dir, "event_table.tar")
+    if not op.exists(event_table_path) or not LAZY:
+        _features_paths = glob.glob(
+            os.path.join(features_dir, "*_event_table.tar")
+        )
+        event_table = spt.concatenate_files(
+            list_of_table_paths=_features_paths,
+            structure=table.STRUCTURE,
+        )
+        spt.write(
+            path=event_table_path,
+            table=event_table,
+            structure=table.STRUCTURE,
+        )
+    qmrlog(
+        "Reduce {:s} {:s} event_table.".format(site_key, particle_key)
+    )
+
+    # grid images
+    # ===========
+    grid_path = os.path.join(site_particle_dir, "grid.tar")
+    if not op.exists(grid_path) or not LAZY:
+        _grid_paths = glob.glob(os.path.join(features_dir, "*_grid.tar"))
+        grid.reduce(
+            list_of_grid_paths=_grid_paths, out_path=grid_path
+        )
+    qmrlog("Reduce {:s} {:s} grid.".format(site_key, particle_key))
+
+    # cherenkov-photon-stream
+    # =======================
+    loph_abspath = os.path.join(site_particle_dir, "cherenkov.phs.loph.tar")
+    tmp_loph_abspath = loph_abspath + ".tmp"
+    qmrlog(
+        "Reduce {:s} {:s} cherenkov phs.".format(
+            site_key, particle_key
+        )
+    )
+    if not op.exists(loph_abspath) or not LAZY:
+        qmrlog("compile ", loph_abspath)
+        _cer_run_paths = glob.glob(
+            os.path.join(
+                site_particle_dir,
+                "past_trigger_reconstructed_cherenkov_dir.map",
+                "*_reconstructed_cherenkov.tar",
+            )
+        )
+        _cer_run_paths.sort()
+        pl.photon_stream.loph.concatenate_tars(
+            in_paths=_cer_run_paths, out_path=tmp_loph_abspath
+        )
+        nfs.move(tmp_loph_abspath, loph_abspath)
 
 
 def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):

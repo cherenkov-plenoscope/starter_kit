@@ -5,7 +5,7 @@ import json_numpy
 import magnetic_deflection
 from .. import utils
 from .. import reconstruction
-
+from .. import map_and_reduce
 
 def absjoin(*args):
     return op.abspath(op.join(*args))
@@ -115,50 +115,71 @@ ARTIFICIAL_CORE_LIMITATION["helium"] = ARTIFICIAL_CORE_LIMITATION[
 def make_example_job(
     run_dir,
     num_air_showers=25,
-    example_dirname="_testing",
+    production_key="_testing",
     particle_key="proton",
     site_key="namibia",
     artificial_core_limitation=None,
+    run_id=1,
 ):
     deflection_table = magnetic_deflection.read_deflection(
         work_dir=op.join(run_dir, "magnetic_deflection"), style="dict",
     )
-    test_dir = op.join(run_dir, example_dirname)
     with open(op.join(run_dir, "input", "config.json"), "rt") as fin:
         config = json_numpy.loads(fin.read())
 
-    job = {
-        "run_id": 1,
-        "num_air_showers": num_air_showers,
-        "particle": config["particles"][particle_key],
-        "plenoscope_pointing": config["plenoscope_pointing"],
-        "site": config["sites"][site_key],
-        "grid": config["grid"],
-        "sum_trigger": config["sum_trigger"],
-        "corsika_primary_path": CORSIKA_PRIMARY_PATH,
-        "plenoscope_scenery_path": op.join(
-            run_dir, "light_field_geometry", "input", "scenery"
-        ),
-        "merlict_plenoscope_propagator_path": MERLICT_PLENOSCOPE_PROPAGATOR_PATH,
-        "light_field_geometry_path": op.join(run_dir, "light_field_geometry"),
-        "trigger_geometry_path": op.join(run_dir, "trigger_geometry"),
-        "merlict_plenoscope_propagator_config_path": op.join(
-            run_dir, "input", "merlict_propagation_config.json"
-        ),
-        "site_particle_deflection": deflection_table[site_key][particle_key],
-        "cherenkov_classification": config["cherenkov_classification"],
-        "log_dir": op.join(test_dir, "log"),
-        "past_trigger_dir": op.join(test_dir, "past_trigger"),
-        "past_trigger_reconstructed_cherenkov_dir": op.join(
-            test_dir, "past_trigger_reconstructed_cherenkov"
-        ),
-        "feature_dir": op.join(test_dir, "features"),
-        "keep_tmp": True,
-        "tmp_dir": op.join(test_dir, "tmp"),
-        "date": utils.date_dict_now(),
-        "artificial_core_limitation": artificial_core_limitation,
-        "reconstruction": config["reconstruction"],
-        "raw_sensor_response": config["raw_sensor_response"],
+    job = map_and_reduce.make_job_dict(
+        run_dir=run_dir,
+        production_key=production_key,
+        run_id=run_id,
+        site_key=site_key,
+        particle_key=particle_key,
+        config=config,
+        deflection_table=deflection_table,
+        num_air_showers=num_air_showers,
+        corsika_primary_path=CORSIKA_PRIMARY_PATH,
+        merlict_plenoscope_propagator_path=MERLICT_PLENOSCOPE_PROPAGATOR_PATH,
+        tmp_dir=op.join(run_dir, production_key, site_key, particle_key, "tmp"),
+        keep_tmp_dir=True,
+        date_dict_now=utils.date_dict_now(),
+    )
+
+    return job
+
+
+def make_helium_demo_for_tomography(
+    run_dir,
+    production_key="demo_helium_for_tomography",
+    run_id=1,
+    num_air_showers=25,
+    site_key="namibia",
+    max_scatter_radius_m=250,
+):
+    job = make_example_job(
+        run_dir=run_dir,
+        num_air_showers=num_air_showers,
+        production_key=production_key,
+        particle_key="helium",
+        site_key=site_key,
+        artificial_core_limitation=None,
+    )
+
+    energy_start = utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
+    energy_stop = utils.power10bin(decade=3, bin=2, num_bins_per_decade=5)
+
+    job["particle"] = {
+        "particle_id": 402,
+        "energy_bin_edges_GeV": [energy_start, energy_stop,],
+        "max_scatter_angle_deg": 3.5,
+        "energy_power_law_slope": -1.5,
+        "electric_charge_qe": +2.0,
+        "magnetic_deflection_max_off_axis_deg": 1.5,
     }
+
+    job["artificial_core_limitation"] = {
+        "energy_GeV": [energy_start, energy_stop],
+        "max_scatter_radius_m": [max_scatter_radius_m, max_scatter_radius_m,],
+    }
+
+    job["raw_sensor_response"] = {"skip_num_events": 1}
 
     return job
