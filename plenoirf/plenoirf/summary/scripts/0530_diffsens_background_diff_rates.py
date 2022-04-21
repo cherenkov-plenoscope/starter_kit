@@ -53,7 +53,9 @@ def assert_energy_migration_is_valid(M):
     for etrue in range(num_energy_bins):
         check = np.sum(M["reco_given_true"][etrue, :])
         if check > 0:
-            assert 0.99 < check < 1.01, "sum(P(reco|true)) = {:f}".format(check)
+            assert 0.99 < check < 1.01, "sum(P(reco|true)) = {:f}".format(
+                check
+            )
 
 
 diff_flux = {}

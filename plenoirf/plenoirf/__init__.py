@@ -207,7 +207,9 @@ EXAMPLE_CONFIG = {
 }
 
 
-def init(run_dir, config=EXAMPLE_CONFIG, config_file_paths=EXAMPLE_CONFIG_FILE_PATHS):
+def init(
+    run_dir, config=EXAMPLE_CONFIG, config_file_paths=EXAMPLE_CONFIG_FILE_PATHS
+):
     run_dir = op.abspath(run_dir)
     os.makedirs(run_dir)
     os.makedirs(opj(run_dir, "input"))
@@ -415,9 +417,7 @@ def _populate_table_of_thrown_air_showers(
                     config=config,
                     deflection_table=deflection,
                     num_air_showers=config["num_airshowers_per_run"],
-                    corsika_primary_path=executables[
-                        "corsika_primary_path"
-                    ],
+                    corsika_primary_path=executables["corsika_primary_path"],
                     merlict_plenoscope_propagator_path=executables[
                         "merlict_plenoscope_propagator_path"
                     ],
@@ -436,8 +436,7 @@ def _populate_table_of_thrown_air_showers(
     )
 
     _ = map_and_reduce_pool.map(
-        map_and_reduce.run_jobs_in_bundles,
-        irf_jobs_in_bundles
+        map_and_reduce.run_jobs_in_bundles, irf_jobs_in_bundles
     )
 
     qmrlog("Reduce instrument-response.")
@@ -451,6 +450,7 @@ def _populate_table_of_thrown_air_showers(
                 particle_key=particle_key,
                 LAZY=LAZY_REDUCTION,
             )
+
 
 def run(
     path,

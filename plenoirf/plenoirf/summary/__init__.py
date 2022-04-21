@@ -318,9 +318,7 @@ def _guess_summary_config(run_dir):
 
     {
         "particle_colors": figure.PARTICLE_COLORS,
-        "matplotlib": {
-            "rcParams": figure.MATPLOTLIB_RCPARAMS,
-        },
+        "matplotlib": {"rcParams": figure.MATPLOTLIB_RCPARAMS,},
     }
 
     return summary_config

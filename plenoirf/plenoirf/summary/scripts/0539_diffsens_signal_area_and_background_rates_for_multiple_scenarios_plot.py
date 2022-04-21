@@ -47,7 +47,9 @@ for sk in SITES:
 for sk in SITES:
     for ok in ONREGION_TYPES:
         for dk in irf.analysis.differential_sensitivity.SCENARIOS:
-            elabel = irf.analysis.differential_sensitivity.SCENARIOS[dk]["energy_axes_label"]
+            elabel = irf.analysis.differential_sensitivity.SCENARIOS[dk][
+                "energy_axes_label"
+            ]
 
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
@@ -76,7 +78,10 @@ for sk in SITES:
             ax.loglog()
             fig.savefig(
                 os.path.join(
-                    pa["out_dir"], sk, ok, dk + "_background_rate_vs_reco_energy.jpg",
+                    pa["out_dir"],
+                    sk,
+                    ok,
+                    dk + "_background_rate_vs_reco_energy.jpg",
                 )
             )
             seb.close(fig)
@@ -165,11 +170,6 @@ for sk in SITES:
             ax_c.loglog()
             ax_c.set_xlabel("energy / GeV")
             fig.savefig(
-                os.path.join(
-                    pa["out_dir"],
-                    sk,
-                    ok,
-                    dk + "_B_matrix.jpg",
-                )
+                os.path.join(pa["out_dir"], sk, ok, dk + "_B_matrix.jpg",)
             )
             seb.close(fig)

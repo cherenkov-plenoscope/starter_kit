@@ -78,7 +78,9 @@ for sk in SITES:
                 for ck in COSMIC_RAYS:
                     tmp.append(S[sk][ok][dk][ck]["rate"]["mean"][ereco])
                     tmp_au.append(
-                        S[sk][ok][dk][ck]["rate"]["absolute_uncertainty"][ereco]
+                        S[sk][ok][dk][ck]["rate"]["absolute_uncertainty"][
+                            ereco
+                        ]
                     )
                 (
                     Rreco_total[ereco],

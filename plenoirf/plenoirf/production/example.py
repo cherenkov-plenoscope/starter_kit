@@ -7,6 +7,7 @@ from .. import utils
 from .. import reconstruction
 from .. import map_and_reduce
 
+
 def absjoin(*args):
     return op.abspath(op.join(*args))
 
@@ -138,7 +139,9 @@ def make_example_job(
         num_air_showers=num_air_showers,
         corsika_primary_path=CORSIKA_PRIMARY_PATH,
         merlict_plenoscope_propagator_path=MERLICT_PLENOSCOPE_PROPAGATOR_PATH,
-        tmp_dir=op.join(run_dir, production_key, site_key, particle_key, "tmp"),
+        tmp_dir=op.join(
+            run_dir, production_key, site_key, particle_key, "tmp"
+        ),
         keep_tmp_dir=True,
         date_dict_now=utils.date_dict_now(),
     )

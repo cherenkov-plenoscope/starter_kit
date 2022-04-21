@@ -227,8 +227,12 @@ def test_shower_x_moves_not_counteracted():
         )
 
         cherenkov_wrt_plenoscope = result["random_choice"]["cherenkov_bunches"]
-        x_wrt_plenoscope_m = cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.X] * cpw.CM2M
-        y_wrt_plenoscope_m = cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.Y] * cpw.CM2M
+        x_wrt_plenoscope_m = (
+            cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.X] * cpw.CM2M
+        )
+        y_wrt_plenoscope_m = (
+            cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.Y] * cpw.CM2M
+        )
 
         median_x_wrt_plenoscope_m = np.median(x_wrt_plenoscope_m)
         median_y_wrt_plenoscope_m = np.median(y_wrt_plenoscope_m)
@@ -300,8 +304,12 @@ def test_shower_x_moves_but_counteracted():
         )
 
         cherenkov_wrt_plenoscope = result["random_choice"]["cherenkov_bunches"]
-        x_wrt_plenoscope_m = cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.X] * cpw.CM2M
-        y_wrt_plenoscope_m = cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.Y] * cpw.CM2M
+        x_wrt_plenoscope_m = (
+            cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.X] * cpw.CM2M
+        )
+        y_wrt_plenoscope_m = (
+            cherenkov_wrt_plenoscope[:, cpw.I.BUNCH.Y] * cpw.CM2M
+        )
 
         median_x_wrt_plenoscope_m = np.median(x_wrt_plenoscope_m)
         median_y_wrt_plenoscope_m = np.median(y_wrt_plenoscope_m)

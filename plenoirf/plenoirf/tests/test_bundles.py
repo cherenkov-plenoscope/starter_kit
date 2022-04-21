@@ -10,13 +10,17 @@ def _flatten_bundles(bundles):
 
 
 def test_zero_jobs():
-    bundles = plenoirf.bundle.make_jobs_in_bundles(jobs=[], desired_num_bunbles=1)
+    bundles = plenoirf.bundle.make_jobs_in_bundles(
+        jobs=[], desired_num_bunbles=1
+    )
     assert len(bundles) == 0
 
 
 def test_many_jobs_one_bundle():
     jobs = np.arange(1000).tolist()
-    bundles = plenoirf.bundle.make_jobs_in_bundles(jobs=jobs, desired_num_bunbles=1)
+    bundles = plenoirf.bundle.make_jobs_in_bundles(
+        jobs=jobs, desired_num_bunbles=1
+    )
     assert len(bundles) == 1
 
     jobs_back = _flatten_bundles(bundles)
@@ -27,7 +31,9 @@ def test_many_jobs_one_bundle():
 
 def test_many_jobs_many_bundles():
     jobs = np.arange(1000).tolist()
-    bundles = plenoirf.bundle.make_jobs_in_bundles(jobs=jobs, desired_num_bunbles=10)
+    bundles = plenoirf.bundle.make_jobs_in_bundles(
+        jobs=jobs, desired_num_bunbles=10
+    )
     assert len(bundles) == 10
 
     jobs_back = _flatten_bundles(bundles)
@@ -38,7 +44,9 @@ def test_many_jobs_many_bundles():
 
 def test_few_jobs_many_bundles():
     jobs = np.arange(10).tolist()
-    bundles = plenoirf.bundle.make_jobs_in_bundles(jobs=jobs, desired_num_bunbles=100)
+    bundles = plenoirf.bundle.make_jobs_in_bundles(
+        jobs=jobs, desired_num_bunbles=100
+    )
     assert len(bundles) == 10
 
     jobs_back = _flatten_bundles(bundles)
@@ -49,11 +57,15 @@ def test_few_jobs_many_bundles():
 
 def test_run_jobs_in_bundles():
     jobs = np.arange(24).tolist()
-    bundles = plenoirf.bundle.make_jobs_in_bundles(jobs=jobs, desired_num_bunbles=3)
+    bundles = plenoirf.bundle.make_jobs_in_bundles(
+        jobs=jobs, desired_num_bunbles=3
+    )
 
     bundles_results = []
     for bundle in bundles:
-        bundle_results = plenoirf.bundle._run_jobs_in_bundles_example(bundle=bundle)
+        bundle_results = plenoirf.bundle._run_jobs_in_bundles_example(
+            bundle=bundle
+        )
         bundles_results.append(bundle_results)
 
     job_results = _flatten_bundles(bundles_results)

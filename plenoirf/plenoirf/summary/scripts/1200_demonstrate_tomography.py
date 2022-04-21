@@ -202,8 +202,7 @@ for sk in ["namibia"]:
                 level_keys=["core"],
             )["core"]
             event_core_distance = np.hypot(
-                event_core["core_x_m"][0],
-                event_core["core_y_m"][0],
+                event_core["core_x_m"][0], event_core["core_y_m"][0],
             )
 
             if event_core_distance > MAX_CORE_DISTANCE:
