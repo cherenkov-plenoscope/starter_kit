@@ -27,13 +27,13 @@ demo_helium_dir = os.path.join(pa["run_dir"], production_key)
 if not os.path.exists(demo_helium_dir):
     job = irf.production.example.make_helium_demo_for_tomography(
         run_dir=pa["run_dir"],
-        num_air_showers=5,
+        num_air_showers=50,
         production_key=production_key,
         site_key="namibia",
-        max_scatter_radius_m=250,
+        max_scatter_radius_m=150,
     )
-    plenoirf.map_and_reduce.run_job(job)
-    plenoirf.map_and_reduce.reduce(
+    irf.map_and_reduce.run_job(job)
+    irf.map_and_reduce.reduce(
         run_dir=pa["run_dir"],
         production_key=production_key,
         site_key="namibia",
@@ -42,7 +42,7 @@ if not os.path.exists(demo_helium_dir):
     )
 
 
-NUM_EVENTS_PER_PARTICLE = 10
+NUM_EVENTS_PER_PARTICLE = 50
 MIN_NUM_CHERENKOV_PHOTONS = 200
 MAX_CORE_DISTANCE = 400
 TOMO_NUM_ITERATIONS = 200
