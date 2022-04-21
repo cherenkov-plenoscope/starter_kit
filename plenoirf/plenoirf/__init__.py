@@ -231,36 +231,36 @@ def init(run_dir, config=EXAMPLE_CONFIG, config_file_paths=EXAMPLE_CONFIG_FILE_P
 
 
 def _estimate_magnetic_deflection_of_air_showers(
-    cfg, run_dir, map_and_reduce_pool
+    config, run_dir, map_and_reduce_pool
 ):
     qmrlog("Estimating magnetic deflection.")
     mdfl_dir = opj(run_dir, "magnetic_deflection")
 
     if op.exists(mdfl_dir):
-        mdflcfg = mdfl.read_config(work_dir=mdfl_dir)
+        mdflconfig = mdfl.read_config(work_dir=mdfl_dir)
 
-        for particle in cfg["particles"]:
-            assert particle in mdflcfg["particles"]
-        for site in cfg["sites"]:
-            assert site in mdflcfg["sites"]
+        for particle in config["particles"]:
+            assert particle in mdflconfig["particles"]
+        for site in config["sites"]:
+            assert site in mdflconfig["sites"]
         np.testing.assert_almost_equal(
-            cfg["plenoscope_pointing"]["azimuth_deg"],
-            mdflcfg["pointing"]["azimuth_deg"],
+            config["plenoscope_pointing"]["azimuth_deg"],
+            mdflconfig["pointing"]["azimuth_deg"],
             decimal=2,
         )
         np.testing.assert_almost_equal(
-            cfg["plenoscope_pointing"]["zenith_deg"],
-            mdflcfg["pointing"]["zenith_deg"],
+            config["plenoscope_pointing"]["zenith_deg"],
+            mdflconfig["pointing"]["zenith_deg"],
             decimal=2,
         )
     else:
         mdfl.init(
             work_dir=mdfl_dir,
-            particles=cfg["particles"],
-            sites=cfg["sites"],
-            pointing=cfg["plenoscope_pointing"],
-            max_energy=cfg["magnetic_deflection"]["max_energy_GeV"],
-            num_energy_supports=cfg["magnetic_deflection"][
+            particles=config["particles"],
+            sites=config["sites"],
+            pointing=config["plenoscope_pointing"],
+            max_energy=config["magnetic_deflection"]["max_energy_GeV"],
+            num_energy_supports=config["magnetic_deflection"][
                 "num_energy_supports"
             ],
         )
@@ -271,7 +271,7 @@ def _estimate_magnetic_deflection_of_air_showers(
 
 
 def _estimate_light_field_geometry_of_plenoscope(
-    cfg, run_dir, map_and_reduce_pool, executables
+    config, run_dir, map_and_reduce_pool, executables
 ):
     qmrlog("Estimating light-field-geometry.")
 
@@ -296,10 +296,10 @@ def _estimate_light_field_geometry_of_plenoscope(
                 ],
                 scenery_path=opj(run_dir, "input", "scenery"),
                 out_dir=tmp_dir,
-                num_photons_per_block=cfg["light_field_geometry"][
+                num_photons_per_block=config["light_field_geometry"][
                     "num_photons_per_block"
                 ],
-                num_blocks=cfg["light_field_geometry"]["num_blocks"],
+                num_blocks=config["light_field_geometry"]["num_blocks"],
                 random_seed=0,
             )
             _ = map_and_reduce_pool.map(
@@ -325,14 +325,14 @@ def _estimate_light_field_geometry_of_plenoscope(
 
 
 def _estimate_trigger_geometry_of_plenoscope(
-    cfg, run_dir,
+    config, run_dir,
 ):
     qmrlog("Estimating trigger-geometry.")
     if not op.exists(opj(run_dir, "trigger_geometry")):
         light_field_geometry = pl.LightFieldGeometry(
             path=opj(run_dir, "light_field_geometry")
         )
-        img = cfg["sum_trigger"]["image"]
+        img = config["sum_trigger"]["image"]
         trigger_image_geometry = pl.trigger.geometry.init_trigger_image_geometry(
             image_outer_radius_rad=np.deg2rad(img["image_outer_radius_deg"]),
             pixel_spacing_rad=np.deg2rad(img["pixel_spacing_deg"]),
@@ -344,7 +344,7 @@ def _estimate_trigger_geometry_of_plenoscope(
         trigger_geometry = pl.trigger.geometry.init_trigger_geometry(
             light_field_geometry=light_field_geometry,
             trigger_image_geometry=trigger_image_geometry,
-            object_distances=cfg["sum_trigger"]["object_distances_m"],
+            object_distances=config["sum_trigger"]["object_distances_m"],
         )
         pl.trigger.geometry.write(
             trigger_geometry=trigger_geometry,
@@ -361,7 +361,7 @@ def _estimate_trigger_geometry_of_plenoscope(
 
 
 def _populate_table_of_thrown_air_showers(
-    cfg,
+    config,
     run_dir,
     map_and_reduce_pool,
     executables,
@@ -390,20 +390,20 @@ def _populate_table_of_thrown_air_showers(
     )
 
     irf_jobs = []
-    for site_key in cfg["sites"]:
+    for site_key in config["sites"]:
         site_absdir = opj(table_absdir, site_key)
         if op.exists(site_absdir):
             continue
         os.makedirs(site_absdir, exist_ok=True)
 
-        for particle_key in cfg["particles"]:
+        for particle_key in config["particles"]:
             site_particle_absdir = opj(site_absdir, particle_key)
             if op.exists(site_particle_absdir):
                 continue
             os.makedirs(site_particle_absdir, exist_ok=True)
 
-            run_id = cfg["runs"][particle_key]["first_run_id"]
-            for job_idx in np.arange(cfg["runs"][particle_key]["num"]):
+            run_id = config["runs"][particle_key]["first_run_id"]
+            for job_idx in np.arange(config["runs"][particle_key]["num"]):
                 assert run_id > 0
 
                 irf_job = map_and_reduce.make_job_dict(
@@ -412,9 +412,9 @@ def _populate_table_of_thrown_air_showers(
                     run_id=run_id,
                     site_key=site_key,
                     particle_key=particle_key,
-                    config=cfg,
+                    config=config,
                     deflection_table=deflection,
-                    num_air_showers=cfg["num_airshowers_per_run"],
+                    num_air_showers=config["num_airshowers_per_run"],
                     corsika_primary_path=executables[
                         "corsika_primary_path"
                     ],
@@ -439,8 +439,8 @@ def _populate_table_of_thrown_air_showers(
 
     qmrlog("Reduce instrument-response.")
 
-    for site_key in cfg["sites"]:
-        for particle_key in cfg["particles"]:
+    for site_key in config["sites"]:
+        for particle_key in config["particles"]:
             map_and_reduce.reduce(
                 run_dir=run_dir,
                 production_key="event_table",
@@ -474,23 +474,23 @@ def run(
         qmrlog("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
 
     qmrlog("Read config")
-    cfg = json_numpy.read(opj(run_dir, "input", "config.json"))
+    config = json_numpy.read(opj(run_dir, "input", "config.json"))
 
     _estimate_magnetic_deflection_of_air_showers(
-        cfg=cfg, run_dir=run_dir, map_and_reduce_pool=map_and_reduce_pool
+        config=config, run_dir=run_dir, map_and_reduce_pool=map_and_reduce_pool
     )
 
     _estimate_light_field_geometry_of_plenoscope(
-        cfg=cfg,
+        config=config,
         run_dir=run_dir,
         map_and_reduce_pool=map_and_reduce_pool,
         executables=executables,
     )
 
-    _estimate_trigger_geometry_of_plenoscope(cfg=cfg, run_dir=run_dir)
+    _estimate_trigger_geometry_of_plenoscope(config=config, run_dir=run_dir)
 
     _populate_table_of_thrown_air_showers(
-        cfg=cfg,
+        config=config,
         run_dir=run_dir,
         map_and_reduce_pool=map_and_reduce_pool,
         executables=executables,
