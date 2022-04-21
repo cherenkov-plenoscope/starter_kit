@@ -1038,6 +1038,19 @@ def run_job(job):
 
 
 def run_jobs_in_bundles(bundle):
+    """
+    This is a wrapper to bundle jobs.
+
+    Parameters
+    ----------
+    bundle : list
+        A list of jobs.
+
+    Returns
+    -------
+    results : list
+        A list of returns from each job.
+    """
     results = []
     for j, job in enumerate(bundle):
         msg = "\n#bundle {:d} of {:d}\n".format((j + 1), len(bundle))
