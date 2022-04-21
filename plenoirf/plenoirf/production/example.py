@@ -153,6 +153,7 @@ def make_helium_demo_for_tomography(
     num_air_showers=25,
     site_key="namibia",
     max_scatter_radius_m=250,
+    max_scatter_angle_deg=1.5,
 ):
     job = make_example_job(
         run_dir=run_dir,
@@ -169,7 +170,7 @@ def make_helium_demo_for_tomography(
     job["particle"] = {
         "particle_id": 402,
         "energy_bin_edges_GeV": [energy_start, energy_stop,],
-        "max_scatter_angle_deg": 3.5,
+        "max_scatter_angle_deg": max_scatter_angle_deg,
         "energy_power_law_slope": -1.5,
         "electric_charge_qe": +2.0,
         "magnetic_deflection_max_off_axis_deg": 1.5,
