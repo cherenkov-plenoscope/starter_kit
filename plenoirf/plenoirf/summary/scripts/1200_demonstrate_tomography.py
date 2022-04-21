@@ -42,10 +42,10 @@ if not os.path.exists(demo_helium_dir):
     )
 
 
-NUM_EVENTS_PER_PARTICLE = 50
+NUM_EVENTS_PER_PARTICLE = 5
 MIN_NUM_CHERENKOV_PHOTONS = 200
 MAX_CORE_DISTANCE = 400
-TOMO_NUM_ITERATIONS = 200
+TOMO_NUM_ITERATIONS = 500
 NUM_THREADS = 6
 
 os.makedirs(pa["out_dir"], exist_ok=True)
@@ -108,6 +108,112 @@ def make_binning_from_ligh_field_geometry(light_field_geometry):
         number_obj_bins=NUM_CAMERAS_ON_DIAGONAL // 4,
     )
     return binning
+
+
+def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
+
+    # as cube
+    # -------
+    ivolrec = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
+        volume_intensity=reconstruction[
+            "reconstructed_volume_intensity"
+        ],
+        binning=binning,
+    )
+    ivolrec = ivolrec / np.sum(ivolrec)
+
+    ivoltru = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
+        volume_intensity=simulation_truth["true_volume_intensity"],
+        binning=binning,
+    )
+    ivoltru = ivoltru / np.sum(ivoltru)
+
+    # validity
+    # --------
+    if np.any(np.isnan(ivoltru)):
+        print(
+            uid,
+            "Failed to construct volume of true Cherenkov-emission.",
+        )
+        return
+
+    # normalizing
+    # -----------
+    imax = np.max([np.max(ivolrec), np.max(ivoltru)])
+    imin = np.min(
+        [np.min(ivolrec[ivolrec > 0]), np.min(ivoltru[ivoltru > 0])]
+    )
+
+    UU = 0.2
+    the = np.deg2rad(50)
+
+    for iz in range(binning["number_sen_z_bins"]):
+        projection = np.array(
+            [
+                [np.cos(the), -np.sin(the) * (1.0 / UU), 0],
+                [np.sin(the), np.cos(the) * UU, 5.3 - (5.3 * iz)],
+                [0, 0, 1],
+            ]
+        )
+        intensity_rgb = np.zeros(
+            shape=(
+                binning["number_cx_bins"],
+                binning["number_cy_bins"],
+                4,
+            ),
+            dtype=np.float,
+        )
+        intensity_rgb[:, :, 0] = ivolrec[:, :, iz] / imax
+        intensity_rgb[:, :, 1] = ivoltru[:, :, iz] / imax
+
+        seb.pseudo3d.ax_add_mesh_intensity_to_alpha(
+            ax=ax,
+            projection=projection,
+            x_bin_edges=np.rad2deg(binning["cx_bin_edges"]),
+            y_bin_edges=np.rad2deg(binning["cy_bin_edges"]),
+            intensity_rgb=intensity_rgb,
+            threshold=0.01,
+            gamma=0.5,
+        )
+        seb.pseudo3d.ax_add_grid(
+            ax=ax,
+            projection=projection,
+            x_bin_edges=np.rad2deg(binning["cx_bin_edges"]),
+            y_bin_edges=np.rad2deg(binning["cy_bin_edges"]),
+            alpha=0.22,
+            linewidth=0.1,
+            color="k",
+            linestyle="-",
+        )
+        seb.pseudo3d.ax_add_circle(
+            ax=ax,
+            projection=projection,
+            x=0.0,
+            y=0.0,
+            r=3.25,
+            alpha=0.66,
+            linewidth=0.1,
+            color="k",
+            linestyle="-",
+        )
+
+
+def write_figure_tomography(path, binning, reconstruction, simulation_truth):
+    RRR = 1280
+    axes_style = {"spines": [], "axes": [], "grid": False}
+    fig = seb.figure({"rows": 4 * RRR, "cols": RRR, "fontsize": 1})
+    ax = seb.add_axes(
+        fig=fig, span=[0.0, 0.0, 1.0, 1.0], style=axes_style
+    )
+    ax_add_tomography(
+        ax=ax,
+        binning=binning,
+        reconstruction=reconstruction,
+        simulation_truth=simulation_truth,
+    )
+    ax.set_aspect("equal")
+    fig.savefig(path, transparent=True)
+    seb.close(fig)
 
 
 binning = make_binning_from_ligh_field_geometry(
@@ -228,114 +334,37 @@ for sk in ["namibia"]:
                 result_dir, "reconstruction.json"
             )
 
+
             if not os.path.exists(reconstruction_path):
                 reconstruction = pl.Tomography.Image_Domain.Reconstruction.init(
                     light_field_geometry=light_field_geometry,
                     photon_lixel_ids=loph_record["photons"]["channels"],
                     binning=binning,
                 )
-
-                for i in range(TOMO_NUM_ITERATIONS):
-                    reconstruction = pl.Tomography.Image_Domain.Reconstruction.iterate(
-                        reconstruction=reconstruction,
-                        point_spread_function=tomo_psf,
-                    )
-
                 with open(reconstruction_path, "wt") as f:
                     f.write(json_numpy.dumps(reconstruction))
+
 
             with open(reconstruction_path, "rt") as f:
                 reconstruction = json_numpy.loads(f.read())
 
-            ivolrec = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
-                volume_intensity=reconstruction[
-                    "reconstructed_volume_intensity"
-                ],
-                binning=binning,
-            )
-            ivolrec = ivolrec / np.sum(ivolrec)
-
-            ivoltru = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
-                volume_intensity=simulation_truth["true_volume_intensity"],
-                binning=binning,
-            )
-            ivoltru = ivoltru / np.sum(ivoltru)
-            if np.any(np.isnan(ivoltru)):
-                print(
-                    uid,
-                    "Failed to construct volume of true Cherenkov-emission.",
-                )
-                continue
-
-            imax = np.max([np.max(ivolrec), np.max(ivoltru)])
-            imin = np.min(
-                [np.min(ivolrec[ivolrec > 0]), np.min(ivoltru[ivoltru > 0])]
-            )
-
-            stack_path = os.path.join(result_dir, "stack.jpg")
-
-            if not os.path.exists(stack_path):
-
-                RRR = 1280
-
-                axes_style = {"spines": [], "axes": [], "grid": False}
-                fig = seb.figure({"rows": 4 * RRR, "cols": RRR, "fontsize": 1})
-                ax = seb.add_axes(
-                    fig=fig, span=[0.0, 0.0, 1.0, 1.0], style=axes_style
-                )
-
-                UU = 0.2
-                the = np.deg2rad(50)
-
-                for iz in range(binning["number_sen_z_bins"]):
-                    projection = np.array(
-                        [
-                            [np.cos(the), -np.sin(the) * (1.0 / UU), 0],
-                            [np.sin(the), np.cos(the) * UU, 5.3 * iz],
-                            [0, 0, 1],
-                        ]
+            num_missing_iterations = TOMO_NUM_ITERATIONS - reconstruction["iteration"]
+            if num_missing_iterations > 0:
+                for i in range(num_missing_iterations):
+                    reconstruction = pl.Tomography.Image_Domain.Reconstruction.iterate(
+                        reconstruction=reconstruction,
+                        point_spread_function=tomo_psf,
                     )
-                    intensity_rgb = np.zeros(
-                        shape=(
-                            binning["number_cx_bins"],
-                            binning["number_cy_bins"],
-                            4,
-                        ),
-                        dtype=np.float,
-                    )
-                    intensity_rgb[:, :, 0] = ivolrec[:, :, iz] / imax
-                    intensity_rgb[:, :, 1] = ivoltru[:, :, iz] / imax
-
-                    seb.pseudo3d.ax_add_mesh_intensity_to_alpha(
-                        ax=ax,
-                        projection=projection,
-                        x_bin_edges=np.rad2deg(binning["cx_bin_edges"]),
-                        y_bin_edges=np.rad2deg(binning["cy_bin_edges"]),
-                        intensity_rgb=intensity_rgb,
-                        threshold=0.01,
-                        gamma=0.5,
-                    )
-                    seb.pseudo3d.ax_add_grid(
-                        ax=ax,
-                        projection=projection,
-                        x_bin_edges=np.rad2deg(binning["cx_bin_edges"]),
-                        y_bin_edges=np.rad2deg(binning["cy_bin_edges"]),
-                        alpha=0.22,
-                        linewidth=0.1,
-                        color="k",
-                        linestyle="-",
-                    )
-                    seb.pseudo3d.ax_add_circle(
-                        ax=ax,
-                        projection=projection,
-                        x=0.0,
-                        y=0.0,
-                        r=3.25,
-                        alpha=0.66,
-                        linewidth=0.1,
-                        color="k",
-                        linestyle="-",
-                    )
-                ax.set_aspect("equal")
-                fig.savefig(stack_path, transparent=True)
-                seb.close(fig)
+                    if reconstruction["iteration"] % 25 == 0:
+                        stack_path = os.path.join(
+                            result_dir,
+                            "stack_{:06d}.jpg".format(reconstruction["iteration"])
+                        )
+                        write_figure_tomography(
+                            path=stack_path,
+                            binning=binning,
+                            reconstruction=reconstruction,
+                            simulation_truth=simulation_truth,
+                        )
+                with open(reconstruction_path, "wt") as f:
+                    f.write(json_numpy.dumps(reconstruction))
