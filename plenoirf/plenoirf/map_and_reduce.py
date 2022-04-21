@@ -1047,7 +1047,7 @@ def run_job(job):
     nfs.move(log_path + ".tmp", log_path)
 
 
-def run_bundle(bundle):
+def run_jobs_in_bundles(bundle):
     results = []
     for j, job in enumerate(bundle):
         msg = "\n#bundle {:d} of {:d}\n".format((j + 1), len(bundle))

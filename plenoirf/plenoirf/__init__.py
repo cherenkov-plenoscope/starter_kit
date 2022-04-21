@@ -431,11 +431,14 @@ def _populate_table_of_thrown_air_showers(
 
     random.shuffle(irf_jobs)
 
-    irf_bundles = bundle.bundle_jobs(
+    irf_jobs_in_bundles = bundle.make_jobs_in_bundles(
         jobs=irf_jobs, desired_num_bunbles=num_parallel_jobs
     )
 
-    _ = map_and_reduce_pool.map(map_and_reduce.run_bundle, irf_bundles)
+    _ = map_and_reduce_pool.map(
+        map_and_reduce.run_jobs_in_bundles,
+        irf_jobs_in_bundles
+    )
 
     qmrlog("Reduce instrument-response.")
 

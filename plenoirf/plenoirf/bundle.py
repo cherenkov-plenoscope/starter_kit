@@ -1,10 +1,8 @@
 import numpy as np
 import copy
-import sys
-from . import map_and_reduce
 
 
-def bundle_jobs(jobs, desired_num_bunbles):
+def make_jobs_in_bundles(jobs, desired_num_bunbles):
     assert desired_num_bunbles > 0
     bundles = []
     num_jobs = len(jobs)
@@ -26,7 +24,7 @@ def _run_job_example(job):
     return job * job
 
 
-def _run_bundle_example(bundle):
+def _run_jobs_in_bundles_example(bundle):
     results = []
     for j, job in enumerate(bundle):
         result = _run_job_example(job=job)
