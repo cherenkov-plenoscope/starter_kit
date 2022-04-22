@@ -14,7 +14,6 @@ from . import reconstruction
 from . import utils
 from . import production
 from . import other_instruments
-from . import single_thread_map_and_reduce
 from . import unique
 
 import os
@@ -23,6 +22,7 @@ from os import path as op
 from os.path import join as opj
 import shutil
 import subprocess
+import multiprocessing
 import random
 import glob
 import tempfile
@@ -451,7 +451,7 @@ def _populate_table_of_thrown_air_showers(
 
 def run(
     run_dir,
-    map_and_reduce_pool=single_thread_map_and_reduce,
+    map_and_reduce_pool=multiprocessing.Pool(1),
     num_parallel_jobs=2000,
     executables=EXAMPLE_EXECUTABLE_PATHS,
     TMP_DIR_ON_WORKERNODE=True,
