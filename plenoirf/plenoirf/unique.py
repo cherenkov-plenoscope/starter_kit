@@ -1,3 +1,14 @@
+"""
+The (U)nique (ID)entity of a cosmic particle entering earth's atmosphere.
+Airshowers have UIDs. Airshowers may lead to a detection by the
+instrument which in turn will create a record.
+So record-IDs are an instrument-specific measure,
+while UIDs are a simulation specific measure to keep track of all
+thrown particles when estimating the instrument's response-function.
+
+The UID is related to CORSIKAs scheme of production RUNs and EVENTs within
+the runs.
+"""
 RUN_ID_NUM_DIGITS = 6
 EVENT_ID_NUM_DIGITS = 6
 UID_NUM_DIGITS = RUN_ID_NUM_DIGITS + EVENT_ID_NUM_DIGITS
