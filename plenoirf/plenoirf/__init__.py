@@ -453,7 +453,7 @@ def _populate_table_of_thrown_air_showers(
 
 
 def run(
-    path,
+    run_dir,
     map_and_reduce_pool=single_thread_map_and_reduce,
     num_parallel_jobs=2000,
     executables=EXAMPLE_EXECUTABLE_PATHS,
@@ -464,7 +464,7 @@ def run(
     date_dict_now = utils.date_dict_now()
     qmrlog("Start run()")
 
-    run_dir = op.abspath(path)
+    run_dir = op.abspath(run_dir)
     for exe_path in executables:
         executables[exe_path] = op.abspath(executables[exe_path])
 
