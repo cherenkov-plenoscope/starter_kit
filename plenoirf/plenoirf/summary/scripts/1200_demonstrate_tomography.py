@@ -115,9 +115,7 @@ def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
     # as cube
     # -------
     ivolrec = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
-        volume_intensity=reconstruction[
-            "reconstructed_volume_intensity"
-        ],
+        volume_intensity=reconstruction["reconstructed_volume_intensity"],
         binning=binning,
     )
     ivolrec = ivolrec / np.sum(ivolrec)
@@ -132,17 +130,14 @@ def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
     # --------
     if np.any(np.isnan(ivoltru)):
         print(
-            uid,
-            "Failed to construct volume of true Cherenkov-emission.",
+            uid, "Failed to construct volume of true Cherenkov-emission.",
         )
         return
 
     # normalizing
     # -----------
     imax = np.max([np.max(ivolrec), np.max(ivoltru)])
-    imin = np.min(
-        [np.min(ivolrec[ivolrec > 0]), np.min(ivoltru[ivoltru > 0])]
-    )
+    imin = np.min([np.min(ivolrec[ivolrec > 0]), np.min(ivoltru[ivoltru > 0])])
 
     UU = 0.2
     the = np.deg2rad(50)
@@ -156,16 +151,14 @@ def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
             ]
         )
         intensity_rgb = np.zeros(
-            shape=(
-                binning["number_cx_bins"],
-                binning["number_cy_bins"],
-                4,
-            ),
+            shape=(binning["number_cx_bins"], binning["number_cy_bins"], 4,),
             dtype=np.float,
         )
         intensity_rgb[:, :, 0] = ivolrec[:, :, iz] / imax
         intensity_rgb[:, :, 1] = ivoltru[:, :, iz] / imax
-        intensity_rgb[:, :, 2] = (intensity_rgb[:, :, 0] * intensity_rgb[:, :, 1]) ** (1/3)
+        intensity_rgb[:, :, 2] = (
+            intensity_rgb[:, :, 0] * intensity_rgb[:, :, 1]
+        ) ** (1 / 3)
 
         seb.pseudo3d.ax_add_mesh_intensity_to_alpha(
             ax=ax,
@@ -203,9 +196,7 @@ def write_figure_tomography(path, binning, reconstruction, simulation_truth):
     RRR = 1280
     axes_style = {"spines": [], "axes": [], "grid": False}
     fig = seb.figure({"rows": 4 * RRR, "cols": RRR, "fontsize": 1})
-    ax = seb.add_axes(
-        fig=fig, span=[0.0, 0.0, 1.0, 1.0], style=axes_style
-    )
+    ax = seb.add_axes(fig=fig, span=[0.0, 0.0, 1.0, 1.0], style=axes_style)
     ax_add_tomography(
         ax=ax,
         binning=binning,
@@ -335,7 +326,6 @@ for sk in ["namibia"]:
                 result_dir, "reconstruction.json"
             )
 
-
             if not os.path.exists(reconstruction_path):
                 reconstruction = pl.Tomography.Image_Domain.Reconstruction.init(
                     light_field_geometry=light_field_geometry,
@@ -345,11 +335,12 @@ for sk in ["namibia"]:
                 with open(reconstruction_path, "wt") as f:
                     f.write(json_numpy.dumps(reconstruction))
 
-
             with open(reconstruction_path, "rt") as f:
                 reconstruction = json_numpy.loads(f.read())
 
-            num_missing_iterations = TOMO_NUM_ITERATIONS - reconstruction["iteration"]
+            num_missing_iterations = (
+                TOMO_NUM_ITERATIONS - reconstruction["iteration"]
+            )
             if num_missing_iterations > 0:
                 for i in range(num_missing_iterations):
                     reconstruction = pl.Tomography.Image_Domain.Reconstruction.iterate(
@@ -359,7 +350,9 @@ for sk in ["namibia"]:
                     if reconstruction["iteration"] % 25 == 0:
                         stack_path = os.path.join(
                             result_dir,
-                            "stack_{:06d}.jpg".format(reconstruction["iteration"])
+                            "stack_{:06d}.jpg".format(
+                                reconstruction["iteration"]
+                            ),
                         )
                         write_figure_tomography(
                             path=stack_path,
