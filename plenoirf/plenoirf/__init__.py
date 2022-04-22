@@ -5,7 +5,7 @@ from . import table
 from . import grid
 from . import logging
 from . import map_and_reduce
-from . import network_file_system
+from . import network_file_system as nfs
 from . import bundle
 from . import provenance
 from . import create_test_tables
@@ -215,16 +215,16 @@ def init(
     json_numpy.write(
         path=opj(run_dir, "input", "config.json" + "tmp"), out_dict=config,
     )
-    network_file_system.move(
+    nfs.move(
         opj(run_dir, "input", "config.json" + "tmp"),
         opj(run_dir, "input", "config.json"),
     )
 
-    network_file_system.copy(
+    nfs.copy(
         src=config_file_paths["plenoscope_scenery_path"],
         dst=opj(run_dir, "input", "scenery"),
     )
-    network_file_system.copy(
+    nfs.copy(
         src=config_file_paths["merlict_plenoscope_propagator_config_path"],
         dst=opj(run_dir, "input", "merlict_propagation_config.json"),
     )
