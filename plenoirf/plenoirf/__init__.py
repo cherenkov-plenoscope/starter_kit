@@ -6,7 +6,6 @@ from . import grid
 from . import merlict
 from . import logging
 from . import map_and_reduce
-from . import map_and_reduce_light_field_geometry
 from . import network_file_system
 from . import bundle
 from . import provenance
@@ -292,7 +291,7 @@ def _estimate_light_field_geometry_of_plenoscope(
         with tempfile.TemporaryDirectory(
             prefix="light_field_geometry_", dir=run_dir
         ) as tmp_dir:
-            lfg_jobs = map_and_reduce_light_field_geometry.make_jobs(
+            lfg_jobs = production.light_field_geometry.make_jobs(
                 merlict_map_path=executables[
                     "merlict_plenoscope_calibration_map_path"
                 ],
@@ -305,7 +304,7 @@ def _estimate_light_field_geometry_of_plenoscope(
                 random_seed=0,
             )
             _ = map_and_reduce_pool.map(
-                map_and_reduce_light_field_geometry.run_job, lfg_jobs
+                production.light_field_geometry.run_job, lfg_jobs
             )
             subprocess.call(
                 [
