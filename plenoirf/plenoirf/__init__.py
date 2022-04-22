@@ -364,7 +364,7 @@ def _populate_table_of_thrown_air_showers(
     map_and_reduce_pool,
     executables,
     tmp_absdir,
-    date_dict_now,
+    date_dict,
     KEEP_TMP,
     LAZY_REDUCTION=False,
     num_parallel_jobs=2000,
@@ -419,7 +419,7 @@ def _populate_table_of_thrown_air_showers(
                     ],
                     tmp_dir=tmp_absdir,
                     keep_tmp_dir=KEEP_TMP,
-                    date_dict_now=date_dict_now,
+                    date_dict=date_dict,
                 )
 
                 run_id += 1
@@ -457,7 +457,7 @@ def run(
     KEEP_TMP=False,
     LAZY_REDUCTION=False,
 ):
-    date_dict_now = utils.date_dict_now()
+    date_dict = provenance.get_time_dict_now()
     qmrlog("Start run()")
 
     run_dir = op.abspath(run_dir)
@@ -495,7 +495,7 @@ def run(
         executables=executables,
         tmp_absdir=tmp_absdir,
         KEEP_TMP=KEEP_TMP,
-        date_dict_now=date_dict_now,
+        date_dict=date_dict,
         LAZY_REDUCTION=LAZY_REDUCTION,
         num_parallel_jobs=num_parallel_jobs,
     )

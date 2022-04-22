@@ -155,7 +155,7 @@ def make_job_dict(
     merlict_plenoscope_propagator_path,
     tmp_dir,
     keep_tmp_dir,
-    date_dict_now,
+    date_dict,
 ):
     job = {
         "run_id": run_id,
@@ -204,7 +204,7 @@ def make_job_dict(
         ),
         "keep_tmp": keep_tmp_dir,
         "tmp_dir": tmp_dir,
-        "date": date_dict_now,
+        "date": date_dict,
         "artificial_core_limitation": config["artificial_core_limitation"][
             particle_key
         ],

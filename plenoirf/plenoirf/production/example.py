@@ -6,6 +6,7 @@ import magnetic_deflection
 from .. import utils
 from .. import reconstruction
 from .. import map_and_reduce
+from .. import provenance
 
 
 def absjoin(*args):
@@ -143,7 +144,7 @@ def make_example_job(
             run_dir, production_key, site_key, particle_key, "tmp"
         ),
         keep_tmp_dir=True,
-        date_dict_now=utils.date_dict_now(),
+        date_dict=provenance.get_time_dict_now(),
     )
 
     return job

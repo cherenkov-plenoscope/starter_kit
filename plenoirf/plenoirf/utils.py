@@ -25,14 +25,6 @@ def contains_same_bytes(path_a, path_b):
         return a_bytes == b_bytes
 
 
-def date_dict_now():
-    dt = datetime.datetime.now()
-    out = {}
-    for key in ["year", "month", "day", "hour", "minute", "second"]:
-        out[key] = int(dt.__getattribute__(key))
-    return out
-
-
 def tar_append(tarout, file_name, file_bytes):
     with io.BytesIO() as buff:
         info = tarfile.TarInfo(file_name)
