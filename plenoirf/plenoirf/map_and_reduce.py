@@ -315,7 +315,7 @@ def _init_grid_geometry_from_job(job):
     plenoscope_pointing_direction = np.array([0, 0, 1])  # For now this is fix.
 
     _scenery_path = op.join(job["plenoscope_scenery_path"], "scenery.json")
-    _light_field_sensor_geometry = merlict.read_plenoscope_geometry(
+    _light_field_sensor_geometry = production.merlict.read_plenoscope_geometry(
         merlict_scenery_path=_scenery_path
     )
     plenoscope_diameter = (
@@ -591,7 +591,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
 def _run_merlict(job, cherenkov_pools_path, tmp_dir):
     detector_responses_path = op.join(tmp_dir, "detector_responses")
     if not op.exists(detector_responses_path):
-        merlict_rc = merlict.plenoscope_propagator(
+        merlict_rc = production.merlict.plenoscope_propagator(
             corsika_run_path=cherenkov_pools_path,
             output_path=detector_responses_path,
             light_field_geometry_path=job["light_field_geometry_path"],

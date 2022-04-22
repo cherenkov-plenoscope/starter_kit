@@ -3,7 +3,6 @@ from . import analysis
 from . import features
 from . import table
 from . import grid
-from . import merlict
 from . import logging
 from . import map_and_reduce
 from . import network_file_system

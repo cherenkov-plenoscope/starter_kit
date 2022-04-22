@@ -13,7 +13,7 @@ from .. import reconstruction
 from .. import analysis
 from .. import table
 from .. import provenance
-from .. import merlict
+from .. import production
 from .. import grid
 from . import figure
 from .cosmic_flux import make_gamma_ray_reference_flux
@@ -66,7 +66,7 @@ def read_summary_config(summary_dir):
 def read_instrument_response_config(run_dir):
     with open(opj(run_dir, "input", "config.json"), "rt") as f:
         config = json_numpy.loads(f.read())
-    light_field_sensor_geometry = merlict.read_plenoscope_geometry(
+    light_field_sensor_geometry = production.merlict.read_plenoscope_geometry(
         opj(run_dir, "input", "scenery", "scenery.json")
     )
 
