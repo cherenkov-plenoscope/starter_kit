@@ -290,13 +290,13 @@ def _estimate_light_field_geometry_of_plenoscope(
     else:
         with tempfile.TemporaryDirectory(
             prefix="light_field_geometry_", dir=run_dir
-        ) as tmp_dir:
+        ) as map_dir:
             lfg_jobs = production.light_field_geometry.make_jobs(
                 merlict_map_path=executables[
                     "merlict_plenoscope_calibration_map_path"
                 ],
                 scenery_path=opj(run_dir, "input", "scenery"),
-                out_dir=tmp_dir,
+                map_dir=map_dir,
                 num_photons_per_block=config["light_field_geometry"][
                     "num_photons_per_block"
                 ],
@@ -306,14 +306,12 @@ def _estimate_light_field_geometry_of_plenoscope(
             _ = map_and_reduce_pool.map(
                 production.light_field_geometry.run_job, lfg_jobs
             )
-            subprocess.call(
-                [
-                    executables["merlict_plenoscope_calibration_reduce_path"],
-                    "--input",
-                    tmp_dir,
-                    "--output",
-                    opj(run_dir, "light_field_geometry"),
-                ]
+            production.light_field_geometry.reduce(
+                merlict_reduce_path=executables[
+                    "merlict_plenoscope_calibration_reduce_path"
+                ],
+                map_dir=map_dir,
+                out_dir=opj(run_dir, "light_field_geometry"),
             )
 
     if not op.exists(opj(run_dir, "light_field_geometry", "plot")):
