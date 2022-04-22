@@ -45,7 +45,7 @@ if not os.path.exists(demo_helium_dir):
 NUM_EVENTS_PER_PARTICLE = 5
 MIN_NUM_CHERENKOV_PHOTONS = 200
 MAX_CORE_DISTANCE = 400
-TOMO_NUM_ITERATIONS = 500
+TOMO_NUM_ITERATIONS = 550
 NUM_THREADS = 6
 
 os.makedirs(pa["out_dir"], exist_ok=True)
@@ -165,6 +165,7 @@ def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
         )
         intensity_rgb[:, :, 0] = ivolrec[:, :, iz] / imax
         intensity_rgb[:, :, 1] = ivoltru[:, :, iz] / imax
+        intensity_rgb[:, :, 2] = (intensity_rgb[:, :, 0] * intensity_rgb[:, :, 1]) ** (1/3)
 
         seb.pseudo3d.ax_add_mesh_intensity_to_alpha(
             ax=ax,
