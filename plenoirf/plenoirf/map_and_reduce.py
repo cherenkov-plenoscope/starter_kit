@@ -1,7 +1,6 @@
 from . import table
 from . import unique
 from . import grid
-from . import merlict
 from . import logging
 from . import network_file_system as nfs
 from . import utils
