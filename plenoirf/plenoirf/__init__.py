@@ -4,7 +4,7 @@ from . import features
 from . import table
 from . import grid
 from . import logging
-from . import map_and_reduce
+from . import instrument_response
 from . import network_file_system as nfs
 from . import bundle
 from . import provenance
@@ -404,7 +404,7 @@ def _populate_table_of_thrown_air_showers(
             for job_idx in np.arange(config["runs"][particle_key]["num"]):
                 assert run_id > 0
 
-                irf_job = map_and_reduce.make_job_dict(
+                irf_job = instrument_response.make_job_dict(
                     run_dir=run_dir,
                     production_key="event_table",
                     run_id=run_id,
@@ -432,14 +432,14 @@ def _populate_table_of_thrown_air_showers(
     )
 
     _ = map_and_reduce_pool.map(
-        map_and_reduce.run_jobs_in_bundles, irf_jobs_in_bundles
+        instrument_response.run_jobs_in_bundles, irf_jobs_in_bundles
     )
 
     qmrlog("Reduce instrument-response.")
 
     for site_key in config["sites"]:
         for particle_key in config["particles"]:
-            map_and_reduce.reduce(
+            instrument_response.reduce(
                 run_dir=run_dir,
                 production_key="event_table",
                 site_key=site_key,

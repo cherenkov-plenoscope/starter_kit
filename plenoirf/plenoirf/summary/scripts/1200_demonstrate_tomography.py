@@ -32,8 +32,8 @@ if not os.path.exists(demo_helium_dir):
         site_key="namibia",
         max_scatter_radius_m=150,
     )
-    irf.map_and_reduce.run_job(job)
-    irf.map_and_reduce.reduce(
+    irf.instrument_response.run_job(job)
+    irf.instrument_response.reduce(
         run_dir=pa["run_dir"],
         production_key=production_key,
         site_key="namibia",
