@@ -5,7 +5,7 @@ import json_numpy
 import magnetic_deflection
 from .. import utils
 from .. import reconstruction
-from .. import map_and_reduce
+from .. import instrument_response
 from .. import provenance
 
 
@@ -129,7 +129,7 @@ def make_example_job(
     with open(op.join(run_dir, "input", "config.json"), "rt") as fin:
         config = json_numpy.loads(fin.read())
 
-    job = map_and_reduce.make_job_dict(
+    job = instrument_response.make_job_dict(
         run_dir=run_dir,
         production_key=production_key,
         run_id=run_id,
