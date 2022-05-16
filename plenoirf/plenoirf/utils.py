@@ -242,23 +242,6 @@ def apply_confusion_matrix(x, confusion_matrix, x_unc=None):
     return y
 
 
-def apply_confusion_matrix_uncertainty(x_unc, confusion_matrix):
-    cm = confusion_matrix
-    n = cm.shape[0]
-    assert cm.shape[1] == n
-    assert x_unc.shape[0] == n
-
-    y_unc = np.zeros(shape=(n))
-    for r in range(n):
-        for t in range(n):
-            if not np.isnan(x_unc[t]):
-                y_unc[r] += (cm[t, r] * x_unc[t]) ** 2.0
-    y_unc = np.sqrt(y_unc)
-    y_unc[y_unc == 0.0] = np.nan
-
-    return y_unc
-
-
 def make_confusion_matrix(
     ax0_key,
     ax0_values,
@@ -368,17 +351,6 @@ def integrate_rate_where_known(dRdE, dRdE_au, E_edges):
 
     T, T_au = pru.integrate(f=(_dRdE, _dRdE_au), x_bin_edges=E_edges)
     return T, T_au
-
-
-def log10interp(x, xp, fp):
-    return 10 ** (np.interp(x=np.log10(x), xp=np.log10(xp), fp=np.log10(fp)))
-
-
-def log10interp2d(x, y, fp, xp, yp):
-    mm_f = scipy.interpolate.interp2d(
-        x=np.log10(xp), y=np.log10(yp), z=fp, kind="linear"
-    )
-    return mm_f(np.log10(x), np.log10(y))
 
 
 def filter_particles_with_electric_charge(particles):
