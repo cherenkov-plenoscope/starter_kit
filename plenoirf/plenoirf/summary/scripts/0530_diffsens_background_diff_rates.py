@@ -2,6 +2,7 @@
 import sys
 import copy
 import numpy as np
+import propagate_uncertainties as pru
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
@@ -114,36 +115,37 @@ for sk in SITES:
                 _tmp_sum = np.zeros(energy_bin["num_bins"])
                 _tmp_sum_au = np.zeros(energy_bin["num_bins"])
                 for etrue in range(energy_bin["num_bins"]):
+                    _prods = [
+                        dFdE[etrue],
+                        M["reco_given_true"][etrue, ereco],
+                        Q[etrue],
+                        energy_bin["width"][etrue],
+                    ]
+                    _prods_au = [
+                        dFdE_au[etrue],
+                        M["reco_given_true_abs_unc"][etrue, ereco],
+                        Q_au[etrue],
+                        energy_bin__width__au[etrue],
+                    ]
                     (
                         _tmp_sum[etrue],
                         _tmp_sum_au[etrue],
-                    ) = irf.utils.multiply_elemnetwise_au(
-                        x=[
-                            dFdE[etrue],
-                            M["reco_given_true"][etrue, ereco],
-                            Q[etrue],
-                            energy_bin["width"][etrue],
-                        ],
-                        x_au=[
-                            dFdE_au[etrue],
-                            M["reco_given_true_abs_unc"][etrue, ereco],
-                            Q_au[etrue],
-                            energy_bin__width__au[etrue],
-                        ],
-                    )
+                    ) = pru.prod(x=(_prods, _prods_au))
                 (
                     Rreco[sk][ok][pk][ereco],
                     Rreco_au[sk][ok][pk][ereco],
-                ) = irf.utils.sum_elemnetwise_au(x=_tmp_sum, x_au=_tmp_sum_au,)
+                ) = pru.sum(x=(_tmp_sum, _tmp_sum_au))
 
             # Compute cosmic-ray-rate in true energy Rtrue
             for etrue in range(energy_bin["num_bins"]):
                 (
                     Rtrue[sk][ok][pk][etrue],
                     Rtrue_au[sk][ok][pk][etrue],
-                ) = irf.utils.multiply_elemnetwise_au(
-                    x=[dFdE[etrue], Q[etrue], energy_bin["width"][etrue]],
-                    x_au=[dFdE_au[etrue], Q_au[etrue], 0.0],
+                ) = pru.prod(
+                    x=(
+                        [dFdE[etrue], Q[etrue], energy_bin["width"][etrue]],
+                        [dFdE_au[etrue], Q_au[etrue], 0.0],
+                    )
                 )
 
             # cross check

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import numpy as np
+import propagate_uncertainties as pru
 import plenoirf as irf
 import cosmic_fluxes
 import os
@@ -83,8 +84,8 @@ for sk in SITES:
             x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_A_au
         )
 
-        dRdE, dRdE_au = irf.utils.multiply(
-            x=gamma_dKdE, x_au=gamma_dKdE_au, y=A, y_au=A_au,
+        dRdE, dRdE_au = pru.multiply(
+            x=(gamma_dKdE, x_au=gamma_dKdE_au), y=(A, A_au),
         )
 
         R, R_au = irf.utils.integrate_rate_where_known(
@@ -138,8 +139,8 @@ for sk in SITES:
                 x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q_au,
             )
 
-            dRdE, dRdE_au = irf.utils.multiply(
-                x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=Q, y_au=Q_au,
+            dRdE, dRdE_au = pru.multiply(
+                x=(cosmic_dFdE, cosmic_dFdE_au), y=(Q, Q_au),
             )
 
             R, R_au = irf.utils.integrate_rate_where_known(

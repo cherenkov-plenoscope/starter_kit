@@ -1,4 +1,5 @@
 import numpy as np
+import propagate_uncertainties as pru
 import datetime
 import io
 import tarfile
@@ -356,42 +357,6 @@ def estimate_rel_abs_uncertainty_in_counts(counts):
     return rel_unc, abs_unc
 
 
-def unc(x_au, dfdx, y_au, dfdy):
-    return np.sqrt((dfdx * x_au) ** 2 + (dfdy * y_au) ** 2)
-
-
-def add(x, x_au, y, y_au):
-    return x + y, unc(x_au=x_au, dfdx=1.0, y_au=y_au, dfdy=1.0)
-
-
-def multiply(x, x_au, y, y_au):
-    return x * y, unc(x_au=x_au, dfdx=y, y_au=y_au, dfdy=x)
-
-
-def divide(x, x_au, y, y_au):
-    return (
-        x / y,
-        unc(x_au=x_au, dfdx=1.0 / y, y_au=y_au, dfdy=(-1 * x * y ** (-2))),
-    )
-
-
-def sum(x, x_au):
-    return np.sum(x), np.sqrt(np.sum(x_au ** 2))
-
-
-def integrate(f, f_au, x_edges):
-    I = 0.0
-    num_bins = len(x_edges) - 1
-    a = np.zeros(num_bins)
-    a_au = np.zeros(num_bins)
-    for i in range(num_bins):
-        step = x_edges[i + 1] - x_edges[i]
-        _a, _a_au = multiply(x=f[i], x_au=f_au[i], y=step, y_au=0.0)
-        a[i] = _a
-        a_au[i] = _a_au
-    return sum(x=a, x_au=a_au)
-
-
 def integrate_rate_where_known(dRdE, dRdE_au, E_edges):
     unknown = np.isnan(dRdE_au)
 
@@ -401,44 +366,8 @@ def integrate_rate_where_known(dRdE, dRdE_au, E_edges):
     _dRdE[unknown] = 0.0
     _dRdE_au[unknown] = 0.0
 
-    T, T_au = integrate(f=_dRdE, f_au=_dRdE_au, x_edges=E_edges)
+    T, T_au = pru.integrate(f=(_dRdE, _dRdE_au), x_bin_edges=E_edges)
     return T, T_au
-
-
-def _abs_unc(dfdx, x_au):
-    dfdx = np.array(dfdx)
-    x_au = np.array(x_au)
-    assert len(dfdx) == len(x_au)
-    S = 0.0
-    for i in range(len(x_au)):
-        S += (dfdx[i] * x_au[i]) ** 2.0
-    return np.sqrt(S)
-
-
-def multiply_elemnetwise_au(x, x_au):
-    x = np.array(x)
-    x_au = np.array(x_au)
-    assert len(x) == len(x_au)
-    P = np.prod(x)
-    dfdxs = []
-    for i in range(len(x)):
-        mask_i = np.ones(len(x), dtype=np.bool)
-        mask_i[i] = False
-        dfdxi = np.prod(x[mask_i])
-        dfdxs.append(dfdxi)
-
-    Pau = _abs_unc(dfdx=dfdxs, x_au=x_au)
-    return P, Pau
-
-
-def sum_elemnetwise_au(x, x_au):
-    x = np.array(x)
-    x_au = np.array(x_au)
-    assert len(x) == len(x_au)
-    S = np.sum(x)
-    dfdxs = np.ones(len(x))
-    S_au = _abs_unc(dfdx=dfdxs, x_au=x_au)
-    return S, S_au
 
 
 def log10interp(x, xp, fp):

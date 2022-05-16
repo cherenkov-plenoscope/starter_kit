@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
+import propagate_uncertainties as pru
 import sparse_numeric_table as spt
 import cosmic_fluxes
 import os
@@ -101,8 +102,8 @@ for sk in irf_config["config"]["sites"]:
             fp=_A_au[tt, :],
         )
 
-        dRdE[tt, :], dRdE_au[tt, :] = irf.utils.multiply(
-            x=gamma_dKdE, x_au=gamma_dKdE_au, y=A, y_au=A_au,
+        dRdE[tt, :], dRdE_au[tt, :] = pru.multiply(
+            x=(gamma_dKdE, gamma_dKdE_au), y=(A, A_au),
         )
 
         R[tt], R_au[tt] = irf.utils.integrate_rate_where_known(
@@ -161,8 +162,8 @@ for sk in irf_config["config"]["sites"]:
                 fp=_Q_au[tt, :],
             )
 
-            dRdE[tt, :], dRdE_au[tt, :] = irf.utils.multiply(
-                x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=Q, y_au=Q_au,
+            dRdE[tt, :], dRdE_au[tt, :] = pru.multiply(
+                x=(cosmic_dFdE, cosmic_dFdE_au), y=(Q, Q_au),
             )
 
             R[tt], R_au[tt] = irf.utils.integrate_rate_where_known(

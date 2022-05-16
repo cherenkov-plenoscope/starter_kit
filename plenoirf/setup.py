@@ -17,6 +17,7 @@ setuptools.setup(
     install_requires=[
         "cosmic_fluxes",
         "corsika_primary",
+        "propagate_uncertainties",
         "iminuit==1.4.9",
         "shapely",
     ],
