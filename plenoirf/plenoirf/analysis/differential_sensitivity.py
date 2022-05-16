@@ -281,10 +281,7 @@ def make_area_in_reco_energy(
 
         for et in range(num_bins):
             tmp[et], tmp_au[et] = pru.prod(
-                x=(
-                    [G[et, er], A[et],],
-                    [G_au[et, er], A_au[et],],
-                )
+                x=([G[et, er], A[et],], [G_au[et, er], A_au[et],],)
             )
 
         A_out[er], A_out_au[er] = pru.sum(x=(tmp, tmp_au))

@@ -85,7 +85,7 @@ for sk in SITES:
         )
 
         dRdE, dRdE_au = pru.multiply(
-            x=(gamma_dKdE, x_au=gamma_dKdE_au), y=(A, A_au),
+            x=(gamma_dKdE, gamma_dKdE_au), y=(A, A_au),
         )
 
         R, R_au = irf.utils.integrate_rate_where_known(

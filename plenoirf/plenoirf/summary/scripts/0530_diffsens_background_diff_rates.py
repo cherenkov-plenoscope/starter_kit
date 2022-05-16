@@ -127,10 +127,9 @@ for sk in SITES:
                         Q_au[etrue],
                         energy_bin__width__au[etrue],
                     ]
-                    (
-                        _tmp_sum[etrue],
-                        _tmp_sum_au[etrue],
-                    ) = pru.prod(x=(_prods, _prods_au))
+                    (_tmp_sum[etrue], _tmp_sum_au[etrue],) = pru.prod(
+                        x=(_prods, _prods_au)
+                    )
                 (
                     Rreco[sk][ok][pk][ereco],
                     Rreco_au[sk][ok][pk][ereco],
