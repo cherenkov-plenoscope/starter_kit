@@ -30,6 +30,7 @@ import tarfile
 import io
 
 import json_numpy
+import binning_utils
 import plenopy as pl
 import sparse_numeric_table as spt
 import queue_map_reduce
@@ -98,8 +99,8 @@ EXAMPLE_CONFIG = {
         "gamma": {
             "particle_id": 1,
             "energy_bin_edges_GeV": [
-                utils.power10bin(decade=-1, bin=2, num_bins_per_decade=5),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
+                binning_utils.power10.lower_bin_edge(decade=-1, bin=2, num_bins_per_decade=5),
+                binning_utils.power10.lower_bin_edge(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 3.25,
             "energy_power_law_slope": -1.5,
@@ -109,8 +110,8 @@ EXAMPLE_CONFIG = {
         "electron": {
             "particle_id": 3,
             "energy_bin_edges_GeV": [
-                utils.power10bin(decade=-1, bin=3, num_bins_per_decade=5),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
+                binning_utils.power10.lower_bin_edge(decade=-1, bin=3, num_bins_per_decade=5),
+                binning_utils.power10.lower_bin_edge(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 6.5,
             "energy_power_law_slope": -1.5,
@@ -122,9 +123,9 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [
                 max(
                     MIN_PROTON_ENERGY_GEV,
-                    utils.power10bin(decade=0, bin=3, num_bins_per_decade=5),
+                    binning_utils.power10.lower_bin_edge(decade=0, bin=3, num_bins_per_decade=5),
                 ),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
+                binning_utils.power10.lower_bin_edge(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,
@@ -136,9 +137,9 @@ EXAMPLE_CONFIG = {
             "energy_bin_edges_GeV": [
                 max(
                     MIN_HELIUM_ENERGY_GEV,
-                    utils.power10bin(decade=1, bin=0, num_bins_per_decade=5),
+                    binning_utils.power10.lower_bin_edge(decade=1, bin=0, num_bins_per_decade=5),
                 ),
-                utils.power10bin(decade=3, bin=1, num_bins_per_decade=5),
+                binning_utils.power10.lower_bin_edge(decade=3, bin=1, num_bins_per_decade=5),
             ],
             "max_scatter_angle_deg": 13,
             "energy_power_law_slope": -1.5,

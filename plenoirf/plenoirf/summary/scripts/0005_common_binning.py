@@ -4,6 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import json_numpy
+import binning_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -27,8 +28,8 @@ for scenario_key in sum_config["energy_binning"]["fine"]:
         "key": scenario_key,
         "edges": edges,
         "num_bins": num_bins,
-        "centers": irf.utils.bin_centers(edges),
-        "width": irf.utils.bin_width(edges),
+        "centers": binning_utils.centers(edges),
+        "width": binning_utils.widths(edges),
         "start": edges[0],
         "stop": edges[-1],
         "limits": [edges[0], edges[-1]],

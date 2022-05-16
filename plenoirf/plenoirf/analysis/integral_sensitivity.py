@@ -1,7 +1,7 @@
 import numpy as np
 import cosmic_fluxes
 import lima1983analysis
-from .. import utils
+import binning_utils
 
 
 def estimate_detection_rate_per_s_for_power_law(
@@ -81,10 +81,10 @@ def estimate_critical_power_laws(
     assert np.all(effective_area_energy_bin_edges_GeV > 0.0)
     assert np.all(np.gradient(effective_area_energy_bin_edges_GeV) > 0.0)
 
-    effective_area_energy_bin_centers_GeV = utils.bin_centers(
+    effective_area_energy_bin_centers_GeV = binning_utils.centers(
         bin_edges=effective_area_energy_bin_edges_GeV,
     )
-    effective_area_energy_bin_width_GeV = utils.bin_width(
+    effective_area_energy_bin_width_GeV = binning_utils.widths(
         bin_edges=effective_area_energy_bin_edges_GeV,
     )
 

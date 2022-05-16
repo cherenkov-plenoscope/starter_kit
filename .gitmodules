@@ -43,3 +43,6 @@
 [submodule "propagate_uncertainties"]
 	path = propagate_uncertainties
 	url = git@github.com:cherenkov-plenoscope/propagate_uncertainties.git
+[submodule "binning_utils"]
+	path = binning_utils
+	url = git@github.com:cherenkov-plenoscope/binning_utils.git

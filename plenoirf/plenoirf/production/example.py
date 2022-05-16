@@ -1,6 +1,7 @@
 import os
 from os import path as op
 import json_numpy
+import binning_utils
 
 import magnetic_deflection
 from .. import utils
@@ -168,8 +169,8 @@ def make_helium_demo_for_tomography(
         artificial_core_limitation=None,
     )
 
-    energy_start = utils.power10bin(decade=3, bin=1, num_bins_per_decade=5)
-    energy_stop = utils.power10bin(decade=3, bin=2, num_bins_per_decade=5)
+    energy_start = binning_utils.power10.lower_bin_edge(decade=3, bin=1, num_bins_per_decade=5)
+    energy_stop = binning_utils.power10.lower_bin_edge(decade=3, bin=2, num_bins_per_decade=5)
 
     job["particle"] = {
         "particle_id": 402,
