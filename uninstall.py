@@ -14,6 +14,7 @@ tools = [
     "lima1983analysis",
     "sebastians_matplotlib_addons",
     "json_numpy",
+    "propagate_uncertainties",
     "gamma_ray_reconstruction",
     "merlict_camera_server",
 ]

@@ -81,6 +81,7 @@ def main():
         # -----
         tools = [
             "json_numpy",
+            "propagate_uncertainties",
             "sebastians_matplotlib_addons",
             "sparse_numeric_table",
             "cosmic_fluxes",

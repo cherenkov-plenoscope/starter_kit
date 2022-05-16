@@ -40,3 +40,6 @@
 [submodule "portal-corporate-identity"]
 	path = portal-corporate-identity
 	url = git@github.com:cherenkov-plenoscope/portal-corporate-identity.git
+[submodule "propagate_uncertainties"]
+	path = propagate_uncertainties
+	url = git@github.com:cherenkov-plenoscope/propagate_uncertainties.git
