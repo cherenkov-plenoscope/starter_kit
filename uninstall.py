@@ -4,6 +4,7 @@ from subprocess import call
 
 tools = [
     "corsika_primary",
+    "binning_utils",
     "cosmic_fluxes",
     "plenopy",
     "cable_robo_mount",
