@@ -17,14 +17,14 @@ def main():
             "and kindly ask for the username and password combination.\n"
         ),
     )
-    export_bibtex.add_argument(
-        "username",
+    parser.add_argument(
+        "--username",
         metavar="STR",
         type=str,
         help="The username to access KIT-CORSIKA's downloads",
     )
-    export_bibtex.add_argument(
-        "password",
+    parser.add_argument(
+        "--password",
         metavar="STR",
         type=str,
         help="The password to access KIT-CORSIKA's downloads",
