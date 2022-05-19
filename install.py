@@ -18,18 +18,25 @@ def main():
         ),
     )
     parser.add_argument(
-        "--username",
-        metavar="STR",
+        "username",
+        metavar="username",
         type=str,
-        help="The username to access KIT-CORSIKA's downloads",
+        help="The username to access KIT-CORSIKA's downloads.",
     )
     parser.add_argument(
-        "--password",
-        metavar="STR",
+        "password",
+        metavar="password",
         type=str,
-        help="The password to access KIT-CORSIKA's downloads",
+        help="The password to access KIT-CORSIKA's downloads.",
+    )
+    parser.add_argument(
+        "-j",
+        metavar="num",
+        type=int,
+        help="The number of threads to use when a build can be parallelized.",
     )
     arguments = parser.parse_args()
+    num_threads_str = str(parser.j)
 
     os.makedirs("build", exist_ok=True)
 
@@ -69,7 +76,7 @@ def main():
         ],
         cwd=merlict_build_dir,
     )
-    call(["make", "-j", "12"], cwd=merlict_build_dir)
+    call(["make", "-j", num_threads_str], cwd=merlict_build_dir)
     call(
         [
             "touch",
@@ -79,7 +86,7 @@ def main():
         ],
         cwd=merlict_build_dir,
     )
-    call(["make", "-j", "12"], cwd=merlict_build_dir)
+    call(["make", "-j", num_threads_str], cwd=merlict_build_dir)
 
     # Tools
     # -----
