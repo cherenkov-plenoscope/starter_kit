@@ -99,40 +99,49 @@ def main():
     parser = argparse.ArgumentParser(
         prog="install",
         description=(
-            "Install the simulations for the Cherenkov-plenoscope.\n"
-            "You need to have the credentials to the KIT-CORSIKA\n"
-            "air-shower-simulation-software.\n"
-            "\n"
-            "Go visit https://www.ikp.kit.edu/corsika/\n"
-            "and kindly ask for the username and password combination.\n"
+            "Install or uninstall the Cherenkov-plenoscope. "
+            "This is meant for development and production."
         ),
     )
     commands = parser.add_subparsers(help="Commands", dest="command")
 
     in_parser = commands.add_parser(
-        "install", help="Build and install."
+        "install",
+        help="Build and install.",
+        description=(
+            "Install the simulations of the Cherenkov-plenoscope. "
+            "To download CORSIKA you need credentials. "
+            "Go visit https://www.ikp.kit.edu/corsika/ "
+            "and kindly ask for the username and password combination. "
+            "Builds CORSIKA, and merlict. "
+            "Installs the local python-packages in editable mode. "
+        ),
     )
     un_parser = commands.add_parser(
-        "uninstall", help="Remove builds and uninstall."
+        "uninstall",
+        help="Remove builds and uninstall.",
+        description=(
+            "Uninstall all local python-packages and remove the build."
+        ),
     )
 
     in_parser.add_argument(
         "username",
         metavar="username",
         type=str,
-        help="The username to access KIT-CORSIKA's downloads.",
+        help="to download CORSIKA.",
     )
     in_parser.add_argument(
         "password",
         metavar="password",
         type=str,
-        help="The password to access KIT-CORSIKA's downloads.",
+        help="to download CORSIKA.",
     )
     in_parser.add_argument(
         "-j",
         metavar="num",
         type=int,
-        help="The number of threads to use when a build can be parallelized.",
+        help="number of threads to use when a build can be parallelized.",
         default=1,
     )
 
