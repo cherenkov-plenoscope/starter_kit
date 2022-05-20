@@ -20,8 +20,8 @@ setuptools.setup(
         "propagate_uncertainties>=0.1.0",
         "iminuit==1.4.9",
         "shapely",
-        "binning_utils_relleums",
-        "json_numpy_relleums",
+        "binning_utils_sebastian-achim-mueller",
+        "json_numpy_sebastian-achim-mueller",
     ],
     package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},
     classifiers=[

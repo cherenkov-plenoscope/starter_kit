@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 import argparse
 import os
-from os.path import join
-from subprocess import call
+import subprocess
 
 
 def is_installed(path):
@@ -10,34 +9,56 @@ def is_installed(path):
     return True if rc == 0 else False
 
 
-def build_corsika(username, password):
-    if not is_installed("f77"):
-        print("CORSIKA uses f77, but it's not in your path.")
-        print("Install gfortran (GNU compiler collection) if you have not.")
-        print("Make a f77-link pointing to your gfortran.")
+def build_corsika(username, password, corsika_tar):
+    assert os.path.isdir(os.path.join(".", "corsika_install"))
 
-    assert os.path.isdir(join(".", "corsika_install"))
-
-    call(["pip", "install", "-e", join(".", "corsika_install")])
-    call(
-        [
-            join(
-                ".",
-                "corsika_install",
-                "corsika_primary",
-                "scripts",
-                "install.py",
-            ),
-            "--install_path",
-            join(".", "build", "corsika"),
-            "--username",
-            username,
-            "--password",
-            password,
-            "--resource_path",
-            join(".", "corsika_install", "resources"),
-        ]
+    subprocess.call(
+        ["pip", "install", "-e", os.path.join(".", "corsika_install")]
     )
+    if corsika_tar:
+        subprocess.call(
+            [
+                os.path.join(
+                    ".",
+                    "corsika_install",
+                    "corsika_primary",
+                    "scripts",
+                    "install.py",
+                ),
+                "--install_path",
+                os.path.join(".", "build", "corsika"),
+                "--corsika_tar",
+                corsika_tar,
+                "--resource_path",
+                os.path.join(".", "corsika_install", "resources"),
+            ]
+        )
+    else:
+        if not is_installed("f77"):
+            print("CORSIKA uses f77, but it's not in your path.")
+            print(
+                "Install gfortran (GNU compiler collection) if you have not."
+            )
+            print("Make a f77-link pointing to your gfortran.")
+        subprocess.call(
+            [
+                os.path.join(
+                    ".",
+                    "corsika_install",
+                    "corsika_primary",
+                    "scripts",
+                    "install.py",
+                ),
+                "--install_path",
+                os.path.join(".", "build", "corsika"),
+                "--username",
+                username,
+                "--password",
+                password,
+                "--resource_path",
+                os.path.join(".", "corsika_install", "resources"),
+            ]
+        )
 
 
 def build_merlict_cpp(num_threads):
@@ -51,11 +72,11 @@ def build_merlict_cpp(num_threads):
 
     num_threads_str = "{:d}".format(num_threads)
 
-    assert os.path.isdir(join(".", "merlict_development_kit"))
+    assert os.path.isdir(os.path.join(".", "merlict_development_kit"))
 
-    merlict_build_dir = join(".", "build", "merlict")
+    merlict_build_dir = os.path.join(".", "build", "merlict")
     os.makedirs(merlict_build_dir, exist_ok=True)
-    call(
+    subprocess.call(
         [
             "cmake",
             "../../merlict_development_kit",
@@ -64,44 +85,59 @@ def build_merlict_cpp(num_threads):
         ],
         cwd=merlict_build_dir,
     )
-    call(["make", "-j", num_threads_str], cwd=merlict_build_dir)
-    call(
+    subprocess.call(["make", "-j", num_threads_str], cwd=merlict_build_dir)
+    subprocess.call(
         [
             "touch",
-            join(
+            os.path.join(
                 ".", "..", "..", "merlict_development_kit", "CMakeLists.txt",
             ),
         ],
         cwd=merlict_build_dir,
     )
-    call(["make", "-j", num_threads_str], cwd=merlict_build_dir)
+    subprocess.call(["make", "-j", num_threads_str], cwd=merlict_build_dir)
 
 
 LOCAL_PYHTHON_PACKAGES = [
-    "json_numpy",
-    "binning_utils",
-    "propagate_uncertainties",
-    "sebastians_matplotlib_addons",
-    "sparse_numeric_table",
-    "cosmic_fluxes",
-    "plenopy",
-    "cable_robo_mount",
-    "gamma_ray_reconstruction",
-    "plenoirf",
-    "magnetic_deflection",
-    "spectral_energy_distribution_units",
-    "lima1983analysis",
-    "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
+    {"path": "json_numpy", "name": "json_numpy-sebastian-achim-mueller"},
+    {"path": "binning_utils", "name": "binning_utils-sebastian-achim-mueller"},
+    {
+        "path": "propagate_uncertainties",
+        "name": "propagate_uncertainties-sebastian-achim-mueller",
+    },
+    {
+        "path": "sebastians_matplotlib_addons",
+        "name": "sebastians_matplotlib_addons",
+    },
+    {
+        "path": "sparse_numeric_table",
+        "name": "sparse_numeric_table-sebastian-achim-mueller",
+    },
+    {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
+    {"path": "plenopy", "name": "plenopy"},
+    {"path": "cable_robo_mount", "name": "cable_robo_mount"},
+    {"path": "gamma_ray_reconstruction", "name": "gamma_ray_reconstruction"},
+    {"path": "plenoirf", "name": "plenoirf"},
+    {"path": "magnetic_deflection", "name": "magnetic_deflection"},
+    {
+        "path": "spectral_energy_distribution_units",
+        "name": "spectral_energy_distribution_units-sebastian-achim-mueller",
+    },
+    {
+        "path": "lima1983analysis",
+        "name": "lima1983analysis-sebastian-achim-mueller",
+    },
+    {
+        "path": "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
+        "name": "merlict_camera_server",
+    },
 ]
 
 
 def main():
     parser = argparse.ArgumentParser(
         prog="install",
-        description=(
-            "Install or uninstall the Cherenkov-plenoscope. "
-            "This is meant for development and production."
-        ),
+        description=("Install or uninstall the Cherenkov-plenoscope. "),
     )
     commands = parser.add_subparsers(help="Commands", dest="command")
 
@@ -110,6 +146,7 @@ def main():
         help="Build and install.",
         description=(
             "Install the simulations of the Cherenkov-plenoscope. "
+            "Either provide the CORSIKA-tar or download it. "
             "To download CORSIKA you need credentials. "
             "Go visit https://www.ikp.kit.edu/corsika/ "
             "and kindly ask for the username and password combination. "
@@ -126,41 +163,53 @@ def main():
     )
 
     in_parser.add_argument(
-        "username",
-        metavar="username",
+        "--corsika_tar",
+        metavar="PATH",
         type=str,
-        help="to download CORSIKA.",
+        help="file with the CORSIKA-tar you would download from KIT.",
     )
     in_parser.add_argument(
-        "password",
-        metavar="password",
+        "--username",
+        metavar="STRING",
         type=str,
-        help="to download CORSIKA.",
+        help="to download CORSIKA from KIT.",
+    )
+    in_parser.add_argument(
+        "--password",
+        metavar="STRING",
+        type=str,
+        help="to download CORSIKA from KIT.",
     )
     in_parser.add_argument(
         "-j",
-        metavar="num",
+        metavar="NUM_THREADS",
         type=int,
         help="number of threads to use when a build can be parallelized.",
-        default=1,
     )
 
     args = parser.parse_args()
 
     if args.command == "install":
         os.makedirs("build", exist_ok=True)
-        build_corsika(username=args.username, password=args.password)
+        build_corsika(
+            username=args.username,
+            password=args.password,
+            corsika_tar=args.corsika_tar,
+        )
         build_merlict_cpp(num_threads=args.j)
 
-        for package_path in LOCAL_PYHTHON_PACKAGES:
-            call(["pip", "install", "-e", join(".", package_path)])
+        for pypackage in LOCAL_PYHTHON_PACKAGES:
+            subprocess.call(
+                ["pip", "install", "-e", os.path.join(".", pypackage["path"])]
+            )
 
     elif args.command == "uninstall":
-        os.rmdir("build")
+        subprocess.call(["rm", "-rf", "build"])
 
-        for package_path in LOCAL_PYHTHON_PACKAGES:
-            package = os.path.split(package_path)[-1]
-            call(["pip", "uninstall", package])
+        for pypackage in LOCAL_PYHTHON_PACKAGES:
+            subprocess.call(["pip", "uninstall", "--yes", pypackage["name"]])
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":
