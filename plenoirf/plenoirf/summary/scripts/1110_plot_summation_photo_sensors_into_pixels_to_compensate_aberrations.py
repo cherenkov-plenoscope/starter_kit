@@ -5,6 +5,7 @@ import plenopy as pl
 import scipy
 import os
 import json_numpy
+import numpy as np
 import sebastians_matplotlib_addons as seb
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -68,7 +69,7 @@ for pixel in pixels:
 # plot individual pixels
 # ----------------------
 
-seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"]["rcParams"])
+seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 ROI_RADIUS = 0.35
 

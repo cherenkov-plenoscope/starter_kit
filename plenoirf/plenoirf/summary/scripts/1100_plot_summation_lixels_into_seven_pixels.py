@@ -3,6 +3,7 @@ import sys
 import plenoirf as irf
 import plenopy as pl
 import os
+import numpy as np
 import json_numpy
 import sebastians_matplotlib_addons as seb
 import matplotlib
@@ -15,7 +16,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"]["rcParams"])
+seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 light_field_geometry = pl.LightFieldGeometry(
     os.path.join(pa["run_dir"], "light_field_geometry")

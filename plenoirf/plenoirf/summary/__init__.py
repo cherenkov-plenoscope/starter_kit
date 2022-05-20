@@ -224,7 +224,7 @@ def _guess_summary_config(run_dir):
         },
     }
 
-    summary_config = {
+    cfg = {
         "energy_binning": {
             "start": {"decade": -1, "bin": 2},
             "stop": {"decade": 3, "bin": 1},
@@ -314,14 +314,11 @@ def _guess_summary_config(run_dir):
         },
     }
 
-    summary_config["plot"] = figure.MATPLOTLIB_RCPARAMS
+    cfg["plot"] = {}
+    cfg["plot"]["matplotlib"] = figure.MATPLOTLIB_RCPARAMS
+    cfg["plot"]["particle_colors"] = figure.PARTICLE_COLORS
 
-    {
-        "particle_colors": figure.PARTICLE_COLORS,
-        "matplotlib": {"rcParams": figure.MATPLOTLIB_RCPARAMS,},
-    }
-
-    return summary_config
+    return cfg
 
 
 def read_train_test_frame(

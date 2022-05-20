@@ -3,6 +3,7 @@ import sys
 import copy
 import numpy as np
 import plenoirf as irf
+import propagate_uncertainties as pru
 import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
@@ -85,7 +86,7 @@ for sk in SITES:
                 (
                     Rreco_total[ereco],
                     Rreco_total_au[ereco],
-                ) = irf.utils.sum_elemnetwise_au(x=tmp, x_au=tmp_au)
+                ) = pru.sum(x=(tmp, tmp_au))
 
             Rreco_total_uu = Rreco_total + Rreco_total_au
             Areco_lu = Areco - Areco_au
