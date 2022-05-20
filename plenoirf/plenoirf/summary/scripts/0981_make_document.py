@@ -20,9 +20,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 production_dirname = irf.summary.production_name_from_run_dir(pa["run_dir"])
 fname = os.path.join(pa["summary_dir"], "{:s}_ltx".format(production_dirname))
 
-BIB_REFERENCES_PATH = os.path.join(
-    os.getcwd(), "sebastians_references", "references"
-)
+STARTER_KIT_DIR = os.getcwd()
 
 sk = "namibia"
 ok = "large"
@@ -243,6 +241,23 @@ doc.append(noesc(r"\begin{multicols}{2}"))
 
 with doc.create(ltx.Section("Version", numbering=False)):
     doc.append(noesc(Verbatim(basic_version_str)))
+
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            os.path.join(
+                STARTER_KIT_DIR,
+                "portal-corporate-identity",
+                "images",
+                "side_total_from_distance.jpg",
+            ),
+            width=noesc(r"1.0\linewidth"),
+        )
+        fig.add_caption(
+            noesc(
+                r"Portal, a Cherenkov-Plenoscope "
+                r"to observe gamma-rays with energies as low as 1\,GeV."
+            )
+        )
 
 with doc.create(ltx.Section("Performance", numbering=False)):
 
@@ -482,7 +497,13 @@ with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
         )
 
 doc.append(noesc(r"\bibliographystyle{apalike}"))
-doc.append(noesc(r"\bibliography{" + BIB_REFERENCES_PATH + "}"))
+doc.append(
+    noesc(
+        r"\bibliography{"
+        + os.path.join(STARTER_KIT_DIR, "sebastians_references", "references")
+        + "}"
+    )
+)
 
 doc.append(noesc(r"\end{multicols}{2}"))
 doc.generate_pdf(clean_tex=False)
