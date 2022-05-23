@@ -5,7 +5,7 @@ import binning_utils
 
 
 def estimate_detection_rate_per_s_for_power_law(
-    effective_area_bins_m2,
+    effective_area_m2,
     effective_area_energy_bin_centers_GeV,
     effective_area_energy_bin_width_GeV,
     flux_density_per_m2_per_GeV_per_s,
@@ -20,7 +20,7 @@ def estimate_detection_rate_per_s_for_power_law(
     )
 
     differential_rate_per_s_per_GeV = (
-        differential_flux_per_m2_per_s_per_GeV * effective_area_bins_m2
+        differential_flux_per_m2_per_s_per_GeV * effective_area_m2
     )
 
     rate_per_s = np.sum(
@@ -34,7 +34,7 @@ def _relative_ratio(a, b):
 
 
 def estimate_critical_power_laws(
-    effective_area_bins_m2,
+    effective_area_m2,
     effective_area_energy_bin_edges_GeV,
     critical_rate_per_s,
     power_law_spectral_indices,
@@ -45,10 +45,10 @@ def estimate_critical_power_laws(
 ):
     assert (
         len(effective_area_energy_bin_edges_GeV)
-        == len(effective_area_bins_m2) + 1
+        == len(effective_area_m2) + 1
     )
 
-    assert np.all(effective_area_bins_m2 >= 0.0)
+    assert np.all(effective_area_m2 >= 0.0)
     assert np.all(effective_area_energy_bin_edges_GeV > 0.0)
     assert np.all(np.gradient(effective_area_energy_bin_edges_GeV) > 0.0)
 
@@ -70,7 +70,7 @@ def estimate_critical_power_laws(
             assert iteration < max_num_iterations
 
             detection_rate_per_s = estimate_detection_rate_per_s_for_power_law(
-                effective_area_bins_m2=effective_area_bins_m2,
+                effective_area_m2=effective_area_m2,
                 effective_area_energy_bin_centers_GeV=effective_area_energy_bin_centers_GeV,
                 effective_area_energy_bin_width_GeV=effective_area_energy_bin_width_GeV,
                 flux_density_per_m2_per_GeV_per_s=flux,

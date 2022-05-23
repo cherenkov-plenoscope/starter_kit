@@ -156,7 +156,7 @@ for site_key in irf_config["config"]["sites"]:
         isez_energy_GeV,
         isez_differential_flux_per_GeV_per_m2_per_s,
     ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
-        effective_area_bins_m2=all_fov_gamma_effective_area_m2,
+        effective_area_m2=all_fov_gamma_effective_area_m2,
         effective_area_energy_bin_edges_GeV=all_fov_energy_bin_edges,
         background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
         onregion_over_offregion_ratio=PHD_ON_OVER_OFF_RATIO,

@@ -81,7 +81,7 @@ def _estimate_tangent_of_my_consecutive_power_laws(power_laws):
 
 
 def estimate_integral_spectral_exclusion_zone(
-    effective_area_bins_m2,
+    effective_area_m2,
     effective_area_energy_bin_edges_GeV,
     background_rate_in_onregion_per_s,
     onregion_over_offregion_ratio,
@@ -102,7 +102,7 @@ def estimate_integral_spectral_exclusion_zone(
     )
 
     critical_power_laws = integral_sensitivity.estimate_critical_power_laws(
-        effective_area_bins_m2=effective_area_bins_m2,
+        effective_area_m2=effective_area_m2,
         effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
         critical_rate_per_s=critical_rate_per_s,
         power_law_spectral_indices=np.linspace(
