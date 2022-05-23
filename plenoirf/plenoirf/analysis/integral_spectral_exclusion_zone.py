@@ -33,10 +33,10 @@ def _estimate_tangent_of_consecutive_power_laws(A_ns, G_ns):
     Estimate the curve described by the intersection-points of two
     consecutive power-laws in a list of N power-laws [f_0(x), ..., f_N(x)].
 
-    f_0(x) = A_0 * x ^ {G_0},
+    f_0(x) = A_0 * x ** G_0,
            .
            .
-    f_N(x) = A_N * x ^ {G_N}
+    f_N(x) = A_N * x ** G_N
 
     Parameters
     ----------
@@ -69,47 +69,57 @@ def _estimate_tangent_of_consecutive_power_laws(A_ns, G_ns):
     return (np.array(x), np.array(y))
 
 
-def _estimate_tangent_of_my_consecutive_power_laws(power_laws):
-    (
-        energy_GeV,
-        diff_flux_per_m2_per_GeV_per_s,
-    ) = _estimate_tangent_of_consecutive_power_laws(
-        A_ns=[p["flux_density_per_m2_per_GeV_per_s"] for p in power_laws],
-        G_ns=[p["spectral_index"] for p in power_laws],
+def estimate_tangent_of_consecutive_power_laws(
+    flux_densities, spectral_indices
+):
+    return _estimate_tangent_of_consecutive_power_laws(
+        A_ns=flux_densities, G_ns=spectral_indices,
     )
-    return energy_GeV, diff_flux_per_m2_per_GeV_per_s
 
 
 def estimate_integral_spectral_exclusion_zone(
     effective_area_m2,
     effective_area_energy_bin_edges_GeV,
-    background_rate_in_onregion_per_s,
-    onregion_over_offregion_ratio,
-    observation_time_s,
-    instrument_systematic_uncertainty=0.0,
-    num_points=137,
-    gamma_range=[-5, -0.5],
-    detection_threshold_std=5.0,
-    method="LiMaEq17",
+    critical_rate_per_s,
+    power_law_spectral_indices=np.linspace(start=-5, stop=-0.5, num=137),
+    power_law_pivot_energy_GeV=1.0,
 ):
-    critical_rate_per_s = critical_rate.estimate_critical_rate(
-        hatR_B=background_rate_in_onregion_per_s,
-        alpha=onregion_over_offregion_ratio,
-        T_obs=observation_time_s,
-        U_sys_rel_unc=instrument_systematic_uncertainty,
-        S=detection_threshold_std,
-        estimator_statistics=method,
-    )
+    """
+    Estimates a curve in the space of differential flux and energy.
+    All power-laws below this curve can not be detected.
 
-    critical_power_laws = integral_sensitivity.estimate_critical_power_laws(
+    Parameters
+    ----------
+    effective_area_m2 : list of N floats
+        The effective area where signal is collected in the on-region.
+    effective_area_energy_bin_edges_GeV : list of (N+1) floats
+        The edges of the energy-bins used for the effective area.
+    critical_rate_per_s : float
+        The minimal rate of signal in the on-region R_S required to
+        claim a detection.
+    power_law_spectral_indices : list of floats
+    """
+    assert critical_rate_per_s > 0.0
+
+    power_law_spectral_indices = np.array(power_law_spectral_indices)
+    assert len(power_law_spectral_indices) >= 2
+    assert np.all(np.gradient(power_law_spectral_indices) > 0.0)
+
+    assert power_law_pivot_energy_GeV > 0.0
+
+    power_law_flux_densities = integral_sensitivity.estimate_critical_power_law_flux_densities(
         effective_area_m2=effective_area_m2,
         effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
         critical_rate_per_s=critical_rate_per_s,
-        power_law_spectral_indices=np.linspace(
-            gamma_range[0], gamma_range[1], num_points
-        ),
+        power_law_spectral_indices=power_law_spectral_indices,
+        power_law_pivot_energy_GeV=power_law_pivot_energy_GeV,
     )
 
-    return _estimate_tangent_of_my_consecutive_power_laws(
-        power_laws=critical_power_laws
+    (
+        energy_GeV,
+        diff_flux_per_m2_per_GeV_per_s,
+    ) = estimate_tangent_of_consecutive_power_laws(
+        flux_densities=power_law_flux_densities,
+        spectral_indices=power_law_spectral_indices,
     )
+    return energy_GeV, diff_flux_per_m2_per_GeV_per_s
