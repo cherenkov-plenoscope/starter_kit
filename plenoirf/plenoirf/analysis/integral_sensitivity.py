@@ -29,10 +29,6 @@ def estimate_detection_rate_per_s_for_power_law(
     return rate_per_s
 
 
-def relative_ratio(a, b):
-    return np.abs(a - b) / (0.5 * (a + b))
-
-
 def find_intersection_two_lines(sup1, slope1, sup2, slope2):
     return (sup2 - sup1) / (slope1 - slope2)
 
@@ -60,6 +56,10 @@ def estimate_tangent_of_critical_power_laws(critical_power_laws):
         energy_GeV.append(_E)
         flux_density_per_m2_per_GeV_per_s.append(_F)
     return np.array(energy_GeV), np.array(flux_density_per_m2_per_GeV_per_s)
+
+
+def _relative_ratio(a, b):
+    return np.abs(a - b) / (0.5 * (a + b))
 
 
 def estimate_critical_power_laws(
@@ -107,7 +107,7 @@ def estimate_critical_power_laws(
                 pivot_energy_GeV=pivot_energy_gev,
             )
 
-            ratio = relative_ratio(detection_rate_per_s, critical_rate_per_s)
+            ratio = _relative_ratio(detection_rate_per_s, critical_rate_per_s)
 
             if ratio < margin:
                 break
