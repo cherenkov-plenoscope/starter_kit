@@ -69,6 +69,17 @@ def _estimate_tangent_of_consecutive_power_laws(A_ns, G_ns):
     return (np.array(x), np.array(y))
 
 
+def _estimate_tangent_of_my_consecutive_power_laws(power_laws):
+    (
+        energy_GeV,
+        diff_flux_per_m2_per_GeV_per_s,
+    ) = _estimate_tangent_of_consecutive_power_laws(
+        A_ns=[p["flux_density_per_m2_per_GeV_per_s"] for p in power_laws],
+        G_ns=[p["spectral_index"] for p in power_laws],
+    )
+    return energy_GeV, diff_flux_per_m2_per_GeV_per_s
+
+
 def estimate_integral_spectral_exclusion_zone(
     effective_area_bins_m2,
     effective_area_energy_bin_edges_GeV,
@@ -99,14 +110,6 @@ def estimate_integral_spectral_exclusion_zone(
         ),
     )
 
-    (
-        energy_GeV,
-        diff_flux_per_m2_per_GeV_per_s,
-    ) = _estimate_tangent_of_consecutive_power_laws(
-        A_ns=[
-            p["flux_density_per_m2_per_GeV_per_s"] for p in critical_power_laws
-        ],
-        G_ns=[p["spectral_index"] for p in critical_power_laws],
+    return _estimate_tangent_of_my_consecutive_power_laws(
+        power_laws=critical_power_laws
     )
-
-    return energy_GeV, diff_flux_per_m2_per_GeV_per_s
