@@ -58,6 +58,7 @@ def estimate_integral_spectral_exclusion_zone(
     num_points=137,
     gamma_range=[-5, -0.5],
     detection_threshold_std=5.0,
+    method="LiMaEq17",
 ):
     critical_rate_per_s = integral_sensitivity.estimate_critical_rate(
         background_rate_in_onregion_per_s=background_rate_in_onregion_per_s,
@@ -65,7 +66,7 @@ def estimate_integral_spectral_exclusion_zone(
         observation_time_s=observation_time_s,
         instrument_systematic_uncertainty=instrument_systematic_uncertainty,
         detection_threshold_std=detection_threshold_std,
-        method="LiMaEq17",
+        method=method,
     )
 
     critical_power_laws = integral_sensitivity.estimate_critical_power_laws(
