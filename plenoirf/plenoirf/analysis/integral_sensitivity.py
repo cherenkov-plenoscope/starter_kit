@@ -29,35 +29,6 @@ def estimate_detection_rate_per_s_for_power_law(
     return rate_per_s
 
 
-def find_intersection_two_lines(sup1, slope1, sup2, slope2):
-    return (sup2 - sup1) / (slope1 - slope2)
-
-
-def estimate_tangent_of_critical_power_laws(critical_power_laws):
-    # power-laws are lines in the log-log-scale
-    supports = []
-    slopes = []
-    for plaw in critical_power_laws:
-        supports.append(np.log10(plaw["flux_density_per_m2_per_GeV_per_s"]))
-        slopes.append(plaw["spectral_index"])
-
-    energy_GeV = []
-    flux_density_per_m2_per_GeV_per_s = []
-    for ll in range(len(supports) - 1):
-        log10_E = find_intersection_two_lines(
-            sup1=supports[ll],
-            slope1=slopes[ll],
-            sup2=supports[ll + 1],
-            slope2=slopes[ll + 1],
-        )
-        _E = 10 ** log10_E
-        log10_F = supports[ll] + slopes[ll] * (log10_E)
-        _F = 10 ** log10_F
-        energy_GeV.append(_E)
-        flux_density_per_m2_per_GeV_per_s.append(_F)
-    return np.array(energy_GeV), np.array(flux_density_per_m2_per_GeV_per_s)
-
-
 def _relative_ratio(a, b):
     return np.abs(a - b) / (0.5 * (a + b))
 
