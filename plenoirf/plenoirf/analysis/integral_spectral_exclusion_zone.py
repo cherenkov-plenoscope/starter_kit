@@ -3,49 +3,68 @@ import scipy
 from . import integral_sensitivity
 
 
-def _find_intersection_two_lines(support_1, slope_1, support_2, slope_2):
-    return (support_2 - support_1) / (slope_1 - slope_2)
-
-
-def estimate_tangent_of_critical_power_laws(
-    power_law_flux_densities,
-    power_law_spectral_indices,
-):
+def _find_intersection_two_lines(b1, m1, b2, m2):
     """
-    Estimate the curve described by the intersections of
-    consecutive power-laws.
+    Find the intersection of two affine functions:
+    f1(x) = m1 * x + b1, and f2(x) = m2 * x + b2 in x.
 
     Parameters
     ----------
-    power_law_flux_densities : list / m^{-2} (GeV)^{-1} s^{-1}
-        The power-laws flux-density.
-    power_law_spectral_indices : list / 1
-        The power-laws spectral indices.
+    m1 : float
+        Slope of f1(x).
+    b1 : float
+        Support of f1(x).
+    m2 : float
+        Slope of f2(x).
+    b2 : float
+        Support of f2(x).
+
     Returns
     -------
-    (energy, diff_flux) : (array, array) / (GeV, m^{-2} (GeV)^{-1} s^{-1})
+    x : float
+        Intersection of f1(x) and f2(x).
+     """
+    return (b2 - b1) / (m1 - m2)
+
+
+def _estimate_tangent_of_consecutive_power_laws(A_ns, G_ns):
     """
-    assert len(power_law_flux_densities) == len(power_law_spectral_indices)
-    assert len(power_law_flux_densities) >= 2
+    Estimate the curve described by the intersections of two
+    consecutive power-laws in a list of N power-laws [f_0(x), ..., f_N(x)].
 
-    support_log10_E = np.log10(np.array(power_law_flux_densities))
-    slopes = np.array(power_law_spectral_indices)
+    f_0(x) = A_0 * x ^ {G_0},
+    ...
+    f_N(x) = A_N * x ^ {G_N}
 
-    energy = []
-    diff_flux = []
-    for i in range(len(support_log10_E) - 1):
-        log10_E = _find_intersection_two_lines(
-            support_1=support_log10_E[i],
-            slope_1=slopes[i],
-            support_2=support_log10_E[i + 1],
-            slope_2=slopes[i + 1],
+    Parameters
+    ----------
+    A_ns : list of floats
+        N power-laws normalizations: A_ns = [A_0, A_1, A_2, ... , A_N]
+    G_ns : list of floats
+        N power-laws exponents: G_ns = [G_0, G_1, G_2, ... , G_N]
+
+    Returns
+    -------
+    (x, y) : (array of floats, array of floats)
+        List of N-1 intersections for N power-laws.
+    """
+    assert len(A_ns) == len(G_ns)
+    num = len(A_ns)
+    assert num >= 2
+
+    log10_A_ns = np.log10(np.array(A_ns))
+    G_ns = np.array(G_ns)
+
+    x = []
+    y = []
+    for i in range(num - 1):
+        log10_x = _find_intersection_two_lines(
+            b1=log10_A_ns[i], m1=G_ns[i], b2=log10_A_ns[i + 1], m2=G_ns[i + 1],
         )
-        _E = 10 ** log10_E
-        log10_F = support_log10_E[i] + slopes[i] * (log10_E)
-        _F = 10 ** log10_F
-        energy.append(_E)
-        diff_flux.append(_F)
-    return np.array(energy), np.array(diff_flux)
+        log10_y = log10_A_ns[i] + G_ns[i] * (log10_x)
+        x.append(10 ** log10_x)
+        y.append(10 ** log10_y)
+    return (np.array(x), np.array(y))
 
 
 def estimate_integral_spectral_exclusion_zone(
@@ -78,7 +97,14 @@ def estimate_integral_spectral_exclusion_zone(
         ),
     )
 
-    return estimate_tangent_of_critical_power_laws(
-        power_law_flux_densities=[p["flux_density_per_m2_per_GeV_per_s"] for p in critical_power_laws],
-        power_law_spectral_indices=[p["spectral_index"] for p in critical_power_laws],
+    (
+        energy_GeV,
+        diff_flux_per_m2_per_GeV_per_s,
+    ) = _estimate_tangent_of_consecutive_power_laws(
+        A_ns=[
+            p["flux_density_per_m2_per_GeV_per_s"] for p in critical_power_laws
+        ],
+        G_ns=[p["spectral_index"] for p in critical_power_laws],
     )
+
+    return energy_GeV, diff_flux_per_m2_per_GeV_per_s
