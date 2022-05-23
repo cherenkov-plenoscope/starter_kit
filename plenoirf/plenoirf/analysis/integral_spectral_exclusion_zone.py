@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 from . import integral_sensitivity
+from . import critical_rate
 
 
 def _find_intersection_two_lines(b1, m1, b2, m2):
@@ -29,11 +30,12 @@ def _find_intersection_two_lines(b1, m1, b2, m2):
 
 def _estimate_tangent_of_consecutive_power_laws(A_ns, G_ns):
     """
-    Estimate the curve described by the intersections of two
+    Estimate the curve described by the intersection-points of two
     consecutive power-laws in a list of N power-laws [f_0(x), ..., f_N(x)].
 
     f_0(x) = A_0 * x ^ {G_0},
-    ...
+           .
+           .
     f_N(x) = A_N * x ^ {G_N}
 
     Parameters
@@ -79,13 +81,13 @@ def estimate_integral_spectral_exclusion_zone(
     detection_threshold_std=5.0,
     method="LiMaEq17",
 ):
-    critical_rate_per_s = integral_sensitivity.estimate_critical_rate(
-        background_rate_in_onregion_per_s=background_rate_in_onregion_per_s,
-        onregion_over_offregion_ratio=onregion_over_offregion_ratio,
-        observation_time_s=observation_time_s,
-        instrument_systematic_uncertainty=instrument_systematic_uncertainty,
-        detection_threshold_std=detection_threshold_std,
-        method=method,
+    critical_rate_per_s = critical_rate.estimate_critical_rate(
+        hatR_B=background_rate_in_onregion_per_s,
+        alpha=onregion_over_offregion_ratio,
+        T_obs=observation_time_s,
+        U_sys_rel_unc=instrument_systematic_uncertainty,
+        S=detection_threshold_std,
+        estimator_statistics=method,
     )
 
     critical_power_laws = integral_sensitivity.estimate_critical_power_laws(
