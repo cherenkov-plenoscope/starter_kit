@@ -3,8 +3,8 @@ import scipy
 from . import integral_sensitivity
 
 
-def _find_intersection_two_lines(sup1, slope1, sup2, slope2):
-    return (sup2 - sup1) / (slope1 - slope2)
+def _find_intersection_two_lines(support_1, slope_1, support_2, slope_2):
+    return (support_2 - support_1) / (slope_1 - slope_2)
 
 
 def estimate_tangent_of_critical_power_laws(
@@ -28,20 +28,20 @@ def estimate_tangent_of_critical_power_laws(
     assert len(power_law_flux_densities) == len(power_law_spectral_indices)
     assert len(power_law_flux_densities) >= 2
 
-    supports = np.log10(np.array(power_law_flux_densities))
+    support_log10_E = np.log10(np.array(power_law_flux_densities))
     slopes = np.array(power_law_spectral_indices)
 
     energy = []
     diff_flux = []
-    for ll in range(len(supports) - 1):
+    for i in range(len(support_log10_E) - 1):
         log10_E = _find_intersection_two_lines(
-            sup1=supports[ll],
-            slope1=slopes[ll],
-            sup2=supports[ll + 1],
-            slope2=slopes[ll + 1],
+            support_1=support_log10_E[i],
+            slope_1=slopes[i],
+            support_2=support_log10_E[i + 1],
+            slope_2=slopes[i + 1],
         )
         _E = 10 ** log10_E
-        log10_F = supports[ll] + slopes[ll] * (log10_E)
+        log10_F = support_log10_E[i] + slopes[i] * (log10_E)
         _F = 10 ** log10_F
         energy.append(_E)
         diff_flux.append(_F)
