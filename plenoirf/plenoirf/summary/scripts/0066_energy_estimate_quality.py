@@ -118,18 +118,6 @@ for sk in SITES:
                 cm["reco_given_true"][true, reco] /= _sum
                 cm["reco_given_true_abs_unc"][true, reco] /= _sum
 
-        cm["true_given_reco"] = copy.deepcopy(cm["counts"])
-        cm["true_given_reco_abs_unc"] = copy.deepcopy(cm["counts_au"])
-        for reco in range(N):
-            _sum = 0.0
-            for true in range(N):
-                _sum += cm["counts"][true, reco]
-            if _sum == 0:
-                continue
-            for true in range(N):
-                cm["true_given_reco"][true, reco] /= _sum
-                cm["true_given_reco_abs_unc"][true, reco] /= _sum
-
         json_numpy.write(os.path.join(pa["out_dir"], sk, pk + ".json"), cm)
 
         # performace
