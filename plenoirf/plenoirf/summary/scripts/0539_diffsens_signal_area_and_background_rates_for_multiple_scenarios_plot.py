@@ -46,8 +46,8 @@ for sk in SITES:
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        for dk in irf.analysis.differential_sensitivity.SCENARIOS:
-            elabel = irf.analysis.differential_sensitivity.SCENARIOS[dk][
+        for dk in flux_sensitiviy.differential_sensitivity.SCENARIOS:
+            elabel = flux_sensitiviy.differential_sensitivity.SCENARIOS[dk][
                 "energy_axes_label"
             ]
 

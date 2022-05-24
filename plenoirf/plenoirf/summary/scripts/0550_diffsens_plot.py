@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
+import flux_sensitiviy
 import spectral_energy_distribution_units as sed
 from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
@@ -78,7 +79,7 @@ for sk in SITES:
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        for dk in irf.analysis.differential_sensitivity.SCENARIOS:
+        for dk in flux_sensitiviy.differential_sensitivity.SCENARIOS:
             components = []
 
             # Crab reference fluxes
@@ -221,7 +222,7 @@ for sk in SITES:
                 ax.set_ylim(np.sort(_y_lim))
                 ax.loglog()
                 ax.legend(loc="best", fontsize=10)
-                etype = irf.analysis.differential_sensitivity.SCENARIOS[dk][
+                etype = flux_sensitiviy.differential_sensitivity.SCENARIOS[dk][
                     "energy_axes_label"
                 ]
                 ax.set_xlabel(

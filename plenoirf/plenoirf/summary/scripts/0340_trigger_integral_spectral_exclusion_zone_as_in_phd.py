@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
+import flux_sensitiviy
 import spectral_energy_distribution_units as sed
 from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
@@ -152,7 +153,7 @@ for site_key in irf_config["config"]["sites"]:
         all_fov_acceptance[site_key]["gamma"]["point"]["energy_bin_edges_GeV"]
     )
 
-    critical_signal_rate_per_s = irf.analysis.critical_rate.estimate_critical_signal_rate(
+    critical_signal_rate_per_s = flux_sensitiviy.critical_rate.estimate_critical_signal_rate(
         expected_background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
             site_key
         ],
