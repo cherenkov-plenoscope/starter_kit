@@ -1,5 +1,4 @@
 import numpy as np
-import scipy
 from . import integral_sensitivity
 from . import critical_rate
 
@@ -107,7 +106,7 @@ def estimate_integral_spectral_exclusion_zone(
 
     assert power_law_pivot_energy_GeV > 0.0
 
-    power_law_flux_densities = integral_sensitivity.estimate_critical_power_law_flux_densities(
+    power_law_flux_densities = integral_sensitivity.estimate_flux_densities_of_critical_power_laws(
         effective_area_m2=effective_area_m2,
         effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
         critical_rate_per_s=critical_rate_per_s,

@@ -153,11 +153,11 @@ for site_key in irf_config["config"]["sites"]:
     )
 
     critical_rate_per_s = irf.analysis.critical_rate.estimate_critical_rate(
-        hatR_B=cosmic_ray_rate_onregion[site_key],
-        alpha=PHD_ON_OVER_OFF_RATIO,
-        T_obs=PHD_OBSERVATION_TIME_S,
-        U_sys_rel_unc=0.0,
-        S=PHD_DETECTION_THRESHOLD_STD,
+        expected_background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[site_key],
+        onregion_over_offregion_ratio=PHD_ON_OVER_OFF_RATIO,
+        observation_time_s=PHD_OBSERVATION_TIME_S,
+        instrument_systematic_uncertainty_relative=0.0,
+        detection_threshold_std=PHD_DETECTION_THRESHOLD_STD,
         estimator_statistics="LiMaEq17",
     )
 

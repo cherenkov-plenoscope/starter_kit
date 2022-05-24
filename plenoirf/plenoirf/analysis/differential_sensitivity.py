@@ -115,11 +115,11 @@ def estimate_critical_rate_vs_energy(
     for ebin in range(len(bg_vs_energy_per_s)):
         if bg_vs_energy_per_s[ebin] > 0.0:
             rate_per_s[ebin] = critical_rate.estimate_critical_rate(
-                hatR_B=bg_vs_energy_per_s[ebin],
-                alpha=onregion_over_offregion_ratio,
-                T_obs=observation_time_s,
-                U_sys_rel_unc=instrument_systematic_uncertainty,
-                S=detection_threshold_std,
+                expected_background_rate_in_onregion_per_s=bg_vs_energy_per_s[ebin],
+                onregion_over_offregion_ratio=onregion_over_offregion_ratio,
+                observation_time_s=observation_time_s,
+                instrument_systematic_uncertainty_relative=instrument_systematic_uncertainty,
+                detection_threshold_std=detection_threshold_std,
                 estimator_statistics=method,
             )
         else:

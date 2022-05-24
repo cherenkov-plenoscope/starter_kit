@@ -1,9 +1,8 @@
 import numpy as np
-import lima1983analysis
 import binning_utils
 
 
-def _power_law(energy, flux_density, spectral_index, pivot_energy):
+def power_law_spectrum(energy, flux_density, spectral_index, pivot_energy):
     """
     power-law:
     f(energy) = flux_density * (energy/pivot_energy) ** spectral_index
@@ -11,7 +10,7 @@ def _power_law(energy, flux_density, spectral_index, pivot_energy):
     return flux_density * (energy / pivot_energy) ** (spectral_index)
 
 
-def estimate_signal_rate_per_s_for_power_law(
+def estimate_signal_rate_for_power_law_per_s(
     effective_area_m2,
     effective_area_energy_bin_centers_GeV,
     effective_area_energy_bin_width_GeV,
@@ -28,11 +27,14 @@ def estimate_signal_rate_per_s_for_power_law(
     Parameters
     ----------
     effective_area_m2 : list of N floats
-        The effective area where signal is collected in the on-region.
+        The effective area where signal is collected in the on-region of your
+        instrument.
     effective_area_energy_bin_centers_GeV : list of N floats
-        The centers of the energy-bins used for the effective area.
+        The centers of the energy-bins used for the effective area of your
+        instrument.
     effective_area_energy_bin_width_GeV : list of N floats
-        The widths of the energy-bins used for the effective area.
+        The widths of the energy-bins used for the effective area of your
+        instrument.
     power_law_flux_density_per_m2_per_GeV_per_s : float
         The power-law's flux-density.
     power_law_spectral_index : float
@@ -45,7 +47,7 @@ def estimate_signal_rate_per_s_for_power_law(
     The signal-rate $R_S$ : float
     """
 
-    differential_flux_per_m2_per_s_per_GeV = _power_law(
+    differential_flux_per_m2_per_s_per_GeV = power_law_spectrum(
         energy=effective_area_energy_bin_centers_GeV,
         flux_density=power_law_flux_density_per_m2_per_GeV_per_s,
         spectral_index=power_law_spectral_index,
@@ -66,7 +68,7 @@ def _relative_ratio(a, b):
     return np.abs(a - b) / (0.5 * (a + b))
 
 
-def estimate_critical_power_law_flux_densities(
+def estimate_flux_densities_of_critical_power_laws(
     effective_area_m2,
     effective_area_energy_bin_edges_GeV,
     critical_rate_per_s,
@@ -143,7 +145,7 @@ def estimate_critical_power_law_flux_densities(
         while True:
             assert iteration < max_num_iterations
 
-            rate_per_s = estimate_signal_rate_per_s_for_power_law(
+            rate_per_s = estimate_signal_rate_for_power_law_per_s(
                 effective_area_m2=effective_area_m2,
                 effective_area_energy_bin_centers_GeV=effective_area_energy_bin_centers_GeV,
                 effective_area_energy_bin_width_GeV=effective_area_energy_bin_width_GeV,
