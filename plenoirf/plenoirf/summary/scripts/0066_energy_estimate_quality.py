@@ -103,10 +103,10 @@ for sk in SITES:
             default_low_exposure=0.0,
         )
 
-        # explicit name for conditional probability
-        # -----------------------------------------
-        cm["reco_given_true"] = copy.deepcopy(cm["counts_normalized_on_ax0"])
-        cm["reco_given_true_abs_unc"] = copy.deepcopy(cm["counts_normalized_on_ax0_au"])
+        # explicit rename for conditional probability
+        # -------------------------------------------
+        cm["reco_given_true"] = cm.pop("counts_normalized_on_ax0")
+        cm["reco_given_true_abs_unc"] = cm.pop("counts_normalized_on_ax0_au")
 
         json_numpy.write(os.path.join(pa["out_dir"], sk, pk + ".json"), cm)
 
