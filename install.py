@@ -128,6 +128,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "lima1983analysis-sebastian-achim-mueller",
     },
     {
+        "path": "flux_sensitivity",
+        "name": "flux_sensitivity_sebastian-achim-mueller",
+    },
+    {
         "path": "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
         "name": "merlict_camera_server",
     },

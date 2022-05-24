@@ -21,7 +21,8 @@ setuptools.setup(
         "iminuit==1.4.9",
         "shapely",
         "binning_utils_sebastian-achim-mueller",
-        "json_numpy_sebastian-achim-mueller",
+        "json_numpy_sebastian-achim-mueller"
+        "flux_sensitivity_sebastian-achim-mueller>=0.0.0",
     ],
     package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},
     classifiers=[
