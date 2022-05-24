@@ -82,14 +82,14 @@ for sk in SITES:
             ],
         )
 
-        cm = confusion_matrix.make_confusion_matrix(
+        cm = confusion_matrix.init(
             ax0_key="true_airshower_maximum_altitude",
             ax0_values=true_airshower_maximum_altitude,
             ax0_bin_edges=distance_bin_edges,
             ax1_key="image_smallest_ellipse_object_distance",
             ax1_values=image_smallest_ellipse_object_distance,
             ax1_bin_edges=distance_bin_edges,
-            ax0_weights=event_weights,
+            weights=event_weights,
             min_exposure_ax0=min_number_samples,
             default_low_exposure=0.0,
         )
@@ -126,7 +126,7 @@ for sk in SITES:
         seb.ax_add_histogram(
             ax=ax_h,
             bin_edges=cm["ax0_bin_edges"],
-            bincounts=cm["exposure_ax0_no_weights"],
+            bincounts=cm["exposure_ax0"],
             linestyle="-",
             linecolor="k",
         )

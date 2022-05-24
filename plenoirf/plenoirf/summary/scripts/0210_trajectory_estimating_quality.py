@@ -98,7 +98,7 @@ def write_correlation_figure(
         np.logical_not((np.isnan(x))), np.logical_not((np.isnan(y)))
     )
 
-    cm = confusion_matrix.make_confusion_matrix(
+    cm = confusion_matrix.init(
         ax0_key="x",
         ax0_values=x[valid],
         ax0_bin_edges=x_bin_edges,
@@ -132,7 +132,7 @@ def write_correlation_figure(
     seb.ax_add_histogram(
         ax=ax_h,
         bin_edges=cm["ax0_bin_edges"],
-        bincounts=cm["exposure_ax0_no_weights"],
+        bincounts=cm["exposure_ax0"],
         linestyle="-",
         linecolor="k",
     )

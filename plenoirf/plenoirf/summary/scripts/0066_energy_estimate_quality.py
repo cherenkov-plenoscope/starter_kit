@@ -92,7 +92,7 @@ for sk in SITES:
             target_idxs=valid_event_table["primary"]["idx"],
         )
 
-        cm = confusion_matrix.make_confusion_matrix(
+        cm = confusion_matrix.init(
             ax0_key="true_energy",
             ax0_values=true_energy,
             ax0_bin_edges=energy_bin["edges"],
@@ -107,7 +107,7 @@ for sk in SITES:
         # -----------------------------------
         N = energy_bin["num_bins"]
         cm["reco_given_true"] = copy.deepcopy(cm["counts"])
-        cm["reco_given_true_abs_unc"] = copy.deepcopy(cm["counts_abs_unc"])
+        cm["reco_given_true_abs_unc"] = copy.deepcopy(cm["counts_au"])
         for true in range(N):
             _sum = 0.0
             for reco in range(N):
@@ -119,7 +119,7 @@ for sk in SITES:
                 cm["reco_given_true_abs_unc"][true, reco] /= _sum
 
         cm["true_given_reco"] = copy.deepcopy(cm["counts"])
-        cm["true_given_reco_abs_unc"] = copy.deepcopy(cm["counts_abs_unc"])
+        cm["true_given_reco_abs_unc"] = copy.deepcopy(cm["counts_au"])
         for reco in range(N):
             _sum = 0.0
             for true in range(N):
@@ -214,7 +214,7 @@ for sk in SITES:
         seb.ax_add_histogram(
             ax=ax_h,
             bin_edges=cm["ax0_bin_edges"],
-            bincounts=cm["exposure_ax0_no_weights"],
+            bincounts=cm["exposure_ax0"],
             linestyle="-",
             linecolor="k",
         )
