@@ -113,22 +113,22 @@ for sk in SITES:
                     method=critical_method,
                 )
 
-                dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
+                dVdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
                     signal_effective_area_m2=Areco,
                     signal_rate_per_s=critical_rate,
                 )
 
-                dFdE_uu = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
+                dVdE_uu = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
                     signal_effective_area_m2=Areco_lu,
                     signal_rate_per_s=critical_rate_uu,
                 )
 
-                dFdE_au = dFdE_uu - dFdE
+                dVdE_au = dVdE_uu - dVdE
 
-                critical_dKdE[:, obstix] = dFdE
-                critical_dKdE_au[:, obstix] = dFdE_au
+                critical_dKdE[:, obstix] = dVdE
+                critical_dKdE_au[:, obstix] = dVdE_au
 
             json_numpy.write(
                 os.path.join(pa["out_dir"], sk, ok, dk + ".json"),
