@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="plenoirf",
-    version="0.1.2",
+    version="0.1.3",
     description="Explore magnetic deflection of cosmic-rays below 10GeV.",
     long_description=long_description,
     url="https://github.com/cherenkov-plenoscope",
@@ -21,7 +21,8 @@ setuptools.setup(
         "iminuit==1.4.9",
         "shapely",
         "binning_utils_sebastian-achim-mueller",
-        "json_numpy_sebastian-achim-mueller"
+        "json_numpy_sebastian-achim-mueller",
+        "confusion_matrix_sebastian-achim-mueller>=0.0.0",
         "flux_sensitivity_sebastian-achim-mueller>=0.0.0",
     ],
     package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},

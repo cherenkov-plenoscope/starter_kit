@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
+import confusion_matrix
 import sparse_numeric_table as spt
 import os
 import sebastians_matplotlib_addons as seb
@@ -97,7 +98,7 @@ def write_correlation_figure(
         np.logical_not((np.isnan(x))), np.logical_not((np.isnan(y)))
     )
 
-    cm = irf.utils.make_confusion_matrix(
+    cm = confusion_matrix.make_confusion_matrix(
         ax0_key="x",
         ax0_values=x[valid],
         ax0_bin_edges=x_bin_edges,

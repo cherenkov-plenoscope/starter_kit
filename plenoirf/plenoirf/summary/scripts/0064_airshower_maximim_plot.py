@@ -2,6 +2,7 @@
 import sys
 import plenoirf as irf
 import sparse_numeric_table as spt
+import confusion_matrix
 import os
 from os.path import join as opj
 import numpy as np
@@ -81,7 +82,7 @@ for sk in SITES:
             ],
         )
 
-        cm = irf.utils.make_confusion_matrix(
+        cm = confusion_matrix.make_confusion_matrix(
             ax0_key="true_airshower_maximum_altitude",
             ax0_values=true_airshower_maximum_altitude,
             ax0_bin_edges=distance_bin_edges,

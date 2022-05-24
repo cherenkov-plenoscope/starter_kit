@@ -2,6 +2,7 @@
 import sys
 import copy
 import plenoirf as irf
+import confusion_matrix
 import sparse_numeric_table as spt
 import os
 import pandas
@@ -91,7 +92,7 @@ for sk in SITES:
             target_idxs=valid_event_table["primary"]["idx"],
         )
 
-        cm = irf.utils.make_confusion_matrix(
+        cm = confusion_matrix.make_confusion_matrix(
             ax0_key="true_energy",
             ax0_values=true_energy,
             ax0_bin_edges=energy_bin["edges"],
