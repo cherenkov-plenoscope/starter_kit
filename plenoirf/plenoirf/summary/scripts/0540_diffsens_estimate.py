@@ -64,7 +64,7 @@ for sk in SITES:
 # ----
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        for dk in flux_sensitivity.differential_sensitivity.SCENARIOS:
+        for dk in flux_sensitivity.differential.SCENARIOS:
             print(sk, ok, dk)
 
             Areco = S[sk][ok][dk]["gamma"]["area"]["mean"]
@@ -96,7 +96,7 @@ for sk in SITES:
             )
             critical_dKdE_au = np.nan * np.ones(critical_dKdE.shape)
             for obstix in range(num_observation_times):
-                critical_signal_rate = flux_sensitivity.differential_sensitivity.estimate_critical_signal_rate_vs_energy(
+                critical_signal_rate = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
                     expected_background_rate_in_onregion_per_s=Rreco_total,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
@@ -105,7 +105,7 @@ for sk in SITES:
                     estimator_statistics=estimator_statistics,
                 )
 
-                critical_signal_rate_uu = flux_sensitivity.differential_sensitivity.estimate_critical_signal_rate_vs_energy(
+                critical_signal_rate_uu = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
                     expected_background_rate_in_onregion_per_s=Rreco_total_uu,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
@@ -114,13 +114,13 @@ for sk in SITES:
                     estimator_statistics=estimator_statistics,
                 )
 
-                dVdE = flux_sensitivity.differential_sensitivity.estimate_differential_sensitivity(
+                dVdE = flux_sensitivity.differential.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
                     signal_effective_area_m2=Areco,
                     critical_signal_rate_per_s=critical_signal_rate,
                 )
 
-                dVdE_uu = flux_sensitivity.differential_sensitivity.estimate_differential_sensitivity(
+                dVdE_uu = flux_sensitivity.differential.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
                     signal_effective_area_m2=Areco_lu,
                     critical_signal_rate_per_s=critical_signal_rate_uu,

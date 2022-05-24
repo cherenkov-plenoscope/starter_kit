@@ -3,6 +3,7 @@ import sys
 import copy
 import numpy as np
 import propagate_uncertainties as pru
+import flux_sensitivity
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
@@ -28,7 +29,6 @@ energy_binning = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
-energy_bin__width__au = np.zeros(energy_bin["num_bins"])  # abs. uncertainty
 
 energy_migration = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
@@ -44,26 +44,14 @@ airshower_fluxes = json_numpy.read_tree(
 
 # prepare
 # -------
-def assert_energy_migration_is_valid(M):
-    assert M["ax0_key"] == "true_energy"
-    assert M["ax1_key"] == "reco_energy"
-
-    assert M["counts"].shape[0] == M["counts"].shape[1]
-    num_energy_bins = M["counts"].shape[0]
-
-    for etrue in range(num_energy_bins):
-        check = np.sum(M["reco_given_true"][etrue, :])
-        if check > 0:
-            assert 0.99 < check < 1.01, "sum(P(reco|true)) = {:f}".format(
-                check
-            )
-
-
 diff_flux = {}
+diff_flux_au = {}
 for sk in SITES:
     diff_flux[sk] = {}
+    diff_flux_au[sk] = {}
     for pk in COSMIC_RAYS:
         diff_flux[sk][pk] = airshower_fluxes[sk][pk]["differential_flux"]
+        diff_flux_au[sk][pk] = np.zeros(diff_flux[sk][pk].shape)
 
 # work
 # ----
@@ -91,67 +79,58 @@ for sk in SITES:
         for pk in COSMIC_RAYS:
             print(sk, pk, ok)
 
-            # init rates to zero
-            Rreco[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
-            Rtrue[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            (
+                Rtrue[sk][ok][pk],
+                Rtrue_au[sk][ok][pk],
+            ) = flux_sensitivity.differential.estimate_rate_in_true_energy(
+                energy_bin_edges_GeV=energy_bin["edges"],
+                effective_acceptance_m2_sr=acceptance[sk][ok][pk][gk]["mean"],
+                effective_acceptance_m2_sr_au=acceptance[sk][ok][pk][gk][
+                    "absolute_uncertainty"
+                ],
+                differential_flux_per_m2_per_sr_per_s_per_GeV=diff_flux[sk][
+                    pk
+                ],
+                differential_flux_per_m2_per_sr_per_s_per_GeV_au=diff_flux_au[
+                    sk
+                ][pk],
+            )
 
-            Rreco_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
-            Rtrue_au[sk][ok][pk] = np.zeros(energy_bin["num_bins"])
+            flux_sensitivity.differential.assert_energy_reco_given_true_ax0true_ax1reco_is_normalized(
+                energy_reco_given_true_ax0true_ax1reco=energy_migration[sk][
+                    pk
+                ]["reco_given_true"],
+                margin=1e-2,
+            )
 
-            # Get cosmic-ray's diff. flux dFdE
-            dFdE = diff_flux[sk][pk]
-            dFdE_au = np.zeros(dFdE.shape)
+            (
+                Rreco[sk][ok][pk],
+                Rreco_au[sk][ok][pk],
+            ) = flux_sensitivity.differential.estimate_rate_in_reco_energy(
+                energy_bin_edges_GeV=energy_bin["edges"],
+                effective_acceptance_m2_sr=acceptance[sk][ok][pk][gk]["mean"],
+                effective_acceptance_m2_sr_au=acceptance[sk][ok][pk][gk][
+                    "absolute_uncertainty"
+                ],
+                differential_flux_per_m2_per_sr_per_s_per_GeV=diff_flux[sk][
+                    pk
+                ],
+                differential_flux_per_m2_per_sr_per_s_per_GeV_au=diff_flux_au[
+                    sk
+                ][pk],
+                energy_reco_given_true_ax0true_ax1reco=energy_migration[sk][
+                    pk
+                ]["reco_given_true"],
+                energy_reco_given_true_ax0true_ax1reco_au=energy_migration[sk][
+                    pk
+                ]["reco_given_true_abs_unc"],
+            )
 
-            # Get instrument's energy migration M
-            M = copy.deepcopy(energy_migration[sk][pk])
-            assert_energy_migration_is_valid(M=M)
-
-            # Get instrument's acceptance Q
-            Q = acceptance[sk][ok][pk][gk]["mean"]
-            Q_au = acceptance[sk][ok][pk][gk]["absolute_uncertainty"]
-
-            # Compute cosmic-ray-rate in reco energy Rreco
-            for ereco in range(energy_bin["num_bins"]):
-                _tmp_sum = np.zeros(energy_bin["num_bins"])
-                _tmp_sum_au = np.zeros(energy_bin["num_bins"])
-                for etrue in range(energy_bin["num_bins"]):
-                    _prods = [
-                        dFdE[etrue],
-                        M["reco_given_true"][etrue, ereco],
-                        Q[etrue],
-                        energy_bin["width"][etrue],
-                    ]
-                    _prods_au = [
-                        dFdE_au[etrue],
-                        M["reco_given_true_abs_unc"][etrue, ereco],
-                        Q_au[etrue],
-                        energy_bin__width__au[etrue],
-                    ]
-                    (_tmp_sum[etrue], _tmp_sum_au[etrue],) = pru.prod(
-                        x=_prods, x_au=_prods_au
-                    )
-                (
-                    Rreco[sk][ok][pk][ereco],
-                    Rreco_au[sk][ok][pk][ereco],
-                ) = pru.sum(x=_tmp_sum, x_au=_tmp_sum_au)
-
-            # Compute cosmic-ray-rate in true energy Rtrue
-            for etrue in range(energy_bin["num_bins"]):
-                (
-                    Rtrue[sk][ok][pk][etrue],
-                    Rtrue_au[sk][ok][pk][etrue],
-                ) = pru.prod(
-                    x=[dFdE[etrue], Q[etrue], energy_bin["width"][etrue]],
-                    x_au=[dFdE_au[etrue], Q_au[etrue], 0.0],
-                )
-
-            # cross check
-            # -----------
-            # Integral rate over all energy-bins must not change (much) under
-            # energy migration.
-            total_Rtrue = np.sum(Rtrue[sk][ok][pk][:])
-            total_Rreco = np.sum(Rreco[sk][ok][pk][:])
-            assert 0.7 < total_Rtrue / total_Rreco < 1.3
+            flux_sensitivity.differential.assert_integral_rates_are_similar_in_reco_and_true_energy(
+                rate_in_reco_energy_per_s=Rreco[sk][ok][pk],
+                rate_in_true_energy_per_s=Rtrue[sk][ok][pk],
+                margin=0.3,
+            )
 
 # export
 # ------

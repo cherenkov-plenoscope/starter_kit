@@ -79,7 +79,7 @@ for sk in SITES:
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        for dk in flux_sensitivity.differential_sensitivity.SCENARIOS:
+        for dk in flux_sensitivity.differential.SCENARIOS:
             components = []
 
             # Crab reference fluxes
@@ -222,9 +222,9 @@ for sk in SITES:
                 ax.set_ylim(np.sort(_y_lim))
                 ax.loglog()
                 ax.legend(loc="best", fontsize=10)
-                etype = flux_sensitivity.differential_sensitivity.SCENARIOS[dk][
-                    "energy_axes_label"
-                ]
+                etype = flux_sensitivity.differential.SCENARIOS[
+                    dk
+                ]["energy_axes_label"]
                 ax.set_xlabel(
                     etype
                     + " "

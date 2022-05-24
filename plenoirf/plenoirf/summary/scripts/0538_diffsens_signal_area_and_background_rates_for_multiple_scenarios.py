@@ -44,7 +44,7 @@ R = json_numpy.read_tree(
 # -------
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        for dk in flux_sensitivity.differential_sensitivity.SCENARIOS:
+        for dk in flux_sensitivity.differential.SCENARIOS:
             for pk in PARTICLES:
                 os.makedirs(
                     os.path.join(pa["out_dir"], sk, ok, dk, pk), exist_ok=True
@@ -54,10 +54,10 @@ for sk in SITES:
     M_gamma = M[sk]["gamma"]
 
     for ok in ONREGION_TYPES:
-        for dk in flux_sensitivity.differential_sensitivity.SCENARIOS:
+        for dk in flux_sensitivity.differential.SCENARIOS:
             print(sk, ok, dk)
 
-            scenario = flux_sensitivity.differential_sensitivity.make_energy_confusion_matrices_for_signal_and_background(
+            scenario = flux_sensitivity.differential.make_energy_confusion_matrices_for_signal_and_background(
                 probability_reco_given_true=M_gamma["reco_given_true"],
                 probability_reco_given_true_abs_unc=M_gamma[
                     "reco_given_true_abs_unc"
@@ -75,7 +75,7 @@ for sk in SITES:
             (
                 A_gamma_scenario,
                 A_gamma_scenario_au,
-            ) = flux_sensitivity.differential_sensitivity.make_area_in_reco_energy(
+            ) = flux_sensitivity.differential.make_area_in_reco_energy(
                 area=Q[sk][ok]["gamma"]["point"]["mean"],
                 area_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
                 G_matrix=scenario["G_matrix"],
@@ -97,7 +97,7 @@ for sk in SITES:
                 (
                     Rreco_scenario,
                     Rreco_scenario_au,
-                ) = flux_sensitivity.differential_sensitivity.integrate_rates_in_reco_energy_with_mask(
+                ) = flux_sensitivity.differential.integrate_rates_in_reco_energy_with_mask(
                     Rreco=R[sk][ok][ck]["reco"]["mean"],
                     Rreco_au=R[sk][ok][ck]["reco"]["absolute_uncertainty"],
                     integration_mask=scenario["B_matrix"],

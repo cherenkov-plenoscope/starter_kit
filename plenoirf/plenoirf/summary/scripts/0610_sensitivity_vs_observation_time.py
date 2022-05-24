@@ -82,7 +82,7 @@ y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-10])  # np.array([1e3, 1e-16])
 # ----
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        for dk in flux_sensitivity.differential_sensitivity.SCENARIOS:
+        for dk in flux_sensitivity.differential.SCENARIOS:
             os.makedirs(os.path.join(pa["out_dir"], sk, ok, dk), exist_ok=True)
 
             observation_times = dS[sk][ok][dk]["observation_times"]
