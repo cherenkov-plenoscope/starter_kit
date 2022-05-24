@@ -7,8 +7,8 @@ from . import critical_rate
 
 def estimate_differential_sensitivity(
     energy_bin_edges_GeV,
-    signal_area_vs_energy_m2,
-    signal_rate_vs_energy_per_s,
+    signal_effective_area_m2,
+    signal_rate_per_s,
 ):
     """
     Estimates the differential flux-sensitivity in N energy-bin.
@@ -17,10 +17,10 @@ def estimate_differential_sensitivity(
     ----------
     energy_bin_edges_GeV : array of (N+1) floats / GeV
         The edges of the energy-bins.
-    signal_area_vs_energy_m2 : array of N floats / m^{2}
-        The effective area for the signal in an energy-bin.
-    signal_rate_vs_energy_per_s : array of N floats / s^{-1}
-        The minimal signsl-rate to claim a detection in an energy-bin.
+    signal_effective_area_m2 : array of N floats / m^{2}
+        The signal's effective area for each energy-bin.
+    signal_rate_per_s : array of N floats / s^{-1}
+        The signal's minimal rate to claim a detection for each energy-bin.
 
     Returns
     -------
@@ -36,8 +36,8 @@ def estimate_differential_sensitivity(
         np.gradient(energy_bin_edges_GeV) > 0.0
     ), "Energy bin-edges must be increasing."
 
-    assert num_energy_bins == len(signal_area_vs_energy_m2)
-    assert num_energy_bins == len(signal_rate_vs_energy_per_s)
+    assert num_energy_bins == len(signal_effective_area_m2)
+    assert num_energy_bins == len(signal_rate_per_s)
 
     # work
     # ----
@@ -46,9 +46,9 @@ def estimate_differential_sensitivity(
     for e in range(num_energy_bins):
         dE_GeV = energy_bin_edges_GeV[e + 1] - energy_bin_edges_GeV[e]
         assert dE_GeV > 0.0
-        if signal_area_vs_energy_m2[e] > 0:
+        if signal_effective_area_m2[e] > 0:
             dV_per_s_per_m2 = (
-                signal_rate_vs_energy_per_s[e] / signal_area_vs_energy_m2[e]
+                signal_rate_per_s[e] / signal_effective_area_m2[e]
             )
         else:
             dV_per_s_per_m2 = np.nan

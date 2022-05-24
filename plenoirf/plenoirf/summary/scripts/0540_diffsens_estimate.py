@@ -115,14 +115,14 @@ for sk in SITES:
 
                 dFdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_area_vs_energy_m2=Areco,
-                    signal_rate_vs_energy_per_s=critical_rate,
+                    signal_effective_area_m2=Areco,
+                    signal_rate_per_s=critical_rate,
                 )
 
                 dFdE_uu = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_area_vs_energy_m2=Areco_lu,
-                    signal_rate_vs_energy_per_s=critical_rate_uu,
+                    signal_effective_area_m2=Areco_lu,
+                    signal_rate_per_s=critical_rate_uu,
                 )
 
                 dFdE_au = dFdE_uu - dFdE
