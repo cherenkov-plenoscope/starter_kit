@@ -49,7 +49,7 @@ observation_times = irf.utils.make_civil_times_points_in_quasi_logspace()
 observation_times = np.array(observation_times)
 num_observation_times = len(observation_times)
 
-critical_method = sum_config["on_off_measuremnent"][
+estimator_statistics = sum_config["on_off_measuremnent"][
     "estimator_for_critical_signal_rate"
 ]
 
@@ -101,7 +101,7 @@ for sk in SITES:
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
                     detection_threshold_std=detection_threshold_std,
-                    method=critical_method,
+                    estimator_statistics=estimator_statistics,
                 )
 
                 critical_rate_uu = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
@@ -110,7 +110,7 @@ for sk in SITES:
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
                     detection_threshold_std=detection_threshold_std,
-                    method=critical_method,
+                    estimator_statistics=estimator_statistics,
                 )
 
                 dVdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(

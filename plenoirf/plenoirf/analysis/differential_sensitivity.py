@@ -125,7 +125,7 @@ def estimate_critical_rate_vs_energy(
     observation_time_s,
     instrument_systematic_uncertainty_relative,
     detection_threshold_std,
-    method,
+    estimator_statistics,
 ):
     bg_vs_energy_per_s = background_rate_in_onregion_vs_energy_per_s
     rate_per_s = np.nan * np.ones(shape=bg_vs_energy_per_s.shape)
@@ -140,7 +140,7 @@ def estimate_critical_rate_vs_energy(
                 observation_time_s=observation_time_s,
                 instrument_systematic_uncertainty_relative=instrument_systematic_uncertainty_relative,
                 detection_threshold_std=detection_threshold_std,
-                estimator_statistics=method,
+                estimator_statistics=estimator_statistics,
             )
         else:
             rate_per_s[ebin] = float("nan")
