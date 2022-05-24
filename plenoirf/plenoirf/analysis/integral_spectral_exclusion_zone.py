@@ -79,7 +79,7 @@ def estimate_tangent_of_consecutive_power_laws(
 def estimate_integral_spectral_exclusion_zone(
     effective_area_m2,
     effective_area_energy_bin_edges_GeV,
-    critical_rate_per_s,
+    critical_signal_rate_per_s,
     power_law_spectral_indices=np.linspace(start=-5, stop=-0.5, num=137),
     power_law_pivot_energy_GeV=1.0,
 ):
@@ -93,12 +93,12 @@ def estimate_integral_spectral_exclusion_zone(
         The effective area where signal is collected in the on-region.
     effective_area_energy_bin_edges_GeV : list of (N+1) floats
         The edges of the energy-bins used for the effective area.
-    critical_rate_per_s : float
-        The minimal rate of signal in the on-region R_S required to
+    critical_signal_rate_per_s : float
+        The minimal rate of signal in the on-region $R_S$ required to
         claim a detection.
     power_law_spectral_indices : list of floats
     """
-    assert critical_rate_per_s > 0.0
+    assert critical_signal_rate_per_s > 0.0
 
     power_law_spectral_indices = np.array(power_law_spectral_indices)
     assert len(power_law_spectral_indices) >= 2
@@ -109,7 +109,7 @@ def estimate_integral_spectral_exclusion_zone(
     power_law_flux_densities = integral_sensitivity.estimate_flux_densities_of_critical_power_laws(
         effective_area_m2=effective_area_m2,
         effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
-        critical_rate_per_s=critical_rate_per_s,
+        critical_signal_rate_per_s=critical_signal_rate_per_s,
         power_law_spectral_indices=power_law_spectral_indices,
         power_law_pivot_energy_GeV=power_law_pivot_energy_GeV,
     )

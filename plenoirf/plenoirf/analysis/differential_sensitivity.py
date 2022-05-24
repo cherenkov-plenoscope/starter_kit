@@ -115,7 +115,9 @@ def estimate_critical_rate_vs_energy(
     for ebin in range(len(bg_vs_energy_per_s)):
         if bg_vs_energy_per_s[ebin] > 0.0:
             rate_per_s[ebin] = critical_rate.estimate_critical_rate(
-                expected_background_rate_in_onregion_per_s=bg_vs_energy_per_s[ebin],
+                expected_background_rate_in_onregion_per_s=bg_vs_energy_per_s[
+                    ebin
+                ],
                 onregion_over_offregion_ratio=onregion_over_offregion_ratio,
                 observation_time_s=observation_time_s,
                 instrument_systematic_uncertainty_relative=instrument_systematic_uncertainty,

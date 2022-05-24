@@ -69,10 +69,10 @@ def estimate_signal_rate_for_power_law_per_s(
         differential_flux_per_m2_per_s_per_GeV * effective_area_m2
     )
 
-    rate_per_s = np.sum(
+    signal_rate_per_s = np.sum(
         differential_rate_per_s_per_GeV * effective_area_energy_bin_width_GeV
     )
-    return rate_per_s
+    return signal_rate_per_s
 
 
 def _relative_ratio(a, b):
@@ -82,7 +82,7 @@ def _relative_ratio(a, b):
 def estimate_flux_densities_of_critical_power_laws(
     effective_area_m2,
     effective_area_energy_bin_edges_GeV,
-    critical_rate_per_s,
+    critical_signal_rate_per_s,
     power_law_spectral_indices,
     power_law_pivot_energy_GeV=1.0,
     margin=1e-2,
@@ -102,7 +102,7 @@ def estimate_flux_densities_of_critical_power_laws(
         The effective area where signal is collected in the on-region.
     effective_area_energy_bin_edges_GeV : list of (N+1) floats
         The edges of the energy-bins used for the effective area.
-    critical_rate_per_s : float
+    critical_signal_rate_per_s : float
         The critical rate of signal in the on-region which is required
         to claim a detection.
     power_law_spectral_indices : list of floats
@@ -111,9 +111,9 @@ def estimate_flux_densities_of_critical_power_laws(
         Same for all power-laws.
     margin : float
         Stopping-criteria for iterative search of flux-density. When the
-        relative ratio of the critical_rate_per_s and the acual rate_per_s
-        caused by a particular power-law is below this margin, the search
-        is complete.
+        relative ratio of the critical_signal_rate_per_s and the acual
+        signal_rate_per_s caused by a particular power-law is below this
+        margin, the search is complete.
     upper_flux_density_per_m2_per_GeV_per_s : float
         Starting point for iterative search of flux-density. This should be
         larger than the expected flux.
@@ -125,7 +125,7 @@ def estimate_flux_densities_of_critical_power_laws(
     -------
     power_law_flux_densities : list of floats
     """
-    assert critical_rate_per_s > 0.0
+    assert critical_signal_rate_per_s > 0.0
 
     assert power_law_pivot_energy_GeV > 0.0
     assert margin > 0.0
@@ -142,7 +142,7 @@ def estimate_flux_densities_of_critical_power_laws(
         while True:
             assert iteration < max_num_iterations
 
-            rate_per_s = estimate_signal_rate_for_power_law_per_s(
+            signal_rate_per_s = estimate_signal_rate_for_power_law_per_s(
                 effective_area_m2=effective_area_m2,
                 effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
                 power_law_flux_density_per_m2_per_GeV_per_s=flux_dens,
@@ -150,13 +150,15 @@ def estimate_flux_densities_of_critical_power_laws(
                 power_law_pivot_energy_GeV=power_law_pivot_energy_GeV,
             )
 
-            ratio = _relative_ratio(rate_per_s, critical_rate_per_s)
+            ratio = _relative_ratio(
+                signal_rate_per_s, critical_signal_rate_per_s
+            )
 
             if ratio < margin:
                 break
 
             rr = ratio / 3
-            if rate_per_s > critical_rate_per_s:
+            if signal_rate_per_s > critical_signal_rate_per_s:
                 flux_dens *= 1 - rr
             else:
                 flux_dens *= 1 + rr
