@@ -46,3 +46,6 @@
 [submodule "binning_utils"]
 	path = binning_utils
 	url = git@github.com:cherenkov-plenoscope/binning_utils.git
+[submodule "flux_sensitivity"]
+	path = flux_sensitivity
+	url = git@github.com:cherenkov-plenoscope/flux_sensitivity.git
