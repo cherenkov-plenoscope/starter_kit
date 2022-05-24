@@ -103,20 +103,10 @@ for sk in SITES:
             default_low_exposure=0.0,
         )
 
-        # normalize conditional probabilities
-        # -----------------------------------
-        N = energy_bin["num_bins"]
-        cm["reco_given_true"] = copy.deepcopy(cm["counts"])
-        cm["reco_given_true_abs_unc"] = copy.deepcopy(cm["counts_au"])
-        for true in range(N):
-            _sum = 0.0
-            for reco in range(N):
-                _sum += cm["counts"][true, reco]
-            if _sum == 0:
-                continue
-            for reco in range(N):
-                cm["reco_given_true"][true, reco] /= _sum
-                cm["reco_given_true_abs_unc"][true, reco] /= _sum
+        # explicit name for conditional probability
+        # -----------------------------------------
+        cm["reco_given_true"] = copy.deepcopy(cm["counts_normalized_on_ax0"])
+        cm["reco_given_true_abs_unc"] = copy.deepcopy(cm["counts_normalized_on_ax0_au"])
 
         json_numpy.write(os.path.join(pa["out_dir"], sk, pk + ".json"), cm)
 
