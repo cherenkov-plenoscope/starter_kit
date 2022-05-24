@@ -99,7 +99,7 @@ for sk in SITES:
                     background_rate_in_onregion_vs_energy_per_s=Rreco_total,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
-                    instrument_systematic_uncertainty=systematic_uncertainty,
+                    instrument_systematic_uncertainty_relative=systematic_uncertainty,
                     detection_threshold_std=detection_threshold_std,
                     method=critical_method,
                 )
@@ -108,7 +108,7 @@ for sk in SITES:
                     background_rate_in_onregion_vs_energy_per_s=Rreco_total_uu,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
-                    instrument_systematic_uncertainty=systematic_uncertainty,
+                    instrument_systematic_uncertainty_relative=systematic_uncertainty,
                     detection_threshold_std=detection_threshold_std,
                     method=critical_method,
                 )

@@ -123,7 +123,7 @@ def estimate_critical_rate_vs_energy(
     background_rate_in_onregion_vs_energy_per_s,
     onregion_over_offregion_ratio,
     observation_time_s,
-    instrument_systematic_uncertainty,
+    instrument_systematic_uncertainty_relative,
     detection_threshold_std,
     method,
 ):
@@ -138,7 +138,7 @@ def estimate_critical_rate_vs_energy(
                 ],
                 onregion_over_offregion_ratio=onregion_over_offregion_ratio,
                 observation_time_s=observation_time_s,
-                instrument_systematic_uncertainty_relative=instrument_systematic_uncertainty,
+                instrument_systematic_uncertainty_relative=instrument_systematic_uncertainty_relative,
                 detection_threshold_std=detection_threshold_std,
                 estimator_statistics=method,
             )
