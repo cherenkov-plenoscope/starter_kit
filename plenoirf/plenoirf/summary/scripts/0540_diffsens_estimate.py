@@ -84,7 +84,7 @@ for sk in SITES:
                         ]
                     )
                 (Rreco_total[ereco], Rreco_total_au[ereco],) = pru.sum(
-                    x=(tmp, tmp_au)
+                    x=tmp, x_au=tmp_au
                 )
 
             Rreco_total_uu = Rreco_total + Rreco_total_au

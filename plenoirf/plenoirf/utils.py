@@ -290,7 +290,7 @@ def integrate_rate_where_known(dRdE, dRdE_au, E_edges):
     _dRdE[unknown] = 0.0
     _dRdE_au[unknown] = 0.0
 
-    T, T_au = pru.integrate(f=(_dRdE, _dRdE_au), x_bin_edges=E_edges)
+    T, T_au = pru.integrate(f=_dRdE, f_au=_dRdE_au, x_bin_edges=E_edges)
     return T, T_au
 
 

@@ -256,10 +256,10 @@ def make_area_in_reco_energy(
 
         for et in range(num_bins):
             tmp[et], tmp_au[et] = pru.prod(
-                x=([G[et, er], A[et],], [G_au[et, er], A_au[et],],)
+                x=[G[et, er], A[et],], x_au=[G_au[et, er], A_au[et],],
             )
 
-        A_out[er], A_out_au[er] = pru.sum(x=(tmp, tmp_au))
+        A_out[er], A_out_au[er] = pru.sum(x=tmp, x_au=tmp_au)
     return A_out, A_out_au
 
 
@@ -289,12 +289,10 @@ def integrate_rates_in_reco_energy_with_mask(
         tmp_sum_au = np.zeros(num_energy_bins)
         for etrue in range(num_energy_bins):
             tmp_sum[etrue], tmp_sum_au[etrue] = pru.prod(
-                x=(
-                    [imask[ereco, etrue], Rreco[etrue],],
-                    [imask_au[ereco, etrue], Rreco_au[etrue],],
-                )
+                x=[imask[ereco, etrue], Rreco[etrue],],
+                x_au=[imask_au[ereco, etrue], Rreco_au[etrue],],
             )
         Rreco_total[ereco], Rreco_total_au[ereco] = pru.sum(
-            x=(tmp_sum, tmp_sum_au)
+            x=tmp_sum, x_au=tmp_sum_au
         )
     return Rreco_total, Rreco_total_au

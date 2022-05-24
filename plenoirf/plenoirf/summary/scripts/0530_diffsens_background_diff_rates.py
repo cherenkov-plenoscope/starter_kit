@@ -128,12 +128,12 @@ for sk in SITES:
                         energy_bin__width__au[etrue],
                     ]
                     (_tmp_sum[etrue], _tmp_sum_au[etrue],) = pru.prod(
-                        x=(_prods, _prods_au)
+                        x=_prods, x_au=_prods_au
                     )
                 (
                     Rreco[sk][ok][pk][ereco],
                     Rreco_au[sk][ok][pk][ereco],
-                ) = pru.sum(x=(_tmp_sum, _tmp_sum_au))
+                ) = pru.sum(x=_tmp_sum, x_au=_tmp_sum_au)
 
             # Compute cosmic-ray-rate in true energy Rtrue
             for etrue in range(energy_bin["num_bins"]):
@@ -141,10 +141,8 @@ for sk in SITES:
                     Rtrue[sk][ok][pk][etrue],
                     Rtrue_au[sk][ok][pk][etrue],
                 ) = pru.prod(
-                    x=(
-                        [dFdE[etrue], Q[etrue], energy_bin["width"][etrue]],
-                        [dFdE_au[etrue], Q_au[etrue], 0.0],
-                    )
+                    x=[dFdE[etrue], Q[etrue], energy_bin["width"][etrue]],
+                    x_au=[dFdE_au[etrue], Q_au[etrue], 0.0],
                 )
 
             # cross check
