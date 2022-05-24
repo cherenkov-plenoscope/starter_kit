@@ -41,9 +41,7 @@ def estimate_signal_rate_for_power_law_per_s(
     The signal-rate $R_S$ : float
     """
     assert np.all(signal_effective_area_m2 >= 0.0)
-    assert (
-        len(energy_bin_edges_GeV) == len(signal_effective_area_m2) + 1
-    )
+    assert len(energy_bin_edges_GeV) == len(signal_effective_area_m2) + 1
     assert np.all(energy_bin_edges_GeV > 0.0)
     assert np.all(np.gradient(energy_bin_edges_GeV) > 0.0)
 

@@ -6,9 +6,7 @@ from . import critical_rate
 
 
 def estimate_differential_sensitivity(
-    energy_bin_edges_GeV,
-    signal_effective_area_m2,
-    signal_rate_per_s,
+    energy_bin_edges_GeV, signal_effective_area_m2, critical_signal_rate_per_s,
 ):
     """
     Estimates the differential flux-sensitivity in N energy-bin.
@@ -19,7 +17,7 @@ def estimate_differential_sensitivity(
         The edges of the energy-bins.
     signal_effective_area_m2 : array of N floats / m^{2}
         The signal's effective area for each energy-bin.
-    signal_rate_per_s : array of N floats / s^{-1}
+    critical_signal_rate_per_s : array of N floats / s^{-1}
         The signal's minimal rate to claim a detection for each energy-bin.
 
     Returns
@@ -37,7 +35,7 @@ def estimate_differential_sensitivity(
     ), "Energy bin-edges must be increasing."
 
     assert num_energy_bins == len(signal_effective_area_m2)
-    assert num_energy_bins == len(signal_rate_per_s)
+    assert num_energy_bins == len(critical_signal_rate_per_s)
 
     # work
     # ----
@@ -48,7 +46,8 @@ def estimate_differential_sensitivity(
         assert dE_GeV > 0.0
         if signal_effective_area_m2[ebin] > 0:
             dV_per_s_per_m2 = (
-                signal_rate_per_s[ebin] / signal_effective_area_m2[ebin]
+                critical_signal_rate_per_s[ebin]
+                / signal_effective_area_m2[ebin]
             )
         else:
             dV_per_s_per_m2 = np.nan
@@ -119,7 +118,7 @@ def make_energy_confusion_matrices_for_signal_and_background(
     }
 
 
-def estimate_critical_rate_vs_energy(
+def estimate_critical_signal_rate_vs_energy(
     expected_background_rate_in_onregion_per_s,
     onregion_over_offregion_ratio,
     observation_time_s,
@@ -127,13 +126,15 @@ def estimate_critical_rate_vs_energy(
     detection_threshold_std,
     estimator_statistics,
 ):
-    rate_per_s = np.nan * np.ones(
+    critical_signal_rate_per_s = np.nan * np.ones(
         shape=expected_background_rate_in_onregion_per_s.shape
     )
 
     for ebin in range(len(expected_background_rate_in_onregion_per_s)):
         if expected_background_rate_in_onregion_per_s[ebin] > 0.0:
-            rate_per_s[ebin] = critical_rate.estimate_critical_rate(
+            critical_signal_rate_per_s[
+                ebin
+            ] = critical_rate.estimate_critical_signal_rate(
                 expected_background_rate_in_onregion_per_s=expected_background_rate_in_onregion_per_s[
                     ebin
                 ],
@@ -144,8 +145,8 @@ def estimate_critical_rate_vs_energy(
                 estimator_statistics=estimator_statistics,
             )
         else:
-            rate_per_s[ebin] = float("nan")
-    return rate_per_s
+            critical_signal_rate_per_s[ebin] = float("nan")
+    return critical_signal_rate_per_s
 
 
 def next_containment_and_weight(

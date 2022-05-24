@@ -26,7 +26,7 @@ import numpy as np
 import lima1983analysis
 
 
-def estimate_critical_rate(
+def estimate_critical_signal_rate(
     expected_background_rate_in_onregion_per_s,
     onregion_over_offregion_ratio,
     observation_time_s,
@@ -61,9 +61,8 @@ def estimate_critical_rate(
     Returns
     -------
     R_S : float
-        The minimal rate of signal-counts in the on-region required
-        to claim a detection.
-
+        The signal's minimal rate in the on-region required to claim a
+        detection.
     """
     hatR_B = float(expected_background_rate_in_onregion_per_s)
     alpha = float(onregion_over_offregion_ratio)

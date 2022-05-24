@@ -152,7 +152,7 @@ for site_key in irf_config["config"]["sites"]:
         all_fov_acceptance[site_key]["gamma"]["point"]["energy_bin_edges_GeV"]
     )
 
-    critical_signal_rate_per_s = irf.analysis.critical_rate.estimate_critical_rate(
+    critical_signal_rate_per_s = irf.analysis.critical_rate.estimate_critical_signal_rate(
         expected_background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
             site_key
         ],

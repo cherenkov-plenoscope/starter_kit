@@ -95,7 +95,7 @@ for sk in SITES:
             )
             critical_dKdE_au = np.nan * np.ones(critical_dKdE.shape)
             for obstix in range(num_observation_times):
-                critical_rate = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
+                critical_signal_rate = irf.analysis.differential_sensitivity.estimate_critical_signal_rate_vs_energy(
                     expected_background_rate_in_onregion_per_s=Rreco_total,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
@@ -104,7 +104,7 @@ for sk in SITES:
                     estimator_statistics=estimator_statistics,
                 )
 
-                critical_rate_uu = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
+                critical_signal_rate_uu = irf.analysis.differential_sensitivity.estimate_critical_signal_rate_vs_energy(
                     expected_background_rate_in_onregion_per_s=Rreco_total_uu,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
@@ -116,13 +116,13 @@ for sk in SITES:
                 dVdE = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
                     signal_effective_area_m2=Areco,
-                    signal_rate_per_s=critical_rate,
+                    critical_signal_rate_per_s=critical_signal_rate,
                 )
 
                 dVdE_uu = irf.analysis.differential_sensitivity.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
                     signal_effective_area_m2=Areco_lu,
-                    signal_rate_per_s=critical_rate_uu,
+                    critical_signal_rate_per_s=critical_signal_rate_uu,
                 )
 
                 dVdE_au = dVdE_uu - dVdE
