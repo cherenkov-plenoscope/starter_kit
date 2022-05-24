@@ -99,66 +99,6 @@ def is_direction_inside(cx, cy, onregion):
     )
 
 
-def estimate_required_opening_angle_deg(
-    true_cx,
-    true_cy,
-    reco_cx,
-    reco_cy,
-    reco_main_axis_azimuth,
-    reco_num_photons,
-    reco_core_radius,
-    config,
-    margin_deg=1e-3,
-    lower_deg=0.0,
-    upper_deg=180.0,
-    max_num_iterations=1000,
-):
-    cfg = dict(config)
-    num_iterations = 0
-
-    while (upper_deg - lower_deg) > margin_deg:
-
-        middle_deg = 0.5 * (lower_deg + upper_deg)
-
-        cfg["opening_angle_deg"] = middle_deg
-        _onregion = estimate_onregion(
-            reco_cx=reco_cx,
-            reco_cy=reco_cy,
-            reco_main_axis_azimuth=reco_main_axis_azimuth,
-            reco_num_photons=reco_num_photons,
-            reco_core_radius=reco_core_radius,
-            config=cfg,
-        )
-        hit = is_direction_inside(cx=true_cx, cy=true_cy, onregion=_onregion)
-
-        # binary search
-        if hit:
-            upper_deg = middle_deg
-        else:
-            lower_deg = middle_deg
-
-        num_iterations += 1
-        assert num_iterations < max_num_iterations
-
-    return middle_deg
-
-
-def make_array_from_event_table_for_onregion_estimate(event_table):
-    common_indices = spt.intersection(
-        [
-            event_table["features"][spt.IDX],
-            event_table["reconstructed_trajectory"][spt.IDX],
-        ]
-    )
-    ta = spt.cut_and_sort_table_on_indices(
-        table=event_table,
-        common_indices=common_indices,
-        level_keys=["primary", "features", "reconstructed_trajectory"],
-    )
-    event_array = spt.make_rectangular_DataFrame(table=ta).to_records()
-    return event_array
-
-
 def _is_point_inside_ellipse(
     point_x,
     point_y,
