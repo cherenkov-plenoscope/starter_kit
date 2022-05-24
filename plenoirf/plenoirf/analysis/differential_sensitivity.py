@@ -228,54 +228,6 @@ def make_mask_for_energy_confusion_matrix_for_bell_spectrum(
     return mask
 
 
-def derive_migration_matrix_by_ax0(
-    migration_matrix_counts, migration_matrix_counts_abs_unc, ax0_bin_widths,
-):
-    M = migration_matrix_counts
-    M_au = migration_matrix_counts_abs_unc
-
-    dMdE = np.zeros(M.shape)
-    dMdE_au = np.zeros(M.shape)
-    for i1 in range(len(ax0_bin_widths)):
-        _sum = np.sum(M[:, i1])
-        if _sum > 0.0:
-            dMdE[:, i1] = M[:, i1] / ax0_bin_widths[:]
-            dMdE_au[:, i1] = M_au[:, i1] / ax0_bin_widths[:]
-    return dMdE, dMdE_au
-
-
-def derive_all_energy_migration(energy_migration, energy_bin_width):
-    SITES = list(energy_migration.keys())
-
-    out = {}
-    for sk in SITES:
-        out[sk] = {}
-        PARTICLES = list(energy_migration[sk].keys())
-        for pk in PARTICLES:
-            out[sk][pk] = {}
-            M = energy_migration[sk][pk]["confusion_matrix"]
-            dMdE = {}
-            dMdE["ax0_key"] = M["ax0_key"]
-            dMdE["ax1_key"] = M["ax1_key"]
-
-            counts = M["counts"]
-            counts_abs_unc = M["counts_abs_unc"]
-
-            (
-                dMdE["counts"],
-                dMdE["counts_abs_unc"],
-            ) = derive_migration_matrix_by_ax0(
-                migration_matrix_counts=M["counts_normalized_on_ax0"],
-                migration_matrix_counts_abs_unc=M[
-                    "counts_normalized_on_ax0_abs_unc"
-                ],
-                ax0_bin_widths=energy_bin_width,
-            )
-            out[sk][pk] = dMdE
-
-    return out
-
-
 def make_area_in_reco_energy(
     area, area_au, G_matrix, G_matrix_au,
 ):
