@@ -43,17 +43,17 @@ def estimate_differential_sensitivity(
     # ----
     dVdE_per_s_per_m2_per_GeV = np.nan * np.ones(num_energy_bins)
 
-    for e in range(num_energy_bins):
-        dE_GeV = energy_bin_edges_GeV[e + 1] - energy_bin_edges_GeV[e]
+    for ebin in range(num_energy_bins):
+        dE_GeV = energy_bin_edges_GeV[ebin + 1] - energy_bin_edges_GeV[ebin]
         assert dE_GeV > 0.0
-        if signal_effective_area_m2[e] > 0:
+        if signal_effective_area_m2[ebin] > 0:
             dV_per_s_per_m2 = (
-                signal_rate_per_s[e] / signal_effective_area_m2[e]
+                signal_rate_per_s[ebin] / signal_effective_area_m2[ebin]
             )
         else:
             dV_per_s_per_m2 = np.nan
 
-        dVdE_per_s_per_m2_per_GeV[e] = dV_per_s_per_m2 / dE_GeV
+        dVdE_per_s_per_m2_per_GeV[ebin] = dV_per_s_per_m2 / dE_GeV
     return dVdE_per_s_per_m2_per_GeV
 
 
