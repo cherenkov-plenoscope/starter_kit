@@ -106,6 +106,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "propagate_uncertainties-sebastian-achim-mueller",
     },
     {
+        "path": "confusion_matrix",
+        "name": "confusion_matrix-sebastian-achim-mueller",
+    },
+    {
         "path": "sebastians_matplotlib_addons",
         "name": "sebastians_matplotlib_addons",
     },

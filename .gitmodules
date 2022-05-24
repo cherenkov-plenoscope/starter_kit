@@ -49,3 +49,6 @@
 [submodule "flux_sensitivity"]
 	path = flux_sensitivity
 	url = git@github.com:cherenkov-plenoscope/flux_sensitivity.git
+[submodule "confusion_matrix"]
+	path = confusion_matrix
+	url = git@github.com:cherenkov-plenoscope/confusion_matrix.git
