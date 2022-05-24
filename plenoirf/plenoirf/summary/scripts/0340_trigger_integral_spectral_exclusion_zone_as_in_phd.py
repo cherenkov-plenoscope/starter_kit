@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
-import flux_sensitiviy
+import flux_sensitivity
 import spectral_energy_distribution_units as sed
 from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
@@ -153,7 +153,7 @@ for site_key in irf_config["config"]["sites"]:
         all_fov_acceptance[site_key]["gamma"]["point"]["energy_bin_edges_GeV"]
     )
 
-    critical_signal_rate_per_s = flux_sensitiviy.critical_rate.estimate_critical_signal_rate(
+    critical_signal_rate_per_s = flux_sensitivity.critical_rate.estimate_critical_signal_rate(
         expected_background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
             site_key
         ],
@@ -167,7 +167,7 @@ for site_key in irf_config["config"]["sites"]:
     (
         isez_energy_GeV,
         isez_differential_flux_per_GeV_per_m2_per_s,
-    ) = irf.analysis.estimate_integral_spectral_exclusion_zone(
+    ) = flux_sensitivity.estimate_integral_spectral_exclusion_zone(
         signal_effective_area_m2=all_fov_gamma_effective_area_m2,
         energy_bin_edges_GeV=all_fov_energy_bin_edges,
         critical_signal_rate_per_s=critical_signal_rate_per_s,

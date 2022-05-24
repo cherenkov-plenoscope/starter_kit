@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import plenoirf as irf
+import flux_sensitivity
 import os
 import sebastians_matplotlib_addons as seb
 import json_numpy
@@ -46,8 +47,8 @@ for sk in SITES:
 
 for sk in SITES:
     for ok in ONREGION_TYPES:
-        for dk in flux_sensitiviy.differential_sensitivity.SCENARIOS:
-            elabel = flux_sensitiviy.differential_sensitivity.SCENARIOS[dk][
+        for dk in flux_sensitivity.differential_sensitivity.SCENARIOS:
+            elabel = flux_sensitivity.differential_sensitivity.SCENARIOS[dk][
                 "energy_axes_label"
             ]
 
