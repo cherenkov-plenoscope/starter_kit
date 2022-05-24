@@ -99,7 +99,7 @@ In practice, we use $(n+1)$ edges for $n$ bins in energy
 E[e] &=& [e_1, e_2, \cdots, e_{n+1}]\\
 \text{unit} &:& \text{energy} / \text{GeV}\\
 \text{dim} &:& \text{list of}\,\,(n + 1)\,\,\text{floats}\\
-\text{code} &:& \verb|E|
+\text{code} &:& \verb|energy_bin_edges_GeV|
 \end{eqnarray*}
 %
 and denote the width of the bins as
@@ -109,7 +109,7 @@ and denote the width of the bins as
 &=& [e_2-e_1, e_3-e_2, \cdots, e_{n+1}-e_n]\\
 \text{unit} &:& \text{energy} / \text{GeV}\\
 \text{dim} &:& \text{list of}\,\,n\,\,\text{floats}\\
-\text{code} &:& \verb|dE|
+\text{code} &:& \verb|energy_bin_width_GeV|
 \end{eqnarray*}
 %
 I will represent all the following quantities as discrete vectors or matrices.
@@ -131,7 +131,7 @@ This is the minimal required parallel flux of gamma-rays
 \dd{V_\gamma}{E}[e] &=& [dv_1, \, dv_2, \, \cdots, \, dv_n]\\
 \text{unit} &:& \text{area}^{-1} \text{time}^{-1} \text{energy}^{-1} / \text{m}^{-2}\,\text{s}^{-1}\,\text{GeV}^{-1}\\
 \text{dim} &:& \text{list of}\,\,n\,\,\text{floats}\\
-\text{code} &:& \verb|dV_gamma_dE|
+\text{code} &:& \verb|dVdE|
 \end{eqnarray*}
 %
 in order to claim a detection.
@@ -148,7 +148,7 @@ On the input side we got some room for different scenarios.
 T_\text{obs} && \\
 \text{unit} &:& \text{time} / s\\
 \text{dim} &:& \text{float}\\
-\text{code} &:& \verb|T_obs|
+\text{code} &:& \verb|observation_time_s|
 \end{eqnarray*}
 %
 The observation-time $T_\text{obs}$ is the accumulated duration our instrument was ready to trigger and record an event.
@@ -178,7 +178,7 @@ The relevant contributions to the background are the cosmic-rays. Some instrumen
 \dd{F_p}{E}[e] &=& [df_{p1}, df_{p2}, \cdots, df_{pn}]\\
 \text{unit} &:& \text{area}^{-1} \text{(solid angle)}^{-1} \text{time}^{-1} \text{energy}^{-1} / \text{m}^{-2}\, \text{sr}^{-1}\,\text{s}^{-1}\,\text{GeV}^{-1}\\
 \text{dim} &:& \text{list of}\,\,n\,\,\text{floats}\\
-\text{code} &:& \verb|dF_p_dE|
+\text{code} &:& \verb|dFdE_{p}|
 \end{eqnarray*}
 %
 The diffuse, differential flux for every cosmic-ray $p$ in $\mathbb{P}_\text{background}$. This might be taken from measurements of space-born instruments e.g. \cite{aguilar2014precision,aguilar2015precision}.
@@ -192,7 +192,7 @@ For such instruments this includes the geomagnetic cutoff, and the flux of air-s
 Q_p[e] &=& [q_1, q_2, \cdots, q_n]\\
 \text{unit} &:& \text{area} \, \text{(solid angle)} / \text{m}^{2}\,\text{sr}\\
 \text{dim} &:& \text{list of}\,\,n\,\,\text{floats}\\
-\text{code} &:& \verb|Q_p|
+\text{code} &:& \verb|effective_acceptance_{p}_m2_sr|
 \end{eqnarray*}
 %
 This product of area and solid angle is also often called etendue.
@@ -204,7 +204,7 @@ The effective acceptance of our instrument to detect an air-shower induced by co
 A_\gamma[e] &=& [a_1, a_2, \cdots, a_n]\\
 \text{unit} &:& \text{area} / \text{m}^{2}\\
 \text{dim} &:& \text{list of}\,\,n\,\,\text{floats}\\
-\text{code} &:& \verb|A_gamma|
+\text{code} &:& \verb|signal_effective_area_m2|
 \end{eqnarray*}
 %
 The effective area of our instrument to detect a gamma-ray with true energy $E$ which the instrument positively classifies to be a gamma-ray.
@@ -248,7 +248,7 @@ After we will have estimated the number of background-counts in the on-region $\
 N_S[e'] &=& C(\hat{N}_B[e'],\,\,S,\,\,\dots)\\
 \text{unit} &:& \text{intensity}/1\\
 \text{dim} &:& \text{list of}\,\,n\,\,\text{floats}\\
-\text{code} &:& \verb|N_S|
+\text{code} &:& \verb|critical_signal_counts_1|
 \end{eqnarray*}
 %
 which is required to claim a detection.
