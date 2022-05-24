@@ -96,7 +96,7 @@ for sk in SITES:
             critical_dKdE_au = np.nan * np.ones(critical_dKdE.shape)
             for obstix in range(num_observation_times):
                 critical_rate = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
-                    background_rate_in_onregion_vs_energy_per_s=Rreco_total,
+                    expected_background_rate_in_onregion_per_s=Rreco_total,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
@@ -105,7 +105,7 @@ for sk in SITES:
                 )
 
                 critical_rate_uu = irf.analysis.differential_sensitivity.estimate_critical_rate_vs_energy(
-                    background_rate_in_onregion_vs_energy_per_s=Rreco_total_uu,
+                    expected_background_rate_in_onregion_per_s=Rreco_total_uu,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
