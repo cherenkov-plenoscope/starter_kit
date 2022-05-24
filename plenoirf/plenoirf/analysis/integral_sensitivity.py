@@ -12,16 +12,15 @@ def power_law_spectrum(energy, flux_density, spectral_index, pivot_energy):
 
 def estimate_signal_rate_for_power_law_per_s(
     effective_area_m2,
-    effective_area_energy_bin_centers_GeV,
-    effective_area_energy_bin_width_GeV,
+    effective_area_energy_bin_edges_GeV,
     power_law_flux_density_per_m2_per_GeV_per_s,
     power_law_spectral_index,
     power_law_pivot_energy_GeV,
 ):
     """
-    Estimate the rate of signal-counts in the on-region $R_S$ given the
-    emission's energy-spectrum is a power-law.
-    power-law:
+    Estimate the rate of signal-counts in the on-region $R_S / s^{-1}$
+    given the emission's energy-spectrum is a power-law:
+
     f(energy) = flux_density * (energy/pivot_energy) ** spectral_index
 
     Parameters
@@ -29,12 +28,8 @@ def estimate_signal_rate_for_power_law_per_s(
     effective_area_m2 : list of N floats
         The effective area where signal is collected in the on-region of your
         instrument.
-    effective_area_energy_bin_centers_GeV : list of N floats
-        The centers of the energy-bins used for the effective area of your
-        instrument.
-    effective_area_energy_bin_width_GeV : list of N floats
-        The widths of the energy-bins used for the effective area of your
-        instrument.
+    effective_area_energy_bin_edges_GeV : list of (N+1) floats
+        The edges of the energy-bins used for the effective area.
     power_law_flux_density_per_m2_per_GeV_per_s : float
         The power-law's flux-density.
     power_law_spectral_index : float
@@ -46,6 +41,22 @@ def estimate_signal_rate_for_power_law_per_s(
     -------
     The signal-rate $R_S$ : float
     """
+    assert np.all(effective_area_m2 >= 0.0)
+    assert (
+        len(effective_area_energy_bin_edges_GeV) == len(effective_area_m2) + 1
+    )
+    assert np.all(effective_area_energy_bin_edges_GeV > 0.0)
+    assert np.all(np.gradient(effective_area_energy_bin_edges_GeV) > 0.0)
+
+    assert power_law_flux_density_per_m2_per_GeV_per_s > 0.0
+    assert power_law_pivot_energy_GeV > 0.0
+
+    effective_area_energy_bin_centers_GeV = binning_utils.centers(
+        bin_edges=effective_area_energy_bin_edges_GeV,
+    )
+    effective_area_energy_bin_width_GeV = binning_utils.widths(
+        bin_edges=effective_area_energy_bin_edges_GeV,
+    )
 
     differential_flux_per_m2_per_s_per_GeV = power_law_spectrum(
         energy=effective_area_energy_bin_centers_GeV,
@@ -114,26 +125,12 @@ def estimate_flux_densities_of_critical_power_laws(
     -------
     power_law_flux_densities : list of floats
     """
-    assert (
-        len(effective_area_energy_bin_edges_GeV) == len(effective_area_m2) + 1
-    )
-    assert np.all(effective_area_m2 >= 0.0)
-    assert np.all(effective_area_energy_bin_edges_GeV > 0.0)
-    assert np.all(np.gradient(effective_area_energy_bin_edges_GeV) > 0.0)
-
     assert critical_rate_per_s > 0.0
 
     assert power_law_pivot_energy_GeV > 0.0
     assert margin > 0.0
     assert upper_flux_density_per_m2_per_GeV_per_s > 0.0
     assert max_num_iterations > 0
-
-    effective_area_energy_bin_centers_GeV = binning_utils.centers(
-        bin_edges=effective_area_energy_bin_edges_GeV,
-    )
-    effective_area_energy_bin_width_GeV = binning_utils.widths(
-        bin_edges=effective_area_energy_bin_edges_GeV,
-    )
 
     power_law_flux_densities = []
 
@@ -147,8 +144,7 @@ def estimate_flux_densities_of_critical_power_laws(
 
             rate_per_s = estimate_signal_rate_for_power_law_per_s(
                 effective_area_m2=effective_area_m2,
-                effective_area_energy_bin_centers_GeV=effective_area_energy_bin_centers_GeV,
-                effective_area_energy_bin_width_GeV=effective_area_energy_bin_width_GeV,
+                effective_area_energy_bin_edges_GeV=effective_area_energy_bin_edges_GeV,
                 power_law_flux_density_per_m2_per_GeV_per_s=flux_dens,
                 power_law_spectral_index=power_law_spectral_index,
                 power_law_pivot_energy_GeV=power_law_pivot_energy_GeV,
