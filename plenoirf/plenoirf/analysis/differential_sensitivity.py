@@ -11,32 +11,50 @@ def estimate_differential_sensitivity(
     signal_rate_vs_energy_per_s,
 ):
     """
-    Returns the diff.Flux-sensitivity df/dE / m^{-2} s^{-1} (GeV)^{-1}
-    required to reach the critical signal rate.
+    Estimates the differential flux-sensitivity in N energy-bin.
 
     Parameters
     ----------
-    energy_bin_edges_GeV : array 1d
-            The edges of the energy-bins in GeV.
-    signal_area_vs_energy_m2 : array 1d
-            The effective area for the signal in m$^{2}$.
-    signal_rate_vs_energy_per_s : array 1d
-            The minimal rate for signal to claim a detection in s$^{-1}$.
+    energy_bin_edges_GeV : array of (N+1) floats / GeV
+        The edges of the energy-bins.
+    signal_area_vs_energy_m2 : array of N floats / m^{2}
+        The effective area for the signal in an energy-bin.
+    signal_rate_vs_energy_per_s : array of N floats / s^{-1}
+        The minimal signsl-rate to claim a detection in an energy-bin.
+
+    Returns
+    -------
+    differential_flux_vs_energy : array of N floats / m^{-2} s^{-1} (GeV)^{-1}
+        The minimal differential flux required to claim a detection in an
+        energy-bin.
     """
-    num_bins = len(energy_bin_edges_GeV) - 1
-    dfdE_per_s_per_m2_per_GeV = np.nan * np.ones(num_bins)
-    for e in range(num_bins):
+    num_energy_bins = len(energy_bin_edges_GeV) - 1
+    assert num_energy_bins >= 1, "Need at least two bin-edges."
+
+    assert np.all(energy_bin_edges_GeV > 0.0), "Energy must be positive."
+    assert np.all(
+        np.gradient(energy_bin_edges_GeV) > 0.0
+    ), "Energy bin-edges must be increasing."
+
+    assert num_energy_bins == len(signal_area_vs_energy_m2)
+    assert num_energy_bins == len(signal_rate_vs_energy_per_s)
+
+    # work
+    # ----
+    dVdE_per_s_per_m2_per_GeV = np.nan * np.ones(num_energy_bins)
+
+    for e in range(num_energy_bins):
         dE_GeV = energy_bin_edges_GeV[e + 1] - energy_bin_edges_GeV[e]
         assert dE_GeV > 0.0
         if signal_area_vs_energy_m2[e] > 0:
-            f_per_s_per_m2 = (
+            dV_per_s_per_m2 = (
                 signal_rate_vs_energy_per_s[e] / signal_area_vs_energy_m2[e]
             )
         else:
-            f_per_s_per_m2 = np.nan
+            dV_per_s_per_m2 = np.nan
 
-        dfdE_per_s_per_m2_per_GeV[e] = f_per_s_per_m2 / dE_GeV
-    return dfdE_per_s_per_m2_per_GeV
+        dVdE_per_s_per_m2_per_GeV[e] = dV_per_s_per_m2 / dE_GeV
+    return dVdE_per_s_per_m2_per_GeV
 
 
 SCENARIOS = {

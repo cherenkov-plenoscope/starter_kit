@@ -25,16 +25,16 @@ def estimate_signal_rate_for_power_law_per_s(
 
     Parameters
     ----------
-    effective_area_m2 : list of N floats
+    effective_area_m2 : array of N floats / m^2
         The effective area where signal is collected in the on-region of your
         instrument.
-    effective_area_energy_bin_edges_GeV : list of (N+1) floats
+    effective_area_energy_bin_edges_GeV : array of (N+1) floats / GeV
         The edges of the energy-bins used for the effective area.
-    power_law_flux_density_per_m2_per_GeV_per_s : float
+    power_law_flux_density_per_m2_per_GeV_per_s : float / m^{-2} s^{-1} (GeV)^{-1}
         The power-law's flux-density.
-    power_law_spectral_index : float
+    power_law_spectral_index : float / 1
         The power-law's spectral-index.
-    power_law_pivot_energy_GeV : float
+    power_law_pivot_energy_GeV : float / GeV
         The power-law's pivot-energy.
 
     Returns
