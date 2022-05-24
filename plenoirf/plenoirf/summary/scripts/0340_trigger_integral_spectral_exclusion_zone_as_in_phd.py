@@ -167,7 +167,7 @@ for site_key in irf_config["config"]["sites"]:
     (
         isez_energy_GeV,
         isez_differential_flux_per_GeV_per_m2_per_s,
-    ) = flux_sensitivity.estimate_integral_spectral_exclusion_zone(
+    ) = flux_sensitivity.integral.estimate_spectral_exclusion_zone(
         signal_effective_area_m2=all_fov_gamma_effective_area_m2,
         energy_bin_edges_GeV=all_fov_energy_bin_edges,
         critical_signal_rate_per_s=critical_signal_rate_per_s,
