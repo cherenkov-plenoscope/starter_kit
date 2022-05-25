@@ -85,8 +85,7 @@ for sk in SITES:
                 )
 
             R_background_scenario, R_background_scenario_au = pru.sum_axis0(
-                x=R_background_components,
-                x_au=R_background_components_au,
+                x=R_background_components, x_au=R_background_components_au,
             )
 
             # make crude estimate for uncertainty 'uu'
@@ -102,7 +101,7 @@ for sk in SITES:
             critical_dVdE_au = np.nan * np.ones(critical_dVdE.shape)
             for obstix in range(num_observation_times):
                 R_gamma_scenario = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    background_rate_onregion_per_s=R_background_scenario,
+                    background_rate_onregion_in_scenario_per_s=R_background_scenario,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
@@ -111,7 +110,7 @@ for sk in SITES:
                 )
 
                 R_gamma_scenario_uu = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    background_rate_onregion_per_s=R_background_scenario_uu,
+                    background_rate_onregion_in_scenario_per_s=R_background_scenario_uu,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
