@@ -76,10 +76,10 @@ for sk in SITES:
                 A_gamma_scenario,
                 A_gamma_scenario_au,
             ) = flux_sensitivity.differential.make_area_in_reco_energy(
-                area=Q[sk][ok]["gamma"]["point"]["mean"],
-                area_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
-                G_matrix=scenario["G_matrix"],
-                G_matrix_au=scenario["G_matrix_au"],
+                signal_effective_area_m2=Q[sk][ok]["gamma"]["point"]["mean"],
+                signal_effective_area_m2_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
+                scenario_G_matrix=scenario["G_matrix"],
+                scenario_G_matrix_au=scenario["G_matrix_au"],
             )
 
             json_numpy.write(
