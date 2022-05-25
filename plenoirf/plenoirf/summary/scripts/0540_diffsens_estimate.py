@@ -88,20 +88,17 @@ for sk in SITES:
                 x=R_background_components, x_au=R_background_components_au,
             )
 
-            # make crude estimate for uncertainty 'uu'
-            # ----------------------------------------
-            R_background_scenario_uu = (
-                R_background_scenario + R_background_scenario_au
-            )
-            A_gamma_scenario_lu = A_gamma_scenario - A_gamma_scenario_au
-
             critical_dVdE = np.nan * np.ones(
                 shape=(energy_bin["num_bins"], num_observation_times)
             )
             critical_dVdE_au = np.nan * np.ones(critical_dVdE.shape)
             for obstix in range(num_observation_times):
-                R_gamma_scenario = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
+                (
+                    R_gamma_scenario,
+                    R_gamma_scenario_au,
+                ) = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
                     background_rate_onregion_in_scenario_per_s=R_background_scenario,
+                    background_rate_onregion_in_scenario_per_s_au=R_background_scenario_au,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
@@ -109,28 +106,16 @@ for sk in SITES:
                     estimator_statistics=estimator_statistics,
                 )
 
-                R_gamma_scenario_uu = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    background_rate_onregion_in_scenario_per_s=R_background_scenario_uu,
-                    onregion_over_offregion_ratio=on_over_off_ratio,
-                    observation_time_s=observation_times[obstix],
-                    instrument_systematic_uncertainty_relative=systematic_uncertainty,
-                    detection_threshold_std=detection_threshold_std,
-                    estimator_statistics=estimator_statistics,
-                )
-
-                dVdE = flux_sensitivity.differential.estimate_differential_sensitivity(
+                (
+                    dVdE,
+                    dVdE_au,
+                ) = flux_sensitivity.differential.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
                     signal_area_in_scenario_m2=A_gamma_scenario,
+                    signal_area_in_scenario_m2_au=A_gamma_scenario_au,
                     critical_signal_rate_in_scenario_per_s=R_gamma_scenario,
+                    critical_signal_rate_in_scenario_per_s_au=R_gamma_scenario_au,
                 )
-
-                dVdE_uu = flux_sensitivity.differential.estimate_differential_sensitivity(
-                    energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_area_in_scenario_m2=A_gamma_scenario_lu,
-                    critical_signal_rate_in_scenario_per_s=R_gamma_scenario_uu,
-                )
-
-                dVdE_au = dVdE_uu - dVdE
 
                 critical_dVdE[:, obstix] = dVdE
                 critical_dVdE_au[:, obstix] = dVdE_au

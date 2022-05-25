@@ -153,10 +153,16 @@ for site_key in irf_config["config"]["sites"]:
         all_fov_acceptance[site_key]["gamma"]["point"]["energy_bin_edges_GeV"]
     )
 
-    critical_signal_rate_per_s = flux_sensitivity.critical_rate.estimate_critical_signal_rate(
+    (
+        critical_signal_rate_per_s,
+        critical_signal_rate_per_s_au,
+    ) = flux_sensitivity.critical_rate.estimate_critical_signal_rate(
         background_rate_onregion_in_scenario_per_s=cosmic_ray_rate_onregion[
             site_key
         ],
+        background_rate_onregion_in_scenario_per_s_au=np.zeros(
+            shape=cosmic_ray_rate_onregion[site_key].shape
+        ),
         onregion_over_offregion_ratio=PHD_ON_OVER_OFF_RATIO,
         observation_time_s=PHD_OBSERVATION_TIME_S,
         instrument_systematic_uncertainty_relative=0.0,
