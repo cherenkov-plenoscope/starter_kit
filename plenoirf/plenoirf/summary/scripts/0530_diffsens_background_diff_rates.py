@@ -84,8 +84,8 @@ for sk in SITES:
                 Rtrue_au[sk][ok][pk],
             ) = flux_sensitivity.differential.estimate_rate_in_true_energy(
                 energy_bin_edges_GeV=energy_bin["edges"],
-                effective_acceptance_m2_sr=acceptance[sk][ok][pk][gk]["mean"],
-                effective_acceptance_m2_sr_au=acceptance[sk][ok][pk][gk][
+                acceptance_m2_sr=acceptance[sk][ok][pk][gk]["mean"],
+                acceptance_m2_sr_au=acceptance[sk][ok][pk][gk][
                     "absolute_uncertainty"
                 ],
                 differential_flux_per_m2_per_sr_per_s_per_GeV=diff_flux[sk][
@@ -108,8 +108,8 @@ for sk in SITES:
                 Rreco_au[sk][ok][pk],
             ) = flux_sensitivity.differential.estimate_rate_in_reco_energy(
                 energy_bin_edges_GeV=energy_bin["edges"],
-                effective_acceptance_m2_sr=acceptance[sk][ok][pk][gk]["mean"],
-                effective_acceptance_m2_sr_au=acceptance[sk][ok][pk][gk][
+                acceptance_m2_sr=acceptance[sk][ok][pk][gk]["mean"],
+                acceptance_m2_sr_au=acceptance[sk][ok][pk][gk][
                     "absolute_uncertainty"
                 ],
                 differential_flux_per_m2_per_sr_per_s_per_GeV=diff_flux[sk][
