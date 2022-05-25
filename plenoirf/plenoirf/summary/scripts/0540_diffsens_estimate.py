@@ -67,13 +67,13 @@ for sk in SITES:
         for dk in flux_sensitivity.differential.SCENARIOS:
             print(sk, ok, dk)
 
-            Areco = S[sk][ok][dk]["gamma"]["area"]["mean"]
-            Areco_au = S[sk][ok][dk]["gamma"]["area"]["absolute_uncertainty"]
+            A_gamma_scenario = S[sk][ok][dk]["gamma"]["area"]["mean"]
+            A_gamma_scenario_au = S[sk][ok][dk]["gamma"]["area"]["absolute_uncertainty"]
 
             # total background rate in reco energy
             # -------------------------------------
-            Rreco_total = np.zeros(energy_bin["num_bins"])
-            Rreco_total_au = np.zeros(energy_bin["num_bins"])
+            R_background_scenario = np.zeros(energy_bin["num_bins"])
+            R_background_scenario_au = np.zeros(energy_bin["num_bins"])
             for ereco in range(energy_bin["num_bins"]):
                 tmp = []
                 tmp_au = []
@@ -84,20 +84,20 @@ for sk in SITES:
                             ereco
                         ]
                     )
-                (Rreco_total[ereco], Rreco_total_au[ereco],) = pru.sum(
+                (R_background_scenario[ereco], R_background_scenario_au[ereco],) = pru.sum(
                     x=tmp, x_au=tmp_au
                 )
 
-            Rreco_total_uu = Rreco_total + Rreco_total_au
-            Areco_lu = Areco - Areco_au
+            R_background_scenario_uu = R_background_scenario + R_background_scenario_au
+            A_gamma_scenario_lu = A_gamma_scenario - A_gamma_scenario_au
 
-            critical_dKdE = np.nan * np.ones(
+            critical_dVdE = np.nan * np.ones(
                 shape=(energy_bin["num_bins"], num_observation_times)
             )
-            critical_dKdE_au = np.nan * np.ones(critical_dKdE.shape)
+            critical_dVdE_au = np.nan * np.ones(critical_dVdE.shape)
             for obstix in range(num_observation_times):
-                critical_signal_rate = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    background_rate_onregion_per_s=Rreco_total,
+                R_gamma_scenario = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
+                    background_rate_onregion_per_s=R_background_scenario,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
@@ -105,8 +105,8 @@ for sk in SITES:
                     estimator_statistics=estimator_statistics,
                 )
 
-                critical_signal_rate_uu = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    background_rate_onregion_per_s=Rreco_total_uu,
+                R_gamma_scenario_uu = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
+                    background_rate_onregion_per_s=R_background_scenario_uu,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
@@ -116,28 +116,28 @@ for sk in SITES:
 
                 dVdE = flux_sensitivity.differential.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_area_m2=Areco,
-                    critical_signal_rate_per_s=critical_signal_rate,
+                    signal_area_in_scenario_m2=A_gamma_scenario,
+                    critical_signal_rate_in_scenario_per_s=R_gamma_scenario,
                 )
 
                 dVdE_uu = flux_sensitivity.differential.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_area_m2=Areco_lu,
-                    critical_signal_rate_per_s=critical_signal_rate_uu,
+                    signal_area_in_scenario_m2=A_gamma_scenario_lu,
+                    critical_signal_rate_in_scenario_per_s=R_gamma_scenario_uu,
                 )
 
                 dVdE_au = dVdE_uu - dVdE
 
-                critical_dKdE[:, obstix] = dVdE
-                critical_dKdE_au[:, obstix] = dVdE_au
+                critical_dVdE[:, obstix] = dVdE
+                critical_dVdE_au[:, obstix] = dVdE_au
 
             json_numpy.write(
                 os.path.join(pa["out_dir"], sk, ok, dk + ".json"),
                 {
                     "energy_binning_key": energy_bin["key"],
                     "observation_times": observation_times,
-                    "differential_flux": critical_dKdE,
-                    "differential_flux_au": critical_dKdE_au,
+                    "differential_flux": critical_dVdE,
+                    "differential_flux_au": critical_dVdE_au,
                     "comment": (
                         "Critical, differential flux-sensitivity "
                         "VS energy VS observation-time"
