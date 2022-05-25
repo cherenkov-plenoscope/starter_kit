@@ -95,8 +95,8 @@ for sk in SITES:
             # ----------------
             for ck in COSMIC_RAYS:
                 (
-                    Rreco_scenario,
-                    Rreco_scenario_au,
+                    R_cosmic_ray_scenario,
+                    R_cosmic_ray_scenario_au,
                 ) = flux_sensitivity.differential.apply_scenario_to_background_rate(
                     rate_in_reco_energy_per_s=R[sk][ok][ck]["reco"]["mean"],
                     rate_in_reco_energy_per_s_au=R[sk][ok][ck]["reco"]["absolute_uncertainty"],
@@ -108,7 +108,7 @@ for sk in SITES:
                     os.path.join(pa["out_dir"], sk, ok, dk, ck, "rate.json"),
                     {
                         "energy_binning_key": energy_bin["key"],
-                        "mean": Rreco_scenario,
-                        "absolute_uncertainty": Rreco_scenario_au,
+                        "mean": R_cosmic_ray_scenario,
+                        "absolute_uncertainty": R_cosmic_ray_scenario_au,
                     },
                 )
