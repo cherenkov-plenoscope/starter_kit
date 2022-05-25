@@ -154,7 +154,7 @@ for site_key in irf_config["config"]["sites"]:
     )
 
     critical_signal_rate_per_s = flux_sensitivity.critical_rate.estimate_critical_signal_rate(
-        expected_background_rate_in_onregion_per_s=cosmic_ray_rate_onregion[
+        background_rate_onregion_per_s=cosmic_ray_rate_onregion[
             site_key
         ],
         onregion_over_offregion_ratio=PHD_ON_OVER_OFF_RATIO,

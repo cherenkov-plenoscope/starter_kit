@@ -97,7 +97,7 @@ for sk in SITES:
             critical_dKdE_au = np.nan * np.ones(critical_dKdE.shape)
             for obstix in range(num_observation_times):
                 critical_signal_rate = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    expected_background_rate_in_onregion_per_s=Rreco_total,
+                    background_rate_onregion_per_s=Rreco_total,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
@@ -106,7 +106,7 @@ for sk in SITES:
                 )
 
                 critical_signal_rate_uu = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    expected_background_rate_in_onregion_per_s=Rreco_total_uu,
+                    background_rate_onregion_per_s=Rreco_total_uu,
                     onregion_over_offregion_ratio=on_over_off_ratio,
                     observation_time_s=observation_times[obstix],
                     instrument_systematic_uncertainty_relative=systematic_uncertainty,
