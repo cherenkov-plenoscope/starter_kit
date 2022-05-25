@@ -68,7 +68,9 @@ for sk in SITES:
             print(sk, ok, dk)
 
             A_gamma_scenario = S[sk][ok][dk]["gamma"]["area"]["mean"]
-            A_gamma_scenario_au = S[sk][ok][dk]["gamma"]["area"]["absolute_uncertainty"]
+            A_gamma_scenario_au = S[sk][ok][dk]["gamma"]["area"][
+                "absolute_uncertainty"
+            ]
 
             # total background rate in reco energy
             # -------------------------------------
@@ -84,11 +86,14 @@ for sk in SITES:
                             ereco
                         ]
                     )
-                (R_background_scenario[ereco], R_background_scenario_au[ereco],) = pru.sum(
-                    x=tmp, x_au=tmp_au
-                )
+                (
+                    R_background_scenario[ereco],
+                    R_background_scenario_au[ereco],
+                ) = pru.sum(x=tmp, x_au=tmp_au)
 
-            R_background_scenario_uu = R_background_scenario + R_background_scenario_au
+            R_background_scenario_uu = (
+                R_background_scenario + R_background_scenario_au
+            )
             A_gamma_scenario_lu = A_gamma_scenario - A_gamma_scenario_au
 
             critical_dVdE = np.nan * np.ones(

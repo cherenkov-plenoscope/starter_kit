@@ -77,7 +77,9 @@ for sk in SITES:
                 A_gamma_scenario_au,
             ) = flux_sensitivity.differential.apply_scenario_to_signal_effective_area(
                 signal_area_m2=Q[sk][ok]["gamma"]["point"]["mean"],
-                signal_area_m2_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
+                signal_area_m2_au=Q[sk][ok]["gamma"]["point"][
+                    "absolute_uncertainty"
+                ],
                 scenario_G_matrix=scenario["G_matrix"],
                 scenario_G_matrix_au=scenario["G_matrix_au"],
             )
@@ -99,7 +101,9 @@ for sk in SITES:
                     R_cosmic_ray_scenario_au,
                 ) = flux_sensitivity.differential.apply_scenario_to_background_rate(
                     rate_in_reco_energy_per_s=R[sk][ok][ck]["reco"]["mean"],
-                    rate_in_reco_energy_per_s_au=R[sk][ok][ck]["reco"]["absolute_uncertainty"],
+                    rate_in_reco_energy_per_s_au=R[sk][ok][ck]["reco"][
+                        "absolute_uncertainty"
+                    ],
                     scenario_B_matrix=scenario["B_matrix"],
                     scenario_B_matrix_au=scenario["B_matrix_au"],
                 )
