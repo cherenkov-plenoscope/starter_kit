@@ -116,13 +116,13 @@ for sk in SITES:
 
                 dVdE = flux_sensitivity.differential.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_effective_area_m2=Areco,
+                    signal_area_m2=Areco,
                     critical_signal_rate_per_s=critical_signal_rate,
                 )
 
                 dVdE_uu = flux_sensitivity.differential.estimate_differential_sensitivity(
                     energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_effective_area_m2=Areco_lu,
+                    signal_area_m2=Areco_lu,
                     critical_signal_rate_per_s=critical_signal_rate_uu,
                 )
 

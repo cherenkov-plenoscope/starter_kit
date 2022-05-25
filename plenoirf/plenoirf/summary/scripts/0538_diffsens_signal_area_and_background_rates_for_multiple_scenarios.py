@@ -76,8 +76,8 @@ for sk in SITES:
                 A_gamma_scenario,
                 A_gamma_scenario_au,
             ) = flux_sensitivity.differential.apply_scenario_to_signal_effective_area(
-                signal_effective_area_m2=Q[sk][ok]["gamma"]["point"]["mean"],
-                signal_effective_area_m2_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
+                signal_area_m2=Q[sk][ok]["gamma"]["point"]["mean"],
+                signal_area_m2_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
                 scenario_G_matrix=scenario["G_matrix"],
                 scenario_G_matrix_au=scenario["G_matrix_au"],
             )
