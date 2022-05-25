@@ -72,25 +72,25 @@ for sk in SITES:
                 "absolute_uncertainty"
             ]
 
-            # total background rate in reco energy
-            # -------------------------------------
-            R_background_scenario = np.zeros(energy_bin["num_bins"])
-            R_background_scenario_au = np.zeros(energy_bin["num_bins"])
-            for ereco in range(energy_bin["num_bins"]):
-                tmp = []
-                tmp_au = []
-                for ck in COSMIC_RAYS:
-                    tmp.append(S[sk][ok][dk][ck]["rate"]["mean"][ereco])
-                    tmp_au.append(
-                        S[sk][ok][dk][ck]["rate"]["absolute_uncertainty"][
-                            ereco
-                        ]
-                    )
-                (
-                    R_background_scenario[ereco],
-                    R_background_scenario_au[ereco],
-                ) = pru.sum(x=tmp, x_au=tmp_au)
+            # Sum up components of background rate in scenario
+            # ------------------------------------------------
+            R_background_components = []
+            R_background_components_au = []
+            for ck in COSMIC_RAYS:
+                R_background_components.append(
+                    S[sk][ok][dk][ck]["rate"]["mean"][:]
+                )
+                R_background_components_au.append(
+                    S[sk][ok][dk][ck]["rate"]["absolute_uncertainty"][:]
+                )
 
+            R_background_scenario, R_background_scenario_au = pru.sum_axis0(
+                x=R_background_components,
+                x_au=R_background_components_au,
+            )
+
+            # make crude estimate for uncertainty 'uu'
+            # ----------------------------------------
             R_background_scenario_uu = (
                 R_background_scenario + R_background_scenario_au
             )
