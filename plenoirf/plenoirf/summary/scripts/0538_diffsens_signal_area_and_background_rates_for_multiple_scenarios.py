@@ -75,7 +75,7 @@ for sk in SITES:
             (
                 A_gamma_scenario,
                 A_gamma_scenario_au,
-            ) = flux_sensitivity.differential.make_area_in_reco_energy(
+            ) = flux_sensitivity.differential.apply_scenario_to_signal_effective_area(
                 signal_effective_area_m2=Q[sk][ok]["gamma"]["point"]["mean"],
                 signal_effective_area_m2_au=Q[sk][ok]["gamma"]["point"]["absolute_uncertainty"],
                 scenario_G_matrix=scenario["G_matrix"],
@@ -97,11 +97,11 @@ for sk in SITES:
                 (
                     Rreco_scenario,
                     Rreco_scenario_au,
-                ) = flux_sensitivity.differential.integrate_rates_in_reco_energy_with_mask(
-                    Rreco=R[sk][ok][ck]["reco"]["mean"],
-                    Rreco_au=R[sk][ok][ck]["reco"]["absolute_uncertainty"],
-                    integration_mask=scenario["B_matrix"],
-                    integration_mask_au=scenario["B_matrix_au"],
+                ) = flux_sensitivity.differential.apply_scenario_to_background_rate(
+                    rate_in_reco_energy_per_s=R[sk][ok][ck]["reco"]["mean"],
+                    rate_in_reco_energy_per_s_au=R[sk][ok][ck]["reco"]["absolute_uncertainty"],
+                    scenario_B_matrix=scenario["B_matrix"],
+                    scenario_B_matrix_au=scenario["B_matrix_au"],
                 )
 
                 json_numpy.write(
