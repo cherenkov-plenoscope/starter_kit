@@ -57,9 +57,9 @@ for sk in SITES:
         for dk in flux_sensitivity.differential.SCENARIOS:
             print(sk, ok, dk)
 
-            scenario = flux_sensitivity.differential.make_energy_confusion_matrices_for_signal_and_background(
+            scenario = flux_sensitivity.differential.init_scenario_matrices_for_signal_and_background(
                 probability_reco_given_true=M_gamma["reco_given_true"],
-                probability_reco_given_true_abs_unc=M_gamma[
+                probability_reco_given_true_au=M_gamma[
                     "reco_given_true_abs_unc"
                 ],
                 scenario_key=dk,
