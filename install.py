@@ -15,6 +15,14 @@ def build_corsika(username, password, corsika_tar):
     subprocess.call(
         ["pip", "install", "-e", os.path.join(".", "corsika_install")]
     )
+
+    if not is_installed("f77"):
+        print("CORSIKA uses f77, but it's not in your path.")
+        print(
+            "Install gfortran (GNU compiler collection) if you have not."
+        )
+        print("Make a f77-link pointing to your gfortran.")
+
     if corsika_tar:
         subprocess.call(
             [
@@ -34,12 +42,8 @@ def build_corsika(username, password, corsika_tar):
             ]
         )
     else:
-        if not is_installed("f77"):
-            print("CORSIKA uses f77, but it's not in your path.")
-            print(
-                "Install gfortran (GNU compiler collection) if you have not."
-            )
-            print("Make a f77-link pointing to your gfortran.")
+        assert username, "Expected a Corsika-username for download."
+        assert password, "Expected a Corsika-password for download."
         subprocess.call(
             [
                 os.path.join(
@@ -192,6 +196,7 @@ def main():
         "-j",
         metavar="NUM_THREADS",
         type=int,
+        default=1,
         help="number of threads to use when a build can be parallelized.",
     )
 
