@@ -3,7 +3,6 @@ from . import analysis
 from . import features
 from . import table
 from . import grid
-from . import logging
 from . import instrument_response
 from . import network_file_system as nfs
 from . import bundle
@@ -28,7 +27,6 @@ import tempfile
 import pandas as pd
 import tarfile
 import io
-import inspect
 
 import json_numpy
 import binning_utils
@@ -36,6 +34,7 @@ import plenopy as pl
 import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
 import gamma_ray_reconstruction as gamrec
+import json_line_logger as jlogging
 
 
 MIN_PROTON_ENERGY_GEV = 5.0
@@ -283,7 +282,7 @@ def _estimate_magnetic_deflection_of_air_showers(
 
         jobs = mdfl.make_jobs(work_dir=mdfl_dir)
         _ = map_and_reduce_pool.map(mdfl.map_and_reduce.run_job, jobs)
-        mdfl.reduce(work_dir=mdfl_dir)
+        mdfl.reduce(work_dir=mdfl_dir, logger=logger)
 
 
 def _estimate_light_field_geometry_of_plenoscope(
@@ -476,10 +475,8 @@ def run(
     LAZY_REDUCTION=False,
     logger=None,
 ):
-    if logger is None:
-        logger = logging.LoggerStream()
-
-    map_and_reduce_pool = logging.MapAndReducePoolWithLogger(
+    logger = logger if logger else jlogging.LoggerStdout()
+    map_and_reduce_pool = jlogging.MapAndReducePoolWithLogger(
         pool=map_and_reduce_pool
     )
 

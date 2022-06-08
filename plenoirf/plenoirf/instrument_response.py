@@ -1,7 +1,6 @@
 from . import table
 from . import unique
 from . import grid
-from . import logging
 from . import network_file_system as nfs
 from . import utils
 from . import production
@@ -23,6 +22,7 @@ import corsika_primary as cpw
 import plenopy as pl
 import sparse_numeric_table as spt
 import gamma_ray_reconstruction as gamrec
+import json_line_logger as jlogging
 
 """
 I think I have an efficient and very simple algorithm
@@ -222,7 +222,7 @@ def reduce(
     log_path = os.path.join(site_particle_dir, "runtime.csv")
     if not op.exists(log_path) or not LAZY:
         _lop_paths = glob.glob(os.path.join(log_dir, "*_runtime.jsonl"))
-        logging.reduce(list_of_log_paths=_lop_paths, out_path=log_path)
+        jlogging.reduce(list_of_log_paths=_lop_paths, out_path=log_path)
     logger.info("Reduce {:s} {:s} run-time.".format(site_key, particle_key))
 
     # event table
@@ -936,13 +936,13 @@ def run_job(job):
     _export_job_to_log_dir(job=job)
 
     log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
-    logger = logging.LoggerFile(path=log_path + ".tmp")
+    logger = jlogging.LoggerFile(path=log_path + ".tmp")
     logger.info("starting run")
 
     logger.info("init prng")
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
-    with logging.TimeDelta(logger, "draw_primary"):
+    with jlogging.TimeDelta(logger, "draw_primary"):
         corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
             run_id=job["run_id"],
             site=job["site"],
@@ -961,7 +961,7 @@ def run_job(job):
 
     tabrec = _init_table_records()
 
-    with logging.TimeDelta(logger, "corsika_and_grid"):
+    with jlogging.TimeDelta(logger, "corsika_and_grid"):
         (
             cherenkov_pools_path,
             tabrec,
@@ -972,7 +972,7 @@ def run_job(job):
             corsika_primary_steering=corsika_primary_steering,
             tabrec=tabrec,
         )
-    with logging.TimeDelta(logger, "merlict"):
+    with jlogging.TimeDelta(logger, "merlict"):
         detector_responses_path = _run_merlict(
             job=job,
             cherenkov_pools_path=cherenkov_pools_path,
@@ -982,7 +982,7 @@ def run_job(job):
     if not job["keep_tmp"]:
         os.remove(cherenkov_pools_path)
 
-    with logging.TimeDelta(logger, "read_geometry"):
+    with jlogging.TimeDelta(logger, "read_geometry"):
         light_field_geometry = pl.LightFieldGeometry(
             path=job["light_field_geometry_path"]
         )
@@ -990,7 +990,7 @@ def run_job(job):
             path=job["trigger_geometry_path"]
         )
 
-    with logging.TimeDelta(logger, "pass_loose_trigger"):
+    with jlogging.TimeDelta(logger, "pass_loose_trigger"):
         tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
             job=job,
             tabrec=tabrec,
@@ -1000,7 +1000,7 @@ def run_job(job):
             tmp_dir=tmp_dir,
         )
 
-    with logging.TimeDelta(logger, "classify_cherenkov"):
+    with jlogging.TimeDelta(logger, "classify_cherenkov"):
         tabrec = _classify_cherenkov_photons(
             job=job,
             tabrec=tabrec,
@@ -1010,7 +1010,7 @@ def run_job(job):
             trigger_geometry=trigger_geometry,
         )
 
-    with logging.TimeDelta(logger, "extract_features"):
+    with jlogging.TimeDelta(logger, "extract_features"):
         tabrec = _extract_features(
             tabrec=tabrec,
             light_field_geometry=light_field_geometry,
@@ -1018,7 +1018,7 @@ def run_job(job):
             prng=prng,
         )
 
-    with logging.TimeDelta(logger, "estimate_primary_trajectory"):
+    with jlogging.TimeDelta(logger, "estimate_primary_trajectory"):
         tabrec = _estimate_primary_trajectory(
             job=job,
             tmp_dir=tmp_dir,
@@ -1026,7 +1026,7 @@ def run_job(job):
             tabrec=tabrec,
         )
 
-    with logging.TimeDelta(logger, "export_event_table"):
+    with jlogging.TimeDelta(logger, "export_event_table"):
         _export_event_table(job=job, tmp_dir=tmp_dir, tabrec=tabrec)
 
     if not job["keep_tmp"]:
