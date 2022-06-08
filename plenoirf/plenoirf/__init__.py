@@ -473,11 +473,10 @@ def run(
     TMP_DIR_ON_WORKERNODE=True,
     KEEP_TMP=False,
     LAZY_REDUCTION=False,
-    logger=None,
+    logger=jlogging.LoggerStdout(),
 ):
-    logger = logger if logger else jlogging.LoggerStdout()
     map_and_reduce_pool = jlogging.MapAndReducePoolWithLogger(
-        pool=map_and_reduce_pool
+        pool=map_and_reduce_pool, logger=logger,
     )
 
     date_dict = provenance.get_time_dict_now()
