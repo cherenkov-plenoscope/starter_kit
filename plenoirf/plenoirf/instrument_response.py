@@ -934,13 +934,13 @@ def run_job(job):
     _export_job_to_log_dir(job=job)
 
     log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
-    jl = logging.LoggerFile(path=log_path + ".tmp")
-    jl.info("starting run")
+    logger = logging.LoggerFile(path=log_path + ".tmp")
+    logger.info("starting run")
 
-    jl.info("init prng")
+    logger.info("init prng")
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
-    with logging.TimeDelta(jl, "draw_primary"):
+    with logging.TimeDelta(logger, "draw_primary"):
         corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
             run_id=job["run_id"],
             site=job["site"],
@@ -955,11 +955,11 @@ def run_job(job):
     else:
         tmp_dir = op.join(job["tmp_dir"], _run_id_str(job))
         os.makedirs(tmp_dir, exist_ok=True)
-    jl.info("make tmp_dir: {:s}".format(tmp_dir))
+    logger.info("make tmp_dir: {:s}".format(tmp_dir))
 
     tabrec = _init_table_records()
 
-    with logging.TimeDelta(jl, "corsika_and_grid"):
+    with logging.TimeDelta(logger, "corsika_and_grid"):
         (
             cherenkov_pools_path,
             tabrec,
@@ -970,7 +970,7 @@ def run_job(job):
             corsika_primary_steering=corsika_primary_steering,
             tabrec=tabrec,
         )
-    with logging.TimeDelta(jl, "merlict"):
+    with logging.TimeDelta(logger, "merlict"):
         detector_responses_path = _run_merlict(
             job=job,
             cherenkov_pools_path=cherenkov_pools_path,
@@ -980,7 +980,7 @@ def run_job(job):
     if not job["keep_tmp"]:
         os.remove(cherenkov_pools_path)
 
-    with logging.TimeDelta(jl, "read_geometry"):
+    with logging.TimeDelta(logger, "read_geometry"):
         light_field_geometry = pl.LightFieldGeometry(
             path=job["light_field_geometry_path"]
         )
@@ -988,7 +988,7 @@ def run_job(job):
             path=job["trigger_geometry_path"]
         )
 
-    with logging.TimeDelta(jl, "pass_loose_trigger"):
+    with logging.TimeDelta(logger, "pass_loose_trigger"):
         tabrec, table_past_trigger, tmp_past_trigger_dir = _run_loose_trigger(
             job=job,
             tabrec=tabrec,
@@ -998,7 +998,7 @@ def run_job(job):
             tmp_dir=tmp_dir,
         )
 
-    with logging.TimeDelta(jl, "classify_cherenkov"):
+    with logging.TimeDelta(logger, "classify_cherenkov"):
         tabrec = _classify_cherenkov_photons(
             job=job,
             tabrec=tabrec,
@@ -1008,7 +1008,7 @@ def run_job(job):
             trigger_geometry=trigger_geometry,
         )
 
-    with logging.TimeDelta(jl, "extract_features"):
+    with logging.TimeDelta(logger, "extract_features"):
         tabrec = _extract_features(
             tabrec=tabrec,
             light_field_geometry=light_field_geometry,
@@ -1016,7 +1016,7 @@ def run_job(job):
             prng=prng,
         )
 
-    with logging.TimeDelta(jl, "estimate_primary_trajectory"):
+    with logging.TimeDelta(logger, "estimate_primary_trajectory"):
         tabrec = _estimate_primary_trajectory(
             job=job,
             tmp_dir=tmp_dir,
@@ -1024,12 +1024,12 @@ def run_job(job):
             tabrec=tabrec,
         )
 
-    with logging.TimeDelta(jl, "export_event_table"):
+    with logging.TimeDelta(logger, "export_event_table"):
         _export_event_table(job=job, tmp_dir=tmp_dir, tabrec=tabrec)
 
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
-    jl.info("ending run")
+    logger.info("ending run")
     nfs.move(log_path + ".tmp", log_path)
 
 
@@ -1050,12 +1050,12 @@ def run_jobs_in_bundles(bundle):
     results = []
     for j, job in enumerate(bundle):
         msg = "\n#bundle {:d} of {:d}\n".format((j + 1), len(bundle))
-        print(msg, file=sys.stdout)
-        print(msg, file=sys.stderr)
+        print(msg)
         try:
             print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
             result = run_job(job=job)
         except Exception as exception_msg:
+            print(exception_msg)
             print(exception_msg, file=sys.stderr)
             result = 0
         results.append(result)
