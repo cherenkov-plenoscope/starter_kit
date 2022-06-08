@@ -18,9 +18,7 @@ def build_corsika(username, password, corsika_tar):
 
     if not is_installed("f77"):
         print("CORSIKA uses f77, but it's not in your path.")
-        print(
-            "Install gfortran (GNU compiler collection) if you have not."
-        )
+        print("Install gfortran (GNU compiler collection) if you have not.")
         print("Make a f77-link pointing to your gfortran.")
 
     if corsika_tar:
@@ -103,7 +101,10 @@ def build_merlict_cpp(num_threads):
 
 
 LOCAL_PYHTHON_PACKAGES = [
-    {"path": "json_line_logger", "name": "json_line_logger-sebastian-achim-mueller"},
+    {
+        "path": "json_line_logger",
+        "name": "json_line_logger-sebastian-achim-mueller",
+    },
     {"path": "json_numpy", "name": "json_numpy-sebastian-achim-mueller"},
     {"path": "binning_utils", "name": "binning_utils-sebastian-achim-mueller"},
     {
