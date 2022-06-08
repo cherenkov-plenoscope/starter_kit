@@ -103,6 +103,7 @@ def build_merlict_cpp(num_threads):
 
 
 LOCAL_PYHTHON_PACKAGES = [
+    {"path": "json_line_logger", "name": "json_line_logger-sebastian-achim-mueller"},
     {"path": "json_numpy", "name": "json_numpy-sebastian-achim-mueller"},
     {"path": "binning_utils", "name": "binning_utils-sebastian-achim-mueller"},
     {

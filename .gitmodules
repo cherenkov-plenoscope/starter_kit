@@ -52,3 +52,6 @@
 [submodule "confusion_matrix"]
 	path = confusion_matrix
 	url = git@github.com:cherenkov-plenoscope/confusion_matrix.git
+[submodule "json_line_logger"]
+	path = json_line_logger
+	url = https://github.com/cherenkov-plenoscope/json_line_logger
