@@ -103,17 +103,17 @@ def build_merlict_cpp(num_threads):
 LOCAL_PYHTHON_PACKAGES = [
     {
         "path": "json_line_logger",
-        "name": "json_line_logger-sebastian-achim-mueller",
+        "name": "json_line_logger_sebastian-achim-mueller",
     },
-    {"path": "json_numpy", "name": "json_numpy-sebastian-achim-mueller"},
-    {"path": "binning_utils", "name": "binning_utils-sebastian-achim-mueller"},
+    {"path": "json_numpy", "name": "json_numpy_sebastian-achim-mueller"},
+    {"path": "binning_utils", "name": "binning_utils_sebastian-achim-mueller"},
     {
         "path": "propagate_uncertainties",
-        "name": "propagate_uncertainties-sebastian-achim-mueller",
+        "name": "propagate_uncertainties_sebastian-achim-mueller",
     },
     {
         "path": "confusion_matrix",
-        "name": "confusion_matrix-sebastian-achim-mueller",
+        "name": "confusion_matrix_sebastian-achim-mueller",
     },
     {
         "path": "sebastians_matplotlib_addons",
@@ -121,7 +121,7 @@ LOCAL_PYHTHON_PACKAGES = [
     },
     {
         "path": "sparse_numeric_table",
-        "name": "sparse_numeric_table-sebastian-achim-mueller",
+        "name": "sparse_numeric_table_sebastian-achim-mueller",
     },
     {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
     {"path": "plenopy", "name": "plenopy"},
@@ -131,11 +131,11 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "magnetic_deflection", "name": "magnetic_deflection"},
     {
         "path": "spectral_energy_distribution_units",
-        "name": "spectral_energy_distribution_units-sebastian-achim-mueller",
+        "name": "spectral_energy_distribution_units_sebastian-achim-mueller",
     },
     {
         "path": "lima1983analysis",
-        "name": "lima1983analysis-sebastian-achim-mueller",
+        "name": "lima1983analysis_sebastian-achim-mueller",
     },
     {
         "path": "flux_sensitivity",
