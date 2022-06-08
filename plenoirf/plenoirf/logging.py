@@ -1,42 +1,62 @@
-import datetime
+"""
+A simple json-line-logger
+"""
+
 import time
 import json_numpy
 import os
 import pandas as pd
 import shutil
+import logging
+import sys
 
 
-class JsonlLog:
-    def __init__(self, path):
-        self.path = path
+DATEFMT_ISO8601 = "%Y-%m-%dT%H:%M:%S"
+FMT = "{"
+FMT += '"t":"%(asctime)s.%(msecs)03d"'
+FMT += ", "
+FMT += '"c":"%(module)s:%(funcName)s"'
+FMT += ", "
+FMT += '"l":"%(levelname)s"'
+FMT += ", "
+FMT += '"m":"%(message)s"'
+FMT += "}"
 
-    def log(self, msg, delta=None):
-        unix_time_now = time.time()
-        date_now = datetime.datetime.fromtimestamp(unix_time_now)
-        with open(self.path, "at") as f:
-            d = {
-                "time": date_now.isoformat(),
-                "unix": unix_time_now,
-                "msg": msg,
-            }
-            if delta:
-                d["delta"] = delta
-            f.write(json_numpy.dumps(d) + "\n")
+
+def LoggerStream(stream=sys.stdout):
+    lggr = logging.Logger(name="single-use-for-print")
+    fmtr = logging.Formatter(fmt=FMT, datefmt=DATEFMT_ISO8601)
+    stha = logging.StreamHandler(stream)
+    stha.setFormatter(fmtr)
+    lggr.addHandler(stha)
+    lggr.setLevel(logging.DEBUG)
+    return lggr
+
+
+def LoggerFile(path):
+    lggr = logging.Logger(name=path)
+    file_handler = logging.FileHandler(filename=path, mode="w")
+    fmtr = logging.Formatter(fmt=FMT, datefmt=DATEFMT_ISO8601)
+    file_handler.setFormatter(fmtr)
+    lggr.addHandler(file_handler)
+    lggr.setLevel(logging.DEBUG)
+    return lggr
 
 
 class TimeDelta:
-    def __init__(self, log, msg):
-        self.log = log
-        self.msg = msg
+    def __init__(self, logger, name, level=logging.INFO):
+        self.logger = logger
+        self.name = name
 
     def __enter__(self):
         self.start = time.time()
-        self.log.log(msg=self.msg + ":start")
+        self.logger.log(level=level, msg="{:s}:start:{:f}".format(self.name, self.start))
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop = time.time()
-        self.log.log(msg=self.msg + ":stop", delta=self.delta())
+        self.logger.log(level=level, msg="{:s}:stop:{:f}".format(self.name, self.start))
+        self.logger.log(level=level, msg="{:s}:delta:{:f}".format(self.name, self.delta()))
 
     def delta(self):
         return self.stop - self.start
@@ -56,12 +76,34 @@ def reduce_into_records(list_of_log_paths):
         run_id = int(os.path.basename(log_path)[0:6])
         run = {"run_id": run_id}
 
+        key = ":delta:"
         with open(log_path, "rt") as fin:
             for line in fin:
                 logline = json_numpy.loads(line)
-                if "delta" in logline:
-                    name = logline["msg"].replace(":stop", "")
-                    run[name] = logline["delta"]
+                if "msg" in logline:
+                    msg = logline["msg"]
+                    if key in msg:
+                        iname = str.find(msg, key)
+                        name = msg[:(iname)]
+                        deltastr = msg[(iname + len(key)):]
+                        run[name] = float(deltastr)
             list_of_log_records.append(run)
 
     return list_of_log_records
+
+
+class MapAndReducePoolWithLogger():
+    def __init__(pool, logger):
+        self.pool = pool
+        self.logger = logger
+
+    def accepts_logger(self):
+        signature = inspect.signature(self.pool.map)
+        return "logger" in signature.parameters
+
+    def map(self, function, jobs):
+        if self.accepts_logger()
+            return self.pool.map(function, jobs, logger=self.logger)
+        else:
+            return self.pool.map(function, jobs)
+

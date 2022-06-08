@@ -23,9 +23,6 @@ import corsika_primary as cpw
 import plenopy as pl
 import sparse_numeric_table as spt
 import gamma_ray_reconstruction as gamrec
-import queue_map_reduce
-from queue_map_reduce.tools import _log as qmrlog
-
 
 """
 I think I have an efficient and very simple algorithm
@@ -212,7 +209,7 @@ def make_job_dict(
 
 
 def reduce(
-    run_dir, production_key, site_key, particle_key, LAZY,
+    run_dir, production_key, site_key, particle_key, logger, LAZY,
 ):
     production_dir = os.path.join(run_dir, production_key)
     site_dir = os.path.join(production_dir, site_key)
@@ -226,7 +223,7 @@ def reduce(
     if not op.exists(log_path) or not LAZY:
         _lop_paths = glob.glob(os.path.join(log_dir, "*_runtime.jsonl"))
         logging.reduce(list_of_log_paths=_lop_paths, out_path=log_path)
-    qmrlog("Reduce {:s} {:s} run-time.".format(site_key, particle_key))
+    logger.info("Reduce {:s} {:s} run-time.".format(site_key, particle_key))
 
     # event table
     # ===========
@@ -243,7 +240,7 @@ def reduce(
             table=event_table,
             structure=table.STRUCTURE,
         )
-    qmrlog("Reduce {:s} {:s} event_table.".format(site_key, particle_key))
+    logger.info("Reduce {:s} {:s} event_table.".format(site_key, particle_key))
 
     # grid images
     # ===========
@@ -251,15 +248,15 @@ def reduce(
     if not op.exists(grid_path) or not LAZY:
         _grid_paths = glob.glob(os.path.join(features_dir, "*_grid.tar"))
         grid.reduce(list_of_grid_paths=_grid_paths, out_path=grid_path)
-    qmrlog("Reduce {:s} {:s} grid.".format(site_key, particle_key))
+    logger.info("Reduce {:s} {:s} grid.".format(site_key, particle_key))
 
     # cherenkov-photon-stream
     # =======================
     loph_abspath = os.path.join(site_particle_dir, "cherenkov.phs.loph.tar")
     tmp_loph_abspath = loph_abspath + ".tmp"
-    qmrlog("Reduce {:s} {:s} cherenkov phs.".format(site_key, particle_key))
+    logger.info("Reduce {:s} {:s} cherenkov phs.".format(site_key, particle_key))
     if not op.exists(loph_abspath) or not LAZY:
-        qmrlog("compile ", loph_abspath)
+        logger.info("compile ", loph_abspath)
         _cer_run_paths = glob.glob(
             os.path.join(
                 site_particle_dir,
@@ -937,10 +934,10 @@ def run_job(job):
     _export_job_to_log_dir(job=job)
 
     log_path = op.join(job["log_dir"], _run_id_str(job) + "_runtime.jsonl")
-    jl = logging.JsonlLog(path=log_path + ".tmp")
-    jl.log("starting run")
+    jl = logging.LoggerFile(path=log_path + ".tmp")
+    jl.info("starting run")
 
-    jl.log("init prng")
+    jl.info("init prng")
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
     with logging.TimeDelta(jl, "draw_primary"):
@@ -958,7 +955,7 @@ def run_job(job):
     else:
         tmp_dir = op.join(job["tmp_dir"], _run_id_str(job))
         os.makedirs(tmp_dir, exist_ok=True)
-    jl.log("make tmp_dir: {:s}".format(tmp_dir))
+    jl.info("make tmp_dir: {:s}".format(tmp_dir))
 
     tabrec = _init_table_records()
 
@@ -1032,7 +1029,7 @@ def run_job(job):
 
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
-    jl.log("ending run")
+    jl.info("ending run")
     nfs.move(log_path + ".tmp", log_path)
 
 

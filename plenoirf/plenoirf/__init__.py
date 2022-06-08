@@ -28,13 +28,12 @@ import tempfile
 import pandas as pd
 import tarfile
 import io
+import inspect
 
 import json_numpy
 import binning_utils
 import plenopy as pl
 import sparse_numeric_table as spt
-import queue_map_reduce
-from queue_map_reduce.tools import _log as qmrlog
 import magnetic_deflection as mdfl
 import gamma_ray_reconstruction as gamrec
 
@@ -248,9 +247,9 @@ def init(
 
 
 def _estimate_magnetic_deflection_of_air_showers(
-    config, run_dir, map_and_reduce_pool
+    config, run_dir, map_and_reduce_pool, logger
 ):
-    qmrlog("Estimating magnetic deflection.")
+    logger.info("Estimating magnetic deflection.")
     mdfl_dir = opj(run_dir, "magnetic_deflection")
 
     if op.exists(mdfl_dir):
@@ -288,9 +287,9 @@ def _estimate_magnetic_deflection_of_air_showers(
 
 
 def _estimate_light_field_geometry_of_plenoscope(
-    config, run_dir, map_and_reduce_pool, executables
+    config, run_dir, map_and_reduce_pool, executables, logger,
 ):
-    qmrlog("Estimating light-field-geometry.")
+    logger.info("Estimating light-field-geometry.")
 
     if op.exists(opj(run_dir, "light_field_geometry")):
         assert utils.contains_same_bytes(
@@ -331,7 +330,7 @@ def _estimate_light_field_geometry_of_plenoscope(
             )
 
     if not op.exists(opj(run_dir, "light_field_geometry", "plot")):
-        qmrlog("Plotting light-field-geometry.")
+        logger.info("Plotting light-field-geometry.")
         lfg = pl.LightFieldGeometry(opj(run_dir, "light_field_geometry"))
         pl.plot.light_field_geometry.save_all(
             light_field_geometry=lfg,
@@ -340,9 +339,9 @@ def _estimate_light_field_geometry_of_plenoscope(
 
 
 def _estimate_trigger_geometry_of_plenoscope(
-    config, run_dir,
+    config, run_dir, logger,
 ):
-    qmrlog("Estimating trigger-geometry.")
+    logger.info("Estimating trigger-geometry.")
     if not op.exists(opj(run_dir, "trigger_geometry")):
         light_field_geometry = pl.LightFieldGeometry(
             path=opj(run_dir, "light_field_geometry")
@@ -383,10 +382,11 @@ def _populate_table_of_thrown_air_showers(
     tmp_absdir,
     date_dict,
     KEEP_TMP,
-    LAZY_REDUCTION=False,
-    num_parallel_jobs=2000,
+    LAZY_REDUCTION,
+    num_parallel_jobs,
+    logger,
 ):
-    qmrlog("Estimating instrument-response.")
+    logger.info("Estimating instrument-response.")
     table_absdir = opj(run_dir, "event_table")
     os.makedirs(table_absdir, exist_ok=True)
 
@@ -395,7 +395,7 @@ def _populate_table_of_thrown_air_showers(
         prov=prov, corsika_primary_path=executables["corsika_primary_path"]
     )
 
-    qmrlog("Write provenance.")
+    logger.info("Write provenance.")
     json_numpy.write(
         path=opj(table_absdir, "provenance.json"), out_dict=prov,
     )
@@ -452,7 +452,7 @@ def _populate_table_of_thrown_air_showers(
         instrument_response.run_jobs_in_bundles, irf_jobs_in_bundles
     )
 
-    qmrlog("Reduce instrument-response.")
+    logger.info("Reduce instrument-response.")
 
     for site_key in config["sites"]:
         for particle_key in config["particles"]:
@@ -461,6 +461,7 @@ def _populate_table_of_thrown_air_showers(
                 production_key="event_table",
                 site_key=site_key,
                 particle_key=particle_key,
+                logger=logger,
                 LAZY=LAZY_REDUCTION,
             )
 
@@ -473,9 +474,17 @@ def run(
     TMP_DIR_ON_WORKERNODE=True,
     KEEP_TMP=False,
     LAZY_REDUCTION=False,
+    logger=None,
 ):
+    if logger is None:
+        logger = logging.LoggerStream()
+
+    map_and_reduce_pool = logging.MapAndReducePoolWithLogger(
+        pool=map_and_reduce_pool
+    )
+
     date_dict = provenance.get_time_dict_now()
-    qmrlog("Start run()")
+    logger.info("Start run()")
 
     run_dir = op.abspath(run_dir)
     for exe_path in executables:
@@ -483,17 +492,20 @@ def run(
 
     if TMP_DIR_ON_WORKERNODE:
         tmp_absdir = None
-        qmrlog("Use tmp_dir on workernodes.")
+        logger.info("Use tmp_dir on workernodes.")
     else:
         tmp_absdir = opj(run_dir, "tmp")
         os.makedirs(tmp_absdir, exist_ok=True)
-        qmrlog("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
+        logger.info("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
 
-    qmrlog("Read config")
+    logger.info("Read config")
     config = json_numpy.read(opj(run_dir, "input", "config.json"))
 
     _estimate_magnetic_deflection_of_air_showers(
-        config=config, run_dir=run_dir, map_and_reduce_pool=map_and_reduce_pool
+        config=config,
+        run_dir=run_dir,
+        map_and_reduce_pool=map_and_reduce_pool,
+        logger=logger,
     )
 
     _estimate_light_field_geometry_of_plenoscope(
@@ -501,9 +513,12 @@ def run(
         run_dir=run_dir,
         map_and_reduce_pool=map_and_reduce_pool,
         executables=executables,
+        logger=logger,
     )
 
-    _estimate_trigger_geometry_of_plenoscope(config=config, run_dir=run_dir)
+    _estimate_trigger_geometry_of_plenoscope(
+        config=config, run_dir=run_dir, logger=logger,
+    )
 
     _populate_table_of_thrown_air_showers(
         config=config,
@@ -515,6 +530,7 @@ def run(
         date_dict=date_dict,
         LAZY_REDUCTION=LAZY_REDUCTION,
         num_parallel_jobs=num_parallel_jobs,
+        logger=logger,
     )
 
-    qmrlog("End run().")
+    logger.info("End run().")
