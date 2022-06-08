@@ -124,10 +124,7 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "sparse_numeric_table_sebastian-achim-mueller",
     },
     {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
-    {"path": "plenopy", "name": "plenopy"},
-    {"path": "cable_robo_mount", "name": "cable_robo_mount"},
     {"path": "gamma_ray_reconstruction", "name": "gamma_ray_reconstruction"},
-    {"path": "plenoirf", "name": "plenoirf"},
     {"path": "magnetic_deflection", "name": "magnetic_deflection"},
     {
         "path": "spectral_energy_distribution_units",
@@ -146,6 +143,9 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "merlict_camera_server",
     },
     {"path": "corsika_install", "name": "corsika_primary"},
+    {"path": "cable_robo_mount", "name": "cable_robo_mount"},
+    {"path": "plenopy", "name": "plenopy"},
+    {"path": "plenoirf", "name": "plenoirf"},
 ]
 
 
