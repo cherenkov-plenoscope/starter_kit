@@ -254,7 +254,9 @@ def reduce(
     # =======================
     loph_abspath = os.path.join(site_particle_dir, "cherenkov.phs.loph.tar")
     tmp_loph_abspath = loph_abspath + ".tmp"
-    logger.info("Reduce {:s} {:s} cherenkov phs.".format(site_key, particle_key))
+    logger.info(
+        "Reduce {:s} {:s} cherenkov phs.".format(site_key, particle_key)
+    )
     if not op.exists(loph_abspath) or not LAZY:
         logger.info("compile ", loph_abspath)
         _cer_run_paths = glob.glob(

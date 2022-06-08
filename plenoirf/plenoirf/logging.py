@@ -50,13 +50,19 @@ class TimeDelta:
 
     def __enter__(self):
         self.start = time.time()
-        self.logger.log(level=level, msg="{:s}:start:{:f}".format(self.name, self.start))
+        self.logger.log(
+            level=level, msg="{:s}:start:{:f}".format(self.name, self.start)
+        )
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop = time.time()
-        self.logger.log(level=level, msg="{:s}:stop:{:f}".format(self.name, self.start))
-        self.logger.log(level=level, msg="{:s}:delta:{:f}".format(self.name, self.delta()))
+        self.logger.log(
+            level=level, msg="{:s}:stop:{:f}".format(self.name, self.start)
+        )
+        self.logger.log(
+            level=level, msg="{:s}:delta:{:f}".format(self.name, self.delta())
+        )
 
     def delta(self):
         return self.stop - self.start
@@ -85,14 +91,14 @@ def reduce_into_records(list_of_log_paths):
                     if key in msg:
                         iname = str.find(msg, key)
                         name = msg[:(iname)]
-                        deltastr = msg[(iname + len(key)):]
+                        deltastr = msg[(iname + len(key)) :]
                         run[name] = float(deltastr)
             list_of_log_records.append(run)
 
     return list_of_log_records
 
 
-class MapAndReducePoolWithLogger():
+class MapAndReducePoolWithLogger:
     def __init__(pool, logger):
         self.pool = pool
         self.logger = logger
@@ -102,8 +108,7 @@ class MapAndReducePoolWithLogger():
         return "logger" in signature.parameters
 
     def map(self, function, jobs):
-        if self.accepts_logger()
+        if self.accepts_logger():
             return self.pool.map(function, jobs, logger=self.logger)
         else:
             return self.pool.map(function, jobs)
-
