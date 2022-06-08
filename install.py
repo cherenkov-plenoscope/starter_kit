@@ -145,6 +145,7 @@ LOCAL_PYHTHON_PACKAGES = [
         "path": "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
         "name": "merlict_camera_server",
     },
+    {"path": "corsika_install", "name": "corsika_primary"},
 ]
 
 
