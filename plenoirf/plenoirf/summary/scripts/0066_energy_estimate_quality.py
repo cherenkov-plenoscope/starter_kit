@@ -212,8 +212,8 @@ for sk in SITES:
                 span=[0.1, 0.1 + ax_step * ebin, 0.8, ax_step],
                 style=axstyle_bottom if ebin == 0 else axstyle_stack,
             )
-            mm = cm["true_given_reco"][:, ebin]
-            mm_abs_unc = cm["true_given_reco_abs_unc"][:, ebin]
+            mm = cm["reco_given_true"][:, ebin]
+            mm_abs_unc = cm["reco_given_true_abs_unc"][:, ebin]
             seb.ax_add_histogram(
                 ax=axe,
                 bin_edges=cm["ax0_bin_edges"],

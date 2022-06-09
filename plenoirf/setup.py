@@ -23,7 +23,7 @@ setuptools.setup(
         "shapely",
         "binning_utils_sebastian-achim-mueller",
         "json_numpy_sebastian-achim-mueller",
-        "confusion_matrix_sebastian-achim-mueller>=0.0.2",
+        "confusion_matrix_sebastian-achim-mueller>=0.0.4",
         "flux_sensitivity_sebastian-achim-mueller>=0.0.1",
     ],
     package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},
