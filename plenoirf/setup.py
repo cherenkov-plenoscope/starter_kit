@@ -17,7 +17,7 @@ setuptools.setup(
     install_requires=[
         "cosmic_fluxes",
         "corsika_primary",
-        "json_line_logger_sebastian-achim-mueller>=0.0.2",
+        "json_line_logger_sebastian-achim-mueller>=0.0.3",
         "propagate_uncertainties_sebastian-achim-mueller>=0.2.3",
         "iminuit==1.4.9",
         "shapely",
