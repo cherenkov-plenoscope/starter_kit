@@ -101,7 +101,7 @@ EXAMPLE_CONFIG = {
                     decade=-1, bin=2, num_bins_per_decade=5
                 ),
                 binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=1, num_bins_per_decade=5
+                    decade=3, bin=2, num_bins_per_decade=5
                 ),
             ],
             "max_scatter_angle_deg": 3.25,
@@ -116,7 +116,7 @@ EXAMPLE_CONFIG = {
                     decade=-1, bin=3, num_bins_per_decade=5
                 ),
                 binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=1, num_bins_per_decade=5
+                    decade=3, bin=2, num_bins_per_decade=5
                 ),
             ],
             "max_scatter_angle_deg": 6.5,
@@ -134,7 +134,7 @@ EXAMPLE_CONFIG = {
                     ),
                 ),
                 binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=1, num_bins_per_decade=5
+                    decade=3, bin=2, num_bins_per_decade=5
                 ),
             ],
             "max_scatter_angle_deg": 13,
@@ -152,7 +152,7 @@ EXAMPLE_CONFIG = {
                     ),
                 ),
                 binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=1, num_bins_per_decade=5
+                    decade=3, bin=2, num_bins_per_decade=5
                 ),
             ],
             "max_scatter_angle_deg": 13,

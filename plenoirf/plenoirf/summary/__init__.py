@@ -227,7 +227,7 @@ def _guess_summary_config(run_dir):
     cfg = {
         "energy_binning": {
             "start": {"decade": -1, "bin": 2},
-            "stop": {"decade": 3, "bin": 1},
+            "stop": {"decade": 3, "bin": 2},
             "num_bins_per_decade": 5,
             "fine": {
                 "trigger_acceptance": 2,
