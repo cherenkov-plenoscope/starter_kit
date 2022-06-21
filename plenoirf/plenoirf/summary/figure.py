@@ -30,7 +30,7 @@ PARTICLE_COLORS = {
     "helium": "orange",
 }
 
-MATPLOTLIB_RCPARAMS = {
+MATPLOTLIB_RCPARAMS_LATEX = {
     "mathtext.fontset": "cm",
     "font.family": "STIXGeneral",
 }

@@ -11,7 +11,9 @@ import json_numpy
 import sebastians_matplotlib_addons as sebplt
 import sys
 
-sebplt.matplotlib.rcParams.update(plenoirf.summary.figure.MATPLOTLIB_RCPARAMS)
+sebplt.matplotlib.rcParams.update(
+    plenoirf.summary.figure.MATPLOTLIB_RCPARAMS_LATEX
+)
 
 argv = sys.argv
 if argv[0] == "ipython" and argv[1] == "-i":

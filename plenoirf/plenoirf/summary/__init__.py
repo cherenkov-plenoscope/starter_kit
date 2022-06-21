@@ -315,7 +315,7 @@ def _guess_summary_config(run_dir):
     }
 
     cfg["plot"] = {}
-    cfg["plot"]["matplotlib"] = figure.MATPLOTLIB_RCPARAMS
+    cfg["plot"]["matplotlib"] = figure.MATPLOTLIB_RCPARAMS_LATEX
     cfg["plot"]["particle_colors"] = figure.PARTICLE_COLORS
 
     return cfg
