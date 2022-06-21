@@ -15,8 +15,7 @@ with open(os.path.join(plot_dir, "summary.json"), "rt") as f:
     coll = json_numpy.loads(f.read())
 
 offaxis_angles_deg = np.linalg.norm(
-    np.array(config["sources"]["off_axis_angles_deg"]),
-    axis=1
+    np.array(config["sources"]["off_axis_angles_deg"]), axis=1
 )
 max_offaxis_angle_deg = np.max(offaxis_angles_deg)
 
@@ -61,7 +60,6 @@ fig.savefig(os.path.join(plot_dir, "psf.jpg"))
 sebplt.close(fig)
 
 
-
 fig = sebplt.figure(sebplt.FIGURE_4_3)
 ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
 max_t80 = 0.0
@@ -72,8 +70,12 @@ for mkey in config["mirror"]["keys"]:
         t80s = np.zeros(len(config["sources"]["off_axis_angles_deg"]))
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
             ofakey = "{:03d}".format(ofa)
-            t_stop = coll[mkey][paxkey][ofakey]["time"]["containment80"]["stop"]
-            t_start = coll[mkey][paxkey][ofakey]["time"]["containment80"]["start"]
+            t_stop = coll[mkey][paxkey][ofakey]["time"]["containment80"][
+                "stop"
+            ]
+            t_start = coll[mkey][paxkey][ofakey]["time"]["containment80"][
+                "start"
+            ]
             t80s[ofa] = t_stop - t_start
         ax.plot(
             offaxis_angles_deg,

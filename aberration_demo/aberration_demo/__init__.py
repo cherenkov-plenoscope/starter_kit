@@ -19,15 +19,17 @@ CFG = {}
 CFG["seed"] = 42
 
 CFG["executables"] = {
-    "merlict_plenoscope_propagator_path": os.path.abspath(os.path.join(
-        "build", "merlict", "merlict-plenoscope-propagation"
-    )),
-    "merlict_plenoscope_calibration_map_path": os.path.abspath(os.path.join(
-        "build", "merlict", "merlict-plenoscope-calibration-map"
-    )),
-    "merlict_plenoscope_calibration_reduce_path": os.path.abspath(os.path.join(
-        "build", "merlict", "merlict-plenoscope-calibration-reduce"
-    )),
+    "merlict_plenoscope_propagator_path": os.path.abspath(
+        os.path.join("build", "merlict", "merlict-plenoscope-propagation")
+    ),
+    "merlict_plenoscope_calibration_map_path": os.path.abspath(
+        os.path.join("build", "merlict", "merlict-plenoscope-calibration-map")
+    ),
+    "merlict_plenoscope_calibration_reduce_path": os.path.abspath(
+        os.path.join(
+            "build", "merlict", "merlict-plenoscope-calibration-reduce"
+        )
+    ),
 }
 
 CFG["sources"] = {}
@@ -42,7 +44,9 @@ CFG["mirror"]["keys"] = [
 ]
 CFG["mirror"]["focal_length"] = 106.5
 CFG["mirror"]["inner_radius"] = 35.5
-CFG["mirror"]["outer_radius"] = (2/np.sqrt(3)) * CFG["mirror"]["inner_radius"]
+CFG["mirror"]["outer_radius"] = (2 / np.sqrt(3)) * CFG["mirror"][
+    "inner_radius"
+]
 CFG["sensor"] = {}
 CFG["sensor"]["fov_radius_deg"] = 9.0
 CFG["sensor"]["housing_overhead"] = 1.1
@@ -54,7 +58,6 @@ CFG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
 CFG["binning"] = analysis.BINNING
 
 
-
 def init(work_dir, config=CFG):
     os.makedirs(work_dir, exist_ok=True)
     prng = np.random.Generator(np.random.PCG64(config["seed"]))
@@ -62,7 +65,9 @@ def init(work_dir, config=CFG):
     with open(os.path.join(work_dir, "config.json"), "wt") as f:
         f.write(json_numpy.dumps(config, indent=4))
 
-    with open(os.path.join(work_dir, "merlict_propagation_config.json"), "wt") as f:
+    with open(
+        os.path.join(work_dir, "merlict_propagation_config.json"), "wt"
+    ) as f:
         f.write(json_numpy.dumps(merlict.PROPAGATION_CONFIG, indent=4))
 
 
@@ -70,7 +75,9 @@ def make_responses(work_dir):
     with open(os.path.join(work_dir, "config.json"), "rt") as f:
         config = json_numpy.loads(f.read())
 
-    with open(os.path.join(work_dir, "merlict_propagation_config.json"), "wt") as f:
+    with open(
+        os.path.join(work_dir, "merlict_propagation_config.json"), "wt"
+    ) as f:
         f.write(json_numpy.dumps(merlict.PROPAGATION_CONFIG))
 
     sources_dir = os.path.join(work_dir, "sources")
@@ -93,21 +100,20 @@ def make_responses(work_dir):
                 if not os.path.exists(ofa_dir):
                     plenoirf.merlict.plenoscope_propagator(
                         corsika_run_path=os.path.join(
-                            sources_dir,
-                            "{:03d}.tar".format(ofa)
+                            sources_dir, "{:03d}.tar".format(ofa)
                         ),
                         output_path=ofa_dir,
                         light_field_geometry_path=os.path.join(
                             geometries_dir,
                             mkey,
                             "paxel{:d}".format(npax),
-                            "light_field_geometry"
+                            "light_field_geometry",
                         ),
-                        merlict_plenoscope_propagator_path=config["executables"][
-                            "merlict_plenoscope_propagator_path"],
+                        merlict_plenoscope_propagator_path=config[
+                            "executables"
+                        ]["merlict_plenoscope_propagator_path"],
                         merlict_plenoscope_propagator_config_path=os.path.join(
-                            work_dir,
-                            "merlict_propagation_config.json"
+                            work_dir, "merlict_propagation_config.json"
                         ),
                         random_seed=runningseed,
                         photon_origins=True,
@@ -135,15 +141,17 @@ def make_calibration_source_run(cx, cy, size, path, prng, aperture_radius):
 
         run.write_runh(runh)
         run.write_evth(evth)
-        run.write_bunches(cpw.calibration_light_source.draw_parallel_and_isochor_bunches(
-            cx=-1.0 * cx,
-            cy=-1.0 * cy,
-            aperture_radius=aperture_radius,
-            wavelength=433e-9,
-            size=size,
-            prng=prng,
-            speed_of_light=299792458,
-        ))
+        run.write_bunches(
+            cpw.calibration_light_source.draw_parallel_and_isochor_bunches(
+                cx=-1.0 * cx,
+                cy=-1.0 * cy,
+                aperture_radius=aperture_radius,
+                wavelength=433e-9,
+                size=size,
+                prng=prng,
+                speed_of_light=299792458,
+            )
+        )
 
 
 def make_analyse(work_dir):
@@ -187,12 +195,7 @@ def make_analyse(work_dir):
 
                     event = plenopy.Event(
                         path=os.path.join(
-                            work_dir,
-                            "responses",
-                            mkey,
-                            paxkey,
-                            ofakey,
-                            "1",
+                            work_dir, "responses", mkey, paxkey, ofakey, "1",
                         ),
                         light_field_geometry=light_field_geometry,
                     )
@@ -220,8 +223,12 @@ def make_analyse(work_dir):
                     )
 
                     thisbinning = dict(config["binning"])
-                    thisbinning["image"]["center"]["cx_deg"] = config["sources"]["off_axis_angles_deg"][ofa][0]
-                    thisbinning["image"]["center"]["cy_deg"] = config["sources"]["off_axis_angles_deg"][ofa][1]
+                    thisbinning["image"]["center"]["cx_deg"] = config[
+                        "sources"
+                    ]["off_axis_angles_deg"][ofa][0]
+                    thisbinning["image"]["center"]["cy_deg"] = config[
+                        "sources"
+                    ]["off_axis_angles_deg"][ofa][1]
                     thisimg_bin_edges = analysis.binning_image_bin_edges(
                         binning=thisbinning
                     )
@@ -245,7 +252,10 @@ def make_analyse(work_dir):
                         percentile=CONTAINMENT_PERCENTILE,
                     )
                     print("time full_width_half_maximum")
-                    time_fwhm_start, time_fwhm_stop = analysis.full_width_half_maximum(
+                    (
+                        time_fwhm_start,
+                        time_fwhm_stop,
+                    ) = analysis.full_width_half_maximum(
                         x=cres["time"]["bin_centers"],
                         f=cres["time"]["weights"],
                     )
@@ -254,11 +264,19 @@ def make_analyse(work_dir):
                     out = {}
                     out["statistics"] = {}
                     out["statistics"]["image_beams"] = {}
-                    out["statistics"]["image_beams"]["total"] = light_field_geometry.number_lixel
-                    out["statistics"]["image_beams"]["valid"] = np.sum(cres["image_beams"]["valid"])
+                    out["statistics"]["image_beams"][
+                        "total"
+                    ] = light_field_geometry.number_lixel
+                    out["statistics"]["image_beams"]["valid"] = np.sum(
+                        cres["image_beams"]["valid"]
+                    )
                     out["statistics"]["photons"] = {}
-                    out["statistics"]["photons"]["total"] = event.raw_sensor_response.number_photons
-                    out["statistics"]["photons"]["valid"] = np.sum(cres["image_beams"]["weights"])
+                    out["statistics"]["photons"][
+                        "total"
+                    ] = event.raw_sensor_response.number_photons
+                    out["statistics"]["photons"]["valid"] = np.sum(
+                        cres["image_beams"]["weights"]
+                    )
 
                     out["time"] = cres["time"]
                     out["time"]["fwhm"] = {}
@@ -275,7 +293,6 @@ def make_analyse(work_dir):
 
                     with open(summary_path, "wt") as f:
                         f.write(json_numpy.dumps(out))
-
 
 
 def make_sources(work_dir):
@@ -320,7 +337,9 @@ def make_light_field_geometires(work_dir, map_and_reduce_pool):
 
                 scenery_dir = os.path.join(paxel_dir, "input", "scenery")
                 os.makedirs(scenery_dir, exist_ok=True)
-                with open(os.path.join(scenery_dir, "scenery.json"), "wt") as f:
+                with open(
+                    os.path.join(scenery_dir, "scenery.json"), "wt"
+                ) as f:
                     s = merlict.make_plenoscope_scenery_for_merlict(
                         mirror_key=mkey,
                         num_paxel_on_diagonal=npax,
@@ -331,9 +350,15 @@ def make_light_field_geometires(work_dir, map_and_reduce_pool):
                 lfg_path = os.path.join(paxel_dir, "light_field_geometry")
 
                 plenoirf._estimate_light_field_geometry_of_plenoscope(
-                    cfg={"light_field_geometry": {
-                            "num_blocks": config["light_field_geometry"]["num_blocks"] * npax ** 2,
-                            "num_photons_per_block": config["light_field_geometry"]["num_photons_per_block"],
+                    cfg={
+                        "light_field_geometry": {
+                            "num_blocks": config["light_field_geometry"][
+                                "num_blocks"
+                            ]
+                            * npax ** 2,
+                            "num_photons_per_block": config[
+                                "light_field_geometry"
+                            ]["num_photons_per_block"],
                         }
                     },
                     out_absdir=paxel_dir,
@@ -356,12 +381,7 @@ def read_analysis(work_dir):
                 ofakey = "{:03d}".format(ofa)
 
                 summary_path = os.path.join(
-                    work_dir,
-                    "analysis",
-                    mkey,
-                    paxkey,
-                    ofakey,
-                    "summary.json",
+                    work_dir, "analysis", mkey, paxkey, ofakey, "summary.json",
                 )
                 if not os.path.exists(summary_path):
                     print("Expected summary:", summary_path)
@@ -392,12 +412,18 @@ def make_plots(work_dir):
                     binning=tcoll["image"]["binning"]
                 )
 
-                img_path = os.path.join(plot_dir, "image_" + scenario_key + ".jpg")
+                img_path = os.path.join(
+                    plot_dir, "image_" + scenario_key + ".jpg"
+                )
                 if not os.path.exists(img_path):
                     fig = sebplt.figure(sebplt.FIGURE_4_3)
                     ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
-                    ax_cb = sebplt.add_axes(fig=fig, span=[0.85, 0.1, 0.02, 0.8])
-                    img_raw_norm = tcoll["image"]["raw"] / np.max(tcoll["image"]["raw"])
+                    ax_cb = sebplt.add_axes(
+                        fig=fig, span=[0.85, 0.1, 0.02, 0.8]
+                    )
+                    img_raw_norm = tcoll["image"]["raw"] / np.max(
+                        tcoll["image"]["raw"]
+                    )
                     cmap_psf = ax.pcolormesh(
                         np.rad2deg(bin_edges_cx),
                         np.rad2deg(bin_edges_cy),
@@ -407,15 +433,21 @@ def make_plots(work_dir):
                     )
                     sebplt.plt.colorbar(cmap_psf, cax=ax_cb, extend="max")
 
-                    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.33)
+                    ax.grid(
+                        color="k", linestyle="-", linewidth=0.66, alpha=0.33
+                    )
                     sebplt.ax_add_circle(
                         ax=ax,
-                        x=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
-                        y=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
+                        x=tcoll["image"]["binning"]["image"]["center"][
+                            "cx_deg"
+                        ],
+                        y=tcoll["image"]["binning"]["image"]["center"][
+                            "cy_deg"
+                        ],
                         r=np.rad2deg(tcoll["image"]["angle80"]),
                         linewidth=0.5,
-                        linestyle='-',
-                        color='r',
+                        linestyle="-",
+                        color="r",
                         alpha=1,
                         num_steps=360,
                     )
@@ -425,26 +457,33 @@ def make_plots(work_dir):
                     fig.savefig(img_path)
                     sebplt.close(fig)
 
-                time_path = os.path.join(plot_dir, "time_" + scenario_key + ".jpg")
+                time_path = os.path.join(
+                    plot_dir, "time_" + scenario_key + ".jpg"
+                )
                 if not os.path.exists(time_path):
                     fig = sebplt.figure(sebplt.FIGURE_1_1)
                     ax = sebplt.add_axes(fig, [0.1, 0.1, 0.8, 0.8])
                     sebplt.ax_add_histogram(
                         ax=ax,
                         bin_edges=tcoll["time"]["bin_edges"],
-                        bincounts=tcoll["time"]["weights"] / np.max(tcoll["time"]["weights"]),
+                        bincounts=tcoll["time"]["weights"]
+                        / np.max(tcoll["time"]["weights"]),
                         face_color="k",
                         face_alpha=0.1,
                         draw_bin_walls=True,
                     )
                     ax.plot(
-                        [tcoll["time"]["fwhm"]["start"], tcoll["time"]["fwhm"]["stop"]],
+                        [
+                            tcoll["time"]["fwhm"]["start"],
+                            tcoll["time"]["fwhm"]["stop"],
+                        ],
                         [0.5, 0.5],
-                        "r-"
+                        "r-",
                     )
                     ax.semilogy()
                     ax.set_xlabel("time / s")
                     fig.savefig(time_path)
                     sebplt.close(fig)
 
-#def make_summary_plots(work_dir):
+
+# def make_summary_plots(work_dir):

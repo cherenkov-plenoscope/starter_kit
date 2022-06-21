@@ -127,9 +127,7 @@ def make_isochron_light_front_from_point_source(
     num_rays,
 ):
     thetas = prng.normal(
-        loc=true_incident_direction,
-        scale=point_source_spread,
-        size=num_rays,
+        loc=true_incident_direction, scale=point_source_spread, size=num_rays,
     )
 
     return _make_isochron_light_front(
@@ -141,10 +139,7 @@ def make_isochron_light_front_from_point_source(
 
 
 def _make_isochron_light_front(
-    thetas,
-    aperture_diameter,
-    emission_distance,
-    aperture_distance,
+    thetas, aperture_diameter, emission_distance, aperture_distance,
 ):
     """
                                             /\ (0)
@@ -165,9 +160,7 @@ def _make_isochron_light_front(
     num_rays = len(thetas)
 
     hh = prng.uniform(
-        low=-aperture_diameter / 2,
-        high=aperture_diameter / 2,
-        size=num_rays,
+        low=-aperture_diameter / 2, high=aperture_diameter / 2, size=num_rays,
     )
 
     support_positions = np.zeros(shape=(num_rays, 2))
@@ -196,8 +189,6 @@ def _make_isochron_light_front(
     return emission_positions, support_positions
 
 
-
-
 def _light_field_geometry_add_rays(
     light_field_geometry,
     plenoscope_geometry,
@@ -209,7 +200,10 @@ def _light_field_geometry_add_rays(
     lfg = light_field_geometry
     pg = plenoscope_geometry
 
-    emission_positions, support_positions = make_isochron_light_front_from_diffuse_source(
+    (
+        emission_positions,
+        support_positions,
+    ) = make_isochron_light_front_from_diffuse_source(
         incident_direction_start=-np.deg2rad(max_off_axis_angle_deg),
         incident_direction_stop=np.deg2rad(max_off_axis_angle_deg),
         aperture_diameter=pg["mirror"]["diameter"],
@@ -276,8 +270,8 @@ def _light_field_geometry_add_rays(
 
         paxel_id = np.digitize(sys[r], bins=pg["paxel"]["edges"]) - 1
 
-        ddx = (sensor_plane_intersection_position[0])
-        ddy = (sys[r] - sensor_plane_intersection_position[1])
+        ddx = sensor_plane_intersection_position[0]
+        ddy = sys[r] - sensor_plane_intersection_position[1]
         dd = np.hypot(ddx, ddy)
 
         if pixel_id >= 0 and pixel_id < pg["sensor"]["smallcameras"]["num"]:
@@ -291,8 +285,7 @@ def _light_field_geometry_add_rays(
 
 
 def _light_field_geometry_fraction_min_rays_per_sensor(
-    light_field_geometry,
-    min_num_rays_per_sensor
+    light_field_geometry, min_num_rays_per_sensor
 ):
     lfg = light_field_geometry
     num_paxel = len(lfg["y"])
@@ -351,7 +344,7 @@ def estimate_light_field_geometry(
         if num_loops > max_num_loops:
             break
 
-        print("light-field-geometry", int(good_statistics*100), "%")
+        print("light-field-geometry", int(good_statistics * 100), "%")
 
         lfg_temp = _light_field_geometry_add_rays(
             light_field_geometry=lfg_temp,
@@ -489,9 +482,9 @@ def _triangle(x, loc, width):
     width: float
             Width of the triangle's base.
     """
-    height = 1/width
+    height = 1 / width
 
-    _val = 1 - (1/width)*np.abs(x - loc)
+    _val = 1 - (1 / width) * np.abs(x - loc)
     _comp = np.c_[_val, np.zeros(len(x))]
     return height * np.max(_comp, axis=1)
 
@@ -505,7 +498,7 @@ def histogram_image(cy, cy_std, edges):
     """
     assert len(cy) == len(cy_std)
     counts = np.zeros(len(edges) - 1)
-    centers = (edges[1:] + edges[:-1])/2
+    centers = (edges[1:] + edges[:-1]) / 2
 
     for i in range(len(cy)):
         count = _triangle(x=centers, loc=cy[i], width=cy_std[i])
@@ -523,7 +516,7 @@ def simulate_point_source(
 
     (
         emission_positions,
-        support_positions
+        support_positions,
     ) = make_isochron_light_front_from_point_source(
         true_incident_direction=true_incident_direction,
         point_source_spread=np.deg2rad(POINT_SOURCE_SPREAD_DEG),
@@ -605,7 +598,8 @@ def simulate_point_source(
             emission_positions[i] - sphere_intersection_positions[i]
         )
         sph_to_sen = np.linalg.norm(
-            sphere_intersection_positions[i] - sensor_plane_intersection_positions[i]
+            sphere_intersection_positions[i]
+            - sensor_plane_intersection_positions[i]
         )
         path_length_emission_to_absorption[i] = emi_to_sph + sph_to_sen
 
@@ -693,8 +687,8 @@ NUM_TIME_BINS = 1000
 PLENOSCOPES = [
     {"num_paxel": 1, "plot_image": True},
     {"num_paxel": 3, "plot_image": True},
-    #{"num_paxel": 9, "plot_image": True},
-    #{"num_paxel": 27, "plot_image": False},
+    # {"num_paxel": 9, "plot_image": True},
+    # {"num_paxel": 27, "plot_image": False},
 ]
 
 res = []
@@ -737,16 +731,11 @@ for plenoscop_config in PLENOSCOPES:
     ) / 2
 
     pg["computed_timebins"] = {}
-    pg["computed_timebins"]["edges"] = np.linspace(
-        -10,
-        10,
-        NUM_TIME_BINS + 1,
-    )
+    pg["computed_timebins"]["edges"] = np.linspace(-10, 10, NUM_TIME_BINS + 1,)
     pg["computed_timebins"]["centers"] = (
         pg["computed_timebins"]["edges"][:-1]
         + pg["computed_timebins"]["edges"][1:]
     ) / 2
-
 
     pg["paxel"] = {}
     pg["paxel"]["num"] = num_paxel
@@ -829,7 +818,8 @@ if PLOT_LIGHT_RAYS:
         )
         fig.savefig(
             os.path.join(
-                OUT_DIR, "spherical_aberrations_overview_{:01d}.jpg".format(idir),
+                OUT_DIR,
+                "spherical_aberrations_overview_{:01d}.jpg".format(idir),
             ),
             dpi=DPI,
         )
@@ -851,7 +841,8 @@ if PLOT_LIGHT_RAYS:
         ax.set_ylim(ylim)
         fig.savefig(
             os.path.join(
-                OUT_DIR, "spherical_aberrations_close_up_{:01d}.jpg".format(idir),
+                OUT_DIR,
+                "spherical_aberrations_close_up_{:01d}.jpg".format(idir),
             ),
             dpi=DPI,
         )

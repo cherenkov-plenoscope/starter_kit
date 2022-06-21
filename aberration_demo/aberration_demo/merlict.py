@@ -1,6 +1,7 @@
 import numpy as np
 import os
 
+
 def make_mirror_davies_cotton(focal_length, outer_radius):
     return {
         "type": "SegmentedReflector",
@@ -14,9 +15,8 @@ def make_mirror_davies_cotton(focal_length, outer_radius):
         "facet_inner_hex_radius": 0.75,
         "gap_between_facets": 0.025,
         "name": "reflector",
-        "surface": {
-            "outer_reflection": "mirror_reflectivity_vs_wavelength"},
-        "children": []
+        "surface": {"outer_reflection": "mirror_reflectivity_vs_wavelength"},
+        "children": [],
     }
 
 
@@ -33,9 +33,8 @@ def make_mirror_parabola_segmented(focal_length, outer_radius):
         "facet_inner_hex_radius": 0.75,
         "gap_between_facets": 0.025,
         "name": "reflector",
-        "surface": {
-            "outer_reflection": "mirror_reflectivity_vs_wavelength"},
-        "children": []
+        "surface": {"outer_reflection": "mirror_reflectivity_vs_wavelength"},
+        "children": [],
     }
 
 
@@ -47,9 +46,8 @@ def make_mirror_spherical_monolith(focal_length, outer_radius):
         "curvature_radius": 2.0 * focal_length,
         "outer_radius": outer_radius,
         "name": "reflector",
-        "surface": {
-            "outer_reflection": "mirror_reflectivity_vs_wavelength"},
-        "children": []
+        "surface": {"outer_reflection": "mirror_reflectivity_vs_wavelength"},
+        "children": [],
     }
 
 
@@ -62,34 +60,25 @@ MIRRORS = {
 
 PROPAGATION_CONFIG = {
     "night_sky_background_ligth": {
-        "flux_vs_wavelength": [
-                [250.0e-9, 1.0],
-                [700.0e-9, 1.0]
-        ],
+        "flux_vs_wavelength": [[250.0e-9, 1.0], [700.0e-9, 1.0]],
         "exposure_time": 50e-9,
-        "comment": "Night sky brightness is off. In Photons/(sr s m^2 m), last 'm' is for the wavelength wavelength[m] flux[1/(s m^2 sr m)"
+        "comment": "Night sky brightness is off. In Photons/(sr s m^2 m), last 'm' is for the wavelength wavelength[m] flux[1/(s m^2 sr m)",
     },
     "photo_electric_converter": {
-        "quantum_efficiency_vs_wavelength": [
-                [240e-9, 1.0],
-                [701e-9, 1.0]
-        ],
+        "quantum_efficiency_vs_wavelength": [[240e-9, 1.0], [701e-9, 1.0]],
         "dark_rate": 1e-3,
         "probability_for_second_puls": 0.0,
-        "comment": "perfect detection"
+        "comment": "perfect detection",
     },
     "photon_stream": {
         "time_slice_duration": 0.5e-9,
-        "single_photon_arrival_time_resolution": 0.416e-9
-    }
+        "single_photon_arrival_time_resolution": 0.416e-9,
+    },
 }
 
 
-
 def make_plenoscope_scenery_for_merlict(
-    mirror_key,
-    num_paxel_on_diagonal,
-    cfg,
+    mirror_key, num_paxel_on_diagonal, cfg,
 ):
     mirror = MIRRORS[mirror_key](
         focal_length=cfg["mirror"]["focal_length"],
@@ -103,25 +92,27 @@ def make_plenoscope_scenery_for_merlict(
         "pos": [0, 0, cfg["mirror"]["focal_length"]],
         "rot": [0, 0, 0],
         "expected_imaging_system_focal_length": cfg["mirror"]["focal_length"],
-        "expected_imaging_system_aperture_radius": cfg["mirror"]["inner_radius"],
+        "expected_imaging_system_aperture_radius": cfg["mirror"][
+            "inner_radius"
+        ],
         "max_FoV_diameter_deg": 2.0 * cfg["sensor"]["fov_radius_deg"],
-        "hex_pixel_FoV_flat2flat_deg": cfg["sensor"]["hex_pixel_fov_flat2flat_deg"],
+        "hex_pixel_FoV_flat2flat_deg": cfg["sensor"][
+            "hex_pixel_fov_flat2flat_deg"
+        ],
         "num_paxel_on_pixel_diagonal": num_paxel_on_diagonal,
         "housing_overhead": cfg["sensor"]["housing_overhead"],
         "lens_refraction_vs_wavelength": "lens_refraction_vs_wavelength",
         "bin_reflection_vs_wavelength": "mirror_reflectivity_vs_wavelength",
-        "children": []
+        "children": [],
     }
 
     scn = {
         "functions": [
             {
                 "name": "mirror_reflectivity_vs_wavelength",
-                "argument_versus_value": [
-                    [2.238e-07, 1.0],
-                    [7.010e-07, 1.0]
-                ],
-            "comment": "Ideal mirror, perfect reflection."},
+                "argument_versus_value": [[2.238e-07, 1.0], [7.010e-07, 1.0]],
+                "comment": "Ideal mirror, perfect reflection.",
+            },
             {
                 "name": "lens_refraction_vs_wavelength",
                 "argument_versus_value": [
@@ -134,12 +125,14 @@ def make_plenoscope_scenery_for_merlict(
                     [546e-9, 1.4601],
                     [633e-9, 1.4570],
                     [694e-9, 1.4554],
-                    [753e-9, 1.4542]],
-                "comment": "Hereaus Quarzglas GmbH and Co. KG"}
+                    [753e-9, 1.4542],
+                ],
+                "comment": "Hereaus Quarzglas GmbH and Co. KG",
+            },
         ],
         "colors": [
-            {"name":"orange", "rgb":[255, 91, 49]},
-            {"name":"wood_brown", "rgb":[200, 200, 0]}
+            {"name": "orange", "rgb": [255, 91, 49]},
+            {"name": "wood_brown", "rgb": [200, 200, 0]},
         ],
         "children": [
             {
@@ -147,9 +140,9 @@ def make_plenoscope_scenery_for_merlict(
                 "name": "Portal",
                 "pos": [0, 0, 0],
                 "rot": [0, 0, 0],
-                "children": []
+                "children": [],
             }
-        ]
+        ],
     }
 
     scn["children"][0]["children"].append(mirror)

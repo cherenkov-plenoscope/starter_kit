@@ -14,10 +14,10 @@ import sys
 argv = sys.argv
 
 # --------
-#work_dir = "aberration_demo_2022-03-09"
-#mkey = "sphere_monolith"
-#npax = 1
-#ofa = 1
+# work_dir = "aberration_demo_2022-03-09"
+# mkey = "sphere_monolith"
+# npax = 1
+# ofa = 1
 
 assert len(argv) >= 5
 if argv[1] == "-i":
@@ -62,24 +62,13 @@ if not os.path.exists(summary_path):
     print("read light_field_geometry")
     light_field_geometry = plenopy.LightFieldGeometry(
         path=os.path.join(
-            work_dir,
-            "geometries",
-            mkey,
-            paxkey,
-            "light_field_geometry",
+            work_dir, "geometries", mkey, paxkey, "light_field_geometry",
         )
     )
 
     print("read event")
     event = plenopy.Event(
-        path=os.path.join(
-            work_dir,
-            "responses",
-            mkey,
-            paxkey,
-            ofakey,
-            "1",
-        ),
+        path=os.path.join(work_dir, "responses", mkey, paxkey, ofakey, "1",),
         light_field_geometry=light_field_geometry,
     )
 
@@ -116,8 +105,12 @@ if not os.path.exists(summary_path):
     )
 
     thisbinning = dict(config["binning"])
-    thisbinning["image"]["center"]["cx_deg"] = config["sources"]["off_axis_angles_deg"][ofa][0]
-    thisbinning["image"]["center"]["cy_deg"] = config["sources"]["off_axis_angles_deg"][ofa][1]
+    thisbinning["image"]["center"]["cx_deg"] = config["sources"][
+        "off_axis_angles_deg"
+    ][ofa][0]
+    thisbinning["image"]["center"]["cy_deg"] = config["sources"][
+        "off_axis_angles_deg"
+    ][ofa][1]
     thisimg_bin_edges = aberration_demo.analysis.binning_image_bin_edges(
         binning=thisbinning
     )
@@ -141,20 +134,30 @@ if not os.path.exists(summary_path):
         percentile=CONTAINMENT_PERCENTILE,
     )
     print("time full_width_half_maximum")
-    time_fwhm_start, time_fwhm_stop = aberration_demo.analysis.full_width_half_maximum(
-        x=cres["time"]["bin_centers"],
-        f=cres["time"]["weights"],
+    (
+        time_fwhm_start,
+        time_fwhm_stop,
+    ) = aberration_demo.analysis.full_width_half_maximum(
+        x=cres["time"]["bin_centers"], f=cres["time"]["weights"],
     )
 
     print("time export")
     out = {}
     out["statistics"] = {}
     out["statistics"]["image_beams"] = {}
-    out["statistics"]["image_beams"]["total"] = light_field_geometry.number_lixel
-    out["statistics"]["image_beams"]["valid"] = np.sum(cres["image_beams"]["valid"])
+    out["statistics"]["image_beams"][
+        "total"
+    ] = light_field_geometry.number_lixel
+    out["statistics"]["image_beams"]["valid"] = np.sum(
+        cres["image_beams"]["valid"]
+    )
     out["statistics"]["photons"] = {}
-    out["statistics"]["photons"]["total"] = event.raw_sensor_response.number_photons
-    out["statistics"]["photons"]["valid"] = np.sum(cres["image_beams"]["weights"])
+    out["statistics"]["photons"][
+        "total"
+    ] = event.raw_sensor_response.number_photons
+    out["statistics"]["photons"]["valid"] = np.sum(
+        cres["image_beams"]["weights"]
+    )
 
     out["time"] = cres["time"]
     out["time"]["fwhm"] = {}
@@ -202,8 +205,8 @@ sebplt.ax_add_circle(
     y=out["image"]["binning"]["image"]["center"]["cy_deg"],
     r=np.rad2deg(out["image"]["angle80"]),
     linewidth=0.5,
-    linestyle='-',
-    color='r',
+    linestyle="-",
+    color="r",
     alpha=1,
     num_steps=360,
 )
@@ -227,7 +230,7 @@ sebplt.ax_add_histogram(
 ax.plot(
     [out["time"]["fwhm"]["start"], out["time"]["fwhm"]["stop"]],
     [0.5, 0.5],
-    "r-"
+    "r-",
 )
 ax.semilogy()
 ax.set_xlabel("time / s")

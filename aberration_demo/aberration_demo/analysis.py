@@ -27,14 +27,7 @@ def make_bin_edges_and_centers(bin_width, num_bins, first_bin_center):
 
 
 def histogram2d_std(
-    x,
-    y,
-    x_std,
-    y_std,
-    weights,
-    bins,
-    prng,
-    num_sub_samples=10,
+    x, y, x_std, y_std, weights, bins, prng, num_sub_samples=10,
 ):
     num_samples = len(x)
     assert len(y) == num_samples
@@ -68,11 +61,13 @@ def histogram2d_std(
             iby = np.digitize(x=ry, bins=bin_edges_y) - 1
 
             if 0 <= ibx < num_bins_x and 0 <= iby < num_bins_y:
-                counts[ibx, iby] += weights[i]/num_sub_samples
+                counts[ibx, iby] += weights[i] / num_sub_samples
     return counts, bins
 
 
-def calibrate_plenoscope_response(event, light_field_geometry, object_distance):
+def calibrate_plenoscope_response(
+    event, light_field_geometry, object_distance
+):
     image_rays = plenopy.image.ImageRays(
         light_field_geometry=light_field_geometry
     )
@@ -88,15 +83,18 @@ def calibrate_plenoscope_response(event, light_field_geometry, object_distance):
     out["time"] = {}
     out["time"]["bin_edges"] = time_bin_edges
     out["time"]["bin_centers"] = time_bin_centers
-    out["time"]["weights"] = event.light_field_sequence_for_isochor_image(
-    ).sum(axis=1)
+    out["time"][
+        "weights"
+    ] = event.light_field_sequence_for_isochor_image().sum(axis=1)
 
     out["image_beams"] = {}
-    out["image_beams"]["_weights"] = event.light_field_sequence_for_isochor_image(
-    ).sum(axis=0)
-    out["image_beams"]["_cx"], out["image_beams"]["_cy"] = image_rays.cx_cy_in_object_distance(
-        object_distance
-    )
+    out["image_beams"][
+        "_weights"
+    ] = event.light_field_sequence_for_isochor_image().sum(axis=0)
+    (
+        out["image_beams"]["_cx"],
+        out["image_beams"]["_cy"],
+    ) = image_rays.cx_cy_in_object_distance(object_distance)
     out["image_beams"]["_cx_std"] = light_field_geometry.cx_std
     out["image_beams"]["_cy_std"] = light_field_geometry.cy_std
 
@@ -121,32 +119,26 @@ def calibrate_plenoscope_response(event, light_field_geometry, object_distance):
 def binning_image_bin_edges(binning):
     bb = binning
     cx_image_angle = np.deg2rad(
-        bb["image"]["num_pixel_cx"]
-        * bb["image"]["pixel_angle_deg"]
+        bb["image"]["num_pixel_cx"] * bb["image"]["pixel_angle_deg"]
     )
     cy_image_angle = np.deg2rad(
-        bb["image"]["num_pixel_cy"]
-        * bb["image"]["pixel_angle_deg"]
+        bb["image"]["num_pixel_cy"] * bb["image"]["pixel_angle_deg"]
     )
 
     cx_cen = np.deg2rad(bb["image"]["center"]["cx_deg"])
     cy_cen = np.deg2rad(bb["image"]["center"]["cy_deg"])
 
-    cx_start = cx_cen - cx_image_angle/2
-    cx_stop = cx_cen + cx_image_angle/2
+    cx_start = cx_cen - cx_image_angle / 2
+    cx_stop = cx_cen + cx_image_angle / 2
 
-    cy_start = cy_cen - cy_image_angle/2
-    cy_stop = cy_cen + cy_image_angle/2
+    cy_start = cy_cen - cy_image_angle / 2
+    cy_stop = cy_cen + cy_image_angle / 2
 
     cx_bin_edges = np.linspace(
-        cx_start,
-        cx_stop,
-        bb["image"]["num_pixel_cx"] + 1
+        cx_start, cx_stop, bb["image"]["num_pixel_cx"] + 1
     )
     cy_bin_edges = np.linspace(
-        cy_start,
-        cy_stop,
-        bb["image"]["num_pixel_cy"] + 1
+        cy_start, cy_stop, bb["image"]["num_pixel_cy"] + 1
     )
 
     return cx_bin_edges, cy_bin_edges
@@ -198,7 +190,7 @@ def encirclement2d(
 
     while True:
         overlap = len(tree.query_ball_point(x=[center_x, center_y], r=radius))
-        if overlap/integral >= required_fraction:
+        if overlap / integral >= required_fraction:
             radius = radius * iteration_shrinking_factor
         else:
             break
@@ -210,7 +202,6 @@ def encirclement2d(
     return center_x, center_y, radius
 
 
-
 def encirclement1d(x, f, percentile=80, oversample=137):
     assert len(x) == len(f)
     assert len(x) >= 3
@@ -219,8 +210,8 @@ def encirclement1d(x, f, percentile=80, oversample=137):
     assert oversample >= 1
     num_bins_fine = len(x) * oversample
 
-    start_fraction = 0.5 - 0.5 * (percentile/100.0)
-    stop_fraction = 0.5 + 0.5 * (percentile/100.0)
+    start_fraction = 0.5 - 0.5 * (percentile / 100.0)
+    stop_fraction = 0.5 + 0.5 * (percentile / 100.0)
 
     xfine = np.linspace(x[0], x[-1], num_bins_fine,)
     ffine = np.interp(x=xfine, xp=x, fp=f)
@@ -252,7 +243,6 @@ def encirclement1d(x, f, percentile=80, oversample=137):
     return xfine[istart], xfine[istop]
 
 
-
 def full_width_half_maximum(x, f, oversample=137):
     assert len(x) == len(f)
     assert len(x) >= 3
@@ -261,7 +251,7 @@ def full_width_half_maximum(x, f, oversample=137):
     num_bins_fine = len(x) * oversample
 
     xfine = np.linspace(x[0], x[-1], num_bins_fine,)
-    #print("xfine", xfine[0], xfine[-1])
+    # print("xfine", xfine[0], xfine[-1])
 
     ffine = np.interp(x=xfine, xp=x, fp=f)
     ffine = ffine / np.max(ffine)
