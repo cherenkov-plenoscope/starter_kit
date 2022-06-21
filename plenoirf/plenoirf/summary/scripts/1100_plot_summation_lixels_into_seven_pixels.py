@@ -13,10 +13,9 @@ argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
+seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
-
-seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 light_field_geometry = pl.LightFieldGeometry(
     os.path.join(pa["run_dir"], "light_field_geometry")

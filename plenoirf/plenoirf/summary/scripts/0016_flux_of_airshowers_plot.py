@@ -14,6 +14,7 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 
 irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
+seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 airshower_fluxes = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")

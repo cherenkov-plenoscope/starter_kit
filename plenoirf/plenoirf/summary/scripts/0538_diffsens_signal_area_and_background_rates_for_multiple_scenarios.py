@@ -5,7 +5,6 @@ import numpy as np
 import plenoirf as irf
 import flux_sensitivity
 import os
-import sebastians_matplotlib_addons as seb
 import json_numpy
 
 argv = irf.summary.argv_since_py(sys.argv)

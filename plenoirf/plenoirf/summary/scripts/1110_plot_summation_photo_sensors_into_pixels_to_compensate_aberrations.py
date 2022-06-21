@@ -12,6 +12,8 @@ argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
+seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
+
 AXES_STYLE = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
 
 os.makedirs(pa["out_dir"], exist_ok=True)
@@ -68,8 +70,6 @@ for pixel in pixels:
 
 # plot individual pixels
 # ----------------------
-
-seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 ROI_RADIUS = 0.35
 
