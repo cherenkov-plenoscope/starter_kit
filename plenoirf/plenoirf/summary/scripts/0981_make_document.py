@@ -23,7 +23,7 @@ fname = os.path.join(pa["summary_dir"], "{:s}_ltx".format(production_dirname))
 STARTER_KIT_DIR = os.getcwd()
 
 sk = "namibia"
-ok = "large"
+ok = "medium"
 dk = "bell_spectrum"
 
 SED_STYLE_KEY = "portal"
@@ -178,15 +178,25 @@ differential_sensitivity_figure_path = ppath(
 )
 assert os.path.exists(differential_sensitivity_figure_path)
 
-sens_vs_observation_time_figure_path = ppath(
+sens_vs_observation_time_2500MeV_figure_path = ppath(
     pa["summary_dir"],
     "0610_sensitivity_vs_observation_time",
     sk,
     ok,
     dk,
-    "sensitivity_vs_obseravtion_time_{:s}.jpg".format(SED_STYLE_KEY),
+    "sensitivity_vs_obseravtion_time_{:d}MeV.jpg".format(2500),
 )
-assert os.path.exists(sens_vs_observation_time_figure_path)
+assert os.path.exists(sens_vs_observation_time_2500MeV_figure_path)
+
+sens_vs_observation_time_25000MeV_figure_path = ppath(
+    pa["summary_dir"],
+    "0610_sensitivity_vs_observation_time",
+    sk,
+    ok,
+    dk,
+    "sensitivity_vs_obseravtion_time_{:d}MeV.jpg".format(25000),
+)
+assert os.path.exists(sens_vs_observation_time_25000MeV_figure_path)
 
 ratescan_figure_path = ppath(
     pa["summary_dir"], "0130_trigger_ratescan_plot", sk + "_ratescan.jpg"
@@ -276,7 +286,16 @@ with doc.create(ltx.Section("Performance", numbering=False)):
 
     with doc.create(ltx.Figure(position="H")) as fig:
         fig.add_image(
-            sens_vs_observation_time_figure_path,
+            sens_vs_observation_time_2500MeV_figure_path,
+            width=noesc(r"1.0\linewidth"),
+        )
+        fig.add_caption(
+            noesc(r"Sensitivity vs. observation-time at 2.5\,GeV.")
+        )
+
+    with doc.create(ltx.Figure(position="H")) as fig:
+        fig.add_image(
+            sens_vs_observation_time_25000MeV_figure_path,
             width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
