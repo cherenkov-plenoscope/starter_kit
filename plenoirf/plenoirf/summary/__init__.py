@@ -206,7 +206,7 @@ def _guess_summary_config(run_dir):
         "threshold_pe"
     ]
     analysis_trigger_threshold_pe = int(
-        np.round(1.17 * collection_trigger_threshold_pe)
+        np.round(1.09 * collection_trigger_threshold_pe)
     )
 
     fov_radius_deg = (
@@ -245,14 +245,14 @@ def _guess_summary_config(run_dir):
         "trigger": {
             "modus": {
                 "accepting_focus": 6,
-                "rejecting_focus": -1,
+                "rejecting_focus": 4,
                 "intensity_ratio_between_foci": 1.0,
-                "use_rejection_focus": False,
+                "use_rejection_focus": True,
             },
             "threshold_pe": analysis_trigger_threshold_pe,
             "ratescan_thresholds_pe": make_ratescan_trigger_thresholds(
-                lower_threshold=int(collection_trigger_threshold_pe * 0.8),
-                upper_threshold=int(collection_trigger_threshold_pe * 1.5),
+                lower_threshold=int(collection_trigger_threshold_pe * 0.86),
+                upper_threshold=int(collection_trigger_threshold_pe * 1.6),
                 num_thresholds=32,
                 collection_trigger_threshold=collection_trigger_threshold_pe,
                 analysis_trigger_threshold=analysis_trigger_threshold_pe,

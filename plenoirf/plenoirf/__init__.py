@@ -177,7 +177,7 @@ EXAMPLE_CONFIG = {
             40557.0,
             50000.0,
         ],
-        "threshold_pe": 115,
+        "threshold_pe": 105,
         "integration_time_slices": 10,
         "image": {
             "image_outer_radius_deg": 3.25 - 0.033335,
