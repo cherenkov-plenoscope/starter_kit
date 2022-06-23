@@ -35,7 +35,7 @@ energy_bin_width_au = np.zeros(energy_bin["num_bins"])
 S = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"],
-        "0538_diffsens_signal_area_and_background_rates_for_multiple_scenarios",
+        "0534_diffsens_signal_area_and_background_rates_for_multiple_scenarios",
     )
 )
 
@@ -47,8 +47,14 @@ systematic_uncertainty = sum_config["on_off_measuremnent"][
     "systematic_uncertainty"
 ]
 
-observation_times = irf.utils.make_civil_times_points_in_quasi_logspace()
-observation_times = np.array(observation_times)
+observation_times = json_numpy.read(
+    os.path.join(
+        pa["summary_dir"],
+        "0539_diffsens_observation_times",
+        "observation_times.json",
+    )
+)["observation_times"]
+
 num_observation_times = len(observation_times)
 
 estimator_statistics = sum_config["on_off_measuremnent"][

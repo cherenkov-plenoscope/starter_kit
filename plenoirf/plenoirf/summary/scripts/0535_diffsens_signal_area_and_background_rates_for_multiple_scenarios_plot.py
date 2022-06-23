@@ -35,7 +35,7 @@ acceptance = json_numpy.read_tree(
 scenarios = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"],
-        "0538_diffsens_signal_area_and_background_rates_for_multiple_scenarios",
+        "0534_diffsens_signal_area_and_background_rates_for_multiple_scenarios",
     )
 )
 

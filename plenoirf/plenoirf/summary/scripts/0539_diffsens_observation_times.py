@@ -20,8 +20,6 @@ json_numpy.write(
     {
         "observation_times": observation_times,
         "unit": "s",
-        "comment": (
-            "Typical civil times"
-        ),
+        "comment": ("Typical civil times"),
     },
 )

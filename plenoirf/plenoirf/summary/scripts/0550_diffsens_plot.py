@@ -60,6 +60,29 @@ def find_observation_time_index(
     )
 
 
+def com_add_diff_flux(com, energy_bin_edges, dVdE, dVdE_au, obstidx):
+    com["energy"] = []
+    com["differential_flux"] = []
+    com["differential_flux_au"] = []
+    num_energy_bins = len(energy_bin_edges) - 1
+
+    for ebin in range(num_energy_bins):
+        com["energy"].append(
+            [energy_bin_edges[ebin], energy_bin_edges[ebin + 1],]
+        )
+        com["differential_flux"].append(
+            [dVdE[ebin, obstidx], dVdE[ebin, obstidx],]
+        )
+        com["differential_flux_au"].append(
+            [dVdE_au[ebin, obstidx], dVdE_au[ebin, obstidx],]
+        )
+    return com
+
+
+cta_diffsens = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0545_diffsens_estimate_cta_south")
+)
+
 observation_times = {"1800s": 1800, "0180s": 180}
 
 for obsk in observation_times:
@@ -117,8 +140,36 @@ for obsk in observation_times:
                 com["linestyle"] = "-"
                 components.append(com)
 
-                # CTA South 30min
-                # ---------------
+                # CTA-South, my own estimate
+                # --------------------------
+                cta_obstidx = find_observation_time_index(
+                    observation_times=cta_diffsens["config"][
+                        "observation_times"
+                    ],
+                    observation_time=observation_time,
+                )
+                com = {}
+                com = com_add_diff_flux(
+                    com=com,
+                    energy_bin_edges=cta_diffsens[
+                        "instrument_response_function"
+                    ]["energy_bin_edges_GeV"],
+                    dVdE=cta_diffsens[dk]["flux_sensitivity"][
+                        "dVdE_per_m2_per_GeV_per_s"
+                    ],
+                    dVdE_au=cta_diffsens[dk]["flux_sensitivity"][
+                        "dVdE_per_m2_per_GeV_per_s_au"
+                    ],
+                    obstidx=cta_obstidx,
+                )
+                com["label"] = cta.LABEL + ", " + observation_time_str
+                com["color"] = cta.COLOR
+                com["alpha"] = 1.0
+                com["linestyle"] = "-"
+                components.append(com)
+
+                # CTA-South, Jim Hinton and Stefan Funk, 30min
+                # --------------------------------------------
                 try:
                     cta_diff = cta.differential_sensitivity(
                         observation_time=observation_time
@@ -128,10 +179,12 @@ for obsk in observation_times:
                     com["differential_flux"] = [
                         np.array(cta_diff["differential_flux"]["values"])
                     ]
-                    com["label"] = cta.LABEL + ", " + observation_time_str
+                    com["label"] = (
+                        cta.LABEL + " (official)" + ", " + observation_time_str
+                    )
                     com["color"] = cta.COLOR
                     com["alpha"] = 1.0
-                    com["linestyle"] = "-"
+                    com["linestyle"] = ":"
                     components.append(com)
                 except AssertionError as asserr:
                     print("CTA official", asserr)
@@ -142,28 +195,14 @@ for obsk in observation_times:
                     observation_times=dS[sk][ok][dk]["observation_times"],
                     observation_time=observation_time,
                 )
-
                 com = {}
-                com["energy"] = []
-                com["differential_flux"] = []
-                com["differential_flux_au"] = []
-
-                for ii in range(energy_bin["num_bins"]):
-                    com["energy"].append(
-                        [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
-                    )
-                    _dFdE_sens = dS[sk][ok][dk]["differential_flux"][
-                        ii, obstidx
-                    ]
-                    com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
-
-                    _dFdE_sens_au = dS[sk][ok][dk]["differential_flux_au"][
-                        ii, obstidx
-                    ]
-                    com["differential_flux_au"].append(
-                        [_dFdE_sens_au, _dFdE_sens_au]
-                    )
-
+                com = com_add_diff_flux(
+                    com=com,
+                    energy_bin_edges=energy_bin["edges"],
+                    dVdE=dS[sk][ok][dk]["differential_flux"],
+                    dVdE_au=dS[sk][ok][dk]["differential_flux_au"],
+                    obstidx=obstidx,
+                )
                 com["label"] = (
                     "Portal, "
                     + observation_time_str
