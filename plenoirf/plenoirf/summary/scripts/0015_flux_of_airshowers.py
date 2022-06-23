@@ -67,11 +67,14 @@ for sk in SITES:
             ]
         )
 
-        num_energy = len(cosmic_ray_fluxes[pk]["differential_flux"])
-        shower_fluxes[sk][pk]["differential_flux"] = np.zeros(num_energy)
-        shower_fluxes[sk][pk]["differential_flux_au"] = np.zeros(num_energy)
+        shower_fluxes[sk][pk]["differential_flux"] = np.zeros(
+            energy_bin["num_bins"]
+        )
+        shower_fluxes[sk][pk]["differential_flux_au"] = np.zeros(
+            energy_bin["num_bins"]
+        )
 
-        for ebin in range(num_energy):
+        for ebin in range(energy_bin["num_bins"]):
             if energy_bin["centers"][ebin] < cutoff_energy:
                 shower_fluxes[sk][pk]["differential_flux"][ebin] = (
                     cosmic_ray_fluxes[pk]["differential_flux"][ebin]
