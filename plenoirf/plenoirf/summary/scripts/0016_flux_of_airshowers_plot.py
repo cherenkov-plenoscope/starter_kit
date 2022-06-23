@@ -30,12 +30,23 @@ for sk in irf_config["config"]["sites"]:
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for pk in airshower_fluxes[sk]:
+        dFdE = airshower_fluxes[sk][pk]["differential_flux"]["values"]
+        dFdE_au = airshower_fluxes[sk][pk]["differential_flux"][
+            "absolute_uncertainty"
+        ]
+
         ax.plot(
-            energy_bin["centers"],
-            airshower_fluxes[sk][pk]["differential_flux"]["values"],
-            label=pk,
-            color=particle_colors[pk],
+            energy_bin["centers"], dFdE, label=pk, color=particle_colors[pk],
         )
+        ax.fill_between(
+            x=energy_bin["centers"],
+            y1=dFdE - dFdE_au,
+            y2=dFdE + dFdE_au,
+            facecolor=particle_colors[pk],
+            alpha=0.2,
+            linewidth=0.0,
+        )
+
     ax.set_xlabel("energy / GeV")
     ax.set_ylabel(
         "differential flux of airshowers /\n"

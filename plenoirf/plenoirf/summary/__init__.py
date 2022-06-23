@@ -259,7 +259,10 @@ def _guess_summary_config(run_dir):
             ),
         },
         "night_sky_background": {"max_num_true_cherenkov_photons": 0,},
-        "airshower_flux": {"fraction_of_flux_below_geomagnetic_cutoff": 0.05,},
+        "airshower_flux": {
+            "fraction_of_flux_below_geomagnetic_cutoff": 0.05,
+            "relative_uncertainty_below_geomagnetic_cutoff": 0.5,
+        },
         "gamma_ray_source_direction": {
             "max_angle_relative_to_pointing_deg": fov_radius_deg - 0.5,
         },

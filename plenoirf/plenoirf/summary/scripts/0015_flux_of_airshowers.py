@@ -31,8 +31,11 @@ SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 
-geomagnetic_cutoff_fraction = sum_config["airshower_flux"][
+fraction_of_flux_below_geomagnetic_cutoff = sum_config["airshower_flux"][
     "fraction_of_flux_below_geomagnetic_cutoff"
+]
+relative_uncertainty_below_geomagnetic_cutoff = sum_config["airshower_flux"][
+    "relative_uncertainty_below_geomagnetic_cutoff"
 ]
 
 
@@ -53,23 +56,37 @@ for pk in COSMIC_RAYS:
 
 # earth's geomagnetic cutoff
 # --------------------------
-air_shower_fluxes = {}
+shower_fluxes = {}
 for sk in SITES:
-    air_shower_fluxes[sk] = {}
+    shower_fluxes[sk] = {}
     for pk in COSMIC_RAYS:
-        air_shower_fluxes[sk][pk] = {}
+        shower_fluxes[sk][pk] = {}
         cutoff_energy = _rigidity_to_total_energy(
             rigidity_GV=irf_config["config"]["sites"][sk][
                 "geomagnetic_cutoff_rigidity_GV"
             ]
         )
-        below_cutoff = energy_bin["centers"] < cutoff_energy
-        air_shower_fluxes[sk][pk]["differential_flux"] = copy.deepcopy(
-            cosmic_ray_fluxes[pk]["differential_flux"]
-        )
-        air_shower_fluxes[sk][pk]["differential_flux"][
-            below_cutoff
-        ] *= geomagnetic_cutoff_fraction
+
+        num_energy = len(cosmic_ray_fluxes[pk]["differential_flux"])
+        shower_fluxes[sk][pk]["differential_flux"] = np.zeros(num_energy)
+        shower_fluxes[sk][pk]["differential_flux_au"] = np.zeros(num_energy)
+
+        for ebin in range(num_energy):
+            if energy_bin["centers"][ebin] < cutoff_energy:
+                shower_fluxes[sk][pk]["differential_flux"][ebin] = (
+                    cosmic_ray_fluxes[pk]["differential_flux"][ebin]
+                    * fraction_of_flux_below_geomagnetic_cutoff
+                )
+                shower_fluxes[sk][pk]["differential_flux_au"][ebin] = (
+                    shower_fluxes[sk][pk]["differential_flux"][ebin]
+                    * relative_uncertainty_below_geomagnetic_cutoff
+                )
+            else:
+                shower_fluxes[sk][pk]["differential_flux"][
+                    ebin
+                ] = cosmic_ray_fluxes[pk]["differential_flux"][ebin]
+                shower_fluxes[sk][pk]["differential_flux_au"][ebin] = 0.0
+
 
 # zenith compensation
 # -------------------
@@ -84,9 +101,11 @@ for sk in SITES:
             fp=deflection_table[sk][pk]["particle_zenith_deg"],
         )
         scaling = np.cos(np.deg2rad(primary_zenith_deg))
-        zc_flux = scaling * air_shower_fluxes[sk][pk]["differential_flux"]
+        zc_flux = scaling * shower_fluxes[sk][pk]["differential_flux"]
         air_shower_fluxes_zc[sk][pk]["differential_flux"] = zc_flux
 
+        zc_flux_au = scaling * shower_fluxes[sk][pk]["differential_flux_au"]
+        air_shower_fluxes_zc[sk][pk]["differential_flux_au"] = zc_flux_au
 
 # export
 # ------
@@ -104,6 +123,9 @@ for sk in SITES:
                     "deflected in earth's magnetic-field."
                 ),
                 "values": air_shower_fluxes_zc[sk][pk]["differential_flux"],
+                "absolute_uncertainty": air_shower_fluxes_zc[sk][pk][
+                    "differential_flux_au"
+                ],
                 "unit": raw_cosmic_ray_fluxes[pk]["differential_flux"]["unit"],
             },
         )
