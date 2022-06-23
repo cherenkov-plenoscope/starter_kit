@@ -49,11 +49,6 @@ SED_STYLES = {
     "cta": sed_styles.CHERENKOV_TELESCOPE_ARRAY_SED_STYLE,
 }
 
-observation_time = 30 * 60
-observation_time_str = irf.utils.make_civil_time_str(
-    time_s=observation_time, format_seconds="{:.0f}"
-)
-
 
 def find_observation_time_index(
     observation_times, observation_time, max_rel_error=0.1
@@ -65,186 +60,198 @@ def find_observation_time_index(
     )
 
 
-sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
+observation_times = {"1800s": 1800, "0180s": 180}
 
-x_lim_GeV = np.array([1e-1, 1e4])
-y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
+for obsk in observation_times:
+    observation_time = observation_times[obsk]
+    observation_time_str = irf.utils.make_civil_time_str(
+        time_s=observation_time, format_seconds="{:.0f}"
+    )
 
+    sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
 
-for sk in SITES:
-    for ok in ONREGION_TYPES:
-        for sedk in SED_STYLES:
-            os.makedirs(
-                os.path.join(pa["out_dir"], sk, ok, sedk), exist_ok=True
-            )
+    x_lim_GeV = np.array([1e-1, 1e4])
+    y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
 
-for sk in SITES:
-    for ok in ONREGION_TYPES:
-        for dk in flux_sensitivity.differential.SCENARIOS:
-            components = []
-
-            # Crab reference fluxes
-            # ---------------------
-            for i in range(4):
-                com = {}
-                scale_factor = np.power(10.0, (-1) * i)
-                com["energy"] = [np.array(crab_flux["energy"]["values"])]
-                com["differential_flux"] = [
-                    scale_factor
-                    * np.array(crab_flux["differential_flux"]["values"])
-                ]
-                com[
-                    "label"
-                ] = None  # "{:1.1e} Crab".format(scale_factor) if i == 0 else None
-                com["color"] = "k"
-                com["alpha"] = 0.25 / (1.0 + i)
-                com["linestyle"] = "--"
-                components.append(com.copy())
-
-            # Fermi-LAT diff
-            # --------------
-            fermi_diff = fermi.differential_sensitivity(l=0, b=90)
-            com = {}
-            com["energy"] = [np.array(fermi_diff["energy"]["values"])]
-            com["differential_flux"] = [
-                np.array(fermi_diff["differential_flux"]["values"])
-            ]
-            com["label"] = fermi.LABEL + ", 10y, (l=0, b=90)"
-            com["color"] = fermi.COLOR
-            com["alpha"] = 1.0
-            com["linestyle"] = "-"
-            components.append(com)
-
-            # CTA South 30min
-            # ---------------
-            cta_diff = cta.differential_sensitivity(
-                observation_time=observation_time
-            )
-            com = {}
-            com["energy"] = [np.array(cta_diff["energy"]["values"])]
-            com["differential_flux"] = [
-                np.array(cta_diff["differential_flux"]["values"])
-            ]
-            com["label"] = cta.LABEL + ", " + observation_time_str
-            com["color"] = cta.COLOR
-            com["alpha"] = 1.0
-            com["linestyle"] = "-"
-            components.append(com)
-
-            # Plenoscope diff
-            # ---------------
-            obstidx = find_observation_time_index(
-                observation_times=dS[sk][ok][dk]["observation_times"],
-                observation_time=observation_time,
-            )
-
-            com = {}
-            com["energy"] = []
-            com["differential_flux"] = []
-            com["differential_flux_au"] = []
-
-            for ii in range(energy_bin["num_bins"]):
-                com["energy"].append(
-                    [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
-                )
-                _dFdE_sens = dS[sk][ok][dk]["differential_flux"][ii, obstidx]
-                com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
-
-                _dFdE_sens_au = dS[sk][ok][dk]["differential_flux_au"][
-                    ii, obstidx
-                ]
-                com["differential_flux_au"].append(
-                    [_dFdE_sens_au, _dFdE_sens_au]
-                )
-
-            com["label"] = (
-                "Portal, "
-                + observation_time_str
-                + ", sys. {:.1e}".format(sys_unc)
-            )
-            com["color"] = "black"
-            com["alpha"] = 1.0
-            com["linestyle"] = "-"
-            components.append(com)
-
+    for sk in SITES:
+        for ok in ONREGION_TYPES:
             for sedk in SED_STYLES:
-                sed_style = SED_STYLES[sedk]
+                os.makedirs(
+                    os.path.join(pa["out_dir"], sk, ok, sedk), exist_ok=True
+                )
 
-                fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
-                ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+    for sk in SITES:
+        for ok in ONREGION_TYPES:
+            for dk in flux_sensitivity.differential.SCENARIOS:
+                components = []
 
-                for com in components:
+                # Crab reference fluxes
+                # ---------------------
+                for i in range(4):
+                    com = {}
+                    scale_factor = np.power(10.0, (-1) * i)
+                    com["energy"] = [np.array(crab_flux["energy"]["values"])]
+                    com["differential_flux"] = [
+                        scale_factor
+                        * np.array(crab_flux["differential_flux"]["values"])
+                    ]
+                    com[
+                        "label"
+                    ] = None  # "{:1.1e} Crab".format(scale_factor) if i == 0 else None
+                    com["color"] = "k"
+                    com["alpha"] = 0.25 / (1.0 + i)
+                    com["linestyle"] = "--"
+                    components.append(com.copy())
 
-                    for ii in range(len(com["energy"])):
-                        _energy, _dFdE = sed.convert_units_with_style(
-                            x=com["energy"][ii],
-                            y=com["differential_flux"][ii],
-                            input_style=internal_sed_style,
-                            target_style=sed_style,
-                        )
+                # Fermi-LAT diff
+                # --------------
+                fermi_diff = fermi.differential_sensitivity(l=0, b=90)
+                com = {}
+                com["energy"] = [np.array(fermi_diff["energy"]["values"])]
+                com["differential_flux"] = [
+                    np.array(fermi_diff["differential_flux"]["values"])
+                ]
+                com["label"] = fermi.LABEL + ", 10y, (l=0, b=90)"
+                com["color"] = fermi.COLOR
+                com["alpha"] = 1.0
+                com["linestyle"] = "-"
+                components.append(com)
 
-                        ax.plot(
-                            _energy,
-                            _dFdE,
-                            label=com["label"] if ii == 0 else None,
-                            color=com["color"],
-                            alpha=com["alpha"],
-                            linestyle=com["linestyle"],
-                        )
+                # CTA South 30min
+                # ---------------
+                try:
+                    cta_diff = cta.differential_sensitivity(
+                        observation_time=observation_time
+                    )
+                    com = {}
+                    com["energy"] = [np.array(cta_diff["energy"]["values"])]
+                    com["differential_flux"] = [
+                        np.array(cta_diff["differential_flux"]["values"])
+                    ]
+                    com["label"] = cta.LABEL + ", " + observation_time_str
+                    com["color"] = cta.COLOR
+                    com["alpha"] = 1.0
+                    com["linestyle"] = "-"
+                    components.append(com)
+                except AssertionError as asserr:
+                    print("CTA official", asserr)
 
-                        if "differential_flux_au" in com:
-                            _, _dFdE_au = sed.convert_units_with_style(
+                # Plenoscope diff
+                # ---------------
+                obstidx = find_observation_time_index(
+                    observation_times=dS[sk][ok][dk]["observation_times"],
+                    observation_time=observation_time,
+                )
+
+                com = {}
+                com["energy"] = []
+                com["differential_flux"] = []
+                com["differential_flux_au"] = []
+
+                for ii in range(energy_bin["num_bins"]):
+                    com["energy"].append(
+                        [energy_bin["edges"][ii], energy_bin["edges"][ii + 1]]
+                    )
+                    _dFdE_sens = dS[sk][ok][dk]["differential_flux"][
+                        ii, obstidx
+                    ]
+                    com["differential_flux"].append([_dFdE_sens, _dFdE_sens])
+
+                    _dFdE_sens_au = dS[sk][ok][dk]["differential_flux_au"][
+                        ii, obstidx
+                    ]
+                    com["differential_flux_au"].append(
+                        [_dFdE_sens_au, _dFdE_sens_au]
+                    )
+
+                com["label"] = (
+                    "Portal, "
+                    + observation_time_str
+                    + ", sys. {:.1e}".format(sys_unc)
+                )
+                com["color"] = "black"
+                com["alpha"] = 1.0
+                com["linestyle"] = "-"
+                components.append(com)
+
+                for sedk in SED_STYLES:
+                    sed_style = SED_STYLES[sedk]
+
+                    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+                    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+
+                    for com in components:
+
+                        for ii in range(len(com["energy"])):
+                            _energy, _dFdE = sed.convert_units_with_style(
                                 x=com["energy"][ii],
-                                y=com["differential_flux_au"][ii],
+                                y=com["differential_flux"][ii],
                                 input_style=internal_sed_style,
                                 target_style=sed_style,
                             )
-                            _d_ru = _dFdE_au / _dFdE
-                            _dFdE_lu = _dFdE - _dFdE_au
-                            _dFdE_uu = _dFdE + _dFdE_au
-                            ax.fill_between(
-                                x=_energy,
-                                y1=_dFdE_lu,
-                                y2=_dFdE_uu,
-                                label=None,
+
+                            ax.plot(
+                                _energy,
+                                _dFdE,
+                                label=com["label"] if ii == 0 else None,
                                 color=com["color"],
-                                alpha=com["alpha"] * 0.15,
-                                linewidth=0.0,
+                                alpha=com["alpha"],
+                                linestyle=com["linestyle"],
                             )
 
-                _x_lim, _y_lim = sed.convert_units_with_style(
-                    x=x_lim_GeV,
-                    y=y_lim_per_m2_per_s_per_GeV,
-                    input_style=internal_sed_style,
-                    target_style=sed_style,
-                )
+                            if "differential_flux_au" in com:
+                                _, _dFdE_au = sed.convert_units_with_style(
+                                    x=com["energy"][ii],
+                                    y=com["differential_flux_au"][ii],
+                                    input_style=internal_sed_style,
+                                    target_style=sed_style,
+                                )
+                                _d_ru = _dFdE_au / _dFdE
+                                _dFdE_lu = _dFdE - _dFdE_au
+                                _dFdE_uu = _dFdE + _dFdE_au
+                                ax.fill_between(
+                                    x=_energy,
+                                    y1=_dFdE_lu,
+                                    y2=_dFdE_uu,
+                                    label=None,
+                                    color=com["color"],
+                                    alpha=com["alpha"] * 0.15,
+                                    linewidth=0.0,
+                                )
 
-                ax.set_xlim(np.sort(_x_lim))
-                ax.set_ylim(np.sort(_y_lim))
-                ax.loglog()
-                ax.legend(loc="best", fontsize=10)
-                etype = flux_sensitivity.differential.SCENARIOS[dk][
-                    "energy_axes_label"
-                ]
-                ax.set_xlabel(
-                    etype
-                    + " "
-                    + sed_style["x_label"]
-                    + " /"
-                    + sed_style["x_unit"]
-                )
-                ax.set_ylabel(
-                    sed_style["y_label"] + " /\n " + sed_style["y_unit"]
-                )
-                fig.savefig(
-                    os.path.join(
-                        pa["out_dir"],
-                        sk,
-                        ok,
-                        sedk,
-                        "{:s}_{:s}_{:s}_differential_sensitivity_sed_style_{:s}.jpg".format(
-                            sk, ok, dk, sedk,
-                        ),
+                    _x_lim, _y_lim = sed.convert_units_with_style(
+                        x=x_lim_GeV,
+                        y=y_lim_per_m2_per_s_per_GeV,
+                        input_style=internal_sed_style,
+                        target_style=sed_style,
                     )
-                )
-                seb.close(fig)
+
+                    ax.set_xlim(np.sort(_x_lim))
+                    ax.set_ylim(np.sort(_y_lim))
+                    ax.loglog()
+                    ax.legend(loc="best", fontsize=10)
+                    etype = flux_sensitivity.differential.SCENARIOS[dk][
+                        "energy_axes_label"
+                    ]
+                    ax.set_xlabel(
+                        etype
+                        + " "
+                        + sed_style["x_label"]
+                        + " / "
+                        + sed_style["x_unit"]
+                    )
+                    ax.set_ylabel(
+                        sed_style["y_label"] + " /\n " + sed_style["y_unit"]
+                    )
+                    fig.savefig(
+                        os.path.join(
+                            pa["out_dir"],
+                            sk,
+                            ok,
+                            sedk,
+                            "{:s}_{:s}_{:s}_differential_sensitivity_sed_style_{:s}_{:s}.jpg".format(
+                                sk, ok, dk, sedk, obsk
+                            ),
+                        )
+                    )
+                    seb.close(fig)
