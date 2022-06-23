@@ -52,7 +52,7 @@ for sk in SITES:
     diff_flux_au[sk] = {}
     for pk in COSMIC_RAYS:
         diff_flux[sk][pk] = airshower_fluxes[sk][pk]["differential_flux"]
-        diff_flux_au[sk][pk] = np.zeros(diff_flux[sk][pk].shape)
+        diff_flux_au[sk][pk] = airshower_fluxes[sk][pk]["absolute_uncertainty"]
 
 # work
 # ----
