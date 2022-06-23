@@ -125,7 +125,9 @@ for sk in SITES:
             cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"][
                 "values"
             ]
-            cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
+            cosmic_dFdE_au = airshower_fluxes[sk][ck]["differential_flux"][
+                "absolute_uncertainty"
+            ]
 
             _Q = onregion_acceptance[sk][ok][ck]["diffuse"]["mean"]
             _Q_au = onregion_acceptance[sk][ok][ck]["diffuse"][

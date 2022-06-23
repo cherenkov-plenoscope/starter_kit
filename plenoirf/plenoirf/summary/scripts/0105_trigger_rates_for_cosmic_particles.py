@@ -148,7 +148,9 @@ for sk in irf_config["config"]["sites"]:
         dRdE_au = np.zeros(shape=dRdE.shape)
 
         cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]["values"]
-        cosmic_dFdE_au = np.zeros(cosmic_dFdE.shape)
+        cosmic_dFdE_au = airshower_fluxes[sk][ck]["differential_flux"][
+            "absolute_uncertainty"
+        ]
 
         for tt in range(num_trigger_thresholds):
             Q = np.interp(
