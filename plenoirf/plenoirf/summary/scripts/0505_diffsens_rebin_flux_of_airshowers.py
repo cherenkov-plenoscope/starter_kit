@@ -55,26 +55,35 @@ for E in energy_bin["edges"]:
 # work
 # ----
 diff_flux = {}
+diff_flux_au = {}
 for sk in SITES:
     diff_flux[sk] = {}
+    diff_flux_au[sk] = {}
     sk_dir = os.path.join(pa["out_dir"], sk)
     os.makedirs(sk_dir, exist_ok=True)
     for pk in COSMIC_RAYS:
         fine_dFdE = airshower_fluxes[sk][pk]["differential_flux"]["values"]
+        fine_dFdE_au = airshower_fluxes[sk][pk]["differential_flux"][
+            "absolute_uncertainty"
+        ]
         dFdE = np.zeros(energy_bin["num_bins"])
+        dFdE_au = np.zeros(energy_bin["num_bins"])
 
-        for ee in range(energy_bin["num_bins"]):
-            fe_start = fine_energy_bin_matches[ee]
-            fe_stop = fine_energy_bin_matches[ee + 1]
-            dFdE[ee] = np.mean(fine_dFdE[fe_start:fe_stop])
+        for ebin in range(energy_bin["num_bins"]):
+            fe_start = fine_energy_bin_matches[ebin]
+            fe_stop = fine_energy_bin_matches[ebin + 1]
+            dFdE[ebin] = np.mean(fine_dFdE[fe_start:fe_stop])
+            dFdE_au[ebin] = np.mean(fine_dFdE_au[fe_start:fe_stop])
 
         diff_flux[sk][pk] = dFdE
+        diff_flux_au[sk][pk] = dFdE_au
 
         json_numpy.write(
             os.path.join(pa["out_dir"], sk, pk + ".json"),
             {
                 "energy_binning_key": energy_bin["key"],
                 "differential_flux": dFdE,
+                "absolute_uncertainty": dFdE_au,
                 "unit": "m$^{-2}$ sr$^{-1}$ s$^{-1}$ (GeV)$^{-1}$",
             },
         )
@@ -94,7 +103,11 @@ for sk in SITES:
             ax=ax,
             bin_edges=energy_bin["edges"],
             bincounts=diff_flux[sk][pk],
+            bincounts_upper=diff_flux[sk][pk] + diff_flux_au[sk][pk],
+            bincounts_lower=diff_flux[sk][pk] - diff_flux_au[sk][pk],
             linecolor=sum_config["plot"]["particle_colors"][pk],
+            face_color=sum_config["plot"]["particle_colors"][pk],
+            face_alpha=0.2,
         )
     ax.set_ylabel(
         "differential flux /\nm$^{-2}$ sr$^{-1}$ s$^{-1}$ (GeV)$^{-1}$"
