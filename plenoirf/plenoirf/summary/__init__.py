@@ -287,7 +287,7 @@ def _guess_summary_config(run_dir):
             "estimator_for_critical_signal_rate": "LiMaEq17",
             "on_over_off_ratio": 1 / 5,
             "detection_threshold_std": 5.0,
-            "systematic_uncertainty": 1e-2,
+            "systematic_uncertainties": [1e-2, 1e-3],
             "onregion_types": {
                 "small": {
                     "opening_angle_deg": 0.2,

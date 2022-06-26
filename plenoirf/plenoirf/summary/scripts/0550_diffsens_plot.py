@@ -60,7 +60,9 @@ def find_observation_time_index(
     )
 
 
-def com_add_diff_flux(com, energy_bin_edges, dVdE, dVdE_au, obstidx):
+def com_add_diff_flux(
+    com, energy_bin_edges, dVdE, dVdE_au, obstidx, sysuncix=None
+):
     com["energy"] = []
     com["differential_flux"] = []
     com["differential_flux_au"] = []
@@ -70,12 +72,23 @@ def com_add_diff_flux(com, energy_bin_edges, dVdE, dVdE_au, obstidx):
         com["energy"].append(
             [energy_bin_edges[ebin], energy_bin_edges[ebin + 1],]
         )
-        com["differential_flux"].append(
-            [dVdE[ebin, obstidx], dVdE[ebin, obstidx],]
-        )
-        com["differential_flux_au"].append(
-            [dVdE_au[ebin, obstidx], dVdE_au[ebin, obstidx],]
-        )
+        if sysuncix is not None:
+            com["differential_flux"].append(
+                [dVdE[ebin, obstidx, sysuncix], dVdE[ebin, obstidx, sysuncix],]
+            )
+            com["differential_flux_au"].append(
+                [
+                    dVdE_au[ebin, obstidx, sysuncix],
+                    dVdE_au[ebin, obstidx, sysuncix],
+                ]
+            )
+        else:
+            com["differential_flux"].append(
+                [dVdE[ebin, obstidx], dVdE[ebin, obstidx],]
+            )
+            com["differential_flux_au"].append(
+                [dVdE_au[ebin, obstidx], dVdE_au[ebin, obstidx],]
+            )
     return com
 
 
@@ -84,6 +97,7 @@ cta_diffsens = json_numpy.read_tree(
 )
 
 observation_times = {"1800s": 1800, "0180s": 180}
+sysuncix = 0
 
 for obsk in observation_times:
     observation_time = observation_times[obsk]
@@ -91,7 +105,9 @@ for obsk in observation_times:
         time_s=observation_time, format_seconds="{:.0f}"
     )
 
-    sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainty"]
+    sys_unc = sum_config["on_off_measuremnent"]["systematic_uncertainties"][
+        sysuncix
+    ]
 
     x_lim_GeV = np.array([1e-1, 1e4])
     y_lim_per_m2_per_s_per_GeV = np.array([1e3, 1e-16])
@@ -202,6 +218,7 @@ for obsk in observation_times:
                     dVdE=dS[sk][ok][dk]["differential_flux"],
                     dVdE_au=dS[sk][ok][dk]["differential_flux_au"],
                     obstidx=obstidx,
+                    sysuncix=sysuncix,
                 )
                 com["label"] = (
                     "Portal, "

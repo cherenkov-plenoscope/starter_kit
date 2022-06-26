@@ -172,7 +172,7 @@ differential_sensitivity_figure_path = ppath(
     sk,
     ok,
     SED_STYLE_KEY,
-    "{:s}_{:s}_{:s}_differential_sensitivity_sed_style_{:s}.jpg".format(
+    "{:s}_{:s}_{:s}_differential_sensitivity_sed_style_{:s}_0180s.jpg".format(
         sk, ok, dk, SED_STYLE_KEY
     ),
 )
@@ -280,7 +280,7 @@ with doc.create(ltx.Section("Performance", numbering=False)):
             noesc(
                 r"Differential sensitivity for a point-like source of gamma-rays. "
                 r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
-                r"CTA-south \cite{cta2018baseline} in blue. "
+                r"CTA-south in blue based on the public instrument-response \cite{cta2018baseline}. "
             )
         )
 
@@ -290,7 +290,11 @@ with doc.create(ltx.Section("Performance", numbering=False)):
             width=noesc(r"1.0\linewidth"),
         )
         fig.add_caption(
-            noesc(r"Sensitivity vs. observation-time at 2.5\,GeV.")
+            noesc(
+                r"Sensitivity vs. observation-time at 2.5\,GeV. "
+                r"Fermi-LAT in orange, and"
+                r"Portal in black (dotted has $1\times{}10^{-3}$ sys.)."
+            )
         )
 
     with doc.create(ltx.Figure(position="H")) as fig:
@@ -301,8 +305,8 @@ with doc.create(ltx.Section("Performance", numbering=False)):
         fig.add_caption(
             noesc(
                 r"Sensitivity vs. observation-time at 25\,GeV. "
-                r"Fermi-LAT in orange and CTA-south in blue taken from "
-                r"\cite{funk2013comparison}."
+                r"Fermi-LAT in orange, CTA-south in blue, and "
+                r"Portal in black (dotted has $1\times{}10^{-3}$ sys.)."
             )
         )
 
@@ -313,8 +317,9 @@ with doc.create(ltx.Section("Performance", numbering=False)):
         fig.add_caption(
             noesc(
                 r"Angular resolution. "
-                r"Fermi-LAT \cite{wood2016fermiperformance} in orange. "
-                r"CTA-south \cite{cta2018baseline} in blue. "
+                r"Fermi-LAT \cite{wood2016fermiperformance} in orange, "
+                r"CTA-south \cite{cta2018baseline} in blue, and "
+                r"Portal in black."
             )
         )
 

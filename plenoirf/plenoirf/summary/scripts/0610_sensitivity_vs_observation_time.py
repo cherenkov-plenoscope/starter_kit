@@ -36,6 +36,11 @@ pivot_energies = {"cta": 25.0, "portal": 2.5}
 
 PLOT_FERMI_LAT_ESTIMATE_BY_HINTON_AND_FUNK = False
 
+systematic_uncertainties = sum_config["on_off_measuremnent"][
+    "systematic_uncertainties"
+]
+num_systematic_uncertainties = len(systematic_uncertainties)
+
 for pe in pivot_energies:
 
     fls = json_numpy.read(
@@ -78,7 +83,7 @@ for pe in pivot_energies:
     x_lim_s = np.array([1e0, 1e9])
     e_lim_GeV = np.array([1e-1, 1e4])
     y_lim_per_m2_per_s_per_GeV = np.array(
-        [1e3, 1e-10]
+        [1e0, 1e-8]
     )  # np.array([1e3, 1e-16])
 
     # work
@@ -191,18 +196,30 @@ for pe in pivot_energies:
                 # Plenoscope
                 # ----------
 
-                portal_dFdE = dS[sk][ok][dk]["differential_flux"]
-                com = {}
-                com["observation_time"] = observation_times
-                com["energy"] = pivot_energies[pe] * np.ones(
-                    len(observation_times)
-                )
-                com["differential_flux"] = portal_dFdE[enidx, :]
-                com["label"] = "Portal"
-                com["color"] = "black"
-                com["alpha"] = 1.0
-                com["linestyle"] = "-"
-                components.append(com)
+                for sysuncix in range(num_systematic_uncertainties):
+                    portal_dFdE = dS[sk][ok][dk]["differential_flux"][
+                        :, :, sysuncix
+                    ]
+                    if sysuncix == 0:
+                        _alpha = 1.0
+                        _linestyle = "-"
+                    else:
+                        _alpha = 1.0 / (1 + sysuncix)
+                        _linestyle = ":"
+
+                    com = {}
+                    com["observation_time"] = observation_times
+                    com["energy"] = pivot_energies[pe] * np.ones(
+                        len(observation_times)
+                    )
+                    com["differential_flux"] = portal_dFdE[enidx, :]
+                    com["label"] = "Portal sys.: {:.1e}".format(
+                        systematic_uncertainties[sysuncix]
+                    )
+                    com["color"] = "black"
+                    com["alpha"] = _alpha
+                    com["linestyle"] = _linestyle
+                    components.append(com)
 
                 # figure
                 # ------

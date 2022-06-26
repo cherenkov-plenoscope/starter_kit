@@ -43,9 +43,10 @@ detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
 on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
-systematic_uncertainty = sum_config["on_off_measuremnent"][
-    "systematic_uncertainty"
+systematic_uncertainties = sum_config["on_off_measuremnent"][
+    "systematic_uncertainties"
 ]
+num_systematic_uncertainties = len(systematic_uncertainties)
 
 observation_times = json_numpy.read(
     os.path.join(
@@ -96,47 +97,57 @@ for sk in SITES:
             )
 
             critical_dVdE = np.nan * np.ones(
-                shape=(energy_bin["num_bins"], num_observation_times)
+                shape=(
+                    energy_bin["num_bins"],
+                    num_observation_times,
+                    num_systematic_uncertainties,
+                )
             )
             critical_dVdE_au = np.nan * np.ones(critical_dVdE.shape)
+
             for obstix in range(num_observation_times):
-                (
-                    R_gamma_scenario,
-                    R_gamma_scenario_au,
-                ) = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
-                    background_rate_onregion_in_scenario_per_s=R_background_scenario,
-                    background_rate_onregion_in_scenario_per_s_au=R_background_scenario_au,
-                    onregion_over_offregion_ratio=on_over_off_ratio,
-                    observation_time_s=observation_times[obstix],
-                    instrument_systematic_uncertainty_relative=systematic_uncertainty,
-                    detection_threshold_std=detection_threshold_std,
-                    estimator_statistics=estimator_statistics,
-                )
+                for sysuncix in range(num_systematic_uncertainties):
+                    (
+                        R_gamma_scenario,
+                        R_gamma_scenario_au,
+                    ) = flux_sensitivity.differential.estimate_critical_signal_rate_vs_energy(
+                        background_rate_onregion_in_scenario_per_s=R_background_scenario,
+                        background_rate_onregion_in_scenario_per_s_au=R_background_scenario_au,
+                        onregion_over_offregion_ratio=on_over_off_ratio,
+                        observation_time_s=observation_times[obstix],
+                        instrument_systematic_uncertainty_relative=systematic_uncertainties[
+                            sysuncix
+                        ],
+                        detection_threshold_std=detection_threshold_std,
+                        estimator_statistics=estimator_statistics,
+                    )
 
-                (
-                    dVdE,
-                    dVdE_au,
-                ) = flux_sensitivity.differential.estimate_differential_sensitivity(
-                    energy_bin_edges_GeV=energy_bin["edges"],
-                    signal_area_in_scenario_m2=A_gamma_scenario,
-                    signal_area_in_scenario_m2_au=A_gamma_scenario_au,
-                    critical_signal_rate_in_scenario_per_s=R_gamma_scenario,
-                    critical_signal_rate_in_scenario_per_s_au=R_gamma_scenario_au,
-                )
+                    (
+                        dVdE,
+                        dVdE_au,
+                    ) = flux_sensitivity.differential.estimate_differential_sensitivity(
+                        energy_bin_edges_GeV=energy_bin["edges"],
+                        signal_area_in_scenario_m2=A_gamma_scenario,
+                        signal_area_in_scenario_m2_au=A_gamma_scenario_au,
+                        critical_signal_rate_in_scenario_per_s=R_gamma_scenario,
+                        critical_signal_rate_in_scenario_per_s_au=R_gamma_scenario_au,
+                    )
 
-                critical_dVdE[:, obstix] = dVdE
-                critical_dVdE_au[:, obstix] = dVdE_au
+                    critical_dVdE[:, obstix, sysuncix] = dVdE
+                    critical_dVdE_au[:, obstix, sysuncix] = dVdE_au
 
             json_numpy.write(
                 os.path.join(pa["out_dir"], sk, ok, dk + ".json"),
                 {
                     "energy_binning_key": energy_bin["key"],
                     "observation_times": observation_times,
+                    "systematic_uncertainties": systematic_uncertainties,
                     "differential_flux": critical_dVdE,
                     "differential_flux_au": critical_dVdE_au,
                     "comment": (
-                        "Critical, differential flux-sensitivity "
-                        "VS energy VS observation-time"
+                        "Differential flux-sensitivity "
+                        "VS energy VS observation-time "
+                        "VS systematic uncertainties."
                     ),
                 },
             )
