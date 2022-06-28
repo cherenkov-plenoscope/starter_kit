@@ -96,6 +96,11 @@ cta_diffsens = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0545_diffsens_estimate_cta_south")
 )
 
+fermi_diffsens = json_numpy.read_tree(
+    os.path.join(pa["summary_dir"], "0544_diffsens_estimate_fermi_lat")
+)["flux_sensitivity"]
+
+
 observation_times = {"1800s": 1800, "0180s": 180}
 sysuncix = 0
 
@@ -144,13 +149,19 @@ for obsk in observation_times:
 
                 # Fermi-LAT diff
                 # --------------
-                fermi_diff = fermi.differential_sensitivity(l=0, b=90)
+                fermi_obstidx = find_observation_time_index(
+                    observation_times=fermi_diffsens["observation_times_s"],
+                    observation_time=observation_time,
+                )
                 com = {}
-                com["energy"] = [np.array(fermi_diff["energy"]["values"])]
-                com["differential_flux"] = [
-                    np.array(fermi_diff["differential_flux"]["values"])
-                ]
-                com["label"] = fermi.LABEL + ", 10y, (l=0, b=90)"
+                com = com_add_diff_flux(
+                    com=com,
+                    energy_bin_edges=fermi_diffsens["energy_bin_edges_GeV"],
+                    dVdE=fermi_diffsens["dVdE_per_m2_per_GeV_per_s"],
+                    dVdE_au=fermi_diffsens["dVdE_per_m2_per_GeV_per_s_au"],
+                    obstidx=fermi_obstidx,
+                )
+                com["label"] = fermi.LABEL + ", " + observation_time_str
                 com["color"] = fermi.COLOR
                 com["alpha"] = 1.0
                 com["linestyle"] = "-"
@@ -220,11 +231,7 @@ for obsk in observation_times:
                     obstidx=obstidx,
                     sysuncix=sysuncix,
                 )
-                com["label"] = (
-                    "Portal, "
-                    + observation_time_str
-                    + ", sys. {:.1e}".format(sys_unc)
-                )
+                com["label"] = "Portal, " + observation_time_str
                 com["color"] = "black"
                 com["alpha"] = 1.0
                 com["linestyle"] = "-"

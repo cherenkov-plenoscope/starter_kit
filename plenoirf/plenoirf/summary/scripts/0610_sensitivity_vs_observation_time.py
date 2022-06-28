@@ -80,10 +80,10 @@ for pe in pivot_energies:
         arr=energy_bin["edges"], val=pivot_energies[pe], max_rel_error=0.25,
     )
 
-    x_lim_s = np.array([1e0, 1e9])
+    x_lim_s = np.array([1e0, 1e7])
     e_lim_GeV = np.array([1e-1, 1e4])
     y_lim_per_m2_per_s_per_GeV = np.array(
-        [1e0, 1e-8]
+        [1e0, 1e-6]
     )  # np.array([1e3, 1e-16])
 
     # work
@@ -201,11 +201,11 @@ for pe in pivot_energies:
                         :, :, sysuncix
                     ]
                     if sysuncix == 0:
+                        _alpha = 0.5
+                        _linestyle = ":"
+                    else:
                         _alpha = 1.0
                         _linestyle = "-"
-                    else:
-                        _alpha = 1.0 / (1 + sysuncix)
-                        _linestyle = ":"
 
                     com = {}
                     com["observation_time"] = observation_times
