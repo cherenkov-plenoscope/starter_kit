@@ -23,7 +23,7 @@ fname = os.path.join(pa["summary_dir"], "{:s}_ltx".format(production_dirname))
 STARTER_KIT_DIR = os.getcwd()
 
 sk = "namibia"
-ok = "medium"
+ok = "small"
 dk = "bell_spectrum"
 
 SED_STYLE_KEY = "portal"

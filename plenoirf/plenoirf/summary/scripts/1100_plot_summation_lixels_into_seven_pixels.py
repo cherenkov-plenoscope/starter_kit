@@ -23,9 +23,12 @@ light_field_geometry = pl.LightFieldGeometry(
 
 region_of_interest_on_sensor_plane = {"x": [-0.35, 0.35], "y": [-0.35, 0.35]}
 
-object_distances = [21e3, 29e3, 999e3]
+#object_distances = [21e3, 29e3, 999e3]
+object_distances = [3e3, 5e3, 9e3, 15e3, 25e3, 999e3]
 central_seven_pixel_ids = [4221, 4124, 4222, 4220, 4125, 4317, 4318]
 colors = ["k", "g", "b", "r", "c", "m", "orange"]
+
+XY_LABELS_ALWAYS = True
 
 linewidths = 0.25
 
@@ -131,7 +134,7 @@ for obj, object_distance in enumerate(object_distances):
     )
     ax.add_collection(coll)
 
-    if obj == 0:
+    if obj == 0 or XY_LABELS_ALWAYS:
         ax.set_xlabel("$x_\\mathrm{sensors}\\,/\\,$m")
         ax.set_ylabel("$y_\\mathrm{sensors}\\,/\\,$m")
 
@@ -148,13 +151,13 @@ for obj, object_distance in enumerate(object_distances):
     )
 
     ax2.text(
-        x=-0.1,
+        x=-0.6,
         y=2 * t,
         s="{:0.0f}$\\,$km".format(object_distance / 1e3),
         fontsize=12,
     )
     if obj + 1 == len(object_distances):
-        ax2.text(x=-0.2, y=3.7, s="infinity", fontsize=12)
+        ax2.text(x=-0.6, y=3.7, s="infinity", fontsize=12)
 
     fig.savefig(
         os.path.join(
