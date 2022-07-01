@@ -60,7 +60,6 @@ CFG["binning"] = analysis.BINNING
 
 def init(work_dir, config=CFG):
     os.makedirs(work_dir, exist_ok=True)
-    prng = np.random.Generator(np.random.PCG64(config["seed"]))
 
     with open(os.path.join(work_dir, "config.json"), "wt") as f:
         f.write(json_numpy.dumps(config, indent=4))
@@ -98,7 +97,7 @@ def make_responses(work_dir):
                 ofa_dir = os.path.join(paxel_dir, "{:03d}".format(ofa))
 
                 if not os.path.exists(ofa_dir):
-                    plenoirf.merlict.plenoscope_propagator(
+                    plenoirf.production.merlict.plenoscope_propagator(
                         corsika_run_path=os.path.join(
                             sources_dir, "{:03d}.tar".format(ofa)
                         ),
