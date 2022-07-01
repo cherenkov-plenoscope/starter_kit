@@ -171,13 +171,25 @@ for sk in SITES:
             if event_off_deg > 2.5:
                 continue
 
-            counter = counter_add(counter, num_pe, SAMPLE)
-
             event_truth = spt.cut_and_sort_table_on_indices(
                 events_truth, common_indices=np.array([airshower_id]),
             )
+
+            core_m = np.hypot(
+                event_truth["core"]["core_x_m"][0],
+                event_truth["core"]["core_x_m"][0],
+            )
+            if core_m > num_pe / 5:
+                print("nope", core_m, num_pe)
+                continue
+
+            counter = counter_add(counter, num_pe, SAMPLE)
+
+            evt_dir = os.path.join(pk_dir, "{:012d}".format(airshower_id))
+            os.makedirs(evt_dir, exist_ok=True)
+
             tabpath = os.path.join(
-                pk_dir, "{:s}_{:012d}.json".format(pk, airshower_id)
+                evt_dir, "{:s}_{:012d}_truth.json".format(pk, airshower_id)
             )
             json_numpy.write(
                 path=tabpath, out_dict=table_to_dict(event_truth), indent=4,
@@ -205,7 +217,7 @@ for sk in SITES:
             for dek in range(number_depths):
                 print(sk, pk, airshower_id, dek, counter)
                 figpath = os.path.join(
-                    pk_dir,
+                    evt_dir,
                     "{:s}_{:012d}_{:03d}.jpg".format(pk, airshower_id, dek),
                 )
                 if os.path.exists(figpath):
