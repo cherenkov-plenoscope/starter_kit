@@ -5,9 +5,9 @@ import sebastians_matplotlib_addons as sebplt
 import plenopy as pl
 
 SEED = 43
-light_field_geometry_path = "2021-12-20_run_mini/light_field_geometry"
-merlict_path = "build/merlict/merlict-plenoscope-raw-photon-propagation"
-merlict_config_path = (
+LIGHT_FIELD_GEOMETRY_PATH = "2021-12-20_run_mini/light_field_geometry"
+MERLICT_PATH = "build/merlict/merlict-plenoscope-raw-photon-propagation"
+MERLICT_CONFIG_PATH = (
     "resources/acp/merlict_propagation_config_no_night_sky_background.json"
 )
 
@@ -156,9 +156,9 @@ light_fields = phantom_source.light_field.make_light_fields_from_meshes(
 
 event, light_field_geometry = phantom_source.merlict.make_plenopy_event_and_read_light_field_geometry(
     light_fields=light_fields,
-    light_field_geometry_path=light_field_geometry_path,
-    merlict_propagate_photons_path=merlict_path,
-    merlict_propagate_config_path=merlict_config_path,
+    light_field_geometry_path=LIGHT_FIELD_GEOMETRY_PATH,
+    merlict_propagate_photons_path=MERLICT_PATH,
+    merlict_propagate_config_path=MERLICT_CONFIG_PATH,
     random_seed=SEED,
 )
 
