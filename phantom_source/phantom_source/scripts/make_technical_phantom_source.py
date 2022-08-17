@@ -1,16 +1,83 @@
+import argparse
 import phantom_source
 import numpy as np
+import json_numpy
 import os
 import sebastians_matplotlib_addons as sebplt
 import plenopy as pl
 
-SEED = 43
-LIGHT_FIELD_GEOMETRY_PATH = "2021-12-20_run_mini/light_field_geometry"
-MERLICT_PATH = "build/merlict/merlict-plenoscope-raw-photon-propagation"
-MERLICT_CONFIG_PATH = (
-    "resources/acp/merlict_propagation_config_no_night_sky_background.json"
+argparser = argparse.ArgumentParser(
+    prog="make_technical_phantom_source",
+    description=(
+        "Create a thechnical phantom-source and export figures "
+        "showing the geometry of the source as well as images of it "
+        "taken by a plenoscope."
+    ),
+)
+argparser.add_argument(
+    "light_field_geometry",
+    metavar="LIGHT_FIELD_GEOMETRY_PATH",
+    type=str,
+    help="Path to the light_field_geometry to be used for the plenoscope.",
+)
+argparser.add_argument(
+    "out_dir",
+    metavar="OUT_DIR",
+    type=str,
+    help="Path to directory to write results.",
+)
+argparser.add_argument(
+    "--merlict_path",
+    metavar="PATH",
+    type=str,
+    default=os.path.join(
+        "build", "merlict", "merlict-plenoscope-raw-photon-propagation"
+    ),
+    help="Path to merlict executable to propagate table of raw photons.",
+)
+argparser.add_argument(
+    "--merlict_config",
+    metavar="PATH",
+    type=str,
+    default=os.path.join(
+        "resources",
+        "acp",
+        "merlict_propagation_config_no_night_sky_background.json",
+    ),
+    help=(
+        "Path to merlict config on night-sky-background "
+        "and sensor-cofiguration."
+    ),
+)
+argparser.add_argument(
+    "--seed",
+    metavar="RANDOM_SEED",
+    type=int,
+    default=43,
+    help="Seed for pseudo-random-number-generator.",
 )
 
+args = argparser.parse_args()
+
+SEED = args.seed
+LIGHT_FIELD_GEOMETRY_PATH = args.light_field_geometry
+MERLICT_PATH = args.merlict_path
+MERLICT_CONFIG_PATH = args.merlict_config
+out_dir = args.out_dir
+
+os.makedirs(name=out_dir, exist_ok=True)
+with open(os.path.join(out_dir, "config.json"), "wt") as f:
+    f.write(
+        json_numpy.dumps(
+            {
+                "seed": SEED,
+                "light_field_geometry": LIGHT_FIELD_GEOMETRY_PATH,
+                "merlict_path": MERLICT_PATH,
+                "merlict_config_path": MERLICT_CONFIG_PATH,
+            },
+            indent=4,
+        )
+    )
 
 prng = np.random.Generator(np.random.MT19937(seed=SEED))
 
@@ -108,21 +175,15 @@ Mimg.append(
 
 Mimg.append(
     phantom_source.mesh.triangle(
-        pos=simg["vertices"]["G"],
-        radius=0.4,
-        density=M * N,
+        pos=simg["vertices"]["G"], radius=0.4, density=M * N,
     )
 )
 
 Mimg.append(
     phantom_source.mesh.sun(
-        pos=simg["vertices"]["I"],
-        num_flares=13,
-        radius=1.2,
-        density=M * N,
+        pos=simg["vertices"]["I"], num_flares=13, radius=1.2, density=M * N,
     )
 )
-
 
 
 Mscn = []
@@ -133,18 +194,15 @@ for mimg in Mimg:
 Mscn = [sscn]
 """
 
-output_path = "tmp_plenoscope_response"
-os.makedirs(name=output_path, exist_ok=True)
-
 phantom_source.plot.save_3d_views_of_meshes(
     meshes=Mscn,
     scale=1e-3,
-    xlim=[-XY_RADIUS*1e-3, XY_RADIUS*1e-3],
-    ylim=[-XY_RADIUS*1e-3, XY_RADIUS*1e-3],
-    zlim=[0*1e-3, MAX_OBJECT_DISTANCE*1e-3],
+    xlim=[-XY_RADIUS * 1e-3, XY_RADIUS * 1e-3],
+    ylim=[-XY_RADIUS * 1e-3, XY_RADIUS * 1e-3],
+    zlim=[0 * 1e-3, MAX_OBJECT_DISTANCE * 1e-3],
     elevations=[23, 90, 0],
     azimuths=[-60, 0, 0],
-    paths=[os.path.join(output_path, "mesh_{:d}.jpg".format(i)) for i in range(3)]
+    paths=[os.path.join(out_dir, "mesh_{:d}.jpg".format(i)) for i in range(3)],
 )
 
 light_fields = phantom_source.light_field.make_light_fields_from_meshes(
@@ -154,7 +212,10 @@ light_fields = phantom_source.light_field.make_light_fields_from_meshes(
     emission_distance_to_aperture=EMISSION_DISTANCE_TO_APERTURE,
 )
 
-event, light_field_geometry = phantom_source.merlict.make_plenopy_event_and_read_light_field_geometry(
+(
+    event,
+    light_field_geometry,
+) = phantom_source.merlict.make_plenopy_event_and_read_light_field_geometry(
     light_fields=light_fields,
     light_field_geometry_path=LIGHT_FIELD_GEOMETRY_PATH,
     merlict_propagate_photons_path=MERLICT_PATH,
@@ -168,7 +229,7 @@ lf_t, lf_lixel_ids = event.photon_arrival_times_and_lixel_ids()
 pl.plot.refocus.save_refocus_stack(
     light_field_geometry=light_field_geometry,
     photon_lixel_ids=lf_lixel_ids,
-    output_path=output_path,
+    output_path=out_dir,
     title=None,
     obj_dist_min=2000.0,
     obj_dist_max=MAX_OBJECT_DISTANCE,
@@ -176,5 +237,5 @@ pl.plot.refocus.save_refocus_stack(
     steps=16,
     use_absolute_scale=True,
     image_prefix="refocus_",
-    figure_style={"rows": 1080, "cols": 1920, "fontsize": 1},
+    figure_style={"rows": 720, "cols": 1280, "fontsize": 1},
 )
