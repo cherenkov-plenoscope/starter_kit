@@ -83,7 +83,7 @@ prng = np.random.Generator(np.random.MT19937(seed=SEED))
 
 aperture_radius = 40
 N = 1e4
-M = 20
+M = 120
 EMISSION_DISTANCE_TO_APERTURE = 1e3
 MAX_OBJECT_DISTANCE = 27e3
 XY_RADIUS = 400
@@ -113,7 +113,7 @@ phantom_source.simple_shower.append_random_edge(
     N=N,
     prng=prng,
 )
-"""
+
 simg = phantom_source.mesh.init()
 simg["vertices"]["A"] = [-2, 1.8, MAX_OBJECT_DISTANCE]
 
@@ -184,15 +184,52 @@ Mimg.append(
         pos=simg["vertices"]["I"], num_flares=13, radius=1.2, density=M * N,
     )
 )
+"""
+RR = 1.0
 
+Mimg = []
+Mimg.append(
+    phantom_source.mesh.triangle(
+        pos=[-1.0, +1.3, 2.5e3], radius=1.8, density=M * N * (2.5 ** RR),
+    )
+)
+Mimg.append(
+    phantom_source.mesh.spiral(
+        pos=[-1.0, -1.3, 4.2e3],
+        turns=2.5,
+        outer_radius=1.7,
+        density=M * N * (4.2 ** RR),
+        fn=110,
+    )
+)
+Mimg.append(
+    phantom_source.mesh.sun(
+        pos=[1.7, 0.0, 7.1e3],
+        num_flares=11,
+        radius=1.0,
+        density=M * N * (7.1 ** RR),
+        fn=110,
+    )
+)
+Mimg.append(
+    phantom_source.mesh.smiley(
+        pos=[-1.0, +1.3, 11.9e3],
+        radius=0.9,
+        density=M * N * (11.9 ** RR),
+        fn=50,
+    )
+)
+Mimg.append(
+    phantom_source.mesh.cross(
+        pos=[+1.3, -1.3, 20.0e3], radius=0.7, density=M * N * (20.0 ** RR),
+    )
+)
 
 Mscn = []
 for mimg in Mimg:
     mscn = phantom_source.mesh.transform_image_to_scneney(mesh=mimg)
     Mscn.append(mscn)
-"""
-Mscn = [sscn]
-"""
+
 
 phantom_source.plot.save_3d_views_of_meshes(
     meshes=Mscn,
@@ -224,7 +261,6 @@ light_fields = phantom_source.light_field.make_light_fields_from_meshes(
 )
 
 lf_t, lf_lixel_ids = event.photon_arrival_times_and_lixel_ids()
-
 
 pl.plot.refocus.save_refocus_stack(
     light_field_geometry=light_field_geometry,
