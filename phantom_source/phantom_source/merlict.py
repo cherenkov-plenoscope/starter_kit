@@ -46,6 +46,7 @@ def propagate_photons(
 [7] wavelength
 """
 
+
 def append_photons_to_space_seperated_values(
     path, ids, supports, directions, wavelengths
 ):
@@ -95,8 +96,7 @@ def make_plenopy_event_and_read_light_field_geometry(
         run_dir = os.path.join(tmpdir, "run")
 
         write_light_fields_to_space_seperated_values(
-            light_fields=light_fields,
-            path=photons_path,
+            light_fields=light_fields, path=photons_path,
         )
 
         rc = propagate_photons(
@@ -108,7 +108,9 @@ def make_plenopy_event_and_read_light_field_geometry(
             random_seed=0,
         )
 
-        light_field_geometry = plenopy.LightFieldGeometry(light_field_geometry_path)
+        light_field_geometry = plenopy.LightFieldGeometry(
+            light_field_geometry_path
+        )
         event = plenopy.Event(
             os.path.join(run_dir, "1"),
             light_field_geometry=light_field_geometry,

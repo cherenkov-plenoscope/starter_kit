@@ -115,10 +115,7 @@ def make_supports_with_equal_distance_to_aperture(
 
 
 def make_light_fields_from_meshes(
-    meshes,
-    aperture_radius,
-    emission_distance_to_aperture,
-    prng,
+    meshes, aperture_radius, emission_distance_to_aperture, prng,
 ):
     """
     meshes : list
@@ -133,8 +130,7 @@ def make_light_fields_from_meshes(
     for m in meshes:
 
         mm = mesh.split_long_edges_into_shorter_ones(
-            mesh=m,
-            max_length_of_edge=aperture_radius
+            mesh=m, max_length_of_edge=aperture_radius
         )
 
         lf = make_light_field_from_mesh(

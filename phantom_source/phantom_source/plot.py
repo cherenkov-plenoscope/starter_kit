@@ -31,7 +31,8 @@ def ax3d_set_xyzlim(ax3d, xlim, ylim, zlim):
                 ax3d.plot(xs=[x], ys=[y], zs=[z])
 
 
-def ax3d_set_pane_colors(ax3d,
+def ax3d_set_pane_colors(
+    ax3d,
     x=(1.0, 1.0, 1.0, 1.0),
     y=(1.0, 1.0, 1.0, 1.0),
     z=(1.0, 1.0, 1.0, 1.0),
@@ -42,20 +43,12 @@ def ax3d_set_pane_colors(ax3d,
 
 
 def save_3d_views_of_meshes(
-    meshes,
-    scale,
-    xlim,
-    ylim,
-    zlim,
-    elevations,
-    azimuths,
-    paths
+    meshes, scale, xlim, ylim, zlim, elevations, azimuths, paths
 ):
     Mscn_km = []
     for mscn in meshes:
         mscn_km = Mesh.scale(mesh=mscn, factor=scale)
         Mscn_km.append(mscn_km)
-
 
     fig = sebplt.figure(style={"rows": 2 * 1080, "cols": 1080, "fontsize": 1})
     ax3d = fig.add_subplot(111, projection="3d")
@@ -63,9 +56,9 @@ def save_3d_views_of_meshes(
         ax3d_add_mesh(ax3d=ax3d, mesh=mscn_km, color="k")
     ax3d_set_xyzlim(
         ax3d=ax3d,
-        xlim=np.array(xlim)*scale,
-        ylim=np.array(ylim)*scale,
-        zlim=np.array(zlim)*scale,
+        xlim=np.array(xlim) * scale,
+        ylim=np.array(ylim) * scale,
+        zlim=np.array(zlim) * scale,
     )
     ax3d_set_pane_colors(
         ax3d=ax3d,
