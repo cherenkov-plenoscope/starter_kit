@@ -137,7 +137,7 @@ EXAMPLE_CONFIG = {
                     decade=3, bin=2, num_bins_per_decade=5
                 ),
             ],
-            "max_scatter_angle_deg": 13,
+            "max_scatter_angle_deg": 18.3,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +1.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
@@ -155,7 +155,7 @@ EXAMPLE_CONFIG = {
                     decade=3, bin=2, num_bins_per_decade=5
                 ),
             ],
-            "max_scatter_angle_deg": 13,
+            "max_scatter_angle_deg": 18.3,
             "energy_power_law_slope": -1.5,
             "electric_charge_qe": +2.0,
             "magnetic_deflection_max_off_axis_deg": 1.5,
