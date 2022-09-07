@@ -554,7 +554,9 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 evttar.write_bunches(bunches=reuse_event["cherenkov_bunches"])
 
                 crszp = ide.copy()
-                crszp = _append_bunch_ssize(crszp, cherenkov_bunches)
+                crszp = _append_bunch_ssize(
+                    crszp, reuse_event["cherenkov_bunches"]
+                )
                 tabrec["cherenkovsizepart"].append(crszp)
                 rase = ide.copy()
                 rase = _append_bunch_statistics(
