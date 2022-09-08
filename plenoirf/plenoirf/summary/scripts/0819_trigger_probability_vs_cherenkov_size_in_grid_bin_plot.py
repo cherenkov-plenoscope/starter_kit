@@ -18,11 +18,10 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 
 trigger_vs_size = json_numpy.read_tree(
     os.path.join(
-        pa["summary_dir"], "0818_trigger_probability_vs_cherenkov_size_in_grid_bin"
+        pa["summary_dir"],
+        "0818_trigger_probability_vs_cherenkov_size_in_grid_bin",
     )
 )
-
-grid_bin_area_m2 = irf_config["grid_geometry"]["bin_area"]
 
 particle_colors = sum_config["plot"]["particle_colors"]
 key = "trigger_probability_vs_cherenkov_size_in_grid_bin"
@@ -37,18 +36,13 @@ for sk in irf_config["config"]["sites"]:
     text_y = 0
     for pk in irf_config["config"]["particles"]:
 
-        size_bin_edges = trigger_vs_size[sk][pk][
-                key
-            ]["true_Cherenkov_size_bin_edges_pe"]
-        density_bin_edges = size_bin_edges / grid_bin_area_m2
+        density_bin_edges = trigger_vs_size[sk][pk][key][
+            "Cherenkov_density_bin_edges_per_m2"
+        ]
 
-        prob = trigger_vs_size[sk][pk][
-                key
-            ]["mean"]
+        prob = trigger_vs_size[sk][pk][key]["mean"]
 
-        prob_unc = trigger_vs_size[sk][pk][
-                key
-            ]["relative_uncertainty"]
+        prob_unc = trigger_vs_size[sk][pk][key]["relative_uncertainty"]
 
         seb.ax_add_histogram(
             ax=ax,

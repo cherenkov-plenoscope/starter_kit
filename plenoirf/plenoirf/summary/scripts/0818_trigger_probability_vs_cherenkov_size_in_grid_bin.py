@@ -20,11 +20,14 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
-size_bin_edges = np.geomspace(1e3, 1e9, 6*5 + 1)
 
 passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
+
+grid_bin_area_m2 = irf_config["grid_geometry"]["bin_area"]
+density_bin_edges_per_m2 = np.geomspace(1e-2, 1e5, 7 * 5 + 1)
+
 
 for sk in SITES:
     for pk in PARTICLES:
@@ -33,11 +36,7 @@ for sk in SITES:
 
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"],
-                "event_table",
-                sk,
-                pk,
-                "event_table.tar",
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -50,12 +49,13 @@ for sk in SITES:
         )
 
         num_thrown = np.histogram(
-            event_table["cherenkovsizepart"]["num_photons"], bins=size_bin_edges
+            event_table["cherenkovsizepart"]["num_photons"] / grid_bin_area_m2,
+            bins=density_bin_edges_per_m2,
         )[0]
 
         num_pasttrigger = np.histogram(
-            event_table["cherenkovsizepart"]["num_photons"],
-            bins=size_bin_edges,
+            event_table["cherenkovsizepart"]["num_photons"] / grid_bin_area_m2,
+            bins=density_bin_edges_per_m2,
             weights=mask_pasttrigger,
         )[0]
 
@@ -72,7 +72,7 @@ for sk in SITES:
         json_numpy.write(
             os.path.join(site_particle_dir, key + ".json"),
             {
-                "true_Cherenkov_size_bin_edges_pe": size_bin_edges,
+                "Cherenkov_density_bin_edges_per_m2": density_bin_edges_per_m2,
                 "unit": "1",
                 "mean": trigger_probability,
                 "relative_uncertainty": trigger_probability_unc,
