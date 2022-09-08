@@ -181,14 +181,23 @@ for sk in SITES:
 
             particle_counter += 1
 
-        pv[pk]["ratio"] = pv[pk]["num_passed"] / pv[pk]["num_thrown"]
-        pv[pk]["ratio_au"] = (
-            np.sqrt(pv[pk]["num_passed"]) / pv[pk]["num_thrown"]
+        pv[pk]["ratio"] = irf.utils._divide_silent(
+            numerator=pv[pk]["num_passed"],
+            denominator=pv[pk]["num_thrown"],
+            default=float("nan"),
+        )
+        pv[pk]["ratio_au"] = irf.utils._divide_silent(
+            numerator=np.sqrt(pv[pk]["num_passed"]),
+            denominator=pv[pk]["num_thrown"],
+            default=float("nan"),
         )
 
         pv[pk]["ratio_upper"] = pv[pk]["ratio"] + pv[pk]["ratio_au"]
         pv[pk]["ratio_lower"] = pv[pk]["ratio"] - pv[pk]["ratio_au"]
-        pv[pk]["ratio_lower"][pv[pk]["ratio_lower"] < 0] = 0
+
+        with np.errstate(invalid="ignore"):
+            pv[pk]["ratio_upper"][pv[pk]["ratio_upper"] > 1] = 1
+            pv[pk]["ratio_lower"][pv[pk]["ratio_lower"] < 0] = 0
 
         fig = seb.figure(style=irf.summary.figure.FIGURE_STYLE)
         ax = seb.add_axes(fig=fig, span=AX_SPAN)
@@ -209,7 +218,7 @@ for sk in SITES:
         ax.set_title(VETO_STR)
         ax.semilogx()
         ax.set_xlim(energy_bin["limits"])
-        ax.set_ylim([-0.1, 2.1])
+        ax.set_ylim([-0.1, 1.1])
         ax.set_xlabel("energy / GeV")
         ax.set_ylabel(
             "trigger(plenoscope)\nAND NOT\nany(trigger(outer telescopes)) / 1"
