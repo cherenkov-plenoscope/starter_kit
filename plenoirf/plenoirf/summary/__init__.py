@@ -246,8 +246,10 @@ def _guess_summary_config(run_dir):
             "modus": {
                 "accepting_focus": 6,
                 "rejecting_focus": 4,
-                "intensity_ratio_between_foci": 1.0,
-                "use_rejection_focus": True,
+                "accepting": {
+                    "threshold_accepting_over_rejecting": [1, 1, 0.8, 0.4, 0.2, 0.1,],
+                    "response_pe": [1e1, 1e2, 1e3, 1e4, 1e5, 1e6],
+                }
             },
             "threshold_pe": analysis_trigger_threshold_pe,
             "ratescan_thresholds_pe": make_ratescan_trigger_thresholds(
