@@ -2,7 +2,7 @@ import plenoirf
 import numpy as np
 
 
-def dummy_trigger_table(num_foci=3):
+def dummy_trigger_table_init(num_foci=3):
     tt = {}
     for i in range(num_foci):
         tt["focus_{:02d}_response_pe".format(i)] = []
@@ -23,10 +23,12 @@ def dummy_trigger_table_arrayfy(trigger_table):
 
 
 def test_trigger_modus():
-    tt = dummy_trigger_table(num_foci=3)
+    tt = dummy_trigger_table_init(num_foci=3)
     tt = dummy_trigger_table_append(tt, [120, 100, 100])
     tt = dummy_trigger_table_append(tt, [120, 130, 140])
     tt = dummy_trigger_table_append(tt, [120, 100, 100])
+    tt = dummy_trigger_table_append(tt, [900, 950, 999])
+    tt = dummy_trigger_table_append(tt, [900, 850, 800])
     tt = dummy_trigger_table_arrayfy(tt)
 
     threshold = 101
@@ -34,8 +36,8 @@ def test_trigger_modus():
         "accepting_focus": 0,
         "rejecting_focus": 2,
         "accepting": {
-            "threshold_accepting_over_rejecting": [1, 1],
-            "response_pe": [1e1, 1e2],
+            "threshold_accepting_over_rejecting": [1, 1, 0.5],
+            "response_pe": [1e1, 1e2, 1e3],
         }
     }
 
@@ -48,3 +50,5 @@ def test_trigger_modus():
     assert mask[0]
     assert not mask[1]
     assert mask[2]
+    assert mask[3]
+    assert mask[4]
