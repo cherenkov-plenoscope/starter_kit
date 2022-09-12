@@ -173,3 +173,35 @@ def filter_particles_with_electric_charge(particles):
         if np.abs(particles[pk]["electric_charge_qe"]) > 0:
             out[pk] = dict(particles[pk])
     return out
+
+
+def copy_square_selection_from_2D_array(img, ix, iy, r, fill=np.nan):
+    """
+    Returns a square selection from the input-image.
+
+    Parameters
+    ----------
+    img : np.array 2D
+        Input image to copy from.
+    ix : int
+        X central bin for selection in input-image
+    iy : int
+        Y central bin for selection in input-image
+    r : int
+        Radius of selection. Width of selection is (2*r + 1).
+    fill : float/int
+        If selection is outside of input-image, this value is written to
+        output.
+    """
+    assert r >= 0
+    out = fill * np.ones(shape=(2 * r + 1, 2 * r + 1), dtype=img.dtype)
+    x_start = ix - r
+    x_stop = ix + r + 1
+    y_start = iy - r
+    y_stop = iy + r + 1
+    for ox, ix in enumerate(np.arange(x_start, x_stop)):
+        for oy, iy in enumerate(np.arange(y_start, y_stop)):
+            if ix >= 0 and ix < img.shape[0]:
+                if iy >= 0 and iy < img.shape[1]:
+                    out[ox, oy] = img[ix, iy]
+    return out

@@ -351,10 +351,15 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     # ---------------------
     cherenkov_pools_path = op.join(tmp_dir, "cherenkov_pools.tar")
     tmp_grid_histogram_path = op.join(tmp_dir, "grid.tar")
+    tmp_grid_roi_histogram_path = op.join(tmp_dir, "grid_roi.tar")
 
     with cpw.event_tape.EventTapeWriter(
         path=cherenkov_pools_path
-    ) as evttar, tarfile.open(tmp_grid_histogram_path, "w") as imgtar:
+    ) as evttar, tarfile.open(
+        tmp_grid_histogram_path, "w"
+    ) as imgtar, tarfile.open(
+        tmp_grid_roi_histogram_path, "w"
+    ) as imgroitar:
 
         corsika_run = cpw.CorsikaPrimary(
             corsika_path=job["corsika_primary_path"],
@@ -570,6 +575,20 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 rcor["core_x_m"] = reuse_event["core_x_m"]
                 rcor["core_y_m"] = reuse_event["core_y_m"]
                 tabrec["core"].append(rcor)
+
+                utils.tar_append(
+                    tarout=imgroitar,
+                    file_name=uid_str + ".f4.gz",
+                    file_bytes=grid.histogram_to_bytes(
+                        utils.copy_square_selection_from_2D_array(
+                            img=grid_result["histogram"],
+                            ix=reuse_event["bin_idx_x"],
+                            iy=reuse_event["bin_idx_y"],
+                            r=12,
+                            fill=np.nan,
+                        ),
+                    ),
+                )
 
     nfs.copy(
         op.join(tmp_dir, "corsika.stdout"),
