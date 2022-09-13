@@ -59,7 +59,7 @@ for sk in SITES:
                 linewidth=0.0,
             )
             ax.text(
-                0.6,
+                0.5,
                 0.1 + text_y,
                 pk,
                 color=particle_colors[pk],
@@ -68,9 +68,9 @@ for sk in SITES:
             ir = onregion_rates[sk][ok][pk]["integral_rate"][mean_key]
             ir_abs_unc = onregion_rates[sk][ok][pk]["integral_rate"][unc_key]
             ax.text(
-                0.7,
+                0.6,
                 0.1 + text_y,
-                r"{: 8.1f}$\pm{:.1f}$ s$^{{-1}}$".format(ir, ir_abs_unc),
+                r"{: 8.1f} $\pm${: 6.1f} s$^{{-1}}$".format(ir, ir_abs_unc),
                 color="k",
                 family="monospace",
                 transform=ax.transAxes,
