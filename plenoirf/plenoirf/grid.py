@@ -290,7 +290,7 @@ def read_histograms(path, indices=None):
 def write_histograms(path, grid_histograms):
     with tarfile.open(path + ".tmp", "w") as tarfout:
         for idx in grid_histograms:
-            filename = unique.UID_FOTMAT_STR.format(seed=idx) + ".f4.gz"
+            filename = unique.UID_FOTMAT_STR.format(idx) + ".f4.gz"
             with io.BytesIO() as buff:
                 info = tarfile.TarInfo(filename)
                 info.size = buff.write(grid_histograms[idx])
