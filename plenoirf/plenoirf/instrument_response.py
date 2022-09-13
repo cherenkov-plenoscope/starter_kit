@@ -208,9 +208,9 @@ def make_job_dict(
     return job
 
 
-def reduce(
-    run_dir, production_key, site_key, particle_key, logger, LAZY,
-):
+def reduce(run_dir, production_key, site_key, particle_key, LAZY, logger=None):
+    logger = logger if logger else jlogging.LoggerStdout()
+
     production_dir = os.path.join(run_dir, production_key)
     site_dir = os.path.join(production_dir, site_key)
     site_particle_dir = os.path.join(site_dir, particle_key)
@@ -244,11 +244,16 @@ def reduce(
 
     # grid images
     # ===========
-    grid_path = os.path.join(site_particle_dir, "grid.tar")
-    if not op.exists(grid_path) or not LAZY:
-        _grid_paths = glob.glob(os.path.join(features_dir, "*_grid.tar"))
-        grid.reduce(list_of_grid_paths=_grid_paths, out_path=grid_path)
-    logger.info("Reduce {:s} {:s} grid.".format(site_key, particle_key))
+    for grid_key in ["grid", "grid_roi_pasttrigger"]:
+        grid_path = os.path.join(site_particle_dir, grid_key + ".tar")
+        if not op.exists(grid_path) or not LAZY:
+            _grid_paths = glob.glob(
+                os.path.join(features_dir, "*_" + grid_key + ".tar")
+            )
+            grid.reduce(list_of_grid_paths=_grid_paths, out_path=grid_path)
+        logger.info(
+            "Reduce {:s} {:s} {:s}.".format(site_key, particle_key, grid_key)
+        )
 
     # cherenkov-photon-stream
     # =======================
@@ -586,7 +591,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                             iy=reuse_event["bin_idx_y"],
                             r=12,
                             fill=np.nan,
-                        ),
+                        )
                     ),
                 )
 
@@ -937,6 +942,33 @@ def _export_event_table(job, tmp_dir, tabrec):
     )
 
 
+def _export_grid_region_of_interest_if_passed_loose_trigger(
+    job, tabrec, tmp_dir
+):
+    pasttrigger_set = set(
+        [record[spt.IDX] for record in tabrec["pasttrigger"]]
+    )
+
+    ipath = op.join(tmp_dir, "grid_roi.tar")
+    opath = op.join(tmp_dir, "grid_roi_pasttrigger.tar")
+
+    with tarfile.open(ipath, "r") as itar, tarfile.open(opath, "w") as otar:
+        for tarinfo in itar:
+            idx = int(tarinfo.name[0 : unique.UID_NUM_DIGITS])
+            if idx in pasttrigger_set:
+                bimg = itar.extractfile(tarinfo).read()
+                filename = unique.UID_FOTMAT_STR.format(idx) + ".f4.gz"
+                utils.tar_append(
+                    tarout=otar, file_name=filename, file_bytes=bimg,
+                )
+    nfs.copy(
+        src=opath,
+        dst=op.join(
+            job["feature_dir"], _run_id_str(job) + "_grid_roi_pasttrigger.tar"
+        ),
+    )
+
+
 def _init_table_records():
     tabrec = {}
     for level_key in table.STRUCTURE:
@@ -1019,6 +1051,11 @@ def run_job(job):
             light_field_geometry=light_field_geometry,
             trigger_geometry=trigger_geometry,
             tmp_dir=tmp_dir,
+        )
+
+    with jlogging.TimeDelta(logger, "export grid region-of-interest"):
+        _export_grid_region_of_interest_if_passed_loose_trigger(
+            job=job, tabrec=tabrec, tmp_dir=tmp_dir,
         )
 
     with jlogging.TimeDelta(logger, "classify_cherenkov"):
