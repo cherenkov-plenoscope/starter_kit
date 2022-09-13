@@ -4,6 +4,7 @@ import plenoirf as irf
 import plenopy as pl
 import scipy
 import os
+import numpy as np
 import json_numpy
 import sparse_numeric_table as spt
 import sebastians_matplotlib_addons as seb
