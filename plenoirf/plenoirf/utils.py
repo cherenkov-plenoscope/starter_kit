@@ -205,3 +205,21 @@ def copy_square_selection_from_2D_array(img, ix, iy, r, fill=np.nan):
                 if iy >= 0 and iy < img.shape[1]:
                     out[ox, oy] = img[ix, iy]
     return out
+
+
+def fill_nans_from_end(arr, val):
+    for i in np.arange(len(arr) - 1, -1, -1):
+        if np.isnan(arr[i]):
+            arr[i] = val
+        else:
+            break
+    return arr
+
+
+def fill_nans_from_start(arr, val):
+    for i in range(len(arr)):
+        if np.isnan(arr[i]):
+            arr[i] = val
+        else:
+            break
+    return arr
