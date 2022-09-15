@@ -310,6 +310,39 @@ def reduce(list_of_grid_paths, out_path):
     shutil.move(out_path + ".tmp", out_path)
 
 
+class GridReader:
+    def __init__(self, path):
+        self.path = str(path)
+        self.tar = tarfile.open(name=self.path, mode="r|")
+        self.next_info = self.tar.next()
+
+    def __next__(self):
+        if self.next_info is None:
+            raise StopIteration
+
+        idx = int(self.next_info.name[0 : unique.UID_NUM_DIGITS])
+        bimg = self.tar.extractfile(self.next_info).read()
+        img = bytes_to_histogram(bimg)
+        self.next_info = self.tar.next()
+        return idx, img
+
+    def close(self):
+        self.tar.close()
+
+    def __iter__(self):
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+    def __repr__(self):
+        out = "{:s}(path='{:s}')".format(self.__class__.__name__, self.path)
+        return out
+
+
 # artificial core limitation
 # --------------------------
 
