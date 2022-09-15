@@ -26,7 +26,7 @@ passing_trigger = json_numpy.read_tree(
 )
 
 grid_bin_area_m2 = irf_config["grid_geometry"]["bin_area"]
-density_bin_edges_per_m2 = np.geomspace(1e-2, 1e5, 7 * 5 + 1)
+density_bin_edges_per_m2 = np.geomspace(1e-3, 1e4, 7 * 5 + 1)
 
 
 for sk in SITES:
