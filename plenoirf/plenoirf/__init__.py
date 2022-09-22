@@ -13,6 +13,7 @@ from . import utils
 from . import production
 from . import other_instruments
 from . import unique
+from . import outer_telescope_array
 
 import os
 import numpy as np

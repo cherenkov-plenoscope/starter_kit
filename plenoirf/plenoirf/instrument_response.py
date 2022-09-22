@@ -5,6 +5,7 @@ from . import network_file_system as nfs
 from . import utils
 from . import production
 from . import reconstruction
+from . import outer_telescope_array
 
 import sys
 import numpy as np
@@ -589,7 +590,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                             img=grid_result["histogram"],
                             ix=reuse_event["bin_idx_x"],
                             iy=reuse_event["bin_idx_y"],
-                            r=12,
+                            r=outer_telescope_array.NUM_BINS_RADIUS,
                             fill=np.nan,
                         )
                     ),

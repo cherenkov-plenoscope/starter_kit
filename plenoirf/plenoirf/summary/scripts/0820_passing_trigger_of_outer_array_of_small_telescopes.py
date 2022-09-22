@@ -41,12 +41,12 @@ plenoscope_mirror_area_m2 = np.pi * (0.5 * plenoscope_mirror_diameter_m) ** 2
 ARRAY_CONFIGS = copy.deepcopy(sum_config["outer_telescope_array_configurations"])
 
 for ak in ARRAY_CONFIGS:
-    ARRAY_CONFIGS[ak]["mask"] = irf.analysis.outer_telescope_array.init_mask_from_telescope_positions(
+    ARRAY_CONFIGS[ak]["mask"] = irf.outer_telescope_array.init_mask_from_telescope_positions(
         positions=ARRAY_CONFIGS[ak]["positions"],
     )
 
-CB = irf.analysis.outer_telescope_array.CENTER_BIN
-NB = irf.analysis.outer_telescope_array.NUM_BINS_ON_EDGE
+CB = irf.outer_telescope_array.CENTER_BIN
+NB = irf.outer_telescope_array.NUM_BINS_ON_EDGE
 
 ROI_RADIUS = np.ceil(3) + 1
 for ak in ARRAY_CONFIGS:

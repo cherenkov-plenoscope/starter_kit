@@ -2,9 +2,8 @@ import numpy as np
 import skimage
 
 NUM_BINS_ON_EDGE = 25
-CENTER_BIN = NUM_BINS_ON_EDGE // 2
-
-
+NUM_BINS_RADIUS = NUM_BINS_ON_EDGE // 2
+CENTER_BIN = NUM_BINS_RADIUS
 
 def init_telescope_positions_in_annulus(outer_radius, inner_radius):
     ccouter, rrouter = skimage.draw.circle(c=0, r=0, radius=outer_radius)
@@ -27,7 +26,7 @@ def init_mask_from_telescope_positions(positions):
 
 
 EXAMPLE_CONFIGURATION = {
-    "mirror_diameter_m": 12.0,
+    "mirror_diameter_m": 11.5,
     "positions": init_telescope_positions_in_annulus(
         outer_radius=2.5,
         inner_radius=0.5,

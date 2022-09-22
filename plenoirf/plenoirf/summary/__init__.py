@@ -15,6 +15,7 @@ from .. import table
 from .. import provenance
 from .. import production
 from .. import grid
+from .. import outer_telescope_array
 from . import figure
 from .cosmic_flux import make_gamma_ray_reference_flux
 from .scripts_multiprocessing import run_parallel
@@ -320,14 +321,14 @@ def _guess_summary_config(run_dir):
         "outer_telescope_array_configurations": {
             "ring-mst": {
                 "mirror_diameter_m": 11.5,
-                "positions": analysis.outer_telescope_array.init_telescope_positions_in_annulus(
+                "positions": outer_telescope_array.init_telescope_positions_in_annulus(
                     outer_radius=2.5,
                     inner_radius=0.5,
                 )
             },
             "many-sst": {
                 "mirror_diameter_m": 4.3,
-                "positions": analysis.outer_telescope_array.init_telescope_positions_in_annulus(
+                "positions": outer_telescope_array.init_telescope_positions_in_annulus(
                     outer_radius=5.5,
                     inner_radius=0.5,
                 )
