@@ -36,7 +36,9 @@ passing_plenoscope_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
-ARRAY_CONFIGS = copy.deepcopy(sum_config["outer_telescope_array_configurations"])
+ARRAY_CONFIGS = copy.deepcopy(
+    sum_config["outer_telescope_array_configurations"]
+)
 
 AX_SPAN = list(irf.summary.figure.AX_SPAN)
 AX_SPAN[3] = AX_SPAN[3] * 0.85
@@ -57,42 +59,47 @@ for sk in SITES:
         for ak in ARRAY_CONFIGS:
             print("estimate trigger ratio", sk, pk, ak)
 
-            passing_plenoscope_and_not_array = np.array(list(set.difference(
-                set(passing_plenoscope_trigger[sk][pk]["idx"]),
-                set(passing_array_trigger[sk][pk][ak]["idx"])
-            )))
+            passing_plenoscope_and_not_array = np.array(
+                list(
+                    set.difference(
+                        set(passing_plenoscope_trigger[sk][pk]["idx"]),
+                        set(passing_array_trigger[sk][pk][ak]["idx"]),
+                    )
+                )
+            )
 
             pleno_table = spt.cut_table_on_indices(
                 table=event_table,
                 common_indices=passing_plenoscope_trigger[sk][pk]["idx"],
-                level_keys=["primary", ]
+                level_keys=["primary",],
             )
 
             veto_table = spt.cut_table_on_indices(
                 table=event_table,
                 common_indices=passing_plenoscope_and_not_array,
-                level_keys=["primary", ]
+                level_keys=["primary",],
             )
 
             pv[sk][pk][ak] = {}
             pv[sk][pk][ak]["num_plenoscope"] = np.histogram(
-                pleno_table["primary"]["energy_GeV"],
-                bins=energy_bin["edges"],
+                pleno_table["primary"]["energy_GeV"], bins=energy_bin["edges"],
             )[0]
             pv[sk][pk][ak]["num_plenoscope_au"] = np.sqrt(
                 pv[sk][pk][ak]["num_plenoscope"]
             )
 
             pv[sk][pk][ak]["num_outer_array"] = np.histogram(
-                veto_table["primary"]["energy_GeV"],
-                bins=energy_bin["edges"],
+                veto_table["primary"]["energy_GeV"], bins=energy_bin["edges"],
             )[0]
             pv[sk][pk][ak]["num_outer_array_au"] = np.sqrt(
                 pv[sk][pk][ak]["num_outer_array"]
             )
 
-            with np.errstate(divide='ignore', invalid='ignore'):
-                pv[sk][pk][ak]["ratio"], pv[sk][pk][ak]["ratio_au"] = pu.divide(
+            with np.errstate(divide="ignore", invalid="ignore"):
+                (
+                    pv[sk][pk][ak]["ratio"],
+                    pv[sk][pk][ak]["ratio_au"],
+                ) = pu.divide(
                     x=pv[sk][pk][ak]["num_outer_array"].astype(np.float),
                     x_au=pv[sk][pk][ak]["num_outer_array_au"],
                     y=pv[sk][pk][ak]["num_plenoscope"].astype(np.float),
@@ -114,8 +121,10 @@ for sk in SITES:
                 linestyle="-",
                 linecolor=irf.summary.figure.PARTICLE_COLORS[pk],
                 linealpha=1.0,
-                bincounts_upper=pv[sk][pk][ak]["ratio"] + pv[sk][pk][ak]["ratio_au"],
-                bincounts_lower=pv[sk][pk][ak]["ratio"] - pv[sk][pk][ak]["ratio_au"],
+                bincounts_upper=pv[sk][pk][ak]["ratio"]
+                + pv[sk][pk][ak]["ratio_au"],
+                bincounts_lower=pv[sk][pk][ak]["ratio"]
+                - pv[sk][pk][ak]["ratio_au"],
                 face_color=irf.summary.figure.PARTICLE_COLORS[pk],
                 face_alpha=0.1,
                 label=None,

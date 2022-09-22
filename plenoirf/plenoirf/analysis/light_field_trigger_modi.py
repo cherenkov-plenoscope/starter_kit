@@ -30,9 +30,7 @@ def make_mask(
         period=None,
     )
 
-    accepting_over_rejecting = (
-        accepting_response_pe / rejecting_response_pe
-    )
+    accepting_over_rejecting = accepting_response_pe / rejecting_response_pe
 
     size_over_threshold = accepting_response_pe >= threshold
     ratio_over_threshold = (

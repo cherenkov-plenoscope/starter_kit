@@ -24,11 +24,7 @@ for sk in irf_config["config"]["sites"]:
 
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"],
-                "event_table",
-                sk,
-                pk,
-                "event_table.tar",
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -40,6 +36,5 @@ for sk in irf_config["config"]["sites"]:
         )
 
         json_numpy.write(
-            path=os.path.join(sk_pk_dir, "idx.json"),
-            out_dict=idx_pasttrigger,
+            path=os.path.join(sk_pk_dir, "idx.json"), out_dict=idx_pasttrigger,
         )

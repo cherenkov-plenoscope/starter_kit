@@ -74,10 +74,5 @@ for sk in irf_config["config"]["sites"]:
         ax.set_ylim([1e-6, 1.5e-0])
         ax.set_xlabel("density of Cherenkov-photons at plenoscope / m$^{-2}$")
         ax.set_ylabel("{:s} / 1".format(trigger_modi[tm]))
-        fig.savefig(
-            opj(
-                pa["out_dir"],
-                sk + "_" + tm + ".jpg",
-            )
-        )
+        fig.savefig(opj(pa["out_dir"], sk + "_" + tm + ".jpg",))
         seb.close(fig)

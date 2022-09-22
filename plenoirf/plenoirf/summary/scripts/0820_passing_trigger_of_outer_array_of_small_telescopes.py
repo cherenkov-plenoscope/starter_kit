@@ -28,7 +28,9 @@ plenoscope_trigger_vs_cherenkov_density = json_numpy.read_tree(
     )
 )
 
-prng = np.random.Generator(np.random.generator.PCG64(sum_config["random_seed"]))
+prng = np.random.Generator(
+    np.random.generator.PCG64(sum_config["random_seed"])
+)
 
 grid_bin_area_m2 = irf_config["grid_geometry"]["bin_area"]
 
@@ -38,10 +40,14 @@ plenoscope_mirror_diameter_m = (
 )
 plenoscope_mirror_area_m2 = np.pi * (0.5 * plenoscope_mirror_diameter_m) ** 2
 
-ARRAY_CONFIGS = copy.deepcopy(sum_config["outer_telescope_array_configurations"])
+ARRAY_CONFIGS = copy.deepcopy(
+    sum_config["outer_telescope_array_configurations"]
+)
 
 for ak in ARRAY_CONFIGS:
-    ARRAY_CONFIGS[ak]["mask"] = irf.outer_telescope_array.init_mask_from_telescope_positions(
+    ARRAY_CONFIGS[ak][
+        "mask"
+    ] = irf.outer_telescope_array.init_mask_from_telescope_positions(
         positions=ARRAY_CONFIGS[ak]["positions"],
     )
 
@@ -54,7 +60,11 @@ for ak in ARRAY_CONFIGS:
     ax = seb.add_axes(
         fig=fig,
         span=irf.summary.figure.AX_SPAN,
-        style={"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False},
+        style={
+            "spines": ["left", "bottom"],
+            "axes": ["x", "y"],
+            "grid": False,
+        },
     )
     seb.ax_add_grid_with_explicit_ticks(
         ax=ax,
@@ -69,7 +79,9 @@ for ak in ARRAY_CONFIGS:
         ax=ax,
         x=0,
         y=0,
-        r=0.5 * plenoscope_mirror_diameter_m/irf_config["grid_geometry"]["bin_width"],
+        r=0.5
+        * plenoscope_mirror_diameter_m
+        / irf_config["grid_geometry"]["bin_width"],
         linewidth=1.0,
         linestyle="-",
         color="k",
@@ -84,8 +96,8 @@ for ak in ARRAY_CONFIGS:
                     x=iix - CB,
                     y=iiy - CB,
                     r=(
-                        0.5 *
-                        ARRAY_CONFIGS[ak]["mirror_diameter_m"]
+                        0.5
+                        * ARRAY_CONFIGS[ak]["mirror_diameter_m"]
                         / irf_config["grid_geometry"]["bin_width"]
                     ),
                     linewidth=1.0,
@@ -97,13 +109,14 @@ for ak in ARRAY_CONFIGS:
     ax.set_xlim([-ROI_RADIUS, ROI_RADIUS])
     ax.set_ylim([-ROI_RADIUS, ROI_RADIUS])
     ax.set_aspect("equal")
-    ax.set_xlabel("x / {:.1f}m".format(irf_config["grid_geometry"]["bin_width"]))
-    ax.set_ylabel("y / {:.1f}m".format(irf_config["grid_geometry"]["bin_width"]))
+    ax.set_xlabel(
+        "x / {:.1f}m".format(irf_config["grid_geometry"]["bin_width"])
+    )
+    ax.set_ylabel(
+        "y / {:.1f}m".format(irf_config["grid_geometry"]["bin_width"])
+    )
     fig.savefig(
-        os.path.join(
-            pa["out_dir"],
-            "array_configuration_" + ak + ".jpg",
-        )
+        os.path.join(pa["out_dir"], "array_configuration_" + ak + ".jpg",)
     )
     seb.close(fig)
 
@@ -117,34 +130,37 @@ for sk in SITES:
     for pk in PARTICLES:
         telescope_trigger[sk][pk] = {}
 
-        pleno_prb = plenoscope_trigger_vs_cherenkov_density[sk][pk][KEY]["mean"]
-        pleno_den_bin_edges = plenoscope_trigger_vs_cherenkov_density[sk][pk][KEY][
-            "Cherenkov_density_bin_edges_per_m2"
+        pleno_prb = plenoscope_trigger_vs_cherenkov_density[sk][pk][KEY][
+            "mean"
         ]
+        pleno_den_bin_edges = plenoscope_trigger_vs_cherenkov_density[sk][pk][
+            KEY
+        ]["Cherenkov_density_bin_edges_per_m2"]
         pleno_den = binning_utils.centers(bin_edges=pleno_den_bin_edges)
 
         for ak in ARRAY_CONFIGS:
 
             assert (
-                ARRAY_CONFIGS[ak]["mirror_diameter_m"] <
-                irf_config["grid_geometry"]["bin_width"]
+                ARRAY_CONFIGS[ak]["mirror_diameter_m"]
+                < irf_config["grid_geometry"]["bin_width"]
             ), "telescope mirror must not exceed grid-cell."
 
-            telescope_mirror_area_m2 = np.pi * (
-                0.5 * ARRAY_CONFIGS[ak]["mirror_diameter_m"]
-            ) ** 2
+            telescope_mirror_area_m2 = (
+                np.pi * (0.5 * ARRAY_CONFIGS[ak]["mirror_diameter_m"]) ** 2
+            )
 
-            _tprb = plenoscope_trigger_vs_cherenkov_density[sk][pk][KEY]["mean"]
+            _tprb = plenoscope_trigger_vs_cherenkov_density[sk][pk][KEY][
+                "mean"
+            ]
             _tprb = irf.utils.fill_nans_from_end(arr=_tprb, val=1.0)
             _tprb = irf.utils.fill_nans_from_start(arr=_tprb, val=0.0)
             _tden = (
-                (plenoscope_mirror_area_m2 / telescope_mirror_area_m2)
-                * pleno_den
-            )
+                plenoscope_mirror_area_m2 / telescope_mirror_area_m2
+            ) * pleno_den
 
             telescope_trigger[sk][pk][ak] = {
                 "probability": _tprb,
-                "cherenkov_density_per_m2": _tden
+                "cherenkov_density_per_m2": _tden,
             }
 
 
@@ -210,14 +226,21 @@ for sk in SITES:
                 ]
                 telescope_trigger_probability = np.interp(
                     array_den,
-                    xp=telescope_trigger[sk][pk][ak]["cherenkov_density_per_m2"],
+                    xp=telescope_trigger[sk][pk][ak][
+                        "cherenkov_density_per_m2"
+                    ],
                     fp=telescope_trigger[sk][pk][ak]["probability"],
                 )
                 uniform = prng.uniform(size=num_teles)
                 trg = np.any(telescope_trigger_probability > uniform)
                 if trg:
                     out[sk][pk][ak].append(shower_idx)
-                    print(sk, pk, ak, irf.unique.UID_FOTMAT_STR.format(shower_idx))
+                    print(
+                        sk,
+                        pk,
+                        ak,
+                        irf.unique.UID_FOTMAT_STR.format(shower_idx),
+                    )
                     break
 
 # export triggers

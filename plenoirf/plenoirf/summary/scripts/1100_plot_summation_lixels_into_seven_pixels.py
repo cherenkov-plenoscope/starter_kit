@@ -23,7 +23,7 @@ light_field_geometry = pl.LightFieldGeometry(
 
 region_of_interest_on_sensor_plane = {"x": [-0.35, 0.35], "y": [-0.35, 0.35]}
 
-#object_distances = [21e3, 29e3, 999e3]
+# object_distances = [21e3, 29e3, 999e3]
 object_distances = [3e3, 5e3, 9e3, 15e3, 25e3, 999e3]
 central_seven_pixel_ids = [4221, 4124, 4222, 4220, 4125, 4317, 4318]
 colors = ["k", "g", "b", "r", "c", "m", "orange"]

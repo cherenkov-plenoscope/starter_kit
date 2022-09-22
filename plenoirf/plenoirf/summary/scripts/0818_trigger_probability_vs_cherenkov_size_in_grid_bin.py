@@ -24,8 +24,13 @@ trigger_modi = {}
 trigger_modi["passing_trigger"] = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-trigger_modi["passing_trigger_if_only_accepting_not_rejecting"] = json_numpy.read_tree(
-    os.path.join(pa["summary_dir"], "0054_passing_trigger_if_only_accepting_not_rejecting")
+trigger_modi[
+    "passing_trigger_if_only_accepting_not_rejecting"
+] = json_numpy.read_tree(
+    os.path.join(
+        pa["summary_dir"],
+        "0054_passing_trigger_if_only_accepting_not_rejecting",
+    )
 )
 
 grid_bin_area_m2 = irf_config["grid_geometry"]["bin_area"]
@@ -52,18 +57,22 @@ for sk in SITES:
             )
 
             num_thrown = np.histogram(
-                event_table["cherenkovsizepart"]["num_photons"] / grid_bin_area_m2,
+                event_table["cherenkovsizepart"]["num_photons"]
+                / grid_bin_area_m2,
                 bins=density_bin_edges_per_m2,
             )[0]
 
             num_pasttrigger = np.histogram(
-                event_table["cherenkovsizepart"]["num_photons"] / grid_bin_area_m2,
+                event_table["cherenkovsizepart"]["num_photons"]
+                / grid_bin_area_m2,
                 bins=density_bin_edges_per_m2,
                 weights=mask_pasttrigger,
             )[0]
 
             trigger_probability = irf.utils._divide_silent(
-                numerator=num_pasttrigger, denominator=num_thrown, default=np.nan
+                numerator=num_pasttrigger,
+                denominator=num_thrown,
+                default=np.nan,
             )
 
             trigger_probability_unc = irf.utils._divide_silent(

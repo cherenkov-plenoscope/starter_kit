@@ -248,9 +248,16 @@ def _guess_summary_config(run_dir):
                 "accepting_focus": 6,
                 "rejecting_focus": 4,
                 "accepting": {
-                    "threshold_accepting_over_rejecting": [1, 1, 0.8, 0.4, 0.2, 0.1,],
+                    "threshold_accepting_over_rejecting": [
+                        1,
+                        1,
+                        0.8,
+                        0.4,
+                        0.2,
+                        0.1,
+                    ],
                     "response_pe": [1e1, 1e2, 1e3, 1e4, 1e5, 1e6],
-                }
+                },
             },
             "threshold_pe": analysis_trigger_threshold_pe,
             "ratescan_thresholds_pe": make_ratescan_trigger_thresholds(
@@ -322,22 +329,20 @@ def _guess_summary_config(run_dir):
             "ring-mst": {
                 "mirror_diameter_m": 11.5,
                 "positions": outer_telescope_array.init_telescope_positions_in_annulus(
-                    outer_radius=2.5,
-                    inner_radius=0.5,
-                )
+                    outer_radius=2.5, inner_radius=0.5,
+                ),
             },
             "many-sst": {
                 "mirror_diameter_m": 4.3,
                 "positions": outer_telescope_array.init_telescope_positions_in_annulus(
-                    outer_radius=5.5,
-                    inner_radius=0.5,
-                )
+                    outer_radius=5.5, inner_radius=0.5,
+                ),
             },
             "few-magics": {
                 "mirror_diameter_m": 17.0,
                 "positions": [[1, 1], [-1, 1], [-1, -1], [1, -1],],
-            }
-        }
+            },
+        },
     }
 
     cfg["plot"] = {}

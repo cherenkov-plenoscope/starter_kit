@@ -38,13 +38,11 @@ def test_trigger_modus():
         "accepting": {
             "threshold_accepting_over_rejecting": [1, 1, 0.5],
             "response_pe": [1e1, 1e2, 1e3],
-        }
+        },
     }
 
     mask = plenoirf.analysis.light_field_trigger_modi.make_mask(
-        trigger_table=tt,
-        threshold=threshold,
-        modus=modus,
+        trigger_table=tt, threshold=threshold, modus=modus,
     )
 
     assert mask[0]
