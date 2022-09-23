@@ -19,7 +19,7 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 trigger_vs_size = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"],
-        "0818_trigger_probability_vs_cherenkov_size_in_grid_bin",
+        "0074_trigger_probability_vs_cherenkov_density_on_ground",
     )
 )
 
