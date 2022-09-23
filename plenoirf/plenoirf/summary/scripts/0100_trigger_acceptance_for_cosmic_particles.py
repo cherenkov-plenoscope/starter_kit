@@ -15,6 +15,8 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+PARTICLES = irf_config["config"]["particles"]
+SITES = irf_config["config"]["sites"]
 MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
     "max_angle_relative_to_pointing_deg"
 ]
@@ -31,9 +33,9 @@ trigger_thresholds = sum_config["trigger"]["ratescan_thresholds_pe"]
 trigger_modus = sum_config["trigger"]["modus"]
 
 
-for site_key in irf_config["config"]["sites"]:
-    for particle_key in irf_config["config"]["particles"]:
-        site_particle_dir = os.path.join(pa["out_dir"], site_key, particle_key)
+for sk in SITES:
+    for pk in PARTICLES:
+        site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
 
         os.makedirs(site_particle_dir, exist_ok=True)
 
@@ -41,8 +43,8 @@ for site_key in irf_config["config"]["sites"]:
             path=os.path.join(
                 pa["run_dir"],
                 "event_table",
-                site_key,
-                particle_key,
+                sk,
+                pk,
                 "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
