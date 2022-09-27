@@ -12,6 +12,12 @@ def cone_solid_angle(cone_radial_opening_angle_rad):
     return 2.0 * np.pi * cap_hight
 
 
+def cone_radial_opening_angle(solid_angle):
+    cap_hight = solid_angle / (2.0 * np.pi)
+    cone_radial_opening_angle_rad = np.arccos(-cap_hight + 1.0)
+    return cone_radial_opening_angle_rad
+
+
 def sr2squaredeg(solid_angle_sr):
     return solid_angle_sr * (180.0 / np.pi) ** 2
 
