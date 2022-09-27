@@ -22,7 +22,11 @@ PLT = sum_config["plot"]
 
 energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
-)["trigger_acceptance"]
+)["trigger_acceptance_onregion"]
+
+max_scatter_angles_deg = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json")
+)
 
 acceptance = json_numpy.read_tree(
     os.path.join(
@@ -35,12 +39,11 @@ source_key = "diffuse"
 # find limits for axis
 # --------------------
 MAX_MAX_SCATTER_ANGLE_DEG = 0
-for sk in SITES:
-    for pk in PARTICLES:
-        MAX_MAX_SCATTER_ANGLE_DEG = np.max([
-            MAX_MAX_SCATTER_ANGLE_DEG,
-            np.rad2deg(np.max(acceptance[sk][pk][source_key]["max_scatter_angles_rad"]))
-        ])
+for pk in PARTICLES:
+    MAX_MAX_SCATTER_ANGLE_DEG = np.max([
+        MAX_MAX_SCATTER_ANGLE_DEG,
+        np.max(max_scatter_angles_deg[pk])
+    ])
 
 AXSPAN = copy.deepcopy(irf.summary.figure.AX_SPAN)
 AXSPAN = [AXSPAN[0], AXSPAN[1], AXSPAN[2], AXSPAN[3]]
@@ -50,15 +53,14 @@ for sk in SITES:
         print("plot 2D", sk, pk)
 
         acc = acceptance[sk][pk][source_key]
-        max_scatter_angles_deg = np.rad2deg(acc["max_scatter_angles_rad"])
 
         Q = acc["mean"]
         Q_au = acc["absolute_uncertainty"]
 
         dQdScatter = np.zeros(shape=(Q.shape[0] - 1, Q.shape[1]))
-        for isc in range(len(max_scatter_angles_deg) - 1):
+        for isc in range(len(max_scatter_angles_deg[pk]) - 1):
             dQdScatter[isc, :] = (
-                (Q[isc + 1, :] - Q[isc, :]) / (0.5 * Q[isc + 1, :] + Q[isc, :])
+                (Q[isc + 1, :] - Q[isc, :]) / (0.5 * (Q[isc + 1, :] + Q[isc, :]))
             )
 
         fig = seb.figure(style=irf.summary.figure.FIGURE_STYLE)
@@ -82,7 +84,7 @@ for sk in SITES:
 
         pcm_ratio = ax.pcolormesh(
             energy_bin["edges"],
-            max_scatter_angles_deg,
+            max_scatter_angles_deg[pk],
             dQdScatter,
             norm=seb.plt_colors.LogNorm(),
             cmap="terrain_r",

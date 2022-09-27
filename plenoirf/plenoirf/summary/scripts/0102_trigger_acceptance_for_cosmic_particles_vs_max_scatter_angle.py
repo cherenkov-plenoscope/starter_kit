@@ -28,10 +28,14 @@ pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
 energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
-)["trigger_acceptance"]
+)["trigger_acceptance_onregion"]
 
 passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
+)
+
+max_scatter_angles_deg = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json")
 )
 
 for sk in SITES:
@@ -85,27 +89,19 @@ for sk in SITES:
             zd2_deg=_mag_zd_deg,
         )
 
-        NUM_MAX_SCATTER_ANGLES = 20
-        max_scatter_angles_rad = np.sqrt(
-            np.linspace(
-                0,
-                particles_max_scatter_angle_rad**2,
-                NUM_MAX_SCATTER_ANGLES + 1,
-            )
-        )
-        max_scatter_angles_rad = max_scatter_angles_rad[1:]
-
         value = []
         absolute_uncertainty = []
-        for ci in range(len(max_scatter_angles_rad)):
-            print(sk, pk, "max. scatter ", np.rad2deg(max_scatter_angles_rad[ci]), "deg")
+        for ci in range(len(max_scatter_angles_deg[pk])):
+            print(sk, pk, "max. scatter {:.3}deg".format(max_scatter_angles_deg[pk][ci]))
 
             solid_angle_thrown_sr = irf.utils.cone_solid_angle(
-                cone_radial_opening_angle_rad=max_scatter_angles_rad[ci]
+                cone_radial_opening_angle_rad=np.deg2rad(
+                    max_scatter_angles_deg[pk][ci]
+                )
             )
 
             mask_within_max_scatter_angle = (
-                scatter_deg <= np.rad2deg(max_scatter_angles_rad[ci])
+                scatter_deg <= max_scatter_angles_deg[pk][ci]
             )
 
             mask_detected = np.logical_and(
@@ -142,8 +138,6 @@ for sk in SITES:
                     "for a diffuse source. "
                     "VS max. scatter-angle VS energy-bins"
                 ),
-                "max_scatter_angles_rad": max_scatter_angles_rad,
-                "energy_bin_edges_GeV": energy_bin["edges"],
                 "unit": "m$^{2}$ sr",
                 "mean": value,
                 "absolute_uncertainty": absolute_uncertainty,
