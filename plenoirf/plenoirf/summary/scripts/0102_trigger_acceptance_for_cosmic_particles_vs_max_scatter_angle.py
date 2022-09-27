@@ -85,9 +85,15 @@ for sk in SITES:
             zd2_deg=_mag_zd_deg,
         )
 
+        NUM_MAX_SCATTER_ANGLES = 20
         max_scatter_angles_rad = np.sqrt(
-            np.linspace(0, particles_max_scatter_angle_rad**2, 21)
+            np.linspace(
+                0,
+                particles_max_scatter_angle_rad**2,
+                NUM_MAX_SCATTER_ANGLES + 1,
+            )
         )
+        max_scatter_angles_rad = max_scatter_angles_rad[1:]
 
         value = []
         absolute_uncertainty = []
