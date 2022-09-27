@@ -229,3 +229,11 @@ def fill_nans_from_start(arr, val):
         else:
             break
     return arr
+
+
+def gradient_in_bin_edges(x, bin_edges):
+    assert len(bin_edges) - 1 == len(x)
+    dx = np.nan * np.ones(len(x) - 1)
+    for i in range(len(x) - 1):
+        dx[i] = (x[i + 1] - x[i]) / bin_edges[i]
+    return dx
