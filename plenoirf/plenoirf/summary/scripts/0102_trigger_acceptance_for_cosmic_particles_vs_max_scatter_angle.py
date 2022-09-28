@@ -34,10 +34,8 @@ passing_trigger = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
-max_scatter_angles_deg = json_numpy.read(
-    os.path.join(
-        pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json"
-    )
+scatter_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "scatter.json")
 )
 
 for sk in SITES:
@@ -55,22 +53,18 @@ for sk in SITES:
 
         # diffuse source
         # --------------
-        energy_GeV = shower_table["primary"]["energy_GeV"]
-
+        """
         num_grid_cells_above_lose_threshold = shower_table["grid"][
             "num_bins_above_threshold"
         ]
         total_num_grid_cells = shower_table["grid"]["num_bins_thrown"]
         idx_detected = passing_trigger[sk][pk]["idx"]
 
-        mask_passed_trigger = spt.make_mask_of_right_in_left(
+        mask_shower_passed_trigger = spt.make_mask_of_right_in_left(
             left_indices=shower_table["primary"][spt.IDX],
             right_indices=idx_detected,
         )
-
-        particles_max_scatter_angle_rad = np.deg2rad(
-            irf_config["config"]["particles"][pk]["max_scatter_angle_deg"]
-        )
+        """
 
         _az_deg = np.rad2deg(shower_table["primary"]["azimuth_rad"])
         _zd_deg = np.rad2deg(shower_table["primary"]["zenith_rad"])
@@ -78,55 +72,76 @@ for sk in SITES:
         _mag_az_deg = np.rad2deg(shower_table["primary"]["magnet_azimuth_rad"])
         _mag_zd_deg = np.rad2deg(shower_table["primary"]["magnet_zenith_rad"])
 
-        scatter_deg = mdfl.spherical_coordinates._angle_between_az_zd_deg(
+        shower_table_scatter_angle_deg = mdfl.spherical_coordinates._angle_between_az_zd_deg(
             az1_deg=_az_deg,
             zd1_deg=_zd_deg,
             az2_deg=_mag_az_deg,
             zd2_deg=_mag_zd_deg,
         )
 
-        value = []
-        absolute_uncertainty = []
-        for ci in range(len(max_scatter_angles_deg[pk])):
+        Q = []
+        Q_au = []
+        for ci in range(scatter_bin[pk]["num_bins"]):
+            scatter_cone_solid_angle_sr = scatter_bin[pk]["edges"][ci + 1]
+            max_scatter_angle_rad = irf.utils.cone_radial_opening_angle(
+                scatter_cone_solid_angle_sr
+            )
+            max_scatter_angle_deg = np.rad2deg(max_scatter_angle_rad)
+
             print(
                 sk,
                 pk,
-                "max. scatter {:.3}deg".format(max_scatter_angles_deg[pk][ci]),
+                "max. scatter cone opening angle {:.3}deg".format(
+                    max_scatter_angle_deg
+                ),
             )
 
-            solid_angle_thrown_sr = irf.utils.cone_solid_angle(
-                cone_radial_opening_angle_rad=np.deg2rad(
-                    max_scatter_angles_deg[pk][ci]
-                )
+            # cut subset of showers wich are within max scatter angle
+            # -------------------------------------------------------
+            mask_shower_within_max_scatter = (
+                shower_table_scatter_angle_deg <= max_scatter_angle_deg
+            )
+            idx_showers_within_max_scatter = shower_table["primary"][spt.IDX][
+                mask_shower_within_max_scatter
+            ]
+
+            S_shower_table = spt.cut_and_sort_table_on_indices(
+                table=shower_table,
+                common_indices=idx_showers_within_max_scatter,
+                level_keys=["primary", "grid"],
             )
 
-            mask_within_max_scatter_angle = (
-                scatter_deg <= max_scatter_angles_deg[pk][ci]
+            S_mask_shower_detected = spt.make_mask_of_right_in_left(
+                left_indices=S_shower_table["primary"][spt.IDX],
+                right_indices=passing_trigger[sk][pk]["idx"],
             )
 
-            mask_detected = np.logical_and(
-                mask_passed_trigger, mask_within_max_scatter_angle,
+            S_quantity_scatter = (
+                S_shower_table["grid"]["area_thrown_m2"]
+                * scatter_cone_solid_angle_sr
             )
 
-            quantity_scatter = (
-                shower_table["grid"]["area_thrown_m2"] * solid_angle_thrown_sr
-            )
+            S_num_grid_cells_above_lose_threshold = S_shower_table["grid"][
+                "num_bins_above_threshold"
+            ]
+
+            S_total_num_grid_cells = S_shower_table["grid"]["num_bins_thrown"]
 
             (
-                _q_eff,
-                _q_eff_au,
+                S_Q,
+                S_Q_au,
             ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
-                energy_GeV=energy_GeV,
-                mask_detected=mask_detected,
-                quantity_scatter=quantity_scatter,
+                energy_GeV=S_shower_table["primary"]["energy_GeV"],
+                mask_detected=S_mask_shower_detected,
+                quantity_scatter=S_quantity_scatter,
                 num_grid_cells_above_lose_threshold=(
-                    num_grid_cells_above_lose_threshold
+                    S_num_grid_cells_above_lose_threshold
                 ),
-                total_num_grid_cells=total_num_grid_cells,
+                total_num_grid_cells=S_total_num_grid_cells,
             )
-            value.append(_q_eff)
-            absolute_uncertainty.append(_q_eff_au)
+            Q.append(S_Q)
+            Q_au.append(S_Q_au)
 
         json_numpy.write(
             os.path.join(sk_pk_dir, "diffuse.json"),
@@ -137,7 +152,7 @@ for sk in SITES:
                     "VS max. scatter-angle VS energy-bins"
                 ),
                 "unit": "m$^{2}$ sr",
-                "mean": value,
-                "absolute_uncertainty": absolute_uncertainty,
+                "mean": Q,
+                "absolute_uncertainty": Q_au,
             },
         )

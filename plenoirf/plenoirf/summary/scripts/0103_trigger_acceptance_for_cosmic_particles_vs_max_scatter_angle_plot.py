@@ -24,10 +24,8 @@ energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
-max_scatter_angles_deg = json_numpy.read(
-    os.path.join(
-        pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json"
-    )
+scatter_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "scatter.json")
 )
 
 acceptance = json_numpy.read_tree(
@@ -41,10 +39,10 @@ source_key = "diffuse"
 
 # find limits for axis
 # --------------------
-MAX_MAX_SCATTER_ANGLE_DEG = 0
+MAX_SCATTER_SOLID_ANGLE_SR = 0.0
 for pk in PARTICLES:
-    MAX_MAX_SCATTER_ANGLE_DEG = np.max(
-        [MAX_MAX_SCATTER_ANGLE_DEG, np.max(max_scatter_angles_deg[pk])]
+    MAX_SCATTER_SOLID_ANGLE_SR = np.max(
+        [MAX_SCATTER_SOLID_ANGLE_SR, scatter_bin[pk]["stop"]]
     )
 
 AXSPAN = copy.deepcopy(irf.summary.figure.AX_SPAN)
@@ -60,47 +58,61 @@ for sk in SITES:
         Q_au = acc["absolute_uncertainty"]
 
         dQdScatter = np.zeros(shape=(Q.shape[0] - 1, Q.shape[1]))
-        for isc in range(len(max_scatter_angles_deg[pk]) - 1):
-            dQdScatter[isc, :] = (Q[isc + 1, :] - Q[isc, :]) / (
-                0.5 * (Q[isc + 1, :] + Q[isc, :])
-            )
+        for isc in range(scatter_bin[pk]["num_bins"] - 1):
+            dQ = Q[isc + 1, :] - Q[isc, :]
+            Qmean = 0.5 * (Q[isc + 1, :] + Q[isc, :])
+            dS = 1e3 * scatter_bin[pk]["widths"][isc]
+
+            dQdScatter[isc, :] = (dQ / dS) / Qmean
 
         fig = seb.figure(style=irf.summary.figure.FIGURE_STYLE)
-        ax = seb.add_axes(fig=fig, span=[AXSPAN[0], AXSPAN[1], 0.6, 0.7])
+        ax = seb.add_axes(fig=fig, span=[AXSPAN[0], AXSPAN[1], 0.55, 0.7])
 
         ax_cb = seb.add_axes(
             fig=fig,
-            span=[0.85, AXSPAN[1], 0.02, 0.7],
+            span=[0.8, AXSPAN[1], 0.02, 0.7],
             # style=seb.AXES_BLANK,
         )
 
         ax.set_xlim(energy_bin["limits"])
         ax.set_ylim(
-            [0, MAX_MAX_SCATTER_ANGLE_DEG,]
+            [0, 1e3 * MAX_SCATTER_SOLID_ANGLE_SR,]
         )
         ax.semilogx()
 
         ax.set_xlabel("energy / GeV")
-        ax.set_ylabel("max scatter angle / $1^\\circ$")
+        ax.set_ylabel("scatter solid angle / msr")
 
+        fig.text(
+            x=0.8, y=0.05, s=r"1msr = 3.3(1$^\circ)^2$", color="grey",
+        )
         pcm_ratio = ax.pcolormesh(
             energy_bin["edges"],
-            max_scatter_angles_deg[pk],
+            1e3 * scatter_bin[pk]["edges"][0:-1],
             dQdScatter,
             norm=seb.plt_colors.LogNorm(),
             cmap="terrain_r",
-            vmin=1e-2,
+            vmin=1e-4,
             vmax=1e0,
         )
 
         seb.plt.colorbar(
             pcm_ratio,
             cax=ax_cb,
-            label="rel. gain in acceptance\nw.r.t. max scatter angle / 1",
+            label=(
+                "Q: acceptance / m$^2$ sr\n"
+                "S: scatter solid angle / msr\n"
+                "dQ/dS Q$^{-1}$ / (msr)$^{-1}$"
+            ),
         )
         seb.ax_add_grid(ax=ax)
 
         fig.savefig(
-            os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, pk,),)
+            os.path.join(
+                pa["out_dir"],
+                "{:s}_{:s}_acceptance_vs_scatter_vs_energy.jpg".format(
+                    sk, pk,
+                ),
+            )
         )
         seb.close(fig)

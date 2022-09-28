@@ -45,25 +45,26 @@ json_numpy.write(os.path.join(pa["out_dir"], "energy.json"), energy)
 # -----------------
 NUM_MAX_SCATTER_ANGLES = 20
 
-max_scatter_angles = {}
+msa = {}
 for pk in PARTICLES:
     max_scatter_angle_deg = PARTICLES[pk]["max_scatter_angle_deg"]
     max_scatter_angle_rad = np.deg2rad(max_scatter_angle_deg)
     max_scatter_solid_angle_sr = irf.utils.cone_solid_angle(
         max_scatter_angle_rad
     )
+    _sc = {}
+    _sc["start"] = 0.0
+    _sc["stop"] = max_scatter_solid_angle_sr
+    _sc["limits"] = [_sc["start"], _sc["stop"]]
+    _sc["unit"] = "sr"
+    _sc["num_bins"] = NUM_MAX_SCATTER_ANGLES
 
     solid_angle_step_sr = max_scatter_solid_angle_sr / NUM_MAX_SCATTER_ANGLES
+    _sc["edges"] = np.zeros(NUM_MAX_SCATTER_ANGLES + 1)
+    for i in range(NUM_MAX_SCATTER_ANGLES + 1):
+        _sc["edges"][i] = solid_angle_step_sr * i
+    _sc["centers"] = binning_utils.centers(_sc["edges"])
+    _sc["widths"] = binning_utils.widths(_sc["edges"])
+    msa[pk] = _sc
 
-    msa_rad = np.zeros(NUM_MAX_SCATTER_ANGLES)
-    for i in range(NUM_MAX_SCATTER_ANGLES):
-        msa_rad[i] = irf.utils.cone_radial_opening_angle(
-            solid_angle_step_sr * (i + 1)
-        )
-
-    max_scatter_angles[pk] = np.rad2deg(msa_rad)
-
-json_numpy.write(
-    os.path.join(pa["out_dir"], "max_scatter_angles_deg.json"),
-    max_scatter_angles,
-)
+json_numpy.write(os.path.join(pa["out_dir"], "scatter.json"), msa)
