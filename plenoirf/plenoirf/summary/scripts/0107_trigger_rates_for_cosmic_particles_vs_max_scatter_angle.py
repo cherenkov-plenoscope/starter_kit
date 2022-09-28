@@ -21,7 +21,8 @@ SITES = irf_config["config"]["sites"]
 
 acceptance = json_numpy.read_tree(
     os.path.join(
-        pa["summary_dir"], "0102_trigger_acceptance_for_cosmic_particles_vs_max_scatter_angle"
+        pa["summary_dir"],
+        "0102_trigger_acceptance_for_cosmic_particles_vs_max_scatter_angle",
     )
 )
 
@@ -68,9 +69,7 @@ for sk in SITES:
 
         R = np.zeros(num_max_scatter_angles)
         R_au = np.zeros(R.shape)
-        dRdE = np.zeros(
-            shape=(num_max_scatter_angles, energy_bin["num_bins"])
-        )
+        dRdE = np.zeros(shape=(num_max_scatter_angles, energy_bin["num_bins"]))
         dRdE_au = np.zeros(shape=dRdE.shape)
 
         cosmic_dFdE = airshower_fluxes[sk][ck]["differential_flux"]

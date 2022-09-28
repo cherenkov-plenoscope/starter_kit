@@ -25,12 +25,15 @@ energy_bin = json_numpy.read(
 )["trigger_acceptance_onregion"]
 
 max_scatter_angles_deg = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json")
+    os.path.join(
+        pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json"
+    )
 )
 
 acceptance = json_numpy.read_tree(
     os.path.join(
-        pa["summary_dir"], "0102_trigger_acceptance_for_cosmic_particles_vs_max_scatter_angle"
+        pa["summary_dir"],
+        "0102_trigger_acceptance_for_cosmic_particles_vs_max_scatter_angle",
     )
 )
 
@@ -40,10 +43,9 @@ source_key = "diffuse"
 # --------------------
 MAX_MAX_SCATTER_ANGLE_DEG = 0
 for pk in PARTICLES:
-    MAX_MAX_SCATTER_ANGLE_DEG = np.max([
-        MAX_MAX_SCATTER_ANGLE_DEG,
-        np.max(max_scatter_angles_deg[pk])
-    ])
+    MAX_MAX_SCATTER_ANGLE_DEG = np.max(
+        [MAX_MAX_SCATTER_ANGLE_DEG, np.max(max_scatter_angles_deg[pk])]
+    )
 
 AXSPAN = copy.deepcopy(irf.summary.figure.AX_SPAN)
 AXSPAN = [AXSPAN[0], AXSPAN[1], AXSPAN[2], AXSPAN[3]]
@@ -59,8 +61,8 @@ for sk in SITES:
 
         dQdScatter = np.zeros(shape=(Q.shape[0] - 1, Q.shape[1]))
         for isc in range(len(max_scatter_angles_deg[pk]) - 1):
-            dQdScatter[isc, :] = (
-                (Q[isc + 1, :] - Q[isc, :]) / (0.5 * (Q[isc + 1, :] + Q[isc, :]))
+            dQdScatter[isc, :] = (Q[isc + 1, :] - Q[isc, :]) / (
+                0.5 * (Q[isc + 1, :] + Q[isc, :])
             )
 
         fig = seb.figure(style=irf.summary.figure.FIGURE_STYLE)
@@ -69,14 +71,13 @@ for sk in SITES:
         ax_cb = seb.add_axes(
             fig=fig,
             span=[0.85, AXSPAN[1], 0.02, 0.7],
-            #style=seb.AXES_BLANK,
+            # style=seb.AXES_BLANK,
         )
 
         ax.set_xlim(energy_bin["limits"])
-        ax.set_ylim([
-            0,
-            MAX_MAX_SCATTER_ANGLE_DEG,
-        ])
+        ax.set_ylim(
+            [0, MAX_MAX_SCATTER_ANGLE_DEG,]
+        )
         ax.semilogx()
 
         ax.set_xlabel("energy / GeV")
@@ -100,12 +101,6 @@ for sk in SITES:
         seb.ax_add_grid(ax=ax)
 
         fig.savefig(
-            os.path.join(
-                pa["out_dir"],
-                "{:s}_{:s}.jpg".format(
-                    sk,
-                    pk,
-                ),
-            )
+            os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, pk,),)
         )
         seb.close(fig)

@@ -35,7 +35,9 @@ passing_trigger = json_numpy.read_tree(
 )
 
 max_scatter_angles_deg = json_numpy.read(
-    os.path.join(pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json")
+    os.path.join(
+        pa["summary_dir"], "0005_common_binning", "max_scatter_angles_deg.json"
+    )
 )
 
 for sk in SITES:
@@ -46,11 +48,7 @@ for sk in SITES:
 
         shower_table = spt.read(
             path=os.path.join(
-                pa["run_dir"],
-                "event_table",
-                sk,
-                pk,
-                "event_table.tar",
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -62,9 +60,7 @@ for sk in SITES:
         num_grid_cells_above_lose_threshold = shower_table["grid"][
             "num_bins_above_threshold"
         ]
-        total_num_grid_cells = shower_table["grid"][
-            "num_bins_thrown"
-        ]
+        total_num_grid_cells = shower_table["grid"]["num_bins_thrown"]
         idx_detected = passing_trigger[sk][pk]["idx"]
 
         mask_passed_trigger = spt.make_mask_of_right_in_left(
@@ -92,7 +88,11 @@ for sk in SITES:
         value = []
         absolute_uncertainty = []
         for ci in range(len(max_scatter_angles_deg[pk])):
-            print(sk, pk, "max. scatter {:.3}deg".format(max_scatter_angles_deg[pk][ci]))
+            print(
+                sk,
+                pk,
+                "max. scatter {:.3}deg".format(max_scatter_angles_deg[pk][ci]),
+            )
 
             solid_angle_thrown_sr = irf.utils.cone_solid_angle(
                 cone_radial_opening_angle_rad=np.deg2rad(
@@ -105,13 +105,11 @@ for sk in SITES:
             )
 
             mask_detected = np.logical_and(
-                mask_passed_trigger,
-                mask_within_max_scatter_angle,
+                mask_passed_trigger, mask_within_max_scatter_angle,
             )
 
             quantity_scatter = (
-                shower_table["grid"]["area_thrown_m2"]
-                * solid_angle_thrown_sr
+                shower_table["grid"]["area_thrown_m2"] * solid_angle_thrown_sr
             )
 
             (
