@@ -32,7 +32,7 @@ for scenario_key in sum_config["energy_binning"]["fine"]:
         "edges": edges,
         "num_bins": num_bins,
         "centers": binning_utils.centers(edges),
-        "width": binning_utils.widths(edges),
+        "widths": binning_utils.widths(edges),
         "start": edges[0],
         "stop": edges[-1],
         "limits": [edges[0], edges[-1]],

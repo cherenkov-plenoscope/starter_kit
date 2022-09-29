@@ -145,7 +145,7 @@ for sk in SITES:
         # ----------------------------------
         R = np.zeros(shape=dRdE.shape)
         for sc in range(scatter_bin[pk]["num_bins"]):
-            R[sc, :] = dRdE[sc, :] * energy_bin["width"]
+            R[sc, :] = dRdE[sc, :] * energy_bin["widths"]
 
         # differentiate w.r.t. scatter
         # ----------------------------
