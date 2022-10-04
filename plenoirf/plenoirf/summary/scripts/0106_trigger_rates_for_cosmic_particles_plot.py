@@ -70,9 +70,9 @@ for sk in irf_config["config"]["sites"]:
         ir = cosmic_rates[sk][pk]["integral_rate"][mean_key][tt]
         ir_abs_unc = cosmic_rates[sk][pk]["integral_rate"][unc_key][tt]
         ax.text(
-            0.7,
+            0.6,
             0.1 + text_y,
-            r"{: 8.0f}$\pm{:4.0f}$ s$^{{-1}}$".format(ir, np.ceil(ir_abs_unc)),
+            r"{: 8.1f} $\pm${: 6.1f} s$^{{-1}}$".format(ir, np.ceil(ir_abs_unc)),
             color="k",
             family="monospace",
             transform=ax.transAxes,

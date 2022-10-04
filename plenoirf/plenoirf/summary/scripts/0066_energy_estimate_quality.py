@@ -165,8 +165,8 @@ for sk in SITES:
             seb.close(fig)
 
         fig = seb.figure(seb.FIGURE_1_1)
-        ax_c = seb.add_axes(fig=fig, span=[0.25, 0.27, 0.55, 0.65])
-        ax_h = seb.add_axes(fig=fig, span=[0.25, 0.11, 0.55, 0.1])
+        ax_c = seb.add_axes(fig=fig, span=[0.15, 0.27, 0.65, 0.65])
+        ax_h = seb.add_axes(fig=fig, span=[0.15, 0.11, 0.65, 0.1])
         ax_cb = seb.add_axes(fig=fig, span=[0.85, 0.27, 0.02, 0.65])
         _pcm_confusion = ax_c.pcolormesh(
             cm["ax0_bin_edges"],
@@ -182,6 +182,7 @@ for sk in SITES:
         ax_c.set_title(r"$P(E_\mathrm{reco} \vert E_\mathrm{true})$")
         ax_c.set_ylabel("reco. energy / GeV")
         ax_c.loglog()
+        ax_c.set_xticklabels([])
         ax_h.semilogx()
         ax_h.set_xlim(
             [np.min(cm["ax0_bin_edges"]), np.max(cm["ax1_bin_edges"])]
