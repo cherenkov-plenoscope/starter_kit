@@ -4,6 +4,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import json_numpy
+import numpy as np
 import copy
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -14,19 +15,20 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-trigger_modus = sum_config["trigger"]["modus"]
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
-
-tm = {}
-tm["accepting_focus"] = trigger_modus["accepting_focus"]
-tm["rejecting_focus"] = trigger_modus["rejecting_focus"]
-tm["accepting"] = {}
-tm["accepting"]["threshold_accepting_over_rejecting"] = np.zeros(
-    len(trigger_modus["accepting"]["response_pe"])
-)
-tm["accepting"]["response_pe"] = trigger_modus["accepting"]["response_pe"]
-
 for sk in irf_config["config"]["sites"]:
+
+    trigger_modus = sum_config["trigger"][sk]["modus"]
+    trigger_threshold = sum_config["trigger"][sk]["threshold_pe"]
+
+    tm = {}
+    tm["accepting_focus"] = trigger_modus["accepting_focus"]
+    tm["rejecting_focus"] = trigger_modus["rejecting_focus"]
+    tm["accepting"] = {}
+    tm["accepting"]["threshold_accepting_over_rejecting"] = np.zeros(
+        len(trigger_modus["accepting"]["response_pe"])
+    )
+    tm["accepting"]["response_pe"] = trigger_modus["accepting"]["response_pe"]
+
     for pk in irf_config["config"]["particles"]:
 
         sk_pk_dir = os.path.join(pa["out_dir"], sk, pk)

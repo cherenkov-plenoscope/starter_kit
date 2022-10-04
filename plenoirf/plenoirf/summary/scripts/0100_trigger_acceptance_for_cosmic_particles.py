@@ -29,11 +29,11 @@ energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance"]
 
-trigger_thresholds = sum_config["trigger"]["ratescan_thresholds_pe"]
-trigger_modus = sum_config["trigger"]["modus"]
-
 
 for sk in SITES:
+    trigger_thresholds = sum_config["trigger"][sk]["ratescan_thresholds_pe"]
+    trigger_modus = sum_config["trigger"][sk]["modus"]
+
     for pk in PARTICLES:
         site_particle_dir = os.path.join(pa["out_dir"], sk, pk)
 
@@ -159,8 +159,6 @@ for sk in SITES:
                     "for a diffuse source. "
                     "VS trigger-ratescan-thresholds VS energy-bins"
                 ),
-                "energy_bin_edges_GeV": energy_bin["edges"],
-                "trigger": sum_config["trigger"],
                 "unit": "m$^{2}$ sr",
                 "mean": value,
                 "absolute_uncertainty": absolute_uncertainty,

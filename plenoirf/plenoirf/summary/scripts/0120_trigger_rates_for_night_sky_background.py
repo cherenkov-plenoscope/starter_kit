@@ -14,6 +14,9 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+PARTICLES = irf_config["config"]["particles"]
+SITES = irf_config["config"]["sites"]
+
 MAX_CHERENKOV_IN_NSB_PE = sum_config["night_sky_background"][
     "max_num_true_cherenkov_photons"
 ]
@@ -24,28 +27,24 @@ NUM_TIME_SLICES_PER_EVENT = (
     - irf_config["config"]["sum_trigger"]["integration_time_slices"]
 )
 EXPOSURE_TIME_PER_EVENT = NUM_TIME_SLICES_PER_EVENT * TIME_SLICE_DURATION
-
-trigger_thresholds = sum_config["trigger"]["ratescan_thresholds_pe"]
-num_trigger_thresholds = len(trigger_thresholds)
-trigger_modus = sum_config["trigger"]["modus"]
+TRIGGER = sum_config["trigger"]
 
 nsb = {}
-for site_key in irf_config["config"]["sites"]:
-    nsb[site_key] = {
+for sk in SITES:
+    trigger_thresholds = TRIGGER[sk]["ratescan_thresholds_pe"]
+    num_trigger_thresholds = len(trigger_thresholds)
+    trigger_modus = TRIGGER[sk]["modus"]
+
+    nsb[sk] = {
         "num_exposures": 0,
         "num_triggers_vs_threshold": np.zeros(
             num_trigger_thresholds, dtype=np.int
         ),
     }
-    for particle_key in irf_config["config"]["particles"]:
-
+    for pk in PARTICLES:
         airshower_table = spt.read(
             path=os.path.join(
-                pa["run_dir"],
-                "event_table",
-                site_key,
-                particle_key,
-                "event_table.tar",
+                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -66,12 +65,12 @@ for site_key in irf_config["config"]["sites"]:
                 threshold=threshold,
                 modus=trigger_modus,
             )
-            nsb[site_key]["num_exposures"] += len(idx_nsb)
-            nsb[site_key]["num_triggers_vs_threshold"][tt] += len(idx_trigger)
+            nsb[sk]["num_exposures"] += len(idx_nsb)
+            nsb[sk]["num_triggers_vs_threshold"][tt] += len(idx_trigger)
 
-for site_key in irf_config["config"]["sites"]:
-    num_exposures = nsb[site_key]["num_exposures"]
-    num_triggers_vs_threshold = nsb[site_key]["num_triggers_vs_threshold"]
+for sk in SITES:
+    num_exposures = nsb[sk]["num_exposures"]
+    num_triggers_vs_threshold = nsb[sk]["num_triggers_vs_threshold"]
 
     mean = num_triggers_vs_threshold / (
         num_exposures * EXPOSURE_TIME_PER_EVENT
@@ -82,7 +81,7 @@ for site_key in irf_config["config"]["sites"]:
         default=np.nan,
     )
 
-    site_dir = os.path.join(pa["out_dir"], site_key)
+    site_dir = os.path.join(pa["out_dir"], sk)
     os.makedirs(site_dir, exist_ok=True)
     json_numpy.write(
         os.path.join(site_dir, "night_sky_background_rates.json"),

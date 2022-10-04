@@ -13,10 +13,10 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-trigger_modus = sum_config["trigger"]["modus"]
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
-
 for sk in irf_config["config"]["sites"]:
+    trigger_modus = sum_config["trigger"][sk]["modus"]
+    trigger_threshold = sum_config["trigger"][sk]["threshold_pe"]
+
     for pk in irf_config["config"]["particles"]:
 
         sk_pk_dir = os.path.join(pa["out_dir"], sk, pk)

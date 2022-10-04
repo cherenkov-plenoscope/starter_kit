@@ -16,12 +16,9 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-trigger_thresholds = sum_config["trigger"]["ratescan_thresholds_pe"]
-trigger_threshold = sum_config["trigger"]["threshold_pe"]
-idx_trigger_threshold = np.where(
-    np.array(trigger_thresholds) == trigger_threshold,
-)[0][0]
-assert trigger_threshold in trigger_thresholds
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+TRIGGER = sum_config["trigger"]
 
 # trigger
 # -------
@@ -46,7 +43,14 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 particle_colors = sum_config["plot"]["particle_colors"]
 
 
-for sk in irf_config["config"]["sites"]:
+for sk in SITES:
+    trigger_thresholds = TRIGGER[sk]["ratescan_thresholds_pe"]
+    trigger_threshold = TRIGGER[sk]["threshold_pe"]
+    idx_trigger_threshold = np.where(
+        np.array(trigger_thresholds) == trigger_threshold,
+    )[0][0]
+    assert trigger_threshold in trigger_thresholds
+
     for ok in ONREGION_TYPES:
         for gk in irf.summary.figure.SOURCES:
 
@@ -54,7 +58,7 @@ for sk in irf_config["config"]["sites"]:
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
             text_y = 0
-            for pk in irf_config["config"]["particles"]:
+            for pk in PARTICLES:
 
                 Q = G[sk][ok][pk][gk]["mean"]
                 Q_au = G[sk][ok][pk][gk]["absolute_uncertainty"]

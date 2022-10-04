@@ -15,6 +15,9 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+
 cr = json_numpy.read_tree(
     os.path.join(
         pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles"
@@ -25,12 +28,14 @@ energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance"]
 
-trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
-analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
-
 particle_colors = sum_config["plot"]["particle_colors"]
 
-for site_key in irf_config["config"]["sites"]:
+for sk in SITES:
+    trigger_thresholds = np.array(
+        sum_config["trigger"][sk]["ratescan_thresholds_pe"]
+    )
+    analysis_trigger_threshold = sum_config["trigger"][sk]["threshold_pe"]
+
     for source_key in irf.summary.figure.SOURCES:
         for tt in range(len(trigger_thresholds)):
 
@@ -38,15 +43,11 @@ for site_key in irf_config["config"]["sites"]:
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
             text_y = 0
-            for particle_key in irf_config["config"]["particles"]:
+            for pk in PARTICLES:
 
-                Q = np.array(
-                    cr[site_key][particle_key][source_key]["mean"][tt]
-                )
+                Q = np.array(cr[sk][pk][source_key]["mean"][tt])
                 Q_au = np.array(
-                    cr[site_key][particle_key][source_key][
-                        "absolute_uncertainty"
-                    ][tt]
+                    cr[sk][pk][source_key]["absolute_uncertainty"][tt]
                 )
 
                 seb.ax_add_histogram(
@@ -54,18 +55,18 @@ for site_key in irf_config["config"]["sites"]:
                     bin_edges=energy_bin["edges"],
                     bincounts=Q,
                     linestyle="-",
-                    linecolor=particle_colors[particle_key],
+                    linecolor=particle_colors[pk],
                     bincounts_upper=Q + Q_au,
                     bincounts_lower=Q - Q_au,
-                    face_color=particle_colors[particle_key],
+                    face_color=particle_colors[pk],
                     face_alpha=0.25,
                 )
 
                 ax.text(
                     0.9,
                     0.1 + text_y,
-                    particle_key,
-                    color=particle_colors[particle_key],
+                    pk,
+                    color=particle_colors[pk],
                     transform=ax.transAxes,
                 )
                 text_y += 0.06
@@ -88,8 +89,7 @@ for site_key in irf_config["config"]["sites"]:
             if trigger_thresholds[tt] == analysis_trigger_threshold:
                 fig.savefig(
                     os.path.join(
-                        pa["out_dir"],
-                        "{:s}_{:s}.jpg".format(site_key, source_key,),
+                        pa["out_dir"], "{:s}_{:s}.jpg".format(sk, source_key,),
                     )
                 )
             ax.set_title(
@@ -98,7 +98,7 @@ for site_key in irf_config["config"]["sites"]:
             fig.savefig(
                 os.path.join(
                     pa["out_dir"],
-                    "{:s}_{:s}_{:06d}.jpg".format(site_key, source_key, tt,),
+                    "{:s}_{:s}_{:06d}.jpg".format(sk, source_key, tt,),
                 )
             )
             seb.close(fig)

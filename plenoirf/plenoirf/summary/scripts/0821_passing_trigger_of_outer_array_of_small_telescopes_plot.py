@@ -6,6 +6,7 @@ import sebastians_matplotlib_addons as seb
 import os
 import copy
 import json_numpy
+import numpy as np
 import pandas
 import propagate_uncertainties as pu
 

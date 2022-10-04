@@ -23,15 +23,17 @@ fine_energy_bin = json_numpy.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["interpolation"]
 
-trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
-analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
-
 particle_colors = sum_config["plot"]["particle_colors"]
 
 mean_key = "mean"
 unc_key = "absolute_uncertainty"
 
 for sk in irf_config["config"]["sites"]:
+
+    trigger_thresholds = np.array(
+        sum_config["trigger"][sk]["ratescan_thresholds_pe"]
+    )
+    analysis_trigger_threshold = sum_config["trigger"][sk]["threshold_pe"]
 
     tt = 0
     for tt, trigger_threshold in enumerate(trigger_thresholds):
@@ -72,7 +74,9 @@ for sk in irf_config["config"]["sites"]:
         ax.text(
             0.6,
             0.1 + text_y,
-            r"{: 8.1f} $\pm${: 6.1f} s$^{{-1}}$".format(ir, np.ceil(ir_abs_unc)),
+            r"{: 8.1f} $\pm${: 6.1f} s$^{{-1}}$".format(
+                ir, np.ceil(ir_abs_unc)
+            ),
             color="k",
             family="monospace",
             transform=ax.transAxes,

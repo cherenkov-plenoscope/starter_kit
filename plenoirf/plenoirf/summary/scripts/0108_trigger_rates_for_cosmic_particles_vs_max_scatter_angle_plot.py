@@ -155,7 +155,11 @@ for sk in SITES:
                 dR = R[sc + 1, eb] - R[sc, eb]
                 Rmean = 0.5 * (R[sc + 1, eb] + R[sc, eb])
                 dS = 1e3 * scatter_bin[pk]["widths"][sc]
-                dRdS[sc, eb] = (dR / dS) / Rmean
+
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    dRdS[sc, eb] = (dR / dS) / Rmean
+
+        dRdS[np.isnan(dRdS)] = 0.0
 
         fig = seb.figure(style=irf.summary.figure.FIGURE_STYLE)
         ax = seb.add_axes(fig=fig, span=[AXSPAN[0], AXSPAN[1], 0.55, 0.7])

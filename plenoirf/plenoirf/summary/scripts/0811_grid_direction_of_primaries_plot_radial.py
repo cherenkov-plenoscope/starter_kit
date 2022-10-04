@@ -106,19 +106,20 @@ for sk in SITES:
         o[sk][pk]["thrown"] = np.array(o[sk][pk]["thrown"])
         o[sk][pk]["detected"] = np.array(o[sk][pk]["detected"])
 
-        o[sk][pk]["thrown_au"] = (
-            np.sqrt(o[sk][pk]["thrown"]) / o[sk][pk]["thrown"]
-        )
-        o[sk][pk]["detected_au"] = (
-            np.sqrt(o[sk][pk]["detected"]) / o[sk][pk]["detected"]
-        )
+        with np.errstate(divide="ignore", invalid="ignore"):
+            o[sk][pk]["thrown_au"] = (
+                np.sqrt(o[sk][pk]["thrown"]) / o[sk][pk]["thrown"]
+            )
+            o[sk][pk]["detected_au"] = (
+                np.sqrt(o[sk][pk]["detected"]) / o[sk][pk]["detected"]
+            )
 
-        ratio, ratio_au = propagate_uncertainties.divide(
-            x=o[sk][pk]["detected"].astype(np.float),
-            x_au=o[sk][pk]["detected_au"],
-            y=o[sk][pk]["thrown"].astype(np.float),
-            y_au=o[sk][pk]["thrown_au"],
-        )
+            ratio, ratio_au = propagate_uncertainties.divide(
+                x=o[sk][pk]["detected"].astype(np.float),
+                x_au=o[sk][pk]["detected_au"],
+                y=o[sk][pk]["thrown"].astype(np.float),
+                y_au=o[sk][pk]["thrown_au"],
+            )
 
         o[sk][pk]["ratio"] = ratio
         o[sk][pk]["ratio_au"] = ratio_au
@@ -255,10 +256,12 @@ for sk in SITES:
         ax.set_xlabel("energy / GeV")
         ax.set_ylabel("scatter angle / $1^\\circ$")
 
+        ratio = np.array(o[sk][pk]["ratio"])
+        ratio[np.isnan(ratio)] = 0.0
         pcm_ratio = ax.pcolormesh(
             energy_bin["edges"],
             c_bin_edges_deg[pk],
-            np.transpose(o[sk][pk]["ratio"]),
+            np.transpose(ratio),
             norm=seb.plt_colors.LogNorm(),
             cmap="terrain_r",
             vmin=1e-4,

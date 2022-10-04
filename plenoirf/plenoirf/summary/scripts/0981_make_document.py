@@ -22,7 +22,7 @@ fname = os.path.join(pa["summary_dir"], "{:s}_ltx".format(production_dirname))
 
 STARTER_KIT_DIR = os.getcwd()
 
-sk = "namibia"
+sk = "chile"
 ok = "small"
 dk = "bell_spectrum"
 
@@ -375,7 +375,7 @@ with doc.create(ltx.Section("Site", numbering=False)):
 
 
 trgstr = make_trigger_modus_str(
-    analysis_trigger=sum_config["trigger"],
+    analysis_trigger=sum_config["trigger"][sk],
     production_trigger=irf_config["config"]["sum_trigger"],
 )
 

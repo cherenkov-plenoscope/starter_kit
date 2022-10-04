@@ -63,7 +63,10 @@ for sk in SITES:
             Qmean = 0.5 * (Q[isc + 1, :] + Q[isc, :])
             dS = 1e3 * scatter_bin[pk]["widths"][isc]
 
-            dQdScatter[isc, :] = (dQ / dS) / Qmean
+            with np.errstate(divide="ignore", invalid="ignore"):
+                dQdScatter[isc, :] = (dQ / dS) / Qmean
+
+            dQdScatter[np.isnan(dQdScatter)] = 0.0
 
         fig = seb.figure(style=irf.summary.figure.FIGURE_STYLE)
         ax = seb.add_axes(fig=fig, span=[AXSPAN[0], AXSPAN[1], 0.55, 0.7])

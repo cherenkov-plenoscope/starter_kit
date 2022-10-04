@@ -196,6 +196,56 @@ FERMI_3FGL_CRAB_NEBULA_NAME = "3FGL J0534.5+2201"
 FERMI_3FGL_PHD_THESIS_REFERENCE_SOURCE_NAME = "3FGL J2254.0+1608"
 
 
+def _guess_trigger(
+    collection_trigger_threshold_pe,
+    analysis_trigger_threshold_pe,
+    site_altitude_asl_m,
+    trigger_foci_object_distamces_m,
+    trigger_accepting_altitude_asl_m=19856,
+    trigger_rejecting_altitude_asl_m=13851,
+):
+    """
+
+    example Namibia:
+    - accepting focus 17,556m, rejecting focus 11,551m, site's altitude 2,300m
+    """
+    _obj = trigger_foci_object_distamces_m
+    _trg_acc_alt = trigger_accepting_altitude_asl_m
+    _trg_rej_alt = trigger_rejecting_altitude_asl_m
+    _site_alt = site_altitude_asl_m
+
+
+    accep = np.argmin(np.abs(_obj - _trg_acc_alt + _site_alt))
+    rejec = np.argmin(np.abs(_obj - _trg_rej_alt + _site_alt))
+
+    modus = {
+        "modus": {
+            "accepting_focus": accep,
+            "rejecting_focus": rejec,
+            "accepting": {
+                "threshold_accepting_over_rejecting": [
+                    1,
+                    1,
+                    0.8,
+                    0.4,
+                    0.2,
+                    0.1,
+                ],
+                "response_pe": [1e1, 1e2, 1e3, 1e4, 1e5, 1e6],
+            },
+        },
+        "threshold_pe": analysis_trigger_threshold_pe,
+        "ratescan_thresholds_pe": make_ratescan_trigger_thresholds(
+            lower_threshold=int(collection_trigger_threshold_pe * 0.86),
+            upper_threshold=int(collection_trigger_threshold_pe * 1.6),
+            num_thresholds=32,
+            collection_trigger_threshold=collection_trigger_threshold_pe,
+            analysis_trigger_threshold=analysis_trigger_threshold_pe,
+        ),
+    }
+    return modus
+
+
 def _guess_summary_config(run_dir):
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
@@ -241,31 +291,6 @@ def _guess_summary_config(run_dir):
             "radial_angle_deg": 35.0,
             "num_bins": _guess_num_direction_bins(
                 num_events_past_collection_trigger
-            ),
-        },
-        "trigger": {
-            "modus": {
-                "accepting_focus": 6,
-                "rejecting_focus": 4,
-                "accepting": {
-                    "threshold_accepting_over_rejecting": [
-                        1,
-                        1,
-                        0.8,
-                        0.4,
-                        0.2,
-                        0.1,
-                    ],
-                    "response_pe": [1e1, 1e2, 1e3, 1e4, 1e5, 1e6],
-                },
-            },
-            "threshold_pe": analysis_trigger_threshold_pe,
-            "ratescan_thresholds_pe": make_ratescan_trigger_thresholds(
-                lower_threshold=int(collection_trigger_threshold_pe * 0.86),
-                upper_threshold=int(collection_trigger_threshold_pe * 1.6),
-                num_thresholds=32,
-                collection_trigger_threshold=collection_trigger_threshold_pe,
-                analysis_trigger_threshold=analysis_trigger_threshold_pe,
             ),
         },
         "night_sky_background": {"max_num_true_cherenkov_photons": 0,},
@@ -349,6 +374,17 @@ def _guess_summary_config(run_dir):
     cfg["plot"]["matplotlib"] = figure.MATPLOTLIB_RCPARAMS_LATEX
     cfg["plot"]["particle_colors"] = figure.PARTICLE_COLORS
 
+    cfg["trigger"] = {}
+    SITES = irf_config["config"]["sites"]
+    for sk in irf_config["config"]["sites"]:
+        cfg["trigger"][sk] = _guess_trigger(
+            collection_trigger_threshold_pe=collection_trigger_threshold_pe,
+            analysis_trigger_threshold_pe=analysis_trigger_threshold_pe,
+            site_altitude_asl_m=SITES[sk]["observation_level_asl_m"],
+            trigger_foci_object_distamces_m=irf_config["config"]["sum_trigger"]["object_distances_m"],
+            trigger_accepting_altitude_asl_m=19856,
+            trigger_rejecting_altitude_asl_m=13851,
+        )
     return cfg
 
 

@@ -20,6 +20,10 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
+SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
+TRIGGER = sum_config["trigger"]
+
 """
 In Sebastian's phd-thesis, the trigger-rate for gamma-rays was estiamted by
 taking the overall acceptance for gamma-rays from a  point-source and
@@ -51,12 +55,6 @@ all_fov_rates = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0105_trigger_rates_for_cosmic_particles")
 )
 
-trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
-analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
-trigger_threshold_key = np.where(
-    trigger_thresholds == analysis_trigger_threshold
-)[0][0]
-
 cosmic_ray_keys = list(irf_config["config"]["particles"].keys())
 cosmic_ray_keys.remove("gamma")
 
@@ -85,19 +83,24 @@ onregion_over_all_fov_ratio = PHD_PSF_RADIUS_DEG ** 2 / FOV_RADIUS_DEG ** 2
 
 cosmic_ray_rate_onregion = {}
 electron_rate_onregion = {}
-for site_key in irf_config["config"]["sites"]:
+for sk in SITES:
+    trigger_thresholds = np.array(TRIGGER[sk]["ratescan_thresholds_pe"])
+    analysis_trigger_threshold = TRIGGER[sk]["threshold_pe"]
+    trigger_threshold_key = np.where(
+        trigger_thresholds == analysis_trigger_threshold
+    )[0][0]
 
-    electron_rate_onregion[site_key] = (
-        all_fov_rates[site_key]["electron"]["integral_rate"]["mean"][
+    electron_rate_onregion[sk] = (
+        all_fov_rates[sk]["electron"]["integral_rate"]["mean"][
             trigger_threshold_key
         ]
         * onregion_over_all_fov_ratio
     )
 
-    cosmic_ray_rate_onregion[site_key] = 0
+    cosmic_ray_rate_onregion[sk] = 0
     for cosmic_ray_key in PHD_COSMIC_RAY_KEYS:
-        cosmic_ray_rate_onregion[site_key] += (
-            all_fov_rates[site_key][cosmic_ray_key]["integral_rate"]["mean"][
+        cosmic_ray_rate_onregion[sk] += (
+            all_fov_rates[sk][cosmic_ray_key]["integral_rate"]["mean"][
                 trigger_threshold_key
             ]
             * onregion_over_all_fov_ratio
@@ -106,7 +109,7 @@ for site_key in irf_config["config"]["sites"]:
 x_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e-0, 1e-16])
 
-for site_key in irf_config["config"]["sites"]:
+for sk in SITES:
 
     components = []
 
@@ -143,7 +146,7 @@ for site_key in irf_config["config"]["sites"]:
     # ----------
     all_fov_gamma_effective_area_m2 = (
         np.array(
-            all_fov_acceptance[site_key]["gamma"]["point"]["mean"][
+            all_fov_acceptance[sk]["gamma"]["point"]["mean"][
                 trigger_threshold_key
             ]
         )
@@ -151,7 +154,7 @@ for site_key in irf_config["config"]["sites"]:
     )
 
     all_fov_energy_bin_edges = np.array(
-        all_fov_acceptance[site_key]["gamma"]["point"]["energy_bin_edges_GeV"]
+        all_fov_acceptance[sk]["gamma"]["point"]["energy_bin_edges_GeV"]
     )
 
     (
@@ -159,10 +162,10 @@ for site_key in irf_config["config"]["sites"]:
         critical_signal_rate_per_s_au,
     ) = flux_sensitivity.critical_rate.estimate_critical_signal_rate(
         background_rate_onregion_in_scenario_per_s=cosmic_ray_rate_onregion[
-            site_key
+            sk
         ],
         background_rate_onregion_in_scenario_per_s_au=np.zeros(
-            shape=cosmic_ray_rate_onregion[site_key].shape
+            shape=cosmic_ray_rate_onregion[sk].shape
         ),
         onregion_over_offregion_ratio=PHD_ON_OVER_OFF_RATIO,
         observation_time_s=PHD_OBSERVATION_TIME_S,
@@ -241,7 +244,7 @@ for site_key in irf_config["config"]["sites"]:
             os.path.join(
                 pa["out_dir"],
                 "{:s}_integral_spectral_exclusion_zone_style_{:s}.jpg".format(
-                    site_key, sed_style_key
+                    sk, sed_style_key
                 ),
             )
         )

@@ -23,27 +23,27 @@ nsb_rates = json_numpy.read_tree(
 )
 
 SITES = irf_config["config"]["sites"]
-
-trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
-analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
-
-assert analysis_trigger_threshold in trigger_thresholds
-analysis_trigger_threshold_idx = irf.utils.find_closest_index_in_array_for_value(
-    arr=trigger_thresholds, val=analysis_trigger_threshold
-)
+PARTICLES = irf_config["config"]["particles"]
+TRIGGER = sum_config["trigger"]
 
 trigger_rates = {}
 for sk in SITES:
+    trigger_thresholds = np.array(TRIGGER[sk]["ratescan_thresholds_pe"])
+    analysis_trigger_threshold = TRIGGER[sk]["threshold_pe"]
+
+    assert analysis_trigger_threshold in trigger_thresholds
+    analysis_trigger_threshold_idx = irf.utils.find_closest_index_in_array_for_value(
+        arr=trigger_thresholds, val=analysis_trigger_threshold
+    )
+
     os.makedirs(os.path.join(pa["out_dir"], sk), exist_ok=True)
     trigger_rates[sk] = {}
     trigger_rates[sk]["night_sky_background"] = nsb_rates[sk][
         "night_sky_background_rates"
     ]["mean"]
 
-    for cosmic_key in irf_config["config"]["particles"]:
-        trigger_rates[sk][cosmic_key] = cosmic_rates[sk][cosmic_key][
-            "integral_rate"
-        ]["mean"]
+    for pk in PARTICLES:
+        trigger_rates[sk][pk] = cosmic_rates[sk][pk]["integral_rate"]["mean"]
 
     json_numpy.write(
         os.path.join(pa["out_dir"], sk, "trigger_rates_by_origin.json"),

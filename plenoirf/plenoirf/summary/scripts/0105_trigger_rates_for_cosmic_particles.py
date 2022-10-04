@@ -28,10 +28,6 @@ energy_binning = json_numpy.read(
 energy_bin = energy_binning["trigger_acceptance"]
 fine_energy_bin = energy_binning["interpolation"]
 
-trigger_thresholds = np.array(sum_config["trigger"]["ratescan_thresholds_pe"])
-analysis_trigger_threshold = sum_config["trigger"]["threshold_pe"]
-num_trigger_thresholds = len(trigger_thresholds)
-
 # cosmic-ray-flux
 # ----------------
 airshower_fluxes = json_numpy.read_tree(
@@ -73,6 +69,12 @@ dKdE / s^{-1} m^{-2} (GeV)^{-1}
 
 
 for sk in irf_config["config"]["sites"]:
+    trigger_thresholds = np.array(
+        sum_config["trigger"][sk]["ratescan_thresholds_pe"]
+    )
+    analysis_trigger_threshold = sum_config["trigger"][sk]["threshold_pe"]
+    num_trigger_thresholds = len(trigger_thresholds)
+
     sk_dir = os.path.join(pa["out_dir"], sk)
     os.makedirs(sk_dir, exist_ok=True)
 
