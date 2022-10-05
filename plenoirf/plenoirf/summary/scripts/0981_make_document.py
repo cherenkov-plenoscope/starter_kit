@@ -31,11 +31,17 @@ geometry_options = {
 }
 
 SITES = irf_config["config"]["sites"]
+PARTICLES = irf_config["config"]["particles"]
 STARTER_KIT_DIR = os.getcwd()
 SED_STYLE_KEY = "portal"
+OUTER_ARRAY_KEY = "ring-mst"
 
-ok = ["small", "medium", "large"][1]
+ok = ["small", "medium", "large"][0]
 dk = "bell_spectrum"
+
+energy_bin = json_numpy.read(
+    os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
+)["point_spread_function"]
 
 
 def noesc(text):
@@ -181,7 +187,7 @@ for sk in SITES:
                 ppath(
                     pa["summary_dir"],
                     "0230_point_spread_function",
-                    sk + "_gamma.jpg",
+                    "{:s}_gamma.jpg".format(sk),
                 ),
                 width=noesc(r"1.0\linewidth"),
             )
@@ -199,7 +205,7 @@ for sk in SITES:
                 ppath(
                     pa["summary_dir"],
                     "0066_energy_estimate_quality",
-                    sk + "_gamma_resolution.jpg",
+                    "{:s}_gamma_resolution.jpg".format(sk),
                 ),
                 width=noesc(r"1.0\linewidth"),
             )
@@ -294,7 +300,22 @@ for sk in SITES:
                 ),
                 width=noesc(r"1.0\linewidth"),
             )
-            fig.add_caption("Trigger-probability vs. true Cherenkov-size.")
+            fig.add_caption(
+                "Trigger-probability vs. true Cherenkov-size in photo-sensors."
+            )
+
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "0075_trigger_probability_vs_cherenkov_density_on_ground_plot",
+                    "{:s}_passing_trigger.jpg".format(sk),
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+            fig.add_caption(
+                "Trigger-probability vs. Cherenkov-density on ground."
+            )
 
     with doc.create(ltx.Section("Acceptance at Trigger", numbering=False)):
         with doc.create(ltx.Figure(position="H")) as fig:
@@ -332,7 +353,8 @@ for sk in SITES:
                     r"Trigger-rate on gamma-ray-source {:s}".format(
                         sum_config["gamma_ray_reference_source"]["name_3fgl"]
                     )
-                    + r"\cite{acero2015fermi3fglcatalog}."
+                    + r"\cite{acero2015fermi3fglcatalog}. "
+                    + r"Entire field-of-view."
                 )
             )
 
@@ -378,6 +400,17 @@ for sk in SITES:
             )
             fig.add_caption("Energy-confusion for gamma-rays.")
 
+    with doc.create(ltx.Section("Angular resolution", numbering=False)):
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "0213_trajectory_benchmarking",
+                    "{:s}_gamma_psf_image_all.jpg".format(sk),
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+
     with doc.create(ltx.Section("Acceptance after all Cuts", numbering=False)):
         with doc.create(ltx.Figure(position="H")) as fig:
             fig.add_image(
@@ -414,6 +447,73 @@ for sk in SITES:
                 "Final rates in on-region while observing {:s}".format(
                     sum_config["gamma_ray_reference_source"]["name_3fgl"]
                 )
+            )
+
+    with doc.create(ltx.Section("Quality", numbering=False)):
+        doc.append(
+            "The quality of the instrument-response-function. "
+            "Is the scatter-angle large enough? "
+            "Here scatter-angle is the angle between the particle's direction "
+            "and the direction a particle must have to see its "
+            "Cherenkov-light in the center of the instrument's field-of-view."
+        )
+
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "0108_trigger_rates_for_cosmic_particles_vs_max_scatter_angle_plot",
+                    "{:s}_trigger-rate_vs_scatter.jpg".format(sk),
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+            fig.add_caption("Trigger-rate vs. max. scatter-angle.")
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "0108_trigger_rates_for_cosmic_particles_vs_max_scatter_angle_plot",
+                    "{:s}_diff-trigger-rate_vs_scatter.jpg".format(sk),
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+            fig.add_caption("Diff. trigger-rate w.r.t. max. scatter-angle.")
+
+    with doc.create(
+        ltx.Section("Outer array to veto hadrons", numbering=False)
+    ):
+        doc.append(
+            "Explore an outer array of 'small' telescopes to veto "
+            "hadronic showers with large impact distances."
+        )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "0820_passing_trigger_of_outer_array_of_small_telescopes",
+                    "array_configuration_{:s}.jpg".format(OUTER_ARRAY_KEY),
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "0820_passing_trigger_of_outer_array_of_small_telescopes",
+                    "{:s}_{:s}_telescope_trigger_probability.jpg".format(
+                        sk, OUTER_ARRAY_KEY
+                    ),
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "0821_passing_trigger_of_outer_array_of_small_telescopes_plot",
+                    "{:s}_{:s}.jpg".format(sk, OUTER_ARRAY_KEY),
+                ),
+                width=noesc(r"1.0\linewidth"),
             )
 
     doc.append(noesc(r"\bibliographystyle{apalike}"))

@@ -384,98 +384,92 @@ for sk in irf_config["config"]["sites"]:
             - rectab["true_trajectory/cy_rad"]
         )
 
-        for ene in range(energy_bin["num_bins"]):
+        num_panels = energy_bin["num_bins"] + 1
+        num_cols = 4
+        num_rows = num_panels // num_cols
 
-            ene_start = energy_bin["edges"][ene]
-            ene_stop = energy_bin["edges"][ene + 1]
+        fig = seb.figure(
+            {
+                "rows": (1 + num_rows) * 200,
+                "cols": num_cols * 200,
+                "fontsize": 1,
+            }
+        )
+        _colw = 1.0 / num_cols
+        _colh = 1.0 / num_rows
+        fov_shrink = 0.7
+        fov_radius_shrink_deg = fov_radius_deg * fov_shrink
+        c_bin_edges_shrink_deg = np.linspace(
+            -fov_radius_shrink_deg, fov_radius_shrink_deg, num_c_bins,
+        )
 
-            ene_mask = np.logical_and(
-                rectab["primary/energy_GeV"] >= ene_start,
-                rectab["primary/energy_GeV"] < ene_stop,
-            )
+        for ene in range(num_panels):
+            _xi = np.mod(ene, num_cols)
+            _yi = ene // num_cols
 
-            ene_delta_cx_deg = delta_cx_deg[ene_mask]
-            ene_delta_cy_deg = delta_cy_deg[ene_mask]
+            _xx = _xi * _colw
+            _yy = 1.0 - ((_yi + 1) * _colh)
 
-            ene_num_thrown = np.sum(ene_mask)
-            ene_psf_image = np.histogram2d(
-                ene_delta_cx_deg,
-                ene_delta_cy_deg,
-                bins=(c_bin_edges_deg, c_bin_edges_deg),
-            )[0]
-            ene_psf_image_fine = np.histogram2d(
-                ene_delta_cx_deg,
-                ene_delta_cy_deg,
-                bins=(c_bin_edges_fine_deg, c_bin_edges_fine_deg),
-            )[0]
-
-            fig = seb.figure(seb.FIGURE_16_9)
             ax1 = seb.add_axes(
-                fig=fig, span=[0.075, 0.1, 0.4, 0.8], style=psf_ax_style
+                fig=fig,
+                span=[_xx, _yy, _colw * 0.95, _colh * 0.95],
+                style={"spines": [], "axes": [], "grid": False},
             )
-            ax1.pcolor(
-                c_bin_edges_deg,
-                c_bin_edges_deg,
-                ene_psf_image,
-                cmap="Blues",
-                vmax=None,
-            )
-            seb.ax_add_grid(ax1)
-            ax1.set_title(
-                "energy {: 7.1f} - {: 7.1f} GeV".format(ene_start, ene_stop,),
-                family="monospace",
+
+            if ene == energy_bin["num_bins"]:
+                fig.text(
+                    s="1$^{\circ}$", x=_xx + 0.5 * _colw, y=_yy + 0.5 * _colh,
+                )
+                ax1.plot([0, 1,], [0, 0,], "k-")
+            else:
+                ene_start = energy_bin["edges"][ene]
+                ene_stop = energy_bin["edges"][ene + 1]
+
+                fig.text(
+                    s="{: 7.1f} GeV".format(ene_start),
+                    x=_xx,
+                    y=_yy,
+                    # family="monospace",
+                )
+
+                ene_mask = np.logical_and(
+                    rectab["primary/energy_GeV"] >= ene_start,
+                    rectab["primary/energy_GeV"] < ene_stop,
+                )
+
+                ene_delta_cx_deg = delta_cx_deg[ene_mask]
+                ene_delta_cy_deg = delta_cy_deg[ene_mask]
+
+                ene_psf_image = np.histogram2d(
+                    ene_delta_cx_deg,
+                    ene_delta_cy_deg,
+                    bins=(c_bin_edges_shrink_deg, c_bin_edges_shrink_deg),
+                )[0]
+                ax1.pcolor(
+                    c_bin_edges_shrink_deg,
+                    c_bin_edges_shrink_deg,
+                    ene_psf_image,
+                    cmap="Blues",
+                    vmax=None,
+                )
+
+            seb.ax_add_grid_with_explicit_ticks(
+                ax=ax1,
+                xticks=np.linspace(-2, 2, 5),
+                yticks=np.linspace(-2, 2, 5),
+                color="k",
+                linestyle="-",
+                linewidth=0.33,
+                alpha=0.11,
             )
             ax1.set_aspect("equal")
-            ax1.set_xlim([-1.01 * fov_radius_deg, 1.01 * fov_radius_deg])
-            ax1.set_ylim([-1.01 * fov_radius_deg, 1.01 * fov_radius_deg])
-            ax1.set_xlabel(r"$\Delta{} c_x$ / $1^\circ{}$")
-            ax1.set_ylabel(r"$\Delta{} c_y$ / $1^\circ{}$")
+            _frs = fov_radius_shrink_deg
+            ax1.set_xlim([-1.01 * _frs, 1.01 * _frs])
+            ax1.set_ylim([-1.01 * _frs, 1.01 * _frs])
 
-            ax1.plot(
-                [-fov_radius_fine_deg, fov_radius_fine_deg],
-                [fov_radius_fine_deg, fov_radius_fine_deg],
-                "k-",
-                linewidth=2 * 0.66,
-                alpha=0.15,
+        fig.savefig(
+            os.path.join(
+                pa["out_dir"], "{:s}_{:s}_psf_image_all.jpg".format(sk, pk),
             )
-            ax1.plot(
-                [-fov_radius_fine_deg, fov_radius_fine_deg],
-                [-fov_radius_fine_deg, -fov_radius_fine_deg],
-                "k-",
-                linewidth=2 * 0.66,
-                alpha=0.15,
-            )
-            ax1.plot(
-                [fov_radius_fine_deg, fov_radius_fine_deg],
-                [-fov_radius_fine_deg, fov_radius_fine_deg],
-                "k-",
-                linewidth=2 * 0.66,
-                alpha=0.15,
-            )
-            ax1.plot(
-                [-fov_radius_fine_deg, -fov_radius_fine_deg],
-                [-fov_radius_fine_deg, fov_radius_fine_deg],
-                "k-",
-                linewidth=2 * 0.66,
-                alpha=0.15,
-            )
-
-            ax2 = seb.add_axes(
-                fig=fig, span=[0.575, 0.1, 0.4, 0.8], style=psf_ax_style
-            )
-            ax2.set_aspect("equal")
-            ax2.pcolor(
-                c_bin_edges_fine_deg,
-                c_bin_edges_fine_deg,
-                ene_psf_image_fine,
-                cmap="Blues",
-                vmax=None,
-            )
-            seb.ax_add_grid(ax2)
-            fig.savefig(
-                os.path.join(
-                    pa["out_dir"],
-                    "{:s}_{:s}_psf_image_ene{:06d}.jpg".format(sk, pk, ene),
-                )
-            )
-            seb.close(fig)
+        )
+        seb.close(fig)
