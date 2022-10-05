@@ -5,6 +5,8 @@ import datetime
 import io
 import tarfile
 import scipy.interpolate
+import json_numpy
+import warnings
 
 
 def cone_solid_angle(cone_radial_opening_angle_rad):
@@ -237,3 +239,28 @@ def gradient_in_bin_edges(x, bin_edges):
     for i in range(len(x) - 1):
         dx[i] = (x[i + 1] - x[i]) / bin_edges[i]
     return dx
+
+
+def read_json_but_forgive(path, default={}):
+    try:
+        with open(path, "rt") as f:
+            out = json_numpy.loads(f.read())
+    except Exception as e:
+        print(e)
+        warnings.warn("Failed to load '{:s}'".format(path))
+        out = default
+    return out
+
+
+def dict_to_pretty_str(dictionary):
+    ss = json_numpy.dumps(dictionary, indent=2)
+    ss = ss.replace('"', "")
+    ss = ss.replace("{", "")
+    ss = ss.replace("}", "")
+    oss = io.StringIO()
+    for line in ss.splitlines():
+        if len(line) > 0:
+            oss.write(line)
+            oss.write("\n")
+    oss.seek(0)
+    return oss.read()

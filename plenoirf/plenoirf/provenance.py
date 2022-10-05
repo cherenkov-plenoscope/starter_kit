@@ -151,3 +151,26 @@ def add_corsika(prov, corsika_primary_path):
         corsika_primary_path, strip=True
     )
     return prov
+
+
+def make_basic_version_str(
+    production_dirname, production_provenance, analysis_provenance
+):
+    pp = production_provenance
+    ap = analysis_provenance
+
+    ver = ""
+    ver += "Production\n"
+    ver += "    dirname: {:s}\n".format(production_dirname)
+    ver += "    date: {:s}\n".format(pp["time"]["iso"][0:16])
+    ver += "    git-commit: {:s}\n".format(
+        pp["starter_kit"]["git"]["commit"][0:9]
+    )
+    ver += "    hostname: {:s}\n".format(pp["hostname"])
+    ver += "Analysis\n"
+    ver += "    date: {:s}\n".format(ap["time"]["iso"][0:16])
+    ver += "    git-commit:   {:s}\n".format(
+        ap["starter_kit"]["git"]["commit"][0:9]
+    )
+    ver += "    hostname: {:s}\n".format(ap["hostname"])
+    return ver

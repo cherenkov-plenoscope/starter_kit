@@ -45,3 +45,32 @@ def make_indices(
 ):
     mask = make_mask(trigger_table, threshold, modus,)
     return trigger_table[spt.IDX][mask]
+
+
+def make_trigger_modus_str(analysis_trigger, production_trigger):
+    pro = production_trigger
+    ana = analysis_trigger
+
+    acc_foc = ana["modus"]["accepting_focus"]
+    acc_obj = pro["object_distances_m"][acc_foc]
+    rej_foc = ana["modus"]["rejecting_focus"]
+    rej_obj = pro["object_distances_m"][rej_foc]
+
+    modus = ana["modus"]
+
+    s = ""
+    s += "Modus\n"
+    s += "    Accepting object-distance "
+    s += "{:.1f}km, focus {:02d}\n".format(1e-3 * acc_obj, acc_foc)
+    s += "    Rejecting object-distance "
+    s += "{:.1f}km, focus {:02d}\n".format(1e-3 * rej_obj, rej_foc)
+    s += "    Intensity-ratio between foci:\n"
+    s += "        response / pe    ratio / 1\n"
+    for i in range(len(modus["accepting"]["response_pe"])):
+        xp = modus["accepting"]["response_pe"][i]
+        fp = modus["accepting"]["threshold_accepting_over_rejecting"][i]
+        s += "        {:1.2e}          {:.2f}\n".format(xp, fp)
+    s += "Threshold\n"
+    s += "    {:d}p.e. ".format(ana["threshold_pe"])
+    s += "({:d}p.e. in production)\n".format(pro["threshold_pe"])
+    return s
