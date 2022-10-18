@@ -287,7 +287,7 @@ def _estimate_magnetic_deflection_of_air_showers(
 
 
 def _estimate_light_field_geometry_of_plenoscope(
-    config, run_dir, map_and_reduce_pool, executables, logger,
+    config, run_dir, map_and_reduce_pool, executables, logger, make_plots=True,
 ):
     logger.info("Estimating light-field-geometry.")
 
@@ -330,12 +330,13 @@ def _estimate_light_field_geometry_of_plenoscope(
             )
 
     if not op.exists(opj(run_dir, "light_field_geometry", "plot")):
-        logger.info("Plotting light-field-geometry.")
-        lfg = pl.LightFieldGeometry(opj(run_dir, "light_field_geometry"))
-        pl.plot.light_field_geometry.save_all(
-            light_field_geometry=lfg,
-            out_dir=opj(run_dir, "light_field_geometry", "plot"),
-        )
+        if make_plots:
+            logger.info("Plotting light-field-geometry.")
+            lfg = pl.LightFieldGeometry(opj(run_dir, "light_field_geometry"))
+            pl.plot.light_field_geometry.save_all(
+                light_field_geometry=lfg,
+                out_dir=opj(run_dir, "light_field_geometry", "plot"),
+            )
 
 
 def _estimate_trigger_geometry_of_plenoscope(

@@ -73,6 +73,12 @@ def init(work_dir, config=CFG):
         f.write(json_numpy.dumps(merlict.PROPAGATION_CONFIG, indent=4))
 
 
+def LightFieldGeometry(path, off_axis_angle_deg):
+    lfg = plenopy.LightFieldGeometry(path=path)
+    lfg.cx_mean += np.deg2rad(off_axis_angle_deg)
+    return lfg
+
+
 def run(
     work_dir,
     map_and_reduce_pool=multiprocessing.Pool(4),
@@ -94,7 +100,7 @@ def run(
     make_source(work_dir=work_dir)
 
     logger.debug("Make responses to calibration source")
-    make_responses(work_dir=work_dir)
+    make_responses(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
     logger.debug("Make analysis")
     make_analysis(work_dir=work_dir)
@@ -105,53 +111,84 @@ def run(
     logger.debug("Stop")
 
 
-def make_responses(work_dir):
+def make_responses(
+    work_dir,
+    map_and_reduce_pool=multiprocessing.Pool(4),
+):
+    jobs =  _responses_make_jobs(work_dir=work_dir)
+    _ = map_and_reduce_pool.map(_responses_run_job, jobs)
+
+
+def _responses_make_jobs(work_dir):
+    jobs = []
+
     with open(os.path.join(work_dir, "config.json"), "rt") as f:
         config = json_numpy.loads(f.read())
 
-    source_path = os.path.join(work_dir, "source.tar")
-    geometries_dir = os.path.join(work_dir, "geometries")
-    responses_dir = os.path.join(work_dir, "responses")
-    os.makedirs(responses_dir, exist_ok=True)
-
     runningseed = int(config["seed"])
     for mkey in config["mirror"]["keys"]:
-        mdir = os.path.join(responses_dir, mkey)
-        os.makedirs(mdir, exist_ok=True)
 
         for npax in config["sensor"]["num_paxel_on_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
-            pdir = os.path.join(mdir, pkey)
-            os.makedirs(pdir, exist_ok=True)
 
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
                 akey = ANGLE_FMT.format(ofa)
-                adir = os.path.join(pdir, akey)
 
-                if not os.path.exists(adir):
-                    plenoirf.production.merlict.plenoscope_propagator(
-                        corsika_run_path=source_path,
-                        output_path=adir,
-                        light_field_geometry_path=os.path.join(
-                            geometries_dir,
-                            mkey,
-                            pkey,
-                            akey,
-                            "light_field_geometry",
-                        ),
-                        merlict_plenoscope_propagator_path=config[
-                            "executables"
-                        ]["merlict_plenoscope_propagator_path"],
-                        merlict_plenoscope_propagator_config_path=os.path.join(
-                            work_dir, "merlict_propagation_config.json"
-                        ),
-                        random_seed=runningseed,
-                        photon_origins=True,
-                        stdout_path=adir + ".o",
-                        stderr_path=adir + ".e",
-                    )
-                    shutil.rmtree(os.path.join(adir, "input"))
+                job = {}
+                job["work_dir"] = work_dir
+                job["mkey"] = mkey
+                job["pkey"] = pkey
+                job["akey"] = akey
+                job["merlict_plenoscope_propagator_path"] = config[
+                    "executables"
+                ]["merlict_plenoscope_propagator_path"]
+                job["seed"] = runningseed
+                jobs.append(job)
+
                 runningseed += 1
+
+    return jobs
+
+
+def _responses_run_job(job):
+    adir = os.path.join(
+        job["work_dir"],
+        "responses",
+        job["mkey"],
+        job["pkey"],
+        job["akey"]
+    )
+
+    if not os.path.exists(adir):
+        plenoirf.production.merlict.plenoscope_propagator(
+            corsika_run_path=os.path.join(job["work_dir"], "source.tar"),
+            output_path=adir,
+            light_field_geometry_path=os.path.join(
+                job["work_dir"],
+                "geometries",
+                job["mkey"],
+                job["pkey"],
+                job["akey"],
+                "light_field_geometry",
+            ),
+            merlict_plenoscope_propagator_path=job[
+                "merlict_plenoscope_propagator_path"
+            ],
+            merlict_plenoscope_propagator_config_path=os.path.join(
+                job["work_dir"], "merlict_propagation_config.json"
+            ),
+            random_seed=job["seed"],
+            photon_origins=True,
+            stdout_path=adir + ".o",
+            stderr_path=adir + ".e",
+        )
+
+    left_over_input_dir = os.path.join(adir, "input")
+    if os.path.exists(left_over_input_dir):
+        shutil.rmtree(left_over_input_dir)
+
+    return 1
+
 
 
 def make_analysis(work_dir):
@@ -177,12 +214,13 @@ def make_analysis(work_dir):
 
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
                 akey = ANGLE_FMT.format(ofa)
+                angle_deg = config["sources"]["off_axis_angles_deg"][ofa]
                 adir = os.path.join(pdir, akey)
                 os.makedirs(adir, exist_ok=True)
                 summary_path = os.path.join(adir, "summary.json")
 
                 if not os.path.exists(summary_path):
-                    light_field_geometry = plenopy.LightFieldGeometry(
+                    light_field_geometry = LightFieldGeometry(
                         path=os.path.join(
                             work_dir,
                             "geometries",
@@ -190,7 +228,8 @@ def make_analysis(work_dir):
                             pkey,
                             akey,
                             "light_field_geometry",
-                        )
+                        ),
+                        off_axis_angle_deg=angle_deg,
                     )
 
                     event = plenopy.Event(

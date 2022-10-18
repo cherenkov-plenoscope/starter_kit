@@ -66,7 +66,7 @@ def histogram2d_std(
 
 
 def calibrate_plenoscope_response(
-    event, light_field_geometry, object_distance
+    event, light_field_geometry, object_distance,
 ):
     image_rays = plenopy.image.ImageRays(
         light_field_geometry=light_field_geometry
