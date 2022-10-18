@@ -40,35 +40,35 @@ with open(os.path.join(work_dir, "config.json"), "rt") as f:
 prng = np.random.Generator(np.random.PCG64(config["seed"]))
 
 
-paxkey = "paxel{:d}".format(npax)
-ofakey = "{:03d}".format(ofa)
+pkey = aberration_demo.PAXEL_FMT.format(npax)
+akey = aberration_demo.ANGLE_FMT.format(ofa)
 
 
 analysis_dir = os.path.join(work_dir, "analysis")
 os.makedirs(analysis_dir, exist_ok=True)
 
-mirror_dir = os.path.join(analysis_dir, mkey)
-os.makedirs(mirror_dir, exist_ok=True)
+mdir = os.path.join(analysis_dir, mkey)
+os.makedirs(mdir, exist_ok=True)
 
-paxel_dir = os.path.join(mirror_dir, paxkey)
-os.makedirs(paxel_dir, exist_ok=True)
+pdir = os.path.join(mdir, pkey)
+os.makedirs(pdir, exist_ok=True)
 
-ofa_dir = os.path.join(paxel_dir, ofakey)
-os.makedirs(ofa_dir, exist_ok=True)
+adir = os.path.join(pdir, akey)
+os.makedirs(adir, exist_ok=True)
 
-summary_path = os.path.join(ofa_dir, "summary.json")
+summary_path = os.path.join(adir, "summary.json")
 
 if not os.path.exists(summary_path):
     print("read light_field_geometry")
     light_field_geometry = plenopy.LightFieldGeometry(
         path=os.path.join(
-            work_dir, "geometries", mkey, paxkey, "light_field_geometry",
+            work_dir, "geometries", mkey, pkey, "light_field_geometry",
         )
     )
 
     print("read event")
     event = plenopy.Event(
-        path=os.path.join(work_dir, "responses", mkey, paxkey, ofakey, "1",),
+        path=os.path.join(work_dir, "responses", mkey, pkey, akey, "1",),
         light_field_geometry=light_field_geometry,
     )
 
@@ -213,7 +213,7 @@ sebplt.ax_add_circle(
 ax.set_aspect("equal")
 ax.set_xlabel(r"$c_x$ / $1^\circ{}$")
 ax.set_ylabel(r"$c_y$ / $1^\circ{}$")
-fig.savefig(os.path.join(ofa_dir, "img.jpg"))
+fig.savefig(os.path.join(adir, "img.jpg"))
 sebplt.close(fig)
 
 
@@ -235,5 +235,5 @@ ax.plot(
 ax.semilogy()
 ax.set_xlabel("time / s")
 
-fig.savefig(os.path.join(ofa_dir, "img_time.jpg"))
+fig.savefig(os.path.join(adir, "img_time.jpg"))
 sebplt.close(fig)

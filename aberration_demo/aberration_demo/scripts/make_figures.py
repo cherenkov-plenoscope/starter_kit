@@ -50,7 +50,7 @@ def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
 
 
 def _ax_add_paxel_and_off_axis_labels(ax):
-    for isens, paxkey in enumerate(coll[mkey]):
+    for isens, pkey in enumerate(coll[mkey]):
         num_paxel_on_diagonal = config["sensor"]["num_paxel_on_diagonal"][
             isens
         ]
@@ -66,10 +66,10 @@ def _ax_add_paxel_and_off_axis_labels(ax):
             fontsize=10,
         )
 
-        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
+        for iofa, ofakey in enumerate(coll[mkey][pkey]):
 
-            off_axis_cx_deg = config["sources"]["off_axis_angles_deg"][iofa][0]
-            off_axis_cy_deg = config["sources"]["off_axis_angles_deg"][iofa][1]
+            off_axis_cx_deg = config["sources"]["off_axis_angles_deg"][iofa]
+            off_axis_cy_deg = 0.0
 
             ax.text(
                 0.12
@@ -86,8 +86,8 @@ def _ax_add_paxel_and_off_axis_labels(ax):
 num_mirrors = len(coll)
 for mkey in coll:
     num_sensors = len(coll[mkey])
-    for paxkey in coll[mkey]:
-        num_offaxis = len(coll[mkey][paxkey])
+    for pkey in coll[mkey]:
+        num_offaxis = len(coll[mkey][pkey])
 
     ax_hori_start = 0.1
     ax_vert_start = 0.1
@@ -112,10 +112,10 @@ for mkey in coll:
     )
     _ax_add_paxel_and_off_axis_labels(ax=ax_psf_labels)
 
-    for isens, paxkey in enumerate(coll[mkey]):
-        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
+    for isens, pkey in enumerate(coll[mkey]):
+        for iofa, ofakey in enumerate(coll[mkey][pkey]):
 
-            tcoll = coll[mkey][paxkey][ofakey]
+            tcoll = coll[mkey][pkey][ofakey]
             (
                 bin_edges_cx,
                 bin_edges_cy,
@@ -282,9 +282,9 @@ for mkey in coll:
     ax_tsf_labels.text(0.5, 0.05, r"time / ns", rotation=0, fontsize=12)
     _ax_add_paxel_and_off_axis_labels(ax=ax_tsf_labels)
 
-    for isens, paxkey in enumerate(coll[mkey]):
-        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
-            tcoll = coll[mkey][paxkey][ofakey]
+    for isens, pkey in enumerate(coll[mkey]):
+        for iofa, ofakey in enumerate(coll[mkey][pkey]):
+            tcoll = coll[mkey][pkey][ofakey]
 
             ax_pax_off = sebplt.add_axes(
                 fig=fig_tsf,
@@ -367,12 +367,12 @@ ax_psf_sum = sebplt.add_axes(
     style={"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": True},
 )
 for mkey in MIRROR_COLORS:
-    for isens, paxkey in enumerate(coll[mkey]):
+    for isens, pkey in enumerate(coll[mkey]):
         cxs_deg = []
         theta80_rad = []
-        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
+        for iofa, ofakey in enumerate(coll[mkey][pkey]):
             cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa][0])
-            theta80_rad.append(coll[mkey][paxkey][ofakey]["image"]["angle80"])
+            theta80_rad.append(coll[mkey][pkey][ofakey]["image"]["angle80"])
         theta80_rad = np.array(theta80_rad)
 
         omega80_sr = plenoirf.utils.cone_solid_angle(
@@ -384,7 +384,7 @@ for mkey in MIRROR_COLORS:
         ax_psf_sum.plot(
             cxs_deg,
             omega80_deg2,
-            PAXEL_STYLE[paxkey],
+            PAXEL_STYLE[pkey],
             color=MIRROR_COLORS[mkey],
         )
 ax_psf_sum.set_xlabel(OFF_AXIS_ANGLE_LABEL)
@@ -400,22 +400,22 @@ ax_tsf_sum = sebplt.add_axes(
     style={"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": True},
 )
 for mkey in MIRROR_COLORS:
-    for isens, paxkey in enumerate(coll[mkey]):
+    for isens, pkey in enumerate(coll[mkey]):
         cxs_deg = []
         time80_ns = []
-        for iofa, ofakey in enumerate(coll[mkey][paxkey]):
+        for iofa, ofakey in enumerate(coll[mkey][pkey]):
             cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa][0])
-            t80start = coll[mkey][paxkey][ofakey]["time"]["containment80"][
+            t80start = coll[mkey][pkey][ofakey]["time"]["containment80"][
                 "start"
             ]
-            t80stop = coll[mkey][paxkey][ofakey]["time"]["containment80"][
+            t80stop = coll[mkey][pkey][ofakey]["time"]["containment80"][
                 "stop"
             ]
 
             time80_ns.append(1e9 * (t80stop - t80start))
 
         ax_tsf_sum.plot(
-            cxs_deg, time80_ns, PAXEL_STYLE[paxkey], color=MIRROR_COLORS[mkey]
+            cxs_deg, time80_ns, PAXEL_STYLE[pkey], color=MIRROR_COLORS[mkey]
         )
 ax_tsf_sum.set_xlabel(OFF_AXIS_ANGLE_LABEL)
 ax_tsf_sum.set_ylabel(r"duration 80% / ns")

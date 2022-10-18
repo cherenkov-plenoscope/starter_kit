@@ -78,29 +78,39 @@ PROPAGATION_CONFIG = {
 
 
 def make_plenoscope_scenery_for_merlict(
-    mirror_key, num_paxel_on_diagonal, cfg,
+    mirror_key,
+    num_paxel_on_diagonal,
+    config,
+    off_axis_angles_deg,
 ):
     mirror = MIRRORS[mirror_key](
-        focal_length=cfg["mirror"]["focal_length"],
-        outer_radius=cfg["mirror"]["outer_radius"],
+        focal_length=config["mirror"]["focal_length"],
+        outer_radius=config["mirror"]["outer_radius"],
     )
 
     # ------------------------------------------
-    sensor_part = {
+    alpha = np.deg2rad(off_axis_angles_deg)
+    f = config["mirror"]["focal_length"]
+
+    posx = f * np.sin(alpha)
+    posy = 0.0
+    posz = f * np.cos(alpha)
+
+    sensor = {
         "type": "LightFieldSensor",
         "name": "light_field_sensor",
-        "pos": [0, 0, cfg["mirror"]["focal_length"]],
-        "rot": [0, 0, 0],
-        "expected_imaging_system_focal_length": cfg["mirror"]["focal_length"],
-        "expected_imaging_system_aperture_radius": cfg["mirror"][
+        "pos": [posx, posy, posz],
+        "rot": [0, -alpha, 0],
+        "expected_imaging_system_focal_length": config["mirror"]["focal_length"],
+        "expected_imaging_system_aperture_radius": config["mirror"][
             "inner_radius"
         ],
-        "max_FoV_diameter_deg": 2.0 * cfg["sensor"]["fov_radius_deg"],
-        "hex_pixel_FoV_flat2flat_deg": cfg["sensor"][
+        "max_FoV_diameter_deg": 2.0 * config["sensor"]["fov_radius_deg"],
+        "hex_pixel_FoV_flat2flat_deg": config["sensor"][
             "hex_pixel_fov_flat2flat_deg"
         ],
         "num_paxel_on_pixel_diagonal": num_paxel_on_diagonal,
-        "housing_overhead": cfg["sensor"]["housing_overhead"],
+        "housing_overhead": config["sensor"]["housing_overhead"],
         "lens_refraction_vs_wavelength": "lens_refraction_vs_wavelength",
         "bin_reflection_vs_wavelength": "mirror_reflectivity_vs_wavelength",
         "children": [],
@@ -110,7 +120,7 @@ def make_plenoscope_scenery_for_merlict(
         "functions": [
             {
                 "name": "mirror_reflectivity_vs_wavelength",
-                "argument_versus_value": [[2.238e-07, 1.0], [7.010e-07, 1.0]],
+                "argument_versus_value": [[2.238e-07, 0.8], [7.010e-07, 0.8]],
                 "comment": "Ideal mirror, perfect reflection.",
             },
             {
@@ -139,12 +149,12 @@ def make_plenoscope_scenery_for_merlict(
                 "type": "Frame",
                 "name": "Portal",
                 "pos": [0, 0, 0],
-                "rot": [0, 0, 0],
+                "rot": [0, -alpha, 0],
                 "children": [],
             }
         ],
     }
 
     scn["children"][0]["children"].append(mirror)
-    scn["children"][0]["children"].append(sensor_part)
+    scn["children"][0]["children"].append(sensor)
     return scn
