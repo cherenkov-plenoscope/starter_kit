@@ -47,8 +47,7 @@ CONFIG["mirror"]["keys"] = [
 CONFIG["mirror"]["focal_length"] = 106.5
 CONFIG["mirror"]["outer_radius"] = 41.0
 CONFIG["mirror"]["inner_radius"] = (
-    HEXAGON_INNER_OVER_OUTER_RADIUS
-    * CONFIG["mirror"]["outer_radius"]
+    HEXAGON_INNER_OVER_OUTER_RADIUS * CONFIG["mirror"]["outer_radius"]
 )
 CONFIG["sensor"] = {}
 CONFIG["sensor"]["fov_radius_deg"] = 3.25
@@ -115,31 +114,31 @@ def run(
     logger : logging.Logger
         A logger of your choice.
     """
-    logger.debug("Start")
+    logger.info("Start")
 
-    logger.debug("Make sceneries")
+    logger.info("Make sceneries")
     make_sceneries_for_light_field_geometires(work_dir=work_dir)
 
-    logger.debug("Estimate light_field_geometry")
+    logger.info("Estimate light_field_geometry")
     make_light_field_geometires(
         work_dir=work_dir,
         map_and_reduce_pool=map_and_reduce_pool,
         logger=logger,
     )
 
-    logger.debug("Make calibration source")
+    logger.info("Make calibration source")
     make_source(work_dir=work_dir)
 
-    logger.debug("Make responses to calibration source")
+    logger.info("Make responses to calibration source")
     make_responses(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
-    logger.debug("Make analysis")
+    logger.info("Make analysis")
     make_analysis(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
-    logger.debug("Plot analysis")
+    logger.info("Plot analysis")
     make_plots(work_dir=work_dir)
 
-    logger.debug("Stop")
+    logger.info("Stop")
 
 
 def read_config(work_dir):
@@ -507,67 +506,110 @@ def make_sceneries_for_light_field_geometires(work_dir):
                     f.write(json_numpy.dumps(s, indent=4))
 
 
-def make_light_field_geometires(
-    work_dir, map_and_reduce_pool, logger=json_line_logger.LoggerStdout(),
-):
-    """
-    Makes the light-field-geometries for each combination of:
-    - mirror-geometry
-    - photo-sensor-density
-    - off-axis-angle
+def make_light_field_geometires(work_dir, map_and_reduce_pool, logger):
 
-    Parameters
-    ----------
-    work_dir : str
-        Path to the work_dir
-    """
+    logger.info("lfg: Make jobs to estimate light-field-geometries.")
 
+    jobs, rjobs = _light_field_geometries_make_jobs_and_rjobs(
+        work_dir=work_dir,
+    )
+
+    logger.info("lfg: num jobs: mapping", len(jobs), " reducing", len(rjobs))
+
+    logger.info("lfg: Map")
+
+    _ = map_and_reduce_pool.map(
+        plenoirf.production.light_field_geometry.run_job, jobs
+    )
+
+    logger.info("lfg: Reduce")
+    _ = map_and_reduce_pool.map(_light_field_geometries_run_rjob, rjobs)
+    logger.info("lfg: Done")
+
+
+def _light_field_geometries_make_jobs_and_rjobs(work_dir):
     config = read_config(work_dir=work_dir)
 
-    geometries_dir = os.path.join(work_dir, "geometries")
-    os.makedirs(geometries_dir, exist_ok=True)
+    jobs = []
+    rjobs = []
 
     for mkey in config["mirror"]["keys"]:
-        mdir = os.path.join(geometries_dir, mkey)
-
         for npax in config["sensor"]["num_paxel_on_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
-            pdir = os.path.join(mdir, pkey)
-
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
                 akey = ANGLE_FMT.format(ofa)
-                angle_deg = config["sources"]["off_axis_angles_deg"][ofa]
-                adir = os.path.join(pdir, akey)
 
-                logger.debug(
-                    "Estimate geometry, "
-                    "mirror: {:s}, ".format(mkey)
-                    + "num. paxel: {:d}, ".format(npax)
-                    + "angle: {:.2f}deg".format(angle_deg)
-                )
+                adir = os.path.join(work_dir, "geometries", mkey, pkey, akey,)
 
-                _num_blocks = config["light_field_geometry"]["num_blocks"]
-                _num_blocks *= guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
-                    num_paxel_on_diagonal=npax
-                )
+                out_dir = os.path.join(adir, "light_field_geometry")
 
-                _num_photons_per_block = config["light_field_geometry"][
-                    "num_photons_per_block"
-                ]
+                if not os.path.exists(out_dir):
 
-                plenoirf._estimate_light_field_geometry_of_plenoscope(
-                    config={
-                        "light_field_geometry": {
-                            "num_blocks": _num_blocks,
-                            "num_photons_per_block": _num_photons_per_block,
-                        }
-                    },
-                    run_dir=adir,
-                    map_and_reduce_pool=map_and_reduce_pool,
-                    executables=config["executables"],
-                    logger=logger,
-                    make_plots=(npax < 3),
-                )
+                    # mapping
+                    # -------
+                    map_dir = os.path.join(adir, "light_field_geometry.map")
+                    os.makedirs(map_dir, exist_ok=True)
+
+                    _num_blocks = config["light_field_geometry"]["num_blocks"]
+                    _num_blocks *= guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
+                        num_paxel_on_diagonal=npax
+                    )
+
+                    _num_photons_per_block = config["light_field_geometry"][
+                        "num_photons_per_block"
+                    ]
+
+                    _jobs = plenoirf.production.light_field_geometry.make_jobs(
+                        merlict_map_path=config["executables"][
+                            "merlict_plenoscope_calibration_map_path"
+                        ],
+                        scenery_path=os.path.join(adir, "input", "scenery"),
+                        map_dir=map_dir,
+                        num_photons_per_block=_num_photons_per_block,
+                        num_blocks=_num_blocks,
+                        random_seed=0,
+                    )
+
+                    jobs += _jobs
+
+                    # reducing
+                    # --------
+                    rjob = {}
+                    rjob["work_dir"] = work_dir
+                    rjob["mkey"] = mkey
+                    rjob["pkey"] = pkey
+                    rjob["akey"] = akey
+                    rjobs.append(rjob)
+
+    return jobs, rjobs
+
+
+def _light_field_geometries_run_rjob(rjob):
+    config = read_config(work_dir=rjob["work_dir"])
+
+    adir = os.path.join(
+        rjob["work_dir"],
+        "geometries",
+        rjob["mkey"],
+        rjob["pkey"],
+        rjob["akey"],
+    )
+
+    map_dir = os.path.join(adir, "light_field_geometry.map")
+    out_dir = os.path.join(adir, "light_field_geometry")
+
+    rc = plenoirf.production.light_field_geometry.reduce(
+        merlict_reduce_path=config["executables"][
+            "merlict_plenoscope_calibration_reduce_path"
+        ],
+        map_dir=map_dir,
+        out_dir=out_dir,
+    )
+
+    if rc == 0:
+        shutil.rmtree(map_dir)
+
+    return rc
 
 
 def read_analysis(work_dir):

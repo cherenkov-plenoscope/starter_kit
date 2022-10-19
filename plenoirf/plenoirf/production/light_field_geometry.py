@@ -34,16 +34,19 @@ def make_jobs(
         The random_seed for the estimate.
     """
     jobs = []
-    for seed in np.arange(random_seed, num_blocks):
+    running_seed = int(random_seed)
+
+    for i in range(num_blocks):
         jobs.append(
             {
                 "merlict_map_path": merlict_map_path,
                 "scenery_path": scenery_path,
-                "random_seed": seed,
+                "random_seed": running_seed,
                 "map_dir": map_dir,
                 "num_photons_per_block": num_photons_per_block,
             }
         )
+        running_seed += 1
     return jobs
 
 
