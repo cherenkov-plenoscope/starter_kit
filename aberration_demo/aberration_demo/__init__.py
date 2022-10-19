@@ -53,7 +53,7 @@ CFG["sensor"]["housing_overhead"] = 1.1
 CFG["sensor"]["hex_pixel_fov_flat2flat_deg"] = 0.06667
 CFG["sensor"]["num_paxel_on_diagonal"] = [1, 3, 9]
 CFG["light_field_geometry"] = {}
-CFG["light_field_geometry"]["num_blocks"] = 24
+CFG["light_field_geometry"]["num_blocks"] = 5
 CFG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
 CFG["binning"] = analysis.BINNING
 
@@ -62,6 +62,23 @@ ANGLE_FMT = "angle{:06d}"
 PAXEL_FMT = "paxel{:06d}"
 
 def init(work_dir, config=CFG):
+    """
+    Initialize the work_dir, i.e. the base of all operations to explore how
+    plenoptics can compensate distortions and aberrations.
+
+    When initialized, you might want to adjust the work_dir/config.json.
+    Then you call run(work_dir) to run the exploration.
+
+    Parameters
+    ----------
+    work_dir : str
+        The path to the work_dir.
+    config : dict
+        The configuration of our explorations.
+        Configure the different geometries of the mirrors,
+        the different off-axis-angles,
+        and the number of photo-sensors in the light-field-sensor.
+    """
     os.makedirs(work_dir, exist_ok=True)
 
     with open(os.path.join(work_dir, "config.json"), "wt") as f:
@@ -78,6 +95,24 @@ def run(
     map_and_reduce_pool=multiprocessing.Pool(4),
     logger=json_line_logger.LoggerStdout(),
 ):
+    """
+    Runs the entire exploration.
+        - Makes the sceneries with the optics
+        - Estimates the light-field-geometries of the optical instruments.
+        - Makes the calibration-source.
+        - Makes the response of each instrument to the calibration-source.
+        - Analyses each response.
+        - Makes overview plots of the responses.
+
+    Parameters
+    ----------
+    work_dir : str
+        The path to the work_dir.
+    map_and_reduce_pool : pool
+        Must have a map()-function. Used for parallel computing.
+    logger : logging.Logger
+        A logger of your choice.
+    """
     logger.debug("Start")
 
     logger.debug("Make sceneries")
@@ -106,21 +141,56 @@ def run(
 
 
 def read_config(work_dir):
+    """
+    Returns the config in work_dir/config.json.
+
+    Parameters
+    ----------
+    work_dir : str
+        Path to the work_dir
+    """
     with open(os.path.join(work_dir, "config.json"), "rt") as f:
         config = json_numpy.loads(f.read())
     return config
 
 
 def LightFieldGeometry(path, off_axis_angle_deg):
+    """
+    Returns a plenopy.LightFieldGeometry(path) but de-rotated by
+    off_axis_angle_deg in cx.
+
+    Parameters
+    ----------
+    path : str
+        Path to the plenopy.LightFieldGeometry
+    off_axis_angle_deg : float
+        The off-axis-angle of the light.
+    """
     lfg = plenopy.LightFieldGeometry(path=path)
     lfg.cx_mean += np.deg2rad(off_axis_angle_deg)
     return lfg
+
+
+def guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
+    num_paxel_on_diagonal
+):
+    return (num_paxel_on_diagonal * num_paxel_on_diagonal)
 
 
 def make_responses(
     work_dir,
     map_and_reduce_pool=multiprocessing.Pool(4),
 ):
+    """
+    Makes the responses of the instruments to the calibration-sources.
+
+    Parameters
+    ----------
+    work_dir : str
+        Path to the work_dir
+    map_and_reduce_pool : pool
+        Used for parallel computing.
+    """
     jobs =  _responses_make_jobs(work_dir=work_dir)
     _ = map_and_reduce_pool.map(_responses_run_job, jobs)
 
@@ -381,6 +451,17 @@ def make_analysis(
 
 
 def make_source(work_dir):
+    """
+    Makes the calibration-source.
+    This is a bundle of parallel photons coming from zenith.
+    It is written to work_dir/source.tar and is in the CORSIKA-like format
+    EvnetTape.
+
+    Parameters
+    ----------
+    work_dir : str
+        Path to the work_dir
+    """
     config = read_config(work_dir=work_dir)
 
     source_path = os.path.join(work_dir, "source.tar")
@@ -398,6 +479,17 @@ def make_source(work_dir):
 
 
 def make_sceneries_for_light_field_geometires(work_dir):
+    """
+    Makes the sceneries of the instruments for each combination of:
+    - mirror-geometry
+    - photo-sensor-density
+    - off-axis-angle
+
+    Parameters
+    ----------
+    work_dir : str
+        Path to the work_dir
+    """
     config = read_config(work_dir=work_dir)
 
     geometries_dir = os.path.join(work_dir, "geometries")
@@ -433,6 +525,18 @@ def make_light_field_geometires(
     map_and_reduce_pool=multiprocessing.Pool(4),
     logger=json_line_logger.LoggerStdout(),
 ):
+    """
+    Makes the light-field-geometries for each combination of:
+    - mirror-geometry
+    - photo-sensor-density
+    - off-axis-angle
+
+    Parameters
+    ----------
+    work_dir : str
+        Path to the work_dir
+    """
+
     config = read_config(work_dir=work_dir)
 
     geometries_dir = os.path.join(work_dir, "geometries")
@@ -457,15 +561,18 @@ def make_light_field_geometires(
                     "angle: {:.2f}deg".format(angle_deg)
                 )
 
+                _num_blocks = config["light_field_geometry"]["num_blocks"]
+                _num_blocks *= guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
+                    num_paxel_on_diagonal=npax
+                )
+
+                _num_photons_per_block = config["light_field_geometry"]["num_photons_per_block"]
+
                 plenoirf._estimate_light_field_geometry_of_plenoscope(
                     config={
                         "light_field_geometry": {
-                            "num_blocks": config["light_field_geometry"][
-                                "num_blocks"
-                            ],
-                            "num_photons_per_block": config[
-                                "light_field_geometry"
-                            ]["num_photons_per_block"],
+                            "num_blocks": _num_blocks,
+                            "num_photons_per_block": _num_photons_per_block,
                         }
                     },
                     run_dir=adir,
