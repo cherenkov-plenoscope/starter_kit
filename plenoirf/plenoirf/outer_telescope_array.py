@@ -7,8 +7,9 @@ CENTER_BIN = NUM_BINS_RADIUS
 
 
 def init_telescope_positions_in_annulus(outer_radius, inner_radius):
-    ccouter, rrouter = skimage.draw.circle(c=0, r=0, radius=outer_radius)
-    ccinner, rrinner = skimage.draw.circle(c=0, r=0, radius=inner_radius)
+    ccouter, rrouter = skimage.draw.disk(center=(0, 0), radius=outer_radius)
+    ccinner, rrinner = skimage.draw.disk(center=(0, 0), radius=inner_radius)
+
     pos = set()
     for i in range(len(ccouter)):
         pos.add((ccouter[i], rrouter[i]))
