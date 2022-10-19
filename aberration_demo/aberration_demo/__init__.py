@@ -94,7 +94,10 @@ def init(work_dir, config=CONFIG):
 
 
 def run(
-    work_dir, map_and_reduce_pool, logger=json_line_logger.LoggerStdout(),
+    work_dir,
+    map_and_reduce_pool,
+    logger=json_line_logger.LoggerStdout(),
+    desired_num_bunbles=400,
 ):
     """
     Runs the entire exploration.
@@ -124,6 +127,7 @@ def run(
         work_dir=work_dir,
         map_and_reduce_pool=map_and_reduce_pool,
         logger=logger,
+        desired_num_bunbles=desired_num_bunbles,
     )
 
     logger.info("Make calibration source")
@@ -506,8 +510,9 @@ def make_sceneries_for_light_field_geometires(work_dir):
                     f.write(json_numpy.dumps(s, indent=4))
 
 
-def make_light_field_geometires(work_dir, map_and_reduce_pool, logger):
-
+def make_light_field_geometires(
+    work_dir, map_and_reduce_pool, logger, desired_num_bunbles=400,
+):
     logger.info("lfg: Make jobs to estimate light-field-geometries.")
 
     jobs, rjobs = _light_field_geometries_make_jobs_and_rjobs(
@@ -520,15 +525,27 @@ def make_light_field_geometires(work_dir, map_and_reduce_pool, logger):
         )
     )
 
+    bundle_jobs = plenoirf.bundle.make_jobs_in_bundles(
+        jobs=jobs, desired_num_bunbles=desired_num_bunbles,
+    )
+
     logger.info("lfg: Map")
 
     _ = map_and_reduce_pool.map(
-        plenoirf.production.light_field_geometry.run_job, jobs
+        _light_field_geometries_run_jobs_in_bundles, bundle_jobs
     )
 
     logger.info("lfg: Reduce")
     _ = map_and_reduce_pool.map(_light_field_geometries_run_rjob, rjobs)
     logger.info("lfg: Done")
+
+
+def _light_field_geometries_run_jobs_in_bundles(bundle):
+    results = []
+    for job in bundle:
+        result = plenoirf.production.light_field_geometry.run_job(job)
+        results.append(result)
+    return results
 
 
 def _light_field_geometries_make_jobs_and_rjobs(work_dir):
