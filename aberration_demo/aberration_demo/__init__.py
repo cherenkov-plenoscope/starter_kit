@@ -103,7 +103,7 @@ def run(
     make_responses(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
     logger.debug("Make analysis")
-    make_analysis(work_dir=work_dir)
+    make_analysis(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
     logger.debug("Plot analysis")
     make_plots(work_dir=work_dir)
@@ -158,8 +158,10 @@ def _responses_run_job(job):
         job["pkey"],
         job["akey"]
     )
+    os.makedirs(adir, exist_ok=True)
+    response_event_path = os.path.join(adir, "1")
 
-    if not os.path.exists(adir):
+    if not os.path.exists(response_event_path):
         plenoirf.production.merlict.plenoscope_propagator(
             corsika_run_path=os.path.join(job["work_dir"], "source.tar"),
             output_path=adir,
@@ -190,146 +192,188 @@ def _responses_run_job(job):
     return 1
 
 
-
-def make_analysis(work_dir):
-    CONTAINMENT_PERCENTILE = 80
-    OBJECT_DISTANCE = 1e6
+def _analysis_make_jobs(
+    work_dir,
+    containment_percentile=80,
+    object_distance_m=1e6,
+):
+    assert 0.0 < containment_percentile <= 100.0
+    assert object_distance_m > 0.0
 
     with open(os.path.join(work_dir, "config.json"), "rt") as f:
         config = json_numpy.loads(f.read())
 
-    prng = np.random.Generator(np.random.PCG64(config["seed"]))
-
-    analysis_dir = os.path.join(work_dir, "analysis")
-    os.makedirs(analysis_dir, exist_ok=True)
+    jobs = []
+    runningseed = int(config["seed"])
 
     for mkey in config["mirror"]["keys"]:
-        mdir = os.path.join(analysis_dir, mkey)
-        os.makedirs(mdir, exist_ok=True)
-
         for npax in config["sensor"]["num_paxel_on_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
-            pdir = os.path.join(mdir, pkey)
-            os.makedirs(pdir, exist_ok=True)
-
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
                 akey = ANGLE_FMT.format(ofa)
                 angle_deg = config["sources"]["off_axis_angles_deg"][ofa]
-                adir = os.path.join(pdir, akey)
-                os.makedirs(adir, exist_ok=True)
-                summary_path = os.path.join(adir, "summary.json")
 
-                if not os.path.exists(summary_path):
-                    light_field_geometry = LightFieldGeometry(
-                        path=os.path.join(
-                            work_dir,
-                            "geometries",
-                            mkey,
-                            pkey,
-                            akey,
-                            "light_field_geometry",
-                        ),
-                        off_axis_angle_deg=angle_deg,
-                    )
+                job = {}
+                job["work_dir"] = work_dir
+                job["mkey"] = mkey
+                job["pkey"] = pkey
+                job["akey"] = akey
+                job["off_axis_angle_deg"] = angle_deg
+                job["seed"] = runningseed
+                job["object_distance_m"] = object_distance_m
+                job["containment_percentile"] = containment_percentile
+                jobs.append(job)
+                runningseed += 1
 
-                    event = plenopy.Event(
-                        path=os.path.join(
-                            work_dir, "responses", mkey, pkey, akey, "1",
-                        ),
-                        light_field_geometry=light_field_geometry,
-                    )
+    return jobs
 
-                    print(mkey, pkey, akey)
 
-                    calibrated_response = analysis.calibrate_plenoscope_response(
-                        light_field_geometry=light_field_geometry,
-                        event=event,
-                        object_distance=OBJECT_DISTANCE,
-                    )
+def _analysis_run_job(job):
 
-                    cres = calibrated_response
+    adir = os.path.join(
+        job["work_dir"],
+        "analysis",
+        job["mkey"],
+        job["pkey"],
+        job["akey"]
+    )
+    os.makedirs(adir, exist_ok=True)
+    summary_path = os.path.join(adir, "summary.json")
 
-                    print("image encirclement2d")
-                    psf_cx, psf_cy, psf_angle80 = analysis.encirclement2d(
-                        x=cres["image_beams"]["cx"],
-                        y=cres["image_beams"]["cy"],
-                        x_std=cres["image_beams"]["cx_std"],
-                        y_std=cres["image_beams"]["cy_std"],
-                        weights=cres["image_beams"]["weights"],
-                        prng=prng,
-                        percentile=CONTAINMENT_PERCENTILE,
-                        num_sub_samples=1,
-                    )
+    if os.path.exists(summary_path):
+        return 1
 
-                    thisbinning = dict(config["binning"])
-                    thisbinning["image"]["center"]["cx_deg"] = config[
-                        "sources"
-                    ]["off_axis_angles_deg"][ofa]
-                    thisbinning["image"]["center"]["cy_deg"] = 0.0
-                    thisimg_bin_edges = analysis.binning_image_bin_edges(
-                        binning=thisbinning
-                    )
+    prng = np.random.Generator(np.random.PCG64(job["seed"]))
 
-                    print("image histogram2d_std")
-                    imgraw = analysis.histogram2d_std(
-                        x=cres["image_beams"]["cx"],
-                        y=cres["image_beams"]["cy"],
-                        x_std=cres["image_beams"]["cx_std"],
-                        y_std=cres["image_beams"]["cy_std"],
-                        weights=cres["image_beams"]["weights"],
-                        bins=thisimg_bin_edges,
-                        prng=prng,
-                        num_sub_samples=1000,
-                    )[0]
+    light_field_geometry = LightFieldGeometry(
+        path=os.path.join(
+            job["work_dir"],
+            "geometries",
+            job["mkey"],
+            job["pkey"],
+            job["akey"],
+            "light_field_geometry",
+        ),
+        off_axis_angle_deg=job["off_axis_angle_deg"],
+    )
 
-                    print("time encirclement1d")
-                    time_80_start, time_80_stop = analysis.encirclement1d(
-                        x=cres["time"]["bin_centers"],
-                        f=cres["time"]["weights"],
-                        percentile=CONTAINMENT_PERCENTILE,
-                    )
-                    print("time full_width_half_maximum")
-                    (
-                        time_fwhm_start,
-                        time_fwhm_stop,
-                    ) = analysis.full_width_half_maximum(
-                        x=cres["time"]["bin_centers"],
-                        f=cres["time"]["weights"],
-                    )
+    event = plenopy.Event(
+        path=os.path.join(
+            job["work_dir"],
+            "responses",
+            job["mkey"],
+            job["pkey"],
+            job["akey"],
+            "1",
+        ),
+        light_field_geometry=light_field_geometry,
+    )
 
-                    print("export")
-                    out = {}
-                    out["statistics"] = {}
-                    out["statistics"]["image_beams"] = {}
-                    out["statistics"]["image_beams"][
-                        "total"
-                    ] = light_field_geometry.number_lixel
-                    out["statistics"]["image_beams"]["valid"] = np.sum(
-                        cres["image_beams"]["valid"]
-                    )
-                    out["statistics"]["photons"] = {}
-                    out["statistics"]["photons"][
-                        "total"
-                    ] = event.raw_sensor_response.number_photons
-                    out["statistics"]["photons"]["valid"] = np.sum(
-                        cres["image_beams"]["weights"]
-                    )
+    print(job["mkey"], job["pkey"], job["akey"])
 
-                    out["time"] = cres["time"]
-                    out["time"]["fwhm"] = {}
-                    out["time"]["fwhm"]["start"] = time_fwhm_start
-                    out["time"]["fwhm"]["stop"] = time_fwhm_stop
-                    out["time"]["containment80"] = {}
-                    out["time"]["containment80"]["start"] = time_80_start
-                    out["time"]["containment80"]["stop"] = time_80_stop
+    calibrated_response = analysis.calibrate_plenoscope_response(
+        light_field_geometry=light_field_geometry,
+        event=event,
+        object_distance=job["object_distance_m"],
+    )
 
-                    out["image"] = {}
-                    out["image"]["angle80"] = psf_angle80
-                    out["image"]["binning"] = thisbinning
-                    out["image"]["raw"] = imgraw
+    cres = calibrated_response
 
-                    with open(summary_path, "wt") as f:
-                        f.write(json_numpy.dumps(out))
+    print("image encirclement2d")
+    psf_cx, psf_cy, psf_angle80 = analysis.encirclement2d(
+        x=cres["image_beams"]["cx"],
+        y=cres["image_beams"]["cy"],
+        x_std=cres["image_beams"]["cx_std"],
+        y_std=cres["image_beams"]["cy_std"],
+        weights=cres["image_beams"]["weights"],
+        prng=prng,
+        percentile=job["containment_percentile"],
+        num_sub_samples=1,
+    )
+
+    thisbinning = dict(config["binning"])
+    thisbinning["image"]["center"]["cx_deg"] = job["off_axis_angle_deg"]
+    thisbinning["image"]["center"]["cy_deg"] = 0.0
+    thisimg_bin_edges = analysis.binning_image_bin_edges(
+        binning=thisbinning
+    )
+
+    print("image histogram2d_std")
+    imgraw = analysis.histogram2d_std(
+        x=cres["image_beams"]["cx"],
+        y=cres["image_beams"]["cy"],
+        x_std=cres["image_beams"]["cx_std"],
+        y_std=cres["image_beams"]["cy_std"],
+        weights=cres["image_beams"]["weights"],
+        bins=thisimg_bin_edges,
+        prng=prng,
+        num_sub_samples=1000,
+    )[0]
+
+    print("time encirclement1d")
+    time_80_start, time_80_stop = analysis.encirclement1d(
+        x=cres["time"]["bin_centers"],
+        f=cres["time"]["weights"],
+        percentile=CONTAINMENT_PERCENTILE,
+    )
+    print("time full_width_half_maximum")
+    (
+        time_fwhm_start,
+        time_fwhm_stop,
+    ) = analysis.full_width_half_maximum(
+        x=cres["time"]["bin_centers"],
+        f=cres["time"]["weights"],
+    )
+
+    print("export")
+    out = {}
+    out["statistics"] = {}
+    out["statistics"]["image_beams"] = {}
+    out["statistics"]["image_beams"][
+        "total"
+    ] = light_field_geometry.number_lixel
+    out["statistics"]["image_beams"]["valid"] = np.sum(
+        cres["image_beams"]["valid"]
+    )
+    out["statistics"]["photons"] = {}
+    out["statistics"]["photons"][
+        "total"
+    ] = event.raw_sensor_response.number_photons
+    out["statistics"]["photons"]["valid"] = np.sum(
+        cres["image_beams"]["weights"]
+    )
+
+    out["time"] = cres["time"]
+    out["time"]["fwhm"] = {}
+    out["time"]["fwhm"]["start"] = time_fwhm_start
+    out["time"]["fwhm"]["stop"] = time_fwhm_stop
+    out["time"]["containment80"] = {}
+    out["time"]["containment80"]["start"] = time_80_start
+    out["time"]["containment80"]["stop"] = time_80_stop
+
+    out["image"] = {}
+    out["image"]["angle80"] = psf_angle80
+    out["image"]["binning"] = thisbinning
+    out["image"]["raw"] = imgraw
+
+    with open(summary_path, "wt") as f:
+        f.write(json_numpy.dumps(out))
+
+    return 1
+
+
+def make_analysis(
+    work_dir,
+    object_distance_m=1e6,
+    containment_percentile=80,
+    map_and_reduce_pool=multiprocessing.Pool(4),
+):
+    jobs = _analysis_make_jobs(
+        work_dir=work_dir,
+        object_distance_m=object_distance_m,
+        containment_percentile=containment_percentile,
+    )
+    _ map_and_reduce_pool.map(_responses_run_job, jobs)
 
 
 def make_source(work_dir):
