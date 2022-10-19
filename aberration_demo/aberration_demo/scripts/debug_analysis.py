@@ -57,10 +57,11 @@ summary_path = os.path.join(adir, "summary.json")
 
 if not os.path.exists(summary_path):
     print("read light_field_geometry")
-    light_field_geometry = plenopy.LightFieldGeometry(
+    light_field_geometry = abe.LightFieldGeometry(
         path=os.path.join(
-            work_dir, "geometries", mkey, pkey, "light_field_geometry",
-        )
+            work_dir, "geometries", mkey, pkey, akey, "light_field_geometry",
+        ),
+        off_axis_angle_deg=config["sources"]["off_axis_angles_deg"][ofa],
     )
 
     print("read event")
