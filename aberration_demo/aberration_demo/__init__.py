@@ -92,7 +92,7 @@ def init(work_dir, config=CFG):
 
 def run(
     work_dir,
-    map_and_reduce_pool=multiprocessing.Pool(4),
+    map_and_reduce_pool,
     logger=json_line_logger.LoggerStdout(),
 ):
     """
@@ -179,7 +179,7 @@ def guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
 
 def make_responses(
     work_dir,
-    map_and_reduce_pool=multiprocessing.Pool(4),
+    map_and_reduce_pool,
 ):
     """
     Makes the responses of the instruments to the calibration-sources.
@@ -303,7 +303,6 @@ def _analysis_make_jobs(
 
 
 def _analysis_run_job(job):
-
     adir = os.path.join(
         job["work_dir"],
         "analysis",
@@ -317,6 +316,7 @@ def _analysis_run_job(job):
     if os.path.exists(summary_path):
         return 1
 
+    config = read_config(work_dir=job["work_dir"])
     prng = np.random.Generator(np.random.PCG64(job["seed"]))
 
     light_field_geometry = LightFieldGeometry(
@@ -388,7 +388,7 @@ def _analysis_run_job(job):
     time_80_start, time_80_stop = analysis.encirclement1d(
         x=cres["time"]["bin_centers"],
         f=cres["time"]["weights"],
-        percentile=CONTAINMENT_PERCENTILE,
+        percentile=job["containment_percentile"],
     )
     print("time full_width_half_maximum")
     (
@@ -438,16 +438,16 @@ def _analysis_run_job(job):
 
 def make_analysis(
     work_dir,
+    map_and_reduce_pool,
     object_distance_m=1e6,
     containment_percentile=80,
-    map_and_reduce_pool=multiprocessing.Pool(4),
 ):
     jobs = _analysis_make_jobs(
         work_dir=work_dir,
         object_distance_m=object_distance_m,
         containment_percentile=containment_percentile,
     )
-    _ = map_and_reduce_pool.map(_responses_run_job, jobs)
+    _ = map_and_reduce_pool.map(_analysis_run_job, jobs)
 
 
 def make_source(work_dir):
@@ -512,7 +512,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
                     os.path.join(scenery_dir, "scenery.json"), "wt"
                 ) as f:
                     s = merlict.make_plenoscope_scenery_for_merlict(
-                        mkey=mkey,
+                        mirror_key=mkey,
                         num_paxel_on_diagonal=npax,
                         config=config,
                         off_axis_angles_deg=config["sources"]["off_axis_angles_deg"][ofa]
@@ -522,7 +522,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
 
 def make_light_field_geometires(
     work_dir,
-    map_and_reduce_pool=multiprocessing.Pool(4),
+    map_and_reduce_pool,
     logger=json_line_logger.LoggerStdout(),
 ):
     """

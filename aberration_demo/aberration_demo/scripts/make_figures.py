@@ -116,7 +116,7 @@ for mkey in coll:
             (
                 bin_edges_cx,
                 bin_edges_cy,
-            ) = aberration_demo.analysis.binning_image_bin_edges(
+            ) = abe.analysis.binning_image_bin_edges(
                 binning=tcoll["image"]["binning"]
             )
             bin_edges_cx_deg = np.rad2deg(bin_edges_cx)
@@ -351,9 +351,9 @@ MIRROR_COLORS = {
 }
 
 PAXEL_STYLE = {
-    "paxel1": "o-",
-    "paxel3": "o--",
-    "paxel9": "o:",
+    abe.PAXEL_FMT.format(1): "o-",
+    abe.PAXEL_FMT.format(3): "o--",
+    abe.PAXEL_FMT.format(9): "o:",
 }
 
 
@@ -368,7 +368,7 @@ for mkey in MIRROR_COLORS:
         cxs_deg = []
         theta80_rad = []
         for iofa, akey in enumerate(coll[mkey][pkey]):
-            cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa][0])
+            cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa])
             theta80_rad.append(coll[mkey][pkey][akey]["image"]["angle80"])
         theta80_rad = np.array(theta80_rad)
 
@@ -401,7 +401,7 @@ for mkey in MIRROR_COLORS:
         cxs_deg = []
         time80_ns = []
         for iofa, akey in enumerate(coll[mkey][pkey]):
-            cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa][0])
+            cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa])
             t80start = coll[mkey][pkey][akey]["time"]["containment80"][
                 "start"
             ]
