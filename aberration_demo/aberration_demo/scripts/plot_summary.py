@@ -68,12 +68,8 @@ for mkey in config["mirror"]["keys"]:
             if akey not in coll[mkey][pkey]:
                 continue
 
-            t_stop = coll[mkey][pkey][akey]["time"]["containment80"][
-                "stop"
-            ]
-            t_start = coll[mkey][pkey][akey]["time"]["containment80"][
-                "start"
-            ]
+            t_stop = coll[mkey][pkey][akey]["time"]["containment80"]["stop"]
+            t_start = coll[mkey][pkey][akey]["time"]["containment80"]["start"]
             t80s[ofa] = t_stop - t_start
         ax.plot(
             offaxis_angles_deg,

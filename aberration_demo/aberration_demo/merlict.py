@@ -78,10 +78,7 @@ PROPAGATION_CONFIG = {
 
 
 def make_plenoscope_scenery_for_merlict(
-    mirror_key,
-    num_paxel_on_diagonal,
-    config,
-    off_axis_angles_deg,
+    mirror_key, num_paxel_on_diagonal, config, off_axis_angles_deg,
 ):
     mirror = MIRRORS[mirror_key](
         focal_length=config["mirror"]["focal_length"],
@@ -101,7 +98,9 @@ def make_plenoscope_scenery_for_merlict(
         "name": "light_field_sensor",
         "pos": [posx, posy, posz],
         "rot": [0, -alpha, 0],
-        "expected_imaging_system_focal_length": config["mirror"]["focal_length"],
+        "expected_imaging_system_focal_length": config["mirror"][
+            "focal_length"
+        ],
         "expected_imaging_system_aperture_radius": config["mirror"][
             "inner_radius"
         ],

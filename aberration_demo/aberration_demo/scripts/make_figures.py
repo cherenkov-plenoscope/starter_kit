@@ -402,12 +402,8 @@ for mkey in MIRROR_COLORS:
         time80_ns = []
         for iofa, akey in enumerate(coll[mkey][pkey]):
             cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa])
-            t80start = coll[mkey][pkey][akey]["time"]["containment80"][
-                "start"
-            ]
-            t80stop = coll[mkey][pkey][akey]["time"]["containment80"][
-                "stop"
-            ]
+            t80start = coll[mkey][pkey][akey]["time"]["containment80"]["start"]
+            t80stop = coll[mkey][pkey][akey]["time"]["containment80"]["stop"]
 
             time80_ns.append(1e9 * (t80stop - t80start))
 

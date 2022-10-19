@@ -15,10 +15,10 @@ from . import analysis
 from . import calibration_source
 import json_line_logger
 
-CFG = {}
-CFG["seed"] = 42
+CONFIG = {}
+CONFIG["seed"] = 42
 
-CFG["executables"] = {
+CONFIG["executables"] = {
     "merlict_plenoscope_propagator_path": os.path.abspath(
         os.path.join("build", "merlict", "merlict-plenoscope-propagation")
     ),
@@ -32,36 +32,37 @@ CFG["executables"] = {
     ),
 }
 
-CFG["sources"] = {}
-CFG["sources"]["off_axis_angles_deg"] = [0.0, 4.0, 8.0]
-CFG["sources"]["num_photons"] = 1000 * 1000
+CONFIG["sources"] = {}
+CONFIG["sources"]["off_axis_angles_deg"] = [0.0, 4.0, 8.0]
+CONFIG["sources"]["num_photons"] = 1000 * 1000
 
-CFG["mirror"] = {}
-CFG["mirror"]["keys"] = [
+CONFIG["mirror"] = {}
+CONFIG["mirror"]["keys"] = [
     "sphere_monolith",
     "davies_cotton",
     "parabola_segmented",
 ]
-CFG["mirror"]["focal_length"] = 106.5
-CFG["mirror"]["inner_radius"] = 35.5
-CFG["mirror"]["outer_radius"] = (2 / np.sqrt(3)) * CFG["mirror"][
+CONFIG["mirror"]["focal_length"] = 106.5
+CONFIG["mirror"]["inner_radius"] = 35.5
+CONFIG["mirror"]["outer_radius"] = (2 / np.sqrt(3)) * CONFIG["mirror"][
     "inner_radius"
 ]
-CFG["sensor"] = {}
-CFG["sensor"]["fov_radius_deg"] = 6.5
-CFG["sensor"]["housing_overhead"] = 1.1
-CFG["sensor"]["hex_pixel_fov_flat2flat_deg"] = 0.06667
-CFG["sensor"]["num_paxel_on_diagonal"] = [1, 3, 9]
-CFG["light_field_geometry"] = {}
-CFG["light_field_geometry"]["num_blocks"] = 5
-CFG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
-CFG["binning"] = analysis.BINNING
+CONFIG["sensor"] = {}
+CONFIG["sensor"]["fov_radius_deg"] = 6.5
+CONFIG["sensor"]["housing_overhead"] = 1.1
+CONFIG["sensor"]["hex_pixel_fov_flat2flat_deg"] = 0.06667
+CONFIG["sensor"]["num_paxel_on_diagonal"] = [1, 3, 9]
+CONFIG["light_field_geometry"] = {}
+CONFIG["light_field_geometry"]["num_blocks"] = 5
+CONFIG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
+CONFIG["binning"] = analysis.BINNING
 
 
 ANGLE_FMT = "angle{:06d}"
 PAXEL_FMT = "paxel{:06d}"
 
-def init(work_dir, config=CFG):
+
+def init(work_dir, config=CONFIG):
     """
     Initialize the work_dir, i.e. the base of all operations to explore how
     plenoptics can compensate distortions and aberrations.
@@ -91,9 +92,7 @@ def init(work_dir, config=CFG):
 
 
 def run(
-    work_dir,
-    map_and_reduce_pool,
-    logger=json_line_logger.LoggerStdout(),
+    work_dir, map_and_reduce_pool, logger=json_line_logger.LoggerStdout(),
 ):
     """
     Runs the entire exploration.
@@ -172,14 +171,13 @@ def LightFieldGeometry(path, off_axis_angle_deg):
 
 
 def guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
-    num_paxel_on_diagonal
+    num_paxel_on_diagonal,
 ):
-    return (num_paxel_on_diagonal * num_paxel_on_diagonal)
+    return num_paxel_on_diagonal * num_paxel_on_diagonal
 
 
 def make_responses(
-    work_dir,
-    map_and_reduce_pool,
+    work_dir, map_and_reduce_pool,
 ):
     """
     Makes the responses of the instruments to the calibration-sources.
@@ -191,7 +189,7 @@ def make_responses(
     map_and_reduce_pool : pool
         Used for parallel computing.
     """
-    jobs =  _responses_make_jobs(work_dir=work_dir)
+    jobs = _responses_make_jobs(work_dir=work_dir)
     _ = map_and_reduce_pool.map(_responses_run_job, jobs)
 
 
@@ -227,11 +225,7 @@ def _responses_make_jobs(work_dir):
 
 def _responses_run_job(job):
     adir = os.path.join(
-        job["work_dir"],
-        "responses",
-        job["mkey"],
-        job["pkey"],
-        job["akey"]
+        job["work_dir"], "responses", job["mkey"], job["pkey"], job["akey"]
     )
     os.makedirs(adir, exist_ok=True)
     response_event_path = os.path.join(adir, "1")
@@ -268,9 +262,7 @@ def _responses_run_job(job):
 
 
 def _analysis_make_jobs(
-    work_dir,
-    containment_percentile=80,
-    object_distance_m=1e6,
+    work_dir, containment_percentile=80, object_distance_m=1e6,
 ):
     assert 0.0 < containment_percentile <= 100.0
     assert object_distance_m > 0.0
@@ -304,11 +296,7 @@ def _analysis_make_jobs(
 
 def _analysis_run_job(job):
     adir = os.path.join(
-        job["work_dir"],
-        "analysis",
-        job["mkey"],
-        job["pkey"],
-        job["akey"]
+        job["work_dir"], "analysis", job["mkey"], job["pkey"], job["akey"]
     )
     os.makedirs(adir, exist_ok=True)
     summary_path = os.path.join(adir, "summary.json")
@@ -368,9 +356,7 @@ def _analysis_run_job(job):
     thisbinning = dict(config["binning"])
     thisbinning["image"]["center"]["cx_deg"] = job["off_axis_angle_deg"]
     thisbinning["image"]["center"]["cy_deg"] = 0.0
-    thisimg_bin_edges = analysis.binning_image_bin_edges(
-        binning=thisbinning
-    )
+    thisimg_bin_edges = analysis.binning_image_bin_edges(binning=thisbinning)
 
     print("image histogram2d_std")
     imgraw = analysis.histogram2d_std(
@@ -391,12 +377,8 @@ def _analysis_run_job(job):
         percentile=job["containment_percentile"],
     )
     print("time full_width_half_maximum")
-    (
-        time_fwhm_start,
-        time_fwhm_stop,
-    ) = analysis.full_width_half_maximum(
-        x=cres["time"]["bin_centers"],
-        f=cres["time"]["weights"],
+    (time_fwhm_start, time_fwhm_stop,) = analysis.full_width_half_maximum(
+        x=cres["time"]["bin_centers"], f=cres["time"]["weights"],
     )
 
     print("export")
@@ -515,15 +497,15 @@ def make_sceneries_for_light_field_geometires(work_dir):
                         mirror_key=mkey,
                         num_paxel_on_diagonal=npax,
                         config=config,
-                        off_axis_angles_deg=config["sources"]["off_axis_angles_deg"][ofa]
+                        off_axis_angles_deg=config["sources"][
+                            "off_axis_angles_deg"
+                        ][ofa],
                     )
                     f.write(json_numpy.dumps(s, indent=4))
 
 
 def make_light_field_geometires(
-    work_dir,
-    map_and_reduce_pool,
-    logger=json_line_logger.LoggerStdout(),
+    work_dir, map_and_reduce_pool, logger=json_line_logger.LoggerStdout(),
 ):
     """
     Makes the light-field-geometries for each combination of:
@@ -556,9 +538,9 @@ def make_light_field_geometires(
 
                 logger.debug(
                     "Estimate geometry, "
-                    "mirror: {:s}, ".format(mkey) +
-                    "num. paxel: {:d}, ".format(npax) +
-                    "angle: {:.2f}deg".format(angle_deg)
+                    "mirror: {:s}, ".format(mkey)
+                    + "num. paxel: {:d}, ".format(npax)
+                    + "angle: {:.2f}deg".format(angle_deg)
                 )
 
                 _num_blocks = config["light_field_geometry"]["num_blocks"]
@@ -566,7 +548,9 @@ def make_light_field_geometires(
                     num_paxel_on_diagonal=npax
                 )
 
-                _num_photons_per_block = config["light_field_geometry"]["num_photons_per_block"]
+                _num_photons_per_block = config["light_field_geometry"][
+                    "num_photons_per_block"
+                ]
 
                 plenoirf._estimate_light_field_geometry_of_plenoscope(
                     config={

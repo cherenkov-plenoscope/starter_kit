@@ -2,7 +2,9 @@ import corsika_primary as cpw
 import numpy as np
 
 
-def write_photon_bunches(cx, cy, size, path, prng, aperture_radius, BUFFER_SIZE=10000):
+def write_photon_bunches(
+    cx, cy, size, path, prng, aperture_radius, BUFFER_SIZE=10000
+):
     """
     Draw parallel and isochor corsika-bunches and write them into a
     corsika like EventTape.
