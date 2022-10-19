@@ -469,7 +469,7 @@ def _populate_table_of_thrown_air_showers(
 
 def run(
     run_dir,
-    map_and_reduce_pool=multiprocessing.Pool(1),
+    map_and_reduce_pool,
     num_parallel_jobs=2000,
     executables=EXAMPLE_EXECUTABLE_PATHS,
     TMP_DIR_ON_WORKERNODE=True,
