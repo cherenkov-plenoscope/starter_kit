@@ -15,6 +15,8 @@ from . import analysis
 from . import calibration_source
 import json_line_logger
 
+HEXAGON_INNER_OVER_OUTER_RADIUS = np.sqrt(3) * 0.5
+
 CONFIG = {}
 CONFIG["seed"] = 42
 
@@ -43,10 +45,13 @@ CONFIG["mirror"]["keys"] = [
     "parabola_segmented",
 ]
 CONFIG["mirror"]["focal_length"] = 106.5
-CONFIG["mirror"]["inner_radius"] = 0.0
 CONFIG["mirror"]["outer_radius"] = 41.0
+CONFIG["mirror"]["inner_radius"] = (
+    HEXAGON_INNER_OVER_OUTER_RADIUS
+    * CONFIG["mirror"]["outer_radius"]
+)
 CONFIG["sensor"] = {}
-CONFIG["sensor"]["fov_radius_deg"] = 6.5
+CONFIG["sensor"]["fov_radius_deg"] = 3.25
 CONFIG["sensor"]["housing_overhead"] = 1.1
 CONFIG["sensor"]["hex_pixel_fov_flat2flat_deg"] = 0.06667
 CONFIG["sensor"]["num_paxel_on_diagonal"] = [1, 3, 9]
