@@ -33,7 +33,7 @@ CONFIG["executables"] = {
 }
 
 CONFIG["sources"] = {}
-CONFIG["sources"]["off_axis_angles_deg"] = [0.0, 4.0, 8.0]
+CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 8.0, 9)
 CONFIG["sources"]["num_photons"] = 1000 * 1000
 
 CONFIG["mirror"] = {}
@@ -43,10 +43,8 @@ CONFIG["mirror"]["keys"] = [
     "parabola_segmented",
 ]
 CONFIG["mirror"]["focal_length"] = 106.5
-CONFIG["mirror"]["inner_radius"] = 35.5
-CONFIG["mirror"]["outer_radius"] = (2 / np.sqrt(3)) * CONFIG["mirror"][
-    "inner_radius"
-]
+CONFIG["mirror"]["inner_radius"] = 0.0
+CONFIG["mirror"]["outer_radius"] = 41.0
 CONFIG["sensor"] = {}
 CONFIG["sensor"]["fov_radius_deg"] = 6.5
 CONFIG["sensor"]["housing_overhead"] = 1.1
