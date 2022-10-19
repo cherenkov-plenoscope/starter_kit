@@ -3,22 +3,16 @@ import json_numpy
 import os
 import sebastians_matplotlib_addons as sebplt
 import sys
+import aberration_demo as abe
 
 work_dir = sys.argv[1]
 
-with open(os.path.join(work_dir, "config.json"), "rt") as f:
-    config = json_numpy.loads(f.read())
-
+config = abe.read_config(work_dir=work_dir)
+coll = abe.read_analysis(work_dir=work_dir)
 plot_dir = os.path.join(work_dir, "plot")
 
-with open(os.path.join(plot_dir, "summary.json"), "rt") as f:
-    coll = json_numpy.loads(f.read())
-
-offaxis_angles_deg = np.linalg.norm(
-    np.array(config["sources"]["off_axis_angles_deg"]), axis=1
-)
+offaxis_angles_deg = config["sources"]["off_axis_angles_deg"]
 max_offaxis_angle_deg = np.max(offaxis_angles_deg)
-
 
 MSTYLES = {
     "sphere_monolith": {"linestyle": "-"},
@@ -31,18 +25,19 @@ PAXSTYLES = {
     9: {"alpha": 1.0},
 }
 
-
 fig = sebplt.figure(sebplt.FIGURE_4_3)
 ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
 max_psf80s_deg = 0.0
 for mkey in config["mirror"]["keys"]:
     for npax in config["sensor"]["num_paxel_on_diagonal"]:
-        paxkey = "paxel{:d}".format(npax)
+        pkey = abe.PAXEL_FMT.format(npax)
         psf80s_deg = np.zeros(len(config["sources"]["off_axis_angles_deg"]))
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
-            ofakey = "{:03d}".format(ofa)
+            akey = abe.ANGLE_FMT.format(ofa)
+            if akey not in coll[mkey][pkey]:
+                continue
             psf80s_deg[ofa] = np.rad2deg(
-                coll[mkey][paxkey][ofakey]["image"]["angle80"]
+                coll[mkey][pkey][akey]["image"]["angle80"]
             )
         ax.plot(
             offaxis_angles_deg,
@@ -65,15 +60,18 @@ ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
 max_t80 = 0.0
 for mkey in config["mirror"]["keys"]:
     for npax in config["sensor"]["num_paxel_on_diagonal"]:
-        paxkey = "paxel{:d}".format(npax)
+        pkey = abe.PAXEL_FMT.format(npax)
 
         t80s = np.zeros(len(config["sources"]["off_axis_angles_deg"]))
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
-            ofakey = "{:03d}".format(ofa)
-            t_stop = coll[mkey][paxkey][ofakey]["time"]["containment80"][
+            akey = abe.ANGLE_FMT.format(ofa)
+            if akey not in coll[mkey][pkey]:
+                continue
+
+            t_stop = coll[mkey][pkey][akey]["time"]["containment80"][
                 "stop"
             ]
-            t_start = coll[mkey][paxkey][ofakey]["time"]["containment80"][
+            t_start = coll[mkey][pkey][akey]["time"]["containment80"][
                 "start"
             ]
             t80s[ofa] = t_stop - t_start

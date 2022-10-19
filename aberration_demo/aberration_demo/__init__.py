@@ -73,12 +73,6 @@ def init(work_dir, config=CFG):
         f.write(json_numpy.dumps(merlict.PROPAGATION_CONFIG, indent=4))
 
 
-def LightFieldGeometry(path, off_axis_angle_deg):
-    lfg = plenopy.LightFieldGeometry(path=path)
-    lfg.cx_mean += np.deg2rad(off_axis_angle_deg)
-    return lfg
-
-
 def run(
     work_dir,
     map_and_reduce_pool=multiprocessing.Pool(4),
@@ -111,6 +105,18 @@ def run(
     logger.debug("Stop")
 
 
+def read_config(work_dir):
+    with open(os.path.join(work_dir, "config.json"), "rt") as f:
+        config = json_numpy.loads(f.read())
+    return config
+
+
+def LightFieldGeometry(path, off_axis_angle_deg):
+    lfg = plenopy.LightFieldGeometry(path=path)
+    lfg.cx_mean += np.deg2rad(off_axis_angle_deg)
+    return lfg
+
+
 def make_responses(
     work_dir,
     map_and_reduce_pool=multiprocessing.Pool(4),
@@ -122,8 +128,7 @@ def make_responses(
 def _responses_make_jobs(work_dir):
     jobs = []
 
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+    config = read_config(work_dir=work_dir)
 
     runningseed = int(config["seed"])
     for mkey in config["mirror"]["keys"]:
@@ -200,8 +205,7 @@ def _analysis_make_jobs(
     assert 0.0 < containment_percentile <= 100.0
     assert object_distance_m > 0.0
 
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+    config = read_config(work_dir=work_dir)
 
     jobs = []
     runningseed = int(config["seed"])
@@ -373,12 +377,11 @@ def make_analysis(
         object_distance_m=object_distance_m,
         containment_percentile=containment_percentile,
     )
-    _ map_and_reduce_pool.map(_responses_run_job, jobs)
+    _ = map_and_reduce_pool.map(_responses_run_job, jobs)
 
 
 def make_source(work_dir):
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+    config = read_config(work_dir=work_dir)
 
     source_path = os.path.join(work_dir, "source.tar")
 
@@ -395,8 +398,7 @@ def make_source(work_dir):
 
 
 def make_sceneries_for_light_field_geometires(work_dir):
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+    config = read_config(work_dir=work_dir)
 
     geometries_dir = os.path.join(work_dir, "geometries")
     os.makedirs(geometries_dir, exist_ok=True)
@@ -426,14 +428,12 @@ def make_sceneries_for_light_field_geometires(work_dir):
                     f.write(json_numpy.dumps(s, indent=4))
 
 
-
 def make_light_field_geometires(
     work_dir,
     map_and_reduce_pool=multiprocessing.Pool(4),
     logger=json_line_logger.LoggerStdout(),
 ):
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+    config = read_config(work_dir=work_dir)
 
     geometries_dir = os.path.join(work_dir, "geometries")
     os.makedirs(geometries_dir, exist_ok=True)
@@ -477,8 +477,7 @@ def make_light_field_geometires(
 
 
 def read_analysis(work_dir):
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+    config = read_config(work_dir=work_dir)
 
     coll = {}
     for mkey in config["mirror"]["keys"]:
@@ -505,8 +504,7 @@ def read_analysis(work_dir):
 
 
 def make_plots(work_dir):
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+    config = read_config(work_dir=work_dir)
 
     plot_dir = os.path.join(work_dir, "plot")
     os.makedirs(plot_dir, exist_ok=True)
@@ -595,6 +593,3 @@ def make_plots(work_dir):
                     ax.set_xlabel("time / s")
                     fig.savefig(time_path)
                     sebplt.close(fig)
-
-
-# def make_summary_plots(work_dir):

@@ -6,7 +6,7 @@ import plenopy
 import scipy
 from scipy import spatial
 from scipy import stats
-import aberration_demo
+import aberration_demo as abe
 import json_numpy
 import sebastians_matplotlib_addons as sebplt
 import sys
@@ -21,11 +21,8 @@ if argv[0] == "ipython" and argv[1] == "-i":
 
 WORK_DIR = argv[1]
 
-with open(os.path.join(WORK_DIR, "config.json"), "rt") as f:
-    config = json_numpy.loads(f.read())
-
-
-coll = aberration_demo.read_analysis(WORK_DIR)
+config = abe.read_config(work_dir=WORK_DIR)
+coll = abe.read_analysis(work_dir=WORK_DIR)
 
 # summary plot of poin-spread-functions
 # -------------------------------------
@@ -66,7 +63,7 @@ def _ax_add_paxel_and_off_axis_labels(ax):
             fontsize=10,
         )
 
-        for iofa, ofakey in enumerate(coll[mkey][pkey]):
+        for iofa, akey in enumerate(coll[mkey][pkey]):
 
             off_axis_cx_deg = config["sources"]["off_axis_angles_deg"][iofa]
             off_axis_cy_deg = 0.0
@@ -113,9 +110,9 @@ for mkey in coll:
     _ax_add_paxel_and_off_axis_labels(ax=ax_psf_labels)
 
     for isens, pkey in enumerate(coll[mkey]):
-        for iofa, ofakey in enumerate(coll[mkey][pkey]):
+        for iofa, akey in enumerate(coll[mkey][pkey]):
 
-            tcoll = coll[mkey][pkey][ofakey]
+            tcoll = coll[mkey][pkey][akey]
             (
                 bin_edges_cx,
                 bin_edges_cy,
@@ -283,8 +280,8 @@ for mkey in coll:
     _ax_add_paxel_and_off_axis_labels(ax=ax_tsf_labels)
 
     for isens, pkey in enumerate(coll[mkey]):
-        for iofa, ofakey in enumerate(coll[mkey][pkey]):
-            tcoll = coll[mkey][pkey][ofakey]
+        for iofa, akey in enumerate(coll[mkey][pkey]):
+            tcoll = coll[mkey][pkey][akey]
 
             ax_pax_off = sebplt.add_axes(
                 fig=fig_tsf,
@@ -370,9 +367,9 @@ for mkey in MIRROR_COLORS:
     for isens, pkey in enumerate(coll[mkey]):
         cxs_deg = []
         theta80_rad = []
-        for iofa, ofakey in enumerate(coll[mkey][pkey]):
+        for iofa, akey in enumerate(coll[mkey][pkey]):
             cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa][0])
-            theta80_rad.append(coll[mkey][pkey][ofakey]["image"]["angle80"])
+            theta80_rad.append(coll[mkey][pkey][akey]["image"]["angle80"])
         theta80_rad = np.array(theta80_rad)
 
         omega80_sr = plenoirf.utils.cone_solid_angle(
@@ -403,12 +400,12 @@ for mkey in MIRROR_COLORS:
     for isens, pkey in enumerate(coll[mkey]):
         cxs_deg = []
         time80_ns = []
-        for iofa, ofakey in enumerate(coll[mkey][pkey]):
+        for iofa, akey in enumerate(coll[mkey][pkey]):
             cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa][0])
-            t80start = coll[mkey][pkey][ofakey]["time"]["containment80"][
+            t80start = coll[mkey][pkey][akey]["time"]["containment80"][
                 "start"
             ]
-            t80stop = coll[mkey][pkey][ofakey]["time"]["containment80"][
+            t80stop = coll[mkey][pkey][akey]["time"]["containment80"][
                 "stop"
             ]
 
