@@ -514,7 +514,11 @@ def make_light_field_geometires(work_dir, map_and_reduce_pool, logger):
         work_dir=work_dir,
     )
 
-    logger.info("lfg: num jobs: mapping", len(jobs), " reducing", len(rjobs))
+    logger.info(
+        "lfg: num jobs: mapping {:d}, reducing {:d}".format(
+            len(jobs), len(rjobs)
+        )
+    )
 
     logger.info("lfg: Map")
 
