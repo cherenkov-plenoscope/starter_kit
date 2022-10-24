@@ -3,7 +3,6 @@ simulate different light-field-sensors
 """
 import numpy as np
 import plenoirf
-import queue_map_reduce
 import multiprocessing
 import json_numpy
 import os
