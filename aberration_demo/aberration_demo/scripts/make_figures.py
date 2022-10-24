@@ -19,20 +19,23 @@ argv = sys.argv
 if argv[0] == "ipython" and argv[1] == "-i":
     argv.pop(1)
 
-WORK_DIR = argv[1]
+work_dir = argv[1]
+out_dir = os.path.join(work_dir, "figures", "3x3")
+os.makedirs(out_dir, exist_ok=True)
 
-config = abe.read_config(work_dir=WORK_DIR)
-coll = abe.read_analysis(work_dir=WORK_DIR)
+config = abe.read_config(work_dir=work_dir)
+coll = abe.read_analysis(work_dir=work_dir)
 
 # summary plot of poin-spread-functions
 # -------------------------------------
 
+OFFAXIS_ANGLE_IDXS = [0, 4, 8]
 OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.2
 
 
 def filename(name):
-    return os.path.join(WORK_DIR, "plot", name)
+    return os.path.join(out_dir, name)
 
 
 def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
@@ -84,7 +87,7 @@ num_mirrors = len(coll)
 for mkey in coll:
     num_sensors = len(coll[mkey])
     for pkey in coll[mkey]:
-        num_offaxis = len(coll[mkey][pkey])
+        num_offaxis = len(OFFAXIS_ANGLE_IDXS)
 
     ax_hori_start = 0.1
     ax_vert_start = 0.1
@@ -110,7 +113,8 @@ for mkey in coll:
     _ax_add_paxel_and_off_axis_labels(ax=ax_psf_labels)
 
     for isens, pkey in enumerate(coll[mkey]):
-        for iofa, akey in enumerate(coll[mkey][pkey]):
+        for iofa in OFFAXIS_ANGLE_IDXS:
+            akey = abe.ANGLE_FMT.format(iofa)
 
             tcoll = coll[mkey][pkey][akey]
             (
@@ -280,13 +284,14 @@ for mkey in coll:
     _ax_add_paxel_and_off_axis_labels(ax=ax_tsf_labels)
 
     for isens, pkey in enumerate(coll[mkey]):
-        for iofa, akey in enumerate(coll[mkey][pkey]):
+        for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
+            akey = abe.ANGLE_FMT.format(ofa)
             tcoll = coll[mkey][pkey][akey]
 
             ax_pax_off = sebplt.add_axes(
                 fig=fig_tsf,
                 span=[
-                    ax_hori_start + ax_margin_width_rel + ax_width_rel * iofa,
+                    ax_hori_start + ax_margin_width_rel + ax_width_rel * iiofa,
                     ax_vert_start
                     + ax_margin_height_rel
                     + ax_height_rel * (num_sensors - isens - 1),

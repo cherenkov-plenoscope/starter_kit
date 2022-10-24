@@ -4,12 +4,22 @@ import os
 import sebastians_matplotlib_addons as sebplt
 import sys
 import aberration_demo as abe
+import plenoirf
 
-work_dir = sys.argv[1]
+sebplt.matplotlib.rcParams.update(
+    plenoirf.summary.figure.MATPLOTLIB_RCPARAMS_LATEX
+)
+
+argv = sys.argv
+if argv[0] == "ipython" and argv[1] == "-i":
+    argv.pop(1)
+
+work_dir = argv[1]
+out_dir = os.path.join(work_dir, "figures", "abc")
+os.makedirs(out_dir, exist_ok=True)
 
 config = abe.read_config(work_dir=work_dir)
 coll = abe.read_analysis(work_dir=work_dir)
-plot_dir = os.path.join(work_dir, "plot")
 
 offaxis_angles_deg = config["sources"]["off_axis_angles_deg"]
 max_offaxis_angle_deg = np.max(offaxis_angles_deg)
@@ -51,7 +61,7 @@ ax.set_ylim([0.0, 1.2 * max_psf80s_deg])
 ax.set_xlim([0.0, 1.2 * max_offaxis_angle_deg])
 ax.set_xlabel(r"off axis / $1^\circ{}$")
 ax.set_ylabel(r"psf80 / $1^\circ{}$")
-fig.savefig(os.path.join(plot_dir, "psf.jpg"))
+fig.savefig(os.path.join(out_dir, "psf.jpg"))
 sebplt.close(fig)
 
 
@@ -83,5 +93,5 @@ ax.set_ylim([0.0, 1.2 * max_t80])
 ax.set_xlim([0.0, 1.2 * max_offaxis_angle_deg])
 ax.set_xlabel(r"off axis / $1^\circ{}$")
 ax.set_ylabel(r"time / s")
-fig.savefig(os.path.join(plot_dir, "time.jpg"))
+fig.savefig(os.path.join(out_dir, "time.jpg"))
 sebplt.close(fig)
