@@ -8,7 +8,6 @@ import json_numpy
 import os
 import shutil
 import plenopy
-import sebastians_matplotlib_addons as sebplt
 from . import merlict
 from . import analysis
 from . import calibration_source
