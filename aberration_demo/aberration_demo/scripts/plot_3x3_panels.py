@@ -34,10 +34,6 @@ OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.2
 
 
-def filename(name):
-    return os.path.join(out_dir, name)
-
-
 def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
     extent = pixel_angel * num_pixel
     num_ticks = int(np.ceil(extent / tick_angle))
@@ -243,7 +239,7 @@ for mkey in coll:
                     num_steps=7,
                 )
 
-    fig_psf.savefig(filename(name="psf_" + mkey + "_images.jpg"))
+    fig_psf.savefig(os.path.join(out_dir, "psf_" + mkey + "_images.jpg"))
     sebplt.close(fig_psf)
 
     fig_psf_cmap = sebplt.figure(
@@ -254,7 +250,7 @@ for mkey in coll:
     sebplt.plt.colorbar(
         cmap_psf, cax=ax_cmap, extend="max", orientation="horizontal"
     )
-    fig_psf_cmap.savefig(filename(name="psf_" + mkey + "_cmap.jpg"))
+    fig_psf_cmap.savefig(os.path.join(out_dir, "psf_" + mkey + "_cmap.jpg"))
     sebplt.close(fig_psf_cmap)
 
 
@@ -346,76 +342,5 @@ for mkey in coll:
             else:
                 ax_pax_off.set_yticks([])
 
-    fig_tsf.savefig(filename(name="tsf_" + mkey + "_hists.jpg"))
+    fig_tsf.savefig(os.path.join(out_dir, "tsf_" + mkey + "_hists.jpg"))
     sebplt.close(fig_tsf)
-
-
-MIRROR_COLORS = {
-    "parabola_segmented": "black",
-    "davies_cotton": "gray",
-}
-
-PAXEL_STYLE = {
-    abe.PAXEL_FMT.format(1): "o-",
-    abe.PAXEL_FMT.format(3): "o--",
-    abe.PAXEL_FMT.format(9): "o:",
-}
-
-
-fig_psf_sum = sebplt.figure(style={"rows": 640, "cols": 1280, "fontsize": 1})
-ax_psf_sum = sebplt.add_axes(
-    fig=fig_psf_sum,
-    span=[0.15, 0.15, 0.8, 0.8],
-    style={"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": True},
-)
-for mkey in MIRROR_COLORS:
-    for isens, pkey in enumerate(coll[mkey]):
-        cxs_deg = []
-        theta80_rad = []
-        for iofa, akey in enumerate(coll[mkey][pkey]):
-            cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa])
-            theta80_rad.append(coll[mkey][pkey][akey]["image"]["angle80"])
-        theta80_rad = np.array(theta80_rad)
-
-        omega80_sr = plenoirf.utils.cone_solid_angle(
-            cone_radial_opening_angle_rad=theta80_rad,
-        )
-
-        omega80_deg2 = plenoirf.utils.sr2squaredeg(solid_angle_sr=omega80_sr)
-
-        ax_psf_sum.plot(
-            cxs_deg,
-            omega80_deg2,
-            PAXEL_STYLE[pkey],
-            color=MIRROR_COLORS[mkey],
-        )
-ax_psf_sum.set_xlabel(OFF_AXIS_ANGLE_LABEL)
-ax_psf_sum.set_ylabel(r"solid angle 80% / (1$^\circ$)$^{2}$")
-fig_psf_sum.savefig(filename(name="psf_overview.jpg"))
-sebplt.close(fig_psf_sum)
-
-
-fig_tsf_sum = sebplt.figure(style={"rows": 640, "cols": 1280, "fontsize": 1})
-ax_tsf_sum = sebplt.add_axes(
-    fig=fig_tsf_sum,
-    span=[0.15, 0.15, 0.8, 0.8],
-    style={"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": True},
-)
-for mkey in MIRROR_COLORS:
-    for isens, pkey in enumerate(coll[mkey]):
-        cxs_deg = []
-        time80_ns = []
-        for iofa, akey in enumerate(coll[mkey][pkey]):
-            cxs_deg.append(config["sources"]["off_axis_angles_deg"][iofa])
-            t80start = coll[mkey][pkey][akey]["time"]["containment80"]["start"]
-            t80stop = coll[mkey][pkey][akey]["time"]["containment80"]["stop"]
-
-            time80_ns.append(1e9 * (t80stop - t80start))
-
-        ax_tsf_sum.plot(
-            cxs_deg, time80_ns, PAXEL_STYLE[pkey], color=MIRROR_COLORS[mkey]
-        )
-ax_tsf_sum.set_xlabel(OFF_AXIS_ANGLE_LABEL)
-ax_tsf_sum.set_ylabel(r"duration 80% / ns")
-fig_tsf_sum.savefig(filename(name="tsf_overview.jpg"))
-sebplt.close(fig_tsf_sum)
