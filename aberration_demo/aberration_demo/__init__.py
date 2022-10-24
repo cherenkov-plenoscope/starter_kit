@@ -513,38 +513,21 @@ def make_light_field_geometires(
     work_dir, map_and_reduce_pool, logger, desired_num_bunbles=400,
 ):
     logger.info("lfg: Make jobs to estimate light-field-geometries.")
-
     jobs, rjobs = _light_field_geometries_make_jobs_and_rjobs(
-        work_dir=work_dir,
+        work_dir=work_dir
     )
-
     logger.info(
         "lfg: num jobs: mapping {:d}, reducing {:d}".format(
             len(jobs), len(rjobs)
         )
     )
-
-    bundle_jobs = plenoirf.bundle.make_jobs_in_bundles(
-        jobs=jobs, desired_num_bunbles=desired_num_bunbles,
-    )
-
     logger.info("lfg: Map")
-
     _ = map_and_reduce_pool.map(
-        _light_field_geometries_run_jobs_in_bundles, bundle_jobs
+        plenoirf.production.light_field_geometry.run_job, jobs
     )
-
     logger.info("lfg: Reduce")
     _ = map_and_reduce_pool.map(_light_field_geometries_run_rjob, rjobs)
     logger.info("lfg: Done")
-
-
-def _light_field_geometries_run_jobs_in_bundles(bundle):
-    results = []
-    for job in bundle:
-        result = plenoirf.production.light_field_geometry.run_job(job)
-        results.append(result)
-    return results
 
 
 def _light_field_geometries_make_jobs_and_rjobs(work_dir):

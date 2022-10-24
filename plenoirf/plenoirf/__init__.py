@@ -5,7 +5,6 @@ from . import table
 from . import grid
 from . import instrument_response
 from . import network_file_system as nfs
-from . import bundle
 from . import provenance
 from . import create_test_tables
 from . import reconstruction
@@ -384,7 +383,6 @@ def _populate_table_of_thrown_air_showers(
     date_dict,
     KEEP_TMP,
     LAZY_REDUCTION,
-    num_parallel_jobs,
     logger,
 ):
     logger.info("Estimating instrument-response.")
@@ -444,14 +442,7 @@ def _populate_table_of_thrown_air_showers(
                 irf_jobs.append(irf_job)
 
     random.shuffle(irf_jobs)
-
-    irf_jobs_in_bundles = bundle.make_jobs_in_bundles(
-        jobs=irf_jobs, desired_num_bunbles=num_parallel_jobs
-    )
-
-    _ = map_and_reduce_pool.map(
-        instrument_response.run_jobs_in_bundles, irf_jobs_in_bundles
-    )
+    _ = map_and_reduce_pool.map(instrument_response.run_job, irf_jobs)
 
     logger.info("Reduce instrument-response.")
 
@@ -470,7 +461,6 @@ def _populate_table_of_thrown_air_showers(
 def run(
     run_dir,
     map_and_reduce_pool,
-    num_parallel_jobs=2000,
     executables=EXAMPLE_EXECUTABLE_PATHS,
     TMP_DIR_ON_WORKERNODE=True,
     KEEP_TMP=False,
@@ -527,7 +517,6 @@ def run(
         KEEP_TMP=KEEP_TMP,
         date_dict=date_dict,
         LAZY_REDUCTION=LAZY_REDUCTION,
-        num_parallel_jobs=num_parallel_jobs,
         logger=logger,
     )
 
