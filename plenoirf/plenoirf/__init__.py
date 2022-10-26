@@ -4,7 +4,6 @@ from . import features
 from . import table
 from . import grid
 from . import instrument_response
-from . import network_file_system as nfs
 from . import provenance
 from . import create_test_tables
 from . import reconstruction
@@ -35,6 +34,7 @@ import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
+import network_file_system as nfs
 
 
 MIN_PROTON_ENERGY_GEV = 5.0

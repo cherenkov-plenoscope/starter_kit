@@ -2,6 +2,7 @@ import os
 import plenoirf
 import json_numpy
 import argparse
+import network_file_system as nfs
 
 parser = argparse.ArgumentParser(
     description=
@@ -83,7 +84,7 @@ for ii in range(len(study_config["arrival_times_resolution_s"])):
     if ii > 0:
         for common_resource in common_resources:
             if not os.path.exists(os.path.join(run_dir, common_resource)):
-                plenoirf.network_file_system.copy(
+                nfs.copy(
                     src=os.path.join(run0_dir, common_resource),
                     dst=os.path.join(run_dir, common_resource)
                 )

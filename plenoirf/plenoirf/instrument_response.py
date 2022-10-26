@@ -1,7 +1,6 @@
 from . import table
 from . import unique
 from . import grid
-from . import network_file_system as nfs
 from . import utils
 from . import production
 from . import reconstruction
@@ -24,6 +23,7 @@ import plenopy as pl
 import sparse_numeric_table as spt
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
+import network_file_system as nfs
 
 """
 I think I have an efficient and very simple algorithm
