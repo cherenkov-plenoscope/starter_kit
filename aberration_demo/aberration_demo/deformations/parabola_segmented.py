@@ -3,7 +3,7 @@ import copy
 from .. import portal
 
 
-MIRROR_CONFIG = copy.deepcopy(portal.MIRROR)
+MIRROR = copy.deepcopy(portal.MIRROR)
 DEFORMATION_POLYNOM = [[0,0], [0,0], [1e-3, -1e-4]]
 
 def z_parabola(distance_to_z_axis, focal_length):
@@ -119,6 +119,6 @@ def make_facets(
                     "outer_color": color,
                     "outer_reflection": reflection_vs_wavelength,
                 }
-                facet["children"]: []
+                facet["children"] = []
                 facets.append(facet)
     return facets

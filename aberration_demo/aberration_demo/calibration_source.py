@@ -1,5 +1,6 @@
 import corsika_primary as cpw
 import numpy as np
+import os
 
 
 def write_photon_bunches(
@@ -17,8 +18,8 @@ def write_photon_bunches(
         Number of bunches
     """
     assert size >= 0
-
-    with cpw.event_tape.EventTapeWriter(path=path) as run:
+    tmp_path = path + ".tmp"
+    with cpw.event_tape.EventTapeWriter(path=tmp_path) as run:
         runh = np.zeros(273, dtype=np.float32)
         runh[cpw.I.RUNH.MARKER] = cpw.I.RUNH.MARKER_FLOAT32
         runh[cpw.I.RUNH.RUN_NUMBER] = 1
@@ -52,3 +53,4 @@ def write_photon_bunches(
                 speed_of_light=299792458,
             )
             run.write_bunches(bunches)
+    os.rename(tmp_path, path)

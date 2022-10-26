@@ -19,7 +19,7 @@ import copy
 from .. import merlict
 from .. import calibration_source
 from .. import portal
-from . import analysis
+from .. import analysis
 from . import scenery
 
 
@@ -82,7 +82,6 @@ def run(
     work_dir,
     map_and_reduce_pool,
     logger=json_line_logger.LoggerStdout(),
-    desired_num_bunbles=400,
 ):
     """
     Runs the entire exploration.
@@ -112,7 +111,6 @@ def run(
         work_dir=work_dir,
         map_and_reduce_pool=map_and_reduce_pool,
         logger=logger,
-        desired_num_bunbles=desired_num_bunbles,
     )
 
     logger.info("Make calibration source")
@@ -493,7 +491,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
 
 
 def make_light_field_geometires(
-    work_dir, map_and_reduce_pool, logger, desired_num_bunbles=400,
+    work_dir, map_and_reduce_pool, logger,
 ):
     logger.info("lfg: Make jobs to estimate light-field-geometries.")
     jobs, rjobs = _light_field_geometries_make_jobs_and_rjobs(
