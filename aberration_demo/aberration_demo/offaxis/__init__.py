@@ -1,5 +1,10 @@
 """
-simulate different light-field-sensors
+Explore how good a light-field-sensor can compensate aberrations.
+
+Alignment: perfect
+Deformations: None
+Offaxisangles: Multiple and large
+Mirror-geometries: Multiple
 """
 import numpy as np
 import plenoirf
@@ -8,30 +13,37 @@ import json_numpy
 import os
 import shutil
 import plenopy
+import json_line_logger
+import copy
+
 from .. import merlict
 from .. import calibration_source
 from .. import portal
 from . import analysis
 from . import scenery
-import json_line_logger
 
 
 CONFIG = {}
 CONFIG["seed"] = 42
-CONFIG["executables"] = dict(merlict.EXECUTABLES)
+CONFIG["executables"] = copy.deepcopy(merlict.EXECUTABLES)
 
 CONFIG["sources"] = {}
 CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 8.0, 9)
 CONFIG["sources"]["num_photons"] = 1000 * 1000
 
-CONFIG["mirror"] = dict(portal.MIRROR)
-CONFIG["sensor"] = dict(portal.SENSOR)
-CONFIG["sensor"]["num_paxel_on_diagonal"] = [1, 3, 9]
+CONFIG["mirror"] = copy.deepcopy(portal.MIRROR)
+CONFIG["mirror"]["keys"] = [
+    "sphere_monolith",
+    "davies_cotton",
+    "parabola_segmented",
+]
+
+CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
 
 CONFIG["light_field_geometry"] = {}
 CONFIG["light_field_geometry"]["num_blocks"] = 5
 CONFIG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
-CONFIG["binning"] = dict(analysis.BINNING)
+CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
 ANGLE_FMT = "angle{:06d}"
 PAXEL_FMT = "paxel{:06d}"

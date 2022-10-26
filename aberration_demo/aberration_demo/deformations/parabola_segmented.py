@@ -1,15 +1,10 @@
 import numpy as np
+import copy
+from .. import portal
 
 
-CONFIG = {}
-CONFIG["focal_length"] = 106.5
-CONFIG["max_outer_aperture_radius"] = 41.0
-CONFIG["min_inner_aperture_radius"] = 0.0
-CONFIG["outer_aperture_shape_hex"] = True
-CONFIG["facet_inner_hex_radius"] = 0.75
-CONFIG["gap_between_facets"] = 0.025
-CONFIG["deformation_polynom"] = [[0,0], [0,0], [1e-3, -1e-4]]
-
+MIRROR_CONFIG = copy.deepcopy(portal.MIRROR)
+DEFORMATION_POLYNOM = [[0,0], [0,0], [1e-3, -1e-4]]
 
 def z_parabola(distance_to_z_axis, focal_length):
     return 1.0 / (4.0*focal_length) * distance_to_z_axis ** 2
@@ -54,19 +49,19 @@ def make_rot_axis_and_angle(normal):
 
 
 def make_facets(
-    config,
-    reflection_vs_wavelength='facet_reflection_vs_wavelength',
+    mirror_config,
+    deformation_polynom,
+    reflection_vs_wavelength='mirror_reflectivity_vs_wavelength',
     color='facet_color',
 ):
+    mcfg = mirror_config
     facet_spacing = (
-        config["facet_inner_hex_radius"] * 2.0 + config["gap_between_facets"]
+        mcfg["facet_inner_hex_radius"] * 2.0 + mcfg["gap_between_facets"]
     )
-    max_outer_radius_to_put_facet_center = (
-        config["max_outer_aperture_radius"] - facet_spacing / 2.0
+    outer_radius_to_put_facet_center = (
+        mcfg["outer_radius"] - facet_spacing / 2.0
     )
-    min_inner_radius_to_put_facet_center = (
-        config["min_inner_aperture_radius"] + facet_spacing / 2.0
-    )
+
     UNIT_X = np.array([1, 0, 0])
     UNIT_Y = np.array([0, 1, 0])
 
@@ -77,8 +72,8 @@ def make_facets(
     UNIT_V = UNIT_Y * np.sin(2./3.*np.pi) + UNIT_X * np.cos(2./3.*np.pi)
     UNIT_W = UNIT_Y * -np.sin(2./3.*np.pi) + UNIT_X * np.cos(2./3.*np.pi)
 
-    R = (np.sqrt(3.0)/2.0) * max_outer_radius_to_put_facet_center
-    N = 2.0 * np.ceil(config["max_outer_aperture_radius"] / facet_spacing)
+    R = (np.sqrt(3.0)/2.0) * outer_radius_to_put_facet_center
+    N = 2.0 * np.ceil(mcfg["outer_radius"] / facet_spacing)
 
     facets = []
     for a in np.arange(-N, N+1):
@@ -95,18 +90,12 @@ def make_facets(
                 w < R and w > -R
             )
 
-            outside_inner_disc = (
-                np.hypot(facet_center[0], facet_center[1]) >
-                min_inner_radius_to_put_facet_center
-            )
-
-            if (inside_outer_hexagon and outside_inner_disc):
-
+            if inside_outer_hexagon:
                 facet_center[2] = surface_z(
                     x=facet_center[0],
                     y=facet_center[1],
-                    focal_length=config["focal_length"],
-                    deformation_polynom=config["deformation_polynom"],
+                    focal_length=mcfg["focal_length"],
+                    deformation_polynom=deformation_polynom,
                 )
 
                 facet = {}
@@ -116,16 +105,16 @@ def make_facets(
                 facet_normal = surface_normal(
                     x=facet_center[0],
                     y=facet_center[1],
-                    focal_length=config["focal_length"],
-                    deformation_polynom=config["deformation_polynom"],
-                    delta=1e-6 * config["focal_length"],
+                    focal_length=mcfg["focal_length"],
+                    deformation_polynom=deformation_polynom,
+                    delta=1e-6 * mcfg["focal_length"],
                 )
                 axis, angle = make_rot_axis_and_angle(normal=facet_normal)
                 facet["rot_axis"] = axis
                 facet["rot_angle"] = angle
 
-                facet["outer_radius"] = (2 / np.sqrt(3)) * config["facet_inner_hex_radius"]
-                facet["curvature_radius"] = 2.0 * config["focal_length"]
+                facet["outer_radius"] = (2 / np.sqrt(3)) * mcfg["facet_inner_hex_radius"]
+                facet["curvature_radius"] = 2.0 * mcfg["focal_length"]
                 facet["surface"] = {
                     "outer_color": color,
                     "outer_reflection": reflection_vs_wavelength,
