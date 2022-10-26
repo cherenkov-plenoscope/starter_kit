@@ -1,5 +1,21 @@
 import numpy as np
 import os
+from . import portal
+
+
+EXECUTABLES = {
+    "merlict_plenoscope_propagator_path": os.path.abspath(
+        os.path.join("build", "merlict", "merlict-plenoscope-propagation")
+    ),
+    "merlict_plenoscope_calibration_map_path": os.path.abspath(
+        os.path.join("build", "merlict", "merlict-plenoscope-calibration-map")
+    ),
+    "merlict_plenoscope_calibration_reduce_path": os.path.abspath(
+        os.path.join(
+            "build", "merlict", "merlict-plenoscope-calibration-reduce"
+        )
+    ),
+}
 
 
 def make_mirror_davies_cotton(focal_length, outer_radius):
@@ -80,7 +96,7 @@ PROPAGATION_CONFIG = {
 def make_plenoscope_scenery_for_merlict(
     mirror_key, num_paxel_on_diagonal, config, off_axis_angles_deg,
 ):
-    mirror = MIRRORS[mirror_key](
+    mirror_frame = MIRRORS[mirror_key](
         focal_length=config["mirror"]["focal_length"],
         outer_radius=config["mirror"]["outer_radius"],
     )
@@ -93,7 +109,7 @@ def make_plenoscope_scenery_for_merlict(
     posy = 0.0
     posz = f * np.cos(alpha)
 
-    sensor = {
+    sensor_frame = {
         "type": "LightFieldSensor",
         "name": "light_field_sensor",
         "pos": [posx, posy, posz],
@@ -117,31 +133,10 @@ def make_plenoscope_scenery_for_merlict(
 
     scn = {
         "functions": [
-            {
-                "name": "mirror_reflectivity_vs_wavelength",
-                "argument_versus_value": [[2.238e-07, 0.8], [7.010e-07, 0.8]],
-                "comment": "Ideal mirror, perfect reflection.",
-            },
-            {
-                "name": "lens_refraction_vs_wavelength",
-                "argument_versus_value": [
-                    [240e-9, 1.5133],
-                    [280e-9, 1.4942],
-                    [320e-9, 1.4827],
-                    [360e-9, 1.4753],
-                    [400e-9, 1.4701],
-                    [486e-9, 1.4631],
-                    [546e-9, 1.4601],
-                    [633e-9, 1.4570],
-                    [694e-9, 1.4554],
-                    [753e-9, 1.4542],
-                ],
-                "comment": "Hereaus Quarzglas GmbH and Co. KG",
-            },
+            portal.MIRROR_REFLECTIVITY,
+            portal.LENS_REFRACTION,
         ],
         "colors": [
-            {"name": "orange", "rgb": [255, 91, 49]},
-            {"name": "wood_brown", "rgb": [200, 200, 0]},
         ],
         "children": [
             {
@@ -149,11 +144,9 @@ def make_plenoscope_scenery_for_merlict(
                 "name": "Portal",
                 "pos": [0, 0, 0],
                 "rot": [0, -alpha, 0],
-                "children": [],
+                "children": [mirror_frame, sensor_frame],
             }
         ],
     }
 
-    scn["children"][0]["children"].append(mirror)
-    scn["children"][0]["children"].append(sensor)
     return scn
