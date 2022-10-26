@@ -23,8 +23,8 @@ work_dir = argv[1]
 out_dir = os.path.join(work_dir, "figures", "3x3")
 os.makedirs(out_dir, exist_ok=True)
 
-config = abe.read_config(work_dir=work_dir)
-coll = abe.read_analysis(work_dir=work_dir)
+config = abe.offaxis.read_config(work_dir=work_dir)
+coll = abe.offaxis.read_analysis(work_dir=work_dir)
 
 # summary plot of poin-spread-functions
 # -------------------------------------
@@ -99,7 +99,7 @@ CMAP_VMAX = 0.0
 for mkey in coll:
     for isens, pkey in enumerate(coll[mkey]):
         for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
-            akey = abe.ANGLE_FMT.format(ofa)
+            akey = abe.offaxis.ANGLE_FMT.format(ofa)
             tcoll = coll[mkey][pkey][akey]
             norm_image = (
                 tcoll["image"]["raw"] / tcoll["statistics"]["photons"]["valid"]
@@ -138,13 +138,13 @@ for cmapkey in CMAPS:
 
         for isens, pkey in enumerate(coll[mkey]):
             for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
-                akey = abe.ANGLE_FMT.format(ofa)
+                akey = abe.offaxis.ANGLE_FMT.format(ofa)
 
                 tcoll = coll[mkey][pkey][akey]
                 (
                     bin_edges_cx,
                     bin_edges_cy,
-                ) = abe.analysis.binning_image_bin_edges(
+                ) = abe.offaxis.analysis.binning_image_bin_edges(
                     binning=tcoll["image"]["binning"]
                 )
                 bin_edges_cx_deg = np.rad2deg(bin_edges_cx)
@@ -314,7 +314,7 @@ for mkey in coll:
 
     for isens, pkey in enumerate(coll[mkey]):
         for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
-            akey = abe.ANGLE_FMT.format(ofa)
+            akey = abe.offaxis.ANGLE_FMT.format(ofa)
             tcoll = coll[mkey][pkey][akey]
 
             ax_pax_off = sebplt.add_axes(

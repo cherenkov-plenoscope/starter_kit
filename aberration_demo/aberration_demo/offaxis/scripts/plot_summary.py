@@ -18,8 +18,8 @@ work_dir = argv[1]
 out_dir = os.path.join(work_dir, "figures", "abc")
 os.makedirs(out_dir, exist_ok=True)
 
-config = abe.read_config(work_dir=work_dir)
-coll = abe.read_analysis(work_dir=work_dir)
+config = abe.offaxis.read_config(work_dir=work_dir)
+coll = abe.offaxis.read_analysis(work_dir=work_dir)
 
 offaxis_angles_deg = config["sources"]["off_axis_angles_deg"]
 max_offaxis_angle_deg = np.max(offaxis_angles_deg)
@@ -40,10 +40,10 @@ ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
 max_psf80s_deg = 0.0
 for mkey in config["mirror"]["keys"]:
     for npax in config["sensor"]["num_paxel_on_diagonal"]:
-        pkey = abe.PAXEL_FMT.format(npax)
+        pkey = abe.offaxis.PAXEL_FMT.format(npax)
         psf80s_deg = np.zeros(len(config["sources"]["off_axis_angles_deg"]))
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
-            akey = abe.ANGLE_FMT.format(ofa)
+            akey = abe.offaxis.ANGLE_FMT.format(ofa)
             if akey not in coll[mkey][pkey]:
                 continue
             psf80s_deg[ofa] = np.rad2deg(
@@ -70,11 +70,11 @@ ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
 max_t80 = 0.0
 for mkey in config["mirror"]["keys"]:
     for npax in config["sensor"]["num_paxel_on_diagonal"]:
-        pkey = abe.PAXEL_FMT.format(npax)
+        pkey = abe.offaxis.PAXEL_FMT.format(npax)
 
         t80s = np.zeros(len(config["sources"]["off_axis_angles_deg"]))
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
-            akey = abe.ANGLE_FMT.format(ofa)
+            akey = abe.offaxis.ANGLE_FMT.format(ofa)
             if akey not in coll[mkey][pkey]:
                 continue
 

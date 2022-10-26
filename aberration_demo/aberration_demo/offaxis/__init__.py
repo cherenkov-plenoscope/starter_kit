@@ -8,11 +8,11 @@ import json_numpy
 import os
 import shutil
 import plenopy
-from . import merlict
+from .. import merlict
+from .. import calibration_source
+from .. import portal
 from . import analysis
-from . import calibration_source
-from . import deformations
-from . import portal
+from . import scenery
 import json_line_logger
 
 
@@ -469,7 +469,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
                 with open(
                     os.path.join(scenery_dir, "scenery.json"), "wt"
                 ) as f:
-                    s = merlict.make_plenoscope_scenery_for_merlict(
+                    s = scenery.make_plenoscope_scenery_for_merlict(
                         mirror_key=mkey,
                         num_paxel_on_diagonal=npax,
                         config=config,

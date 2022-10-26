@@ -18,8 +18,8 @@ work_dir = argv[1]
 out_dir = os.path.join(work_dir, "figures", "details")
 os.makedirs(out_dir, exist_ok=True)
 
-config = abe.read_config(work_dir=work_dir)
-coll = abe.read_analysis(work_dir=work_dir)
+config = abe.offaxis.read_config(work_dir=work_dir)
+coll = abe.offaxis.read_analysis(work_dir=work_dir)
 
 for mkey in coll:
     for pkey in coll[mkey]:
@@ -28,7 +28,7 @@ for mkey in coll:
             tcoll = coll[mkey][pkey][akey]
             scenario_key = mkey + "_" + pkey + "_" + akey
 
-            bin_edges_cx, bin_edges_cy = abe.analysis.binning_image_bin_edges(
+            bin_edges_cx, bin_edges_cy = abe.offaxis.analysis.binning_image_bin_edges(
                 binning=tcoll["image"]["binning"]
             )
 

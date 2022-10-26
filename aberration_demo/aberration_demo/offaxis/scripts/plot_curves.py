@@ -23,8 +23,8 @@ work_dir = argv[1]
 out_dir = os.path.join(work_dir, "figures", "curves")
 os.makedirs(out_dir, exist_ok=True)
 
-config = abe.read_config(work_dir=work_dir)
-coll = abe.read_analysis(work_dir=work_dir)
+config = abe.offaxis.read_config(work_dir=work_dir)
+coll = abe.offaxis.read_analysis(work_dir=work_dir)
 
 # summary plot of poin-spread-functions
 # -------------------------------------
@@ -39,9 +39,9 @@ MIRROR_COLORS = {
 }
 
 PAXEL_STYLE = {
-    abe.PAXEL_FMT.format(1): "o-",
-    abe.PAXEL_FMT.format(3): "o--",
-    abe.PAXEL_FMT.format(9): "o:",
+    abe.offaxis.PAXEL_FMT.format(1): "o-",
+    abe.offaxis.PAXEL_FMT.format(3): "o--",
+    abe.offaxis.PAXEL_FMT.format(9): "o:",
 }
 
 
