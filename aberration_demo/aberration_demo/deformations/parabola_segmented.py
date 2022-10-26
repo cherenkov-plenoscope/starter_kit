@@ -4,7 +4,7 @@ from .. import portal
 
 
 MIRROR = copy.deepcopy(portal.MIRROR)
-DEFORMATION_POLYNOM = [[0,0], [0,0], [1e-3, -1e-4]]
+DEFORMATION_POLYNOM = [[0,0], [0,0], [1e-4, -1e-4]]
 
 def z_parabola(distance_to_z_axis, focal_length):
     return 1.0 / (4.0*focal_length) * distance_to_z_axis ** 2

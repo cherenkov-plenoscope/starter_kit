@@ -13,6 +13,7 @@ import json_numpy
 import json_line_logger
 import shutil
 import plenoirf
+import plenopy
 import network_file_system as nfs
 
 from . import parabola_segmented
@@ -23,6 +24,7 @@ from .. import analysis
 from .. import calibration_source
 from ..offaxis import read_config
 from ..offaxis import PAXEL_FMT
+from ..offaxis import ANGLE_FMT
 from ..offaxis import guess_scaling_of_num_photons_used_to_estimate_light_field_geometry
 
 
@@ -37,8 +39,8 @@ CONFIG["deformation_polynom"] = copy.deepcopy(
 )
 
 CONFIG["sources"] = {}
-CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 8.0, 9)
-CONFIG["sources"]["num_photons"] = 1000 * 1000
+CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)
+CONFIG["sources"]["num_photons"] = 100 * 1000
 
 CONFIG["light_field_geometry"] = {}
 CONFIG["light_field_geometry"]["num_blocks"] = 1
@@ -92,6 +94,12 @@ def run(
 
     logger.info("Make calibration source")
     make_source(work_dir=work_dir)
+
+    logger.info("Make responses to calibration source")
+    make_responses(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
+
+    logger.info("Make analysis")
+    make_analysis(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
     logger.info("Stop")
 
@@ -236,11 +244,11 @@ def make_source(work_dir):
     os.makedirs(sources_dir, exist_ok=True)
 
     for iofa, off_axis_angle_deg in enumerate(config["sources"]["off_axis_angles_deg"]):
-        source_path = os.path.join(sources_dir, "{:06d}.tar".format(iofa))
+        source_path = os.path.join(sources_dir, ANGLE_FMT.format(iofa) + ".tar")
 
         if not os.path.exists(source_path):
             prng = np.random.Generator(np.random.PCG64(config["seed"]))
-            off_axis_angle = np.rad2deg(off_axis_angle_deg)
+            off_axis_angle = np.deg2rad(off_axis_angle_deg)
             calibration_source.write_photon_bunches(
                 cx=off_axis_angle,
                 cy=0.0,
@@ -249,3 +257,175 @@ def make_source(work_dir):
                 prng=prng,
                 aperture_radius=1.2 * config["mirror"]["outer_radius"],
             )
+
+
+def make_responses(
+    work_dir, map_and_reduce_pool,
+):
+    """
+    Makes the responses of the instruments to the calibration-sources.
+
+    Parameters
+    ----------
+    work_dir : str
+        Path to the work_dir
+    map_and_reduce_pool : pool
+        Used for parallel computing.
+    """
+    jobs = _responses_make_jobs(work_dir=work_dir)
+    _ = map_and_reduce_pool.map(_responses_run_job, jobs)
+
+
+def _responses_make_jobs(work_dir):
+    jobs = []
+
+    config = read_config(work_dir=work_dir)
+
+    runningseed = int(config["seed"])
+
+    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        pkey = PAXEL_FMT.format(npax)
+
+        for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
+            akey = ANGLE_FMT.format(ofa)
+
+            job = {}
+            job["work_dir"] = work_dir
+            job["pkey"] = pkey
+            job["akey"] = akey
+            job["merlict_plenoscope_propagator_path"] = config[
+                "executables"
+            ]["merlict_plenoscope_propagator_path"]
+            job["seed"] = runningseed
+            jobs.append(job)
+
+            runningseed += 1
+
+    return jobs
+
+
+def _responses_run_job(job):
+    adir = os.path.join(
+        job["work_dir"], "responses", job["pkey"], job["akey"]
+    )
+    os.makedirs(adir, exist_ok=True)
+    response_event_path = os.path.join(adir, "1")
+
+    if not os.path.exists(response_event_path):
+        source_path = os.path.join(
+            job["work_dir"], "sources", job["akey"] + ".tar"
+        )
+        plenoirf.production.merlict.plenoscope_propagator(
+            corsika_run_path=source_path,
+            output_path=adir,
+            light_field_geometry_path=os.path.join(
+                job["work_dir"],
+                "geometries",
+                job["pkey"],
+                "light_field_geometry",
+            ),
+            merlict_plenoscope_propagator_path=job[
+                "merlict_plenoscope_propagator_path"
+            ],
+            merlict_plenoscope_propagator_config_path=os.path.join(
+                job["work_dir"], "merlict_propagation_config.json"
+            ),
+            random_seed=job["seed"],
+            photon_origins=True,
+            stdout_path=adir + ".o",
+            stderr_path=adir + ".e",
+        )
+
+    left_over_input_dir = os.path.join(adir, "input")
+    if os.path.exists(left_over_input_dir):
+        shutil.rmtree(left_over_input_dir)
+
+    return 1
+
+
+def _analysis_make_jobs(
+    work_dir, containment_percentile=80, object_distance_m=1e6,
+):
+    assert 0.0 < containment_percentile <= 100.0
+    assert object_distance_m > 0.0
+
+    config = read_config(work_dir=work_dir)
+
+    jobs = []
+    runningseed = int(config["seed"])
+
+    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        pkey = PAXEL_FMT.format(npax)
+        for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
+            akey = ANGLE_FMT.format(ofa)
+            angle_deg = config["sources"]["off_axis_angles_deg"][ofa]
+
+            job = {}
+            job["work_dir"] = work_dir
+            job["pkey"] = pkey
+            job["akey"] = akey
+            job["off_axis_angle_deg"] = angle_deg
+            job["seed"] = runningseed
+            job["object_distance_m"] = object_distance_m
+            job["containment_percentile"] = containment_percentile
+            jobs.append(job)
+            runningseed += 1
+
+    return jobs
+
+
+def _analysis_run_job(job):
+    adir = os.path.join(
+        job["work_dir"], "analysis", job["pkey"], job["akey"]
+    )
+    os.makedirs(adir, exist_ok=True)
+    summary_path = os.path.join(adir, "summary.json")
+
+    if os.path.exists(summary_path):
+        return 1
+
+    config = read_config(work_dir=job["work_dir"])
+    prng = np.random.Generator(np.random.PCG64(job["seed"]))
+    light_field_geometry = plenopy.LightFieldGeometry(
+        path=os.path.join(
+            job["work_dir"],
+            "geometries",
+            job["pkey"],
+            "light_field_geometry",
+        ),
+    )
+    event = plenopy.Event(
+        path=os.path.join(
+            job["work_dir"],
+            "responses",
+            job["pkey"],
+            job["akey"],
+            "1",
+        ),
+        light_field_geometry=light_field_geometry,
+    )
+    out = analysis.analyse_response_to_calibration_source(
+        off_axis_angle_deg=job["off_axis_angle_deg"],
+        event=event,
+        light_field_geometry=light_field_geometry,
+        object_distance_m=job["object_distance_m"],
+        containment_percentile=job["containment_percentile"],
+        binning=config["binning"],
+        prng=prng,
+    )
+    nfs.write(json_numpy.dumps(out), summary_path, "wt")
+    return 1
+
+
+def make_analysis(
+    work_dir,
+    map_and_reduce_pool,
+    object_distance_m=1e6,
+    containment_percentile=80,
+):
+    jobs = _analysis_make_jobs(
+        work_dir=work_dir,
+        object_distance_m=object_distance_m,
+        containment_percentile=containment_percentile,
+    )
+    _ = map_and_reduce_pool.map(_analysis_run_job, jobs)

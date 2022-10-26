@@ -304,7 +304,6 @@ def _analysis_run_job(job):
         ),
         off_axis_angle_deg=job["off_axis_angle_deg"],
     )
-
     event = plenopy.Event(
         path=os.path.join(
             job["work_dir"],
@@ -316,91 +315,16 @@ def _analysis_run_job(job):
         ),
         light_field_geometry=light_field_geometry,
     )
-
-    print(job["mkey"], job["pkey"], job["akey"])
-
-    calibrated_response = analysis.calibrate_plenoscope_response(
-        light_field_geometry=light_field_geometry,
+    out = analysis.analyse_response_to_calibration_source(
+        off_axis_angle_deg=job["off_axis_angle_deg"],
         event=event,
-        object_distance=job["object_distance_m"],
-    )
-
-    cres = calibrated_response
-
-    print("image encirclement2d")
-    psf_cx, psf_cy, psf_angle80 = analysis.encirclement2d(
-        x=cres["image_beams"]["cx"],
-        y=cres["image_beams"]["cy"],
-        x_std=cres["image_beams"]["cx_std"],
-        y_std=cres["image_beams"]["cy_std"],
-        weights=cres["image_beams"]["weights"],
+        light_field_geometry=light_field_geometry,
+        object_distance_m=job["object_distance_m"],
+        containment_percentile=job["containment_percentile"],
+        binning=config["binning"],
         prng=prng,
-        percentile=job["containment_percentile"],
-        num_sub_samples=1,
     )
-
-    thisbinning = dict(config["binning"])
-    thisbinning["image"]["center"]["cx_deg"] = job["off_axis_angle_deg"]
-    thisbinning["image"]["center"]["cy_deg"] = 0.0
-    thisimg_bin_edges = analysis.binning_image_bin_edges(binning=thisbinning)
-
-    print("image histogram2d_std")
-    imgraw = analysis.histogram2d_std(
-        x=cres["image_beams"]["cx"],
-        y=cres["image_beams"]["cy"],
-        x_std=cres["image_beams"]["cx_std"],
-        y_std=cres["image_beams"]["cy_std"],
-        weights=cres["image_beams"]["weights"],
-        bins=thisimg_bin_edges,
-        prng=prng,
-        num_sub_samples=1000,
-    )[0]
-
-    print("time encirclement1d")
-    time_80_start, time_80_stop = analysis.encirclement1d(
-        x=cres["time"]["bin_centers"],
-        f=cres["time"]["weights"],
-        percentile=job["containment_percentile"],
-    )
-    print("time full_width_half_maximum")
-    (time_fwhm_start, time_fwhm_stop,) = analysis.full_width_half_maximum(
-        x=cres["time"]["bin_centers"], f=cres["time"]["weights"],
-    )
-
-    print("export")
-    out = {}
-    out["statistics"] = {}
-    out["statistics"]["image_beams"] = {}
-    out["statistics"]["image_beams"][
-        "total"
-    ] = light_field_geometry.number_lixel
-    out["statistics"]["image_beams"]["valid"] = np.sum(
-        cres["image_beams"]["valid"]
-    )
-    out["statistics"]["photons"] = {}
-    out["statistics"]["photons"][
-        "total"
-    ] = event.raw_sensor_response.number_photons
-    out["statistics"]["photons"]["valid"] = np.sum(
-        cres["image_beams"]["weights"]
-    )
-
-    out["time"] = cres["time"]
-    out["time"]["fwhm"] = {}
-    out["time"]["fwhm"]["start"] = time_fwhm_start
-    out["time"]["fwhm"]["stop"] = time_fwhm_stop
-    out["time"]["containment80"] = {}
-    out["time"]["containment80"]["start"] = time_80_start
-    out["time"]["containment80"]["stop"] = time_80_stop
-
-    out["image"] = {}
-    out["image"]["angle80"] = psf_angle80
-    out["image"]["binning"] = thisbinning
-    out["image"]["raw"] = imgraw
-
-    with open(summary_path, "wt") as f:
-        f.write(json_numpy.dumps(out))
-
+    nfs.write(json_numpy.dumps(out), summary_path, "wt")
     return 1
 
 

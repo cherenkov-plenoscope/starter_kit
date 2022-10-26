@@ -1,5 +1,6 @@
 import corsika_primary as cpw
 import os
+import copy
 import plenoirf
 import numpy as np
 import plenopy
@@ -276,3 +277,93 @@ def full_width_half_maximum(x, f, oversample=137):
             istop += 1
 
     return xfine[istart], xfine[istop]
+
+
+def analyse_response_to_calibration_source(
+    off_axis_angle_deg,
+    event,
+    light_field_geometry,
+    object_distance_m,
+    containment_percentile,
+    binning,
+    prng,
+):
+    calibrated_response = calibrate_plenoscope_response(
+        light_field_geometry=light_field_geometry,
+        event=event,
+        object_distance=object_distance_m,
+    )
+
+    cres = calibrated_response
+
+    # print("image encirclement2d")
+    psf_cx, psf_cy, psf_angle80 = encirclement2d(
+        x=cres["image_beams"]["cx"],
+        y=cres["image_beams"]["cy"],
+        x_std=cres["image_beams"]["cx_std"],
+        y_std=cres["image_beams"]["cy_std"],
+        weights=cres["image_beams"]["weights"],
+        prng=prng,
+        percentile=containment_percentile,
+        num_sub_samples=1,
+    )
+
+    thisbinning = copy.deepcopy(binning)
+    thisbinning["image"]["center"]["cx_deg"] = off_axis_angle_deg
+    thisbinning["image"]["center"]["cy_deg"] = 0.0
+    thisimg_bin_edges = binning_image_bin_edges(binning=thisbinning)
+
+    # print("image histogram2d_std")
+    imgraw = histogram2d_std(
+        x=cres["image_beams"]["cx"],
+        y=cres["image_beams"]["cy"],
+        x_std=cres["image_beams"]["cx_std"],
+        y_std=cres["image_beams"]["cy_std"],
+        weights=cres["image_beams"]["weights"],
+        bins=thisimg_bin_edges,
+        prng=prng,
+        num_sub_samples=1000,
+    )[0]
+
+    # print("time encirclement1d")
+    time_80_start, time_80_stop = encirclement1d(
+        x=cres["time"]["bin_centers"],
+        f=cres["time"]["weights"],
+        percentile=containment_percentile,
+    )
+    # print("time full_width_half_maximum")
+    (time_fwhm_start, time_fwhm_stop,) = full_width_half_maximum(
+        x=cres["time"]["bin_centers"], f=cres["time"]["weights"],
+    )
+
+    # export
+    out = {}
+    out["statistics"] = {}
+    out["statistics"]["image_beams"] = {}
+    out["statistics"]["image_beams"][
+        "total"
+    ] = light_field_geometry.number_lixel
+    out["statistics"]["image_beams"]["valid"] = np.sum(
+        cres["image_beams"]["valid"]
+    )
+    out["statistics"]["photons"] = {}
+    out["statistics"]["photons"][
+        "total"
+    ] = event.raw_sensor_response.number_photons
+    out["statistics"]["photons"]["valid"] = np.sum(
+        cres["image_beams"]["weights"]
+    )
+
+    out["time"] = cres["time"]
+    out["time"]["fwhm"] = {}
+    out["time"]["fwhm"]["start"] = time_fwhm_start
+    out["time"]["fwhm"]["stop"] = time_fwhm_stop
+    out["time"]["containment80"] = {}
+    out["time"]["containment80"]["start"] = time_80_start
+    out["time"]["containment80"]["stop"] = time_80_stop
+
+    out["image"] = {}
+    out["image"]["angle80"] = psf_angle80
+    out["image"]["binning"] = thisbinning
+    out["image"]["raw"] = imgraw
+    return out
