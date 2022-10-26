@@ -101,8 +101,7 @@ def make_plenoscope_scenery_for_merlict(
             portal.MIRROR_REFLECTIVITY_VS_WAVELENGTH,
             portal.LENS_REFRACTION_VS_WAVELENGTH,
         ],
-        "colors": [
-        ],
+        "colors": [],
         "children": [
             {
                 "type": "Frame",

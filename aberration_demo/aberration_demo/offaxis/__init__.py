@@ -79,9 +79,7 @@ def init(work_dir, config=CONFIG):
 
 
 def run(
-    work_dir,
-    map_and_reduce_pool,
-    logger=json_line_logger.LoggerStdout(),
+    work_dir, map_and_reduce_pool, logger=json_line_logger.LoggerStdout(),
 ):
     """
     Runs the entire exploration.

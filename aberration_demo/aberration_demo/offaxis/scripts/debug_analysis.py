@@ -131,7 +131,10 @@ if not os.path.exists(summary_path):
         percentile=CONTAINMENT_PERCENTILE,
     )
     print("time full_width_half_maximum")
-    (time_fwhm_start, time_fwhm_stop,) = abe.offaxis.analysis.full_width_half_maximum(
+    (
+        time_fwhm_start,
+        time_fwhm_stop,
+    ) = abe.offaxis.analysis.full_width_half_maximum(
         x=cres["time"]["bin_centers"], f=cres["time"]["weights"],
     )
 

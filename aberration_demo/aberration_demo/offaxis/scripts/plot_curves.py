@@ -47,7 +47,7 @@ PAXEL_STYLE = {
 
 psf_representations = {
     "solid_angle": r"spread's solid angle 80% / (1$^\circ$)$^{2}$",
-    "radial_angle": r"spread's radial angle 80% / 1$^\circ$"
+    "radial_angle": r"spread's radial angle 80% / 1$^\circ$",
 }
 
 for rkey in ["solid_angle", "radial_angle"]:
@@ -80,10 +80,7 @@ for rkey in ["solid_angle", "radial_angle"]:
                 values = np.sqrt(omega80_deg2 / np.pi)
 
             ax.plot(
-                cxs_deg,
-                values,
-                PAXEL_STYLE[pkey],
-                color=MIRROR_COLORS[mkey],
+                cxs_deg, values, PAXEL_STYLE[pkey], color=MIRROR_COLORS[mkey],
             )
     ax.set_xlabel(OFF_AXIS_ANGLE_LABEL)
     ax.set_ylabel(psf_representations[rkey])

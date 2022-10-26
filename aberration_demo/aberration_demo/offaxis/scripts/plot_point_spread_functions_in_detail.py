@@ -28,19 +28,18 @@ for mkey in coll:
             tcoll = coll[mkey][pkey][akey]
             scenario_key = mkey + "_" + pkey + "_" + akey
 
-            bin_edges_cx, bin_edges_cy = abe.offaxis.analysis.binning_image_bin_edges(
+            (
+                bin_edges_cx,
+                bin_edges_cy,
+            ) = abe.offaxis.analysis.binning_image_bin_edges(
                 binning=tcoll["image"]["binning"]
             )
 
-            img_path = os.path.join(
-                out_dir, "image_" + scenario_key + ".jpg"
-            )
+            img_path = os.path.join(out_dir, "image_" + scenario_key + ".jpg")
             if not os.path.exists(img_path):
                 fig = sebplt.figure(sebplt.FIGURE_4_3)
                 ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
-                ax_cb = sebplt.add_axes(
-                    fig=fig, span=[0.85, 0.1, 0.02, 0.8]
-                )
+                ax_cb = sebplt.add_axes(fig=fig, span=[0.85, 0.1, 0.02, 0.8])
                 img_raw_norm = tcoll["image"]["raw"] / np.max(
                     tcoll["image"]["raw"]
                 )
@@ -53,17 +52,11 @@ for mkey in coll:
                 )
                 sebplt.plt.colorbar(cmap_psf, cax=ax_cb, extend="max")
 
-                ax.grid(
-                    color="k", linestyle="-", linewidth=0.66, alpha=0.33
-                )
+                ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.33)
                 sebplt.ax_add_circle(
                     ax=ax,
-                    x=tcoll["image"]["binning"]["image"]["center"][
-                        "cx_deg"
-                    ],
-                    y=tcoll["image"]["binning"]["image"]["center"][
-                        "cy_deg"
-                    ],
+                    x=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
+                    y=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
                     r=np.rad2deg(tcoll["image"]["angle80"]),
                     linewidth=0.5,
                     linestyle="-",
@@ -77,9 +70,7 @@ for mkey in coll:
                 fig.savefig(img_path)
                 sebplt.close(fig)
 
-            time_path = os.path.join(
-                out_dir, "time_" + scenario_key + ".jpg"
-            )
+            time_path = os.path.join(out_dir, "time_" + scenario_key + ".jpg")
             if not os.path.exists(time_path):
                 fig = sebplt.figure(sebplt.FIGURE_1_1)
                 ax = sebplt.add_axes(fig, [0.1, 0.1, 0.8, 0.8])

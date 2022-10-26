@@ -25,7 +25,9 @@ from .. import calibration_source
 from ..offaxis import read_config
 from ..offaxis import PAXEL_FMT
 from ..offaxis import ANGLE_FMT
-from ..offaxis import guess_scaling_of_num_photons_used_to_estimate_light_field_geometry
+from ..offaxis import (
+    guess_scaling_of_num_photons_used_to_estimate_light_field_geometry,
+)
 
 
 CONFIG = {}
@@ -64,9 +66,7 @@ def init(work_dir, config=CONFIG):
 
 
 def run(
-    work_dir,
-    map_and_reduce_pool,
-    logger=json_line_logger.LoggerStdout(),
+    work_dir, map_and_reduce_pool, logger=json_line_logger.LoggerStdout(),
 ):
     """
     Runs the entire exploration.
@@ -116,9 +116,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
 
         scenery_dir = os.path.join(pdir, "input", "scenery")
         os.makedirs(scenery_dir, exist_ok=True)
-        with open(
-            os.path.join(scenery_dir, "scenery.json"), "wt"
-        ) as f:
+        with open(os.path.join(scenery_dir, "scenery.json"), "wt") as f:
             s = scenery.make_plenoscope_scenery_aligned_deformed(
                 mirror_config=config["mirror"],
                 deformation_polynom=config["deformation_polynom"],
@@ -147,7 +145,6 @@ def make_light_field_geometires(
     logger.info("lfg: Reduce")
     _ = map_and_reduce_pool.map(_light_field_geometries_run_rjob, rjobs)
     logger.info("lfg: Done")
-
 
 
 def _light_field_geometries_make_jobs_and_rjobs(work_dir):
@@ -204,11 +201,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
 def _light_field_geometries_run_rjob(rjob):
     config = read_config(work_dir=rjob["work_dir"])
 
-    pdir = os.path.join(
-        rjob["work_dir"],
-        "geometries",
-        rjob["pkey"],
-    )
+    pdir = os.path.join(rjob["work_dir"], "geometries", rjob["pkey"],)
 
     map_dir = os.path.join(pdir, "light_field_geometry.map")
     out_dir = os.path.join(pdir, "light_field_geometry")
@@ -243,8 +236,12 @@ def make_source(work_dir):
     sources_dir = os.path.join(work_dir, "sources")
     os.makedirs(sources_dir, exist_ok=True)
 
-    for iofa, off_axis_angle_deg in enumerate(config["sources"]["off_axis_angles_deg"]):
-        source_path = os.path.join(sources_dir, ANGLE_FMT.format(iofa) + ".tar")
+    for iofa, off_axis_angle_deg in enumerate(
+        config["sources"]["off_axis_angles_deg"]
+    ):
+        source_path = os.path.join(
+            sources_dir, ANGLE_FMT.format(iofa) + ".tar"
+        )
 
         if not os.path.exists(source_path):
             prng = np.random.Generator(np.random.PCG64(config["seed"]))
@@ -293,9 +290,9 @@ def _responses_make_jobs(work_dir):
             job["work_dir"] = work_dir
             job["pkey"] = pkey
             job["akey"] = akey
-            job["merlict_plenoscope_propagator_path"] = config[
-                "executables"
-            ]["merlict_plenoscope_propagator_path"]
+            job["merlict_plenoscope_propagator_path"] = config["executables"][
+                "merlict_plenoscope_propagator_path"
+            ]
             job["seed"] = runningseed
             jobs.append(job)
 
@@ -305,9 +302,7 @@ def _responses_make_jobs(work_dir):
 
 
 def _responses_run_job(job):
-    adir = os.path.join(
-        job["work_dir"], "responses", job["pkey"], job["akey"]
-    )
+    adir = os.path.join(job["work_dir"], "responses", job["pkey"], job["akey"])
     os.makedirs(adir, exist_ok=True)
     response_event_path = os.path.join(adir, "1")
 
@@ -375,9 +370,7 @@ def _analysis_make_jobs(
 
 
 def _analysis_run_job(job):
-    adir = os.path.join(
-        job["work_dir"], "analysis", job["pkey"], job["akey"]
-    )
+    adir = os.path.join(job["work_dir"], "analysis", job["pkey"], job["akey"])
     os.makedirs(adir, exist_ok=True)
     summary_path = os.path.join(adir, "summary.json")
 
@@ -388,19 +381,12 @@ def _analysis_run_job(job):
     prng = np.random.Generator(np.random.PCG64(job["seed"]))
     light_field_geometry = plenopy.LightFieldGeometry(
         path=os.path.join(
-            job["work_dir"],
-            "geometries",
-            job["pkey"],
-            "light_field_geometry",
+            job["work_dir"], "geometries", job["pkey"], "light_field_geometry",
         ),
     )
     event = plenopy.Event(
         path=os.path.join(
-            job["work_dir"],
-            "responses",
-            job["pkey"],
-            job["akey"],
-            "1",
+            job["work_dir"], "responses", job["pkey"], job["akey"], "1",
         ),
         light_field_geometry=light_field_geometry,
     )

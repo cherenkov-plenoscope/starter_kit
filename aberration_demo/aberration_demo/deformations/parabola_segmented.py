@@ -4,21 +4,19 @@ from .. import portal
 
 
 MIRROR = copy.deepcopy(portal.MIRROR)
-DEFORMATION_POLYNOM = [[0,0], [0,0], [1e-4, -1e-4]]
+DEFORMATION_POLYNOM = [[0, 0], [0, 0], [1e-4, -1e-4]]
+
 
 def z_parabola(distance_to_z_axis, focal_length):
-    return 1.0 / (4.0*focal_length) * distance_to_z_axis ** 2
+    return 1.0 / (4.0 * focal_length) * distance_to_z_axis ** 2
 
 
 def surface_z(x, y, focal_length, deformation_polynom):
     _z_parabola = z_parabola(
-        distance_to_z_axis=np.hypot(x, y),
-        focal_length=focal_length,
+        distance_to_z_axis=np.hypot(x, y), focal_length=focal_length,
     )
     _z_deformation = np.polynomial.polynomial.polyval2d(
-        x=x,
-        y=y,
-        c=deformation_polynom,
+        x=x, y=y, c=deformation_polynom,
     )
     return _z_parabola + _z_deformation
 
@@ -51,8 +49,8 @@ def make_rot_axis_and_angle(normal):
 def make_facets(
     mirror_config,
     deformation_polynom,
-    reflection_vs_wavelength='mirror_reflectivity_vs_wavelength',
-    color='facet_color',
+    reflection_vs_wavelength="mirror_reflectivity_vs_wavelength",
+    color="facet_color",
 ):
     mcfg = mirror_config
     facet_spacing = (
@@ -66,18 +64,22 @@ def make_facets(
     UNIT_Y = np.array([0, 1, 0])
 
     HEX_B = UNIT_Y * facet_spacing
-    HEX_A = UNIT_Y * 0.5 + UNIT_X * (np.sqrt(3.) / 2.) * facet_spacing
+    HEX_A = UNIT_Y * 0.5 + UNIT_X * (np.sqrt(3.0) / 2.0) * facet_spacing
 
     UNIT_U = UNIT_X
-    UNIT_V = UNIT_Y * np.sin(2./3.*np.pi) + UNIT_X * np.cos(2./3.*np.pi)
-    UNIT_W = UNIT_Y * -np.sin(2./3.*np.pi) + UNIT_X * np.cos(2./3.*np.pi)
+    UNIT_V = UNIT_Y * np.sin(2.0 / 3.0 * np.pi) + UNIT_X * np.cos(
+        2.0 / 3.0 * np.pi
+    )
+    UNIT_W = UNIT_Y * -np.sin(2.0 / 3.0 * np.pi) + UNIT_X * np.cos(
+        2.0 / 3.0 * np.pi
+    )
 
-    R = (np.sqrt(3.0)/2.0) * outer_radius_to_put_facet_center
+    R = (np.sqrt(3.0) / 2.0) * outer_radius_to_put_facet_center
     N = 2.0 * np.ceil(mcfg["outer_radius"] / facet_spacing)
 
     facets = []
-    for a in np.arange(-N, N+1):
-        for b in np.arange(-N, N+1):
+    for a in np.arange(-N, N + 1):
+        for b in np.arange(-N, N + 1):
             facet_center = HEX_A * a + HEX_B * b
 
             u = np.dot(UNIT_U, facet_center)
@@ -85,9 +87,7 @@ def make_facets(
             w = np.dot(UNIT_W, facet_center)
 
             inside_outer_hexagon = (
-                u < R and u > -R and
-                v < R and v > -R and
-                w < R and w > -R
+                u < R and u > -R and v < R and v > -R and w < R and w > -R
             )
 
             if inside_outer_hexagon:
@@ -113,7 +113,9 @@ def make_facets(
                 facet["rot_axis"] = axis
                 facet["rot_angle"] = angle
 
-                facet["outer_radius"] = (2 / np.sqrt(3)) * mcfg["facet_inner_hex_radius"]
+                facet["outer_radius"] = (2 / np.sqrt(3)) * mcfg[
+                    "facet_inner_hex_radius"
+                ]
                 facet["curvature_radius"] = 2.0 * mcfg["focal_length"]
                 facet["surface"] = {
                     "outer_color": color,

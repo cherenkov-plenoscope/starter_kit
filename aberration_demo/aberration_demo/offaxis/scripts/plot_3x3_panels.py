@@ -34,23 +34,12 @@ OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.2
 
 CMAPS = {
-    "hot": {
-        "gamma": 0.33,
-        "linecolor": "white",
-    },
-    "Blues": {
-        "gamma": 0.25,
-        "linecolor": "black",
-    },
-    "binary": {
-        "gamma": 0.25,
-        "linecolor": "black",
-    },
-    "magma_r": {
-        "gamma": 0.25,
-        "linecolor": "black",
-    },
+    "hot": {"gamma": 0.33, "linecolor": "white",},
+    "Blues": {"gamma": 0.25, "linecolor": "black",},
+    "binary": {"gamma": 0.25, "linecolor": "black",},
+    "magma_r": {"gamma": 0.25, "linecolor": "black",},
 }
+
 
 def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
     extent = pixel_angel * num_pixel
@@ -95,6 +84,7 @@ def _ax_add_paxel_and_off_axis_labels(ax):
                 fontsize=14,
             )
 
+
 CMAP_VMAX = 0.0
 for mkey in coll:
     for isens, pkey in enumerate(coll[mkey]):
@@ -122,7 +112,9 @@ for cmapkey in CMAPS:
         ax_margin_width_rel = ax_width_rel - ax_panel_width_rel
         ax_margin_height_rel = ax_height_rel - ax_panel_height_rel
 
-        fig_psf = sebplt.figure(style={"rows": 1280, "cols": 1280, "fontsize": 1})
+        fig_psf = sebplt.figure(
+            style={"rows": 1280, "cols": 1280, "fontsize": 1}
+        )
         ax_psf_labels = sebplt.add_axes(
             fig=fig_psf,
             span=[0, 0, 1, 1],
@@ -151,16 +143,24 @@ for cmapkey in CMAPS:
                 bin_edges_cy_deg = np.rad2deg(bin_edges_cy)
 
                 ticks_cx_deg = make_grid_ticks(
-                    center=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
-                    num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cx"],
+                    center=tcoll["image"]["binning"]["image"]["center"][
+                        "cx_deg"
+                    ],
+                    num_pixel=tcoll["image"]["binning"]["image"][
+                        "num_pixel_cx"
+                    ],
                     pixel_angel=tcoll["image"]["binning"]["image"][
                         "pixel_angle_deg"
                     ],
                     tick_angle=GRID_ANGLE_DEG,
                 )
                 ticks_cy_deg = make_grid_ticks(
-                    center=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
-                    num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cy"],
+                    center=tcoll["image"]["binning"]["image"]["center"][
+                        "cy_deg"
+                    ],
+                    num_pixel=tcoll["image"]["binning"]["image"][
+                        "num_pixel_cy"
+                    ],
                     pixel_angel=tcoll["image"]["binning"]["image"][
                         "pixel_angle_deg"
                     ],
@@ -170,7 +170,9 @@ for cmapkey in CMAPS:
                 ax_pax_off = sebplt.add_axes(
                     fig=fig_psf,
                     span=[
-                        ax_hori_start + ax_margin_width_rel + ax_width_rel * iiofa,
+                        ax_hori_start
+                        + ax_margin_width_rel
+                        + ax_width_rel * iiofa,
                         ax_vert_start
                         + ax_margin_height_rel
                         + ax_height_rel * (num_sensors - isens - 1),
@@ -180,15 +182,18 @@ for cmapkey in CMAPS:
                 )
 
                 norm_image = (
-                    tcoll["image"]["raw"] / tcoll["statistics"]["photons"]["valid"]
+                    tcoll["image"]["raw"]
+                    / tcoll["statistics"]["photons"]["valid"]
                 )
 
                 cmap_psf = ax_pax_off.pcolormesh(
                     bin_edges_cx_deg,
                     bin_edges_cy_deg,
-                    np.transpose(norm_image)/CMAP_VMAX,
+                    np.transpose(norm_image) / CMAP_VMAX,
                     cmap=cmapkey,
-                    norm=sebplt.plt_colors.PowerNorm(gamma=CMAPS[cmapkey]["gamma"]),
+                    norm=sebplt.plt_colors.PowerNorm(
+                        gamma=CMAPS[cmapkey]["gamma"]
+                    ),
                     vmax=1,
                     vmin=0,
                 )
@@ -217,10 +222,16 @@ for cmapkey in CMAPS:
                 if isens == num_sensors - 1:
                     ax_pax_off.set_xticks(
                         [
-                            tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
+                            tcoll["image"]["binning"]["image"]["center"][
+                                "cx_deg"
+                            ]
                             - 3 * GRID_ANGLE_DEG,
-                            tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
-                            tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
+                            tcoll["image"]["binning"]["image"]["center"][
+                                "cx_deg"
+                            ],
+                            tcoll["image"]["binning"]["image"]["center"][
+                                "cx_deg"
+                            ]
                             + 3 * GRID_ANGLE_DEG,
                         ]
                     )
@@ -230,10 +241,16 @@ for cmapkey in CMAPS:
                 if iiofa == 0:
                     ax_pax_off.set_yticks(
                         [
-                            tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
+                            tcoll["image"]["binning"]["image"]["center"][
+                                "cy_deg"
+                            ]
                             - 3 * GRID_ANGLE_DEG,
-                            tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
-                            tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
+                            tcoll["image"]["binning"]["image"]["center"][
+                                "cy_deg"
+                            ],
+                            tcoll["image"]["binning"]["image"]["center"][
+                                "cy_deg"
+                            ]
                             + 3 * GRID_ANGLE_DEG,
                         ]
                     )
