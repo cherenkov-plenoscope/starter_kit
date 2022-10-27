@@ -71,7 +71,7 @@ if not os.path.exists(summary_path):
 
     """
     print("histogram_arrival_times")
-    traw, tbinedges = abe.offaxis.analysis.histogram_arrival_times(
+    traw, tbinedges = abe.analysis.histogram_arrival_times(
         raw_sensor_response=event.raw_sensor_response,
         time_delays_to_be_subtracted=light_field_geometry.time_delay_image_mean,
         time_delay_std=light_field_geometry.time_delay_std,
@@ -81,7 +81,7 @@ if not os.path.exists(summary_path):
     """
 
     print("calibrate_plenoscope_response")
-    calibrated_response = abe.offaxis.analysis.calibrate_plenoscope_response(
+    calibrated_response = abe.analysis.calibrate_plenoscope_response(
         light_field_geometry=light_field_geometry,
         event=event,
         object_distance=OBJECT_DISTANCE,
@@ -90,7 +90,7 @@ if not os.path.exists(summary_path):
     cres = calibrated_response
 
     print("encirclement2d")
-    psf_cx, psf_cy, psf_angle80 = abe.offaxis.analysis.encirclement2d(
+    psf_cx, psf_cy, psf_angle80 = abe.analysis.encirclement2d(
         x=cres["image_beams"]["cx"],
         y=cres["image_beams"]["cy"],
         x_std=cres["image_beams"]["cx_std"],
@@ -108,12 +108,12 @@ if not os.path.exists(summary_path):
     thisbinning["image"]["center"]["cy_deg"] = config["sources"][
         "off_axis_angles_deg"
     ][ofa][1]
-    thisimg_bin_edges = abe.offaxis.analysis.binning_image_bin_edges(
+    thisimg_bin_edges = abe.analysis.binning_image_bin_edges(
         binning=thisbinning
     )
 
     print("histogram2d_std")
-    imgraw = abe.offaxis.analysis.histogram2d_std(
+    imgraw = abe.analysis.histogram2d_std(
         x=cres["image_beams"]["cx"],
         y=cres["image_beams"]["cy"],
         x_std=cres["image_beams"]["cx_std"],
@@ -125,7 +125,7 @@ if not os.path.exists(summary_path):
     )[0]
 
     print("time encirclement1d")
-    time_80_start, time_80_stop = abe.offaxis.analysis.encirclement1d(
+    time_80_start, time_80_stop = abe.analysis.encirclement1d(
         x=cres["time"]["bin_centers"],
         f=cres["time"]["weights"],
         percentile=CONTAINMENT_PERCENTILE,
@@ -134,7 +134,7 @@ if not os.path.exists(summary_path):
     (
         time_fwhm_start,
         time_fwhm_stop,
-    ) = abe.offaxis.analysis.full_width_half_maximum(
+    ) = abe.analysis.full_width_half_maximum(
         x=cres["time"]["bin_centers"], f=cres["time"]["weights"],
     )
 
@@ -177,7 +177,7 @@ with open(summary_path, "rt") as f:
     out = json_numpy.loads(txt)
 
 
-bin_edges_cx, bin_edges_cy = abe.offaxis.analysis.binning_image_bin_edges(
+bin_edges_cx, bin_edges_cy = abe.analysis.binning_image_bin_edges(
     binning=out["image"]["binning"]
 )
 
