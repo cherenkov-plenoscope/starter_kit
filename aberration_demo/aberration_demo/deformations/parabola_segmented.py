@@ -4,20 +4,26 @@ from .. import portal
 
 
 MIRROR = copy.deepcopy(portal.MIRROR)
-DEFORMATION_POLYNOM = [[0, 0], [0, 0], [1e-4, -1e-4]]
-
+DEFORMATION_POLYNOM = [
+    [0, 0, 5e-5],
+    [0, 0, 0],
+    [-7e-5, 0, 0],
+]
 
 def z_parabola(distance_to_z_axis, focal_length):
     return 1.0 / (4.0 * focal_length) * distance_to_z_axis ** 2
 
 
+def z_deformation(x, y, deformation_polynom):
+    return np.polynomial.polynomial.polyval2d(
+        x=x, y=y, c=deformation_polynom,
+    )
+
 def surface_z(x, y, focal_length, deformation_polynom):
     _z_parabola = z_parabola(
         distance_to_z_axis=np.hypot(x, y), focal_length=focal_length,
     )
-    _z_deformation = np.polynomial.polynomial.polyval2d(
-        x=x, y=y, c=deformation_polynom,
-    )
+    _z_deformation = z_deformation(x, y, deformation_polynom)
     return _z_parabola + _z_deformation
 
 
@@ -46,6 +52,29 @@ def make_rot_axis_and_angle(normal):
     return rot_axis, angle_to_unit_z
 
 
+UNIT_X = np.array([1, 0, 0])
+UNIT_Y = np.array([0, 1, 0])
+
+UNIT_U = UNIT_X
+UNIT_V = UNIT_Y * np.sin(2.0 / 3.0 * np.pi) + UNIT_X * np.cos(
+    2.0 / 3.0 * np.pi
+)
+UNIT_W = UNIT_Y * -np.sin(2.0 / 3.0 * np.pi) + UNIT_X * np.cos(
+    2.0 / 3.0 * np.pi
+)
+
+
+def is_inside_hexagon(position, hexagon_inner_radius):
+    R = hexagon_inner_radius
+    u = np.dot(UNIT_U, position)
+    v = np.dot(UNIT_V, position)
+    w = np.dot(UNIT_W, position)
+    inside_outer_hexagon = (
+        u < R and u > -R and v < R and v > -R and w < R and w > -R
+    )
+    return inside_outer_hexagon
+
+
 def make_facets(
     mirror_config,
     deformation_polynom,
@@ -60,21 +89,13 @@ def make_facets(
         mcfg["outer_radius"] - facet_spacing / 2.0
     )
 
-    UNIT_X = np.array([1, 0, 0])
-    UNIT_Y = np.array([0, 1, 0])
-
     HEX_B = UNIT_Y * facet_spacing
     HEX_A = UNIT_Y * 0.5 + UNIT_X * (np.sqrt(3.0) / 2.0) * facet_spacing
 
-    UNIT_U = UNIT_X
-    UNIT_V = UNIT_Y * np.sin(2.0 / 3.0 * np.pi) + UNIT_X * np.cos(
-        2.0 / 3.0 * np.pi
+    hexagon_inner_radius = (
+        (np.sqrt(3.0) / 2.0)
+        * outer_radius_to_put_facet_center
     )
-    UNIT_W = UNIT_Y * -np.sin(2.0 / 3.0 * np.pi) + UNIT_X * np.cos(
-        2.0 / 3.0 * np.pi
-    )
-
-    R = (np.sqrt(3.0) / 2.0) * outer_radius_to_put_facet_center
     N = 2.0 * np.ceil(mcfg["outer_radius"] / facet_spacing)
 
     facets = []
@@ -82,12 +103,9 @@ def make_facets(
         for b in np.arange(-N, N + 1):
             facet_center = HEX_A * a + HEX_B * b
 
-            u = np.dot(UNIT_U, facet_center)
-            v = np.dot(UNIT_V, facet_center)
-            w = np.dot(UNIT_W, facet_center)
-
-            inside_outer_hexagon = (
-                u < R and u > -R and v < R and v > -R and w < R and w > -R
+            inside_outer_hexagon = is_inside_hexagon(
+                position=facet_center,
+                hexagon_inner_radius=hexagon_inner_radius,
             )
 
             if inside_outer_hexagon:

@@ -22,12 +22,10 @@ from .. import merlict
 from .. import portal
 from .. import analysis
 from .. import calibration_source
-from ..offaxis import read_config
-from ..offaxis import PAXEL_FMT
-from ..offaxis import ANGLE_FMT
-from ..offaxis import (
-    guess_scaling_of_num_photons_used_to_estimate_light_field_geometry,
-)
+from .. import utils
+from ..utils import read_config
+from ..utils import PAXEL_FMT
+from ..utils import ANGLE_FMT
 
 
 CONFIG = {}
@@ -35,6 +33,7 @@ CONFIG["seed"] = 1337
 CONFIG["executables"] = copy.deepcopy(merlict.EXECUTABLES)
 
 CONFIG["mirror"] = copy.deepcopy(parabola_segmented.MIRROR)
+CONFIG["mirror"]["keys"] = ["parabola_segmented"]
 CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
 CONFIG["deformation_polynom"] = copy.deepcopy(
     parabola_segmented.DEFORMATION_POLYNOM
@@ -167,7 +166,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
             os.makedirs(map_dir, exist_ok=True)
 
             _num_blocks = config["light_field_geometry"]["num_blocks"]
-            _num_blocks *= guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
+            _num_blocks *= utils.guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
                 num_paxel_on_diagonal=npax
             )
 
@@ -415,3 +414,28 @@ def make_analysis(
         containment_percentile=containment_percentile,
     )
     _ = map_and_reduce_pool.map(_analysis_run_job, jobs)
+
+
+def read_analysis(work_dir):
+    config = read_config(work_dir=work_dir)
+
+    coll = {}
+
+    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        pkey = PAXEL_FMT.format(npax)
+        coll[pkey] = {}
+
+        for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
+            akey = ANGLE_FMT.format(ofa)
+
+            summary_path = os.path.join(
+                work_dir, "analysis", pkey, akey, "summary.json",
+            )
+            if not os.path.exists(summary_path):
+                print("Expected summary:", summary_path)
+                continue
+
+            with open(summary_path, "rt") as f:
+                out = json_numpy.loads(f.read())
+            coll[pkey][akey] = out
+    return coll

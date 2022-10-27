@@ -16,11 +16,15 @@ import plenopy
 import json_line_logger
 import copy
 
+from . import scenery
 from .. import merlict
 from .. import calibration_source
 from .. import portal
 from .. import analysis
-from . import scenery
+from .. import utils
+from ..utils import read_config
+from ..utils import PAXEL_FMT
+from ..utils import ANGLE_FMT
 
 
 CONFIG = {}
@@ -44,9 +48,6 @@ CONFIG["light_field_geometry"] = {}
 CONFIG["light_field_geometry"]["num_blocks"] = 5
 CONFIG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
 CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
-
-ANGLE_FMT = "angle{:06d}"
-PAXEL_FMT = "paxel{:06d}"
 
 
 def init(work_dir, config=CONFIG):
@@ -123,20 +124,6 @@ def run(
     logger.info("Stop")
 
 
-def read_config(work_dir):
-    """
-    Returns the config in work_dir/config.json.
-
-    Parameters
-    ----------
-    work_dir : str
-        Path to the work_dir
-    """
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
-    return config
-
-
 def LightFieldGeometry(path, off_axis_angle_deg):
     """
     Returns a plenopy.LightFieldGeometry(path) but de-rotated by
@@ -152,12 +139,6 @@ def LightFieldGeometry(path, off_axis_angle_deg):
     lfg = plenopy.LightFieldGeometry(path=path)
     lfg.cx_mean += np.deg2rad(off_axis_angle_deg)
     return lfg
-
-
-def guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
-    num_paxel_on_diagonal,
-):
-    return num_paxel_on_diagonal * num_paxel_on_diagonal
 
 
 def make_responses(
@@ -457,7 +438,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
                     os.makedirs(map_dir, exist_ok=True)
 
                     _num_blocks = config["light_field_geometry"]["num_blocks"]
-                    _num_blocks *= guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
+                    _num_blocks *= utils.guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
                         num_paxel_on_diagonal=npax
                     )
 
