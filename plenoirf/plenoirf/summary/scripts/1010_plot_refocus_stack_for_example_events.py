@@ -28,8 +28,8 @@ lfg = pl.LightFieldGeometry(
 )
 
 SAMPLE = {
-    "bin_edges_pe": np.geomspace(1e3, 1e6, 5),
-    "count": 5 * np.ones(4),
+    "bin_edges_pe": np.geomspace(7.5e1, 7.5e5, 5),
+    "count": np.array([10, 5, 5, 5]),
 }
 
 FIC_SCALE = 2
@@ -238,9 +238,11 @@ for sk in SITES:
                         "fontsize": 0.5 * FIC_SCALE,
                     }
                 )
-                ax = seb.add_axes(fig=fig, span=[0.3, 0.15, 0.6, 0.85])
+                ax = seb.add_axes(fig=fig, span=[0.175, 0.1, 0.7, 0.85])
+                axr = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.05, 0.85])
+                cax = seb.add_axes(fig=fig, span=[0.8, 0.15, 0.025, 0.75])
 
-                pl.plot.image.add2ax(
+                colbar = pl.plot.image.add2ax(
                     ax=ax,
                     I=image_stack[dek, :],
                     px=np.rad2deg(lfg.pixel_pos_cx),
@@ -249,12 +251,11 @@ for sk in SITES:
                     hexrotation=30,
                     vmin=0,
                     vmax=np.max(image_stack),
-                    colorbar=True,
+                    colorbar=False,
                     norm=seb.plt_colors.PowerNorm(gamma=CMAP_GAMMA)
                 )
-
-                ax.set_xlabel(r"$c_x\,/\,1^{\circ}$")
-                ax.set_ylabel(r"$c_y\,/\,1^{\circ}$")
+                ax.set_aspect('equal')
+                seb.plt.colorbar(colbar, cax=cax)
 
                 # region of interest
                 roi_cx_deg = np.rad2deg(event_cx)
@@ -266,7 +267,14 @@ for sk in SITES:
                 ax.set_xlim([cxstart, cxstop])
                 ax.set_ylim([cystart, cystop])
 
-                axr = seb.add_axes(fig=fig, span=[0.1, 0.15, 0.1, 0.85])
+                ax.set_ylabel(r"$c_y\,/\,1^{\circ}$")
+                fig.text(
+                    x=0.47,
+                    y=0.15,
+                    s=r"$c_x\,/\,1^{\circ}$",
+                    color="grey",
+                )
+
                 pl.plot.ruler.add2ax_object_distance_ruler(
                     ax=axr,
                     object_distance=depth,
