@@ -26,8 +26,8 @@ os.makedirs(out_dir, exist_ok=True)
 config = abe.deformations.read_config(work_dir=work_dir)
 coll = abe.deformations.read_analysis(work_dir=work_dir)
 
-# summary plot of poin-spread-functions
-# -------------------------------------
+# summary plot of point-spread-functions
+# --------------------------------------
 
 OFFAXIS_ANGLE_IDXS = [0, 3, 6]
 OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
