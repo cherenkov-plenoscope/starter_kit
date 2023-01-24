@@ -19,7 +19,13 @@ def z_deformation(x, y, deformation_polynom):
         x=x, y=y, c=deformation_polynom,
     )
 
-def surface_z(x, y, focal_length, deformation_polynom):
+LOW_PASS_FILTER_KERNEL = [
+    [(,), (,), (,),],
+    [(,), (,), (,),],
+    [(,), (,), (,),],
+]
+
+def surface_z(x, y, focal_length, deformation_polynom, low_pass_filter_kernel):
     _z_parabola = z_parabola(
         distance_to_z_axis=np.hypot(x, y), focal_length=focal_length,
     )
