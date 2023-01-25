@@ -102,6 +102,14 @@ STRUCTURE["core"] = {
     "core_y_m": {"dtype": "<f8", "comment": ""},
 }
 
+STRUCTURE["instrument"] = {
+    "start_time_of_exposure_s": {
+        "dtype": "<f8",
+        "comment": "The start-time of the plenoscope's exposure-window"
+            "relative to the clock in CORSIKA."
+    },
+}
+
 STRUCTURE["trigger"] = {
     "num_cherenkov_pe": {"dtype": "<i8", "comment": ""},
     "response_pe": {"dtype": "<i8", "comment": ""},

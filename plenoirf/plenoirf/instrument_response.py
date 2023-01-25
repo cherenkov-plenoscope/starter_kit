@@ -669,6 +669,14 @@ def _run_loose_trigger(
         event_id = int(cevth[cpw.I.EVTH.EVENT_NUMBER])
         ide = {spt.IDX: unique.make_uid(run_id=run_id, event_id=event_id)}
 
+        # export instrument's time relative to CORSIKA's time
+        # ---------------------------------------------------
+        ttabs = ide.copy()
+        ttabs["start_time_of_exposure_s"] = (
+            event.simulation_truth.photon_propagator.nsb_exposure_start_time()
+        )
+        tabrec["instrument"].append(ttabs)
+
         # apply loose trigger
         # -------------------
         (
