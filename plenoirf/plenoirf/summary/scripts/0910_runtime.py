@@ -2,6 +2,7 @@
 import sys
 from os.path import join as opj
 import os
+import io
 import pandas as pd
 import numpy as np
 import json_numpy
@@ -210,38 +211,39 @@ for sk in SITES:
 
         ertt = extended_runtime_table
 
-        t_corsika = np.median(
-            ertt["corsika_and_grid"] / ertt["num_events_corsika"]
-        )
-        f_corsika = 1.0
+        with np.errstate(divide='ignore'):
+            t_corsika = np.median(
+                ertt["corsika_and_grid"] / ertt["num_events_corsika"]
+            )
+            f_corsika = 1.0
 
-        t_merlict = np.median(ertt["merlict"] / ertt["num_events_merlict"])
-        f_merlict = np.median(
-            ertt["num_events_merlict"] / ertt["num_events_corsika"]
-        )
+            t_merlict = np.median(ertt["merlict"] / ertt["num_events_merlict"])
+            f_merlict = np.median(
+                ertt["num_events_merlict"] / ertt["num_events_corsika"]
+            )
 
-        t_pltrg = np.median(
-            ertt["pass_loose_trigger"] / ertt["num_events_merlict"]
-        )
-        f_pltrg = f_merlict
+            t_pltrg = np.median(
+                ertt["pass_loose_trigger"] / ertt["num_events_merlict"]
+            )
+            f_pltrg = f_merlict
 
-        t_clscer = np.median(
-            ertt["classify_cherenkov"] / ertt["num_events_pasttrigger"]
-        )
-        f_clscer = np.median(
-            ertt["num_events_pasttrigger"] / ertt["num_events_corsika"]
-        )
+            t_clscer = np.median(
+                ertt["classify_cherenkov"] / ertt["num_events_pasttrigger"]
+            )
+            f_clscer = np.median(
+                ertt["num_events_pasttrigger"] / ertt["num_events_corsika"]
+            )
 
-        t_extft = np.median(
-            ertt["extract_features"] / ertt["num_events_pasttrigger"]
-        )
-        f_extft = f_clscer
+            t_extft = np.median(
+                ertt["extract_features"] / ertt["num_events_pasttrigger"]
+            )
+            f_extft = f_clscer
 
-        t_traje = np.median(
-            ertt["estimate_primary_trajectory"]
-            / ertt["num_events_pasttrigger"]
-        )
-        f_traje = f_clscer
+            t_traje = np.median(
+                ertt["estimate_primary_trajectory"]
+                / ertt["num_events_pasttrigger"]
+            )
+            f_traje = f_clscer
 
         ostr = io.StringIO()
         ostr.write(
