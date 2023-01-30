@@ -264,3 +264,32 @@ def dict_to_pretty_str(dictionary):
             oss.write("\n")
     oss.seek(0)
     return oss.read()
+
+
+def ray_parameter_for_closest_distance_to_point(
+    ray_support,
+    ray_direction,
+    point,
+):
+    """
+    Returns parameter for ray to be at closest point.
+    """
+    # We create a plane orthogonal to this ray and containing the point
+    # plane equation:
+    #  d = x*a + y*b + z*c
+    #
+    # We set the normal vector n of the plane to the ray's direction vector:
+    #  a=direction.x b=direction.y c=direction.z
+    #
+    # Now we insert the support vector of the frame into the plane eqaution:
+    #  d = point.x*dirx + point.y*diry + point.z*dirz
+    d = np.dot(ray_direction, point)
+
+    # Insert the ray into plane equation and solve for the ray parameter.
+    # The ray's direction is normalized, therefore: (direction * direction)=1
+
+    return d - np.dot(ray_support, ray_direction)
+
+
+def ray_at(ray_support, ray_direction, parameter):
+    return ray_support + ray_direction * parameter
