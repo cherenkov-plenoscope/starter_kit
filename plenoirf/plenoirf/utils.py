@@ -267,9 +267,7 @@ def dict_to_pretty_str(dictionary):
 
 
 def ray_parameter_for_closest_distance_to_point(
-    ray_support,
-    ray_direction,
-    point,
+    ray_support, ray_direction, point,
 ):
     """
     Returns parameter for ray to be at closest point.

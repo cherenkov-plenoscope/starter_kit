@@ -106,7 +106,7 @@ STRUCTURE["instrument"] = {
     "start_time_of_exposure_s": {
         "dtype": "<f8",
         "comment": "The start-time of the plenoscope's exposure-window"
-            "relative to the clock in CORSIKA."
+        "relative to the clock in CORSIKA.",
     },
 }
 

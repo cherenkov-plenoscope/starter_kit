@@ -672,9 +672,9 @@ def _run_loose_trigger(
         # export instrument's time relative to CORSIKA's time
         # ---------------------------------------------------
         ttabs = ide.copy()
-        ttabs["start_time_of_exposure_s"] = (
-            event.simulation_truth.photon_propagator.nsb_exposure_start_time()
-        )
+        ttabs[
+            "start_time_of_exposure_s"
+        ] = event.simulation_truth.photon_propagator.nsb_exposure_start_time()
         tabrec["instrument"].append(ttabs)
 
         # apply loose trigger

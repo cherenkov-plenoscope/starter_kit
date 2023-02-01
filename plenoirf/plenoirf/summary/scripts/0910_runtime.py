@@ -211,7 +211,7 @@ for sk in SITES:
 
         ertt = extended_runtime_table
 
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             t_corsika = np.median(
                 ertt["corsika_and_grid"] / ertt["num_events_corsika"]
             )

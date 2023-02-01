@@ -214,7 +214,6 @@ def _guess_trigger(
     _trg_rej_alt = trigger_rejecting_altitude_asl_m
     _site_alt = site_altitude_asl_m
 
-
     accep = np.argmin(np.abs(_obj - _trg_acc_alt + _site_alt))
     rejec = np.argmin(np.abs(_obj - _trg_rej_alt + _site_alt))
 
@@ -381,7 +380,9 @@ def _guess_summary_config(run_dir):
             collection_trigger_threshold_pe=collection_trigger_threshold_pe,
             analysis_trigger_threshold_pe=analysis_trigger_threshold_pe,
             site_altitude_asl_m=SITES[sk]["observation_level_asl_m"],
-            trigger_foci_object_distamces_m=irf_config["config"]["sum_trigger"]["object_distances_m"],
+            trigger_foci_object_distamces_m=irf_config["config"][
+                "sum_trigger"
+            ]["object_distances_m"],
             trigger_accepting_altitude_asl_m=19856,
             trigger_rejecting_altitude_asl_m=13851,
         )

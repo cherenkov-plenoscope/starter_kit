@@ -39,6 +39,7 @@ FIG_COLS = 640 * FIC_SCALE
 REGION_OF_INTEREST_DEG = 3.25
 CMAP_GAMMA = 0.5
 
+
 def table_to_dict(ta):
     out = {}
     for col in ta:
@@ -252,27 +253,24 @@ for sk in SITES:
                     vmin=0,
                     vmax=np.max(image_stack),
                     colorbar=False,
-                    norm=seb.plt_colors.PowerNorm(gamma=CMAP_GAMMA)
+                    norm=seb.plt_colors.PowerNorm(gamma=CMAP_GAMMA),
                 )
-                ax.set_aspect('equal')
+                ax.set_aspect("equal")
                 seb.plt.colorbar(colbar, cax=cax)
 
                 # region of interest
                 roi_cx_deg = np.rad2deg(event_cx)
                 roi_cy_deg = np.rad2deg(event_cy)
-                cxstart = roi_cx_deg - REGION_OF_INTEREST_DEG/2
-                cxstop = roi_cx_deg + REGION_OF_INTEREST_DEG/2
-                cystart = roi_cy_deg - REGION_OF_INTEREST_DEG/2
-                cystop = roi_cy_deg + REGION_OF_INTEREST_DEG/2
+                cxstart = roi_cx_deg - REGION_OF_INTEREST_DEG / 2
+                cxstop = roi_cx_deg + REGION_OF_INTEREST_DEG / 2
+                cystart = roi_cy_deg - REGION_OF_INTEREST_DEG / 2
+                cystop = roi_cy_deg + REGION_OF_INTEREST_DEG / 2
                 ax.set_xlim([cxstart, cxstop])
                 ax.set_ylim([cystart, cystop])
 
                 ax.set_ylabel(r"$c_y\,/\,1^{\circ}$")
                 fig.text(
-                    x=0.47,
-                    y=0.15,
-                    s=r"$c_x\,/\,1^{\circ}$",
-                    color="grey",
+                    x=0.47, y=0.15, s=r"$c_x\,/\,1^{\circ}$", color="grey",
                 )
 
                 pl.plot.ruler.add2ax_object_distance_ruler(

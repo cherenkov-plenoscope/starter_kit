@@ -15,10 +15,10 @@ def test_cone_zero_opening_angle():
 def test_cone_conversion_forth_and_back():
     for opening_angle in np.linspace(0, np.pi, 137):
         solid_angle = plenoirf.utils.cone_solid_angle(opening_angle)
-        opening_angle_back = plenoirf.utils.cone_radial_opening_angle(solid_angle)
+        opening_angle_back = plenoirf.utils.cone_radial_opening_angle(
+            solid_angle
+        )
 
         np.testing.assert_approx_equal(
-            actual=opening_angle_back,
-            desired=opening_angle,
-            significant=7,
+            actual=opening_angle_back, desired=opening_angle, significant=7,
         )
