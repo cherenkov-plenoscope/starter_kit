@@ -18,6 +18,9 @@ EVENT_ID_UPPER = 10 ** EVENT_ID_NUM_DIGITS
 
 UID_FOTMAT_STR = "{:0" + str(UID_NUM_DIGITS) + "d}"
 
+RUN_ID_FORMAT_STR = "{:0" + str(RUN_ID_NUM_DIGITS) + "d}"
+EVENT_ID_FORMAT_STR = "{:0" + str(EVENT_ID_NUM_DIGITS) + "d}"
+
 
 def make_uid(run_id, event_id):
     assert 0 <= run_id < RUN_ID_UPPER
