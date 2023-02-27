@@ -31,7 +31,7 @@ CONFIG = {
         "type": "gamma",
         "energy_range": {"start_GeV": 0.5, "stop_GeV": 1.5, "power_slope": 0},
     },
-    "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 60.0,},
+    "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 6.0,},
     "site": SITES["namibia"],
     "scatter": {
         "direction": {"radial_angle_deg": 3.25,},
@@ -334,6 +334,8 @@ def run_job(job):
     corsika_o_path = os.path.join(job_dir, "corska.o")
     corsika_e_path = os.path.join(job_dir, "corska.e")
 
+    t_deltas = []
+
     with cpw.CorsikaPrimary(
         corsika_path=job["corsika_path"],
         steering_dict=steering,
@@ -350,6 +352,7 @@ def run_job(job):
 
             # everything that is known before Cherenkov emission
             # --------------------------------------------------
+            obs_level_m = cpw.CM2M * evth[cpw.I.EVTH.HEIGHT_OBSERVATION_LEVEL(1)]
             base = uid.copy()
             base["primary_particle_id"] = evth[cpw.I.EVTH.PARTICLE_ID]
             base["primary_energy_GeV"] = evth[cpw.I.EVTH.TOTAL_ENERGY_GEV]
@@ -366,6 +369,23 @@ def run_job(job):
             base["primary_direction_y"] = p_d[1]
             base["primary_direction_z"] = p_d[2]
 
+            # cross-check
+            core_position_xy_m = plenoirf.utils.ray_plane_x_y_intersection(
+                support=[
+                    base["primary_start_x_m"],
+                    base["primary_start_y_m"],
+                    base["primary_start_z_m"],
+                ],
+                direction=[
+                    base["primary_direction_x"],
+                    base["primary_direction_y"],
+                    base["primary_direction_z"],
+                ],
+                plane_z=obs_level_m,
+            )
+            assert np.abs(core_position_xy_m[0]) < 1e-1
+            assert np.abs(core_position_xy_m[1]) < 1e-1
+
             # instrument
             # ----------
             (
@@ -374,9 +394,7 @@ def run_job(job):
             ) = cpw.random.distributions.draw_x_y_in_disc(
                 prng=prng, radius=config["scatter"]["position"]["radius_m"],
             )
-            base["instrument_z_m"] = (
-                cpw.CM2M * evth[cpw.I.EVTH.HEIGHT_OBSERVATION_LEVEL(1)]
-            )
+            base["instrument_z_m"] = obs_level_m
             (
                 base["instrument_azimuth_rad"],
                 base["instrument_zenith_rad"],
@@ -442,7 +460,7 @@ def run_job(job):
             bunches_wrt_intrument_cgs = _bunches_translate_into_instrument_frame(
                 bunches_cgs=bunches_cgs,
                 instrument_x_m=base["instrument_x_m"],
-                instrument_y_m=base["instrument_x_m"],
+                instrument_y_m=base["instrument_y_m"],
             )
 
             mask_visible = _bunches_mask_inside_instruments_etendue(
@@ -523,6 +541,21 @@ def run_job(job):
             reco["arrival_time_median_s"] = np.median(bunches_arrival_times)
             reco["arrival_time_stddev_s"] = np.std(bunches_arrival_times)
             tabrec["reconstruction"].append(reco)
+
+            t_delta = (
+                reco["arrival_time_median_s"] -
+                base["primary_time_to_closest_point_to_instrument_s"]
+            )
+            if cerds["num_bunches"] > 25:
+                t_deltas.append(t_delta)
+                print(
+                    "{: 6.1f}ns +- {: 6.1f}ns".format(t_delta*1e9, 1e9*reco["arrival_time_stddev_s"]),
+                    ", avg: ",
+                    "{: 6.1f}ns, ".format(1e9 * np.std(t_deltas)),
+                    "zd {: 6.1f}deg".format(np.rad2deg(base["primary_zenith_rad"])),
+                    "d {: 6.3f}km".format(base["primary_distance_to_closest_point_to_instrument_m"] * 1e-3)
+                )
+
 
     _export_event_table(
         path=os.path.join(job_dir, "result.tar"), tabrec=tabrec,
