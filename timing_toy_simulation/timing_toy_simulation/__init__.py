@@ -1,4 +1,5 @@
 import os
+import glob
 import numpy as np
 import corsika_primary as cpw
 import json_numpy
@@ -36,7 +37,7 @@ CONFIG = {
         "direction": {"radial_angle_deg": 3.25,},
         "position": {"radius_m": 640.0,},
     },
-    "statistics": {"num_showers_per_run": 1280, "num_runs": 4,},
+    "statistics": {"num_showers_per_run": 1280, "num_runs": 64,},
     "instrument": {
         "radius_m": 35.0,
         "field_of_view_deg": 6.5,
@@ -62,27 +63,27 @@ d2r = np.deg2rad
 
 def init(work_dir, config=None):
     os.makedirs(work_dir, exist_ok=True)
-
     if config == None:
         config = CONFIG
-
     json_numpy.write(os.path.join(work_dir, "config.json"), CONFIG)
+
+
+def make(work_dir, parallel_pool):
+    jobs = make_jobs(work_dir=work_dir)
+    parallel_pool.map(run_job, jobs)
+    reduce_jobs(work_dir=work_dir)
 
 
 def make_jobs(work_dir):
     work_dir = os.path.abspath(work_dir)
-
     config = json_numpy.read(os.path.join(work_dir, "config.json"))
-
     jobs = []
-
     for run_id in np.arange(1, 1 + config["statistics"]["num_runs"]):
         job = {}
         job["job_id"] = run_id
         job["work_dir"] = work_dir
         job["corsika_path"] = os.path.abspath(config["corsika"]["path"])
         jobs.append(job)
-
     return jobs
 
 
@@ -184,11 +185,6 @@ def calculate_angle_between_rad(bunch_cx, bunch_cy, ins_cx, ins_cy):
     angle = plenoirf.grid._make_angle_between(
         directions=bunch_vecs, direction=ins_vec,
     )
-
-    # print("ins_vec", ins_vec)
-    # print("bunch_vecs", bunch_vecs)
-    # print("angle", np.rad2deg(angle))
-
     return angle
 
 
@@ -314,30 +310,35 @@ def _export_event_table(path, tabrec):
     spt.write(
         path=tmp_path, table=event_table, structure=table.STRUCTURE,
     )
-    nfs.copy(src=tmp_path, dst=path)
+    nfs.move(src=tmp_path, dst=path)
 
 
 def run_job(job):
     prng = np.random.Generator(np.random.PCG64(job["job_id"]))
-
     config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
 
-    job_dir = os.path.join(job["work_dir"], "{:09d}".format(job["job_id"]))
-
+    map_dir = os.path.join(job["work_dir"], "map")
+    run_id_str = plenoirf.unique.RUN_ID_FORMAT_STR.format(job["job_id"])
+    job_dir = os.path.join(map_dir, run_id_str)
     os.makedirs(job_dir, exist_ok=True)
 
     steering = _make_corsika_steering(job=job, config=config, prng=prng)
 
-    with open(os.path.join(job_dir, "steering.json"), "wt") as f:
+    steering_path = os.path.join(job_dir, "steering.json")
+    with open(steering_path + ".incomplete", "wt") as f:
         f.write(json_numpy.dumps(steering))
+    nfs.move(steering_path + ".incomplete", steering_path)
 
     tabrec = table.init_records()
+
+    corsika_o_path = os.path.join(job_dir, "corska.o")
+    corsika_e_path = os.path.join(job_dir, "corska.e")
 
     with cpw.CorsikaPrimary(
         corsika_path=job["corsika_path"],
         steering_dict=steering,
-        stdout_path=os.path.join(job_dir, "corska.o"),
-        stderr_path=os.path.join(job_dir, "corska.e"),
+        stdout_path=corsika_o_path + ".incomplete",
+        stderr_path=corsika_e_path + ".incomplete",
         read_block_by_block=False,
     ) as run:
         for shower in run:
@@ -426,7 +427,6 @@ def run_job(job):
             tabrec["cherenkov_size"].append(cers)
 
             if cers["num_bunches"] == 0:
-                print("cherenkov_size")
                 continue
 
             # Cherenkov-pool-properties
@@ -439,14 +439,14 @@ def run_job(job):
 
             # translate bunches into instrument's frame
             # ------------------------------------------
-            bunches_cgs = _bunches_translate_into_instrument_frame(
+            bunches_wrt_intrument_cgs = _bunches_translate_into_instrument_frame(
                 bunches_cgs=bunches_cgs,
                 instrument_x_m=base["instrument_x_m"],
                 instrument_y_m=base["instrument_x_m"],
             )
 
             mask_visible = _bunches_mask_inside_instruments_etendue(
-                bunches_cgs=bunches_cgs,
+                bunches_cgs=bunches_wrt_intrument_cgs,
                 instrument_azimith_rad=base["instrument_azimuth_rad"],
                 instrument_zenith_rad=base["instrument_zenith_rad"],
                 instrument_radius_m=config["instrument"]["radius_m"],
@@ -457,7 +457,7 @@ def run_job(job):
 
             # visible Cherenkov-pool-size
             # ---------------------------
-            bunches_visible_cgs = bunches_cgs[mask_visible]
+            bunches_visible_cgs = bunches_wrt_intrument_cgs[mask_visible]
 
             cerps = uid.copy()
             cerps["num_bunches"] = bunches_visible_cgs.shape[0]
@@ -467,7 +467,6 @@ def run_job(job):
             tabrec["cherenkov_visible_size"].append(cerps)
 
             if cerps["num_bunches"] == 0:
-                print("cherenkov_visible_size")
                 continue
 
             # visible Cherenkov-pool-properties
@@ -506,7 +505,6 @@ def run_job(job):
             tabrec["cherenkov_detected_size"].append(cerds)
 
             if cerds["num_bunches"] == 0:
-                print("cherenkov_detected_size")
                 continue
 
             cerdp = uid.copy()
@@ -526,8 +524,31 @@ def run_job(job):
             reco["arrival_time_stddev_s"] = np.std(bunches_arrival_times)
             tabrec["reconstruction"].append(reco)
 
-            print("reconstruction")
-
     _export_event_table(
         path=os.path.join(job_dir, "result.tar"), tabrec=tabrec,
     )
+
+    nfs.move(corsika_o_path + ".incomplete", corsika_o_path)
+    nfs.move(corsika_e_path + ".incomplete", corsika_e_path)
+
+
+def reduce_jobs(work_dir):
+    _run_paths = glob.glob(os.path.join(work_dir, "map", "*"))
+    result_paths = []
+    for _run_path in _run_paths:
+        result_path = os.path.join(_run_path, "result.tar")
+        if os.path.exists(result_path):
+            result_paths.append(result_path)
+
+    result_table = spt.concatenate_files(
+        list_of_table_paths=result_paths, structure=table.STRUCTURE
+    )
+
+    result_path = os.path.join(work_dir, "result.tar")
+
+    spt.write(
+        path=result_path + ".incomplete",
+        table=result_table,
+        structure=table.STRUCTURE,
+    )
+    nfs.move(src=result_path + ".incomplete", dst=result_path)
