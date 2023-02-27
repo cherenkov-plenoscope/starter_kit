@@ -31,13 +31,13 @@ CONFIG = {
         "type": "gamma",
         "energy_range": {"start_GeV": 0.5, "stop_GeV": 1.5, "power_slope": 0},
     },
-    "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 6.0,},
+    "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 60.0,},
     "site": SITES["namibia"],
     "scatter": {
         "direction": {"radial_angle_deg": 3.25,},
         "position": {"radius_m": 640.0,},
     },
-    "statistics": {"num_showers_per_run": 1280, "num_runs": 64,},
+    "statistics": {"num_showers_per_run": 1280, "num_runs": 1280,},
     "instrument": {
         "radius_m": 35.0,
         "field_of_view_deg": 6.5,
@@ -542,6 +542,7 @@ def run_job(job):
             reco["arrival_time_stddev_s"] = np.std(bunches_arrival_times)
             tabrec["reconstruction"].append(reco)
 
+            """
             t_delta = (
                 reco["arrival_time_median_s"] -
                 base["primary_time_to_closest_point_to_instrument_s"]
@@ -555,6 +556,7 @@ def run_job(job):
                     "zd {: 6.1f}deg".format(np.rad2deg(base["primary_zenith_rad"])),
                     "d {: 6.3f}km".format(base["primary_distance_to_closest_point_to_instrument_m"] * 1e-3)
                 )
+            """
 
 
     _export_event_table(
