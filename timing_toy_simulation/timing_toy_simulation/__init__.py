@@ -188,13 +188,6 @@ def calculate_angle_between_rad(bunch_cx, bunch_cy, ins_cx, ins_cy):
     return angle
 
 
-def calculate_ray_parameter_for_closest_distance_to_point(
-    ray_direction, ray_suppurt, point,
-):
-    d = np.dot(ray_direction, point)
-    return d - np.dot(ray_suppurt, ray_direction)
-
-
 def _bunches_calculate_arrival_time_wrt_origin(bunches_cgs):
     num_bunches = bunches_cgs.shape[0]
 
@@ -412,13 +405,13 @@ def run_job(job):
             # -----------------
             base[
                 "primary_distance_to_closest_point_to_instrument_m"
-            ] = calculate_ray_parameter_for_closest_distance_to_point(
+            ] = plenoirf.utils.ray_parameter_for_closest_distance_to_point(
                 ray_direction=[
                     base["primary_direction_x"],
                     base["primary_direction_y"],
                     base["primary_direction_z"],
                 ],
-                ray_suppurt=[
+                ray_support=[
                     base["primary_start_x_m"],
                     base["primary_start_y_m"],
                     base["primary_start_z_m"],
