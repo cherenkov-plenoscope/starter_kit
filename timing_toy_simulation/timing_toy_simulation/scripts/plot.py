@@ -6,6 +6,7 @@ import os
 import numpy as np
 import sebastians_matplotlib_addons as seb
 import json_numpy
+import binning_utils as bu
 
 
 argv = plenoirf.summary.argv_since_py(sys.argv)
@@ -16,7 +17,7 @@ with open(os.path.join(work_dir, "config.json"), "rt") as f:
     config = json_numpy.loads(f.read())
 
 #seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
-
+prng = np.random.Generator(np.random.PCG64(64))
 os.makedirs(plot_dir, exist_ok=True)
 
 result = spt.read(os.path.join(work_dir, "result.tar"))
@@ -24,7 +25,7 @@ result = spt.read(os.path.join(work_dir, "result.tar"))
 assert config["flux"]["azimuth_deg"] == 0.0
 assert config["flux"]["zenith_deg"] == 0.0
 
-MIN_NUM_DETECTED_PHOTONS = 15
+MIN_NUM_DETECTED_PHOTONS = 25
 
 
 mask_az = np.logical_and(
@@ -52,7 +53,7 @@ idx_valid = spt.intersection([idx_valid, idx_az, idx_inst_x])
 num_valid = idx_valid.shape[0]
 
 
-zd_num_bins = int(np.floor(num_valid))
+zd_num_bins = int(np.floor(num_valid ** 0.3))
 
 zd_bin_edges_rad = plenoirf.utils.cone_opening_angle_space(
     stop_cone_radial_opening_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
@@ -73,20 +74,134 @@ time_true = r["base/primary_time_to_closest_point_to_instrument_s"]
 time_reco = r["reconstruction/arrival_time_median_s"]
 time_delta = time_reco - time_true
 
-fig = seb.figure(style=seb.FIGURE_1_1)
-ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
-ax.plot(
-    np.rad2deg(r["base/primary_zenith_rad"]),
-    time_delta * 1e9,
-    "xk"
-)
-ax.set_xlabel("zenith / deg")
-ax.set_ylabel("time_delta / ns")
 
+# binning
+# -------
+zenith_bin = bu.Binning(
+    bin_edges=plenoirf.utils.cone_opening_angle_space(
+        stop_cone_radial_opening_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
+        num=zd_num_bins,
+    )
+)
+time_delta_bin = bu.Binning(
+    bin_edges=np.linspace(0.0, 100e-9, zd_num_bins)
+)
+
+# simple hist
+# -----------
+z_bin = bu.Binning(
+    bin_edges=plenoirf.utils.cone_opening_angle_space(
+        stop_cone_radial_opening_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
+        num=5,
+    )
+)
+zz_range = np.arange(z_bin["num"] - 1, -1, -1)
+time_delta_hists = np.zeros(shape=(z_bin["num"], time_delta_bin["num"]))
+time_delta_stddevs = np.zeros(z_bin["num"])
+for zz in zz_range:
+    z_start = z_bin["edges"][zz]
+    z_stop = z_bin["edges"][zz + 1]
+    z_mask = np.logical_and(
+        r["base/primary_zenith_rad"] >= z_start,
+        r["base/primary_zenith_rad"] < z_stop,
+    )
+    _th = np.histogram(time_delta[z_mask], bins=time_delta_bin["edges"])[0]
+    time_delta_hists[zz] = _th
+    _ts = np.std(time_delta[z_mask])
+    time_delta_stddevs[zz] = _ts
+intensity_max = np.max(time_delta_hists)
+
+
+fig = seb.figure(style={"rows": 1920, "cols": 1080, "fontsize": 1.5})
+fig.text(
+    x=0.1,
+    y=0.97,
+    s="gamma-ray energy: {:.1f}GeV - {:.1f}GeV".format(
+        config["particle"]["energy_range"]["start_GeV"],
+        config["particle"]["energy_range"]["stop_GeV"],
+    ),
+)
+for zz in zz_range:
+    z_start = z_bin["edges"][zz]
+    z_stop = z_bin["edges"][zz + 1]
+
+    ax_height = 0.85 / z_bin["num"]
+    ax = seb.add_axes(fig=fig, span=[0.2, 0.1 + zz * ax_height, 0.7, 0.8 * ax_height])
+    seb.ax_add_histogram(
+        ax=ax,
+        bin_edges=(1e9 * time_delta_bin["edges"]),
+        bincounts=time_delta_hists[zz],
+        linestyle="-",
+        linecolor="k",
+        linealpha=1.0,
+        bincounts_upper=None,
+        bincounts_lower=None,
+        face_color=None,
+        face_alpha=None,
+        label=None,
+        draw_bin_walls=True,
+    )
+    ax.set_ylim([1, 1.1 * intensity_max])
+    ax.semilogy()
+    if zz > 0:
+        ax.set_xticklabels([t.set_text("") for t in ax.get_xticklabels()])
+    ttt = "zenith: "
+    ttt += "{:.1f}".format(np.rad2deg(z_start))
+    ttt += "$^{\circ}$"
+    ttt += " - "
+    ttt += "{:.1f}".format(np.rad2deg(z_stop))
+    ttt += "$^{\circ}$"
+    ax.text(x=.3, y=.9, s=ttt, transform=ax.transAxes)
+
+    ttt = "std: {:.1f}ns".format(1e9 * time_delta_stddevs[zz])
+    ax.text(x=.5, y=.6, s=ttt, transform=ax.transAxes)
+
+
+ax.set_ylabel("intensity / 1")
+ax.set_xlabel("time (reco - true) / ns")
+fig.savefig(
+    os.path.join(plot_dir, "time_reco_minus_true.jpg")
+)
+seb.close(fig)
+
+
+
+
+
+# zenith
+# ------
+
+time_delta_zenith_hist = np.histogram2d(
+    r["base/primary_zenith_rad"],
+    time_delta,
+    bins=(zenith_bin["edges"], time_delta_bin["edges"]),
+)[0]
+
+fig = seb.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
+ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.5, 0.8])
+axc = seb.add_axes(fig=fig, span=[0.7, 0.15, 0.05, 0.8])
+_pcm_xy = ax.pcolormesh(
+    np.rad2deg(zenith_bin["edges"]),
+    1e9 * time_delta_bin["edges"],
+    np.transpose(time_delta_zenith_hist),
+    cmap="inferno",
+    norm=seb.plt_colors.PowerNorm(gamma=0.5),
+)
+seb.plt.colorbar(_pcm_xy, cax=axc, extend="max")
+ax.grid(color="w", linestyle="-", linewidth=0.66, alpha=0.1)
+#ax.set_aspect("equal")
+ax.set_xlim(np.rad2deg(zenith_bin["limits"]))
+ax.set_ylim(1e9 * time_delta_bin["limits"])
+ax.set_xlabel("zenith / 1$^{\circ}$")
+ax.set_ylabel("time (reco - true) / ns")
 fig.savefig(
     os.path.join(plot_dir, "zd_time.jpg")
 )
 seb.close(fig)
+
+
+
+
 
 
 fig = seb.figure(style=seb.FIGURE_1_1)
@@ -137,32 +252,68 @@ fig.savefig(
 seb.close(fig)
 
 
-fig = seb.figure(style=seb.FIGURE_1_1)
-ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
-ax.plot(
+# x, y
+# ----
+xy_bin = bu.Binning(
+    bin_edges=np.linspace(
+        -config["scatter"]["position"]["radius_m"],
+        config["scatter"]["position"]["radius_m"],
+        int(zd_num_bins),
+    )
+)
+xy_hist = np.histogram2d(
     r["base/instrument_x_m"],
     r["base/instrument_y_m"],
-    "xk"
-)
-ax.set_xlabel("instrument_x / m")
-ax.set_ylabel("instrument_y / m")
+    bins=xy_bin["edges"],
+)[0]
 
+fig = seb.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
+ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.8, 0.8])
+axc = seb.add_axes(fig=fig, span=[0.85, 0.15, 0.05, 0.8])
+_pcm_xy = ax.pcolormesh(
+    xy_bin["edges"],
+    xy_bin["edges"],
+    np.transpose(xy_hist),
+    cmap="inferno",
+    norm=seb.plt_colors.PowerNorm(gamma=0.5),
+)
+seb.plt.colorbar(_pcm_xy, cax=axc, extend="max")
+ax.grid(color="w", linestyle="-", linewidth=0.66, alpha=0.1)
+ax.set_aspect("equal")
+ax.set_xlim(xy_bin["limits"])
+ax.set_ylim(xy_bin["limits"])
+ax.set_xlabel("instrument $x$ / m")
+ax.set_ylabel("instrument $y$ / m")
 fig.savefig(
     os.path.join(plot_dir, "ins_x_y.jpg")
 )
 seb.close(fig)
 
-
-
+# directions in sky
+# -----------------
+az_lines_deg = np.linspace(0, 360, 6, endpoint=False)
+num_points = int(1e3) if r.shape[0] > int(1e3) else r.shape[0]
 fig = seb.figure(style=seb.FIGURE_1_1)
-ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
+ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8], style=seb.AXES_BLANK)
 seb.hemisphere.ax_add_points(
     ax=ax,
-    azimuths_deg=np.rad2deg(r["base/primary_azimuth_rad"]),
-    zeniths_deg=np.rad2deg(r["base/primary_zenith_rad"]),
+    azimuths_deg=np.rad2deg(r["base/primary_azimuth_rad"][0:num_points]),
+    zeniths_deg=np.rad2deg(r["base/primary_zenith_rad"][0:num_points]),
     color="k",
     point_diameter_deg=2.0,
     alpha=0.3,
+)
+seb.hemisphere.ax_add_grid(
+    ax=ax,
+    azimuths_deg=az_lines_deg,
+    zeniths_deg=np.linspace(0, 90, 10),
+    linewidth=0.2,
+    color="black",
+    alpha=0.5,
+    draw_lower_horizontal_edge_deg=90,
+)
+seb.hemisphere.ax_add_ticklabels(
+    ax=ax, azimuths_deg=az_lines_deg, rfov=1.0, fmt=r"{:1.0f}$^\circ$",
 )
 ax.set_xlabel("sky x / m")
 ax.set_ylabel("sky y / m")
