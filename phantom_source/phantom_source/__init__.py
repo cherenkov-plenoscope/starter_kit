@@ -4,5 +4,4 @@ from . import plot
 from . import mesh
 from . import transform
 from . import simple_shower
-
-import numpy as np
+from . import depth
