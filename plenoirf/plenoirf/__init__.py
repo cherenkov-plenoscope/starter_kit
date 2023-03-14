@@ -35,6 +35,7 @@ import magnetic_deflection as mdfl
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
 import network_file_system as nfs
+import phantom_source
 
 
 MIN_PROTON_ENERGY_GEV = 5.0
@@ -58,11 +59,19 @@ EXAMPLE_EXECUTABLE_PATHS = {
     "merlict_plenoscope_calibration_reduce_path": opj(
         "build", "merlict", "merlict-plenoscope-calibration-reduce"
     ),
+    "merlict_plenoscope_raw_photon_propagation_path": opj(
+        "build", "merlict", "merlict-plenoscope-raw-photon-propagation"
+    ),
 }
 
 EXAMPLE_CONFIG_FILE_PATHS = {
     "merlict_plenoscope_propagator_config_path": opj(
         "resources", "acp", "merlict_propagation_config.json"
+    ),
+    "merlict_plenoscope_propagator_without_night_sky_background_config_path": opj(
+        "resources",
+        "acp",
+        "merlict_propagation_config_no_night_sky_background.json",
     ),
     "plenoscope_scenery_path": opj("resources", "acp", "71m", "scenery"),
 }
@@ -242,6 +251,16 @@ def init(
     nfs.copy(
         src=config_file_paths["merlict_plenoscope_propagator_config_path"],
         dst=opj(run_dir, "input", "merlict_propagation_config.json"),
+    )
+    nfs.copy(
+        src=config_file_paths[
+            "merlict_plenoscope_propagator_without_night_sky_background_config_path"
+        ],
+        dst=opj(
+            run_dir,
+            "input",
+            "merlict_plenoscope_propagator_without_night_sky_background_config.json",
+        ),
     )
 
 
@@ -458,6 +477,40 @@ def _populate_table_of_thrown_air_showers(
             )
 
 
+def _estimate_resolution_of_depth(run_dir, executables, map_and_reduce_pool, logger):
+    benchmarks_dir = opj(run_dir, "benchmarks")
+    os.makedirs(benchmarks_dir, exist_ok=True)
+
+    depth_dir = opj(run_dir, "benchmarks", "resolution_of_depth")
+    depth_map_dir = opj(depth_dir, "map")
+    depth_result_path = opj(depth_dir, "result.json")
+
+    if not os.path.exists(depth_dir):
+        logger.info("init benchmark 'resolution of depth'")
+        depth_config = phantom_source.depth.EXAMPLE_CONFIG.copy()
+        depth_config["light_field_geometry_path"] = opj(
+            run_dir, "light_field_geometry"
+        )
+        depth_config["merlict_propagate_photons_path"] = executables[
+            "merlict_plenoscope_raw_photon_propagation_path"
+        ]
+        depth_config["merlict_propagate_config_path"] = opj(
+            run_dir,
+            "input",
+            "merlict_plenoscope_propagator_without_night_sky_background_config.json",
+        )
+        phantom_source.depth.init(work_dir=depth_dir, config=depth_config)
+
+    if not os.path.exists(depth_map_dir):
+        logger.info("estimating benchmark 'resolution of depth'")
+        jobs = phantom_source.depth.make_jobs(work_dir=depth_dir)
+        map_and_reduce_pool.map(phantom_source.depth.run_job, jobs)
+
+    if not os.path.exists(depth_result_path):
+        logger.info("reducing benchmark 'resolution of depth'")
+        phantom_source.depth.reduce(work_dir=depth_dir)
+
+
 def run(
     run_dir,
     map_and_reduce_pool,
@@ -517,6 +570,13 @@ def run(
         KEEP_TMP=KEEP_TMP,
         date_dict=date_dict,
         LAZY_REDUCTION=LAZY_REDUCTION,
+        logger=logger,
+    )
+
+    _estimate_resolution_of_depth(
+        run_dir=run_dir,
+        executables=executables,
+        map_and_reduce_pool=map_and_reduce_pool,
         logger=logger,
     )
 

@@ -5,6 +5,7 @@ import plenopy
 import corsika_primary
 import binning_utils
 import network_file_system as nfs
+import glob
 from . import mesh
 from . import light_field
 from . import merlict
@@ -20,14 +21,14 @@ EXAMPLE_CONFIG = {
         "acp",
         "merlict_propagation_config_no_night_sky_background.json",
     ),
-    "num_photons": 1e4,
+    "num_photons": 1e5,
     "min_object_distance_m": 2.7e3,
     "max_object_distance_m": 27.0e3,
     "num_pixel_on_edge": 1024,
     "image_containment_percentile": 95,
     "auto_focus_step_rate": 0.5,
-    "oversampling_beam_spread": 1000,
-    "num_estimates": 128,
+    "oversampling_beam_spread": 100,
+    "num_estimates": 1280,
 }
 
 
@@ -88,55 +89,99 @@ def make_jobs(work_dir):
     return jobs
 
 
-def run_job(job):
-    config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
-
-    # image_binning
-    # -------------
-    c_radius_rad = np.deg2rad(0.5 * job["field_of_view_deg"])
+def make_image_binning(field_of_view_deg, num_pixel_on_edge):
+    c_radius_rad = np.deg2rad(0.5 * field_of_view_deg)
     c_bin_rag = binning_utils.Binning(
         bin_edges=np.linspace(
-            -c_radius_rad, c_radius_rad, config["num_pixel_on_edge"] + 1
+            -c_radius_rad, c_radius_rad, num_pixel_on_edge + 1
         )
     )
     image_binning = {
         "cx": c_bin_rag,
         "cy": c_bin_rag,
     }
+    return image_binning
+
+
+JOB_UID_STR_TEMPLATE = "{:06d}"
+
+def run_job(job):
+    uid_str = JOB_UID_STR_TEMPLATE.format(job["uid"])
+    config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
+    map_dir = os.path.join(job["work_dir"], "map")
+    job_dir = os.path.join(map_dir, uid_str)
+    os.makedirs(job_dir, exist_ok=True)
 
     job_random_seed = config["random_seed"] + job["uid"]
-
     prng = np.random.Generator(np.random.MT19937(seed=job_random_seed))
 
-    report, img = estimate_resolution(
-        cx_deg=job["cx_deg"],
-        cy_deg=job["cy_deg"],
-        object_distance_m=job["object_distance_m"],
-        aperture_radius_m=job["aperture_radius_m"],
-        image_binning=image_binning,
-        max_object_distance_m=config["max_object_distance_m"],
-        min_object_distance_m=config["min_object_distance_m"],
-        prng=prng,
-        light_field_geometry_path=config["light_field_geometry_path"],
-        merlict_propagate_photons_path=config[
-            "merlict_propagate_photons_path"
-        ],
-        merlict_propagate_config_path=config["merlict_propagate_config_path"],
-        image_containment_percentile=config["image_containment_percentile"],
-        auto_focus_step_rate=config["auto_focus_step_rate"],
-        oversampling_beam_spread=config["oversampling_beam_spread"],
-        num_photons=config["num_photons"],
-    )
+    participating_beams_path = os.path.join(job_dir, "participating_beams.json")
+    if os.path.exists(participating_beams_path):
+        participating_beams = read_participating_beams(participating_beams_path)
+        light_field_geometry = plenopy.LightFieldGeometry(
+            path=config["light_field_geometry_path"]
+        )
+    else:
+        light_field_geometry, participating_beams = estimate_response_to_point_source(
+            cx_deg=job["cx_deg"],
+            cy_deg=job["cy_deg"],
+            object_distance_m=job["object_distance_m"],
+            aperture_radius_m=job["aperture_radius_m"],
+            prng=prng,
+            light_field_geometry_path=config["light_field_geometry_path"],
+            merlict_propagate_photons_path=config[
+                "merlict_propagate_photons_path"
+            ],
+            merlict_propagate_config_path=config["merlict_propagate_config_path"],
+            num_photons=config["num_photons"],
+        )
+        write_participating_beams(
+            os.path.join(job_dir, "participating_beams.json"),
+            participating_beams,
+        )
 
-    uid_str = "{:06d}".format(job["uid"])
+    result_path = os.path.join(job_dir, "result.json")
+    if os.path.exists(result_path):
+        pass
+    else:
+        image_binning = make_image_binning(
+            field_of_view_deg=job["field_of_view_deg"],
+            num_pixel_on_edge=config["num_pixel_on_edge"],
+        )
 
-    report["cx_deg"] = job["cx_deg"]
-    report["cy_deg"] = job["cy_deg"]
-    report["object_distance_m"] = job["object_distance_m"]
+        report = estimate_focus(
+            light_field_geometry=light_field_geometry,
+            participating_beams=participating_beams,
+            prng=prng,
+            image_binning=image_binning,
+            max_object_distance_m=config["max_object_distance_m"],
+            min_object_distance_m=config["min_object_distance_m"],
+            image_containment_percentile=config["image_containment_percentile"],
+            auto_focus_step_rate=config["auto_focus_step_rate"],
+            oversampling_beam_spread=config["oversampling_beam_spread"],
+        )
 
-    nfs_json_numpy_write(
-        os.path.join(job["work_dir"], uid_str + ".json"), report, indent=4,
-    )
+        report["cx_deg"] = job["cx_deg"]
+        report["cy_deg"] = job["cy_deg"]
+        report["object_distance_m"] = job["object_distance_m"]
+
+        nfs_json_numpy_write(
+            os.path.join(job_dir, "result.json"), report, indent=4,
+        )
+
+
+def reduce(work_dir):
+    config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
+    map_dir = os.path.join(work_dir, "map")
+
+    results = []
+    for uid in range(config["num_estimates"]):
+        uid_str = JOB_UID_STR_TEMPLATE.format(job["uid"])
+        result_path = os.path.join(map_dir, uid_str, "result.json")
+        if os.path.exists(result_path):
+            results.append(json_numpy.read(result_path))
+
+    nfs_json_numpy_write(os.path.join(work_dir, "result.json"), results)
 
 
 def make_participating_beams_from_lixel_ids(beam_ids):
@@ -148,13 +193,32 @@ def make_participating_beams_from_lixel_ids(beam_ids):
     return participating_beams
 
 
+def write_participating_beams(path, participating_beams):
+    out = {}
+    for k in participating_beams:
+        out[str(k)] = int(participating_beams[k])
+    nfs_json_numpy_write(
+        path,
+        out,
+        indent=None,
+    )
+
+
+def read_participating_beams(path):
+    b = json_numpy.read(path)
+    out = {}
+    for k in b:
+        out[np.uint32(k)] = np.uint32(b[k])
+    return out
+
+
 def get_num_photons_in_participating_beams(participating_beams):
     return np.sum(
         [participating_beams[beam_id] for beam_id in participating_beams]
     )
 
 
-def make_image(
+def make_image_old(
     image_beams,
     light_field_geometry,
     participating_beams,
@@ -195,22 +259,63 @@ def make_image(
     return img
 
 
-def count_pixels_containing_percentile(image, percentile):
+
+def make_image(
+    image_beams,
+    light_field_geometry,
+    participating_beams,
+    object_distance,
+    image_binning,
+    oversampling,
+    prng,
+):
+    img_cx, img_cy = image_beams.cx_cy_in_object_distance(object_distance)
+    img_cx_std = light_field_geometry.cx_std
+    img_cy_std = light_field_geometry.cy_std
+
+    cx_hits = []
+    cy_hits = []
+    for beam_id in participating_beams:
+        num_photons = participating_beams[beam_id]
+        cx_h = prng.normal(
+            loc=img_cx[beam_id],
+            scale=img_cx_std[beam_id],
+            size=oversampling * num_photons,
+        )
+        cy_h = prng.normal(
+            loc=img_cy[beam_id],
+            scale=img_cy_std[beam_id],
+            size=oversampling * num_photons,
+        )
+        cx_hits.append(cx_h)
+        cy_hits.append(cy_h)
+
+    img = (1 / oversampling) * np.histogram2d(
+        np.concatenate(cx_hits),
+        np.concatenate(cy_hits),
+        bins=(image_binning["cx"]["edges"], image_binning["cy"]["edges"]),
+    )[0]
+
+    return img
+
+
+def estimate_inverse_photon_density_pixel_per_photon(image, percentile):
     assert 0.0 < percentile <= 100.0
     assert np.all(image >= 0.0)
 
     I = image.flatten()
     S = np.sum(I)
     a = np.flip(np.argsort(I))
-
+    num_photons = 0.0
     fraction = 0.0
     targeted_fraction = percentile / 100
-    n = 0
+    num_pixel = 0
     while fraction < targeted_fraction:
-        s = I[a[n]]
+        s = I[a[num_pixel]]
+        num_photons += s
         fraction += s / S
-        n += 1
-    return n
+        num_pixel += 1
+    return num_pixel / num_photons
 
 
 def estimate_depth_from_participating_beams(
@@ -250,7 +355,7 @@ def estimate_depth_from_participating_beams(
         oversampling=oversampling_beam_spread,
         prng=prng,
     )
-    n_hi = count_pixels_containing_percentile(
+    n_hi = estimate_inverse_photon_density_pixel_per_photon(
         image=img_hi, percentile=image_containment_percentile
     )
 
@@ -264,7 +369,7 @@ def estimate_depth_from_participating_beams(
         oversampling=oversampling_beam_spread,
         prng=prng,
     )
-    n_lo = count_pixels_containing_percentile(
+    n_lo = estimate_inverse_photon_density_pixel_per_photon(
         image=img_lo, percentile=image_containment_percentile
     )
     r["num_photons"] = get_num_photons_in_participating_beams(
@@ -287,7 +392,7 @@ def estimate_depth_from_participating_beams(
             oversampling=oversampling_beam_spread,
             prng=prng,
         )
-        n_mi = count_pixels_containing_percentile(
+        n_mi = estimate_inverse_photon_density_pixel_per_photon(
             image=img_mi, percentile=image_containment_percentile
         )
 
@@ -298,7 +403,9 @@ def estimate_depth_from_participating_beams(
         r["spread_in_image"] = n_mi
         r["spread_in_image_low"] = n_lo
 
-        if n_hi <= n_lo and n_mi < n_lo:
+        todo = _focus_(hi=n_hi, mi=n_mi, lo=n_lo, rel=0.001)
+
+        if todo == "raise lower focus":
             obj_lo = afrate * obj_mi + (1 - afrate) * obj_lo
             img_lo = make_image(
                 image_beams=image_beams,
@@ -309,10 +416,10 @@ def estimate_depth_from_participating_beams(
                 oversampling=oversampling_beam_spread,
                 prng=prng,
             )
-            n_lo = count_pixels_containing_percentile(
+            n_lo = estimate_inverse_photon_density_pixel_per_photon(
                 image=img_lo, percentile=image_containment_percentile
             )
-        elif n_mi < n_hi and n_lo <= n_hi:
+        elif todo == "lower upper focus":
             obj_hi = afrate * obj_mi + (1 - afrate) * obj_hi
             img_hi = make_image(
                 image_beams=image_beams,
@@ -323,7 +430,7 @@ def estimate_depth_from_participating_beams(
                 oversampling=oversampling_beam_spread,
                 prng=prng,
             )
-            n_hi = count_pixels_containing_percentile(
+            n_hi = estimate_inverse_photon_density_pixel_per_photon(
                 image=img_hi, percentile=image_containment_percentile
             )
         else:
@@ -332,23 +439,31 @@ def estimate_depth_from_participating_beams(
     return r, img_mi
 
 
-def estimate_resolution(
+def _focus_(hi, mi, lo, rel=0.01):
+    R = 1.0 / rel
+    M = np.mean([hi, mi, lo])
+    Hi = int(hi/M * R)
+    Mi = int(mi/M * R)
+    Lo = int(lo/M * R)
+
+    if Hi <= Lo and Mi < Lo:
+        return "raise lower focus"
+    elif Mi < Hi and Lo <= Hi:
+        return "lower upper focus"
+    else:
+        return "nothing"
+
+
+def estimate_response_to_point_source(
     cx_deg,
     cy_deg,
     object_distance_m,
     aperture_radius_m,
-    image_binning,
-    max_object_distance_m,
-    min_object_distance_m,
     prng,
     light_field_geometry_path,
     merlict_propagate_photons_path,
     merlict_propagate_config_path,
-    image_containment_percentile,
-    auto_focus_step_rate,
-    oversampling_beam_spread,
     num_photons,
-    num_max_iterations=100,
     point_source_apparent_radius_deg=0.01,
     emission_distance_to_aperture_m=1e3,
 ):
@@ -394,7 +509,21 @@ def estimate_resolution(
     participating_beams = make_participating_beams_from_lixel_ids(
         beam_ids=beam_ids
     )
+    return light_field_geometry, participating_beams
 
+
+def estimate_focus(
+    light_field_geometry,
+    participating_beams,
+    prng,
+    image_binning,
+    max_object_distance_m,
+    min_object_distance_m,
+    image_containment_percentile,
+    auto_focus_step_rate,
+    oversampling_beam_spread,
+    num_max_iterations=100,
+):
     image_beams = plenopy.image.ImageRays(
         light_field_geometry=light_field_geometry
     )
@@ -411,7 +540,7 @@ def estimate_resolution(
         oversampling_beam_spread=oversampling_beam_spread,
         num_max_iterations=num_max_iterations,
     )
-    return report, img
+    return report
 
 
 def nfs_json_numpy_write(path, obj, indent=4):

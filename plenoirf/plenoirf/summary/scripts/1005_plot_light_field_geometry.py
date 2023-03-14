@@ -30,12 +30,7 @@ YLABEL = "intensity / 1"
 
 
 def save_histogram(
-    path,
-    v,
-    v_bin_edges,
-    xlabel,
-    xscale=1.0,
-    mask_percentile=90,
+    path, v, v_bin_edges, xlabel, xscale=1.0, mask_percentile=90,
 ):
     v_bin_counts = np.histogram(v, bins=v_bin_edges)[0]
     v_total_counts = np.sum(v_bin_counts)
@@ -104,7 +99,7 @@ beam_solid_angles_sr = 4 * np.pi * lfg.cx_std * lfg.cy_std
 save_histogram(
     path=os.path.join(pa["out_dir"], "directions.jpg"),
     v=beam_solid_angles_sr,
-    v_bin_edges=np.linspace(0, 4*4e-6, 101),
+    v_bin_edges=np.linspace(0, 4 * 4e-6, 101),
     xscale=1e6,
     xlabel="solid angle of beams $\Omega$ / $\mu$sr",
 )
@@ -116,7 +111,7 @@ beam_area_m2 = 4 * np.pi * lfg.x_std * lfg.y_std
 save_histogram(
     path=os.path.join(pa["out_dir"], "areas.jpg"),
     v=beam_area_m2,
-    v_bin_edges=np.linspace(0, 4*300, 101),
+    v_bin_edges=np.linspace(0, 4 * 300, 101),
     xscale=1,
     xlabel="area of beams $A$ / m$^{2}$",
 )
