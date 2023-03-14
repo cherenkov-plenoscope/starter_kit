@@ -48,6 +48,43 @@ def make_light_field_from_line(
     return supports, directions
 
 
+def estimate_fraction_of_solid_angle_covered_by_aperture(
+    distance_to_aperture, aperture_radius,
+):
+    area_of_sphere_in_distance_of_aperture = (
+        4.0 * np.pi * distance_to_aperture ** 2
+    )
+    area_of_aperture = np.pi * aperture_radius ** 2
+    return area_of_aperture / area_of_sphere_in_distance_of_aperture
+
+
+def get_number_photons_from_edge_density(
+    edge_density, edge_length, distance_to_aperture, aperture_radius,
+):
+    fraction_of_solid_angle_covered_by_aperture = estimate_fraction_of_solid_angle_covered_by_aperture(
+        distance_to_aperture=distance_to_aperture,
+        aperture_radius=aperture_radius,
+    )
+
+    photon_density = edge_density * fraction_of_solid_angle_covered_by_aperture
+    number_photons = int(np.ceil(photon_density * edge_length))
+    return number_photons
+
+
+def get_edge_density_from_number_photons(
+    number_photons, edge_length, distance_to_aperture, aperture_radius,
+):
+    fraction_of_solid_angle_covered_by_aperture = estimate_fraction_of_solid_angle_covered_by_aperture(
+        distance_to_aperture=distance_to_aperture,
+        aperture_radius=aperture_radius,
+    )
+    return (
+        number_photons
+        * edge_length ** (-1)
+        * fraction_of_solid_angle_covered_by_aperture ** (-1)
+    )
+
+
 def make_light_field_from_mesh(
     prng, mesh, aperture_radius,
 ):
@@ -69,16 +106,12 @@ def make_light_field_from_mesh(
             2 * aperture_radius, distance_to_aperture
         )
 
-        area_of_sphere_in_distance_of_aperture = (
-            4.0 * np.pi * distance_to_aperture ** 2
+        number_photons = get_number_photons_from_edge_density(
+            edge_density=edge[2],
+            edge_length=edge_length,
+            distance_to_aperture=distance_to_aperture,
+            aperture_radius=aperture_radius,
         )
-        area_of_aperture = np.pi * aperture_radius ** 2
-        fraction_of_solid_angle_covered_by_aperture = (
-            area_of_aperture / area_of_sphere_in_distance_of_aperture
-        )
-
-        photon_density = edge[2] * fraction_of_solid_angle_covered_by_aperture
-        number_photons = int(np.ceil(photon_density * edge_length))
 
         supp_ed, dirs_ed = make_light_field_from_line(
             prng=prng,

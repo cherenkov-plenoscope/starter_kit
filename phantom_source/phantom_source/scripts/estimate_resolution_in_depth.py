@@ -71,14 +71,13 @@ config["merlict_propagate_config_path"] = args.merlict_config
 config["out_dir"] = args.out_dir
 
 config["aperture_radius_m"] = 50
-config["density"] = 2e9
-config["emission_distance_to_aperture_m"] = 1e3
+config["num_photons"] = 1e2
 config["min_object_distance_m"] = 2.7e3
 config["max_object_distance_m"] = 27.0e3
 config["num_pixel_on_edge"] = 1024
 config["image_field_of_view_deg"] = 6.5
 config["image_containment_percentile"] = 95
-config["step_rate"] = 0.5
+config["auto_focus_step_rate"] = 0.5
 config["oversampling_beam_spread"] = 1000
 
 os.makedirs(name=config["out_dir"], exist_ok=True)
@@ -103,7 +102,7 @@ prng = np.random.Generator(np.random.MT19937(seed=config["seed"]))
 report, img = phantom_source.depth.estimate_resolution(
     cx_deg=1.0,
     cy_deg=-1.3,
-    object_distance_m=12.5e3,
+    object_distance_m=35e3,
     aperture_radius_m=config["aperture_radius_m"],
     image_binning=image_binning,
     max_object_distance_m=config["max_object_distance_m"],
@@ -113,8 +112,9 @@ report, img = phantom_source.depth.estimate_resolution(
     merlict_propagate_photons_path=config["merlict_propagate_photons_path"],
     merlict_propagate_config_path=config["merlict_propagate_config_path"],
     image_containment_percentile=config["image_containment_percentile"],
-    step_rate=config["step_rate"],
+    auto_focus_step_rate=config["auto_focus_step_rate"],
     oversampling_beam_spread=config["oversampling_beam_spread"],
+    num_photons=config["num_photons"],
 )
 
 
