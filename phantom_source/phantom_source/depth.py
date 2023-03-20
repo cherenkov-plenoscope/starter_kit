@@ -107,6 +107,7 @@ def make_image_binning(field_of_view_deg, num_pixel_on_edge):
 
 JOB_UID_STR_TEMPLATE = "{:06d}"
 
+
 def run_job(job):
     uid_str = JOB_UID_STR_TEMPLATE.format(job["uid"])
     config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
@@ -117,14 +118,21 @@ def run_job(job):
     job_random_seed = config["random_seed"] + job["uid"]
     prng = np.random.Generator(np.random.MT19937(seed=job_random_seed))
 
-    participating_beams_path = os.path.join(job_dir, "participating_beams.json")
+    participating_beams_path = os.path.join(
+        job_dir, "participating_beams.json"
+    )
     if os.path.exists(participating_beams_path):
-        participating_beams = read_participating_beams(participating_beams_path)
+        participating_beams = read_participating_beams(
+            participating_beams_path
+        )
         light_field_geometry = plenopy.LightFieldGeometry(
             path=config["light_field_geometry_path"]
         )
     else:
-        light_field_geometry, participating_beams = estimate_response_to_point_source(
+        (
+            light_field_geometry,
+            participating_beams,
+        ) = estimate_response_to_point_source(
             cx_deg=job["cx_deg"],
             cy_deg=job["cy_deg"],
             object_distance_m=job["object_distance_m"],
@@ -134,7 +142,9 @@ def run_job(job):
             merlict_propagate_photons_path=config[
                 "merlict_propagate_photons_path"
             ],
-            merlict_propagate_config_path=config["merlict_propagate_config_path"],
+            merlict_propagate_config_path=config[
+                "merlict_propagate_config_path"
+            ],
             num_photons=config["num_photons"],
         )
         write_participating_beams(
@@ -158,7 +168,9 @@ def run_job(job):
             image_binning=image_binning,
             max_object_distance_m=config["max_object_distance_m"],
             min_object_distance_m=config["min_object_distance_m"],
-            image_containment_percentile=config["image_containment_percentile"],
+            image_containment_percentile=config[
+                "image_containment_percentile"
+            ],
             depth_range_shrinking_rate=config["depth_range_shrinking_rate"],
             oversampling_beam_spread=config["oversampling_beam_spread"],
         )
@@ -177,22 +189,16 @@ def plot_report(report, path):
     depth_m = np.array(report["depth_m"])[_ssort]
     spread = np.array(report["spreads_pixel_per_photon"])[_ssort]
     numpho = report["num_photons"]
-    spread_lim = [np.min(spread*numpho), np.max(spread*numpho)]
+    spread_lim = [np.min(spread * numpho), np.max(spread * numpho)]
 
     fig = seb.figure()
     ax = seb.add_axes(fig=fig, span=[0.2, 0.2, 0.7, 0.7])
     seb.ax_add_grid(ax=ax, add_minor=True)
     ax.plot(
-        depth_m,
-        spread*numpho,
-        "kx",
+        depth_m, spread * numpho, "kx",
     )
     ax.plot(
-        depth_m,
-        spread*numpho,
-        "k-",
-        linewidth=0.5,
-        alpha=0.5,
+        depth_m, spread * numpho, "k-", linewidth=0.5, alpha=0.5,
     )
     reco_depth_m = depth_m[np.argmin(spread)]
     ax.plot(
@@ -245,9 +251,7 @@ def write_participating_beams(path, participating_beams):
     for k in participating_beams:
         out[str(k)] = int(participating_beams[k])
     nfs_json_numpy_write(
-        path,
-        out,
-        indent=None,
+        path, out, indent=None,
     )
 
 
@@ -304,7 +308,6 @@ def make_image_old(
         )[0]
 
     return img
-
 
 
 def make_image(
@@ -400,11 +403,13 @@ def estimate_depth_from_participating_beams(
 
     # rough
     # -----
-    r["depth_m"] = list(np.geomspace(
-        min_object_distance_m,
-        max_object_distance_m,
-        num_initial_estimates,
-    ))
+    r["depth_m"] = list(
+        np.geomspace(
+            min_object_distance_m,
+            max_object_distance_m,
+            num_initial_estimates,
+        )
+    )
 
     for i in range(len(r["depth_m"])):
         img = make_image(
@@ -462,12 +467,8 @@ def estimate_depth_from_participating_beams(
     return r
 
 
-
-
 def estimate_next_focus_depth_m(
-    depths_m,
-    spreads_pixel_per_photon,
-    depths_range_m,
+    depths_m, spreads_pixel_per_photon, depths_range_m,
 ):
     assert depths_range_m > 0
 
@@ -501,8 +502,6 @@ def estimate_next_focus_depth_m(
             next_depths.append(d_next)
 
     return np.array(next_depths)
-
-
 
 
 def estimate_response_to_point_source(
