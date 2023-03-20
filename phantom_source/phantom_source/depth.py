@@ -28,7 +28,7 @@ EXAMPLE_CONFIG = {
     "max_object_distance_m": 27.0e3,
     "num_pixel_on_edge": 1024,
     "image_containment_percentile": 95,
-    "auto_focus_step_rate": 0.5,
+    "depth_range_shrinking_rate": 0.5,
     "oversampling_beam_spread": 100,
     "num_estimates": 1280,
 }
@@ -159,7 +159,7 @@ def run_job(job):
             max_object_distance_m=config["max_object_distance_m"],
             min_object_distance_m=config["min_object_distance_m"],
             image_containment_percentile=config["image_containment_percentile"],
-            auto_focus_step_rate=config["auto_focus_step_rate"],
+            depth_range_shrinking_rate=config["depth_range_shrinking_rate"],
             oversampling_beam_spread=config["oversampling_beam_spread"],
         )
 
@@ -170,10 +170,6 @@ def run_job(job):
         nfs_json_numpy_write(
             os.path.join(job_dir, "result.json"), report, indent=4,
         )
-
-
-def col_pos(num_columns, vmin, vmax, v):
-    col = int(np.round(num_columns * (v - vmin) / (vmax - vmin)))
 
 
 def plot_report(report, path):
@@ -369,146 +365,6 @@ def estimate_inverse_photon_density_pixel_per_photon(image, percentile):
     return num_pixel / num_photons
 
 
-def estimate_depth_from_participating_beams_old(
-    prng,
-    image_beams,
-    light_field_geometry,
-    participating_beams,
-    image_binning,
-    max_object_distance,
-    min_object_distance,
-    image_containment_percentile=95,
-    auto_focus_step_rate=0.1,
-    oversampling_beam_spread=1000,
-    num_max_iterations=1000,
-):
-    """
-    auto-focus
-    """
-    assert 0.0 < auto_focus_step_rate < 1.0
-    assert num_max_iterations > 0
-    assert 0 < image_containment_percentile <= 100
-    assert max_object_distance > 0
-    assert min_object_distance > 0
-    assert min_object_distance < max_object_distance
-    assert oversampling_beam_spread >= 1
-
-    afrate = auto_focus_step_rate
-    r = {}
-
-    obj_hi = max_object_distance
-    img_hi = make_image(
-        image_beams=image_beams,
-        light_field_geometry=light_field_geometry,
-        participating_beams=participating_beams,
-        object_distance=obj_hi,
-        image_binning=image_binning,
-        oversampling=oversampling_beam_spread,
-        prng=prng,
-    )
-    n_hi = estimate_inverse_photon_density_pixel_per_photon(
-        image=img_hi, percentile=image_containment_percentile
-    )
-
-    obj_lo = min_object_distance
-    img_lo = make_image(
-        image_beams=image_beams,
-        light_field_geometry=light_field_geometry,
-        participating_beams=participating_beams,
-        object_distance=obj_lo,
-        image_binning=image_binning,
-        oversampling=oversampling_beam_spread,
-        prng=prng,
-    )
-    n_lo = estimate_inverse_photon_density_pixel_per_photon(
-        image=img_lo, percentile=image_containment_percentile
-    )
-    r["num_photons"] = get_num_photons_in_participating_beams(
-        participating_beams=participating_beams
-    )
-    r["image_binning"] = image_binning
-    r["focus"] = False
-    r["num_iterations"] = 0
-    r["iterations"] = []
-    while not r["focus"]:
-        r["num_iterations"] += 1
-        if r["num_iterations"] > num_max_iterations:
-            raise RuntimeError(json_numpy.dumps(r))
-
-        obj_mi = np.mean([obj_lo, obj_hi])
-        img_mi = make_image(
-            image_beams=image_beams,
-            light_field_geometry=light_field_geometry,
-            participating_beams=participating_beams,
-            object_distance=obj_mi,
-            image_binning=image_binning,
-            oversampling=oversampling_beam_spread,
-            prng=prng,
-        )
-        n_mi = estimate_inverse_photon_density_pixel_per_photon(
-            image=img_mi, percentile=image_containment_percentile
-        )
-
-        it = {}
-        it["reco_object_distance_high_m"] = obj_hi
-        it["reco_object_distance_m"] = obj_mi
-        it["reco_object_distance_low_m"] = obj_lo
-        it["spread_in_image_high"] = n_hi
-        it["spread_in_image"] = n_mi
-        it["spread_in_image_low"] = n_lo
-        r["iterations"].append(it)
-
-        todo = _focus_(hi=n_hi, mi=n_mi, lo=n_lo, rel=0.001)
-
-        if todo == "raise lower focus":
-            obj_lo = afrate * obj_mi + (1 - afrate) * obj_lo
-            img_lo = make_image(
-                image_beams=image_beams,
-                light_field_geometry=light_field_geometry,
-                participating_beams=participating_beams,
-                object_distance=obj_lo,
-                image_binning=image_binning,
-                oversampling=oversampling_beam_spread,
-                prng=prng,
-            )
-            n_lo = estimate_inverse_photon_density_pixel_per_photon(
-                image=img_lo, percentile=image_containment_percentile
-            )
-        elif todo == "lower upper focus":
-            obj_hi = afrate * obj_mi + (1 - afrate) * obj_hi
-            img_hi = make_image(
-                image_beams=image_beams,
-                light_field_geometry=light_field_geometry,
-                participating_beams=participating_beams,
-                object_distance=obj_hi,
-                image_binning=image_binning,
-                oversampling=oversampling_beam_spread,
-                prng=prng,
-            )
-            n_hi = estimate_inverse_photon_density_pixel_per_photon(
-                image=img_hi, percentile=image_containment_percentile
-            )
-        else:
-            r["focus"] = True
-
-    return r, img_mi
-
-
-def _focus_(hi, mi, lo, rel=0.01):
-    R = 1.0 / rel
-    M = np.mean([hi, mi, lo])
-    Hi = int(hi/M * R)
-    Mi = int(mi/M * R)
-    Lo = int(lo/M * R)
-
-    if Hi <= Lo and Mi < Lo:
-        return "raise lower focus"
-    elif Mi < Hi and Lo <= Hi:
-        return "lower upper focus"
-    else:
-        return "nothing"
-
-
 def estimate_depth_from_participating_beams(
     prng,
     image_beams,
@@ -551,7 +407,6 @@ def estimate_depth_from_participating_beams(
     ))
 
     for i in range(len(r["depth_m"])):
-        print("refocus rough", i)
         img = make_image(
             image_beams=image_beams,
             light_field_geometry=light_field_geometry,
@@ -572,7 +427,8 @@ def estimate_depth_from_participating_beams(
     while depths_range_m / reco_depth_m > 1e-3:
 
         if r["num_iterations"] >= num_max_iterations:
-            raise RuntimeError("Too many iterations")
+            print("Estimating focus: Too many iterations.")
+            return r
 
         depths_range_m = depth_range_shrinking_rate * depths_range_m
 
@@ -581,8 +437,6 @@ def estimate_depth_from_participating_beams(
             spreads_pixel_per_photon=r["spreads_pixel_per_photon"],
             depths_range_m=depths_range_m,
         )
-        print("refocus fine ", r["num_iterations"], r["num_iterations"])
-        print("refocus fine next depths ", next_depths_m)
         for n in range(len(next_depths_m)):
             n_depth_m = next_depths_m[n]
             n_img = make_image(
@@ -599,7 +453,6 @@ def estimate_depth_from_participating_beams(
             )
             r["depth_m"].append(n_depth_m)
             r["spreads_pixel_per_photon"].append(n_spread)
-            print("refocus fine depth ",  n_depth_m)
 
         reco_depth_m = r["depth_m"][np.argmin(r["spreads_pixel_per_photon"])]
         r["num_iterations"] += 1
@@ -718,7 +571,7 @@ def estimate_focus(
     max_object_distance_m,
     min_object_distance_m,
     image_containment_percentile,
-    auto_focus_step_rate,
+    depth_range_shrinking_rate,
     oversampling_beam_spread,
     num_max_iterations=100,
 ):
@@ -734,7 +587,7 @@ def estimate_focus(
         max_object_distance_m=max_object_distance_m,
         min_object_distance_m=min_object_distance_m,
         image_containment_percentile=image_containment_percentile,
-        #auto_focus_step_rate=auto_focus_step_rate,
+        depth_range_shrinking_rate=depth_range_shrinking_rate,
         oversampling_beam_spread=oversampling_beam_spread,
         num_max_iterations=num_max_iterations,
     )
