@@ -399,10 +399,6 @@ def estimate_depth_from_participating_beams(
     # fine iteration
     # --------------
     for it in range(12):
-        if r["num_iterations"] >= num_max_iterations:
-            print("Estimating focus: Too many iterations.")
-            return r
-
         next_depths_m = estimate_next_focus_depth_m(
             depths_m=r["depth_m"],
             spreads_pixel_per_photon=r["spreads_pixel_per_photon"],
