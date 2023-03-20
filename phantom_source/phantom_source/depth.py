@@ -269,47 +269,6 @@ def get_num_photons_in_participating_beams(participating_beams):
     )
 
 
-def make_image_old(
-    image_beams,
-    light_field_geometry,
-    participating_beams,
-    object_distance,
-    image_binning,
-    oversampling,
-    prng,
-):
-    img = np.zeros(
-        shape=(image_binning["cx"]["num"], image_binning["cy"]["num"])
-    )
-
-    img_cx, img_cy = image_beams.cx_cy_in_object_distance(object_distance)
-    img_cx_std = light_field_geometry.cx_std
-    img_cy_std = light_field_geometry.cy_std
-
-    for beam_id in participating_beams:
-        num_photons = participating_beams[beam_id]
-
-        cx_hits = prng.normal(
-            loc=img_cx[beam_id],
-            scale=img_cx_std[beam_id],
-            size=oversampling * num_photons,
-        )
-
-        cy_hits = prng.normal(
-            loc=img_cy[beam_id],
-            scale=img_cy_std[beam_id],
-            size=oversampling * num_photons,
-        )
-
-        img += (1 / oversampling) * np.histogram2d(
-            cx_hits,
-            cy_hits,
-            bins=(image_binning["cx"]["edges"], image_binning["cy"]["edges"]),
-        )[0]
-
-    return img
-
-
 def make_image(
     image_beams,
     light_field_geometry,
@@ -484,8 +443,6 @@ def estimate_next_focus_depth_m(
 
     assert np.all(depths > 0.0)
     assert np.all(spreads > 0.0)
-
-    print("Estimate next focus: depths_m", depths)
 
     reco_depth_m = depths[np.argmin(spreads)]
     d_next_start = reco_depth_m - depths_range_m / 2
