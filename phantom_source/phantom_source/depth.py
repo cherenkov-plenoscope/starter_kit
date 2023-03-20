@@ -158,6 +158,7 @@ def run_job(job):
             os.path.join(job_dir, "participating_beams.json"),
             participating_beams,
         )
+        os.rmdir(job_merlict_tmp_dir)
 
     result_path = os.path.join(job_dir, "result.json")
     if os.path.exists(result_path):
