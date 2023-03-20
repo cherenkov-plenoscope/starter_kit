@@ -1,4 +1,5 @@
 import os
+import shutil
 import numpy as np
 import json_numpy
 import plenopy
@@ -158,7 +159,7 @@ def run_job(job):
             os.path.join(job_dir, "participating_beams.json"),
             participating_beams,
         )
-        os.rmdir(job_merlict_tmp_dir)
+        shutil.rmtree(job_merlict_tmp_dir)
 
     result_path = os.path.join(job_dir, "result.json")
     if os.path.exists(result_path):
