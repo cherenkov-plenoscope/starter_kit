@@ -90,30 +90,40 @@ def make_plenopy_event_and_read_light_field_geometry(
     merlict_propagate_photons_path,
     merlict_propagate_config_path,
     random_seed=0,
+    work_dir=None,
 ):
-    with tempfile.TemporaryDirectory(prefix="phantom_source_") as tmpdir:
-        photons_path = os.path.join(tmpdir, "photons.ssv")
-        run_dir = os.path.join(tmpdir, "run")
+    if work_dir == None:
+        work_dir_cleanup = True
+        tmpdir_handle = tempfile.TemporaryDirectory(prefix="phantom_source_")
+        work_dir = tmpdir_handle.name
+    else:
+        work_dir_cleanup = False
+        os.makedirs(work_dir, exist_ok=True)
 
-        write_light_fields_to_space_seperated_values(
-            light_fields=light_fields, path=photons_path,
-        )
+    photons_path = os.path.join(work_dir, "photons.ssv")
+    run_dir = os.path.join(work_dir, "run")
 
-        rc = propagate_photons(
-            input_path=photons_path,
-            output_path=run_dir,
-            light_field_geometry_path=light_field_geometry_path,
-            merlict_propagate_photons_path=merlict_propagate_photons_path,
-            merlict_propagate_config_path=merlict_propagate_config_path,
-            random_seed=0,
-        )
+    write_light_fields_to_space_seperated_values(
+        light_fields=light_fields, path=photons_path,
+    )
 
-        light_field_geometry = plenopy.LightFieldGeometry(
-            light_field_geometry_path
-        )
-        event = plenopy.Event(
-            os.path.join(run_dir, "1"),
-            light_field_geometry=light_field_geometry,
-        )
+    rc = propagate_photons(
+        input_path=photons_path,
+        output_path=run_dir,
+        light_field_geometry_path=light_field_geometry_path,
+        merlict_propagate_photons_path=merlict_propagate_photons_path,
+        merlict_propagate_config_path=merlict_propagate_config_path,
+        random_seed=0,
+    )
 
-        return event, light_field_geometry
+    light_field_geometry = plenopy.LightFieldGeometry(
+        light_field_geometry_path
+    )
+    event = plenopy.Event(
+        os.path.join(run_dir, "1"), light_field_geometry=light_field_geometry,
+    )
+
+    if work_dir_cleanup:
+        tmpdir_handle.cleanup()
+
+    return event, light_field_geometry

@@ -119,6 +119,7 @@ def run_job(job):
     map_dir = os.path.join(job["work_dir"], "map")
     job_dir = os.path.join(map_dir, uid_str)
     os.makedirs(job_dir, exist_ok=True)
+    job_merlict_tmp_dir = os.path.join(job_dir, "merlict")
 
     job_random_seed = config["random_seed"] + job["uid"]
     prng = np.random.Generator(np.random.MT19937(seed=job_random_seed))
@@ -151,6 +152,7 @@ def run_job(job):
                 "merlict_propagate_config_path"
             ],
             num_photons=config["num_photons"],
+            work_dir=job_merlict_tmp_dir,
         )
         write_participating_beams(
             os.path.join(job_dir, "participating_beams.json"),
@@ -483,6 +485,7 @@ def estimate_response_to_point_source(
     merlict_propagate_photons_path,
     merlict_propagate_config_path,
     num_photons,
+    work_dir=None,
     point_source_apparent_radius_deg=0.01,
     emission_distance_to_aperture_m=1e3,
 ):
@@ -522,6 +525,7 @@ def estimate_response_to_point_source(
         merlict_propagate_photons_path=merlict_propagate_photons_path,
         merlict_propagate_config_path=merlict_propagate_config_path,
         random_seed=merlict_random_seed,
+        work_dir=work_dir,
     )
     _beam_t, beam_ids = event.photon_arrival_times_and_lixel_ids()
 
