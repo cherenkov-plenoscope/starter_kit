@@ -24,8 +24,8 @@ EXAMPLE_CONFIG = {
         "merlict_propagation_config_no_night_sky_background.json",
     ),
     "num_photons": 1e5,
-    "min_object_distance_m": 2.7e3,
-    "max_object_distance_m": 27.0e3,
+    "min_object_distance_m": 2.0e3,
+    "max_object_distance_m": 40.0e3,
     "num_pixel_on_edge": 1024,
     "image_containment_percentile": 95,
     "depth_range_shrinking_rate": 0.5,
@@ -68,10 +68,13 @@ def make_jobs(work_dir):
     jobs = []
     for uid in range(config["num_estimates"]):
 
-        object_distance_m = prng.uniform(
-            low=config["min_object_distance_m"],
-            high=config["max_object_distance_m"],
-        )
+        object_distance_m = corsika_primary.random.distributions.draw_power_law(
+            prng=prng,
+            lower_limit=config["min_object_distance_m"],
+            upper_limit=config["max_object_distance_m"],
+            power_slope=-1,
+            num_samples=1,
+        )[0]
 
         cx_deg, cy_deg = corsika_primary.random.distributions.draw_x_y_in_disc(
             prng=prng, radius=0.5 * field_of_view_deg,
@@ -166,8 +169,8 @@ def run_job(job):
             participating_beams=participating_beams,
             prng=prng,
             image_binning=image_binning,
-            max_object_distance_m=config["max_object_distance_m"],
-            min_object_distance_m=config["min_object_distance_m"],
+            max_object_distance_m=1.25 * config["max_object_distance_m"],
+            min_object_distance_m=0.75 * config["min_object_distance_m"],
             image_containment_percentile=config[
                 "image_containment_percentile"
             ],
@@ -182,6 +185,14 @@ def run_job(job):
         nfs_json_numpy_write(
             os.path.join(job_dir, "result.json"), report, indent=4,
         )
+
+        try:
+            plot_report(
+                report=report,
+                path=os.path.join(job_dir, "result.jpg"),
+            )
+        except:
+            pass
 
 
 def plot_report(report, path):
