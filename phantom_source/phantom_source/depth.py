@@ -74,7 +74,9 @@ def make_jobs(work_dir):
             upper_limit=config["max_object_distance_m"],
             power_slope=-1,
             num_samples=1,
-        )[0]
+        )[
+            0
+        ]
 
         cx_deg, cy_deg = corsika_primary.random.distributions.draw_x_y_in_disc(
             prng=prng, radius=0.5 * field_of_view_deg,
@@ -188,8 +190,7 @@ def run_job(job):
 
         try:
             plot_report(
-                report=report,
-                path=os.path.join(job_dir, "result.jpg"),
+                report=report, path=os.path.join(job_dir, "result.jpg"),
             )
         except:
             pass
