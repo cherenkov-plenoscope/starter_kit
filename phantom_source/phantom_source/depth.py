@@ -29,9 +29,8 @@ EXAMPLE_CONFIG = {
     "max_object_distance_m": 40.0e3,
     "num_pixel_on_edge": 1024,
     "image_containment_percentile": 95,
-    "depth_range_shrinking_rate": 0.5,
     "oversampling_beam_spread": 100,
-    "num_estimates": 1280,
+    "num_estimates": 4096,
 }
 
 
@@ -180,7 +179,6 @@ def run_job(job):
             image_containment_percentile=config[
                 "image_containment_percentile"
             ],
-            depth_range_shrinking_rate=config["depth_range_shrinking_rate"],
             oversampling_beam_spread=config["oversampling_beam_spread"],
         )
 
@@ -240,12 +238,12 @@ def plot_report(report, path):
 
 
 def reduce(work_dir):
-    config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
+    config = json_numpy.read(os.path.join(work_dir, "config.json"))
     map_dir = os.path.join(work_dir, "map")
 
     results = []
     for uid in range(config["num_estimates"]):
-        uid_str = JOB_UID_STR_TEMPLATE.format(job["uid"])
+        uid_str = JOB_UID_STR_TEMPLATE.format(uid)
         result_path = os.path.join(map_dir, uid_str, "result.json")
         if os.path.exists(result_path):
             results.append(json_numpy.read(result_path))
@@ -351,13 +349,9 @@ def estimate_depth_from_participating_beams(
     image_binning,
     max_object_distance_m,
     min_object_distance_m,
-    image_containment_percentile=95,
-    depth_range_shrinking_rate=0.5,
-    oversampling_beam_spread=1000,
-    num_max_iterations=100,
+    image_containment_percentile,
+    oversampling_beam_spread,
 ):
-    assert 0.0 < depth_range_shrinking_rate < 1.0
-    assert num_max_iterations > 0
     assert oversampling_beam_spread > 0
     assert 0 < image_containment_percentile <= 100
     assert max_object_distance_m > 0
@@ -373,8 +367,8 @@ def estimate_depth_from_participating_beams(
     r["depth_m"] = []
     r["spreads_pixel_per_photon"] = []
 
-    num_initial_estimates = 7
-    depths_range_m = max_object_distance_m - min_object_distance_m
+    num_initial_estimates = 9
+    depths_range_ratio = max_object_distance_m / min_object_distance_m
 
     # rough
     # -----
@@ -404,18 +398,15 @@ def estimate_depth_from_participating_beams(
 
     # fine iteration
     # --------------
-    while depths_range_m / reco_depth_m > 1e-3:
-
+    for it in range(12):
         if r["num_iterations"] >= num_max_iterations:
             print("Estimating focus: Too many iterations.")
             return r
 
-        depths_range_m = depth_range_shrinking_rate * depths_range_m
-
         next_depths_m = estimate_next_focus_depth_m(
             depths_m=r["depth_m"],
             spreads_pixel_per_photon=r["spreads_pixel_per_photon"],
-            depths_range_m=depths_range_m,
+            next_depths_radius_num_points=3,
         )
         for n in range(len(next_depths_m)):
             n_depth_m = next_depths_m[n]
@@ -443,9 +434,9 @@ def estimate_depth_from_participating_beams(
 
 
 def estimate_next_focus_depth_m(
-    depths_m, spreads_pixel_per_photon, depths_range_m,
+    depths_m, spreads_pixel_per_photon, next_depths_radius_num_points,
 ):
-    assert depths_range_m > 0
+    assert next_depths_radius_num_points > 0
 
     _depths = np.array(depths_m)
     _spreads = np.array(spreads_pixel_per_photon)
@@ -460,21 +451,20 @@ def estimate_next_focus_depth_m(
     assert np.all(depths > 0.0)
     assert np.all(spreads > 0.0)
 
-    reco_depth_m = depths[np.argmin(spreads)]
-    d_next_start = reco_depth_m - depths_range_m / 2
-    d_next_stop = reco_depth_m + depths_range_m / 2
+    i_min = np.argmin(spreads)
+    i_start = i_min - next_depths_radius_num_points
+    i_stop = i_min + next_depths_radius_num_points
 
     next_depths = []
-
-    for i in range(len(depths) - 1):
-        d_start = depths[i]
-        d_stop = depths[i + 1]
-        # d_next = 0.5 * (d_stop + d_start)
-        d_next = np.geomspace(d_start, d_stop, 3)[1]
-        if d_next_start <= d_next <= d_next_stop:
+    for i in np.arange(i_start, i_stop):
+        if i >= 0 and (i + 1) < len(depths):
+            d_start = depths[i]
+            d_stop = depths[i + 1]
+            d_next = np.geomspace(d_start, d_stop, 3)[1]
             next_depths.append(d_next)
 
-    return np.array(next_depths)
+    next_depths = np.array(next_depths)
+    return next_depths
 
 
 def estimate_response_to_point_source(
@@ -545,9 +535,7 @@ def estimate_focus(
     max_object_distance_m,
     min_object_distance_m,
     image_containment_percentile,
-    depth_range_shrinking_rate,
     oversampling_beam_spread,
-    num_max_iterations=100,
 ):
     image_beams = plenopy.image.ImageRays(
         light_field_geometry=light_field_geometry
@@ -561,9 +549,7 @@ def estimate_focus(
         max_object_distance_m=max_object_distance_m,
         min_object_distance_m=min_object_distance_m,
         image_containment_percentile=image_containment_percentile,
-        depth_range_shrinking_rate=depth_range_shrinking_rate,
         oversampling_beam_spread=oversampling_beam_spread,
-        num_max_iterations=num_max_iterations,
     )
     return report
 
