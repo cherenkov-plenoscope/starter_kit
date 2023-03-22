@@ -146,6 +146,13 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "cable_robo_mount", "name": "cable_robo_mount"},
     {"path": "plenopy", "name": "plenopy"},
     {"path": "plenoirf", "name": "plenoirf"},
+    {"path": "timing_toy_simulation", "name": "timing_toy_simulation"},
+    {"path": "phantom_source", "name": "phantom_source"},
+    {
+        "path": "network_file_system",
+        "name": "network_file_system_sebastian-achim-mueller",
+    },
+    {"path": "aberration_demo", "name": "aberration_demo"},
 ]
 
 
