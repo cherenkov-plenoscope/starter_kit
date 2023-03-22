@@ -480,7 +480,9 @@ for sk in SITES:
             fig.add_caption("Diff. trigger-rate w.r.t. max. scatter-angle.")
 
     with doc.create(ltx.Section("Optical performance", numbering=False)):
-        doc.append("Statistics of the plenoscope's optical beams.")
+        doc.append(
+            "Statistics of the plenoscope's optical beams. Gray area contains 90%. Dashed, vertical line is median."
+        )
         with doc.create(ltx.Figure(position="H")) as fig:
             fig.add_image(
                 ppath(
@@ -514,6 +516,20 @@ for sk in SITES:
                     pa["summary_dir"],
                     "1005_plot_light_field_geometry",
                     "efficiencies_log.jpg",
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+        doc.append(
+            noesc(
+                r"Performance to estimate the depth of a bright, point-like source. Dotted lines mark the $g_+$ and $g_-$ bounds."
+            )
+        )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "1210_demonstrate_resolution_of_depth",
+                    "relative_depth_reco_vs_true.jpg",
                 ),
                 width=noesc(r"1.0\linewidth"),
             )

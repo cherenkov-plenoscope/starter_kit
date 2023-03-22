@@ -142,7 +142,7 @@ seb.ax_add_histogram(
     linestyle="-",
     linecolor="k",
 )
-fig.savefig(os.path.join(pa["out_dir"], "depth_reco_vs_true"))
+fig.savefig(os.path.join(pa["out_dir"], "depth_reco_vs_true.jpg"))
 seb.close(fig)
 
 
@@ -213,5 +213,5 @@ seb.ax_add_histogram(
     linestyle="-",
     linecolor="k",
 )
-fig.savefig(os.path.join(pa["out_dir"], "relative_depth_reco_vs_true"))
+fig.savefig(os.path.join(pa["out_dir"], "relative_depth_reco_vs_true.jpg"))
 seb.close(fig)
