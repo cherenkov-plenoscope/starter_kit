@@ -55,7 +55,17 @@ def make_percentile_mask(v, v_bin_edges, mask_percentile=90):
 
 
 def save_histogram(
-    path, v_bin_edges, v_bin_counts, v_median, percentile_mask, xlabel, xscale, ylim, yscale=1, ylabel="intensity / 1", semilogy=True,
+    path,
+    v_bin_edges,
+    v_bin_counts,
+    v_median,
+    percentile_mask,
+    xlabel,
+    xscale,
+    ylim,
+    yscale=1,
+    ylabel="intensity / 1",
+    semilogy=True,
 ):
     num_bins = len(v_bin_counts)
     fig = seb.figure(FIGSTY)
@@ -107,35 +117,33 @@ hists["solid_angles"] = {
     "v": 4 * np.pi * lfg.cx_std * lfg.cy_std,
     "v_bin_edges": np.linspace(0, 4 * 4e-6, 101),
     "xscale": 1e6,
-    "xlabel": "solid angle of beams $\Omega$ / $\mu$sr"
+    "xlabel": "solid angle of beams $\Omega$ / $\mu$sr",
 }
 hists["areas"] = {
     "v": 4 * np.pi * lfg.x_std * lfg.y_std,
     "v_bin_edges": np.linspace(0, 4 * 300, 101),
     "xscale": 1,
-    "xlabel": "area of beams $A$ / m$^{2}$"
+    "xlabel": "area of beams $A$ / m$^{2}$",
 }
 hists["time_spreads"] = {
     "v": lfg.time_delay_wrt_principal_aperture_plane_std,
     "v_bin_edges": np.linspace(0, 2.5e-9, 101),
     "xscale": 1e9,
-    "xlabel": "time-spread of beams $T$ / ns"
+    "xlabel": "time-spread of beams $T$ / ns",
 }
 hists["efficiencies"] = {
     "v": lfg.efficiency / np.median(lfg.efficiency),
     "v_bin_edges": np.linspace(0, 1.2, 101),
     "xscale": 1,
-    "xlabel": "relative efficiency of beams $E$ / 1"
+    "xlabel": "relative efficiency of beams $E$ / 1",
 }
 
 for key in hists:
     hists[key]["v_bin_counts"] = make_histogram(
-        v=hists[key]["v"],
-        v_bin_edges=hists[key]["v_bin_edges"],
+        v=hists[key]["v"], v_bin_edges=hists[key]["v_bin_edges"],
     )
     hists[key]["percentile_mask"] = make_percentile_mask(
-        v=hists[key]["v"],
-        v_bin_edges=hists[key]["v_bin_edges"],
+        v=hists[key]["v"], v_bin_edges=hists[key]["v_bin_edges"],
     )
     hists[key]["v_median"] = np.median(hists[key]["v"])
 

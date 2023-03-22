@@ -479,12 +479,8 @@ for sk in SITES:
             )
             fig.add_caption("Diff. trigger-rate w.r.t. max. scatter-angle.")
 
-    with doc.create(
-        ltx.Section("Optical performance", numbering=False)
-    ):
-        doc.append(
-            "Statistics of the plenoscope's optical beams."
-        )
+    with doc.create(ltx.Section("Optical performance", numbering=False)):
+        doc.append("Statistics of the plenoscope's optical beams.")
         with doc.create(ltx.Figure(position="H")) as fig:
             fig.add_image(
                 ppath(
