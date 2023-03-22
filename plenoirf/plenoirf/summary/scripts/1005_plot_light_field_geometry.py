@@ -29,10 +29,12 @@ YLIM = np.array([1, 1e6])
 YLABEL = "intensity / 1"
 
 
-def save_histogram(
-    path, v, v_bin_edges, xlabel, xscale=1.0, mask_percentile=90,
-):
-    v_bin_counts = np.histogram(v, bins=v_bin_edges)[0]
+def make_histogram(v, v_bin_edges):
+    return np.histogram(v, bins=v_bin_edges)[0]
+
+
+def make_percentile_mask(v, v_bin_edges, mask_percentile=90):
+    v_bin_counts = make_histogram(v=v, v_bin_edges=v_bin_edges)
     v_total_counts = np.sum(v_bin_counts)
 
     # watershed
@@ -49,16 +51,23 @@ def save_histogram(
         v_bin_counts_fraction[a] = 0
         fraction_part = v_bin_counts[a] / v_total_counts
         fraction += fraction_part
+    return mask
 
+
+def save_histogram(
+    path, v_bin_edges, v_bin_counts, v_median, percentile_mask, xlabel, xscale, ylim, yscale=1, ylabel="intensity / 1", semilogy=True,
+):
+    num_bins = len(v_bin_counts)
     fig = seb.figure(FIGSTY)
     ax = seb.add_axes(fig=fig, span=AXSPAN)
+    ylim = np.array(ylim)
 
     seb.ax_add_histogram(
         ax=ax,
         bin_edges=v_bin_edges * xscale,
-        bincounts=np.ones(num_bins),
-        bincounts_upper=mask * v_bin_counts,
-        bincounts_lower=np.ones(num_bins),
+        bincounts=np.ones(num_bins) * yscale,
+        bincounts_upper=percentile_mask * v_bin_counts * yscale,
+        bincounts_lower=np.ones(num_bins) * yscale,
         linestyle=None,
         linecolor=None,
         linealpha=0.0,
@@ -71,71 +80,96 @@ def save_histogram(
     seb.ax_add_histogram(
         ax=ax,
         bin_edges=v_bin_edges * xscale,
-        bincounts=v_bin_counts,
+        bincounts=v_bin_counts * yscale,
         linestyle="-",
         linecolor="k",
         linealpha=1.0,
         draw_bin_walls=True,
     )
     ax.vlines(
-        x=xscale * np.median(v),
-        ymin=YLIM[0],
-        ymax=YLIM[1],
+        x=xscale * v_median,
+        ymin=ylim[0] * yscale,
+        ymax=ylim[1] * yscale,
         color="gray",
         linestyle="--",
     )
-    ax.set_ylim(YLIM)
-    ax.semilogy()
+    ax.set_ylim(ylim * yscale)
+    if semilogy:
+        ax.semilogy()
     ax.set_xlabel(xlabel)
-    ax.set_ylabel(YLABEL)
+    ax.set_ylabel(ylabel)
     fig.savefig(path)
     seb.close(fig)
 
 
-# direction
-# ---------
-beam_solid_angles_sr = 4 * np.pi * lfg.cx_std * lfg.cy_std
+hists = {}
+hists["solid_angles"] = {
+    "v": 4 * np.pi * lfg.cx_std * lfg.cy_std,
+    "v_bin_edges": np.linspace(0, 4 * 4e-6, 101),
+    "xscale": 1e6,
+    "xlabel": "solid angle of beams $\Omega$ / $\mu$sr"
+}
+hists["areas"] = {
+    "v": 4 * np.pi * lfg.x_std * lfg.y_std,
+    "v_bin_edges": np.linspace(0, 4 * 300, 101),
+    "xscale": 1,
+    "xlabel": "area of beams $A$ / m$^{2}$"
+}
+hists["time_spreads"] = {
+    "v": lfg.time_delay_wrt_principal_aperture_plane_std,
+    "v_bin_edges": np.linspace(0, 2.5e-9, 101),
+    "xscale": 1e9,
+    "xlabel": "time-spread of beams $T$ / ns"
+}
+hists["efficiencies"] = {
+    "v": lfg.efficiency / np.median(lfg.efficiency),
+    "v_bin_edges": np.linspace(0, 1.2, 101),
+    "xscale": 1,
+    "xlabel": "relative efficiency of beams $E$ / 1"
+}
 
-save_histogram(
-    path=os.path.join(pa["out_dir"], "directions.jpg"),
-    v=beam_solid_angles_sr,
-    v_bin_edges=np.linspace(0, 4 * 4e-6, 101),
-    xscale=1e6,
-    xlabel="solid angle of beams $\Omega$ / $\mu$sr",
-)
+for key in hists:
+    hists[key]["v_bin_counts"] = make_histogram(
+        v=hists[key]["v"],
+        v_bin_edges=hists[key]["v_bin_edges"],
+    )
+    hists[key]["percentile_mask"] = make_percentile_mask(
+        v=hists[key]["v"],
+        v_bin_edges=hists[key]["v_bin_edges"],
+    )
+    hists[key]["v_median"] = np.median(hists[key]["v"])
 
-# position
-# ---------
-beam_area_m2 = 4 * np.pi * lfg.x_std * lfg.y_std
+max_bin_count = 0
+for key in hists:
+    if np.max(hists[key]["v_bin_counts"]) > max_bin_count:
+        max_bin_count = np.max(hists[key]["v_bin_counts"])
 
-save_histogram(
-    path=os.path.join(pa["out_dir"], "areas.jpg"),
-    v=beam_area_m2,
-    v_bin_edges=np.linspace(0, 4 * 300, 101),
-    xscale=1,
-    xlabel="area of beams $A$ / m$^{2}$",
-)
+ylim_lin = [0, 1.1 * max_bin_count]
+ylim_log = [1, 10 ** np.ceil(np.log10(max_bin_count))]
 
-# time
-# ----
-beam_time_spread = lfg.time_delay_wrt_principal_aperture_plane_std
-
-save_histogram(
-    path=os.path.join(pa["out_dir"], "time_spreads.jpg"),
-    v=beam_time_spread,
-    v_bin_edges=np.linspace(0, 2.5e-9, 101),
-    xscale=1e9,
-    xlabel="time-spread of beams $T$ / ns",
-)
-
-# relative efficiency
-# -------------------
-beam_efficiency = lfg.efficiency / np.median(lfg.efficiency)
-
-save_histogram(
-    path=os.path.join(pa["out_dir"], "efficiencies.jpg"),
-    v=beam_efficiency,
-    v_bin_edges=np.linspace(0, 1.2, 101),
-    xscale=1,
-    xlabel="relative efficiency of beams $E$ / 1",
-)
+for key in hists:
+    save_histogram(
+        path=os.path.join(pa["out_dir"], key + "_log.jpg"),
+        ylim=ylim_log,
+        semilogy=True,
+        v_bin_edges=hists[key]["v_bin_edges"],
+        v_bin_counts=hists[key]["v_bin_counts"],
+        v_median=hists[key]["v_median"],
+        percentile_mask=hists[key]["percentile_mask"],
+        xlabel=hists[key]["xlabel"],
+        xscale=hists[key]["xscale"],
+        ylabel="intensity / 1",
+    )
+    save_histogram(
+        path=os.path.join(pa["out_dir"], key + "_lin.jpg"),
+        ylim=ylim_lin,
+        semilogy=False,
+        v_bin_edges=hists[key]["v_bin_edges"],
+        v_bin_counts=hists[key]["v_bin_counts"],
+        v_median=hists[key]["v_median"],
+        percentile_mask=hists[key]["percentile_mask"],
+        xlabel=hists[key]["xlabel"],
+        xscale=hists[key]["xscale"],
+        ylabel="intensity / 1k",
+        yscale=1e-3,
+    )

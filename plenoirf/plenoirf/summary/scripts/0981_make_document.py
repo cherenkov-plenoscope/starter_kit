@@ -480,6 +480,49 @@ for sk in SITES:
             fig.add_caption("Diff. trigger-rate w.r.t. max. scatter-angle.")
 
     with doc.create(
+        ltx.Section("Optical performance", numbering=False)
+    ):
+        doc.append(
+            "Statistics of the plenoscope's optical beams."
+        )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "1005_plot_light_field_geometry",
+                    "solid_angles_log.jpg",
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "1005_plot_light_field_geometry",
+                    "areas_log.jpg",
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "1005_plot_light_field_geometry",
+                    "time_spreads_log.jpg",
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+        with doc.create(ltx.Figure(position="H")) as fig:
+            fig.add_image(
+                ppath(
+                    pa["summary_dir"],
+                    "1005_plot_light_field_geometry",
+                    "efficiencies_log.jpg",
+                ),
+                width=noesc(r"1.0\linewidth"),
+            )
+
+    with doc.create(
         ltx.Section("Outer array to veto hadrons", numbering=False)
     ):
         doc.append(
