@@ -30,6 +30,16 @@ demfap = abe.deformations.deformation_map.read(
     path=abe.deformations.deformation_map.EXAMPLE_DEFORMATION_MAP_PATH
 )
 
+demfap = abe.deformations.deformation_map.init_perlin_noise(
+    mirror_diameter_m=83,
+    octaves=1.5,
+    intensity_per_m=10,
+    z_0_offset=0.5,
+    seed=43,
+    num_bins_on_edge=256,
+)
+
+
 demfap_zeor = abe.deformations.deformation_map.init_zero(
     mirror_diameter_m=(
         demfap["pixel_bin"]["limits"][1] - demfap["pixel_bin"]["limits"][0]
@@ -40,7 +50,7 @@ facets = abe.deformations.parabola_segmented.make_facets(
     mirror_config=config["mirror"], deformation=demfap,
 )
 
-N = 512
+N = 64
 R_inner = 71 / 2
 R_outer = 2 / np.sqrt(3) * R_inner
 f = config["mirror"]["focal_length"]
@@ -113,6 +123,7 @@ cmap = ax.pcolormesh(
     vmin=-VMINMAX_M * 1e3,
 )
 
+"""
 for facet in facets:
     fx = facet["pos"][0]
     fy = facet["pos"][1]
@@ -127,7 +138,7 @@ for facet in facets:
         ffxx.append(ffx)
         ffyy.append(ffy)
     ax.plot(ffxx, ffyy, "k-", linewidth=0.1)
-
+"""
 ax.set_aspect("equal")
 ax.set_xlim([-R_outer, R_outer])
 ax.set_ylim([-R_outer, R_outer])

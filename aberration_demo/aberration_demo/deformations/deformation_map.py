@@ -8,6 +8,8 @@ from scipy.interpolate import interp2d as scipy_interpolate_interp2d
 import skimage
 from skimage import io as skimage_io
 import pkg_resources
+import perlin_noise
+
 
 EXAMPLE_DEFORMATION_MAP_PATH = pkg_resources.resource_filename(
     "aberration_demo", "deformations/resources/example_deformation_map"
@@ -46,6 +48,37 @@ def init(
         kind="cubic",
     )
     return cc
+
+
+def init_perlin_noise(
+    mirror_diameter_m,
+    octaves,
+    intensity_per_m,
+    z_0_offset,
+    seed,
+    num_bins_on_edge,
+):
+    png = perlin_noise.PerlinNoise(octaves=octaves, seed=seed)
+
+    z_map = np.zeros(
+        shape=(num_bins_on_edge, num_bins_on_edge), dtype=np.float32,
+    )
+
+    for x in range(num_bins_on_edge):
+        for y in range(num_bins_on_edge):
+            z_map[x, y] = png.noise(
+                [x / num_bins_on_edge, y / num_bins_on_edge]
+            )
+
+    z_map = z_map - np.min(z_map)
+    z_map = z_map / np.max(z_map)
+
+    return init(
+        z_map=z_map,
+        mirror_diameter_m=mirror_diameter_m,
+        intensity_per_m=intensity_per_m,
+        z_0_offset=z_0_offset,
+    )
 
 
 def init_zero(mirror_diameter_m,):

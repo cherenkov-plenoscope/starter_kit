@@ -14,7 +14,7 @@ setuptools.setup(
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
     license="MIT",
     packages=["aberration_demo",],
-    install_requires=[""],
+    install_requires=["perlin_noise"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
