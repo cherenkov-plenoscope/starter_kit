@@ -1,10 +1,5 @@
 import numpy as np
 import copy
-import binning_utils
-import scipy
-from scipy.interpolate import interp2d as scipy_interpolate_interp2d
-import skimage
-from skimage import io as skimage_io
 from . import deformation_map
 from .. import portal
 
@@ -12,12 +7,17 @@ from .. import portal
 MIRROR = copy.deepcopy(portal.MIRROR)
 
 
-def z_parabola(distance_to_z_axis, focal_length):
+def parabola_z(distance_to_z_axis, focal_length):
     return 1.0 / (4.0 * focal_length) * distance_to_z_axis ** 2
 
 
-def surface_z(x, y, focal_length, deformation):
-    _z_parabola = z_parabola(
+def mirror_surface_z(x, y, focal_length, deformation):
+    """
+    Returns the surface height (z-axis) of the mirror.
+    The facets are mounted on this surface.
+    When the surface deforms, the facets rotate and translate accordingly.
+    """
+    _z_parabola = parabola_z(
         distance_to_z_axis=np.hypot(x, y), focal_length=focal_length,
     )
     _z_deformation = deformation_map.evaluate(
@@ -26,18 +26,34 @@ def surface_z(x, y, focal_length, deformation):
     return _z_parabola + _z_deformation
 
 
-def surface_normal(x, y, focal_length, deformation, delta):
+def mirror_surface_normal(x, y, focal_length, deformation, delta):
     """
-    surface-normal is: ( -dz/dx , -dz/dy , 1 )
+    Returns the mirror's surface-normal: ( -dz/dx , -dz/dy , 1 ) at position
+    (x, y). Computed by numeri means.
+
+    Parameters
+    ----------
+    x : float / m
+        The x-coordinate.
+    y : float / m
+        The y-coordinate.
+    focal_length : float m
+        Mirror's focal-length
+    deformation : dict
+        The deformation of the mirror along the z-axis. This is the
+        deviation from the targeted geometry.
+    delta : float / m
+        Step-length in x, and y to sample the neighborhood of (x, y) in order
+        to compute the surface's normal.
     """
     xp = x + delta
     xm = x - delta
     yp = y + delta
     ym = y - delta
-    z_xp = surface_z(xp, y, focal_length, deformation)
-    z_xm = surface_z(xm, y, focal_length, deformation)
-    z_yp = surface_z(x, yp, focal_length, deformation)
-    z_ym = surface_z(x, ym, focal_length, deformation)
+    z_xp = mirror_surface_z(xp, y, focal_length, deformation)
+    z_xm = mirror_surface_z(xm, y, focal_length, deformation)
+    z_yp = mirror_surface_z(x, yp, focal_length, deformation)
+    z_ym = mirror_surface_z(x, ym, focal_length, deformation)
     dzdx = (z_xp - z_xm) / (2 * delta)
     dzdy = (z_yp - z_ym) / (2 * delta)
     normal = [-dzdx, -dzdy, 1.0]
@@ -83,16 +99,23 @@ def is_inside_hexagon(position, hexagon_inner_radius):
 
 def make_facets(
     mirror_config,
-    deformation,
+    mirror_deformation,
     reflection_vs_wavelength="mirror_reflectivity_vs_wavelength",
     color="facet_color",
 ):
-    mcfg = mirror_config
+    """
+    Returns a list of facet-dicts for the merlict-raytracer which form
+    a segmented mirror with specific deformations.
 
-    if not "min_inner_aperture_radius" in mcfg:
-        min_inner_aperture_radius = 3.05
-    else:
-        min_inner_aperture_radius = mcfg["min_inner_aperture_radius"]
+    Parameters
+    ----------
+    mirror_config : dict
+        Describes the targeted geometry of the mirror.
+    mirror_deformation : dict
+        Describes the deformations of the mirror, i.e. the deviations from the
+        targeted geometry.
+    """
+    mcfg = mirror_config
 
     facet_spacing = (
         mcfg["facet_inner_hex_radius"] * 2.0 + mcfg["gap_between_facets"]
@@ -106,7 +129,7 @@ def make_facets(
     ) * outer_radius_to_put_facet_center
 
     MIN_INNER_RADIUS_TO_PUT_FACET_CENTER = (
-        min_inner_aperture_radius + facet_spacing / 2.0
+        mcfg["min_inner_aperture_radius"] + facet_spacing / 2.0
     )
 
     N = 2.0 * np.ceil(mcfg["outer_radius"] / facet_spacing)
@@ -127,22 +150,22 @@ def make_facets(
             )
 
             if inside_outer_hexagon and outside_inner_disc:
-                facet_center[2] = surface_z(
+                facet_center[2] = mirror_surface_z(
                     x=facet_center[0],
                     y=facet_center[1],
                     focal_length=mcfg["focal_length"],
-                    deformation=deformation,
+                    deformation=mirror_deformation,
                 )
 
                 facet = {}
                 facet["type"] = "SphereCapWithHexagonalBound"
                 facet["name"] = "facet_{:06d}".format(len(facets))
                 facet["pos"] = facet_center
-                facet_normal = surface_normal(
+                facet_normal = mirror_surface_normal(
                     x=facet_center[0],
                     y=facet_center[1],
                     focal_length=mcfg["focal_length"],
-                    deformation=deformation,
+                    deformation=mirror_deformation,
                     delta=0.5 * mcfg["facet_inner_hex_radius"],
                 )
                 axis, angle = make_rot_axis_and_angle(normal=facet_normal)

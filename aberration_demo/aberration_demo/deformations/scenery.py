@@ -3,7 +3,7 @@ from . import parabola_segmented
 
 
 def make_plenoscope_scenery_aligned_deformed(
-    mirror_config, deformation_polynom, sensor_config, num_paxel_on_diagonal,
+    mirror_config, mirror_deformation, sensor_config, num_paxel_on_diagonal,
 ):
     FACET_COLOR = "facet_color"
 
@@ -33,7 +33,7 @@ def make_plenoscope_scenery_aligned_deformed(
         "rot": [0, 0, 0],
         "children": parabola_segmented.make_facets(
             mirror_config=mirror_config,
-            deformation_polynom=deformation_polynom,
+            mirror_deformation=mirror_deformation,
             reflection_vs_wavelength="mirror_reflectivity_vs_wavelength",
             color=FACET_COLOR,
         ),

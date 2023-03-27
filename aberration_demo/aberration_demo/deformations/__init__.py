@@ -36,12 +36,8 @@ CONFIG["executables"] = copy.deepcopy(merlict.EXECUTABLES)
 CONFIG["mirror"] = copy.deepcopy(parabola_segmented.MIRROR)
 CONFIG["mirror"]["keys"] = ["parabola_segmented"]
 CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
-CONFIG["deformation"] = {
-    "perlin_noise": {
-        "octaves": 1.5,
-        "seed": 43,
-        "num_bins_on_edge": 256,
-    },
+CONFIG["mirror_deformation"] = {
+    "perlin_noise": {"octaves": 1.5, "seed": 43, "num_bins_on_edge": 256,},
     "amplitude_m": 2.5e-2,
     "offset_m": 0.0,
 }
@@ -125,7 +121,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
         with open(os.path.join(scenery_dir, "scenery.json"), "wt") as f:
             s = scenery.make_plenoscope_scenery_aligned_deformed(
                 mirror_config=config["mirror"],
-                deformation_polynom=config["deformation_polynom"],
+                mirror_deformation=config["mirror_deformation"],
                 sensor_config=config["sensor"],
                 num_paxel_on_diagonal=npax,
             )

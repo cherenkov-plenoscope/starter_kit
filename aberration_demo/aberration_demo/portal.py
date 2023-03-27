@@ -10,6 +10,7 @@ MIRROR["inner_radius"] = (
 )
 MIRROR["facet_inner_hex_radius"] = 0.75
 MIRROR["gap_between_facets"] = 0.025
+MIRROR["min_inner_aperture_radius"] = 3.05
 
 SENSOR = {}
 SENSOR["fov_radius_deg"] = 3.25

@@ -35,7 +35,7 @@ def init_from_z_map(z_map, mirror_diameter_m):
     return cc
 
 
-def init_perlin_noise(
+def init_from_perlin_noise(
     mirror_diameter_m,
     amplitude_m,
     offset_m,
@@ -44,8 +44,7 @@ def init_perlin_noise(
     perlin_noise_num_bins_on_edge,
 ):
     png = perlin_noise.PerlinNoise(
-        octaves=perlin_noise_octaves,
-        seed=perlin_noise_seed,
+        octaves=perlin_noise_octaves, seed=perlin_noise_seed,
     )
 
     N = perlin_noise_num_bins_on_edge
@@ -58,18 +57,12 @@ def init_perlin_noise(
     z_map *= amplitude_m
     z_map += offset_m
 
-    return init_from_z_map(
-        z_map=z_map,
-        mirror_diameter_m=mirror_diameter_m,
-    )
+    return init_from_z_map(z_map=z_map, mirror_diameter_m=mirror_diameter_m,)
 
 
-def init_zero(mirror_diameter_m,):
-    z_map = np.zeros(shape=(80, 80))
-    return init_from_z_map(
-        z_map=z_map,
-        mirror_diameter_m=mirror_diameter_m,
-    )
+def init_zero(mirror_diameter_m, num_bins_on_edge=8):
+    z_map = np.zeros(shape=(num_bins_on_edge, num_bins_on_edge))
+    return init_from_z_map(z_map=z_map, mirror_diameter_m=mirror_diameter_m,)
 
 
 def evaluate(deformation_map, x_m, y_m):
