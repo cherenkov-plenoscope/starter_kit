@@ -26,17 +26,13 @@ os.makedirs(out_dir, exist_ok=True)
 
 config = abe.deformations.read_config(work_dir=work_dir)
 
-demfap = abe.deformations.deformation_map.read(
-    path=abe.deformations.deformation_map.EXAMPLE_DEFORMATION_MAP_PATH
-)
-
 demfap = abe.deformations.deformation_map.init_perlin_noise(
     mirror_diameter_m=83,
-    octaves=1.5,
-    intensity_per_m=10,
-    z_0_offset=0.5,
-    seed=43,
-    num_bins_on_edge=256,
+    amplitude_m=2.5e-2,
+    offset_m=0.0,
+    perlin_noise_octaves=1.5,
+    perlin_noise_seed=43,
+    perlin_noise_num_bins_on_edge=256,
 )
 
 

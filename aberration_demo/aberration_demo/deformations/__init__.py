@@ -36,7 +36,15 @@ CONFIG["executables"] = copy.deepcopy(merlict.EXECUTABLES)
 CONFIG["mirror"] = copy.deepcopy(parabola_segmented.MIRROR)
 CONFIG["mirror"]["keys"] = ["parabola_segmented"]
 CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
-CONFIG["deformation_path"] = deformation_map.EXAMPLE_DEFORMATION_MAP_PATH
+CONFIG["deformation"] = {
+    "perlin_noise": {
+        "octaves": 1.5,
+        "seed": 43,
+        "num_bins_on_edge": 256,
+    },
+    "amplitude_m": 2.5e-2,
+    "offset_m": 0.0,
+}
 
 CONFIG["sources"] = {}
 CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)

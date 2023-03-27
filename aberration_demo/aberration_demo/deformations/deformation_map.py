@@ -5,35 +5,20 @@ import copy
 import binning_utils
 import scipy
 from scipy.interpolate import interp2d as scipy_interpolate_interp2d
-import skimage
-from skimage import io as skimage_io
-import pkg_resources
 import perlin_noise
 
 
-EXAMPLE_DEFORMATION_MAP_PATH = pkg_resources.resource_filename(
-    "aberration_demo", "deformations/resources/example_deformation_map"
-)
-
-
-def read(path):
-    z_map = skimage_io.imread(os.path.join(path, "z.png"))
-    original_dtype = z_map.dtype
-    z_map = z_map.astype(np.float32)
-    z_map /= np.iinfo(original_dtype).max
-
-    if len(z_map.shape) == 3:
-        z_map = (1 / 3) * z_map[:, :, 0] + z_map[:, :, 1] + z_map[:, :, 2]
-
-    with open(os.path.join(path, "scale.json"), "rt") as f:
-        scale = json_numpy.loads(f.read())
-
-    return init(z_map=z_map, **scale)
-
-
-def init(
-    z_map, mirror_diameter_m, intensity_per_m, z_0_offset,
-):
+def init_from_z_map(z_map, mirror_diameter_m):
+    """
+    Parameters
+    ----------
+    z_map : np.array 2D / m
+        Deformation amplitudes along the z-axis of the mirror in units of
+        meters.
+    mirror_diameter_m : float / m
+        Diameter of the map/mirror. Better make this a little bit bigger than
+        the actual diameter of the mirror.
+    """
     assert z_map.shape[0] == z_map.shape[1]
     cc = {}
     cc["pixel_bin"] = binning_utils.Binning(
@@ -44,7 +29,7 @@ def init(
     cc["z"] = scipy_interpolate_interp2d(
         x=cc["pixel_bin"]["centers"],
         y=cc["pixel_bin"]["centers"],
-        z=(z_map - z_0_offset) / intensity_per_m,
+        z=z_map,
         kind="cubic",
     )
     return cc
@@ -52,42 +37,38 @@ def init(
 
 def init_perlin_noise(
     mirror_diameter_m,
-    octaves,
-    intensity_per_m,
-    z_0_offset,
-    seed,
-    num_bins_on_edge,
+    amplitude_m,
+    offset_m,
+    perlin_noise_octaves,
+    perlin_noise_seed,
+    perlin_noise_num_bins_on_edge,
 ):
-    png = perlin_noise.PerlinNoise(octaves=octaves, seed=seed)
-
-    z_map = np.zeros(
-        shape=(num_bins_on_edge, num_bins_on_edge), dtype=np.float32,
+    png = perlin_noise.PerlinNoise(
+        octaves=perlin_noise_octaves,
+        seed=perlin_noise_seed,
     )
 
-    for x in range(num_bins_on_edge):
-        for y in range(num_bins_on_edge):
-            z_map[x, y] = png.noise(
-                [x / num_bins_on_edge, y / num_bins_on_edge]
-            )
+    N = perlin_noise_num_bins_on_edge
+    z_map = np.zeros(shape=(N, N), dtype=np.float32,)
 
-    z_map = z_map - np.min(z_map)
-    z_map = z_map / np.max(z_map)
+    for x in range(N):
+        for y in range(N):
+            z_map[x, y] = png.noise([x / N, y / N])
 
-    return init(
+    z_map *= amplitude_m
+    z_map += offset_m
+
+    return init_from_z_map(
         z_map=z_map,
         mirror_diameter_m=mirror_diameter_m,
-        intensity_per_m=intensity_per_m,
-        z_0_offset=z_0_offset,
     )
 
 
 def init_zero(mirror_diameter_m,):
     z_map = np.zeros(shape=(80, 80))
-    return init(
+    return init_from_z_map(
         z_map=z_map,
         mirror_diameter_m=mirror_diameter_m,
-        intensity_per_m=1.0,
-        z_0_offset=0.0,
     )
 
 
