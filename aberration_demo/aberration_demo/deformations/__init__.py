@@ -16,6 +16,7 @@ import plenoirf
 import plenopy
 import network_file_system as nfs
 
+from . import deformation_map
 from . import parabola_segmented
 from . import scenery
 from .. import merlict
@@ -35,9 +36,7 @@ CONFIG["executables"] = copy.deepcopy(merlict.EXECUTABLES)
 CONFIG["mirror"] = copy.deepcopy(parabola_segmented.MIRROR)
 CONFIG["mirror"]["keys"] = ["parabola_segmented"]
 CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
-CONFIG["deformation_polynom"] = copy.deepcopy(
-    parabola_segmented.DEFORMATION_POLYNOM
-)
+CONFIG["deformation_path"] = deformation_map.EXAMPLE_DEFORMATION_MAP_PATH
 
 CONFIG["sources"] = {}
 CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)

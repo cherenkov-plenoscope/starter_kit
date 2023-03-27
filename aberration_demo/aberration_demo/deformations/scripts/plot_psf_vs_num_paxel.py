@@ -42,6 +42,7 @@ CMAPS = {
 
 mkey = config["mirror"]["keys"][0]
 
+
 def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
     extent = pixel_angel * num_pixel
     num_ticks = int(np.ceil(extent / tick_angle))
@@ -111,9 +112,7 @@ for cmapkey in CMAPS:
     ax_margin_width_rel = ax_width_rel - ax_panel_width_rel
     ax_margin_height_rel = ax_height_rel - ax_panel_height_rel
 
-    fig_psf = sebplt.figure(
-        style={"rows": 1280, "cols": 1280, "fontsize": 1}
-    )
+    fig_psf = sebplt.figure(style={"rows": 1280, "cols": 1280, "fontsize": 1})
     ax_psf_labels = sebplt.add_axes(
         fig=fig_psf,
         span=[0, 0, 1, 1],
@@ -142,24 +141,16 @@ for cmapkey in CMAPS:
             bin_edges_cy_deg = np.rad2deg(bin_edges_cy)
 
             ticks_cx_deg = make_grid_ticks(
-                center=tcoll["image"]["binning"]["image"]["center"][
-                    "cx_deg"
-                ],
-                num_pixel=tcoll["image"]["binning"]["image"][
-                    "num_pixel_cx"
-                ],
+                center=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
+                num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cx"],
                 pixel_angel=tcoll["image"]["binning"]["image"][
                     "pixel_angle_deg"
                 ],
                 tick_angle=GRID_ANGLE_DEG,
             )
             ticks_cy_deg = make_grid_ticks(
-                center=tcoll["image"]["binning"]["image"]["center"][
-                    "cy_deg"
-                ],
-                num_pixel=tcoll["image"]["binning"]["image"][
-                    "num_pixel_cy"
-                ],
+                center=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
+                num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cy"],
                 pixel_angel=tcoll["image"]["binning"]["image"][
                     "pixel_angle_deg"
                 ],
@@ -169,9 +160,7 @@ for cmapkey in CMAPS:
             ax_pax_off = sebplt.add_axes(
                 fig=fig_psf,
                 span=[
-                    ax_hori_start
-                    + ax_margin_width_rel
-                    + ax_width_rel * iiofa,
+                    ax_hori_start + ax_margin_width_rel + ax_width_rel * iiofa,
                     ax_vert_start
                     + ax_margin_height_rel
                     + ax_height_rel * (num_sensors - isens - 1),
@@ -181,8 +170,7 @@ for cmapkey in CMAPS:
             )
 
             norm_image = (
-                tcoll["image"]["raw"]
-                / tcoll["statistics"]["photons"]["valid"]
+                tcoll["image"]["raw"] / tcoll["statistics"]["photons"]["valid"]
             )
 
             cmap_psf = ax_pax_off.pcolormesh(
@@ -221,16 +209,10 @@ for cmapkey in CMAPS:
             if isens == num_sensors - 1:
                 ax_pax_off.set_xticks(
                     [
-                        tcoll["image"]["binning"]["image"]["center"][
-                            "cx_deg"
-                        ]
+                        tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
                         - 3 * GRID_ANGLE_DEG,
-                        tcoll["image"]["binning"]["image"]["center"][
-                            "cx_deg"
-                        ],
-                        tcoll["image"]["binning"]["image"]["center"][
-                            "cx_deg"
-                        ]
+                        tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
+                        tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
                         + 3 * GRID_ANGLE_DEG,
                     ]
                 )
@@ -240,16 +222,10 @@ for cmapkey in CMAPS:
             if iiofa == 0:
                 ax_pax_off.set_yticks(
                     [
-                        tcoll["image"]["binning"]["image"]["center"][
-                            "cy_deg"
-                        ]
+                        tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
                         - 3 * GRID_ANGLE_DEG,
-                        tcoll["image"]["binning"]["image"]["center"][
-                            "cy_deg"
-                        ],
-                        tcoll["image"]["binning"]["image"]["center"][
-                            "cy_deg"
-                        ]
+                        tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
+                        tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
                         + 3 * GRID_ANGLE_DEG,
                     ]
                 )
@@ -353,9 +329,7 @@ for isens, pkey in enumerate(coll):
             tcoll["time"]["fwhm"]["stop"] + tcoll["time"]["fwhm"]["start"]
         )
         time_weights_norm_perc = (
-            100
-            * tcoll["time"]["weights"]
-            / np.sum(tcoll["time"]["weights"])
+            100 * tcoll["time"]["weights"] / np.sum(tcoll["time"]["weights"])
         )
         sebplt.ax_add_histogram(
             ax=ax_pax_off,
@@ -366,9 +340,7 @@ for isens, pkey in enumerate(coll):
             draw_bin_walls=True,
         )
         ax_pax_off.set_xlim([time_start_ns, time_stop_ns])
-        ax_pax_off.set_ylim(
-            [time_weight_start_perc, time_weight_stop_perc]
-        )
+        ax_pax_off.set_ylim([time_weight_start_perc, time_weight_stop_perc])
         # ax_pax_off.semilogy()
 
         sebplt.ax_add_grid_with_explicit_ticks(

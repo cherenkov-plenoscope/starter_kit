@@ -1,39 +1,32 @@
 import numpy as np
 import copy
+import binning_utils
+import scipy
+from scipy.interpolate import interp2d as scipy_interpolate_interp2d
+import skimage
+from skimage import io as skimage_io
+from . import deformation_map
 from .. import portal
 
 
 MIRROR = copy.deepcopy(portal.MIRROR)
-DEFORMATION_POLYNOM = [
-    [0, 0, 5e-5],
-    [0, 0, 0],
-    [-7e-5, 0, 0],
-]
+
 
 def z_parabola(distance_to_z_axis, focal_length):
     return 1.0 / (4.0 * focal_length) * distance_to_z_axis ** 2
 
 
-def z_deformation(x, y, deformation_polynom):
-    return np.polynomial.polynomial.polyval2d(
-        x=x, y=y, c=deformation_polynom,
-    )
-
-LOW_PASS_FILTER_KERNEL = [
-    [(,), (,), (,),],
-    [(,), (,), (,),],
-    [(,), (,), (,),],
-]
-
-def surface_z(x, y, focal_length, deformation_polynom, low_pass_filter_kernel):
+def surface_z(x, y, focal_length, deformation):
     _z_parabola = z_parabola(
         distance_to_z_axis=np.hypot(x, y), focal_length=focal_length,
     )
-    _z_deformation = z_deformation(x, y, deformation_polynom)
+    _z_deformation = deformation_map.evaluate(
+        deformation_map=deformation, x_m=x, y_m=y,
+    )
     return _z_parabola + _z_deformation
 
 
-def surface_normal(x, y, focal_length, deformation_polynom, delta=1e-6):
+def surface_normal(x, y, focal_length, deformation, delta):
     """
     surface-normal is: ( -dz/dx , -dz/dy , 1 )
     """
@@ -41,14 +34,18 @@ def surface_normal(x, y, focal_length, deformation_polynom, delta=1e-6):
     xm = x - delta
     yp = y + delta
     ym = y - delta
-    z_xp = surface_z(xp, y, focal_length, deformation_polynom)
-    z_xm = surface_z(xm, y, focal_length, deformation_polynom)
-    z_yp = surface_z(x, yp, focal_length, deformation_polynom)
-    z_ym = surface_z(x, ym, focal_length, deformation_polynom)
+    z_xp = surface_z(xp, y, focal_length, deformation)
+    z_xm = surface_z(xm, y, focal_length, deformation)
+    z_yp = surface_z(x, yp, focal_length, deformation)
+    z_ym = surface_z(x, ym, focal_length, deformation)
     dzdx = (z_xp - z_xm) / (2 * delta)
     dzdy = (z_yp - z_ym) / (2 * delta)
     normal = [-dzdx, -dzdy, 1.0]
     return normal / np.linalg.norm(normal)
+
+
+def angle_between(a, b):
+    return np.arccos(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
 
 def make_rot_axis_and_angle(normal):
@@ -60,6 +57,9 @@ def make_rot_axis_and_angle(normal):
 
 UNIT_X = np.array([1, 0, 0])
 UNIT_Y = np.array([0, 1, 0])
+
+HEX_B = UNIT_Y
+HEX_A = UNIT_Y * 0.5 + UNIT_X * (np.sqrt(3.0) / 2.0)
 
 UNIT_U = UNIT_X
 UNIT_V = UNIT_Y * np.sin(2.0 / 3.0 * np.pi) + UNIT_X * np.cos(
@@ -83,11 +83,17 @@ def is_inside_hexagon(position, hexagon_inner_radius):
 
 def make_facets(
     mirror_config,
-    deformation_polynom,
+    deformation,
     reflection_vs_wavelength="mirror_reflectivity_vs_wavelength",
     color="facet_color",
 ):
     mcfg = mirror_config
+
+    if not "min_inner_aperture_radius" in mcfg:
+        min_inner_aperture_radius = 3.05
+    else:
+        min_inner_aperture_radius = mcfg["min_inner_aperture_radius"]
+
     facet_spacing = (
         mcfg["facet_inner_hex_radius"] * 2.0 + mcfg["gap_between_facets"]
     )
@@ -95,31 +101,37 @@ def make_facets(
         mcfg["outer_radius"] - facet_spacing / 2.0
     )
 
-    HEX_B = UNIT_Y * facet_spacing
-    HEX_A = UNIT_Y * 0.5 + UNIT_X * (np.sqrt(3.0) / 2.0) * facet_spacing
-
     hexagon_inner_radius = (
-        (np.sqrt(3.0) / 2.0)
-        * outer_radius_to_put_facet_center
+        np.sqrt(3.0) / 2.0
+    ) * outer_radius_to_put_facet_center
+
+    MIN_INNER_RADIUS_TO_PUT_FACET_CENTER = (
+        min_inner_aperture_radius + facet_spacing / 2.0
     )
+
     N = 2.0 * np.ceil(mcfg["outer_radius"] / facet_spacing)
 
     facets = []
     for a in np.arange(-N, N + 1):
         for b in np.arange(-N, N + 1):
-            facet_center = HEX_A * a + HEX_B * b
+            facet_center = (HEX_A * a + HEX_B * b) * facet_spacing
 
             inside_outer_hexagon = is_inside_hexagon(
                 position=facet_center,
                 hexagon_inner_radius=hexagon_inner_radius,
             )
 
-            if inside_outer_hexagon:
+            outside_inner_disc = (
+                np.hypot(facet_center[0], facet_center[1],)
+                > MIN_INNER_RADIUS_TO_PUT_FACET_CENTER
+            )
+
+            if inside_outer_hexagon and outside_inner_disc:
                 facet_center[2] = surface_z(
                     x=facet_center[0],
                     y=facet_center[1],
                     focal_length=mcfg["focal_length"],
-                    deformation_polynom=deformation_polynom,
+                    deformation=deformation,
                 )
 
                 facet = {}
@@ -130,8 +142,8 @@ def make_facets(
                     x=facet_center[0],
                     y=facet_center[1],
                     focal_length=mcfg["focal_length"],
-                    deformation_polynom=deformation_polynom,
-                    delta=1e-6 * mcfg["focal_length"],
+                    deformation=deformation,
+                    delta=0.5 * mcfg["facet_inner_hex_radius"],
                 )
                 axis, angle = make_rot_axis_and_angle(normal=facet_normal)
                 facet["rot_axis"] = axis
