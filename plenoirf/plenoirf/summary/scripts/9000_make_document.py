@@ -502,12 +502,17 @@ for sk in SITES:
                     ppath(
                         pa["summary_dir"],
                         "0108_trigger_rates_for_cosmic_particles_vs_max_scatter_angle_plot",
-                        "{:s}_{:s}_diff-trigger-rate_vs_scatter_vs_energy".format(sk, cosmic_key),
+                        "{:s}_{:s}_diff-trigger-rate_vs_scatter_vs_energy".format(
+                            sk, cosmic_key
+                        ),
                     ),
                     width=noesc(r"1.0\linewidth"),
                 )
-                fig.add_caption("{:s}. Diff. trigger-rate vs. max. scatter-angle vs. energy.".format(cosmic_key))
-
+                fig.add_caption(
+                    "{:s}. Diff. trigger-rate vs. max. scatter-angle vs. energy.".format(
+                        cosmic_key
+                    )
+                )
 
     with doc.create(ltx.Section("Optical performance", numbering=False)):
         doc.append(
@@ -601,9 +606,7 @@ for sk in SITES:
                 width=noesc(r"1.0\linewidth"),
             )
 
-    with doc.create(
-        ltx.Section("Compute-time", numbering=False)
-    ):
+    with doc.create(ltx.Section("Compute-time", numbering=False)):
         doc.append(
             "Relative compute-time for protons, which are the bulk. "
             "Small contributions are either quick to compute or do not occur often."

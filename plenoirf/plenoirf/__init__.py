@@ -36,6 +36,7 @@ import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
 import network_file_system as nfs
 import phantom_source
+import aberration_demo
 
 
 MIN_PROTON_ENERGY_GEV = 5.0
@@ -477,7 +478,9 @@ def _populate_table_of_thrown_air_showers(
             )
 
 
-def _estimate_resolution_of_depth(run_dir, executables, map_and_reduce_pool, logger):
+def _estimate_resolution_of_depth(
+    run_dir, executables, map_and_reduce_pool, logger
+):
     benchmarks_dir = opj(run_dir, "benchmarks")
     os.makedirs(benchmarks_dir, exist_ok=True)
 
