@@ -8,6 +8,13 @@ from scipy.interpolate import interp2d as scipy_interpolate_interp2d
 import perlin_noise
 
 
+EXAMPLE_MIRROR_DEFORMATION = {
+    "perlin_noise": {"octaves": 1.5, "seed": 43, "num_bins_on_edge": 256,},
+    "amplitude_m": 2.5e-2,
+    "offset_m": 0.0,
+}
+
+
 def init_from_z_map(z_map, mirror_diameter_m):
     """
     Parameters

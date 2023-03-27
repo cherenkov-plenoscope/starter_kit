@@ -33,3 +33,16 @@ PROPAGATION_CONFIG = {
         "single_photon_arrival_time_resolution": 0.416e-9,
     },
 }
+
+
+def find_first_child_by_type(children, child_type):
+    for child in children:
+        if child["type"] == child_type:
+            return child
+        else:
+            res = find_first_child_by_type(
+                children=child["children"],
+                child_type=child_type
+            )
+            if res:
+                return res

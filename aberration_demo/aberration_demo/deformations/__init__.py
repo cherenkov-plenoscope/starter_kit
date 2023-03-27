@@ -24,23 +24,20 @@ from .. import portal
 from .. import analysis
 from .. import calibration_source
 from .. import utils
-from ..utils import read_config
+from ..utils import read_json
 from ..utils import PAXEL_FMT
 from ..utils import ANGLE_FMT
 
 
 CONFIG = {}
 CONFIG["seed"] = 1337
-CONFIG["executables"] = copy.deepcopy(merlict.EXECUTABLES)
 
 CONFIG["mirror"] = copy.deepcopy(parabola_segmented.MIRROR)
 CONFIG["mirror"]["keys"] = ["parabola_segmented"]
 CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
-CONFIG["mirror_deformation"] = {
-    "perlin_noise": {"octaves": 1.5, "seed": 43, "num_bins_on_edge": 256,},
-    "amplitude_m": 2.5e-2,
-    "offset_m": 0.0,
-}
+CONFIG["mirror_deformation"] = copy.deepcopy(
+    deformation_map.EXAMPLE_MIRROR_DEFORMATION
+)
 
 CONFIG["sources"] = {}
 CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)
@@ -53,8 +50,57 @@ CONFIG["light_field_geometry"]["num_photons_per_block"] = 100 * 1000
 CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
 
-def init(work_dir, config=CONFIG):
+
+def make_config_from_scenery(scenery_path, seed=1337, num_photons=100000):
+    scenery = read_json(scenery_path)
+
+    mirror_config = merlict.find_first_child_by_type(
+        children=scenery["children"],
+        child_type="SegmentedReflector",
+    )
+
+    sensor_config = merlict.find_first_child_by_type(
+        children=scenery["children"],
+        child_type="LightFieldSensor",
+    )
+
+    cfg = {}
+    cfg["seed"] = seed
+
+    cfg["mirror"] = {}
+    for key in portal.MIRROR:
+        cfg["mirror"][key] = mirror_config[key]
+    cfg["mirror"]["keys"] = ["parabola_segmented"]
+
+
+    cfg["sensor"] = {}
+    for key in portal.SENSOR:
+        cfg["sensor"][key] = sensor_config[key]
+
+    cfg["mirror_deformation"] = copy.deepcopy(
+        deformation_map.EXAMPLE_MIRROR_DEFORMATION
+    )
+
+    cfg["sources"] = {}
+    cfg["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)
+    cfg["sources"]["num_photons"] = num_photons
+
+    cfg["light_field_geometry"] = {}
+    cfg["light_field_geometry"]["num_blocks"] = 1
+    cfg["light_field_geometry"]["num_photons_per_block"] = num_photons
+
+    cfg["binning"] = copy.deepcopy(analysis.BINNING)
+    return cfg
+
+
+def init(work_dir, config=CONFIG, executables=merlict.EXECUTABLES):
     os.makedirs(work_dir, exist_ok=True)
+
+    nfs.write(
+        json_numpy.dumps(executables, indent=4),
+        os.path.join(work_dir, "executables.json"),
+        "wt",
+    )
     nfs.write(
         json_numpy.dumps(config, indent=4),
         os.path.join(work_dir, "config.json"),
@@ -107,7 +153,7 @@ def run(
 
 
 def make_sceneries_for_light_field_geometires(work_dir):
-    config = read_config(work_dir=work_dir)
+    config = read_json(os.path.join(work_dir, "config.json"))
 
     geometries_dir = os.path.join(work_dir, "geometries")
     os.makedirs(geometries_dir, exist_ok=True)
@@ -150,7 +196,8 @@ def make_light_field_geometires(
 
 
 def _light_field_geometries_make_jobs_and_rjobs(work_dir):
-    config = read_config(work_dir=work_dir)
+    config = read_json(os.path.join(work_dir, "config.json"))
+    executables = read_json(os.path.join(work_dir, "executables.json"))
 
     jobs = []
     rjobs = []
@@ -178,7 +225,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
             ]
 
             _jobs = plenoirf.production.light_field_geometry.make_jobs(
-                merlict_map_path=config["executables"][
+                merlict_map_path=executables[
                     "merlict_plenoscope_calibration_map_path"
                 ],
                 scenery_path=os.path.join(pdir, "input", "scenery"),
@@ -201,7 +248,9 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
 
 
 def _light_field_geometries_run_rjob(rjob):
-    config = read_config(work_dir=rjob["work_dir"])
+    config = read_json(os.path.join(rjob["work_dir"], "config.json"))
+    executables = read_json(os.path.join(rjob["work_dir"], "executables.json"))
+
 
     pdir = os.path.join(rjob["work_dir"], "geometries", rjob["pkey"],)
 
@@ -209,7 +258,7 @@ def _light_field_geometries_run_rjob(rjob):
     out_dir = os.path.join(pdir, "light_field_geometry")
 
     rc = plenoirf.production.light_field_geometry.reduce(
-        merlict_reduce_path=config["executables"][
+        merlict_reduce_path=executables[
             "merlict_plenoscope_calibration_reduce_path"
         ],
         map_dir=map_dir,
@@ -234,7 +283,7 @@ def make_source(work_dir):
     work_dir : str
         Path to the work_dir
     """
-    config = read_config(work_dir=work_dir)
+    config = read_json(os.path.join(work_dir, "config.json"))
     sources_dir = os.path.join(work_dir, "sources")
     os.makedirs(sources_dir, exist_ok=True)
 
@@ -278,7 +327,8 @@ def make_responses(
 def _responses_make_jobs(work_dir):
     jobs = []
 
-    config = read_config(work_dir=work_dir)
+    config = read_json(os.path.join(work_dir, "config.json"))
+    executables = read_json(os.path.join(work_dir, "executables.json"))
 
     runningseed = int(config["seed"])
 
@@ -292,7 +342,7 @@ def _responses_make_jobs(work_dir):
             job["work_dir"] = work_dir
             job["pkey"] = pkey
             job["akey"] = akey
-            job["merlict_plenoscope_propagator_path"] = config["executables"][
+            job["merlict_plenoscope_propagator_path"] = executables[
                 "merlict_plenoscope_propagator_path"
             ]
             job["seed"] = runningseed
@@ -346,7 +396,7 @@ def _analysis_make_jobs(
     assert 0.0 < containment_percentile <= 100.0
     assert object_distance_m > 0.0
 
-    config = read_config(work_dir=work_dir)
+    config = read_json(os.path.join(work_dir, "config.json"))
 
     jobs = []
     runningseed = int(config["seed"])
@@ -379,7 +429,8 @@ def _analysis_run_job(job):
     if os.path.exists(summary_path):
         return 1
 
-    config = read_config(work_dir=job["work_dir"])
+    config = read_json(os.path.join(job["work_dir"], "config.json"))
+
     prng = np.random.Generator(np.random.PCG64(job["seed"]))
     light_field_geometry = plenopy.LightFieldGeometry(
         path=os.path.join(
@@ -420,7 +471,7 @@ def make_analysis(
 
 
 def read_analysis(work_dir):
-    config = read_config(work_dir=work_dir)
+    config = read_json(os.path.join(work_dir, "config.json"))
 
     coll = {}
 

@@ -7,24 +7,17 @@ def make_plenoscope_scenery_aligned_deformed(
 ):
     FACET_COLOR = "facet_color"
 
-    scfg = sensor_config
-    mcfg = mirror_config
-
     sensor_frame = {
         "type": "LightFieldSensor",
         "name": "light_field_sensor",
-        "pos": [0, 0, mcfg["focal_length"]],
+        "pos": [0, 0, sensor_config["expected_imaging_system_focal_length"]],
         "rot": [0, 0, 0],
-        "expected_imaging_system_focal_length": mcfg["focal_length"],
-        "expected_imaging_system_aperture_radius": mcfg["inner_radius"],
-        "max_FoV_diameter_deg": 2.0 * scfg["fov_radius_deg"],
-        "hex_pixel_FoV_flat2flat_deg": scfg["hex_pixel_fov_flat2flat_deg"],
-        "num_paxel_on_pixel_diagonal": num_paxel_on_diagonal,
-        "housing_overhead": scfg["housing_overhead"],
         "lens_refraction_vs_wavelength": "lens_refraction_vs_wavelength",
         "bin_reflection_vs_wavelength": "mirror_reflectivity_vs_wavelength",
         "children": [],
     }
+    for key in portal.SENSOR:
+        sensor_frame[key] = sensor_config[key]
 
     mirror_frame = {
         "type": "Frame",

@@ -15,9 +15,13 @@ def read_config(work_dir):
     work_dir : str
         Path to the work_dir
     """
-    with open(os.path.join(work_dir, "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
-    return config
+    return read_json(path=os.path.join(work_dir, "config.json"))
+
+
+def read_json(path):
+    with open(path, "rt") as f:
+        cont = json_numpy.loads(f.read())
+    return cont
 
 
 def guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(

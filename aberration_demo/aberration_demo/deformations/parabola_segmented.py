@@ -121,7 +121,7 @@ def make_facets(
         mcfg["facet_inner_hex_radius"] * 2.0 + mcfg["gap_between_facets"]
     )
     outer_radius_to_put_facet_center = (
-        mcfg["outer_radius"] - facet_spacing / 2.0
+        mcfg["max_outer_aperture_radius"] - facet_spacing / 2.0
     )
 
     hexagon_inner_radius = (
@@ -132,7 +132,7 @@ def make_facets(
         mcfg["min_inner_aperture_radius"] + facet_spacing / 2.0
     )
 
-    N = 2.0 * np.ceil(mcfg["outer_radius"] / facet_spacing)
+    N = 2.0 * np.ceil(mcfg["max_outer_aperture_radius"] / facet_spacing)
 
     facets = []
     for a in np.arange(-N, N + 1):

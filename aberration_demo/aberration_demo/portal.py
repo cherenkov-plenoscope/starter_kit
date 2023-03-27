@@ -1,22 +1,24 @@
 import numpy as np
 
-HEXAGON_INNER_OVER_OUTER_RADIUS = np.sqrt(3) * 0.5
 
-MIRROR = {}
-MIRROR["focal_length"] = 106.5
-MIRROR["outer_radius"] = 41.0
-MIRROR["inner_radius"] = (
-    HEXAGON_INNER_OVER_OUTER_RADIUS * MIRROR["outer_radius"]
-)
-MIRROR["facet_inner_hex_radius"] = 0.75
-MIRROR["gap_between_facets"] = 0.025
-MIRROR["min_inner_aperture_radius"] = 3.05
+MIRROR = {
+    "focal_length": 106.5,
+    "max_outer_aperture_radius": 41.0,
+    "min_inner_aperture_radius": 3.05,
+    "outer_aperture_shape_hex": True,
+    "DaviesCotton_over_parabolic_mixing_factor": 0.0,
+    "facet_inner_hex_radius": 0.75,
+    "gap_between_facets": 0.025,
+}
 
-SENSOR = {}
-SENSOR["fov_radius_deg"] = 3.25
-SENSOR["housing_overhead"] = 1.1
-SENSOR["hex_pixel_fov_flat2flat_deg"] = 0.06667
-SENSOR["num_paxel_on_diagonal"] = [1, 3, 9]
+SENSOR = {
+    "expected_imaging_system_focal_length": 106.5,
+    "expected_imaging_system_aperture_radius": 35.5,
+    "max_FoV_diameter_deg": 6.5,
+    "hex_pixel_FoV_flat2flat_deg": 0.06667,
+    "num_paxel_on_pixel_diagonal": 9,
+    "housing_overhead": 1.1,
+}
 
 LENS_REFRACTION_VS_WAVELENGTH = {
     "name": "lens_refraction_vs_wavelength",
