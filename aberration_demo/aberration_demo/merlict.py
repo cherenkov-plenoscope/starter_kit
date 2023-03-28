@@ -36,13 +36,15 @@ PROPAGATION_CONFIG = {
 
 
 def find_first_child_by_type(children, child_type):
+    """
+    Search for certain child_type in the children of a merlict scenery.
+    """
     for child in children:
         if child["type"] == child_type:
             return child
         else:
             res = find_first_child_by_type(
-                children=child["children"],
-                child_type=child_type
+                children=child["children"], child_type=child_type
             )
             if res:
                 return res
