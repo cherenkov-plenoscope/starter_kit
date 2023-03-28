@@ -50,18 +50,15 @@ CONFIG["light_field_geometry"]["num_photons_per_block"] = 100 * 1000
 CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
 
-
 def make_config_from_scenery(scenery_path, seed=1337, num_photons=100000):
     scenery = read_json(scenery_path)
 
     mirror_config = merlict.find_first_child_by_type(
-        children=scenery["children"],
-        child_type="SegmentedReflector",
+        children=scenery["children"], child_type="SegmentedReflector",
     )
 
     sensor_config = merlict.find_first_child_by_type(
-        children=scenery["children"],
-        child_type="LightFieldSensor",
+        children=scenery["children"], child_type="LightFieldSensor",
     )
 
     cfg = {}
@@ -71,7 +68,6 @@ def make_config_from_scenery(scenery_path, seed=1337, num_photons=100000):
     for key in portal.MIRROR:
         cfg["mirror"][key] = mirror_config[key]
     cfg["mirror"]["keys"] = ["parabola_segmented"]
-
 
     cfg["sensor"] = {}
     for key in portal.SENSOR:
@@ -130,6 +126,9 @@ def run(
     """
     logger.info("Start")
 
+    logger.info("Plot deformation")
+    plot_mirror_deformation(work_dir=work_dir)
+
     logger.info("Make sceneries")
     make_sceneries_for_light_field_geometires(work_dir=work_dir)
 
@@ -150,6 +149,22 @@ def run(
     make_analysis(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
     logger.info("Stop")
+
+
+def plot_mirror_deformation(work_dir):
+    subprocess.call(
+        [
+            "python",
+            os.path.join(
+                "aberration_demo",
+                "aberration_demo",
+                "deformations",
+                "scripts",
+                "plot_mirror_deformation.py",
+            ),
+            work_dir,
+        ]
+    )
 
 
 def make_sceneries_for_light_field_geometires(work_dir):
@@ -250,7 +265,6 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
 def _light_field_geometries_run_rjob(rjob):
     config = read_json(os.path.join(rjob["work_dir"], "config.json"))
     executables = read_json(os.path.join(rjob["work_dir"], "executables.json"))
-
 
     pdir = os.path.join(rjob["work_dir"], "geometries", rjob["pkey"],)
 
