@@ -15,6 +15,21 @@ EXAMPLE_MIRROR_DEFORMATION = {
 }
 
 
+def init_from_mirror_and_deformation_configs(
+    mirror_config, mirror_deformation_config, amplitude_scaleing=1.0,
+):
+    mc = mirror_config
+    md = mirror_deformation_config
+    return init_from_perlin_noise(
+        mirror_diameter_m=2.0 * mc["max_outer_aperture_radius"],
+        amplitude_m=md["amplitude_m"] * amplitude_scaleing,
+        offset_m=md["offset_m"],
+        perlin_noise_octaves=md["perlin_noise"]["octaves"],
+        perlin_noise_seed=md["perlin_noise"]["seed"],
+        perlin_noise_num_bins_on_edge=md["perlin_noise"]["num_bins_on_edge"],
+    )
+
+
 def init_from_z_map(z_map, mirror_diameter_m):
     """
     Parameters
@@ -64,11 +79,6 @@ def init_from_perlin_noise(
     z_map *= amplitude_m
     z_map += offset_m
 
-    return init_from_z_map(z_map=z_map, mirror_diameter_m=mirror_diameter_m,)
-
-
-def init_zero(mirror_diameter_m, num_bins_on_edge=8):
-    z_map = np.zeros(shape=(num_bins_on_edge, num_bins_on_edge))
     return init_from_z_map(z_map=z_map, mirror_diameter_m=mirror_diameter_m,)
 
 
