@@ -485,7 +485,6 @@ def _estimate_resolution_of_depth(
     os.makedirs(benchmarks_dir, exist_ok=True)
 
     depth_dir = opj(run_dir, "benchmarks", "resolution_of_depth")
-    depth_map_dir = opj(depth_dir, "map")
     depth_result_path = opj(depth_dir, "result.json")
 
     if not os.path.exists(depth_dir):
@@ -504,7 +503,6 @@ def _estimate_resolution_of_depth(
         )
         phantom_source.depth.init(work_dir=depth_dir, config=depth_config)
 
-    if not os.path.exists(depth_map_dir):
         logger.info("estimating benchmark 'resolution of depth'")
         jobs = phantom_source.depth.make_jobs(work_dir=depth_dir)
         map_and_reduce_pool.map(phantom_source.depth.run_job, jobs)
@@ -512,6 +510,31 @@ def _estimate_resolution_of_depth(
     if not os.path.exists(depth_result_path):
         logger.info("reducing benchmark 'resolution of depth'")
         phantom_source.depth.reduce(work_dir=depth_dir)
+
+
+
+def _compensating_deformations(
+    run_dir, executables, map_and_reduce_pool, logger
+):
+    benchmarks_dir = opj(run_dir, "benchmarks")
+    os.makedirs(benchmarks_dir, exist_ok=True)
+
+    deform_dir = opj(run_dir, "benchmarks", "compensating_deformations")
+
+    if not os.path.exists(deform_dir):
+        logger.info("init benchmark 'compensating deformations'")
+
+        deform_config = aberration_demo.deformations.make_config_from_scenery(
+            scenery_path=opj(run_dir, "light_field_geometry", "input", "scenery", "scenery.json"),
+        )
+
+        aberration_demo.deformations.init(
+            work_dir=deform_dir,
+            config=aberration_demo.deformations.CONFIG,
+            executables=executables,
+        )
+    else:
+        pass
 
 
 def run(
@@ -577,6 +600,13 @@ def run(
     )
 
     _estimate_resolution_of_depth(
+        run_dir=run_dir,
+        executables=executables,
+        map_and_reduce_pool=map_and_reduce_pool,
+        logger=logger,
+    )
+
+    _compensating_deformations(
         run_dir=run_dir,
         executables=executables,
         map_and_reduce_pool=map_and_reduce_pool,

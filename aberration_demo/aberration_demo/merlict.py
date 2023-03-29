@@ -49,6 +49,7 @@ def find_first_child_by_type(children, child_type):
             if res:
                 return res
 
+
 def make_mirror_and_sensor_dimensions_from_merlict_scenery(scenery):
 
     _mirror_dimensions = find_first_child_by_type(

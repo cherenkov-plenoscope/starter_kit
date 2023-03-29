@@ -179,6 +179,9 @@ def encirclement2d(
 
     required_fraction = percentile / 100.0
     integral = xy.shape[0]
+    if integral == 0:
+        return float("nan"), float("nan"), float("nan")
+
     assert integral > 0
     center_x = np.median(xy[:, 0])
     center_y = np.median(xy[:, 1])

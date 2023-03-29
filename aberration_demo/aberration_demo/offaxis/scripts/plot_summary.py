@@ -39,7 +39,7 @@ fig = sebplt.figure(sebplt.FIGURE_4_3)
 ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
 max_psf80s_deg = 0.0
 for mkey in config["mirror"]["keys"]:
-    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+    for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
         pkey = abe.offaxis.PAXEL_FMT.format(npax)
         psf80s_deg = np.zeros(len(config["sources"]["off_axis_angles_deg"]))
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
@@ -69,7 +69,7 @@ fig = sebplt.figure(sebplt.FIGURE_4_3)
 ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8])
 max_t80 = 0.0
 for mkey in config["mirror"]["keys"]:
-    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+    for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
         pkey = abe.offaxis.PAXEL_FMT.format(npax)
 
         t80s = np.zeros(len(config["sources"]["off_axis_angles_deg"]))

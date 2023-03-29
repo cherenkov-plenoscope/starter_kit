@@ -35,7 +35,8 @@ GRID_ANGLE_DEG = 0.2
 
 MIRROR_COLORS = {
     "parabola_segmented": "black",
-    "davies_cotton": "gray",
+    "sphere_monolith": "gray",
+    # "davies_cotton": "gray",
 }
 
 PAXEL_STYLE = {

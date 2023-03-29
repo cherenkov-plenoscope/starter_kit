@@ -29,7 +29,7 @@ coll = abe.offaxis.read_analysis(work_dir=work_dir)
 # summary plot of poin-spread-functions
 # -------------------------------------
 
-OFFAXIS_ANGLE_IDXS = [0, 4, 8]
+OFFAXIS_ANGLE_IDXS = [0, 1, 2]
 OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.2
 
@@ -54,9 +54,9 @@ def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
 
 def _ax_add_paxel_and_off_axis_labels(ax):
     for isens, pkey in enumerate(coll[mkey]):
-        num_paxel_on_diagonal = config["sensor"]["num_paxel_on_diagonal"][
-            isens
-        ]
+        num_paxel_on_diagonal = config["sensor"][
+            "num_paxel_on_pixel_diagonal"
+        ][isens]
 
         ax.text(
             0.01,
@@ -276,7 +276,9 @@ for cmapkey in CMAPS:
                                 bin_edges_cy_deg[0],
                             ]
                         ),
-                        r=config["sensor"]["hex_pixel_fov_flat2flat_deg"]
+                        r=config["sensor"]["dimensions"][
+                            "hex_pixel_FoV_flat2flat_deg"
+                        ]
                         * 0.5
                         * 2
                         / np.sqrt(3),

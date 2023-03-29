@@ -24,6 +24,7 @@ from .. import portal
 from .. import analysis
 from .. import utils
 from ..utils import read_json
+from ..utils import read_config
 from ..utils import PAXEL_FMT
 from ..utils import ANGLE_FMT
 
@@ -35,20 +36,20 @@ CONFIG["mirror"] = {}
 CONFIG["mirror"]["dimensions"] = copy.deepcopy(portal.MIRROR)
 CONFIG["mirror"]["keys"] = [
     "sphere_monolith",
-    "davies_cotton",
+    # "davies_cotton",
     "parabola_segmented",
 ]
 
 CONFIG["sensor"] = {}
 CONFIG["sensor"]["dimensions"] = copy.deepcopy(portal.SENSOR)
-CONFIG["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3, 9]
+CONFIG["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3]
 
 CONFIG["sources"] = {}
-CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 8.0, 9)
+CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 8.0, 3)
 CONFIG["sources"]["num_photons"] = 1000 * 1000
 
 CONFIG["light_field_geometry"] = {}
-CONFIG["light_field_geometry"]["num_blocks"] = 5
+CONFIG["light_field_geometry"]["num_blocks"] = 1
 CONFIG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
 CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
@@ -57,7 +58,7 @@ def make_config_from_scenery(scenery_path, seed=1337):
     scenery = read_json(scenery_path)
     (
         mirror_dimensions,
-        sensor_dimensions
+        sensor_dimensions,
     ) = merlict.make_mirror_and_sensor_dimensions_from_merlict_scenery(scenery)
 
     cfg = {}
@@ -69,7 +70,9 @@ def make_config_from_scenery(scenery_path, seed=1337):
 
     cfg["sensor"] = {}
     cfg["sensor"]["dimensions"] = sensor_dimensions
-    cfg["sensor"]["num_paxel_on_pixel_diagonal"] = CONFIG["sensor"]["num_paxel_on_pixel_diagonal"]
+    cfg["sensor"]["num_paxel_on_pixel_diagonal"] = CONFIG["sensor"][
+        "num_paxel_on_pixel_diagonal"
+    ]
 
     cfg["sources"] = CONFIG["sources"]
     cfg["light_field_geometry"] = CONFIG["light_field_geometry"]
@@ -197,12 +200,13 @@ def make_responses(
 def _responses_make_jobs(work_dir):
     jobs = []
 
-    config = read_config(work_dir=work_dir)
+    config = json_numpy.read(os.path.join(work_dir, "config.json"))
+    executables = json_numpy.read(os.path.join(work_dir, "executables.json"))
 
     runningseed = int(config["seed"])
     for mkey in config["mirror"]["keys"]:
 
-        for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
 
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
@@ -213,9 +217,9 @@ def _responses_make_jobs(work_dir):
                 job["mkey"] = mkey
                 job["pkey"] = pkey
                 job["akey"] = akey
-                job["merlict_plenoscope_propagator_path"] = config[
-                    "executables"
-                ]["merlict_plenoscope_propagator_path"]
+                job["merlict_plenoscope_propagator_path"] = executables[
+                    "merlict_plenoscope_propagator_path"
+                ]
                 job["seed"] = runningseed
                 jobs.append(job)
 
@@ -268,13 +272,13 @@ def _analysis_make_jobs(
     assert 0.0 < containment_percentile <= 100.0
     assert object_distance_m > 0.0
 
-    config = read_config(work_dir=work_dir)
+    config = json_numpy.read(os.path.join(work_dir, "config.json"))
 
     jobs = []
     runningseed = int(config["seed"])
 
     for mkey in config["mirror"]["keys"]:
-        for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
                 akey = ANGLE_FMT.format(ofa)
@@ -305,7 +309,7 @@ def _analysis_run_job(job):
     if os.path.exists(summary_path):
         return 1
 
-    config = read_config(work_dir=job["work_dir"])
+    config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
     prng = np.random.Generator(np.random.PCG64(job["seed"]))
 
     light_field_geometry = LightFieldGeometry(
@@ -369,7 +373,7 @@ def make_source(work_dir):
     work_dir : str
         Path to the work_dir
     """
-    config = read_config(work_dir=work_dir)
+    config = json_numpy.read(os.path.join(work_dir, "config.json"))
 
     source_path = os.path.join(work_dir, "source.tar")
 
@@ -381,7 +385,8 @@ def make_source(work_dir):
             size=config["sources"]["num_photons"],
             path=source_path,
             prng=prng,
-            aperture_radius=1.2 * config["mirror"]["outer_radius"],
+            aperture_radius=1.2
+            * config["mirror"]["dimensions"]["max_outer_aperture_radius"],
         )
 
 
@@ -405,7 +410,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
     for mkey in config["mirror"]["keys"]:
         mdir = os.path.join(geometries_dir, mkey)
 
-        for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
             pdir = os.path.join(mdir, pkey)
 
@@ -420,7 +425,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
                 ) as f:
                     s = scenery.make_plenoscope_scenery_for_merlict(
                         mirror_key=mkey,
-                        num_paxel_on_diagonal=npax,
+                        num_paxel_on_pixel_diagonal=npax,
                         config=config,
                         off_axis_angles_deg=config["sources"][
                             "off_axis_angles_deg"
@@ -451,13 +456,14 @@ def make_light_field_geometires(
 
 
 def _light_field_geometries_make_jobs_and_rjobs(work_dir):
-    config = read_config(work_dir=work_dir)
+    config = json_numpy.read(os.path.join(work_dir, "config.json"))
+    executables = json_numpy.read(os.path.join(work_dir, "executables.json"))
 
     jobs = []
     rjobs = []
 
     for mkey in config["mirror"]["keys"]:
-        for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
             for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
                 akey = ANGLE_FMT.format(ofa)
@@ -475,7 +481,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
 
                     _num_blocks = config["light_field_geometry"]["num_blocks"]
                     _num_blocks *= utils.guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
-                        num_paxel_on_diagonal=npax
+                        num_paxel_on_pixel_diagonal=npax
                     )
 
                     _num_photons_per_block = config["light_field_geometry"][
@@ -483,7 +489,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
                     ]
 
                     _jobs = plenoirf.production.light_field_geometry.make_jobs(
-                        merlict_map_path=config["executables"][
+                        merlict_map_path=executables[
                             "merlict_plenoscope_calibration_map_path"
                         ],
                         scenery_path=os.path.join(adir, "input", "scenery"),
@@ -508,7 +514,10 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
 
 
 def _light_field_geometries_run_rjob(rjob):
-    config = read_config(work_dir=rjob["work_dir"])
+    config = json_numpy.read(os.path.join(rjob["work_dir"], "config.json"))
+    executables = json_numpy.read(
+        os.path.join(rjob["work_dir"], "executables.json")
+    )
 
     adir = os.path.join(
         rjob["work_dir"],
@@ -522,7 +531,7 @@ def _light_field_geometries_run_rjob(rjob):
     out_dir = os.path.join(adir, "light_field_geometry")
 
     rc = plenoirf.production.light_field_geometry.reduce(
-        merlict_reduce_path=config["executables"][
+        merlict_reduce_path=executables[
             "merlict_plenoscope_calibration_reduce_path"
         ],
         map_dir=map_dir,
@@ -542,7 +551,7 @@ def read_analysis(work_dir):
     for mkey in config["mirror"]["keys"]:
         coll[mkey] = {}
 
-        for npax in config["sensor"]["num_paxel_on_diagonal"]:
+        for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
             pkey = PAXEL_FMT.format(npax)
             coll[mkey][pkey] = {}
 
