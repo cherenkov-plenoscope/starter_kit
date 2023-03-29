@@ -3,21 +3,29 @@ from . import parabola_segmented
 
 
 def make_plenoscope_scenery_aligned_deformed(
-    mirror_config, mirror_deformation, sensor_config, num_paxel_on_diagonal,
+    mirror_dimensions,
+    mirror_deformation_map,
+    sensor_dimensions,
+    num_paxel_on_pixel_diagonal,
 ):
     FACET_COLOR = "facet_color"
 
     sensor_frame = {
         "type": "LightFieldSensor",
         "name": "light_field_sensor",
-        "pos": [0, 0, sensor_config["expected_imaging_system_focal_length"]],
+        "pos": [
+            0,
+            0,
+            sensor_dimensions["expected_imaging_system_focal_length"],
+        ],
         "rot": [0, 0, 0],
+        "num_paxel_on_pixel_diagonal": num_paxel_on_pixel_diagonal,
         "lens_refraction_vs_wavelength": "lens_refraction_vs_wavelength",
         "bin_reflection_vs_wavelength": "mirror_reflectivity_vs_wavelength",
         "children": [],
     }
     for key in portal.SENSOR:
-        sensor_frame[key] = sensor_config[key]
+        sensor_frame[key] = sensor_dimensions[key]
 
     mirror_frame = {
         "type": "Frame",
@@ -25,8 +33,8 @@ def make_plenoscope_scenery_aligned_deformed(
         "pos": [0, 0, 0],
         "rot": [0, 0, 0],
         "children": parabola_segmented.make_facets(
-            mirror_config=mirror_config,
-            mirror_deformation=mirror_deformation,
+            mirror_dimensions=mirror_dimensions,
+            mirror_deformation_map=mirror_deformation_map,
             reflection_vs_wavelength="mirror_reflectivity_vs_wavelength",
             color=FACET_COLOR,
         ),

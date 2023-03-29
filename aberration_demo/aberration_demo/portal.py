@@ -6,7 +6,6 @@ MIRROR = {
     "max_outer_aperture_radius": 41.0,
     "min_inner_aperture_radius": 3.05,
     "outer_aperture_shape_hex": True,
-    "DaviesCotton_over_parabolic_mixing_factor": 0.0,
     "facet_inner_hex_radius": 0.75,
     "gap_between_facets": 0.025,
 }
@@ -16,9 +15,9 @@ SENSOR = {
     "expected_imaging_system_aperture_radius": 35.5,
     "max_FoV_diameter_deg": 6.5,
     "hex_pixel_FoV_flat2flat_deg": 0.06667,
-    "num_paxel_on_pixel_diagonal": 9,
     "housing_overhead": 1.1,
 }
+SENSOR_NUM_PAXEL_ON_PIXEL_DIAGONAL = 9
 
 LENS_REFRACTION_VS_WAVELENGTH = {
     "name": "lens_refraction_vs_wavelength",

@@ -9,6 +9,7 @@ Mirror-geometries: Only parabola_segmented
 import os
 import copy
 import numpy as np
+import subprocess
 import json_numpy
 import json_line_logger
 import shutil
@@ -32,12 +33,15 @@ from ..utils import ANGLE_FMT
 CONFIG = {}
 CONFIG["seed"] = 1337
 
-CONFIG["mirror"] = copy.deepcopy(parabola_segmented.MIRROR)
-CONFIG["mirror"]["keys"] = ["parabola_segmented"]
-CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
-CONFIG["mirror_deformation"] = copy.deepcopy(
+CONFIG["mirror"] = {}
+CONFIG["mirror"]["dimensions"] = copy.deepcopy(portal.MIRROR)
+CONFIG["mirror"]["deformation"] = copy.deepcopy(
     deformation_map.EXAMPLE_MIRROR_DEFORMATION
 )
+
+CONFIG["sensor"] = {}
+CONFIG["sensor"]["dimensions"] = copy.deepcopy(portal.SENSOR)
+CONFIG["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3, 9]
 
 CONFIG["sources"] = {}
 CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)
@@ -50,14 +54,14 @@ CONFIG["light_field_geometry"]["num_photons_per_block"] = 100 * 1000
 CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
 
-def make_config_from_scenery(scenery_path, seed=1337, num_photons=100000):
+def make_config_from_scenery(scenery_path, seed=1337):
     scenery = read_json(scenery_path)
 
-    mirror_config = merlict.find_first_child_by_type(
+    mirror_dimensions = merlict.find_first_child_by_type(
         children=scenery["children"], child_type="SegmentedReflector",
     )
 
-    sensor_config = merlict.find_first_child_by_type(
+    sensor_dimensions = merlict.find_first_child_by_type(
         children=scenery["children"], child_type="LightFieldSensor",
     )
 
@@ -65,27 +69,23 @@ def make_config_from_scenery(scenery_path, seed=1337, num_photons=100000):
     cfg["seed"] = seed
 
     cfg["mirror"] = {}
+    cfg["mirror"]["dimensions"] = {}
     for key in portal.MIRROR:
-        cfg["mirror"][key] = mirror_config[key]
-    cfg["mirror"]["keys"] = ["parabola_segmented"]
-
-    cfg["sensor"] = {}
-    for key in portal.SENSOR:
-        cfg["sensor"][key] = sensor_config[key]
-
-    cfg["mirror_deformation"] = copy.deepcopy(
+        cfg["mirror"]["dimensions"][key] = mirror_dimensions[key]
+    cfg["mirror"]["deformation"] = copy.deepcopy(
         deformation_map.EXAMPLE_MIRROR_DEFORMATION
     )
 
-    cfg["sources"] = {}
-    cfg["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)
-    cfg["sources"]["num_photons"] = num_photons
+    cfg["sensor"] = {}
+    cfg["sensor"]["dimensions"] = {}
+    for key in portal.SENSOR:
+        cfg["sensor"]["dimensions"][key] = sensor_dimensions[key]
+    cfg["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3, 9]
 
-    cfg["light_field_geometry"] = {}
-    cfg["light_field_geometry"]["num_blocks"] = 1
-    cfg["light_field_geometry"]["num_photons_per_block"] = num_photons
+    cfg["sources"] = CONFIG["sources"]
+    cfg["light_field_geometry"] = CONFIG["light_field_geometry"]
 
-    cfg["binning"] = copy.deepcopy(analysis.BINNING)
+    cfg["binning"] = CONFIG["binning"]
     return cfg
 
 
@@ -98,13 +98,13 @@ def init(work_dir, config=CONFIG, executables=merlict.EXECUTABLES):
         "wt",
     )
     nfs.write(
-        json_numpy.dumps(config, indent=4),
-        os.path.join(work_dir, "config.json"),
+        json_numpy.dumps(merlict.PROPAGATION_CONFIG, indent=4),
+        os.path.join(work_dir, "merlict_propagation_config.json"),
         "wt",
     )
     nfs.write(
-        json_numpy.dumps(merlict.PROPAGATION_CONFIG, indent=4),
-        os.path.join(work_dir, "merlict_propagation_config.json"),
+        json_numpy.dumps(config, indent=4),
+        os.path.join(work_dir, "config.json"),
         "wt",
     )
 
@@ -173,18 +173,24 @@ def make_sceneries_for_light_field_geometires(work_dir):
     geometries_dir = os.path.join(work_dir, "geometries")
     os.makedirs(geometries_dir, exist_ok=True)
 
-    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+    for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
         pkey = PAXEL_FMT.format(npax)
         pdir = os.path.join(geometries_dir, pkey)
 
         scenery_dir = os.path.join(pdir, "input", "scenery")
         os.makedirs(scenery_dir, exist_ok=True)
+
+        mirror_deformation_map = deformation_map.init_from_mirror_and_deformation_configs(
+            mirror_dimensions=config["mirror"]["dimensions"],
+            mirror_deformation=config["mirror"]["deformation"],
+        )
+
         with open(os.path.join(scenery_dir, "scenery.json"), "wt") as f:
             s = scenery.make_plenoscope_scenery_aligned_deformed(
-                mirror_config=config["mirror"],
-                mirror_deformation=config["mirror_deformation"],
-                sensor_config=config["sensor"],
-                num_paxel_on_diagonal=npax,
+                mirror_dimensions=config["mirror"]["dimensions"],
+                mirror_deformation_map=mirror_deformation_map,
+                sensor_dimensions=config["sensor"]["dimensions"],
+                num_paxel_on_pixel_diagonal=npax,
             )
             f.write(json_numpy.dumps(s, indent=4))
 
@@ -217,7 +223,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
     jobs = []
     rjobs = []
 
-    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+    for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
         pkey = PAXEL_FMT.format(npax)
         pdir = os.path.join(work_dir, "geometries", pkey)
 
@@ -232,7 +238,7 @@ def _light_field_geometries_make_jobs_and_rjobs(work_dir):
 
             _num_blocks = config["light_field_geometry"]["num_blocks"]
             _num_blocks *= utils.guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
-                num_paxel_on_diagonal=npax
+                num_paxel_on_pixel_diagonal=npax
             )
 
             _num_photons_per_block = config["light_field_geometry"][
@@ -317,7 +323,8 @@ def make_source(work_dir):
                 size=config["sources"]["num_photons"],
                 path=source_path,
                 prng=prng,
-                aperture_radius=1.2 * config["mirror"]["outer_radius"],
+                aperture_radius=1.2
+                * config["mirror"]["dimensions"]["max_outer_aperture_radius"],
             )
 
 
@@ -346,7 +353,7 @@ def _responses_make_jobs(work_dir):
 
     runningseed = int(config["seed"])
 
-    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+    for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
         pkey = PAXEL_FMT.format(npax)
 
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
@@ -415,7 +422,7 @@ def _analysis_make_jobs(
     jobs = []
     runningseed = int(config["seed"])
 
-    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+    for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
         pkey = PAXEL_FMT.format(npax)
         for ofa in range(len(config["sources"]["off_axis_angles_deg"])):
             akey = ANGLE_FMT.format(ofa)
@@ -489,7 +496,7 @@ def read_analysis(work_dir):
 
     coll = {}
 
-    for npax in config["sensor"]["num_paxel_on_diagonal"]:
+    for npax in config["sensor"]["num_paxel_on_pixel_diagonal"]:
         pkey = PAXEL_FMT.format(npax)
         coll[pkey] = {}
 

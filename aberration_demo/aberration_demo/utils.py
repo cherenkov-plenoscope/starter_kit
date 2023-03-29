@@ -25,6 +25,6 @@ def read_json(path):
 
 
 def guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
-    num_paxel_on_diagonal,
+    num_paxel_on_pixel_diagonal,
 ):
-    return num_paxel_on_diagonal * num_paxel_on_diagonal
+    return num_paxel_on_pixel_diagonal * num_paxel_on_pixel_diagonal

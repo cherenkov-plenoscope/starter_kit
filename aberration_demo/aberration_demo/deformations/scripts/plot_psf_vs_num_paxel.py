@@ -23,7 +23,7 @@ work_dir = argv[1]
 out_dir = os.path.join(work_dir, "figures", "psf_vs_num_paxel")
 os.makedirs(out_dir, exist_ok=True)
 
-config = abe.deformations.read_config(work_dir=work_dir)
+config = json_numpy.read(os.path.join(work_dir, "config.json"))
 coll = abe.deformations.read_analysis(work_dir=work_dir)
 
 # summary plot of point-spread-functions
@@ -40,7 +40,7 @@ CMAPS = {
     "magma_r": {"gamma": 0.25, "linecolor": "black",},
 }
 
-mkey = config["mirror"]["keys"][0]
+mkey = "parabola_segmented"
 
 
 def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
@@ -56,9 +56,9 @@ def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
 
 def _ax_add_paxel_and_off_axis_labels(ax):
     for isens, pkey in enumerate(coll):
-        num_paxel_on_diagonal = config["sensor"]["num_paxel_on_diagonal"][
-            isens
-        ]
+        num_paxel_on_diagonal = config["sensor"][
+            "num_paxel_on_pixel_diagonal"
+        ][isens]
 
         ax.text(
             0.01,
@@ -251,7 +251,9 @@ for cmapkey in CMAPS:
                             bin_edges_cy_deg[0],
                         ]
                     ),
-                    r=config["sensor"]["hex_pixel_fov_flat2flat_deg"]
+                    r=config["sensor"]["dimensions"][
+                        "hex_pixel_FoV_flat2flat_deg"
+                    ]
                     * 0.5
                     * 2
                     / np.sqrt(3),

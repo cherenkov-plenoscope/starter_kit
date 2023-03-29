@@ -27,24 +27,27 @@ cax_span = [0.85, 0.125, 0.03, 0.8]
 
 config = abe.utils.read_json(path=os.path.join(work_dir, "config.json"))
 
-demfap = abe.deformations.deformation_map.init_from_mirror_and_deformation_configs(
-    mirror_config=config["mirror"],
-    mirror_deformation_config=config["mirror_deformation"],
-)
 demfap_zeor = abe.deformations.deformation_map.init_from_mirror_and_deformation_configs(
-    mirror_config=config["mirror"],
-    mirror_deformation_config=config["mirror_deformation"],
+    mirror_dimensions=config["mirror"]["dimensions"],
+    mirror_deformation=config["mirror"]["deformation"],
     amplitude_scaleing=0.0,
 )
+
+demfap = abe.deformations.deformation_map.init_from_mirror_and_deformation_configs(
+    mirror_dimensions=config["mirror"]["dimensions"],
+    mirror_deformation=config["mirror"]["deformation"],
+)
+
 facets = abe.deformations.parabola_segmented.make_facets(
-    mirror_config=config["mirror"], mirror_deformation=demfap,
+    mirror_dimensions=config["mirror"]["dimensions"],
+    mirror_deformation_map=demfap,
 )
 
 STEP_Z_M = 0.005
 STEP_ANGLE_DEG = 0.1
 
 N = 128
-R_hex_outer = config["mirror"]["max_outer_aperture_radius"]
+R_hex_outer = config["mirror"]["dimensions"]["max_outer_aperture_radius"]
 R_hex_inner = R_hex_outer * np.sqrt(3) / 2
 
 facets_x_m = []
@@ -64,17 +67,17 @@ for facet in facets:
     actual_surface_normal = abe.deformations.parabola_segmented.mirror_surface_normal(
         x=x,
         y=y,
-        focal_length=config["mirror"]["focal_length"],
-        deformation=demfap,
-        delta=0.5 * config["mirror"]["facet_inner_hex_radius"],
+        focal_length=config["mirror"]["dimensions"]["focal_length"],
+        mirror_deformation_map=demfap,
+        delta=0.5 * config["mirror"]["dimensions"]["facet_inner_hex_radius"],
     )
 
     targeted_surface_normal = abe.deformations.parabola_segmented.mirror_surface_normal(
         x=x,
         y=y,
-        focal_length=config["mirror"]["focal_length"],
-        deformation=demfap_zeor,
-        delta=0.5 * config["mirror"]["facet_inner_hex_radius"],
+        focal_length=config["mirror"]["dimensions"]["focal_length"],
+        mirror_deformation_map=demfap_zeor,
+        delta=0.5 * config["mirror"]["dimensions"]["facet_inner_hex_radius"],
     )
 
     aa_rad = abe.deformations.parabola_segmented.angle_between(

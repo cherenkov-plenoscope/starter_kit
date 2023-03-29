@@ -16,10 +16,10 @@ EXAMPLE_MIRROR_DEFORMATION = {
 
 
 def init_from_mirror_and_deformation_configs(
-    mirror_config, mirror_deformation_config, amplitude_scaleing=1.0,
+    mirror_dimensions, mirror_deformation, amplitude_scaleing=1.0,
 ):
-    mc = mirror_config
-    md = mirror_deformation_config
+    mc = mirror_dimensions
+    md = mirror_deformation
     return init_from_perlin_noise(
         mirror_diameter_m=2.0 * mc["max_outer_aperture_radius"],
         amplitude_m=md["amplitude_m"] * amplitude_scaleing,
