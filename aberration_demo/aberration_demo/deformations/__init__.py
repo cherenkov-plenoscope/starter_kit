@@ -56,30 +56,20 @@ CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
 def make_config_from_scenery(scenery_path, seed=1337):
     scenery = read_json(scenery_path)
-
-    mirror_dimensions = merlict.find_first_child_by_type(
-        children=scenery["children"], child_type="SegmentedReflector",
-    )
-
-    sensor_dimensions = merlict.find_first_child_by_type(
-        children=scenery["children"], child_type="LightFieldSensor",
-    )
+    (
+        mirror_dimensions,
+        sensor_dimensions
+    ) = merlict.make_mirror_and_sensor_dimensions_from_merlict_scenery(scenery)
 
     cfg = {}
     cfg["seed"] = seed
 
     cfg["mirror"] = {}
-    cfg["mirror"]["dimensions"] = {}
-    for key in portal.MIRROR:
-        cfg["mirror"]["dimensions"][key] = mirror_dimensions[key]
-    cfg["mirror"]["deformation"] = copy.deepcopy(
-        deformation_map.EXAMPLE_MIRROR_DEFORMATION
-    )
+    cfg["mirror"]["dimensions"] = mirror_dimensions
+    cfg["mirror"]["deformation"] = CONFIG["mirror"]["deformation"]
 
     cfg["sensor"] = {}
-    cfg["sensor"]["dimensions"] = {}
-    for key in portal.SENSOR:
-        cfg["sensor"]["dimensions"][key] = sensor_dimensions[key]
+    cfg["sensor"]["dimensions"] = sensor_dimensions
     cfg["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3, 9]
 
     cfg["sources"] = CONFIG["sources"]

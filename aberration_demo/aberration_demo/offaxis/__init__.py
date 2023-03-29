@@ -15,6 +15,7 @@ import shutil
 import plenopy
 import json_line_logger
 import copy
+import network_file_system as nfs
 
 from . import scenery
 from .. import merlict
@@ -22,27 +23,29 @@ from .. import calibration_source
 from .. import portal
 from .. import analysis
 from .. import utils
-from ..utils import read_config
+from ..utils import read_json
 from ..utils import PAXEL_FMT
 from ..utils import ANGLE_FMT
 
 
 CONFIG = {}
 CONFIG["seed"] = 42
-CONFIG["executables"] = copy.deepcopy(merlict.EXECUTABLES)
 
-CONFIG["sources"] = {}
-CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 8.0, 9)
-CONFIG["sources"]["num_photons"] = 1000 * 1000
-
-CONFIG["mirror"] = copy.deepcopy(portal.MIRROR)
+CONFIG["mirror"] = {}
+CONFIG["mirror"]["dimensions"] = copy.deepcopy(portal.MIRROR)
 CONFIG["mirror"]["keys"] = [
     "sphere_monolith",
     "davies_cotton",
     "parabola_segmented",
 ]
 
-CONFIG["sensor"] = copy.deepcopy(portal.SENSOR)
+CONFIG["sensor"] = {}
+CONFIG["sensor"]["dimensions"] = copy.deepcopy(portal.SENSOR)
+CONFIG["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3, 9]
+
+CONFIG["sources"] = {}
+CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 8.0, 9)
+CONFIG["sources"]["num_photons"] = 1000 * 1000
 
 CONFIG["light_field_geometry"] = {}
 CONFIG["light_field_geometry"]["num_blocks"] = 5
@@ -50,7 +53,32 @@ CONFIG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
 CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
 
-def init(work_dir, config=CONFIG):
+def make_config_from_scenery(scenery_path, seed=1337):
+    scenery = read_json(scenery_path)
+    (
+        mirror_dimensions,
+        sensor_dimensions
+    ) = merlict.make_mirror_and_sensor_dimensions_from_merlict_scenery(scenery)
+
+    cfg = {}
+    cfg["seed"] = seed
+
+    cfg["mirror"] = {}
+    cfg["mirror"]["dimensions"] = mirror_dimensions
+    cfg["mirror"]["keys"] = CONFIG["mirror"]["keys"]
+
+    cfg["sensor"] = {}
+    cfg["sensor"]["dimensions"] = sensor_dimensions
+    cfg["sensor"]["num_paxel_on_pixel_diagonal"] = CONFIG["sensor"]["num_paxel_on_pixel_diagonal"]
+
+    cfg["sources"] = CONFIG["sources"]
+    cfg["light_field_geometry"] = CONFIG["light_field_geometry"]
+
+    cfg["binning"] = CONFIG["binning"]
+    return cfg
+
+
+def init(work_dir, config=CONFIG, executables=merlict.EXECUTABLES):
     """
     Initialize the work_dir, i.e. the base of all operations to explore how
     plenoptics can compensate distortions and aberrations.
@@ -70,13 +98,21 @@ def init(work_dir, config=CONFIG):
     """
     os.makedirs(work_dir, exist_ok=True)
 
-    with open(os.path.join(work_dir, "config.json"), "wt") as f:
-        f.write(json_numpy.dumps(config, indent=4))
-
-    with open(
-        os.path.join(work_dir, "merlict_propagation_config.json"), "wt"
-    ) as f:
-        f.write(json_numpy.dumps(merlict.PROPAGATION_CONFIG, indent=4))
+    nfs.write(
+        json_numpy.dumps(executables, indent=4),
+        os.path.join(work_dir, "executables.json"),
+        "wt",
+    )
+    nfs.write(
+        json_numpy.dumps(merlict.PROPAGATION_CONFIG, indent=4),
+        os.path.join(work_dir, "merlict_propagation_config.json"),
+        "wt",
+    )
+    nfs.write(
+        json_numpy.dumps(config, indent=4),
+        os.path.join(work_dir, "config.json"),
+        "wt",
+    )
 
 
 def run(
@@ -361,7 +397,7 @@ def make_sceneries_for_light_field_geometires(work_dir):
     work_dir : str
         Path to the work_dir
     """
-    config = read_config(work_dir=work_dir)
+    config = read_json(os.path.join(work_dir, "config.json"))
 
     geometries_dir = os.path.join(work_dir, "geometries")
     os.makedirs(geometries_dir, exist_ok=True)
