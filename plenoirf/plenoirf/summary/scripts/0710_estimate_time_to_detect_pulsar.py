@@ -7,9 +7,9 @@ import sebastians_matplotlib_addons as seb
 import lima1983analysis
 import json_numpy
 import binning_utils
-import cosmic_fluxes
 import propagate_uncertainties
 import copy
+import lima1983analysis
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -46,187 +46,115 @@ prng = np.random.Generator(
     np.random.generator.PCG64(sum_config["random_seed"])
 )
 
+pulsar_spectrum = irf.analysis.pulsar_timing.EXAMPLE_PULSAR_SPECTRUM
+pulsar = irf.analysis.pulsar_timing.ppog_init_dummy(
+    energy_bin_edges=energy_fine_bin["edges"],
+    pulsar_spectrum=pulsar_spectrum,
+)
 
-# pulsars phase-o-gram
-def ppog_init():
-    return {
-        "phase_bin_edges": [],
-        "phase_bin_edges_unit": "rad",
-        "energy_bin_edges": [],
-        "energy_bin_edges_unit": "GeV",
-        "relative_amplitude_vs_phase": [],
-        "relative_amplitude_vs_phase_cdf": [],
-        "differential_flux_vs_energy": [],
-        "differential_flux_vs_energy_unit": "m$^{-2}$ s^{-1} (GeV)$^{-1}$",
-    }
+json_numpy.write(
+    os.path.join(pa["out_dir"], "pulsar_flux.json"),
+    pulsar_spectrum,
+    indent=4,
+)
 
-
-OUR_PULSAR = {
-    "source_name": "Test Pulsar",
-    "spectrum_type": "PLExpCutoff",
-    "spectral_index": -1.5,
-    "exp_index": 1.0,
-    "pivot_energy_GeV": 0.5,
-    "cutoff_energy_GeV": 2.5,
-    "flux_density_per_m2_per_GeV_per_s": 3e-4,
-}
-
-
-def gaussian(x, mu, sigma):
-    return np.exp(-np.power(x - mu, 2.0) / (2 * np.power(sigma, 2.0)))
-
-
-def ppog_init_dummy(
-    num_phase_bins=1234,
-    energy_bin_edges=np.geomspace(1e-1, 1e2, 15),
-    energy_start_GeV=1e-1,
-    energy_stop_GeV=1e2,
-    peak_source_fermi_style=OUR_PULSAR,
-    peak_std_rad=0.05,
-    base_fraction_of_peak=0.1,
-):
-    ppog = ppog_init()
-    assert num_phase_bins >= 1
-    num_energy_bins = len(energy_bin_edges) - 1
-    assert num_energy_bins >= 1
-
-    ppog["phase_bin_edges"] = np.linspace(0, 2 * np.pi, num_phase_bins + 1)
-    ppog["energy_bin_edges"] = np.array(energy_bin_edges)
-
-    ppog["relative_amplitude_vs_phase"] = np.zeros(num_phase_bins)
-    ppog["differential_flux_vs_energy"] = np.zeros(num_energy_bins)
-
-    phase_normalized = np.zeros(num_phase_bins)
-    for p in range(num_phase_bins):
-        phi_start = ppog["phase_bin_edges"][p]
-        phi_stop = ppog["phase_bin_edges"][p + 1]
-        phi = np.mean([phi_start, phi_stop])
-
-        peak_1_amplitude = gaussian(
-            x=phi, mu=(2 * np.pi * 1 / 3), sigma=2 * peak_std_rad
-        )
-        peak_2_amplitude = gaussian(
-            x=phi, mu=(2 * np.pi * 2 / 3), sigma=peak_std_rad
-        )
-        peak_amplitude = peak_1_amplitude + peak_2_amplitude
-
-        base_1 = base_fraction_of_peak * (0.5 + 0.4 * np.sin(phi))
-        base_2 = (
-            base_fraction_of_peak * (1 / 2) * (0.5 + 0.4 * np.cos(2 * phi))
-        )
-        base_3 = (
-            base_fraction_of_peak * (1 / 3) * (0.5 + 0.4 * np.cos(3 * phi))
-        )
-        base_amplitude = base_1 + base_2 + base_3
-        phase_normalized[p] = base_amplitude + peak_amplitude
-
-    ppog["relative_amplitude_vs_phase"] = phase_normalized / np.sum(
-        phase_normalized
-    )
-
-    cdf = np.array(
-        [0] + np.cumsum(ppog["relative_amplitude_vs_phase"]).tolist()
-    )
-
-    ppog["relative_amplitude_vs_phase_cdf"] = cdf
-
-    for e in range(num_energy_bins):
-        E_start = ppog["energy_bin_edges"][e]
-        E_stop = ppog["energy_bin_edges"][e + 1]
-        E = np.mean([E_start, E_stop])
-        dKdE = cosmic_fluxes.flux_of_fermi_source(
-            fermi_source=peak_source_fermi_style, energy=E,
-        )
-        ppog["differential_flux_vs_energy"][e] = dKdE
-
-    return ppog
-
-
-def ppog_draw_phase(ppog, prng, num=1):
-    r = prng.uniform(low=0.0, high=1.0, size=num)
-    phases = np.interp(
-        x=r,
-        xp=ppog["relative_amplitude_vs_phase_cdf"],
-        fp=ppog["phase_bin_edges"],
-    )
-    phases = np.mod(phases, (2 * np.pi))
-    return phases
-
-
-pulsar = ppog_init_dummy(energy_bin_edges=energy_fine_bin["edges"])
-
-arrival_phases = ppog_draw_phase(pulsar, prng, 100 * 1000)
-
-arrival_phases_counts = np.histogram(
-    arrival_phases, bins=pulsar["phase_bin_edges"],
-)[0]
-arrival_phases_counts = arrival_phases_counts / np.sum(arrival_phases_counts)
-
-fig = seb.figure(seb.FIGURE_1_1)
-ax_c = seb.add_axes(fig=fig, span=[0.2, 0.45, 0.7, 0.5])
-ax_h = seb.add_axes(fig=fig, span=[0.2, 0.11, 0.7, 0.2])
-ax_c.plot(
+fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+ax.plot(
     pulsar["energy_bin_edges"][0:-1],
     pulsar["differential_flux_vs_energy"],
     "k-",
 )
-ax_c.loglog()
+ax.loglog()
 _ymax = np.max(pulsar["differential_flux_vs_energy"])
-ax_c.set_ylim([1e-6 * _ymax, _ymax])
-ax_c.set_xlabel("energy / GeV")
-ax_c.set_ylabel(
+ax.set_ylim([1e-6 * _ymax, _ymax])
+ax.set_xlabel("energy / GeV")
+ax.set_ylabel(
     r"$\frac{\mathrm{d\,flux}}{\mathrm{d\,energy}}$ / m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$"
 )
-seb.ax_add_histogram(
-    ax=ax_h,
-    bin_edges=pulsar["phase_bin_edges"] / (2 * np.pi),
-    bincounts=pulsar["relative_amplitude_vs_phase"],
-    linestyle="-",
-    linecolor="k",
-    draw_bin_walls=True,
-)
-
-seb.ax_add_histogram(
-    ax=ax_h,
-    bin_edges=pulsar["phase_bin_edges"] / (2 * np.pi),
-    bincounts=arrival_phases_counts,
-    linestyle=":",
-    linecolor="r",
-    draw_bin_walls=True,
-)
-
-ax_h.set_xlim([0, 1])
-ax_h.set_xlabel(r"phase / 2$\pi$")
-ax_h.set_ylabel(r"relative / 1")
-fig.savefig(os.path.join(pa["out_dir"], "pulsar.jpg"))
+fig.savefig(os.path.join(pa["out_dir"], "pulsar_flux.jpg"))
 seb.close(fig)
 
 
-NUM_BINS_PER_PHASE = 137
-
-c = {}
-c["phase"] = {}
-c["phase"]["bin"] = binning_utils.Binning(
-    bin_edges=np.linspace(0, 2 * np.pi, NUM_BINS_PER_PHASE),
+fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+ax.plot(
+    binning_utils.centers(bin_edges=pulsar["phase_bin_edges"]) / (2 * np.pi),
+    pulsar["relative_amplitude_vs_phase"],
+    color="k",
+    linestyle="-"
 )
-c["observation_time_block_s"] = 3600
+ax.set_xlim([0, 1])
+ax.set_xlabel(r"phase / 2$\pi$")
+ax.set_ylabel(r"relative / 1")
+fig.savefig(os.path.join(pa["out_dir"], "pulsar_phaseogram.jpg"))
+seb.close(fig)
 
+
+fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+ax.plot(
+    pulsar["relative_amplitude_vs_phase_cdf"],
+    pulsar["phase_bin_edges"] / (2 * np.pi),
+    color="k",
+    linestyle="-"
+)
+ax.set_xlim([0, 1])
+ax.set_ylim([0, 1])
+ax.set_xlabel(r"cummulative distribution function / 1")
+ax.set_ylabel(r"phase / 2$\pi$")
+fig.savefig(os.path.join(pa["out_dir"], "pulsar_phaseogram_cummulative_distribution_function.jpg"))
+seb.close(fig)
+
+
+TEST_DRAW_RANDOM_PHASE = False
+if TEST_DRAW_RANDOM_PHASE:
+    arrival_phases = irf.analysis.pulsar_timing.ppog_draw_phase(pulsar, prng, 100 * 1000)
+
+    arrival_phases_counts = np.histogram(
+        arrival_phases, bins=pulsar["phase_bin_edges"],
+    )[0]
+    arrival_phases_counts = arrival_phases_counts / np.sum(arrival_phases_counts)
+
+    fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+    ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+    seb.ax_add_histogram(
+        ax=ax,
+        bin_edges=pulsar["phase_bin_edges"] / (2 * np.pi),
+        bincounts=pulsar["relative_amplitude_vs_phase"],
+        linestyle="-",
+        linecolor="k",
+        draw_bin_walls=True,
+    )
+    seb.ax_add_histogram(
+        ax=ax,
+        bin_edges=pulsar["phase_bin_edges"] / (2 * np.pi),
+        bincounts=arrival_phases_counts,
+        linestyle=":",
+        linecolor="r",
+        draw_bin_walls=True,
+    )
+    ax.set_xlim([0, 1])
+    ax.set_xlabel(r"phase / 2$\pi$")
+    ax.set_ylabel(r"relative / 1")
+    fig.savefig(os.path.join(pa["out_dir"], "pulsar_phaseogram_test_draw.jpg"))
+    seb.close(fig)
+
+
+run_observation_time_s = 3600
 
 def expose_to_background(
-    observation_time_s, background_rate_per_s, phase_bin, prng,
+    observation_time_s, background_rate_per_s, prng,
 ):
     background_intensity = observation_time_s * background_rate_per_s
     background_intensity = int(np.round(background_intensity))
     assert background_intensity > 1e3, "intensity is low -> rounding error."
-    background_arrival_times = prng.uniform(
-        low=phase_bin["start"],
-        high=phase_bin["stop"],
+    background_arrival_phases = prng.uniform(
+        low=0.0,
+        high=(2*np.pi),
         size=background_intensity,
     )
-    background = np.histogram(
-        background_arrival_times, bins=phase_bin["edges"]
-    )[0]
-    return background
+    return background_arrival_phases
 
 
 def draw_time_to_detect_next_gamma_ray(gamma_rate_per_s, prng, num):
@@ -234,7 +162,7 @@ def draw_time_to_detect_next_gamma_ray(gamma_rate_per_s, prng, num):
 
 
 def expose_to_pulsar(
-    observation_time_s, gamma_rate_per_s, phase_bin, pulsar, prng,
+    observation_time_s, gamma_rate_per_s, pulsar, prng,
 ):
     tt = 0.0
     intensity = 0
@@ -244,29 +172,98 @@ def expose_to_pulsar(
         )
         intensity += 1
 
-    gamma_ray_phases = ppog_draw_phase(ppog=pulsar, prng=prng, num=intensity)
+    gamma_ray_phases = irf.analysis.pulsar_timing.ppog_draw_phase(
+        ppog=pulsar,
+        prng=prng,
+        num=intensity,
+    )
 
-    gamma_rays = np.histogram(gamma_ray_phases, bins=phase_bin["edges"])[0]
-
-    return gamma_rays
+    return gamma_ray_phases
 
 
-for sk in ["chile"]: #SITES:
-    for ok in ["large"]: #ONREGION_TYPES:
+def histogram_runs(runs, num_phase_bins=None, a=1e-2):
+    if num_phase_bins == None:
+        num_events = 0
+        for run in runs:
+            num_events += len(run["gamma_phases"])
+            num_events += len(run["background_phases"])
+        num_phase_bins = int(np.round(a * np.sqrt(num_events)))
+
+    assert num_phase_bins >= 1
+    phase_bin = binning_utils.Binning(np.linspace(0, 2*np.pi, num_phase_bins+1))
+
+    exposure_time = 0.0
+    gam_hist = np.zeros(num_phase_bins, dtype=np.int)
+    bkg_hist = np.zeros(num_phase_bins, dtype=np.int)
+
+    for run in runs:
+        exposure_time += run["exposure_time"]
+        gam_hist += np.histogram(run["gamma_phases"], bins=phase_bin["edges"])[0]
+        bkg_hist += np.histogram(run["background_phases"], bins=phase_bin["edges"])[0]
+
+
+    out = {}
+    out["exposure_time"] = exposure_time
+    out["phaseogram"] = {}
+    out["phaseogram"]["bin"] = phase_bin
+    out["phaseogram"]["intensity"] = {}
+    out["phaseogram"]["intensity"]["unit"] = "1"
+    out["phaseogram"]["intensity"] = {}
+    out["phaseogram"]["intensity"]["gamma"] = gam_hist
+    out["phaseogram"]["intensity"]["gamma_au"] = np.sqrt(gam_hist)
+
+    out["phaseogram"]["intensity"]["background"] = bkg_hist
+    out["phaseogram"]["intensity"]["background_au"] = np.sqrt(bkg_hist)
+
+    out["phaseogram"]["intensity"]["total"] = gam_hist + bkg_hist
+    out["phaseogram"]["intensity"]["total_au"] = np.sqrt(out["phaseogram"]["intensity"]["total"])
+
+    i = out["phaseogram"]["intensity"]
+
+    tt = out["exposure_time"] / phase_bin["num"]
+
+    out["phaseogram"]["rate"] = {}
+    out["phaseogram"]["rate"]["unit"] = "s$^{-1}$"
+
+    out["phaseogram"]["rate"]["gamma"] = i["gamma"] /tt
+    out["phaseogram"]["rate"]["gamma_au"] = i["gamma_au"] / tt
+
+    out["phaseogram"]["rate"]["background"] = i["background"] / tt
+    out["phaseogram"]["rate"]["background_au"] = i["background_au"] / tt
+
+    out["phaseogram"]["rate"]["total"] = i["total"] / tt
+    out["phaseogram"]["rate"]["total_au"] = i["total_au"] / tt
+    return out
+
+
+
+for sk in SITES:
+    sk_dir = os.path.join(pa["out_dir"], sk)
+    for ok in ONREGION_TYPES:
+        sk_ok_dir = os.path.join(sk_dir, ok)
+        os.makedirs(sk_ok_dir, exist_ok=True)
 
         # background
         # ----------
-        rate_cosmic_rays = []
-        rate_cosmic_rays_au = []
+        rate_cosmic_rays_per_s = []
+        rate_cosmic_rays_per_s_au = []
+        rate_of_cosmic_rays = {}
         for pk in COSMIC_RAYS:
             rate = onregion_rates[sk][ok][pk]["integral_rate"]["mean"]
             rate_au = onregion_rates[sk][ok][pk]["integral_rate"][
                 "absolute_uncertainty"
             ]
-        rate_cosmic_rays.append(rate)
-        rate_cosmic_rays_au.append(rate_au)
-        rate_cosmic_rays, rate_cosmic_rays_au = propagate_uncertainties.sum(
-            x=rate_cosmic_rays, x_au=rate_cosmic_rays_au
+            rate_of_cosmic_rays[pk] = rate
+        rate_cosmic_rays_per_s.append(rate)
+        rate_cosmic_rays_per_s_au.append(rate_au)
+        rate_cosmic_rays_per_s, rate_cosmic_rays_per_s_au = propagate_uncertainties.sum(
+            x=rate_cosmic_rays_per_s, x_au=rate_cosmic_rays_per_s_au
+        )
+
+        json_numpy.write(
+            os.path.join(sk_ok_dir, "rate_of_cosmic_rays.json"),
+            rate_of_cosmic_rays,
+            indent=4,
         )
 
         # signal
@@ -278,77 +275,123 @@ for sk in ["chile"]: #SITES:
 
         dKdE_per_m2_per_s_per_GeV = pulsar["differential_flux_vs_energy"]
 
-        rate_gamma_per_s = 0.0
+        dRdE_per_s_per_GeV = np.zeros(energy_fine_bin["num_bins"])
         for ebin in range(energy_fine_bin["num_bins"]):
-            E_start_GeV = energy_fine_bin["edges"][ebin]
-            E_stop_GeV = energy_fine_bin["edges"][ebin + 1]
-            E_width_GeV = E_stop_GeV - E_start_GeV
-            rate_gamma_per_s += (
-                A_gamma_fine_m2[ebin]
-                * dKdE_per_m2_per_s_per_GeV[ebin]
-                * E_width_GeV
+            dRdE_per_s_per_GeV[ebin] = (
+                A_gamma_fine_m2[ebin] * dKdE_per_m2_per_s_per_GeV[ebin]
             )
 
-        res = {"gamma": [], "background": []}
-        exposure_time = 0.0
-        for h in range(100):
+        fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+        ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+        ax.plot(
+            energy_fine_bin["centers"],
+            dRdE_per_s_per_GeV,
+            color="k",
+            linestyle="-"
+        )
+        dRdE_max = np.max(dRdE_per_s_per_GeV)
+        ax.set_ylim([1e-4 * dRdE_max, 2 * dRdE_max])
+        ax.loglog()
+        ax.set_xlabel("energy / GeV")
+        ax.set_ylabel(r"$\frac{\mathrm{d\,rate}}{\mathrm{d\,energy}}$ / s$^{-1}$ (GeV)$^{-1}$")
+        fig.savefig(os.path.join(sk_ok_dir, "{:s}_onregion-{:s}_differential_rate_in_onregion.jpg".format(sk, ok)))
+        seb.close(fig)
 
-            gam = expose_to_pulsar(
-                observation_time_s=c["observation_time_block_s"],
-                gamma_rate_per_s=rate_gamma_per_s,
-                phase_bin=c["phase"]["bin"],
+        rate_gamma_rays_per_s = 0.0
+        for ebin in range(energy_fine_bin["num_bins"]):
+            rate_gamma_rays_per_s += dRdE_per_s_per_GeV[ebin] * energy_fine_bin["widths"][ebin]
+
+
+        json_numpy.write(
+            os.path.join(sk_ok_dir, "rate_of_gamma_rays.json"),
+            {"gamma": rate_gamma_rays_per_s},
+            indent=4,
+        )
+
+        rate_min = rate_cosmic_rays_per_s - 2 * rate_gamma_rays_per_s
+        rate_max = rate_cosmic_rays_per_s + 12 * rate_gamma_rays_per_s
+
+        runs = []
+        while len(runs) < 128:
+            print("runs: ", len(runs))
+            run = {}
+            run["gamma_phases"] = expose_to_pulsar(
+                observation_time_s=run_observation_time_s,
+                gamma_rate_per_s=rate_gamma_rays_per_s,
                 pulsar=pulsar,
                 prng=prng,
             )
 
-            bkg = expose_to_background(
-                observation_time_s=c["observation_time_block_s"],
-                background_rate_per_s=rate_cosmic_rays,
-                phase_bin=c["phase"]["bin"],
+            run["background_phases"] = expose_to_background(
+                observation_time_s=run_observation_time_s,
+                background_rate_per_s=rate_cosmic_rays_per_s,
                 prng=prng,
             )
-            exposure_time += c["observation_time_block_s"]
-            res["gamma"].append(gam)
-            res["background"].append(bkg)
+            run["exposure_time"] = run_observation_time_s
+            runs.append(run)
 
+            if np.mod(np.log(len(runs))/np.log(2), 1) <= 1e-6:
+                hist = histogram_runs(runs, a=1e-2)
 
-            tot_background = np.sum(res["background"], axis=0)
-            tot_background_mean = np.mean(tot_background)
-            tot_background_au = np.sqrt(tot_background)
+                num_phase_bins = hist["phaseogram"]["bin"]["num"]
+                sign = np.zeros(num_phase_bins)
 
-            tot_gamma = np.sum(res["gamma"], axis=0)
+                alpha = 0.2
+                B_on = np.zeros(num_phase_bins)
+                B_off = np.zeros(num_phase_bins)
+                C = rate_cosmic_rays_per_s * hist["exposure_time"]
+                C_std = np.sqrt(C)
 
-            tot = tot_background + tot_gamma
-            tot_au = np.sqrt(tot)
+                for b in range(num_phase_bins):
+                    B_on[b] = int(np.round(prng.normal(loc=C, scale=np.sqrt(C_std))))
+                    B_off[b] = int(np.round(prng.normal(loc=C/alpha, scale=np.sqrt(C_std/alpha))))
 
-            if np.mod(h, 10) == 0:
+                for b in range(num_phase_bins):
+                    S = hist["phaseogram"]["intensity"]["gamma"][b]
+                    B = hist["phaseogram"]["intensity"]["background"][b]
+                    sign[b] = lima1983analysis.estimate_S_eq17(
+                        N_on=S + B_on[b],
+                        N_off=B_off[b],
+                        alpha=alpha
+                    )
 
-                fig = seb.figure(seb.FIGURE_1_1)
-                ax = seb.add_axes(fig=fig, span=[0.2, 0.2, 0.7, 0.7])
+                fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+                ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
                 seb.ax_add_histogram(
                     ax=ax,
-                    bin_edges=c["phase"]["bin"]["edges"] / (2 * np.pi),
-                    bincounts=tot/exposure_time,
-                    bincounts_lower=(tot-tot_au)/exposure_time,
-                    bincounts_upper=(tot+tot_au)/exposure_time,
+                    bin_edges=hist["phaseogram"]["bin"]["edges"] / (2 * np.pi),
+                    bincounts=sign,
+                    linestyle="-",
+                    linecolor="k",
+                    draw_bin_walls=True,
+                )
+                ax.set_ylim([-0.5, 3.5])
+                ax.set_xlabel(r"phase / 2$\pi$")
+                ax.set_ylabel(r"significance (lima1983 Eq.17) / 1")
+                fig.savefig(
+                    os.path.join(sk_ok_dir, "{:s}_onregion-{:s}_phaseogram_exposure-time-{:03d}h_significance_lima1983.jpg".format(sk, ok, len(runs)))
+                )
+                seb.close(fig)
+
+                fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+                ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+                seb.ax_add_histogram(
+                    ax=ax,
+                    bin_edges=hist["phaseogram"]["bin"]["edges"] / (2 * np.pi),
+                    bincounts=hist["phaseogram"]["rate"]["total"],
+                    bincounts_lower=hist["phaseogram"]["rate"]["total"] - hist["phaseogram"]["rate"]["total_au"],
+                    bincounts_upper=hist["phaseogram"]["rate"]["total"] + hist["phaseogram"]["rate"]["total_au"],
                     linestyle="-",
                     linecolor="k",
                     face_color="k",
                     face_alpha=0.2,
                     draw_bin_walls=False,
                 )
-                _ymin = rate_cosmic_rays / c["phase"]["bin"]["num"]
-                ax.set_ylim([0.99 * _ymin, _ymin * 1.5])
-
+                ax.set_ylim([rate_min, rate_max])
                 ax.set_xlabel(r"phase / 2$\pi$")
                 ax.set_ylabel(r"rate / s$^{-1}$")
-                fig.savefig(os.path.join(pa["out_dir"], "phase_{:d}.jpg".format(h)))
+                fig.savefig(os.path.join(sk_ok_dir, "{:s}_onregion-{:s}_phaseogram_exposure-time-{:03d}h.jpg".format(sk, ok, len(runs))))
                 seb.close(fig)
-
-
-
-
-
 
         print(
             "Site: ",
@@ -356,9 +399,9 @@ for sk in ["chile"]: #SITES:
             ", Size of on-region: ",
             ok,
             ", Rate cosmic-rays: ",
-            rate_cosmic_rays,
+            rate_cosmic_rays_per_s,
             "+-",
-            rate_cosmic_rays_au,
+            rate_cosmic_rays_per_s_au,
             "s^{-1}",
             ", Area gamma-rays at 1GeV ",
             A_gamma[2],
