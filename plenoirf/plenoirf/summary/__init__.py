@@ -245,6 +245,24 @@ def _guess_trigger(
     return modus
 
 
+def guess_num_offregions(
+    fov_radius_deg, gamma_resolution_radius_at_energy_threshold_deg, onregion_radius_deg, fraction_of_fov_being_useful
+):
+    assert gamma_resolution_radius_at_energy_threshold_deg > 0.0
+    assert 0 < fraction_of_fov_being_useful < 1
+    assert fov_radius_deg > 0.0
+    assert onregion_radius_deg > 0.0
+    assert fov_radius_deg > onregion_radius_deg
+    valid_fov_radius_deg = fov_radius_deg - gamma_resolution_radius_at_energy_threshold_deg
+    num = int(
+        np.round(
+            (valid_fov_radius_deg ** 2 / onregion_radius_deg ** 2)
+            * fraction_of_fov_being_useful
+        )
+    )
+    return num
+
+
 def _guess_summary_config(run_dir):
     irf_config = read_instrument_response_config(run_dir=run_dir)
 
@@ -319,7 +337,6 @@ def _guess_summary_config(run_dir):
         },
         "on_off_measuremnent": {
             "estimator_for_critical_signal_rate": "LiMaEq17",
-            "on_over_off_ratio": 1 / 5,
             "detection_threshold_std": 5.0,
             "systematic_uncertainties": [1e-2, 1e-3],
             "onregion_types": {
@@ -327,16 +344,19 @@ def _guess_summary_config(run_dir):
                     "opening_angle_deg": 0.2,
                     "opening_angle_scaling": _onoff["opening_angle_scaling"],
                     "ellipticity_scaling": _onoff["ellipticity_scaling"],
+                    "on_over_off_ratio": 1 / 5,
                 },
                 "medium": {
                     "opening_angle_deg": 0.4,
                     "opening_angle_scaling": _onoff["opening_angle_scaling"],
                     "ellipticity_scaling": _onoff["ellipticity_scaling"],
+                    "on_over_off_ratio": 1 / 5,
                 },
                 "large": {
                     "opening_angle_deg": 0.8,
                     "opening_angle_scaling": _onoff["opening_angle_scaling"],
                     "ellipticity_scaling": _onoff["ellipticity_scaling"],
+                    "on_over_off_ratio": 1 / 5,
                 },
             },
         },

@@ -42,7 +42,7 @@ S = json_numpy.read_tree(
 detection_threshold_std = sum_config["on_off_measuremnent"][
     "detection_threshold_std"
 ]
-on_over_off_ratio = sum_config["on_off_measuremnent"]["on_over_off_ratio"]
+
 systematic_uncertainties = sum_config["on_off_measuremnent"][
     "systematic_uncertainties"
 ]
@@ -72,6 +72,7 @@ for sk in SITES:
 # ----
 for sk in SITES:
     for ok in ONREGION_TYPES:
+        on_over_off_ratio = ONREGION_TYPES[ok]["on_over_off_ratio"]
         for dk in flux_sensitivity.differential.SCENARIOS:
             print(sk, ok, dk)
 
