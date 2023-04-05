@@ -48,14 +48,11 @@ prng = np.random.Generator(
 
 pulsar_spectrum = irf.analysis.pulsar_timing.EXAMPLE_PULSAR_SPECTRUM
 pulsar = irf.analysis.pulsar_timing.ppog_init_dummy(
-    energy_bin_edges=energy_fine_bin["edges"],
-    pulsar_spectrum=pulsar_spectrum,
+    energy_bin_edges=energy_fine_bin["edges"], pulsar_spectrum=pulsar_spectrum,
 )
 
 json_numpy.write(
-    os.path.join(pa["out_dir"], "pulsar_flux.json"),
-    pulsar_spectrum,
-    indent=4,
+    os.path.join(pa["out_dir"], "pulsar_flux.json"), pulsar_spectrum, indent=4,
 )
 
 fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
@@ -82,7 +79,7 @@ ax.plot(
     binning_utils.centers(bin_edges=pulsar["phase_bin_edges"]) / (2 * np.pi),
     pulsar["relative_amplitude_vs_phase"],
     color="k",
-    linestyle="-"
+    linestyle="-",
 )
 ax.set_xlim([0, 1])
 ax.set_xlabel(r"phase / 2$\pi$")
@@ -97,24 +94,33 @@ ax.plot(
     pulsar["relative_amplitude_vs_phase_cdf"],
     pulsar["phase_bin_edges"] / (2 * np.pi),
     color="k",
-    linestyle="-"
+    linestyle="-",
 )
 ax.set_xlim([0, 1])
 ax.set_ylim([0, 1])
 ax.set_xlabel(r"cummulative distribution function / 1")
 ax.set_ylabel(r"phase / 2$\pi$")
-fig.savefig(os.path.join(pa["out_dir"], "pulsar_phaseogram_cummulative_distribution_function.jpg"))
+fig.savefig(
+    os.path.join(
+        pa["out_dir"],
+        "pulsar_phaseogram_cummulative_distribution_function.jpg",
+    )
+)
 seb.close(fig)
 
 
 TEST_DRAW_RANDOM_PHASE = False
 if TEST_DRAW_RANDOM_PHASE:
-    arrival_phases = irf.analysis.pulsar_timing.ppog_draw_phase(pulsar, prng, 100 * 1000)
+    arrival_phases = irf.analysis.pulsar_timing.ppog_draw_phase(
+        pulsar, prng, 100 * 1000
+    )
 
     arrival_phases_counts = np.histogram(
         arrival_phases, bins=pulsar["phase_bin_edges"],
     )[0]
-    arrival_phases_counts = arrival_phases_counts / np.sum(arrival_phases_counts)
+    arrival_phases_counts = arrival_phases_counts / np.sum(
+        arrival_phases_counts
+    )
 
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
@@ -143,6 +149,7 @@ if TEST_DRAW_RANDOM_PHASE:
 
 run_observation_time_s = 3600
 
+
 def expose_to_background(
     observation_time_s, background_rate_per_s, prng,
 ):
@@ -150,9 +157,7 @@ def expose_to_background(
     background_intensity = int(np.round(background_intensity))
     assert background_intensity > 1e3, "intensity is low -> rounding error."
     background_arrival_phases = prng.uniform(
-        low=0.0,
-        high=(2*np.pi),
-        size=background_intensity,
+        low=0.0, high=(2 * np.pi), size=background_intensity,
     )
     return background_arrival_phases
 
@@ -173,9 +178,7 @@ def expose_to_pulsar(
         intensity += 1
 
     gamma_ray_phases = irf.analysis.pulsar_timing.ppog_draw_phase(
-        ppog=pulsar,
-        prng=prng,
-        num=intensity,
+        ppog=pulsar, prng=prng, num=intensity,
     )
 
     return gamma_ray_phases
@@ -190,7 +193,9 @@ def histogram_runs(runs, num_phase_bins=None, a=1e-2):
         num_phase_bins = int(np.round(a * np.sqrt(num_events)))
 
     assert num_phase_bins >= 1
-    phase_bin = binning_utils.Binning(np.linspace(0, 2*np.pi, num_phase_bins+1))
+    phase_bin = binning_utils.Binning(
+        np.linspace(0, 2 * np.pi, num_phase_bins + 1)
+    )
 
     exposure_time = 0.0
     gam_hist = np.zeros(num_phase_bins, dtype=np.int)
@@ -198,9 +203,12 @@ def histogram_runs(runs, num_phase_bins=None, a=1e-2):
 
     for run in runs:
         exposure_time += run["exposure_time"]
-        gam_hist += np.histogram(run["gamma_phases"], bins=phase_bin["edges"])[0]
-        bkg_hist += np.histogram(run["background_phases"], bins=phase_bin["edges"])[0]
-
+        gam_hist += np.histogram(run["gamma_phases"], bins=phase_bin["edges"])[
+            0
+        ]
+        bkg_hist += np.histogram(
+            run["background_phases"], bins=phase_bin["edges"]
+        )[0]
 
     out = {}
     out["exposure_time"] = exposure_time
@@ -216,7 +224,9 @@ def histogram_runs(runs, num_phase_bins=None, a=1e-2):
     out["phaseogram"]["intensity"]["background_au"] = np.sqrt(bkg_hist)
 
     out["phaseogram"]["intensity"]["total"] = gam_hist + bkg_hist
-    out["phaseogram"]["intensity"]["total_au"] = np.sqrt(out["phaseogram"]["intensity"]["total"])
+    out["phaseogram"]["intensity"]["total_au"] = np.sqrt(
+        out["phaseogram"]["intensity"]["total"]
+    )
 
     i = out["phaseogram"]["intensity"]
 
@@ -225,7 +235,7 @@ def histogram_runs(runs, num_phase_bins=None, a=1e-2):
     out["phaseogram"]["rate"] = {}
     out["phaseogram"]["rate"]["unit"] = "s$^{-1}$"
 
-    out["phaseogram"]["rate"]["gamma"] = i["gamma"] /tt
+    out["phaseogram"]["rate"]["gamma"] = i["gamma"] / tt
     out["phaseogram"]["rate"]["gamma_au"] = i["gamma_au"] / tt
 
     out["phaseogram"]["rate"]["background"] = i["background"] / tt
@@ -235,6 +245,12 @@ def histogram_runs(runs, num_phase_bins=None, a=1e-2):
     out["phaseogram"]["rate"]["total_au"] = i["total_au"] / tt
     return out
 
+
+onregion_alpha = {
+    "small": 1 / 9,
+    "medium": 1 / 3,
+    "large": 1 / 1,
+}
 
 
 for sk in SITES:
@@ -256,7 +272,10 @@ for sk in SITES:
             rate_of_cosmic_rays[pk] = rate
         rate_cosmic_rays_per_s.append(rate)
         rate_cosmic_rays_per_s_au.append(rate_au)
-        rate_cosmic_rays_per_s, rate_cosmic_rays_per_s_au = propagate_uncertainties.sum(
+        (
+            rate_cosmic_rays_per_s,
+            rate_cosmic_rays_per_s_au,
+        ) = propagate_uncertainties.sum(
             x=rate_cosmic_rays_per_s, x_au=rate_cosmic_rays_per_s_au
         )
 
@@ -287,20 +306,30 @@ for sk in SITES:
             energy_fine_bin["centers"],
             dRdE_per_s_per_GeV,
             color="k",
-            linestyle="-"
+            linestyle="-",
         )
         dRdE_max = np.max(dRdE_per_s_per_GeV)
         ax.set_ylim([1e-4 * dRdE_max, 2 * dRdE_max])
         ax.loglog()
         ax.set_xlabel("energy / GeV")
-        ax.set_ylabel(r"$\frac{\mathrm{d\,rate}}{\mathrm{d\,energy}}$ / s$^{-1}$ (GeV)$^{-1}$")
-        fig.savefig(os.path.join(sk_ok_dir, "{:s}_onregion-{:s}_differential_rate_in_onregion.jpg".format(sk, ok)))
+        ax.set_ylabel(
+            r"$\frac{\mathrm{d\,rate}}{\mathrm{d\,energy}}$ / s$^{-1}$ (GeV)$^{-1}$"
+        )
+        fig.savefig(
+            os.path.join(
+                sk_ok_dir,
+                "{:s}_onregion-{:s}_differential_rate_in_onregion.jpg".format(
+                    sk, ok
+                ),
+            )
+        )
         seb.close(fig)
 
         rate_gamma_rays_per_s = 0.0
         for ebin in range(energy_fine_bin["num_bins"]):
-            rate_gamma_rays_per_s += dRdE_per_s_per_GeV[ebin] * energy_fine_bin["widths"][ebin]
-
+            rate_gamma_rays_per_s += (
+                dRdE_per_s_per_GeV[ebin] * energy_fine_bin["widths"][ebin]
+            )
 
         json_numpy.write(
             os.path.join(sk_ok_dir, "rate_of_gamma_rays.json"),
@@ -330,30 +359,71 @@ for sk in SITES:
             run["exposure_time"] = run_observation_time_s
             runs.append(run)
 
-            if np.mod(np.log(len(runs))/np.log(2), 1) <= 1e-6:
+            if np.mod(np.log(len(runs)) / np.log(2), 1) <= 1e-6:
                 hist = histogram_runs(runs, a=1e-2)
 
+                fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+                ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
+                seb.ax_add_histogram(
+                    ax=ax,
+                    bin_edges=hist["phaseogram"]["bin"]["edges"] / (2 * np.pi),
+                    bincounts=hist["phaseogram"]["rate"]["total"],
+                    bincounts_lower=hist["phaseogram"]["rate"]["total"]
+                    - hist["phaseogram"]["rate"]["total_au"],
+                    bincounts_upper=hist["phaseogram"]["rate"]["total"]
+                    + hist["phaseogram"]["rate"]["total_au"],
+                    linestyle="-",
+                    linecolor="k",
+                    face_color="k",
+                    face_alpha=0.2,
+                    draw_bin_walls=False,
+                )
+                ax.set_ylim([rate_min, rate_max])
+                ax.set_xlabel(r"phase / 2$\pi$")
+                ax.set_ylabel(r"rate / s$^{-1}$")
+                fig.savefig(
+                    os.path.join(
+                        sk_ok_dir,
+                        "{:s}_onregion-{:s}_phaseogram_exposure-time-{:03d}h.jpg".format(
+                            sk, ok, len(runs)
+                        ),
+                    )
+                )
+                seb.close(fig)
+
+                # significance
+                # ------------
                 num_phase_bins = hist["phaseogram"]["bin"]["num"]
                 sign = np.zeros(num_phase_bins)
 
-                alpha = 0.2
+                alpha = onregion_alpha[ok]
                 B_on = np.zeros(num_phase_bins)
                 B_off = np.zeros(num_phase_bins)
                 C = rate_cosmic_rays_per_s * hist["exposure_time"]
                 C_std = np.sqrt(C)
 
                 for b in range(num_phase_bins):
-                    B_on[b] = int(np.round(prng.normal(loc=C, scale=np.sqrt(C_std))))
-                    B_off[b] = int(np.round(prng.normal(loc=C/alpha, scale=np.sqrt(C_std/alpha))))
+                    B_on[b] = int(
+                        np.round(prng.normal(loc=C, scale=np.sqrt(C_std)))
+                    )
+                    B_off[b] = int(
+                        np.round(
+                            prng.normal(
+                                loc=C / alpha, scale=np.sqrt(C_std / alpha)
+                            )
+                        )
+                    )
 
                 for b in range(num_phase_bins):
                     S = hist["phaseogram"]["intensity"]["gamma"][b]
                     B = hist["phaseogram"]["intensity"]["background"][b]
-                    sign[b] = lima1983analysis.estimate_S_eq17(
-                        N_on=S + B_on[b],
-                        N_off=B_off[b],
-                        alpha=alpha
-                    )
+                    try:
+                        sign[b] = lima1983analysis.estimate_S_eq17(
+                            N_on=S + B_on[b], N_off=B_off[b], alpha=alpha
+                        )
+                    except AssertionError as err:
+                        print(err)
+                        sign[b] = float("nan")
 
                 fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
                 ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
@@ -367,30 +437,15 @@ for sk in SITES:
                 )
                 ax.set_ylim([-0.5, 3.5])
                 ax.set_xlabel(r"phase / 2$\pi$")
-                ax.set_ylabel(r"significance (lima1983 Eq.17) / 1")
+                ax.set_ylabel("significance / 1\n(Li and Ma, 1983, Eq.17)")
                 fig.savefig(
-                    os.path.join(sk_ok_dir, "{:s}_onregion-{:s}_phaseogram_exposure-time-{:03d}h_significance_lima1983.jpg".format(sk, ok, len(runs)))
+                    os.path.join(
+                        sk_ok_dir,
+                        "{:s}_onregion-{:s}_phaseogram_exposure-time-{:03d}h_significance_lima1983.jpg".format(
+                            sk, ok, len(runs)
+                        ),
+                    )
                 )
-                seb.close(fig)
-
-                fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
-                ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
-                seb.ax_add_histogram(
-                    ax=ax,
-                    bin_edges=hist["phaseogram"]["bin"]["edges"] / (2 * np.pi),
-                    bincounts=hist["phaseogram"]["rate"]["total"],
-                    bincounts_lower=hist["phaseogram"]["rate"]["total"] - hist["phaseogram"]["rate"]["total_au"],
-                    bincounts_upper=hist["phaseogram"]["rate"]["total"] + hist["phaseogram"]["rate"]["total_au"],
-                    linestyle="-",
-                    linecolor="k",
-                    face_color="k",
-                    face_alpha=0.2,
-                    draw_bin_walls=False,
-                )
-                ax.set_ylim([rate_min, rate_max])
-                ax.set_xlabel(r"phase / 2$\pi$")
-                ax.set_ylabel(r"rate / s$^{-1}$")
-                fig.savefig(os.path.join(sk_ok_dir, "{:s}_onregion-{:s}_phaseogram_exposure-time-{:03d}h.jpg".format(sk, ok, len(runs))))
                 seb.close(fig)
 
         print(
