@@ -512,7 +512,6 @@ def _estimate_resolution_of_depth(
         phantom_source.depth.reduce(work_dir=depth_dir)
 
 
-
 def _compensating_deformations(
     run_dir, executables, map_and_reduce_pool, logger
 ):
@@ -525,7 +524,13 @@ def _compensating_deformations(
         logger.info("init benchmark 'compensating deformations'")
 
         deform_config = aberration_demo.deformations.make_config_from_scenery(
-            scenery_path=opj(run_dir, "light_field_geometry", "input", "scenery", "scenery.json"),
+            scenery_path=opj(
+                run_dir,
+                "light_field_geometry",
+                "input",
+                "scenery",
+                "scenery.json",
+            ),
         )
 
         aberration_demo.deformations.init(

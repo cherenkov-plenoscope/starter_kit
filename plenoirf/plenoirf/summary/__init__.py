@@ -246,14 +246,19 @@ def _guess_trigger(
 
 
 def guess_num_offregions(
-    fov_radius_deg, gamma_resolution_radius_at_energy_threshold_deg, onregion_radius_deg, fraction_of_fov_being_useful
+    fov_radius_deg,
+    gamma_resolution_radius_at_energy_threshold_deg,
+    onregion_radius_deg,
+    fraction_of_fov_being_useful,
 ):
     assert gamma_resolution_radius_at_energy_threshold_deg > 0.0
     assert 0 < fraction_of_fov_being_useful < 1
     assert fov_radius_deg > 0.0
     assert onregion_radius_deg > 0.0
     assert fov_radius_deg > onregion_radius_deg
-    valid_fov_radius_deg = fov_radius_deg - gamma_resolution_radius_at_energy_threshold_deg
+    valid_fov_radius_deg = (
+        fov_radius_deg - gamma_resolution_radius_at_energy_threshold_deg
+    )
     num = int(
         np.round(
             (valid_fov_radius_deg ** 2 / onregion_radius_deg ** 2)
