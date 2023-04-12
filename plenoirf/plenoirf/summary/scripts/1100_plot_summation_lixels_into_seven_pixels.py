@@ -35,6 +35,11 @@ linewidths = 0.25
 pixel_spacing_rad = (
     light_field_geometry.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat
 )
+eye_outer_radius_m = (
+    (1 / np.sqrt(3)) *
+    pixel_spacing_rad *
+    light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_focal_length
+)
 image_outer_radius_rad = 0.5 * (
     light_field_geometry.sensor_plane2imaging_system.max_FoV_diameter
     - pixel_spacing_rad
@@ -48,26 +53,68 @@ image_geometry = pl.trigger.geometry.init_trigger_image_geometry(
 )
 
 
-def lixel_in_region_of_interest(
-    light_field_geometry, lixel_id, roi, margin=0.1
-):
+def is_in_roi(x, y, roi, margin=0.1):
     x0 = roi["x"][0] - margin
     x1 = roi["x"][1] + margin
     y0 = roi["y"][0] - margin
     y1 = roi["y"][1] + margin
-
-    lx = light_field_geometry.lixel_positions_x[lixel_id]
-    ly = light_field_geometry.lixel_positions_y[lixel_id]
-
-    if x0 <= lx < x1 and y0 <= ly < y1:
+    if x0 <= x < x1 and y0 <= y < y1:
         return True
     else:
         return False
 
 
+def lixel_in_region_of_interest(
+    light_field_geometry, lixel_id, roi, margin=0.1
+):
+    return is_in_roi(
+        x=light_field_geometry.lixel_positions_x[lixel_id],
+        y=light_field_geometry.lixel_positions_y[lixel_id],
+        roi=roi,
+        margin=margin,
+    )
+
+
+def position_of_eye(light_field_geometry, eye_id):
+    num_pax = light_field_geometry.number_paxel
+    start = eye_id * num_pax
+    stop = (eye_id + 1) * num_pax
+    poly = light_field_geometry.lixel_polygons[start:stop]
+    poly = np.array(poly)
+    pp = []
+    for pol in poly:
+        x = np.mean(pol[:, 0])
+        y = np.mean(pol[:, 1])
+        pp.append([x, y])
+    pp = np.array(pp)
+    x_mean = np.mean(pp[:, 0])
+    y_mean = np.mean(pp[:, 1])
+    return np.array([x_mean, y_mean])
+
+
+def positions_of_eyes_in_roi(light_field_geometry, roi, margin=0.1):
+    positions_of_eyes = {}
+    for eye_id in range(light_field_geometry.number_pixel):
+        pos = position_of_eye(
+            light_field_geometry=light_field_geometry,
+            eye_id=eye_id
+        )
+        if is_in_roi(x=pos[0], y=pos[1], roi=roi, margin=margin):
+            positions_of_eyes[eye_id] = pos
+    return positions_of_eyes
+
+
+poseye = positions_of_eyes_in_roi(
+    light_field_geometry=light_field_geometry,
+    roi=region_of_interest_on_sensor_plane,
+    margin=0.2,
+)
+
+AXES_STYLE = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
+
 for obj, object_distance in enumerate(object_distances):
-    fig = seb.figure(style={"rows": 540, "cols": 720, "fontsize": 0.7})
-    ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.85 * (3 / 4), 0.85])
+    fig = seb.figure(style={"rows": 960, "cols": 1280, "fontsize": 1.244})
+    ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.85 * (3 / 4), 0.85], style=AXES_STYLE)
     ax2 = seb.add_axes(fig=fig, span=[0.82, 0.15, 0.2 * (3 / 4), 0.85])
 
     cpath = os.path.join(
@@ -134,6 +181,19 @@ for obj, object_distance in enumerate(object_distances):
     )
     ax.add_collection(coll)
 
+    for peye in poseye:
+        (_x, _y) = poseye[peye]
+        seb.ax_add_hexagon(
+            ax=ax,
+            x=_x,
+            y=_y,
+            r_outer=eye_outer_radius_m,
+            orientation_deg=0,
+            color="black",
+            linestyle="-",
+            linewidth=linewidths * 2,
+        )
+
     if obj == 0 or XY_LABELS_ALWAYS:
         ax.set_xlabel("$x_\\mathrm{sensors}\\,/\\,$m")
         ax.set_ylabel("$y_\\mathrm{sensors}\\,/\\,$m")
@@ -142,13 +202,18 @@ for obj, object_distance in enumerate(object_distances):
     ax.set_ylim(region_of_interest_on_sensor_plane["y"])
 
     ax2.set_axis_off()
-    irf.summary.figure.add_aperture_plane_to_ax(ax=ax2)
-    ax2.set_xlim([-1, 1])
+    ax2.set_xlim([-1.3, 1.3])
     ax2.set_ylim([-0.05, 3.95])
     t = object_distance / 1e3 / 20
     irf.summary.figure.add_rays_to_ax(
-        ax=ax2, object_distance=t, linewidth=0.3, color="gray"
+        ax=ax2,
+        object_distance=t,
+        linewidth=11,
+        color=irf.summary.figure.COLOR_BEAM_RGBA,
+        alpha=0.2,
     )
+    ax2.plot([-1, 1,], [-.1, -.1], color="white", linewidth=10, alpha=1.0)
+    ax2.plot([-1.3, 1.3,], [0, 0], color="k", linewidth=0.5 * linewidths)
 
     ax2.text(
         x=-0.6,
