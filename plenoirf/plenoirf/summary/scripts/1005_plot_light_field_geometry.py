@@ -26,7 +26,7 @@ FIGSTY = {"rows": 720, "cols": 1920, "fontsize": 1.5}
 AXSPAN = [0.1, 0.25, 0.85, 0.7]
 
 YLIM = np.array([1, 1e6])
-YLABEL = "intensity / 1"
+YLABEL = r"intensity$\,/\,$1"
 
 
 def make_histogram(v, v_bin_edges):
@@ -54,6 +54,19 @@ def make_percentile_mask(v, v_bin_edges, mask_percentile=90):
     return mask
 
 
+def find_start_stop(bin_edges, mask):
+    start = float("nan")
+    found_start = False
+    stop = float("nan")
+    for i in range(len(mask)):
+        if mask[i] and not found_start:
+            found_start = True
+            start = bin_edges[i]
+        if mask[i]:
+            stop = bin_edges[i + 1]
+    return start, stop
+
+
 def save_histogram(
     path,
     v_bin_edges,
@@ -64,7 +77,7 @@ def save_histogram(
     xscale,
     ylim,
     yscale=1,
-    ylabel="intensity / 1",
+    ylabel=YLABEL,
     semilogy=True,
 ):
     num_bins = len(v_bin_counts)
@@ -112,72 +125,82 @@ def save_histogram(
     seb.close(fig)
 
 
+RANGES = ["fix", "sug"]
+
 hists = {}
 hists["solid_angles"] = {
     "v": 4 * np.pi * lfg.cx_std * lfg.cy_std,
-    "v_bin_edges": np.linspace(0, 4 * 4e-6, 101),
+    "fix": {"v_bin_edges": np.linspace(0, 4 * 4e-6, 101)},
+    "sug": {"v_bin_edges": np.linspace(0, 6e-6, 101)},
     "xscale": 1e6,
-    "xlabel": "solid angle of beams $\Omega$ / $\mu$sr",
+    "xlabel": r"solid angle of beams $\Omega\,/\,\mu$sr",
 }
 hists["areas"] = {
     "v": 4 * np.pi * lfg.x_std * lfg.y_std,
-    "v_bin_edges": np.linspace(0, 4 * 300, 101),
+    "fix": {"v_bin_edges": np.linspace(0, 4 * 300, 101)},
+    "sug": {"v_bin_edges": np.linspace(0, 300, 101)},
     "xscale": 1,
-    "xlabel": "area of beams $A$ / m$^{2}$",
+    "xlabel": r"area of beams $A\,/\,$m$^{2}$",
 }
 hists["time_spreads"] = {
     "v": lfg.time_delay_wrt_principal_aperture_plane_std,
-    "v_bin_edges": np.linspace(0, 2.5e-9, 101),
+    "fix": {"v_bin_edges": np.linspace(0, 2.5e-9, 101)},
+    "sug": {"v_bin_edges": np.linspace(0, 1e-9, 101)},
     "xscale": 1e9,
-    "xlabel": "time-spread of beams $T$ / ns",
+    "xlabel": r"time-spread of beams $T\,/\,$ns",
 }
 hists["efficiencies"] = {
     "v": lfg.efficiency / np.median(lfg.efficiency),
-    "v_bin_edges": np.linspace(0, 1.2, 101),
+    "fix": {"v_bin_edges": np.linspace(0, 1.2, 101)},
+    "sug": {"v_bin_edges": np.linspace(0, 1.2, 101)},
     "xscale": 1,
-    "xlabel": "relative efficiency of beams $E$ / 1",
+    "xlabel": r"relative efficiency of beams $E\,/\,$1",
 }
-
 for key in hists:
-    hists[key]["v_bin_counts"] = make_histogram(
-        v=hists[key]["v"], v_bin_edges=hists[key]["v_bin_edges"],
-    )
-    hists[key]["percentile_mask"] = make_percentile_mask(
-        v=hists[key]["v"], v_bin_edges=hists[key]["v_bin_edges"],
-    )
     hists[key]["v_median"] = np.median(hists[key]["v"])
+    for met in RANGES:
+        hists[key][met]["v_bin_counts"] = make_histogram(
+            v=hists[key]["v"], v_bin_edges=hists[key][met]["v_bin_edges"],
+        )
+        hists[key][met]["percentile_mask"] = make_percentile_mask(
+            v=hists[key]["v"], v_bin_edges=hists[key][met]["v_bin_edges"],
+        )
 
-max_bin_count = 0
-for key in hists:
-    if np.max(hists[key]["v_bin_counts"]) > max_bin_count:
-        max_bin_count = np.max(hists[key]["v_bin_counts"])
 
-ylim_lin = [0, 1.1 * max_bin_count]
-ylim_log = [1, 10 ** np.ceil(np.log10(max_bin_count))]
+rrr = {
+    "fix": {"max_bin_count": 0}, "sug": {"max_bin_count": 0}
+}
+for met in RANGES:
+    for key in hists:
+        if np.max(hists[key][met]["v_bin_counts"]) > rrr[met]["max_bin_count"]:
+            rrr[met]["max_bin_count"] = np.max(hists[key][met]["v_bin_counts"])
 
-for key in hists:
-    save_histogram(
-        path=os.path.join(pa["out_dir"], key + "_log.jpg"),
-        ylim=ylim_log,
-        semilogy=True,
-        v_bin_edges=hists[key]["v_bin_edges"],
-        v_bin_counts=hists[key]["v_bin_counts"],
-        v_median=hists[key]["v_median"],
-        percentile_mask=hists[key]["percentile_mask"],
-        xlabel=hists[key]["xlabel"],
-        xscale=hists[key]["xscale"],
-        ylabel="intensity / 1",
-    )
-    save_histogram(
-        path=os.path.join(pa["out_dir"], key + "_lin.jpg"),
-        ylim=ylim_lin,
-        semilogy=False,
-        v_bin_edges=hists[key]["v_bin_edges"],
-        v_bin_counts=hists[key]["v_bin_counts"],
-        v_median=hists[key]["v_median"],
-        percentile_mask=hists[key]["percentile_mask"],
-        xlabel=hists[key]["xlabel"],
-        xscale=hists[key]["xscale"],
-        ylabel="intensity / 1k",
-        yscale=1e-3,
-    )
+    rrr[met]["ylim_lin"] = [0, 1.1 * rrr[met]["max_bin_count"]]
+    rrr[met]["ylim_log"] = [1, 10 ** np.ceil(np.log10(rrr[met]["max_bin_count"]))]
+
+    for key in hists:
+        save_histogram(
+            path=os.path.join(pa["out_dir"], key + "_log_{:s}.jpg".format(met)),
+            ylim=rrr[met]["ylim_log"],
+            semilogy=True,
+            v_bin_edges=hists[key][met]["v_bin_edges"],
+            v_bin_counts=hists[key][met]["v_bin_counts"],
+            v_median=hists[key]["v_median"],
+            percentile_mask=hists[key][met]["percentile_mask"],
+            xlabel=hists[key]["xlabel"],
+            xscale=hists[key]["xscale"],
+            ylabel=r"intensity$\,/\,$1",
+        )
+        save_histogram(
+            path=os.path.join(pa["out_dir"], key + "_lin_{:s}.jpg".format(met)),
+            ylim=rrr[met]["ylim_lin"],
+            semilogy=False,
+            v_bin_edges=hists[key][met]["v_bin_edges"],
+            v_bin_counts=hists[key][met]["v_bin_counts"],
+            v_median=hists[key]["v_median"],
+            percentile_mask=hists[key][met]["percentile_mask"],
+            xlabel=hists[key]["xlabel"],
+            xscale=hists[key]["xscale"],
+            ylabel=r"intensity$\,/\,$1k",
+            yscale=1e-3,
+        )

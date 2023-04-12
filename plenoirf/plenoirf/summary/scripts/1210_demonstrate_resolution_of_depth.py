@@ -43,6 +43,13 @@ plenoscope["diameter_of_pixel_projected_on_sensor_plane_m"] = (
     * plenoscope["focal_length_m"]
 )
 
+num_paxel_on_diagonal = lfg.sensor_plane2imaging_system.number_of_paxel_on_pixel_diagonal
+
+paxelscope = {}
+for kk in plenoscope:
+    paxelscope[kk] = plenoscope[kk] / num_paxel_on_diagonal
+
+
 # prepare results
 # ---------------
 res = []
@@ -97,6 +104,17 @@ for g in theory_depth_m:
     theory_depth_plus_m.append(g_p)
 theory_depth_minus_m = np.array(theory_depth_minus_m)
 theory_depth_plus_m = np.array(theory_depth_plus_m)
+
+theory_depth_paxel_minus_m = []
+theory_depth_paxel_plus_m = []
+for g in theory_depth_m:
+    g_p, g_m = pl.Thin_Lens.resolution_of_depth(
+        object_distance_m=g, **paxelscope,
+    )
+    theory_depth_paxel_minus_m.append(g_m)
+    theory_depth_paxel_plus_m.append(g_p)
+theory_depth_paxel_minus_m = np.array(theory_depth_paxel_minus_m)
+theory_depth_paxel_plus_m = np.array(theory_depth_paxel_plus_m)
 
 # plot
 # ====
@@ -267,7 +285,7 @@ deltas_std_au = deltas_std * deltas_std_ru
 
 G_PLUS_G_MINUS_SCALE = 1e-1
 
-fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
+fig = seb.figure({"rows": 960, "cols": 1920, "fontsize": 1.5})
 ax_h = seb.add_axes(fig=fig, span=[0.12, 0.175, 0.87, 0.8])
 seb.ax_add_grid(ax=ax_h, add_minor=True)
 ax_h.loglog()
