@@ -3,6 +3,8 @@ import numpy as np
 
 FIGURE_STYLE = {"rows": 720, "cols": 1280, "fontsize": 1.0}
 AX_SPAN = [0.2, 0.2, 0.75, 0.75]
+AX_SPAN_WITH_COLORBAR_PAYLOAD = [0.2, 0.2, 0.55, 0.75]
+AX_SPAN_WITH_COLORBAR_COLORBAR = [0.8, 0.2, 0.025, 0.75]
 
 SOURCES = {
     "diffuse": {
@@ -39,6 +41,7 @@ COLOR_PHOTO_SENSOR_RGBA = np.array([192, 0, 0]) / 255
 COLOR_BEAM_RGBA = np.array([0, 128, 255]) / 255
 COLOR_EYE_WALLS_RGBA = np.array([0, 192, 0]) / 255
 
+
 def mark_ax_airshower_spectrum(ax, x=0.93, y=0.93, fontsize=42):
     ax.text(
         x=x,
@@ -61,8 +64,8 @@ def mark_ax_thrown_spectrum(ax, x=0.93, y=0.93, fontsize=42):
     )
 
 
-def add_aperture_plane_to_ax(ax,  **kwargs):
-    ax.plot([-1, 1], [0, 0],  **kwargs)
+def add_aperture_plane_to_ax(ax, **kwargs):
+    ax.plot([-1, 1], [0, 0], **kwargs)
 
 
 def add_rays_to_ax(ax, object_distance, N=4, **kwargs):
@@ -74,7 +77,5 @@ def add_rays_to_ax(ax, object_distance, N=4, **kwargs):
 
     for i in range(N):
         ax.plot(
-            [x_starts[i], x_ends[i]],
-            [y_starts[i], y_ends[i]],
-             **kwargs,
+            [x_starts[i], x_ends[i]], [y_starts[i], y_ends[i]], **kwargs,
         )
