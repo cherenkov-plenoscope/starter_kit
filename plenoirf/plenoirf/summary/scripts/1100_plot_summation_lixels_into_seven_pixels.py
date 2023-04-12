@@ -23,8 +23,8 @@ light_field_geometry = pl.LightFieldGeometry(
 
 region_of_interest_on_sensor_plane = {"x": [-0.35, 0.35], "y": [-0.35, 0.35]}
 
-# object_distances = [21e3, 29e3, 999e3]
-object_distances = [3e3, 5e3, 9e3, 15e3, 25e3, 999e3]
+object_distances = [21e3, 29e3, 999e3]
+# object_distances = [3e3, 5e3, 9e3, 15e3, 25e3, 999e3]
 central_seven_pixel_ids = [4221, 4124, 4222, 4220, 4125, 4317, 4318]
 colors = ["k", "g", "b", "r", "c", "m", "orange"]
 
@@ -195,25 +195,26 @@ for obj, object_distance in enumerate(object_distances):
         )
 
     if obj == 0 or XY_LABELS_ALWAYS:
-        ax.set_xlabel("$x_\\mathrm{sensors}\\,/\\,$m")
-        ax.set_ylabel("$y_\\mathrm{sensors}\\,/\\,$m")
+        ax.set_xlabel("$x\\,/\\,$m")
+        ax.set_ylabel("$y\\,/\\,$m")
 
     ax.set_xlim(region_of_interest_on_sensor_plane["x"])
     ax.set_ylim(region_of_interest_on_sensor_plane["y"])
 
     ax2.set_axis_off()
-    ax2.set_xlim([-1.3, 1.3])
+    ax2.set_xlim([-1., 1.])
     ax2.set_ylim([-0.05, 3.95])
     t = object_distance / 1e3 / 20
     irf.summary.figure.add_rays_to_ax(
         ax=ax2,
         object_distance=t,
-        linewidth=11,
+        N=9,
+        linewidth=4.7,
         color=irf.summary.figure.COLOR_BEAM_RGBA,
         alpha=0.2,
     )
     ax2.plot([-1, 1,], [-.1, -.1], color="white", linewidth=10, alpha=1.0)
-    ax2.plot([-1.3, 1.3,], [0, 0], color="k", linewidth=0.5 * linewidths)
+    ax2.plot([-1., 1.,], [0, 0], color="k", linewidth=0.5 * linewidths)
 
     ax2.text(
         x=-0.6,
