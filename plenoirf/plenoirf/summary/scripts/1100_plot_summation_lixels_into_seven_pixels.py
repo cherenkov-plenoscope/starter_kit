@@ -36,9 +36,9 @@ pixel_spacing_rad = (
     light_field_geometry.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat
 )
 eye_outer_radius_m = (
-    (1 / np.sqrt(3)) *
-    pixel_spacing_rad *
-    light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_focal_length
+    (1 / np.sqrt(3))
+    * pixel_spacing_rad
+    * light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_focal_length
 )
 image_outer_radius_rad = 0.5 * (
     light_field_geometry.sensor_plane2imaging_system.max_FoV_diameter
@@ -96,8 +96,7 @@ def positions_of_eyes_in_roi(light_field_geometry, roi, margin=0.1):
     positions_of_eyes = {}
     for eye_id in range(light_field_geometry.number_pixel):
         pos = position_of_eye(
-            light_field_geometry=light_field_geometry,
-            eye_id=eye_id
+            light_field_geometry=light_field_geometry, eye_id=eye_id
         )
         if is_in_roi(x=pos[0], y=pos[1], roi=roi, margin=margin):
             positions_of_eyes[eye_id] = pos
@@ -114,7 +113,9 @@ AXES_STYLE = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
 
 for obj, object_distance in enumerate(object_distances):
     fig = seb.figure(style={"rows": 960, "cols": 1280, "fontsize": 1.244})
-    ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.85 * (3 / 4), 0.85], style=AXES_STYLE)
+    ax = seb.add_axes(
+        fig=fig, span=[0.15, 0.15, 0.85 * (3 / 4), 0.85], style=AXES_STYLE
+    )
     ax2 = seb.add_axes(fig=fig, span=[0.82, 0.15, 0.2 * (3 / 4), 0.85])
 
     cpath = os.path.join(
@@ -202,7 +203,7 @@ for obj, object_distance in enumerate(object_distances):
     ax.set_ylim(region_of_interest_on_sensor_plane["y"])
 
     ax2.set_axis_off()
-    ax2.set_xlim([-1., 1.])
+    ax2.set_xlim([-1.0, 1.0])
     ax2.set_ylim([-0.05, 3.95])
     t = object_distance / 1e3 / 20
     irf.summary.figure.add_rays_to_ax(
@@ -213,8 +214,8 @@ for obj, object_distance in enumerate(object_distances):
         color=irf.summary.figure.COLOR_BEAM_RGBA,
         alpha=0.2,
     )
-    ax2.plot([-1, 1,], [-.1, -.1], color="white", linewidth=10, alpha=1.0)
-    ax2.plot([-1., 1.,], [0, 0], color="k", linewidth=0.5 * linewidths)
+    ax2.plot([-1, 1,], [-0.1, -0.1], color="white", linewidth=10, alpha=1.0)
+    ax2.plot([-1.0, 1.0,], [0, 0], color="k", linewidth=0.5 * linewidths)
 
     ax2.text(
         x=-0.6,
