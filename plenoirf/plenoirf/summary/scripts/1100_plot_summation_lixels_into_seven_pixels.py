@@ -53,17 +53,6 @@ image_geometry = pl.trigger.geometry.init_trigger_image_geometry(
 )
 
 
-def is_in_roi(x, y, roi, margin=0.1):
-    x0 = roi["x"][0] - margin
-    x1 = roi["x"][1] + margin
-    y0 = roi["y"][0] - margin
-    y1 = roi["y"][1] + margin
-    if x0 <= x < x1 and y0 <= y < y1:
-        return True
-    else:
-        return False
-
-
 def lixel_in_region_of_interest(
     light_field_geometry, lixel_id, roi, margin=0.1
 ):
@@ -75,35 +64,7 @@ def lixel_in_region_of_interest(
     )
 
 
-def position_of_eye(light_field_geometry, eye_id):
-    num_pax = light_field_geometry.number_paxel
-    start = eye_id * num_pax
-    stop = (eye_id + 1) * num_pax
-    poly = light_field_geometry.lixel_polygons[start:stop]
-    poly = np.array(poly)
-    pp = []
-    for pol in poly:
-        x = np.mean(pol[:, 0])
-        y = np.mean(pol[:, 1])
-        pp.append([x, y])
-    pp = np.array(pp)
-    x_mean = np.mean(pp[:, 0])
-    y_mean = np.mean(pp[:, 1])
-    return np.array([x_mean, y_mean])
-
-
-def positions_of_eyes_in_roi(light_field_geometry, roi, margin=0.1):
-    positions_of_eyes = {}
-    for eye_id in range(light_field_geometry.number_pixel):
-        pos = position_of_eye(
-            light_field_geometry=light_field_geometry, eye_id=eye_id
-        )
-        if is_in_roi(x=pos[0], y=pos[1], roi=roi, margin=margin):
-            positions_of_eyes[eye_id] = pos
-    return positions_of_eyes
-
-
-poseye = positions_of_eyes_in_roi(
+poseye = irf.summary.figure.positions_of_eyes_in_roi(
     light_field_geometry=light_field_geometry,
     roi=region_of_interest_on_sensor_plane,
     margin=0.2,

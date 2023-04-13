@@ -68,6 +68,16 @@ for pixel in pixels:
     )
 
 
+pixel_spacing_rad = (
+    light_field_geometry.sensor_plane2imaging_system.pixel_FoV_hex_flat2flat
+)
+eye_outer_radius_m = (
+    (1 / np.sqrt(3))
+    * pixel_spacing_rad
+    * light_field_geometry.sensor_plane2imaging_system.expected_imaging_system_focal_length
+)
+
+
 # plot individual pixels
 # ----------------------
 
@@ -81,6 +91,12 @@ for pixel in pixels:
     xlim = [_x - ROI_RADIUS, _x + ROI_RADIUS]
     ylim = [_y - ROI_RADIUS, _y + ROI_RADIUS]
 
+    poseye = irf.summary.figure.positions_of_eyes_in_roi(
+        light_field_geometry=light_field_geometry,
+        roi={"x": xlim, "y": ylim},
+        margin=0.2,
+    )
+
     pl.plot.light_field_geometry.ax_add_polygons_with_colormap(
         polygons=light_field_geometry.lixel_polygons,
         I=pixel["photo_sensor_mask"],
@@ -91,6 +107,19 @@ for pixel in pixels:
         xlim=xlim,
         ylim=ylim,
     )
+
+    for peye in poseye:
+        (_x, _y) = poseye[peye]
+        seb.ax_add_hexagon(
+            ax=ax,
+            x=_x,
+            y=_y,
+            r_outer=eye_outer_radius_m,
+            orientation_deg=0,
+            color="black",
+            linestyle="-",
+            linewidth=0.5,
+        )
 
     ax.text(
         s=pixel["name_in_figure"],
@@ -134,6 +163,27 @@ pl.plot.light_field_geometry.ax_add_polygons_with_colormap(
     linewidths=(0.02,),
 )
 
+poseye = irf.summary.figure.positions_of_eyes_in_roi(
+    light_field_geometry=light_field_geometry,
+    roi={"x": [-10, 10], "y": [-10, 10]},
+    margin=0.2,
+)
+
+for peye in poseye:
+    (_x, _y) = poseye[peye]
+    seb.ax_add_hexagon(
+        ax=ax,
+        x=_x,
+        y=_y,
+        r_outer=eye_outer_radius_m,
+        orientation_deg=0,
+        color="black",
+        linestyle="-",
+        alpha=0.5,
+        linewidth=0.2,
+    )
+
+
 for pixel in pixels:
     _x, _y = pixel["mean_position_of_photo_sensors_on_sensor_plane"]
 
@@ -160,8 +210,8 @@ for pixel in pixels:
 
 ax.spines["right"].set_visible(False)
 ax.spines["top"].set_visible(False)
-ax.set_xlabel("$x_\\mathrm{sensors}\\,/\\,$m")
-ax.set_ylabel("$y_\\mathrm{sensors}\\,/\\,$m")
+ax.set_xlabel("$x\\,/\\,$m")
+ax.set_ylabel("$y\\,/\\,$m")
 
 fig.savefig(os.path.join(pa["out_dir"], "aberration_overview.jpg"))
 seb.close("all")
