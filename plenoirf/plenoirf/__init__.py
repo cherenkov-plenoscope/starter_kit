@@ -26,6 +26,7 @@ import tempfile
 import pandas as pd
 import tarfile
 import io
+import pkg_resources
 
 import json_numpy
 import binning_utils
@@ -387,11 +388,20 @@ def _estimate_trigger_geometry_of_plenoscope(
         tss = pl.trigger.geometry.init_summation_statistics(
             trigger_geometry=trigger_geometry
         )
-        pl.trigger.plot.write_figures_to_directory(
-            trigger_geometry=trigger_geometry,
-            trigger_summation_statistics=tss,
-            out_dir=opj(run_dir, "trigger_geometry", "plot"),
+        plenopy_trigger_script_plot_path = pkg_resources.resource_filename(
+            "plenopy", os.path.join("trigger", "scripts", "plot.py")
         )
+        try:
+            logger.info("plotting trigger-geometry")
+            subprocess.call(
+                [
+                    "python",
+                    plenopy_trigger_script_plot_path,
+                    os.path.join(run_dir, "trigger_geometry"),
+                ]
+            )
+        except:
+            logger.info("failed to plot trigger-geometry")
 
 
 def _populate_table_of_thrown_air_showers(
