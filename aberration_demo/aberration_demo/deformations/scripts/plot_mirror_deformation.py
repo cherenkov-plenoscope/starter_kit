@@ -21,9 +21,10 @@ work_dir = argv[1]
 plot_dir = os.path.join(work_dir, "plot")
 os.makedirs(plot_dir, exist_ok=True)
 
-figstyle = {"rows": 1200, "cols": 1440, "fontsize": 1.1}
+figstyle = {"rows": 1200, "cols": 1440, "fontsize": 1.4}
 ax_span = [0.075, 0.125, 0.8, 0.8]
 cax_span = [0.85, 0.125, 0.03, 0.8]
+axstyle = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
 
 config = abe.utils.read_json(path=os.path.join(work_dir, "config.json"))
 
@@ -106,7 +107,7 @@ AMINMAX_DEG = STEP_ANGLE_DEG * np.ceil(AMINMAX_DEG / STEP_ANGLE_DEG)
 # deformation in z
 # ----------------
 fig = sebplt.figure(style=figstyle)
-ax = sebplt.add_axes(fig, ax_span)
+ax = sebplt.add_axes(fig, ax_span, style=axstyle)
 cax = sebplt.add_axes(fig, cax_span)
 cmap = plenopy.plot.image.add2ax(
     ax=ax,
@@ -120,21 +121,22 @@ cmap = plenopy.plot.image.add2ax(
     colorbar=False,
     norm=None,
 )
+axlabel = r"deformation in $z\,/\,$mm"
+ax.set_title(axlabel)
 ax.set_aspect("equal")
 ax.set_xlim([-R_hex_outer, R_hex_outer])
 ax.set_ylim([-R_hex_outer, R_hex_outer])
-sebplt.ax_add_grid(ax)
 ax.set_xlabel(r"$x\,/\,$m")
 ax.set_ylabel(r"$y\,/\,$m")
 cbar = sebplt.plt.colorbar(cmap, cax=cax)
-cbar.set_label(r"deformation in $z\,/\,$mm")
+# cbar.set_label(axlabel)
 fig.savefig(os.path.join(plot_dir, "mirror_deformation_z_only_facets.jpg"))
 sebplt.close(fig)
 
 # deformation angle
 # -----------------
 fig = sebplt.figure(style=figstyle)
-ax = sebplt.add_axes(fig, ax_span)
+ax = sebplt.add_axes(fig, ax_span, style=axstyle)
 cax = sebplt.add_axes(fig, cax_span)
 cmap = plenopy.plot.image.add2ax(
     ax=ax,
@@ -148,13 +150,14 @@ cmap = plenopy.plot.image.add2ax(
     colorbar=False,
     norm=None,
 )
+axlabel = r"$\vert$ misalignment $\vert\,/\,1^\circ$"
+ax.set_title(axlabel)
 ax.set_aspect("equal")
 ax.set_xlim([-R_hex_outer, R_hex_outer])
 ax.set_ylim([-R_hex_outer, R_hex_outer])
-sebplt.ax_add_grid(ax)
 ax.set_xlabel(r"$x\,/\,$m")
 ax.set_ylabel(r"$y\,/\,$m")
 cbar = sebplt.plt.colorbar(cmap, cax=cax)
-cbar.set_label(r"$\vert$ misalignment $\vert\,/\,1^\circ$")
+# cbar.set_label(axlabel)
 fig.savefig(os.path.join(plot_dir, "mirror_deformation_angle_only_facets.jpg"))
 sebplt.close(fig)
