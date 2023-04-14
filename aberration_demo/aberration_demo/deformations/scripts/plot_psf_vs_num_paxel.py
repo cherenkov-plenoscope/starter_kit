@@ -35,9 +35,9 @@ GRID_ANGLE_DEG = 0.2
 
 CMAPS = {
     "hot": {"gamma": 0.5, "linecolor": "white",},
-    "Blues": {"gamma": 0.25, "linecolor": "black",},
-    "binary": {"gamma": 0.25, "linecolor": "black",},
-    "magma_r": {"gamma": 0.25, "linecolor": "black",},
+    "Blues": {"gamma": 0.5, "linecolor": "black",},
+    "binary": {"gamma": 0.5, "linecolor": "black",},
+    "magma_r": {"gamma": 0.5, "linecolor": "black",},
 }
 
 mkey = "parabola_segmented"
@@ -179,10 +179,9 @@ for cmapkey in CMAPS:
                 np.transpose(norm_image) / CMAP_VMAX,
                 cmap=cmapkey,
                 norm=sebplt.plt_colors.PowerNorm(
-                    gamma=CMAPS[cmapkey]["gamma"]
+                    gamma=CMAPS[cmapkey]["gamma"],
+                    vmin=0.0, vmax=1.0,
                 ),
-                vmax=1,
-                vmin=0,
             )
             sebplt.ax_add_grid_with_explicit_ticks(
                 xticks=ticks_cx_deg,
