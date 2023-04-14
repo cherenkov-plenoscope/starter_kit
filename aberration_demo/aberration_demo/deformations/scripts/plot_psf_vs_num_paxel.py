@@ -87,6 +87,79 @@ def _ax_add_paxel_and_off_axis_labels(ax):
             )
 
 
+def make_explicit_cx_cy_ticks(tcoll, tick_angle):
+    ticks_cx_deg = make_grid_ticks(
+        center=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
+        num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cx"],
+        pixel_angel=tcoll["image"]["binning"]["image"]["pixel_angle_deg"],
+        tick_angle=tick_angle,
+    )
+    ticks_cy_deg = make_grid_ticks(
+        center=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
+        num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cy"],
+        pixel_angel=tcoll["image"]["binning"]["image"]["pixel_angle_deg"],
+        tick_angle=tick_angle,
+    )
+    return ticks_cx_deg, ticks_cy_deg
+
+
+def ax_psf_add_eye(ax, tcoll, bin_edges_cx_deg, bin_edges_cy_deg, linecolor):
+    sebplt.ax_add_circle(
+        ax=ax,
+        x=np.mean(
+            [
+                tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
+                bin_edges_cx_deg[0],
+            ]
+        ),
+        y=np.mean(
+            [
+                tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
+                bin_edges_cy_deg[0],
+            ]
+        ),
+        r=config["sensor"]["dimensions"]["hex_pixel_FoV_flat2flat_deg"]
+        * 0.5
+        * 2
+        / np.sqrt(3),
+        linewidth=0.75,
+        linestyle="-",
+        color=linecolor,
+        alpha=1,
+        num_steps=7,
+    )
+
+
+def ax_psf_set_ticks(ax, tcoll, grid_angle_deg, x=True, y=True):
+    if x:
+        ax.set_xticks(
+            [
+                tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
+                - 3 * grid_angle_deg,
+                tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
+                tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
+                + 3 * grid_angle_deg,
+            ]
+        )
+    else:
+        ax.set_xticks([])
+
+    if y:
+        ax.set_yticks(
+            [
+                tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
+                - 3 * grid_angle_deg,
+                tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
+                tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
+                + 3 * grid_angle_deg,
+            ]
+        )
+    else:
+        ax.set_yticks([])
+
+
+# estimate vmax
+# -------------
 CMAP_VMAX = 0.0
 for isens, pkey in enumerate(coll):
     for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
@@ -98,35 +171,18 @@ for isens, pkey in enumerate(coll):
         vmax = np.max(norm_image)
         CMAP_VMAX = np.max([CMAP_VMAX, vmax])
 
-for cmapkey in CMAPS:
 
+for cmapkey in CMAPS:
     num_sensors = len(coll)
     num_offaxis = len(OFFAXIS_ANGLE_IDXS)
 
-    ax_hori_start = 0.1
-    ax_vert_start = 0.1
-    ax_width_rel = (1.0 - ax_hori_start) / num_offaxis
-    ax_height_rel = (1.0 - ax_vert_start) / num_sensors
-    ax_panel_width_rel = ax_width_rel * 0.9
-    ax_panel_height_rel = ax_height_rel * 0.9
-    ax_margin_width_rel = ax_width_rel - ax_panel_width_rel
-    ax_margin_height_rel = ax_height_rel - ax_panel_height_rel
-
-    fig_psf = sebplt.figure(style={"rows": 1280, "cols": 1280, "fontsize": 1})
-    ax_psf_labels = sebplt.add_axes(
-        fig=fig_psf,
-        span=[0, 0, 1, 1],
-        style={"spines": [], "axes": [], "grid": False},
-    )
-    ax_psf_labels.text(
-        0.04, 0.55, r"$c_y\,/\,1^\circ$", rotation=90, fontsize=12
-    )
-    ax_psf_labels.text(
-        0.55, 0.05, r"$c_x\,/\,1^\circ$", rotation=0, fontsize=12
-    )
-    _ax_add_paxel_and_off_axis_labels(ax=ax_psf_labels)
-
+    cmap_psf = None
     for isens, pkey in enumerate(coll):
+
+        fig_psf = sebplt.figure(
+            style={"rows": 440, "cols": 1280, "fontsize": 1.0}
+        )
+
         for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
             akey = abe.offaxis.ANGLE_FMT.format(ofa)
 
@@ -139,61 +195,46 @@ for cmapkey in CMAPS:
             )
             bin_edges_cx_deg = np.rad2deg(bin_edges_cx)
             bin_edges_cy_deg = np.rad2deg(bin_edges_cy)
-
-            ticks_cx_deg = make_grid_ticks(
-                center=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
-                num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cx"],
-                pixel_angel=tcoll["image"]["binning"]["image"][
-                    "pixel_angle_deg"
-                ],
-                tick_angle=GRID_ANGLE_DEG,
-            )
-            ticks_cy_deg = make_grid_ticks(
-                center=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
-                num_pixel=tcoll["image"]["binning"]["image"]["num_pixel_cy"],
-                pixel_angel=tcoll["image"]["binning"]["image"][
-                    "pixel_angle_deg"
-                ],
-                tick_angle=GRID_ANGLE_DEG,
+            (ticks_cx_deg, ticks_cy_deg,) = make_explicit_cx_cy_ticks(
+                tcoll=tcoll, tick_angle=GRID_ANGLE_DEG
             )
 
-            ax_pax_off = sebplt.add_axes(
+            ax_psf_width = 0.85 / num_offaxis
+            ax_psf = sebplt.add_axes(
                 fig=fig_psf,
                 span=[
-                    ax_hori_start + ax_margin_width_rel + ax_width_rel * iiofa,
-                    ax_vert_start
-                    + ax_margin_height_rel
-                    + ax_height_rel * (num_sensors - isens - 1),
-                    ax_panel_width_rel,
-                    ax_panel_height_rel,
+                    0.1 + iiofa * (ax_psf_width + 0.02),
+                    0.15,
+                    ax_psf_width,
+                    0.8,
                 ],
             )
-
+            ax_psf.set_aspect("equal")
+            # ax_psf.tick_params(direction="in")
             norm_image = (
                 tcoll["image"]["raw"] / tcoll["statistics"]["photons"]["valid"]
             )
 
-            cmap_psf = ax_pax_off.pcolormesh(
+            cmap_psf = ax_psf.pcolormesh(
                 bin_edges_cx_deg,
                 bin_edges_cy_deg,
                 np.transpose(norm_image) / CMAP_VMAX,
                 cmap=cmapkey,
                 norm=sebplt.plt_colors.PowerNorm(
-                    gamma=CMAPS[cmapkey]["gamma"],
-                    vmin=0.0, vmax=1.0,
+                    gamma=CMAPS[cmapkey]["gamma"], vmin=0.0, vmax=1.0,
                 ),
             )
             sebplt.ax_add_grid_with_explicit_ticks(
                 xticks=ticks_cx_deg,
                 yticks=ticks_cy_deg,
-                ax=ax_pax_off,
+                ax=ax_psf,
                 color=CMAPS[cmapkey]["linecolor"],
                 linestyle="-",
                 linewidth=0.33,
                 alpha=0.33,
             )
             sebplt.ax_add_circle(
-                ax=ax_pax_off,
+                ax=ax_psf,
                 x=tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
                 y=tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
                 r=np.rad2deg(tcoll["image"]["angle80"]),
@@ -203,70 +244,29 @@ for cmapkey in CMAPS:
                 alpha=0.5,
                 num_steps=360,
             )
-            ax_pax_off.set_aspect("equal")
+            ax_psf_set_ticks(
+                ax=ax_psf,
+                tcoll=tcoll,
+                grid_angle_deg=GRID_ANGLE_DEG,
+                x=True,
+                y=iiofa == 0,
+            )
+            ax_psf_add_eye(
+                ax=ax_psf,
+                tcoll=tcoll,
+                bin_edges_cx_deg=bin_edges_cx_deg,
+                bin_edges_cy_deg=bin_edges_cy_deg,
+                linecolor=CMAPS[cmapkey]["linecolor"],
+            )
 
-            if isens == num_sensors - 1:
-                ax_pax_off.set_xticks(
-                    [
-                        tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
-                        - 3 * GRID_ANGLE_DEG,
-                        tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
-                        tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
-                        + 3 * GRID_ANGLE_DEG,
-                    ]
-                )
-            else:
-                ax_pax_off.set_xticks([])
+        fig_psf_name = "psf_{:s}_{:s}_{:s}_images.jpg".format(
+            mkey, pkey, cmapkey
+        )
+        fig_psf.savefig(os.path.join(out_dir, fig_psf_name))
+        sebplt.close(fig_psf)
 
-            if iiofa == 0:
-                ax_pax_off.set_yticks(
-                    [
-                        tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
-                        - 3 * GRID_ANGLE_DEG,
-                        tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
-                        tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
-                        + 3 * GRID_ANGLE_DEG,
-                    ]
-                )
-            else:
-                ax_pax_off.set_yticks([])
-
-            if True:
-                sebplt.ax_add_circle(
-                    ax=ax_pax_off,
-                    x=np.mean(
-                        [
-                            tcoll["image"]["binning"]["image"]["center"][
-                                "cx_deg"
-                            ],
-                            bin_edges_cx_deg[0],
-                        ]
-                    ),
-                    y=np.mean(
-                        [
-                            tcoll["image"]["binning"]["image"]["center"][
-                                "cy_deg"
-                            ],
-                            bin_edges_cy_deg[0],
-                        ]
-                    ),
-                    r=config["sensor"]["dimensions"][
-                        "hex_pixel_FoV_flat2flat_deg"
-                    ]
-                    * 0.5
-                    * 2
-                    / np.sqrt(3),
-                    linewidth=0.75,
-                    linestyle="-",
-                    color=CMAPS[cmapkey]["linecolor"],
-                    alpha=1,
-                    num_steps=7,
-                )
-
-    fig_filename = "psf_{:s}_{:s}_images.jpg".format(mkey, cmapkey)
-    fig_psf.savefig(os.path.join(out_dir, fig_filename))
-    sebplt.close(fig_psf)
-
+    # colormap
+    # --------
     fig_psf_cmap = sebplt.figure(
         style={"rows": 120, "cols": 1280, "fontsize": 1}
     )
@@ -295,30 +295,22 @@ time_grid_yticks = np.linspace(
 time_yticks = np.array([0, 5])
 time_xticks_ns = np.linspace(time_start_ns, time_stop_ns, 11)
 
-fig_tsf = sebplt.figure(style={"rows": 1280, "cols": 1280, "fontsize": 1})
-ax_tsf_labels = sebplt.add_axes(
-    fig=fig_tsf,
-    span=[0, 0, 1, 1],
-    style={"spines": [], "axes": [], "grid": False},
-)
-ax_tsf_labels.text(0.06, 0.45, r"intensity$\,/\,$%", rotation=90, fontsize=12)
-ax_tsf_labels.text(0.5, 0.05, r"time$\,/\,$ns", rotation=0, fontsize=12)
-_ax_add_paxel_and_off_axis_labels(ax=ax_tsf_labels)
 
 for isens, pkey in enumerate(coll):
+    fig_tsf = sebplt.figure(style={"rows": 440, "cols": 1280, "fontsize": 1})
+
     for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
         akey = abe.offaxis.ANGLE_FMT.format(ofa)
         tcoll = coll[pkey][akey]
 
-        ax_pax_off = sebplt.add_axes(
+        ax_tsf_width = 0.85 / num_offaxis
+        ax_tsf = sebplt.add_axes(
             fig=fig_tsf,
             span=[
-                ax_hori_start + ax_margin_width_rel + ax_width_rel * iiofa,
-                ax_vert_start
-                + ax_margin_height_rel
-                + ax_height_rel * (num_sensors - isens - 1),
-                ax_panel_width_rel,
-                ax_panel_height_rel,
+                0.1 + iiofa * (ax_tsf_width + 0.02),
+                0.15,
+                ax_tsf_width,
+                0.8,
             ],
             style={
                 "spines": ["left", "bottom"],
@@ -326,6 +318,7 @@ for isens, pkey in enumerate(coll):
                 "grid": False,
             },
         )
+
         time_center_ns = 0.5e9 * (
             tcoll["time"]["fwhm"]["stop"] + tcoll["time"]["fwhm"]["start"]
         )
@@ -333,36 +326,33 @@ for isens, pkey in enumerate(coll):
             100 * tcoll["time"]["weights"] / np.sum(tcoll["time"]["weights"])
         )
         sebplt.ax_add_histogram(
-            ax=ax_pax_off,
+            ax=ax_tsf,
             bin_edges=1e9 * tcoll["time"]["bin_edges"] - time_center_ns,
             bincounts=time_weights_norm_perc,
             face_color="k",
             face_alpha=0.1,
             draw_bin_walls=True,
         )
-        ax_pax_off.set_xlim([time_start_ns, time_stop_ns])
-        ax_pax_off.set_ylim([time_weight_start_perc, time_weight_stop_perc])
+        ax_tsf.set_xlim([time_start_ns, time_stop_ns])
+        ax_tsf.set_ylim([time_weight_start_perc, time_weight_stop_perc])
         # ax_pax_off.semilogy()
 
         sebplt.ax_add_grid_with_explicit_ticks(
             xticks=time_xticks_ns,
             yticks=time_grid_yticks,
-            ax=ax_pax_off,
+            ax=ax_tsf,
             color="k",
             linestyle="-",
             linewidth=0.33,
             alpha=0.33,
         )
 
-        if isens == num_sensors - 1:
-            pass  # ax_pax_off.set_xticks(tcoll["time"]["bin_edges"])
-        else:
-            ax_pax_off.set_xticks([])
-
         if iiofa == 0:
-            ax_pax_off.set_yticks(time_yticks)
+            ax_tsf.set_yticks(time_yticks)
         else:
-            ax_pax_off.set_yticks([])
+            ax_tsf.set_yticks([])
 
-fig_tsf.savefig(os.path.join(out_dir, "tsf_" + mkey + "_hists.jpg"))
-sebplt.close(fig_tsf)
+    fig_tsf.savefig(
+        os.path.join(out_dir, "tsf_{:s}_{:s}_hists.jpg".format(mkey, pkey))
+    )
+    sebplt.close(fig_tsf)
