@@ -34,10 +34,10 @@ OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.2
 
 CMAPS = {
-    "hot": {"gamma": 0.5, "linecolor": "white",},
-    "Blues": {"gamma": 0.5, "linecolor": "black",},
-    "binary": {"gamma": 0.5, "linecolor": "black",},
-    "magma_r": {"gamma": 0.5, "linecolor": "black",},
+    "hot": {"gamma": 1, "linecolor": "white",},
+    "Blues": {"gamma": 1, "linecolor": "black",},
+    "binary": {"gamma": 1, "linecolor": "black",},
+    "magma_r": {"gamma": 1, "linecolor": "black",},
 }
 
 mkey = "parabola_segmented"
