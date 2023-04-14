@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="aberration_demo",
-    version="0.0.1",
+    version="0.0.2",
     description="A simple simulation to show the power of plenoptic perception",
     long_description=long_description,
     url="https://github.com/cherenkov-plenoscope",

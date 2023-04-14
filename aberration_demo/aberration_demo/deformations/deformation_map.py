@@ -10,7 +10,7 @@ import perlin_noise
 
 EXAMPLE_MIRROR_DEFORMATION = {
     "perlin_noise": {"octaves": 1.5, "seed": 43, "num_bins_on_edge": 256,},
-    "amplitude_m": 5.0e-2,
+    "amplitude_m": 15.0e-2,
     "offset_m": 0.0,
 }
 
@@ -77,6 +77,8 @@ def init_from_perlin_noise(
             z_map[x, y] = png.noise([x / N, y / N])
 
     z_map *= amplitude_m
+
+    z_map -= np.mean(z_map)
     z_map += offset_m
 
     return init_from_z_map(z_map=z_map, mirror_diameter_m=mirror_diameter_m,)
