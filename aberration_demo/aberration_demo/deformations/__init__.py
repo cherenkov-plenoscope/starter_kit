@@ -16,6 +16,7 @@ import shutil
 import plenoirf
 import plenopy
 import network_file_system as nfs
+import pkg_resources
 
 from . import deformation_map
 from . import parabola_segmented
@@ -144,18 +145,12 @@ def run(
 
 
 def plot_mirror_deformation(work_dir):
+    script_path = pkg_resources.resource_filename(
+        "aberration_demo",
+        os.path.join("deformations", "scripts", "plot_mirror_deformation.py"),
+    )
     subprocess.call(
-        [
-            "python",
-            os.path.join(
-                "aberration_demo",
-                "aberration_demo",
-                "deformations",
-                "scripts",
-                "plot_mirror_deformation.py",
-            ),
-            work_dir,
-        ]
+        ["python", script_path, work_dir,]
     )
 
 
