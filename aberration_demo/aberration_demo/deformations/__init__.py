@@ -141,13 +141,23 @@ def run(
     logger.info("Make analysis")
     make_analysis(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
+    logger.info("Plot analysis")
+    plot_analysis(work_dir=work_dir)
+
     logger.info("Stop")
 
 
 def plot_mirror_deformation(work_dir):
+    _run_script(work_dir=work_dir, scriptname="plot_mirror_deformation.py")
+
+
+def plot_analysis(work_dir):
+    _run_script(work_dir=work_dir, scriptname="plot_psf_vs_num_paxel.py")
+
+
+def _run_script(work_dir, scriptname):
     script_path = pkg_resources.resource_filename(
-        "aberration_demo",
-        os.path.join("deformations", "scripts", "plot_mirror_deformation.py"),
+        "aberration_demo", os.path.join("deformations", "scripts", scriptname),
     )
     subprocess.call(
         ["python", script_path, work_dir,]

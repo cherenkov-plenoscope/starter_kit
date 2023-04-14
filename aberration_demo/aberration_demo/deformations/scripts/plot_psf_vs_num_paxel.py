@@ -20,7 +20,7 @@ if argv[0] == "ipython" and argv[1] == "-i":
     argv.pop(1)
 
 work_dir = argv[1]
-out_dir = os.path.join(work_dir, "figures", "psf_vs_num_paxel")
+out_dir = os.path.join(work_dir, "plot", "psf_vs_num_paxel")
 os.makedirs(out_dir, exist_ok=True)
 
 config = json_numpy.read(os.path.join(work_dir, "config.json"))
@@ -34,7 +34,7 @@ OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.2
 
 CMAPS = {
-    "hot": {"gamma": 0.33, "linecolor": "white",},
+    "hot": {"gamma": 0.5, "linecolor": "white",},
     "Blues": {"gamma": 0.25, "linecolor": "black",},
     "binary": {"gamma": 0.25, "linecolor": "black",},
     "magma_r": {"gamma": 0.25, "linecolor": "black",},
@@ -119,10 +119,10 @@ for cmapkey in CMAPS:
         style={"spines": [], "axes": [], "grid": False},
     )
     ax_psf_labels.text(
-        0.04, 0.55, r"$c_y$ / 1$^\circ$", rotation=90, fontsize=12
+        0.04, 0.55, r"$c_y\,/\,1^\circ$", rotation=90, fontsize=12
     )
     ax_psf_labels.text(
-        0.55, 0.05, r"$c_x$ / 1$^\circ$", rotation=0, fontsize=12
+        0.55, 0.05, r"$c_x\,/\,1^\circ$", rotation=0, fontsize=12
     )
     _ax_add_paxel_and_off_axis_labels(ax=ax_psf_labels)
 
@@ -302,8 +302,8 @@ ax_tsf_labels = sebplt.add_axes(
     span=[0, 0, 1, 1],
     style={"spines": [], "axes": [], "grid": False},
 )
-ax_tsf_labels.text(0.06, 0.45, r"intensity / %", rotation=90, fontsize=12)
-ax_tsf_labels.text(0.5, 0.05, r"time / ns", rotation=0, fontsize=12)
+ax_tsf_labels.text(0.06, 0.45, r"intensity$\,/\,$%", rotation=90, fontsize=12)
+ax_tsf_labels.text(0.5, 0.05, r"time$\,/\,$ns", rotation=0, fontsize=12)
 _ax_add_paxel_and_off_axis_labels(ax=ax_tsf_labels)
 
 for isens, pkey in enumerate(coll):
