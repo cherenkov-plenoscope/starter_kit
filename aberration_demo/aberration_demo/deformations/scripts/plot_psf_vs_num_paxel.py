@@ -34,6 +34,7 @@ OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.2
 
 CMAPS = {
+    "inferno": {"gamma": 0.5, "linecolor": "white",},
     "hot": {"gamma": 1, "linecolor": "white",},
     "Blues": {"gamma": 1, "linecolor": "black",},
     "binary": {"gamma": 1, "linecolor": "black",},
@@ -179,6 +180,15 @@ for cmapkey in CMAPS:
     cmap_psf = None
     for isens, pkey in enumerate(coll):
 
+        fig_filename = "psf_{:s}_{:s}_{:s}_images.jpg".format(
+            mkey, pkey, cmapkey
+        )
+        fig_path = os.path.join(out_dir, fig_filename)
+        cmap_psf = None
+
+        if os.path.exists(fig_path):
+            continue
+
         fig_psf = sebplt.figure(
             style={"rows": 440, "cols": 1280, "fontsize": 1.0}
         )
@@ -259,31 +269,27 @@ for cmapkey in CMAPS:
                 linecolor=CMAPS[cmapkey]["linecolor"],
             )
 
-        fig_psf_name = "psf_{:s}_{:s}_{:s}_images.jpg".format(
-            mkey, pkey, cmapkey
-        )
-        fig_psf.savefig(os.path.join(out_dir, fig_psf_name))
+        fig_psf.savefig(fig_path)
         sebplt.close(fig_psf)
 
-    # colormap
-    # --------
-    fig_psf_cmap = sebplt.figure(
-        style={"rows": 120, "cols": 1280, "fontsize": 1}
-    )
-    ax_cmap = sebplt.add_axes(fig_psf_cmap, [0.1, 0.8, 0.8, 0.15])
-    ax_cmap.text(0.5, -4.7, "intensity / 1")
-    sebplt.plt.colorbar(
-        cmap_psf, cax=ax_cmap, extend="max", orientation="horizontal"
-    )
-    fig_cmap_filename = "psf_{:s}_{:s}_cmap_.jpg".format(mkey, cmapkey)
-    fig_psf_cmap.savefig(os.path.join(out_dir, fig_cmap_filename))
-    sebplt.close(fig_psf_cmap)
+    if cmap_psf:
+        # colormap
+        # --------
+        fig_psf_cmap = sebplt.figure(
+            style={"rows": 120, "cols": 1280, "fontsize": 1}
+        )
+        ax_cmap = sebplt.add_axes(fig_psf_cmap, [0.1, 0.8, 0.8, 0.15])
+        ax_cmap.text(0.5, -4.7, "intensity / 1")
+        sebplt.plt.colorbar(
+            cmap_psf, cax=ax_cmap, extend="max", orientation="horizontal"
+        )
+        fig_cmap_filename = "psf_{:s}_{:s}_cmap_.jpg".format(mkey, cmapkey)
+        fig_psf_cmap.savefig(os.path.join(out_dir, fig_cmap_filename))
+        sebplt.close(fig_psf_cmap)
 
 
 # summary plot of time-spread-functions
 # -------------------------------------
-
-
 time_start_ns = -25
 time_stop_ns = 25
 time_weight_start_perc = 0
@@ -297,6 +303,13 @@ time_xticks_ns = np.linspace(time_start_ns, time_stop_ns, 11)
 
 
 for isens, pkey in enumerate(coll):
+
+    fig_tsf_filename = "tsf_{:s}_{:s}_hists.jpg".format(mkey, pkey)
+    fig_tsf_path = os.path.join(out_dir, fig_tsf_filename)
+
+    if os.path.exists(fig_tsf_path):
+        continue
+
     fig_tsf = sebplt.figure(style={"rows": 440, "cols": 1280, "fontsize": 1})
 
     for iiofa, ofa in enumerate(OFFAXIS_ANGLE_IDXS):
@@ -352,7 +365,134 @@ for isens, pkey in enumerate(coll):
         else:
             ax_tsf.set_yticks([])
 
-    fig_tsf.savefig(
-        os.path.join(out_dir, "tsf_{:s}_{:s}_hists.jpg".format(mkey, pkey))
-    )
+    fig_tsf.savefig(fig_tsf_path)
     sebplt.close(fig_tsf)
+
+
+# plot psf80 vs off-axes
+# ----------------------
+NUM_PAXEL_STYLE = {
+    "paxel000001": {"color": "black", "linestyle": "-", "alpha": 1,},
+    "paxel000003": {"color": "black", "linestyle": ":", "alpha": 0.3},
+    "paxel000009": {"color": "black", "linestyle": ":", "alpha": 1},
+}
+SOLID_ANGLE_SCALE = 1e6
+
+fig = sebplt.figure(style={"rows": 720, "cols": 1280, "fontsize": 1})
+ax = sebplt.add_axes(fig=fig, span=[0.15, 0.2, 0.72, 0.75],)
+ax_deg2 = ax.twinx()
+ax_deg2.spines["top"].set_visible(False)
+
+solid_angle_80_sr_start = 1e-6
+solid_angle_80_sr_stop = 1e-4
+
+ylabel_name = r"solid angle containing 80%"
+label_sep = r"$\,/\,$"
+ax.set_ylim(
+    SOLID_ANGLE_SCALE
+    * np.array([solid_angle_80_sr_start, solid_angle_80_sr_stop])
+)
+ax.semilogy()
+ax.set_ylabel(ylabel_name + label_sep + r"$\mu$sr")
+
+solid_angle_80_deg2_start = plenoirf.utils.sr2squaredeg(
+    solid_angle_80_sr_start
+)
+solid_angle_80_deg2_stop = plenoirf.utils.sr2squaredeg(solid_angle_80_sr_stop)
+ax_deg2.set_ylim(
+    np.array([solid_angle_80_deg2_start, solid_angle_80_deg2_stop])
+)
+ax_deg2.semilogy()
+ax_deg2.set_ylabel(label_sep + r"(1$^{\circ}$)$^2$")
+
+sebplt.ax_add_grid(ax=ax, add_minor=True)
+
+for isens, pkey in enumerate(coll):
+    offaxis_angles_deg = config["sources"]["off_axis_angles_deg"]
+    angles80_rad = np.zeros(len(offaxis_angles_deg))
+    for iang, akey in enumerate(coll[pkey]):
+        angles80_rad[iang] = coll[pkey][akey]["image"]["angle80"]
+
+    cone80_solid_angle_sr = np.zeros(len(angles80_rad))
+    for iang in range(len(angles80_rad)):
+        cone80_solid_angle_sr[iang] = plenoirf.utils.cone_solid_angle(
+            cone_radial_opening_angle_rad=angles80_rad[iang]
+        )
+
+    ax.plot(
+        offaxis_angles_deg,
+        cone80_solid_angle_sr * SOLID_ANGLE_SCALE,
+        color=NUM_PAXEL_STYLE[pkey]["color"],
+        linestyle=NUM_PAXEL_STYLE[pkey]["linestyle"],
+        alpha=NUM_PAXEL_STYLE[pkey]["alpha"],
+    )
+
+    for iang in range(len(angles80_rad)):
+        if iang in OFFAXIS_ANGLE_IDXS:
+            marker = "o"
+        else:
+            marker = "x"
+        ax.plot(
+            offaxis_angles_deg[iang],
+            cone80_solid_angle_sr[iang] * SOLID_ANGLE_SCALE,
+            color=NUM_PAXEL_STYLE[pkey]["color"],
+            alpha=NUM_PAXEL_STYLE[pkey]["alpha"],
+            marker=marker,
+            linewidth=0,
+        )
+
+ax.set_xlabel(r"angle off the mirror's optical axis$\,/\,1^{\circ}$")
+
+fig.savefig(os.path.join(out_dir, "psf_vs_num_paxel_vs_off_axis.jpg"))
+sebplt.close(fig)
+
+
+with open(
+    os.path.join(out_dir, "psf_vs_num_paxel_vs_off_axis.txt"), "wt"
+) as f:
+    f.write("{:>20s},".format("offaxis/deg"))
+    for isens, pkey in enumerate(coll):
+        f.write("{:>20s},".format(pkey))
+    f.write("\n")
+
+    # half angle
+    # ==========
+    f.write("{:>20s},".format(""))
+    for isens, pkey in enumerate(coll):
+        f.write("{:>20s},".format("half-angle-80/deg"))
+    f.write("\n")
+
+    for iang, akey in enumerate(coll[pkey]):
+        offax_deg = config["sources"]["off_axis_angles_deg"][iang]
+        f.write("{: 20.2},".format(offax_deg))
+        for isens, pkey in enumerate(coll):
+
+            half_angle80_rad = coll[pkey][akey]["image"]["angle80"]
+            half_angle80_deg = np.rad2deg(half_angle80_rad)
+            f.write("{: 20.2},".format(half_angle80_deg))
+
+        f.write("\n")
+
+    f.write("\n")
+
+    # solid angle
+    # ===========
+    f.write("{:>20s},".format(""))
+    for isens, pkey in enumerate(coll):
+        f.write("{:>20s},".format("solid-angle-80/usr"))
+    f.write("\n")
+
+    for iang, akey in enumerate(coll[pkey]):
+        offax_deg = config["sources"]["off_axis_angles_deg"][iang]
+        f.write("{: 20.2},".format(offax_deg))
+        for isens, pkey in enumerate(coll):
+
+            half_angle80_rad = coll[pkey][akey]["image"]["angle80"]
+            solid_angle_80_sr = plenoirf.utils.cone_solid_angle(
+                cone_radial_opening_angle_rad=half_angle80_rad
+            )
+            f.write("{: 20.2},".format(SOLID_ANGLE_SCALE * solid_angle_80_sr))
+
+        f.write("\n")
+
+    f.write("\n")

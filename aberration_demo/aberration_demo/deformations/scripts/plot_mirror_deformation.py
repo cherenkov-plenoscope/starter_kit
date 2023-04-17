@@ -26,6 +26,9 @@ ax_span = [0.075, 0.125, 0.8, 0.8]
 cax_span = [0.8, 0.125, 0.03, 0.8]
 axstyle = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
 
+CMAP_Z = "bwr"
+CMAP_NORMAL = "inferno"
+
 config = abe.utils.read_json(path=os.path.join(work_dir, "config.json"))
 
 demfap_zeor = abe.deformations.deformation_map.init_from_mirror_and_deformation_configs(
@@ -114,7 +117,7 @@ cmap = plenopy.plot.image.add2ax(
     I=facets_z_m * 1e3,
     px=facets_x_m,
     py=facets_y_m,
-    colormap="seismic",
+    colormap=CMAP_Z,
     hexrotation=30,
     vmin=-ZMINMAX_M * 1e3,
     vmax=ZMINMAX_M * 1e3,
@@ -143,7 +146,7 @@ cmap = plenopy.plot.image.add2ax(
     I=facets_a_deg,
     px=facets_x_m,
     py=facets_y_m,
-    colormap="inferno",
+    colormap=CMAP_NORMAL,
     hexrotation=30,
     vmin=0.0,
     vmax=AMINMAX_DEG,
