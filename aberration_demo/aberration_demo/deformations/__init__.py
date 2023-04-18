@@ -133,7 +133,7 @@ def run(
     )
 
     logger.info("Make calibration source")
-    make_source(work_dir=work_dir)
+    make_source(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
 
     logger.info("Make responses to calibration source")
     make_responses(work_dir=work_dir, map_and_reduce_pool=map_and_reduce_pool)
@@ -288,7 +288,7 @@ def _light_field_geometries_run_rjob(rjob):
     return rc
 
 
-def make_source(work_dir):
+def make_source(work_dir, map_and_reduce_pool):
     """
     Makes the calibration-source.
     This is a bundle of parallel photons coming from zenith.
@@ -300,10 +300,16 @@ def make_source(work_dir):
     work_dir : str
         Path to the work_dir
     """
+    jobs = _sources_make_jobs(work_dir=work_dir)
+    _ = map_and_reduce_pool.map(_sources_run_job, jobs)
+
+
+def _sources_make_jobs(work_dir):
     config = read_json(os.path.join(work_dir, "config.json"))
     sources_dir = os.path.join(work_dir, "sources")
     os.makedirs(sources_dir, exist_ok=True)
 
+    jobs = []
     for iofa, off_axis_angle_deg in enumerate(
         config["sources"]["off_axis_angles_deg"]
     ):
@@ -312,17 +318,28 @@ def make_source(work_dir):
         )
 
         if not os.path.exists(source_path):
-            prng = np.random.Generator(np.random.PCG64(config["seed"]))
-            off_axis_angle = np.deg2rad(off_axis_angle_deg)
-            calibration_source.write_photon_bunches(
-                cx=off_axis_angle,
-                cy=0.0,
-                size=config["sources"]["num_photons"],
-                path=source_path,
-                prng=prng,
-                aperture_radius=1.2
-                * config["mirror"]["dimensions"]["max_outer_aperture_radius"],
-            )
+            job = {}
+            job["work_dir"] = work_dir
+            job["iofa"] = iofa
+            job["off_axis_angle_deg"] = off_axis_angle_deg
+            job["path"] = source_path
+            jobs.append(job)
+    return jobs
+
+
+def _sources_run_job(job):
+    config = read_json(os.path.join(job["work_dir"], "config.json"))
+    prng = np.random.Generator(np.random.PCG64(config["seed"] + job["iofa"]))
+    off_axis_angle_rad = np.deg2rad(job["off_axis_angle_deg"])
+    calibration_source.write_photon_bunches(
+        cx=off_axis_angle_rad,
+        cy=0.0,
+        size=config["sources"]["num_photons"],
+        path=job["path"],
+        prng=prng,
+        aperture_radius=1.2
+        * config["mirror"]["dimensions"]["max_outer_aperture_radius"],
+    )
 
 
 def make_responses(
