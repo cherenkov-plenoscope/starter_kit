@@ -423,13 +423,16 @@ NUM_PAXEL_STYLE = {
 }
 SOLID_ANGLE_SCALE = 1e6
 
-fig = sebplt.figure(style={"rows": 640, "cols": 1280, "fontsize": 1})
+solid_angle_80_sr_start = 0
+solid_angle_80_sr_stop = 50e-6
+solid_angle_80_sr_per_pixel = 20e-6 / 640
+num_rows = solid_angle_80_sr_stop / solid_angle_80_sr_per_pixel
+
+fig = sebplt.figure(style={"rows": num_rows, "cols": 1280, "fontsize": 1})
 ax = sebplt.add_axes(fig=fig, span=[0.15, 0.2, 0.72, 0.75],)
 ax_deg2 = ax.twinx()
 ax_deg2.spines["top"].set_visible(False)
 
-solid_angle_80_sr_start = 0
-solid_angle_80_sr_stop = 26e-6
 
 ylabel_name = r"solid angle containing 80%"
 label_sep = r"$\,/\,$"
@@ -452,7 +455,9 @@ ax_deg2.set_ylabel(r"(1$^{\circ}$)$^2$")
 
 sebplt.ax_add_grid(ax=ax, add_minor=True)
 
+average_angle80_in_fov = {}
 for isens, pkey in enumerate(coll):
+
     offaxis_angles_deg = config["sources"]["off_axis_angles_deg"]
     angles80_rad = np.zeros(len(offaxis_angles_deg))
     for iang, akey in enumerate(coll[pkey]):
@@ -463,6 +468,12 @@ for isens, pkey in enumerate(coll):
         cone80_solid_angle_sr[iang] = plenoirf.utils.cone_solid_angle(
             cone_radial_opening_angle_rad=angles80_rad[iang]
         )
+
+    off_axis_weight = np.pi * offaxis_angles_deg ** 2
+    off_axis_weight /= np.sum(off_axis_weight)
+    average_angle80_in_fov[pkey] = np.average(
+        angles80_rad, weights=off_axis_weight,
+    )
 
     ax.plot(
         offaxis_angles_deg,
@@ -542,4 +553,33 @@ with open(
 
         f.write("\n")
 
+    f.write("\n")
+
+    # average
+    # =======
+    f.write("{:>20s},".format(""))
+    for pkey in coll:
+        f.write("{:>20s},".format("avg-solid-80/usr"))
+    f.write("\n")
+
+    f.write("{:>20s},".format(""))
+    for pkey in coll:
+        avg_solid_angle_usr = (
+            SOLID_ANGLE_SCALE
+            * plenoirf.utils.cone_solid_angle(
+                cone_radial_opening_angle_rad=average_angle80_in_fov[pkey]
+            )
+        )
+        f.write("{: 20.2},".format(avg_solid_angle_usr))
+    f.write("\n")
+
+    f.write("{:>20s},".format(""))
+    for pkey in coll:
+        f.write("{:>20s},".format("avg-angle-80/deg"))
+    f.write("\n")
+
+    f.write("{:>20s},".format(""))
+    for pkey in coll:
+        average_angle80_in_fov_deg = np.rad2deg(average_angle80_in_fov[pkey])
+        f.write("{: 20.2},".format(average_angle80_in_fov_deg))
     f.write("\n")

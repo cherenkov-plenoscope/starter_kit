@@ -27,7 +27,7 @@ cax_span = [0.8, 0.125, 0.03, 0.8]
 axstyle = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
 
 CMAP_Z = "bwr"
-CMAP_NORMAL = "inferno"
+CMAP_NORMAL = "magma_r"
 
 config = abe.utils.read_json(path=os.path.join(work_dir, "config.json"))
 
@@ -48,7 +48,7 @@ facets = abe.deformations.parabola_segmented.make_facets(
 )
 
 STEP_Z_M = 0.005
-STEP_ANGLE_DEG = 0.1
+STEP_ANGLE_DEG = 0.02
 
 N = 128
 R_hex_outer = config["mirror"]["dimensions"]["max_outer_aperture_radius"]
@@ -124,7 +124,7 @@ cmap = plenopy.plot.image.add2ax(
     colorbar=False,
     norm=None,
 )
-axlabel = r"deformation in $z\,/\,$mm"
+axlabel = r"deformation along optical axis$\,/\,$mm"
 # ax.set_title(axlabel)
 ax.set_aspect("equal")
 ax.set_xlim([-R_hex_outer, R_hex_outer])
