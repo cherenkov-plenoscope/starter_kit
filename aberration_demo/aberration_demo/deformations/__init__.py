@@ -45,12 +45,12 @@ CONFIG["sensor"]["dimensions"] = copy.deepcopy(portal.SENSOR)
 CONFIG["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3, 9]
 
 CONFIG["sources"] = {}
-CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 7)
-CONFIG["sources"]["num_photons"] = 100 * 1000
+CONFIG["sources"]["off_axis_angles_deg"] = np.linspace(0.0, 3.0, 51)
+CONFIG["sources"]["num_photons"] = 1000 * 1000
 
 CONFIG["light_field_geometry"] = {}
-CONFIG["light_field_geometry"]["num_blocks"] = 1
-CONFIG["light_field_geometry"]["num_photons_per_block"] = 100 * 1000
+CONFIG["light_field_geometry"]["num_blocks"] = 16
+CONFIG["light_field_geometry"]["num_photons_per_block"] = 1000 * 1000
 
 CONFIG["binning"] = copy.deepcopy(analysis.BINNING)
 
