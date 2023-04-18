@@ -424,11 +424,9 @@ NUM_PAXEL_STYLE = {
 SOLID_ANGLE_SCALE = 1e6
 
 solid_angle_80_sr_start = 0
-solid_angle_80_sr_stop = 50e-6
-solid_angle_80_sr_per_pixel = 20e-6 / 640
-num_rows = solid_angle_80_sr_stop / solid_angle_80_sr_per_pixel
+solid_angle_80_sr_stop = 20e-6
 
-fig = sebplt.figure(style={"rows": num_rows, "cols": 1280, "fontsize": 1})
+fig = sebplt.figure(style={"rows": 640, "cols": 1280, "fontsize": 1})
 ax = sebplt.add_axes(fig=fig, span=[0.15, 0.2, 0.72, 0.75],)
 ax_deg2 = ax.twinx()
 ax_deg2.spines["top"].set_visible(False)
