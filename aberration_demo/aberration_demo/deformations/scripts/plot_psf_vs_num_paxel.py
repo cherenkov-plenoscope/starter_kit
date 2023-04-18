@@ -392,7 +392,7 @@ ax.set_ylim(
     SOLID_ANGLE_SCALE
     * np.array([solid_angle_80_sr_start, solid_angle_80_sr_stop])
 )
-#ax.semilogy()
+# ax.semilogy()
 ax.set_ylabel(ylabel_name + label_sep + r"$\mu$sr")
 
 solid_angle_80_deg2_start = plenoirf.utils.sr2squaredeg(
@@ -402,7 +402,7 @@ solid_angle_80_deg2_stop = plenoirf.utils.sr2squaredeg(solid_angle_80_sr_stop)
 ax_deg2.set_ylim(
     np.array([solid_angle_80_deg2_start, solid_angle_80_deg2_stop])
 )
-#ax_deg2.semilogy()
+# ax_deg2.semilogy()
 ax_deg2.set_ylabel(label_sep + r"(1$^{\circ}$)$^2$")
 
 sebplt.ax_add_grid(ax=ax, add_minor=True)
