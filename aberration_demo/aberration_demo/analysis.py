@@ -14,7 +14,7 @@ BINNING["image"] = {}
 BINNING["image"]["center"] = {"cx_deg": 0.0, "cy_deg": 0.0}
 BINNING["image"]["num_pixel_cx"] = 64
 BINNING["image"]["num_pixel_cy"] = 64
-BINNING["image"]["pixel_angle_deg"] = 0.025
+BINNING["image"]["pixel_angle_deg"] = 0.0125
 
 
 def make_bin_edges_and_centers(bin_width, num_bins, first_bin_center):
