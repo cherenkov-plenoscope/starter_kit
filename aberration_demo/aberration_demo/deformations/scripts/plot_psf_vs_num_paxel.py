@@ -29,12 +29,12 @@ coll = abe.deformations.read_analysis(work_dir=work_dir)
 # summary plot of point-spread-functions
 # --------------------------------------
 
-OFFAXIS_ANGLE_IDXS = [0, 3, 6]
+OFFAXIS_ANGLE_IDXS = [0, 23, 45]
 OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
-GRID_ANGLE_DEG = 0.2
+GRID_ANGLE_DEG = 0.1
 
 CMAPS = {
-    "inferno": {"gamma": 0.5, "linecolor": "white",},
+    "inferno": {"gamma": 1.0, "linecolor": "white",},
     "hot": {"gamma": 1, "linecolor": "white",},
     "Blues": {"gamma": 1, "linecolor": "black",},
     "binary": {"gamma": 1, "linecolor": "black",},
@@ -131,15 +131,15 @@ def ax_psf_add_eye(ax, tcoll, bin_edges_cx_deg, bin_edges_cy_deg, linecolor):
     )
 
 
-def ax_psf_set_ticks(ax, tcoll, grid_angle_deg, x=True, y=True):
+def ax_psf_set_ticks(ax, tcoll, grid_angle_deg, x=True, y=True, n=3):
     if x:
         ax.set_xticks(
             [
                 tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
-                - 3 * grid_angle_deg,
+                - n * grid_angle_deg,
                 tcoll["image"]["binning"]["image"]["center"]["cx_deg"],
                 tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
-                + 3 * grid_angle_deg,
+                + n * grid_angle_deg,
             ]
         )
     else:
@@ -149,10 +149,10 @@ def ax_psf_set_ticks(ax, tcoll, grid_angle_deg, x=True, y=True):
         ax.set_yticks(
             [
                 tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
-                - 3 * grid_angle_deg,
+                - n * grid_angle_deg,
                 tcoll["image"]["binning"]["image"]["center"]["cy_deg"],
                 tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
-                + 3 * grid_angle_deg,
+                + n * grid_angle_deg,
             ]
         )
     else:
@@ -383,8 +383,8 @@ ax = sebplt.add_axes(fig=fig, span=[0.15, 0.2, 0.72, 0.75],)
 ax_deg2 = ax.twinx()
 ax_deg2.spines["top"].set_visible(False)
 
-solid_angle_80_sr_start = 1e-6
-solid_angle_80_sr_stop = 1e-4
+solid_angle_80_sr_start = 0
+solid_angle_80_sr_stop = 20e-6
 
 ylabel_name = r"solid angle containing 80%"
 label_sep = r"$\,/\,$"
@@ -392,7 +392,7 @@ ax.set_ylim(
     SOLID_ANGLE_SCALE
     * np.array([solid_angle_80_sr_start, solid_angle_80_sr_stop])
 )
-ax.semilogy()
+#ax.semilogy()
 ax.set_ylabel(ylabel_name + label_sep + r"$\mu$sr")
 
 solid_angle_80_deg2_start = plenoirf.utils.sr2squaredeg(
@@ -402,7 +402,7 @@ solid_angle_80_deg2_stop = plenoirf.utils.sr2squaredeg(solid_angle_80_sr_stop)
 ax_deg2.set_ylim(
     np.array([solid_angle_80_deg2_start, solid_angle_80_deg2_stop])
 )
-ax_deg2.semilogy()
+#ax_deg2.semilogy()
 ax_deg2.set_ylabel(label_sep + r"(1$^{\circ}$)$^2$")
 
 sebplt.ax_add_grid(ax=ax, add_minor=True)
@@ -430,14 +430,17 @@ for isens, pkey in enumerate(coll):
     for iang in range(len(angles80_rad)):
         if iang in OFFAXIS_ANGLE_IDXS:
             marker = "o"
+            markersize = 3
         else:
-            marker = "x"
+            marker = "o"
+            markersize = 1
         ax.plot(
             offaxis_angles_deg[iang],
             cone80_solid_angle_sr[iang] * SOLID_ANGLE_SCALE,
             color=NUM_PAXEL_STYLE[pkey]["color"],
             alpha=NUM_PAXEL_STYLE[pkey]["alpha"],
             marker=marker,
+            markersize=markersize,
             linewidth=0,
         )
 
