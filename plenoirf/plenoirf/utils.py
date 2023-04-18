@@ -159,10 +159,15 @@ def make_civil_time_str(time_s, format_seconds="{:f}"):
         return (format_seconds + "s").format(time_s)
 
 
-def find_closest_index_in_array_for_value(arr, val, max_rel_error=0.1):
+def find_closest_index_in_array_for_value(
+    arr, val, max_rel_error=0.1, max_abs_error=None
+):
     arr = np.array(arr)
     idx = np.argmin(np.abs(arr - val))
-    assert np.abs(arr[idx] - val) < max_rel_error * val
+    if max_abs_error:
+        assert np.abs(arr[idx] - val) < max_abs_error
+    else:
+        assert np.abs(arr[idx] - val) < max_rel_error * val
     return idx
 
 

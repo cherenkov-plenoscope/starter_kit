@@ -28,17 +28,24 @@ coll = abe.deformations.read_analysis(work_dir=work_dir)
 
 # summary plot of point-spread-functions
 # --------------------------------------
-
-OFFAXIS_ANGLE_IDXS = [0, 23, 45]
+OFFAXIS_ANGLE_OF_INTEREST_DEG = [0.0, 1.5, 3.0]
+OFFAXIS_ANGLE_IDXS = [
+    plenoirf.utils.find_closest_index_in_array_for_value(
+        arr=config["sources"]["off_axis_angles_deg"],
+        val=oaoi_deg,
+        max_abs_error=0.1,
+    )
+    for oaoi_deg in OFFAXIS_ANGLE_OF_INTEREST_DEG
+]
 OFF_AXIS_ANGLE_LABEL = r"off-axis-angle / 1$^\circ$"
 GRID_ANGLE_DEG = 0.1
 
 CMAPS = {
-    "inferno": {"gamma": 1.0, "linecolor": "white",},
-    "hot": {"gamma": 1, "linecolor": "white",},
-    "Blues": {"gamma": 1, "linecolor": "black",},
-    "binary": {"gamma": 1, "linecolor": "black",},
-    "magma_r": {"gamma": 1, "linecolor": "black",},
+    "inferno": {"gamma": 0.5, "linecolor": "white",},
+    "hot": {"gamma": 0.5, "linecolor": "white",},
+    "Blues": {"gamma": 0.5, "linecolor": "black",},
+    "binary": {"gamma": 0.5, "linecolor": "black",},
+    "magma_r": {"gamma": 0.5, "linecolor": "black",},
 }
 
 mkey = "parabola_segmented"
@@ -254,6 +261,17 @@ for cmapkey in CMAPS:
                 alpha=0.5,
                 num_steps=360,
             )
+            sebplt.ax_add_circle(
+                ax=ax_psf,
+                x=0.0,
+                y=0.0,
+                r=0.5 * config["sensor"]["dimensions"]["max_FoV_diameter_deg"],
+                linewidth=1.0,
+                linestyle="-",
+                color=CMAPS[cmapkey]["linecolor"],
+                alpha=0.5,
+                num_steps=360 * 5,
+            )
             ax_psf_set_ticks(
                 ax=ax_psf,
                 tcoll=tcoll,
@@ -268,6 +286,18 @@ for cmapkey in CMAPS:
                 bin_edges_cy_deg=bin_edges_cy_deg,
                 linecolor=CMAPS[cmapkey]["linecolor"],
             )
+            ccx_deg = tcoll["image"]["binning"]["image"]["center"]["cx_deg"]
+            ccy_deg = tcoll["image"]["binning"]["image"]["center"]["cy_deg"]
+            ccxr_deg = 0.5 * (
+                tcoll["image"]["binning"]["image"]["pixel_angle_deg"]
+                * tcoll["image"]["binning"]["image"]["num_pixel_cx"]
+            )
+            ccyr_deg = 0.5 * (
+                tcoll["image"]["binning"]["image"]["pixel_angle_deg"]
+                * tcoll["image"]["binning"]["image"]["num_pixel_cy"]
+            )
+            ax_psf.set_xlim([ccx_deg - ccxr_deg, ccx_deg + ccxr_deg])
+            ax_psf.set_ylim([ccy_deg - ccyr_deg, ccy_deg + ccyr_deg])
 
         fig_psf.savefig(fig_path)
         sebplt.close(fig_psf)
@@ -372,19 +402,34 @@ for isens, pkey in enumerate(coll):
 # plot psf80 vs off-axes
 # ----------------------
 NUM_PAXEL_STYLE = {
-    "paxel000001": {"color": "black", "linestyle": "-", "alpha": 1,},
-    "paxel000003": {"color": "black", "linestyle": ":", "alpha": 0.3},
-    "paxel000009": {"color": "black", "linestyle": ":", "alpha": 1},
+    "paxel000001": {
+        "color": "gray",
+        "linestyle": "-",
+        "alpha": 1,
+        "marker": "P",
+    },
+    "paxel000003": {
+        "color": "gray",
+        "linestyle": "-",
+        "alpha": 0.3,
+        "marker": "s",
+    },
+    "paxel000009": {
+        "color": "black",
+        "linestyle": "-",
+        "alpha": 1,
+        "marker": "o",
+    },
 }
 SOLID_ANGLE_SCALE = 1e6
 
-fig = sebplt.figure(style={"rows": 720, "cols": 1280, "fontsize": 1})
+fig = sebplt.figure(style={"rows": 640, "cols": 1280, "fontsize": 1})
 ax = sebplt.add_axes(fig=fig, span=[0.15, 0.2, 0.72, 0.75],)
 ax_deg2 = ax.twinx()
 ax_deg2.spines["top"].set_visible(False)
 
 solid_angle_80_sr_start = 0
-solid_angle_80_sr_stop = 20e-6
+solid_angle_80_sr_stop = 26e-6
 
 ylabel_name = r"solid angle containing 80%"
 label_sep = r"$\,/\,$"
@@ -403,7 +448,7 @@ ax_deg2.set_ylim(
     np.array([solid_angle_80_deg2_start, solid_angle_80_deg2_stop])
 )
 # ax_deg2.semilogy()
-ax_deg2.set_ylabel(label_sep + r"(1$^{\circ}$)$^2$")
+ax_deg2.set_ylabel(r"(1$^{\circ}$)$^2$")
 
 sebplt.ax_add_grid(ax=ax, add_minor=True)
 
@@ -429,11 +474,10 @@ for isens, pkey in enumerate(coll):
 
     for iang in range(len(angles80_rad)):
         if iang in OFFAXIS_ANGLE_IDXS:
-            marker = "o"
-            markersize = 3
+            markersize = 8
         else:
-            marker = "o"
-            markersize = 1
+            markersize = 3
+        marker = NUM_PAXEL_STYLE[pkey]["marker"]
         ax.plot(
             offaxis_angles_deg[iang],
             cone80_solid_angle_sr[iang] * SOLID_ANGLE_SCALE,
