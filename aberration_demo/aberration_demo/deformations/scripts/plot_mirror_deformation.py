@@ -26,8 +26,9 @@ ax_span = [0.075, 0.125, 0.8, 0.8]
 cax_span = [0.8, 0.125, 0.03, 0.8]
 axstyle = {"spines": ["left", "bottom"], "axes": ["x", "y"], "grid": False}
 
-CMAP_Z = "bwr"
-CMAP_NORMAL = "magma_r"
+CMAP_Z = "RdBu_r"
+CMAP_NORMAL = "Reds"
+PLOT_Z_SIGNS = False
 
 config = abe.utils.read_json(path=os.path.join(work_dir, "config.json"))
 
