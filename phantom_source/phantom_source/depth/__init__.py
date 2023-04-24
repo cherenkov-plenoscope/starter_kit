@@ -9,9 +9,9 @@ import network_file_system as nfs
 import glob
 import sebastians_matplotlib_addons as seb
 import pandas as pd
-from . import mesh
-from . import light_field
-from . import merlict
+from .. import mesh
+from .. import light_field
+from .. import merlict
 
 EXAMPLE_CONFIG = {
     "random_seed": 1,

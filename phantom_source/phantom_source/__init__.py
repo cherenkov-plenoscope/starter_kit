@@ -3,5 +3,5 @@ from . import merlict
 from . import plot
 from . import mesh
 from . import transform
-from . import simple_shower
 from . import depth
+from . import demonstration
