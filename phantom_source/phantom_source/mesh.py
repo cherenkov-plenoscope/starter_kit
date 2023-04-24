@@ -87,24 +87,24 @@ def triangle(pos, radius, density=1):
     x, y, z = pos
     r = radius
     vertices = {
-        0: [
+        "0": [
             x + r * np.cos(2 * np.pi * 0.25),
             y + r * np.sin(2 * np.pi * 0.25),
             z,
         ],
-        1: [
+        "1": [
             x + r * np.cos(2 * np.pi * 0.5833),
             y + r * np.sin(2 * np.pi * 0.5833),
             z,
         ],
-        2: [
+        "2": [
             x + r * np.cos(2 * np.pi * 0.9166),
             y + r * np.sin(2 * np.pi * 0.9166),
             z,
         ],
     }
 
-    edges = np.array([(0, 1, density), (1, 2, density), (2, 0, density)])
+    edges = [("0", "1", density), ("1", "2", density), ("2", "0", density)]
     return {
         "vertices": vertices,
         "edges": edges,
@@ -119,6 +119,9 @@ def spiral(pos, turns, outer_radius, density, fn=110):
     vertices = {}
     edges = []
 
+    def nkey(n):
+        return "{:d}".format(n)
+
     for n in range(fn):
         radius_s = radius[n]
         azimuth_s = azimuth[n]
@@ -127,10 +130,10 @@ def spiral(pos, turns, outer_radius, density, fn=110):
             y + np.sin(azimuth_s) * radius_s,
             z,
         ]
-        vertices[n] = vertex_s
+        vertices[nkey(n)] = vertex_s
 
     for n in range(fn - 1):
-        edges.append((n, n + 1, density))
+        edges.append((nkey(n), nkey(n + 1), density))
 
     return {
         "vertices": vertices,
