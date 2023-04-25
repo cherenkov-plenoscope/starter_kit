@@ -87,14 +87,20 @@ for sk in irf_config["config"]["sites"]:
         plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
     )
 
-    true_energy = rectab["primary/energy_GeV"]
-    reco_energy = align_on_idx(
+    _true_energy = rectab["primary/energy_GeV"]
+    _reco_energy = align_on_idx(
         input_idx=reconstructed_energy[sk][pk][mk]["idx"],
         input_values=reconstructed_energy[sk][pk][mk]["energy"],
         target_idxs=rectab["idx"],
     )
-    theta_deg = np.rad2deg(rectab["trajectory/theta_rad"])
-    theta_deg = np.abs(theta_deg)
+
+    energy = {
+        "true": _true_energy,
+        "reco": _reco_energy,
+    }
+    enekey = "true"
+
+    theta_deg = np.abs(np.rad2deg(rectab["trajectory/theta_rad"]))
 
     out = {}
     out[
@@ -110,7 +116,8 @@ for sk in irf_config["config"]["sites"]:
         energy_bin_start = energy_bin["edges"][ebin]
         energy_bin_stop = energy_bin["edges"][ebin + 1]
         energy_bin_mask = np.logical_and(
-            reco_energy >= energy_bin_start, reco_energy < energy_bin_stop
+            energy[enekey] >= energy_bin_start,
+            energy[enekey] < energy_bin_stop,
         )
         num_events = np.sum(energy_bin_mask)
         energy_bin_theta_deg = theta_deg[energy_bin_mask]
@@ -175,10 +182,12 @@ for sk in irf_config["config"]["sites"]:
     )
 
     ax.set_xlim([1e-1, 1e4])
+    ax.set_ylim([1e-2, 1e1])
     # ax.legend(loc="best", fontsize=10)
     ax.loglog()
-    ax.set_xlabel("reco. energy / GeV")
-    ax.set_ylabel(r"$\Theta{}$ 68% / 1$^\circ{}$")
+    enelabels = {"true": "", "reco": "reco. "}
+    ax.set_xlabel(enelabels[enekey] + r"energy$\,/\,$GeV")
+    ax.set_ylabel(r"$\Theta{}$ 68%$\,/\,$1$^\circ{}$")
 
     fig.savefig(os.path.join(pa["out_dir"], sk + "_" + pk + ".jpg"))
     seb.close(fig)
