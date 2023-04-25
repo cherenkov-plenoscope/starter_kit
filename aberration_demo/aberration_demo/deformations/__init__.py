@@ -41,6 +41,10 @@ CONFIG["mirror"]["deformation"] = copy.deepcopy(
 )
 
 CONFIG["sensor"] = {}
+CONFIG["sensor"]["transformation"] = {
+    'pos': [0., 0., portal.MIRROR["focal_length"]],
+    'rot': {'repr': 'tait_bryan', 'xyz_deg': [0., 0., 0.],}
+}
 CONFIG["sensor"]["dimensions"] = copy.deepcopy(portal.SENSOR)
 CONFIG["sensor"]["num_paxel_on_pixel_diagonal"] = [1, 3, 9]
 

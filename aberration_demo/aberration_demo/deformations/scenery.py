@@ -6,6 +6,7 @@ def make_plenoscope_scenery_aligned_deformed(
     mirror_dimensions,
     mirror_deformation_map,
     sensor_dimensions,
+    sensor_transformation,
     num_paxel_on_pixel_diagonal,
 ):
     FACET_COLOR = "facet_color"
@@ -40,6 +41,11 @@ def make_plenoscope_scenery_aligned_deformed(
         ),
     }
 
+
+    assert sensor_transformation["rot"]["repr"] == "tait_bryan"
+    assert "xyz_deg" in sensor_transformation["rot"]
+    rot_deg = np.array(sensor_transformation["rot"]["xyz_deg"])
+    rot_rad = np.deg2rad(rot_rad)
     scn = {
         "functions": [
             portal.MIRROR_REFLECTIVITY_VS_WAVELENGTH,
@@ -50,8 +56,8 @@ def make_plenoscope_scenery_aligned_deformed(
             {
                 "type": "Frame",
                 "name": "Portal",
-                "pos": [0, 0, 0],
-                "rot": [0, 0, 0],
+                "pos": sensor_transformation["pos"],
+                "rot": rot_rad,
                 "children": [mirror_frame, sensor_frame],
             }
         ],
