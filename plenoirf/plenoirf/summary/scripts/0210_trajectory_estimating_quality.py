@@ -187,10 +187,21 @@ for sk in SITES:
             structure=irf.table.STRUCTURE,
         )
         idx_common = spt.intersection(
-            [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"],]
+            [
+                passing_trigger[sk][pk][spt.IDX],
+                passing_quality[sk][pk][spt.IDX],
+                passing_trajectory[sk][pk]["trajectory_quality"][spt.IDX],
+            ]
         )
         event_table = spt.cut_and_sort_table_on_indices(
-            table=event_table, common_indices=idx_common,
+            table=event_table,
+            common_indices=idx_common,
+            level_keys=[
+                "primary",
+                "core",
+                "reconstructed_trajectory",
+                "features",
+            ],
         )
 
         event_frame = irf.reconstruction.trajectory_quality.make_rectangular_table(
