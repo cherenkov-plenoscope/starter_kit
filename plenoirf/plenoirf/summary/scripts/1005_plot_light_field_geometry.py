@@ -167,20 +167,23 @@ for key in hists:
         )
 
 
-rrr = {
-    "fix": {"max_bin_count": 0}, "sug": {"max_bin_count": 0}
-}
+rrr = {"fix": {"max_bin_count": 0}, "sug": {"max_bin_count": 0}}
 for met in RANGES:
     for key in hists:
         if np.max(hists[key][met]["v_bin_counts"]) > rrr[met]["max_bin_count"]:
             rrr[met]["max_bin_count"] = np.max(hists[key][met]["v_bin_counts"])
 
     rrr[met]["ylim_lin"] = [0, 1.1 * rrr[met]["max_bin_count"]]
-    rrr[met]["ylim_log"] = [1, 10 ** np.ceil(np.log10(rrr[met]["max_bin_count"]))]
+    rrr[met]["ylim_log"] = [
+        1,
+        10 ** np.ceil(np.log10(rrr[met]["max_bin_count"])),
+    ]
 
     for key in hists:
         save_histogram(
-            path=os.path.join(pa["out_dir"], key + "_log_{:s}.jpg".format(met)),
+            path=os.path.join(
+                pa["out_dir"], key + "_log_{:s}.jpg".format(met)
+            ),
             ylim=rrr[met]["ylim_log"],
             semilogy=True,
             v_bin_edges=hists[key][met]["v_bin_edges"],
@@ -192,7 +195,9 @@ for met in RANGES:
             ylabel=r"intensity$\,/\,$1",
         )
         save_histogram(
-            path=os.path.join(pa["out_dir"], key + "_lin_{:s}.jpg".format(met)),
+            path=os.path.join(
+                pa["out_dir"], key + "_lin_{:s}.jpg".format(met)
+            ),
             ylim=rrr[met]["ylim_lin"],
             semilogy=False,
             v_bin_edges=hists[key][met]["v_bin_edges"],

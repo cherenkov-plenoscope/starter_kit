@@ -43,7 +43,9 @@ plenoscope["diameter_of_pixel_projected_on_sensor_plane_m"] = (
     * plenoscope["focal_length_m"]
 )
 
-num_paxel_on_diagonal = lfg.sensor_plane2imaging_system.number_of_paxel_on_pixel_diagonal
+num_paxel_on_diagonal = (
+    lfg.sensor_plane2imaging_system.number_of_paxel_on_pixel_diagonal
+)
 
 paxelscope = {}
 for kk in plenoscope:
