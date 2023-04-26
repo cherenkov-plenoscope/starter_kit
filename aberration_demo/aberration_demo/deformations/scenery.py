@@ -1,3 +1,4 @@
+import numpy as np
 from .. import portal
 from . import parabola_segmented
 
@@ -9,17 +10,18 @@ def make_plenoscope_scenery_aligned_deformed(
     sensor_transformation,
     num_paxel_on_pixel_diagonal,
 ):
+    assert sensor_transformation["rot"]["repr"] == "tait_bryan"
+    assert "xyz_deg" in sensor_transformation["rot"]
+    sensor_rot_deg = np.array(sensor_transformation["rot"]["xyz_deg"])
+    sensor_rot_rad = np.deg2rad(sensor_rot_deg)
+
     FACET_COLOR = "facet_color"
 
     sensor_frame = {
         "type": "LightFieldSensor",
         "name": "light_field_sensor",
-        "pos": [
-            0,
-            0,
-            sensor_dimensions["expected_imaging_system_focal_length"],
-        ],
-        "rot": [0, 0, 0],
+        "pos": sensor_transformation["pos"],
+        "rot": sensor_rot_rad,
         "num_paxel_on_pixel_diagonal": num_paxel_on_pixel_diagonal,
         "lens_refraction_vs_wavelength": "lens_refraction_vs_wavelength",
         "bin_reflection_vs_wavelength": "mirror_reflectivity_vs_wavelength",
@@ -41,11 +43,6 @@ def make_plenoscope_scenery_aligned_deformed(
         ),
     }
 
-
-    assert sensor_transformation["rot"]["repr"] == "tait_bryan"
-    assert "xyz_deg" in sensor_transformation["rot"]
-    rot_deg = np.array(sensor_transformation["rot"]["xyz_deg"])
-    rot_rad = np.deg2rad(rot_rad)
     scn = {
         "functions": [
             portal.MIRROR_REFLECTIVITY_VS_WAVELENGTH,
@@ -56,8 +53,8 @@ def make_plenoscope_scenery_aligned_deformed(
             {
                 "type": "Frame",
                 "name": "Portal",
-                "pos": sensor_transformation["pos"],
-                "rot": rot_rad,
+                "pos": [0, 0, 0],
+                "rot": [0, 0, 0],
                 "children": [mirror_frame, sensor_frame],
             }
         ],

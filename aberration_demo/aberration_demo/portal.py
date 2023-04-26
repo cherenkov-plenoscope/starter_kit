@@ -10,6 +10,16 @@ MIRROR = {
     "gap_between_facets": 0.025,
 }
 
+SENSOR_TRANSFORMATION_DEFAULT = {
+    "pos": [0, 0, MIRROR["focal_length"]],
+    'rot': {'repr': 'tait_bryan', 'xyz_deg': [0., 0., 0.]},
+}
+
+SENSOR_TRANSFORMATION_GENTLE = {
+    "pos": [-0.1, 0.2, 0.995 * MIRROR["focal_length"]],
+    'rot': {'repr': 'tait_bryan', 'xyz_deg': [1., 3., 5.]},
+}
+
 SENSOR = {
     "expected_imaging_system_focal_length": 106.5,
     "expected_imaging_system_aperture_radius": 35.5,

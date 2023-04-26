@@ -10,7 +10,13 @@ import perlin_noise
 
 EXAMPLE_MIRROR_DEFORMATION = {
     "perlin_noise": {"octaves": 1.5, "seed": 43, "num_bins_on_edge": 256,},
-    "amplitude_m": 8.0e-2,
+    "amplitude_m": 55e-3,
+    "offset_m": 0.0,
+}
+
+ZERO_MIRROR_DEFORMATION = {
+    "perlin_noise": {"octaves": 1.5, "seed": 43, "num_bins_on_edge": 256,},
+    "amplitude_m": 0.0,
     "offset_m": 0.0,
 }
 
