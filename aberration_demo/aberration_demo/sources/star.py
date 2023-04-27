@@ -1,6 +1,79 @@
 import corsika_primary as cpw
 import numpy as np
+import json_numpy
+import plenoirf
+import plenopy
 import os
+import tempfile
+from .. import utils
+
+EXAMPLE_STAR_CONFIG = {
+    "type": "star",
+    "cx_deg": 0.0,
+    "cy_deg": 1.0,
+    "areal_photon_density_per_m2": 20,
+    "seed": 122,
+}
+
+
+def make_response_to_star(
+    star_config, light_field_geometry_path, merlict_config,
+):
+    instgeom = utils.get_instrument_geometry_from_light_field_geometry(
+        light_field_geometry_path=light_field_geometry_path
+    )
+    illum_radius = (
+        1.5 * instgeom["expected_imaging_system_max_aperture_radius"]
+    )
+    illum_area = np.pi * illum_radius ** 2
+    num_photons = int(
+        np.round(star_config["areal_photon_density_per_m2"] * illum_area)
+    )
+
+    prng = np.random.Generator(np.random.PCG64(star_config["seed"]))
+
+    with tempfile.TemporaryDirectory(
+        prefix="plenoscope-aberration-demo_"
+    ) as tmp_dir:
+        star_light_path = os.path.join(tmp_dir, "star_light.tar")
+
+        write_photon_bunches(
+            cx=np.deg2rad(star_config["cx_deg"]),
+            cy=np.deg2rad(star_config["cy_deg"]),
+            size=num_photons,
+            path=star_light_path,
+            prng=prng,
+            aperture_radius=illum_radius,
+            BUFFER_SIZE=10000,
+        )
+
+        run_path = os.path.join(tmp_dir, "run")
+
+        merlict_plenoscope_propagator_config_path = os.path.join(
+            tmp_dir, "merlict_propagation_config.json"
+        )
+        json_numpy.write(
+            merlict_plenoscope_propagator_config_path,
+            merlict_config["merlict_propagation_config"],
+        )
+
+        plenoirf.production.merlict.plenoscope_propagator(
+            corsika_run_path=star_light_path,
+            output_path=run_path,
+            light_field_geometry_path=light_field_geometry_path,
+            merlict_plenoscope_propagator_path=merlict_config["executables"][
+                "merlict_plenoscope_propagation_path"
+            ],
+            merlict_plenoscope_propagator_config_path=merlict_plenoscope_propagator_config_path,
+            random_seed=star_config["seed"],
+            photon_origins=True,
+            stdout_path=run_path + ".o",
+            stderr_path=run_path + ".e",
+        )
+
+        run = plenopy.Run(path=run_path)
+        event = run[0]
+        return event.raw_sensor_response
 
 
 def write_photon_bunches(

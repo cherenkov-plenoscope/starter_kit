@@ -1,6 +1,7 @@
 import os
 import json_numpy
 import copy
+import phantom_source
 from .. import deformations
 from .. import portal
 from .. import merlict
@@ -16,9 +17,11 @@ def write_default_config(cfg_dir, minimal):
     write_mirror_deformations(cfg_dir=cfg_dir)
 
     write_sensors_config(cfg_dir=cfg_dir)
-    write_sensors_transla(cfg_dir=cfg_dir)
+    write_sensors_transformations(cfg_dir=cfg_dir)
 
     write_instruments_config(cfg_dir=cfg_dir, minimal=minimal)
+
+    write_observations_config(cfg_dir=cfg_dir, minimal=minimal)
 
 
 def write_instruments_config(cfg_dir, minimal):
@@ -139,7 +142,7 @@ def write_sensors_config(cfg_dir):
     json_numpy.write(os.path.join(cfg_lfsg_dir, "diag1.json"), _t1)
 
 
-def write_sensors_transla(cfg_dir):
+def write_sensors_transformations(cfg_dir):
     cfg_stra_dir = os.path.join(cfg_dir, "sensor_transformations")
     os.makedirs(cfg_stra_dir, exist_ok=True)
     json_numpy.write(
@@ -149,4 +152,46 @@ def write_sensors_transla(cfg_dir):
     json_numpy.write(
         os.path.join(cfg_stra_dir, "gentle.json"),
         portal.SENSOR_TRANSFORMATION_GENTLE,
+    )
+
+
+def write_observations_config(cfg_dir, minimal):
+    cfg_obsv_dir = os.path.join(cfg_dir, "observations")
+    os.makedirs(cfg_obsv_dir, exist_ok=True)
+
+    json_numpy.write(
+        os.path.join(cfg_obsv_dir, "start.json"),
+        {
+            "num_stars": 50 if minimal else 500,
+            "max_angle_off_optical_axis_deg": 4.0,
+        },
+    )
+
+    json_numpy.write(
+        os.path.join(cfg_obsv_dir, "point.json"),
+        {
+            "num_points": 40 if minimal else 4096,
+            "max_angle_off_optical_axis_deg": 3.25,
+        },
+    )
+
+    cfg_phan_dir = os.path.join(cfg_obsv_dir, "phantom")
+    os.makedirs(cfg_phan_dir, exist_ok=True)
+
+    (
+        mesch_scn,
+        mesh_img,
+        mesh_depth,
+    ) = phantom_source.demonstration._make_mesh_for_phantom_source(
+        intensity=36 if minimal else 360
+    )
+    json_numpy.write(
+        os.path.join(cfg_phan_dir, "phantom_source_meshes.json"), mesch_scn,
+    )
+    json_numpy.write(
+        os.path.join(cfg_phan_dir, "phantom_source_meshes_img.json"), mesh_img,
+    )
+    json_numpy.write(
+        os.path.join(cfg_phan_dir, "phantom_source_meshes_depth.json"),
+        mesh_depth,
     )

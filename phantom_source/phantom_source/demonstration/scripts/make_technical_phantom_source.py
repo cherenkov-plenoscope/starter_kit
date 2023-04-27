@@ -163,7 +163,10 @@ light_fields = phantom_source.light_field.make_light_fields_from_meshes(
     random_seed=SEED,
 )
 
-lf_t, lf_lixel_ids = plenopy.light_field_sequence.photon_arrival_times_and_lixel_ids(
+(
+    lf_t,
+    lf_lixel_ids,
+) = plenopy.light_field_sequence.photon_arrival_times_and_lixel_ids(
     raw_sensor_response=event.raw_sensor_response
 )
 plenopy.plot.refocus.save_refocus_stack(
