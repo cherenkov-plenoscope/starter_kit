@@ -484,7 +484,7 @@ def _analysis_run_job(job):
     )
     out = analysis.analyse_response_to_calibration_source(
         off_axis_angle_deg=job["off_axis_angle_deg"],
-        event=event,
+        raw_sensor_response=event.raw_sensor_response,
         light_field_geometry=light_field_geometry,
         object_distance_m=job["object_distance_m"],
         containment_percentile=job["containment_percentile"],

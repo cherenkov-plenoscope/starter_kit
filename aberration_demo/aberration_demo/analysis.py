@@ -67,16 +67,15 @@ def histogram2d_std(
 
 
 def calibrate_plenoscope_response(
-    event, light_field_geometry, object_distance,
+    raw_sensor_response, light_field_geometry, object_distance,
 ):
     image_rays = plenopy.image.ImageRays(
         light_field_geometry=light_field_geometry
     )
 
-    rsr = event.raw_sensor_response
     time_bin_edges, time_bin_centers = make_bin_edges_and_centers(
-        bin_width=rsr.time_slice_duration,
-        num_bins=rsr.number_time_slices,
+        bin_width=raw_sensor_response["time_slice_duration"],
+        num_bins=raw_sensor_response["number_time_slices"],
         first_bin_center=0.0,
     )
 
@@ -86,7 +85,7 @@ def calibrate_plenoscope_response(
     out["time"]["bin_centers"] = time_bin_centers
 
     isochor_image_seqence = plenopy.light_field_sequence.make_isochor_image(
-        raw_sensor_response=event.raw_sensor_response,
+        raw_sensor_response=raw_sensor_response,
         time_delay_image_mean=light_field_geometry.time_delay_image_mean,
     )
 
@@ -286,7 +285,7 @@ def full_width_half_maximum(x, f, oversample=137):
 
 def analyse_response_to_calibration_source(
     off_axis_angle_deg,
-    event,
+    raw_sensor_response,
     light_field_geometry,
     object_distance_m,
     containment_percentile,
@@ -295,7 +294,7 @@ def analyse_response_to_calibration_source(
 ):
     calibrated_response = calibrate_plenoscope_response(
         light_field_geometry=light_field_geometry,
-        event=event,
+        raw_sensor_response=raw_sensor_response,
         object_distance=object_distance_m,
     )
 
@@ -354,7 +353,7 @@ def analyse_response_to_calibration_source(
     out["statistics"]["photons"] = {}
     out["statistics"]["photons"][
         "total"
-    ] = event.raw_sensor_response["number_photons"]
+    ] = raw_sensor_response["number_photons"]
     out["statistics"]["photons"]["valid"] = np.sum(
         cres["image_beams"]["weights"]
     )
