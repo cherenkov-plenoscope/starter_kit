@@ -4,7 +4,7 @@ import numpy as np
 import json_numpy
 import os
 import sebastians_matplotlib_addons as sebplt
-import plenopy as pl
+import plenopy
 
 argparser = argparse.ArgumentParser(
     prog="make_technical_phantom_source",
@@ -163,9 +163,10 @@ light_fields = phantom_source.light_field.make_light_fields_from_meshes(
     random_seed=SEED,
 )
 
-lf_t, lf_lixel_ids = event.photon_arrival_times_and_lixel_ids()
-
-pl.plot.refocus.save_refocus_stack(
+lf_t, lf_lixel_ids = plenopy.raw_light_field_sensor_response.photon_arrival_times_and_lixel_ids(
+    raw_sensor_response=event.raw_sensor_response
+)
+plenopy.plot.refocus.save_refocus_stack(
     light_field_geometry=light_field_geometry,
     photon_lixel_ids=lf_lixel_ids,
     output_path=out_dir,

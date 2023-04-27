@@ -85,7 +85,9 @@ def run(work_dir):
         (
             arrival_times_s,
             photo_sesnor_ids,
-        ) = event.photon_arrival_times_and_lixel_ids()
+        ) = plenopy.light_field_sequence.photon_arrival_times_and_lixel_ids(
+            raw_sensor_response=event.raw_sensor_response
+        )
 
         write_light_field(
             path=phantom_source_light_field_path,

@@ -381,7 +381,9 @@ for scenario in all_scenarios:
 
     refocused_images = pl.plot.refocus.refocus_images(
         light_field_geometry=event.light_field_geometry,
-        photon_lixel_ids=event.photon_arrival_times_and_lixel_ids()[1],
+        photon_lixel_ids=pl.light_field_sequence.photon_arrival_times_and_lixel_ids(
+            raw_sensor_response=event.raw_sensor_response
+        )[1],
         object_distances=refocus_object_distances)
 
     scenario['phantom'] = {
@@ -424,7 +426,9 @@ if not os.path.exists(plot_dir_target_alignment):
 
     detailed_refocused_images = pl.plot.refocus.refocus_images(
         light_field_geometry=event.light_field_geometry,
-        photon_lixel_ids=event.photon_arrival_times_and_lixel_ids()[1],
+        photon_lixel_ids=pl.light_field_sequence.photon_arrival_times_and_lixel_ids(
+            raw_sensor_response=event.raw_sensor_response
+        )[1],
         object_distances=detailed_refocus_object_distances)
 
     vmax = 0
