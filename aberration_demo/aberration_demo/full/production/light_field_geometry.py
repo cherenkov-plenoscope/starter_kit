@@ -12,7 +12,6 @@ from ... import merlict
 from ... import utils
 
 
-
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     config = json_numpy.read_tree(os.path.join(work_dir, "config"))
 
@@ -49,7 +48,9 @@ def make_sceneries_make_jobs(work_dir):
 
 def make_sceneries_run_job(job):
     config = json_numpy.read_tree(os.path.join(job["work_dir"], "config"))
-    instrument_dir = os.path.join(job["work_dir"], "instruments", job["instrument_key"])
+    instrument_dir = os.path.join(
+        job["work_dir"], "instruments", job["instrument_key"]
+    )
     os.makedirs(instrument_dir, exist_ok=True)
 
     ikey = job["instrument_key"]
@@ -57,9 +58,15 @@ def make_sceneries_run_job(job):
 
     mirror_dimensions = config["mirrors"][icfg["mirror"]]
     sensor_dimensions = config["sensors"][icfg["sensor"]]
-    mirror_deformation = config["mirror_deformations"][icfg["mirror_deformation"]]
-    sensor_transformation = config["sensor_transformations"][icfg["sensor_transformation"]]
-    num_paxel_on_pixel_diagonal = sensor_dimensions["num_paxel_on_pixel_diagonal"]
+    mirror_deformation = config["mirror_deformations"][
+        icfg["mirror_deformation"]
+    ]
+    sensor_transformation = config["sensor_transformations"][
+        icfg["sensor_transformation"]
+    ]
+    num_paxel_on_pixel_diagonal = sensor_dimensions[
+        "num_paxel_on_pixel_diagonal"
+    ]
 
     mirror_deformation_map = deformations.deformation_map.init_from_mirror_and_deformation_configs(
         mirror_dimensions=mirror_dimensions,
@@ -76,7 +83,9 @@ def make_sceneries_run_job(job):
 
     scenery_dir = os.path.join(instrument_dir, "input", "scenery")
     os.makedirs(scenery_dir, exist_ok=True)
-    json_numpy.write(os.path.join(scenery_dir, "scenery.json"), merlict_scenery)
+    json_numpy.write(
+        os.path.join(scenery_dir, "scenery.json"), merlict_scenery
+    )
 
 
 def map_and_reduce_make_jobs(work_dir):
@@ -88,7 +97,9 @@ def map_and_reduce_make_jobs(work_dir):
 
     for instrument_key in config["instruments"]:
         instrument_dir = os.path.join(instruments_dir, instrument_key)
-        light_field_geometry_dir = os.path.join(instrument_dir, "light_field_geometry")
+        light_field_geometry_dir = os.path.join(
+            instrument_dir, "light_field_geometry"
+        )
 
         if not os.path.exists(light_field_geometry_dir):
 
@@ -97,8 +108,12 @@ def map_and_reduce_make_jobs(work_dir):
 
             icfg = config["instruments"][instrument_key]
             sensor_dimensions = config["sensors"][icfg["sensor"]]
-            num_paxel_on_pixel_diagonal = sensor_dimensions["num_paxel_on_pixel_diagonal"]
-            _num_blocks = config["statistics"]["light_field_geometry"]["num_blocks"]
+            num_paxel_on_pixel_diagonal = sensor_dimensions[
+                "num_paxel_on_pixel_diagonal"
+            ]
+            _num_blocks = config["statistics"]["light_field_geometry"][
+                "num_blocks"
+            ]
             _num_blocks *= utils.guess_scaling_of_num_photons_used_to_estimate_light_field_geometry(
                 num_paxel_on_pixel_diagonal=num_paxel_on_pixel_diagonal
             )
@@ -109,7 +124,9 @@ def map_and_reduce_make_jobs(work_dir):
                 ],
                 scenery_path=os.path.join(instrument_dir, "input", "scenery"),
                 map_dir=map_dir,
-                num_photons_per_block=config["statistics"]["light_field_geometry"]["num_photons_per_block"],
+                num_photons_per_block=config["statistics"][
+                    "light_field_geometry"
+                ]["num_photons_per_block"],
                 num_blocks=_num_blocks,
                 random_seed=0,
             )
@@ -128,7 +145,9 @@ def map_and_reduce_make_jobs(work_dir):
 def reduce_run_job(job):
     config = json_numpy.read_tree(os.path.join(job["work_dir"], "config"))
 
-    instrument_dir = os.path.join(job["work_dir"], "instruments", job["instrument_key"],)
+    instrument_dir = os.path.join(
+        job["work_dir"], "instruments", job["instrument_key"],
+    )
 
     map_dir = os.path.join(instrument_dir, "light_field_geometry.map")
     out_dir = os.path.join(instrument_dir, "light_field_geometry")
@@ -171,13 +190,17 @@ def plot_make_jobs(work_dir):
 
 
 def plot_run_job(job):
-    lfg_dir = os.path.join(job["work_dir"], "instruments", job["instrument_key"], "light_field_geometry")
+    lfg_dir = os.path.join(
+        job["work_dir"],
+        "instruments",
+        job["instrument_key"],
+        "light_field_geometry",
+    )
     plot_dir = os.path.join(lfg_dir, "plot")
     try:
         lfg = plenopy.light_field_geometry.LightFieldGeometry(path=lfg_dir)
         plenopy.plot.light_field_geometry.save_all(
-            light_field_geometry=lfg,
-            out_dir=plot_dir,
+            light_field_geometry=lfg, out_dir=plot_dir,
         )
     except Exception as e:
         print(e)

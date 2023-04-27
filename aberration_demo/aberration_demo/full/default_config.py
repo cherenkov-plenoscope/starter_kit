@@ -27,7 +27,9 @@ def write_instruments_config(cfg_dir, minimal):
 
     # for off-axis demo and for deformation demo
     # ------------------------------------------
-    paxel_configurations = ["diag3", "diag1"] if minimal else ["diag9", "diag3", "diag1"]
+    paxel_configurations = (
+        ["diag3", "diag1"] if minimal else ["diag9", "diag3", "diag1"]
+    )
 
     tkey = "default"
     for dkey in ["default", "perlin55mm"]:
@@ -35,14 +37,14 @@ def write_instruments_config(cfg_dir, minimal):
             json_numpy.write(
                 os.path.join(
                     cfg_inst_dir,
-                    "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey)
+                    "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey),
                 ),
                 {
                     "mirror": "71m",
                     "mirror_deformation": dkey,
                     "sensor": skey,
                     "sensor_transformation": tkey,
-                }
+                },
             )
 
     # for misalignment demo
@@ -52,15 +54,14 @@ def write_instruments_config(cfg_dir, minimal):
     for skey in paxel_configurations:
         json_numpy.write(
             os.path.join(
-                cfg_inst_dir,
-                "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey)
+                cfg_inst_dir, "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey)
             ),
             {
                 "mirror": "71m",
                 "mirror_deformation": dkey,
                 "sensor": skey,
                 "sensor_transformation": tkey,
-            }
+            },
         )
 
     # for phantom demo
@@ -70,15 +71,14 @@ def write_instruments_config(cfg_dir, minimal):
     for skey in paxel_configurations:
         json_numpy.write(
             os.path.join(
-                cfg_inst_dir,
-                "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey)
+                cfg_inst_dir, "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey)
             ),
             {
                 "mirror": "71m",
                 "mirror_deformation": dkey,
                 "sensor": skey,
                 "sensor_transformation": tkey,
-            }
+            },
         )
 
 
@@ -86,12 +86,11 @@ def write_merlict_config(cfg_dir):
     cfg_merl_dir = os.path.join(cfg_dir, "merlict")
     os.makedirs(cfg_merl_dir, exist_ok=True)
     json_numpy.write(
-        os.path.join(cfg_merl_dir, "executables.json"),
-        merlict.EXECUTABLES
+        os.path.join(cfg_merl_dir, "executables.json"), merlict.EXECUTABLES
     )
     json_numpy.write(
         os.path.join(cfg_merl_dir, "merlict_propagation_config.json"),
-        merlict.PROPAGATION_CONFIG
+        merlict.PROPAGATION_CONFIG,
     )
 
 
@@ -100,11 +99,11 @@ def write_mirror_deformations(cfg_dir):
     os.makedirs(cfg_mdef_dir, exist_ok=True)
     json_numpy.write(
         os.path.join(cfg_mdef_dir, "default.json"),
-        deformations.deformation_map.ZERO_MIRROR_DEFORMATION
+        deformations.deformation_map.ZERO_MIRROR_DEFORMATION,
     )
     json_numpy.write(
         os.path.join(cfg_mdef_dir, "perlin55mm.json"),
-        deformations.deformation_map.EXAMPLE_MIRROR_DEFORMATION
+        deformations.deformation_map.EXAMPLE_MIRROR_DEFORMATION,
     )
 
 
@@ -116,17 +115,14 @@ def write_statistics_config(cfg_dir, minimal):
         {
             "num_blocks": 1 if minimal else 16,
             "num_photons_per_block": 1000 * 100 if minimal else 1000,
-        }
+        },
     )
 
 
 def write_mirrors_config(cfg_dir):
     cfg_mirg_dir = os.path.join(cfg_dir, "mirrors")
     os.makedirs(cfg_mirg_dir, exist_ok=True)
-    json_numpy.write(
-        os.path.join(cfg_mirg_dir, "71m.json"),
-        portal.MIRROR
-    )
+    json_numpy.write(os.path.join(cfg_mirg_dir, "71m.json"), portal.MIRROR)
 
 
 def write_sensors_config(cfg_dir):
@@ -134,22 +130,13 @@ def write_sensors_config(cfg_dir):
     os.makedirs(cfg_lfsg_dir, exist_ok=True)
     _p61 = copy.deepcopy(portal.SENSOR)
     _p61["num_paxel_on_pixel_diagonal"] = 9
-    json_numpy.write(
-        os.path.join(cfg_lfsg_dir, "diag9.json"),
-        _p61
-    )
+    json_numpy.write(os.path.join(cfg_lfsg_dir, "diag9.json"), _p61)
     _p7 = copy.deepcopy(portal.SENSOR)
     _p7["num_paxel_on_pixel_diagonal"] = 3
-    json_numpy.write(
-        os.path.join(cfg_lfsg_dir, "diag3.json"),
-        _p7
-    )
+    json_numpy.write(os.path.join(cfg_lfsg_dir, "diag3.json"), _p7)
     _t1 = copy.deepcopy(portal.SENSOR)
     _t1["num_paxel_on_pixel_diagonal"] = 1
-    json_numpy.write(
-        os.path.join(cfg_lfsg_dir, "diag1.json"),
-        _t1
-    )
+    json_numpy.write(os.path.join(cfg_lfsg_dir, "diag1.json"), _t1)
 
 
 def write_sensors_transla(cfg_dir):
@@ -157,9 +144,9 @@ def write_sensors_transla(cfg_dir):
     os.makedirs(cfg_stra_dir, exist_ok=True)
     json_numpy.write(
         os.path.join(cfg_stra_dir, "default.json"),
-        portal.SENSOR_TRANSFORMATION_DEFAULT
+        portal.SENSOR_TRANSFORMATION_DEFAULT,
     )
     json_numpy.write(
         os.path.join(cfg_stra_dir, "gentle.json"),
-        portal.SENSOR_TRANSFORMATION_GENTLE
+        portal.SENSOR_TRANSFORMATION_GENTLE,
     )

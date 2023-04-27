@@ -11,4 +11,6 @@ def init(work_dir, random_seed=42, minimal=False):
 
 
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
-    production.light_field_geometry.run(work_dir=work_dir, pool=pool, logger=logger)
+    production.light_field_geometry.run(
+        work_dir=work_dir, pool=pool, logger=logger
+    )

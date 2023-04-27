@@ -12,12 +12,12 @@ MIRROR = {
 
 SENSOR_TRANSFORMATION_DEFAULT = {
     "pos": [0, 0, MIRROR["focal_length"]],
-    'rot': {'repr': 'tait_bryan', 'xyz_deg': [0., 0., 0.]},
+    "rot": {"repr": "tait_bryan", "xyz_deg": [0.0, 0.0, 0.0]},
 }
 
 SENSOR_TRANSFORMATION_GENTLE = {
     "pos": [-0.1, 0.2, 0.995 * MIRROR["focal_length"]],
-    'rot': {'repr': 'tait_bryan', 'xyz_deg': [1., 3., 5.]},
+    "rot": {"repr": "tait_bryan", "xyz_deg": [1.0, 3.0, 5.0]},
 }
 
 SENSOR = {

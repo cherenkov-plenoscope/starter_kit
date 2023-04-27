@@ -2,8 +2,13 @@ import os
 from . import portal
 
 EXECUTABLES = {
-    "merlict_plenoscope_propagator_path": os.path.abspath(
+    "merlict_plenoscope_propagation_path": os.path.abspath(
         os.path.join("build", "merlict", "merlict-plenoscope-propagation")
+    ),
+    "merlict_plenoscope_raw_photon_propagation_path": os.path.abspath(
+        os.path.join(
+            "build", "merlict", "merlict-plenoscope-raw-photon-propagation"
+        )
     ),
     "merlict_plenoscope_calibration_map_path": os.path.abspath(
         os.path.join("build", "merlict", "merlict-plenoscope-calibration-map")
