@@ -19,7 +19,7 @@ import network_file_system as nfs
 
 from . import scenery
 from .. import merlict
-from .. import calibration_source
+from .. import sources
 from .. import portal
 from .. import analysis
 from .. import utils
@@ -379,7 +379,7 @@ def make_source(work_dir):
 
     if not os.path.exists(source_path):
         prng = np.random.Generator(np.random.PCG64(config["seed"]))
-        calibration_source.write_photon_bunches(
+        sources.star.write_photon_bunches(
             cx=0.0,
             cy=0.0,
             size=config["sources"]["num_photons"],

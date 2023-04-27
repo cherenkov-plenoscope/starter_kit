@@ -2,7 +2,7 @@ from . import full
 from . import offaxis
 from . import deformations
 from . import merlict
-from . import calibration_source
+from . import sources
 from . import portal
 from . import analysis
 from . import utils

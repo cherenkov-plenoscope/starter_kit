@@ -24,7 +24,7 @@ from . import scenery
 from .. import merlict
 from .. import portal
 from .. import analysis
-from .. import calibration_source
+from .. import sources
 from .. import utils
 from ..utils import read_json
 from ..utils import PAXEL_FMT
@@ -335,7 +335,7 @@ def _sources_run_job(job):
     config = read_json(os.path.join(job["work_dir"], "config.json"))
     prng = np.random.Generator(np.random.PCG64(config["seed"] + job["iofa"]))
     off_axis_angle_rad = np.deg2rad(job["off_axis_angle_deg"])
-    calibration_source.write_photon_bunches(
+    sources.star.write_photon_bunches(
         cx=off_axis_angle_rad,
         cy=0.0,
         size=config["sources"]["num_photons"],

@@ -5,7 +5,7 @@ import tempfile
 import phantom_source
 import numpy as np
 import json_numpy
-from ... import calibration_source
+from ... import sources
 
 
 def make_response_to_source(
@@ -63,7 +63,7 @@ def make_response_to_star(
     ) as tmp_dir:
         star_light_path = os.path.join(tmp_dir, "star_light.tar")
 
-        calibration_source.write_photon_bunches(
+        sources.star.write_photon_bunches(
             cx=np.deg2rad(star_config["cx_deg"]),
             cy=np.deg2rad(star_config["cy_deg"]),
             size=num_photons,
