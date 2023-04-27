@@ -351,9 +351,9 @@ def analyse_response_to_calibration_source(
         cres["image_beams"]["valid"]
     )
     out["statistics"]["photons"] = {}
-    out["statistics"]["photons"][
-        "total"
-    ] = raw_sensor_response["number_photons"]
+    out["statistics"]["photons"]["total"] = raw_sensor_response[
+        "number_photons"
+    ]
     out["statistics"]["photons"]["valid"] = np.sum(
         cres["image_beams"]["weights"]
     )
