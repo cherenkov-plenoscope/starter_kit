@@ -84,14 +84,16 @@ def calibrate_plenoscope_response(
     out["time"] = {}
     out["time"]["bin_edges"] = time_bin_edges
     out["time"]["bin_centers"] = time_bin_centers
-    out["time"][
-        "weights"
-    ] = event.light_field_sequence_for_isochor_image().sum(axis=1)
+
+    isochor_image_seqence = plenopy.light_field_sequence.make_isochor_image(
+        raw_sensor_response=event.raw_sensor_response,
+        time_delay_image_mean=light_field_geometry.time_delay_image_mean,
+    )
+
+    out["time"]["weights"] = isochor_image_seqence.sum(axis=1)
 
     out["image_beams"] = {}
-    out["image_beams"][
-        "_weights"
-    ] = event.light_field_sequence_for_isochor_image().sum(axis=0)
+    out["image_beams"]["_weights"] = isochor_image_seqence.sum(axis=0)
     (
         out["image_beams"]["_cx"],
         out["image_beams"]["_cy"],
@@ -352,7 +354,7 @@ def analyse_response_to_calibration_source(
     out["statistics"]["photons"] = {}
     out["statistics"]["photons"][
         "total"
-    ] = event.raw_sensor_response.number_photons
+    ] = event.raw_sensor_response["number_photons"]
     out["statistics"]["photons"]["valid"] = np.sum(
         cres["image_beams"]["weights"]
     )

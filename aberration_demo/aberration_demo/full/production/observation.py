@@ -99,15 +99,7 @@ def make_response_to_star(
 
         run = plenopy.Run(path=run_path)
         event = run[0]
-        (
-            arrival_times_s,
-            photo_sesnor_ids,
-        ) = event.photon_arrival_times_and_lixel_ids()
-
-        return {
-            "arrival_times_s": arrival_times_s,
-            "photo_sesnor_ids": photo_sesnor_ids,
-        }
+        return event.raw_sensor_response
 
 
 EXAMPLE_MESH_CONFIG = {
@@ -166,15 +158,7 @@ def make_response_to_mesh(
             random_seed=merlict_random_seed,
             work_dir=None,
         )
-    (
-        arrival_times_s,
-        photo_sesnor_ids,
-    ) = event.photon_arrival_times_and_lixel_ids()
-
-    return {
-        "arrival_times_s": arrival_times_s,
-        "photo_sesnor_ids": photo_sesnor_ids,
-    }
+        return event.raw_sensor_response
 
 
 EXAMPLE_POINT_CONFIG = {

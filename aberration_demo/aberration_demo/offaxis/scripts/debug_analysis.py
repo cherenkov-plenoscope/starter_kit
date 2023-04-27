@@ -148,7 +148,7 @@ if not os.path.exists(summary_path):
     out["statistics"]["photons"] = {}
     out["statistics"]["photons"][
         "total"
-    ] = event.raw_sensor_response.number_photons
+    ] = event.raw_sensor_response["number_photons"]
     out["statistics"]["photons"]["valid"] = np.sum(
         cres["image_beams"]["weights"]
     )

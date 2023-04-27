@@ -198,7 +198,7 @@ def test_read_run_with_plenopy(tmp):
         # ASSERT arrival_slices are as expected
         # -------------------------------------
         arrival_times_in_sensors = (
-            arrival_slices*event.raw_sensor_response.time_slice_duration)
+            arrival_slices*event.raw_sensor_response["time_slice_duration"])
 
         arrival_times_in_sensors -= np.median(arrival_times_in_sensors)
         # absolute arrival time is not relevant
@@ -223,9 +223,9 @@ def test_read_run_with_plenopy(tmp):
             max_number_itarations=1000,
             min_number_points_for_plane_fit=3,
             max_orthogonal_distance_of_inlier=(
-                event.raw_sensor_response.time_slice_duration*speed_of_light))
+                event.raw_sensor_response["time_slice_duration"]*speed_of_light))
 
-        if inlier.sum() >= 0.5*event.raw_sensor_response.number_photons:
+        if inlier.sum() >= 0.5*event.raw_sensor_response["number_photons"]:
             plane_fit_correct += 1
 
         if (

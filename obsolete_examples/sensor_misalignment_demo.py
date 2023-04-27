@@ -338,8 +338,10 @@ refocus_object_distances = np.array([4.2e3, 7.1e3, 11.9e3])
 
 
 def reconstruct_classic_image(event):
-    light_field_intensity_sequence = (
-        event.light_field_sequence_for_isochor_image())
+    light_field_intensity_sequence = pl.light_field_sequence.make_isochor_image(
+        raw_sensor_response=event.raw_sensor_response,
+        time_delay_image_mean=event.light_field_geometry.time_delay_image_mean,
+    )
     light_field_intensity = np.sum(light_field_intensity_sequence, axis=0)
     light_field_intensity_pix_pax = np.reshape(
         light_field_intensity , (

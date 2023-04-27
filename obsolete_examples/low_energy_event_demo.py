@@ -65,7 +65,6 @@ def write_image(event, path, image_rays, object_distance=22e3):
 def write_event_overview_text(event, path):
     with open(path, 'w') as f:
         f.write(event.__repr__()+'\n')
-        f.write(event.raw_sensor_response.__repr__()+'\n')
         f.write(event.light_field.__repr__()+'\n')
         f.write(event.sensor_plane2imaging_system.__repr__()+'\n')
         f.write(event.simulation_truth.__repr__()+'\n')
