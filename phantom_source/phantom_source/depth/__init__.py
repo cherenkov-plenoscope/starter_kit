@@ -515,7 +515,7 @@ def estimate_response_to_point_source(
         random_seed=merlict_random_seed,
         work_dir=work_dir,
     )
-    _beam_t, beam_ids = plenopy.raw_light_field_sensor_response.photon_arrival_times_and_lixel_ids(
+    _beam_t, beam_ids = plenopy.light_field_sequence.photon_arrival_times_and_lixel_ids(
         raw_sensor_response=event.raw_sensor_response
     )
 
