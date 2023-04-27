@@ -160,10 +160,11 @@ def write_observations_config(cfg_dir, minimal):
     os.makedirs(cfg_obsv_dir, exist_ok=True)
 
     json_numpy.write(
-        os.path.join(cfg_obsv_dir, "start.json"),
+        os.path.join(cfg_obsv_dir, "star.json"),
         {
-            "num_stars": 50 if minimal else 500,
+            "num_stars": 20 if minimal else 200,
             "max_angle_off_optical_axis_deg": 4.0,
+            "areal_photon_density_per_m2": 5 if minimal else 50,
         },
     )
 
@@ -172,6 +173,9 @@ def write_observations_config(cfg_dir, minimal):
         {
             "num_points": 40 if minimal else 4096,
             "max_angle_off_optical_axis_deg": 3.25,
+            "min_object_distance_m": 1e3,
+            "max_object_distance_m": 20e3,
+            "areal_photon_density_per_m2": 5 if minimal else 50,
         },
     )
 
@@ -194,4 +198,40 @@ def write_observations_config(cfg_dir, minimal):
     json_numpy.write(
         os.path.join(cfg_phan_dir, "phantom_source_meshes_depth.json"),
         mesh_depth,
+    )
+
+    max_diagN = "diag3" if minimal else "diag9"
+
+    obs_table = {}
+    obs_table["diag9_perlin55mm_gentle"] = ["star", "phantom", "point"]
+    obs_table["diag3_perlin55mm_gentle"] = ["star", "phantom", "point"]
+    obs_table["diag1_perlin55mm_gentle"] = ["star", "phantom", "point"]
+    obs_table["diag9_default_gentle"] = [
+        "star",
+    ]
+    obs_table["diag3_default_gentle"] = [
+        "star",
+    ]
+    obs_table["diag1_default_gentle"] = [
+        "star",
+    ]
+    obs_table["diag9_perlin55mm_default"] = [
+        "star",
+    ]
+    obs_table["diag3_perlin55mm_default"] = [
+        "star",
+    ]
+    obs_table["diag1_perlin55mm_default"] = [
+        "star",
+    ]
+    obs_table["diag9_default_default"] = ["star", "phantom", "point"]
+    obs_table["diag3_default_default"] = [
+        "star",
+    ]
+    obs_table["diag1_default_default"] = [
+        "star",
+    ]
+
+    json_numpy.write(
+        os.path.join(cfg_obsv_dir, "instruments.json"), obs_table,
     )
