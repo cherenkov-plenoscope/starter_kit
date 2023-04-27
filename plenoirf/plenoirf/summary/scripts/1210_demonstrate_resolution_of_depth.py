@@ -99,7 +99,7 @@ theory_depth_m = depth_bin["edges"]
 theory_depth_minus_m = []
 theory_depth_plus_m = []
 for g in theory_depth_m:
-    g_p, g_m = pl.Thin_Lens.resolution_of_depth(
+    g_p, g_m = pl.thin_lens.resolution_of_depth(
         object_distance_m=g, **plenoscope,
     )
     theory_depth_minus_m.append(g_m)
@@ -110,7 +110,7 @@ theory_depth_plus_m = np.array(theory_depth_plus_m)
 theory_depth_paxel_minus_m = []
 theory_depth_paxel_plus_m = []
 for g in theory_depth_m:
-    g_p, g_m = pl.Thin_Lens.resolution_of_depth(
+    g_p, g_m = pl.thin_lens.resolution_of_depth(
         object_distance_m=g, **paxelscope,
     )
     theory_depth_paxel_minus_m.append(g_m)
