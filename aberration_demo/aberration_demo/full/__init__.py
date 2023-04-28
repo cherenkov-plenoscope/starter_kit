@@ -34,6 +34,8 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     production.analysis.run(work_dir=work_dir, pool=pool, logger=logger)
     logger.info("Analysis done")
 
+
+
     logger.info("Make Plots")
     pjobs = _plot_make_jobs(work_dir=work_dir)
     logger.info("{:d} jobs to do".format(len(pjobs)))
