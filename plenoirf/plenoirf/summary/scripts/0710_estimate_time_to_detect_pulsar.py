@@ -46,14 +46,13 @@ prng = np.random.Generator(
     np.random.generator.PCG64(sum_config["random_seed"])
 )
 
-pulsar_spectrum = irf.analysis.pulsar_timing.EXAMPLE_PULSAR_SPECTRUM
-pulsar = irf.analysis.pulsar_timing.ppog_init_dummy(
-    energy_bin_edges=energy_fine_bin["edges"], pulsar_spectrum=pulsar_spectrum,
+pulsar_name = "J1231-1411"
+pulsar = irf.analysis.pulsar_timing.ppog_init_from_profiles(
+    energy_bin_edges=energy_fine_bin["edges"],
+    profiles_dir="/home/relleums/Downloads/profiles",
+    pulsar_name=pulsar_name,
 )
 
-json_numpy.write(
-    os.path.join(pa["out_dir"], "pulsar_flux.json"), pulsar_spectrum, indent=4,
-)
 
 fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
 ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
@@ -69,7 +68,9 @@ ax.set_xlabel("energy / GeV")
 ax.set_ylabel(
     r"$\frac{\mathrm{d\,flux}}{\mathrm{d\,energy}}$ / m$^{-2}$ s$^{-1}$ (GeV)$^{-1}$"
 )
-fig.savefig(os.path.join(pa["out_dir"], "pulsar_flux.jpg"))
+fig.savefig(
+    os.path.join(pa["out_dir"], "pulsar_{:s}_flux.jpg".format(pulsar_name))
+)
 seb.close(fig)
 
 
@@ -84,7 +85,11 @@ ax.plot(
 ax.set_xlim([0, 1])
 ax.set_xlabel(r"phase / 2$\pi$")
 ax.set_ylabel(r"relative / 1")
-fig.savefig(os.path.join(pa["out_dir"], "pulsar_phaseogram.jpg"))
+fig.savefig(
+    os.path.join(
+        pa["out_dir"], "pulsar_{:s}_phaseogram.jpg".format(pulsar_name)
+    )
+)
 seb.close(fig)
 
 
@@ -103,7 +108,9 @@ ax.set_ylabel(r"phase / 2$\pi$")
 fig.savefig(
     os.path.join(
         pa["out_dir"],
-        "pulsar_phaseogram_cummulative_distribution_function.jpg",
+        "pulsar_{:s}_phaseogram_cummulative_distribution_function.jpg".format(
+            pulsar_name
+        ),
     )
 )
 seb.close(fig)
@@ -143,7 +150,12 @@ if TEST_DRAW_RANDOM_PHASE:
     ax.set_xlim([0, 1])
     ax.set_xlabel(r"phase / 2$\pi$")
     ax.set_ylabel(r"relative / 1")
-    fig.savefig(os.path.join(pa["out_dir"], "pulsar_phaseogram_test_draw.jpg"))
+    fig.savefig(
+        os.path.join(
+            pa["out_dir"],
+            "pulsar_{:s}_phaseogram_test_draw.jpg".format(pulsar_name),
+        )
+    )
     seb.close(fig)
 
 
@@ -461,4 +473,6 @@ for sk in SITES:
             ", Area gamma-rays at 1GeV ",
             A_gamma[2],
             "m^{2}",
+            ", pulsar_name ",
+            pulsar_name,
         )
