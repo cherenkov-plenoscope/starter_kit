@@ -5,6 +5,7 @@ import phantom_source
 from .. import deformations
 from .. import portal
 from .. import merlict
+from .. import analysis
 
 
 def write_default_config(cfg_dir, minimal):
@@ -22,6 +23,8 @@ def write_default_config(cfg_dir, minimal):
     write_instruments_config(cfg_dir=cfg_dir, minimal=minimal)
 
     write_observations_config(cfg_dir=cfg_dir, minimal=minimal)
+
+    write_analysis_config(cfg_dir)
 
 
 def write_instruments_config(cfg_dir, minimal):
@@ -117,7 +120,7 @@ def write_statistics_config(cfg_dir, minimal):
         os.path.join(cfg_stat_dir, "light_field_geometry.json"),
         {
             "num_blocks": 1 if minimal else 16,
-            "num_photons_per_block": 1000 * 100 if minimal else 1000,
+            "num_photons_per_block": 1000 * 500 if minimal else 1000,
         },
     )
 
@@ -173,8 +176,8 @@ def write_observations_config(cfg_dir, minimal):
         {
             "num_points": 40 if minimal else 4096,
             "max_angle_off_optical_axis_deg": 3.25,
-            "min_object_distance_m": 1e3,
-            "max_object_distance_m": 20e3,
+            "min_object_distance_m": 2e3,
+            "max_object_distance_m": 40e3,
             "areal_photon_density_per_m2": 5 if minimal else 50,
         },
     )
@@ -234,4 +237,40 @@ def write_observations_config(cfg_dir, minimal):
 
     json_numpy.write(
         os.path.join(cfg_obsv_dir, "instruments.json"), obs_table,
+    )
+
+
+def write_analysis_config(cfg_dir):
+    cfg_ana_dir = os.path.join(cfg_dir, "analysis")
+    os.makedirs(cfg_ana_dir, exist_ok=True)
+
+    # star
+    # ----
+    json_numpy.write(
+        os.path.join(cfg_ana_dir, "star.json"),
+        {
+            "object_distance_m": 1e6,
+            "containment_percentile": 80,
+            "binning": analysis.BINNING,
+        },
+    )
+
+    piont_obs_cfg = json_numpy.read(
+        os.path.join(cfg_dir, "observations", "point.json")
+    )
+
+    # point
+    # -----
+    json_numpy.write(
+        os.path.join(os.path.join(cfg_ana_dir, "point.json")),
+        {
+            "field_of_view_deg": 6.5,
+            "num_pixel_on_edge": 1024,
+            "max_object_distance_m": 1.25
+            * piont_obs_cfg["max_object_distance_m"],
+            "min_object_distance_m": 0.75
+            * piont_obs_cfg["min_object_distance_m"],
+            "image_containment_percentile": 95,
+            "oversampling_beam_spread": 100,
+        },
     )

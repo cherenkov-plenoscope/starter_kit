@@ -28,4 +28,24 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     production.observations.run(work_dir=work_dir, pool=pool, logger=logger)
     logger.info("Observations done")
 
+    ajobs = _analysis_make_jobs(work_dir=work_dir)
+    pool.map(_analysys_run_job, ajobs)
+
     logger.info("Done")
+
+
+def _analysis_make_jobs(work_dir):
+    return production.observations._tasks_make_jobs(
+        work_dir=work_dir, task_key="analysis", suffix=".json"
+    )
+
+
+def _analysys_run_job(job):
+    if job["observation_key"] == "star":
+        sources.star.analysis_run_job(job=job)
+    elif job["observation_key"] == "point":
+        sources.point.analysis_run_job(job=job)
+    elif job["observation_key"] == "phantom":
+        pass
+    else:
+        raise AssertionError("Bad observation_key")

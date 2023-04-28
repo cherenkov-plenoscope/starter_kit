@@ -6,6 +6,8 @@ import plenopy
 import os
 import tempfile
 from .. import utils
+from .. import analysis
+
 
 EXAMPLE_STAR_CONFIG = {
     "type": "star",
@@ -150,3 +152,58 @@ def make_source_config_from_job(job):
         "seed": job["number"],
     }
     return source_config
+
+
+def analysis_run_job(job):
+    nkey = "{:06d}".format(job["number"])
+
+    indir = os.path.join(
+        job["work_dir"],
+        "responses",
+        job["instrument_key"],
+        job["observation_key"],
+    )
+
+    outdir = os.path.join(
+        job["work_dir"],
+        "analysis",
+        job["instrument_key"],
+        job["observation_key"],
+    )
+
+    os.makedirs(outdir, exist_ok=True)
+
+    inpath = os.path.join(indir, nkey)
+    truth = json_numpy.read(inpath + ".json")
+    with open(inpath, "rb") as f:
+        raw_sensor_response = plenopy.raw_light_field_sensor_response.read(f)
+
+    prng = np.random.Generator(np.random.PCG64(job["number"]))
+
+    light_field_geometry = plenopy.LightFieldGeometry(
+        os.path.join(
+            job["work_dir"],
+            "instruments",
+            job["instrument_key"],
+            "light_field_geometry",
+        )
+    )
+
+    cfg_analysis = json_numpy.read(
+        os.path.join(job["work_dir"], "config", "analysis", "star.json")
+    )
+
+    result = analysis.analyse_response_to_calibration_source(
+        image_center_cx_deg=truth["cx_deg"],
+        image_center_cy_deg=truth["cy_deg"],
+        raw_sensor_response=raw_sensor_response,
+        light_field_geometry=light_field_geometry,
+        object_distance_m=cfg_analysis["object_distance_m"],
+        containment_percentile=cfg_analysis["containment_percentile"],
+        binning=cfg_analysis["binning"],
+        prng=prng,
+    )
+
+    outpath = os.path.join(outdir, nkey + ".json")
+    json_numpy.write(outpath + ".incomplete", result)
+    os.rename(outpath + ".incomplete", outpath)

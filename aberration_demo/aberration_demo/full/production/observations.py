@@ -8,6 +8,9 @@ from ... import sources
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     logger.info("Obs: Make observations")
     ojobs = _observations_make_jobs(work_dir=work_dir)
+
+    logger.info("Obs: {:d} jobs to do".format(len(ojobs)))
+
     pool.map(_observations_run_job, ojobs)
     logger.info("Obs: Observations done")
 
@@ -38,6 +41,10 @@ def make_response_to_source(
 
 
 def _observations_make_jobs(work_dir):
+    return _tasks_make_jobs(work_dir=work_dir, task_key="responses", suffix="")
+
+
+def _tasks_make_jobs(work_dir, task_key, suffix):
     cfg_dir = os.path.join(work_dir, "config")
     confg = json_numpy.read_tree(cfg_dir)
 
@@ -57,10 +64,10 @@ def _observations_make_jobs(work_dir):
                     nkey = "{:06d}".format(n)
                     outpath = os.path.join(
                         work_dir,
-                        "responses",
+                        task_key,
                         instrument_key,
                         observation_key,
-                        nkey,
+                        nkey + suffix,
                     )
                     if not os.path.exists(outpath):
                         job = {
@@ -77,10 +84,10 @@ def _observations_make_jobs(work_dir):
                     nkey = "{:06d}".format(n)
                     outpath = os.path.join(
                         work_dir,
-                        "responses",
+                        task_key,
                         instrument_key,
                         observation_key,
-                        nkey,
+                        nkey + suffix,
                     )
                     if not os.path.exists(outpath):
                         job = {
@@ -96,10 +103,10 @@ def _observations_make_jobs(work_dir):
 
                 outpath = os.path.join(
                     work_dir,
-                    "responses",
+                    task_key,
                     instrument_key,
                     observation_key,
-                    nkey,
+                    nkey + suffix,
                 )
                 if not os.path.exists(outpath):
                     job = {
