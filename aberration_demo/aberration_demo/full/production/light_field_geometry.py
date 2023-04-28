@@ -13,8 +13,6 @@ from ... import utils
 
 
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
-    config = json_numpy.read_tree(os.path.join(work_dir, "config"))
-
     logger.info("lfg: Start")
     logger.info("lfg: Make sceneries")
     sjobs = make_sceneries_make_jobs(work_dir=work_dir)
