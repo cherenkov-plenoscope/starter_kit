@@ -46,20 +46,20 @@ def _observations_make_jobs(work_dir):
 
 def _tasks_make_jobs(work_dir, task_key, suffix):
     cfg_dir = os.path.join(work_dir, "config")
-    confg = json_numpy.read_tree(cfg_dir)
+    config = json_numpy.read_tree(cfg_dir)
 
     jobs = []
 
-    for instrument_key in confg["observations"]["instruments"]:
+    for instrument_key in config["observations"]["instruments"]:
 
-        if instrument_key not in confg["instruments"]:
+        if instrument_key not in config["instruments"]:
             continue
 
-        for observation_key in confg["observations"]["instruments"][
+        for observation_key in config["observations"]["instruments"][
             instrument_key
         ]:
             if observation_key == "star":
-                stars = confg["observations"]["star"]
+                stars = config["observations"]["star"]
                 for n in range(stars["num_stars"]):
                     nkey = "{:06d}".format(n)
                     outpath = os.path.join(
@@ -79,7 +79,7 @@ def _tasks_make_jobs(work_dir, task_key, suffix):
                         jobs.append(job)
 
             elif observation_key == "point":
-                points = confg["observations"]["point"]
+                points = config["observations"]["point"]
                 for n in range(points["num_points"]):
                     nkey = "{:06d}".format(n)
                     outpath = os.path.join(
@@ -98,8 +98,9 @@ def _tasks_make_jobs(work_dir, task_key, suffix):
                         }
                         jobs.append(job)
             elif observation_key == "phantom":
-                phantom = confg["observations"]["phantom"]
+                phantom = config["observations"]["phantom"]
                 n = 0
+                nkey = "{:06d}".format(n)
 
                 outpath = os.path.join(
                     work_dir,
