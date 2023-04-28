@@ -483,7 +483,8 @@ def _analysis_run_job(job):
         light_field_geometry=light_field_geometry,
     )
     out = analysis.analyse_response_to_calibration_source(
-        off_axis_angle_deg=job["off_axis_angle_deg"],
+        image_center_cx_deg=job["off_axis_angle_deg"],
+        image_center_cy_deg=0.0,
         raw_sensor_response=event.raw_sensor_response,
         light_field_geometry=light_field_geometry,
         object_distance_m=job["object_distance_m"],

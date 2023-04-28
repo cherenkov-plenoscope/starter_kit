@@ -284,7 +284,8 @@ def full_width_half_maximum(x, f, oversample=137):
 
 
 def analyse_response_to_calibration_source(
-    off_axis_angle_deg,
+    image_center_cx_deg,
+    image_center_cy_deg,
     raw_sensor_response,
     light_field_geometry,
     object_distance_m,
@@ -313,8 +314,8 @@ def analyse_response_to_calibration_source(
     )
 
     thisbinning = copy.deepcopy(binning)
-    thisbinning["image"]["center"]["cx_deg"] = off_axis_angle_deg
-    thisbinning["image"]["center"]["cy_deg"] = 0.0
+    thisbinning["image"]["center"]["cx_deg"] = image_center_cx_deg
+    thisbinning["image"]["center"]["cy_deg"] = image_center_cy_deg
     thisimg_bin_edges = binning_image_bin_edges(binning=thisbinning)
 
     # print("image histogram2d_std")
