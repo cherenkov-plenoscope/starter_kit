@@ -7,6 +7,7 @@ import plenopy
 
 from . import default_config
 from . import production
+from .. import sources
 
 
 def init(work_dir, random_seed=42, minimal=False):
@@ -20,6 +21,7 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     )
 
     ojobs = _observations_make_jobs(work_dir=work_dir)
+    pool.map(_observations_run_job, ojobs)
 
 
 def _observations_make_jobs(work_dir):
@@ -117,72 +119,12 @@ def _observations_run_job(job):
         os.path.join(job["work_dir"], "config", "merlict")
     )
 
-    prng = np.random.Generator(np.random.PCG64(job["number"]))
-
     if job["observation_key"] == "star":
-        star_cfg = json_numpy.read(
-            os.path.join(
-                job["work_dir"], "config", "observations", "star.json"
-            )
-        )
-
-        (
-            cx_deg,
-            cy_deg,
-        ) = corsika_primary.random.distributions.draw_x_y_in_disc(
-            prng=prng, radius=star_cfg["max_angle_off_optical_axis_deg"]
-        )
-
-        source_config = {
-            "type": "star",
-            "cx_deg": cx_deg,
-            "cy_deg": cy_deg,
-            "areal_photon_density_per_m2": star_cfg[
-                "areal_photon_density_per_m2"
-            ],
-            "seed": job["number"],
-        }
-
+        source_config = sources.star.make_source_config_from_job(job=job)
     elif job["observation_key"] == "point":
-        point_cfg = json_numpy.read(
-            os.path.join(
-                job["work_dir"], "config", "observations", "point.json"
-            )
-        )
-        (
-            cx_deg,
-            cy_deg,
-        ) = corsika_primary.random.distributions.draw_x_y_in_disc(
-            prng=prng, radius=point_cfg["max_angle_off_optical_axis_deg"]
-        )
-        depth_m = corsika_primary.random.distributions.draw_power_law(
-            prng=prng,
-            lower_limit=point_cfg["min_object_distance_m"],
-            upper_limit=point_cfg["max_object_distance_m"],
-            power_slope=-1,
-            num_samples=1,
-        )[0]
-
-        source_config = {
-            "type": "point",
-            "cx_deg": cx_deg,
-            "cy_deg": cy_deg,
-            "depth_m": depth_m,
-            "areal_photon_density_per_m2": point_cfg[
-                "areal_photon_density_per_m2"
-            ],
-            "seed": job["number"],
-        }
-
+        source_config = sources.point.make_source_config_from_job(job=job)
     elif job["observation_key"] == "phantom":
-        phantom_cfg = json_numpy.read_tree(
-            os.path.join(job["work_dir"], "config", "observations", "phantom")
-        )
-        source_config = {
-            "type": "mesh",
-            "meshes": phantom_cfg["phantom_source_meshes"],
-            "seed": job["number"],
-        }
+        source_config = sources.mesh.make_source_config_from_job(job=job)
     else:
         raise AssertionError("Bad observation_key")
 
@@ -192,6 +134,16 @@ def _observations_run_job(job):
         merlict_config=merlict_config,
     )
 
+    # export truth
+    # ------------
+    outtruthpath = outpath + ".json"
+    json_numpy.write(
+        outtruthpath + ".incomplete", source_config,
+    )
+    os.rename(outtruthpath + ".incomplete", outtruthpath)
+
+    # export raw sensor resposnse
+    # ---------------------------
     with open(outpath + ".incomplete", "wb") as f:
         plenopy.raw_light_field_sensor_response.write(
             f=f, raw_sensor_response=raw_sensor_response

@@ -63,3 +63,15 @@ def make_response_to_mesh(
             work_dir=None,
         )
         return event.raw_sensor_response
+
+
+def make_source_config_from_job(job):
+    phantom_cfg = json_numpy.read_tree(
+        os.path.join(job["work_dir"], "config", "observations", "phantom")
+    )
+    source_config = {
+        "type": "mesh",
+        "meshes": phantom_cfg["phantom_source_meshes"],
+        "seed": job["number"],
+    }
+    return source_config

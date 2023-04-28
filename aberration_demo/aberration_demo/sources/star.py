@@ -1,4 +1,4 @@
-import corsika_primary as cpw
+import corsika_primary
 import numpy as np
 import json_numpy
 import plenoirf
@@ -90,21 +90,23 @@ def write_photon_bunches(
     size : int
         Number of bunches
     """
+    I = corsika_primary.I
+
     assert size >= 0
     tmp_path = path + ".tmp"
-    with cpw.event_tape.EventTapeWriter(path=tmp_path) as run:
+    with corsika_primary.event_tape.EventTapeWriter(path=tmp_path) as run:
         runh = np.zeros(273, dtype=np.float32)
-        runh[cpw.I.RUNH.MARKER] = cpw.I.RUNH.MARKER_FLOAT32
-        runh[cpw.I.RUNH.RUN_NUMBER] = 1
-        runh[cpw.I.RUNH.NUM_EVENTS] = 1
+        runh[I.RUNH.MARKER] = I.RUNH.MARKER_FLOAT32
+        runh[I.RUNH.RUN_NUMBER] = 1
+        runh[I.RUNH.NUM_EVENTS] = 1
 
         evth = np.zeros(273, dtype=np.float32)
-        evth[cpw.I.EVTH.MARKER] = cpw.I.EVTH.MARKER_FLOAT32
-        evth[cpw.I.EVTH.EVENT_NUMBER] = 1
-        evth[cpw.I.EVTH.PARTICLE_ID] = 1
-        evth[cpw.I.EVTH.TOTAL_ENERGY_GEV] = 1.0
-        evth[cpw.I.EVTH.RUN_NUMBER] = runh[cpw.I.RUNH.RUN_NUMBER]
-        evth[cpw.I.EVTH.NUM_REUSES_OF_CHERENKOV_EVENT] = 1
+        evth[I.EVTH.MARKER] = I.EVTH.MARKER_FLOAT32
+        evth[I.EVTH.EVENT_NUMBER] = 1
+        evth[I.EVTH.PARTICLE_ID] = 1
+        evth[I.EVTH.TOTAL_ENERGY_GEV] = 1.0
+        evth[I.EVTH.RUN_NUMBER] = runh[I.RUNH.RUN_NUMBER]
+        evth[I.EVTH.NUM_REUSES_OF_CHERENKOV_EVENT] = 1
 
         run.write_runh(runh)
         run.write_evth(evth)
@@ -116,7 +118,7 @@ def write_photon_bunches(
                 block_size = size - size_written
             size_written += block_size
 
-            bunches = cpw.calibration_light_source.draw_parallel_and_isochor_bunches(
+            bunches = corsika_primary.calibration_light_source.draw_parallel_and_isochor_bunches(
                 cx=-1.0 * cx,
                 cy=-1.0 * cy,
                 aperture_radius=aperture_radius,
@@ -127,3 +129,24 @@ def write_photon_bunches(
             )
             run.write_bunches(bunches)
     os.rename(tmp_path, path)
+
+
+def make_source_config_from_job(job):
+    prng = np.random.Generator(np.random.PCG64(job["number"]))
+
+    star_cfg = json_numpy.read(
+        os.path.join(job["work_dir"], "config", "observations", "star.json")
+    )
+
+    (cx_deg, cy_deg,) = corsika_primary.random.distributions.draw_x_y_in_disc(
+        prng=prng, radius=star_cfg["max_angle_off_optical_axis_deg"]
+    )
+
+    source_config = {
+        "type": "star",
+        "cx_deg": cx_deg,
+        "cy_deg": cy_deg,
+        "areal_photon_density_per_m2": star_cfg["areal_photon_density_per_m2"],
+        "seed": job["number"],
+    }
+    return source_config

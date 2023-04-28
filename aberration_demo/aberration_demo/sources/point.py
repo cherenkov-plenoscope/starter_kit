@@ -1,5 +1,8 @@
 import phantom_source
 import numpy as np
+import json_numpy
+import corsika_primary
+import os
 from . import mesh
 from .. import utils
 
@@ -65,3 +68,33 @@ def make_response_to_point(
         merlict_config=merlict_config,
         emission_distance_to_aperture_m=emission_distance_to_aperture_m,
     )
+
+
+def make_source_config_from_job(job):
+    prng = np.random.Generator(np.random.PCG64(job["number"]))
+
+    point_cfg = json_numpy.read(
+        os.path.join(job["work_dir"], "config", "observations", "point.json")
+    )
+    (cx_deg, cy_deg,) = corsika_primary.random.distributions.draw_x_y_in_disc(
+        prng=prng, radius=point_cfg["max_angle_off_optical_axis_deg"]
+    )
+    depth_m = corsika_primary.random.distributions.draw_power_law(
+        prng=prng,
+        lower_limit=point_cfg["min_object_distance_m"],
+        upper_limit=point_cfg["max_object_distance_m"],
+        power_slope=-1,
+        num_samples=1,
+    )[0]
+
+    source_config = {
+        "type": "point",
+        "cx_deg": cx_deg,
+        "cy_deg": cy_deg,
+        "depth_m": depth_m,
+        "areal_photon_density_per_m2": point_cfg[
+            "areal_photon_density_per_m2"
+        ],
+        "seed": job["number"],
+    }
+    return source_config
