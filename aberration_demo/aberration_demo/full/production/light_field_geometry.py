@@ -15,18 +15,22 @@ from ... import utils
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     config = json_numpy.read_tree(os.path.join(work_dir, "config"))
 
-    logger.info("lfg: Sceneries")
+    logger.info("lfg: Start")
+    logger.info("lfg: Make sceneries")
     sjobs = make_sceneries_make_jobs(work_dir=work_dir)
     pool.map(make_sceneries_run_job, sjobs)
+    logger.info("lfg: Sceneries done")
 
-    logger.info("lfg: Prepare Map and Reduce")
+    logger.info("lfg: Populating statistics of beams")
     mjobs, rjobs = map_and_reduce_make_jobs(work_dir=work_dir)
     pool.map(plenoirf.production.light_field_geometry.run_job, mjobs)
     pool.map(reduce_run_job, rjobs)
+    logger.info("lfg: Statistics of beams done")
 
-    logger.info("lfg: Plot")
+    logger.info("lfg: Make plots")
     pjobs = plot_make_jobs(work_dir=work_dir)
     pool.map(plot_run_job, pjobs)
+    logger.info("lfg: Plots Done")
     logger.info("lfg: Done")
 
 

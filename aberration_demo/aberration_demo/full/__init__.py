@@ -16,12 +16,19 @@ def init(work_dir, random_seed=42, minimal=False):
 
 
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
+    logger.info("Start")
+    logger.info("Make light-field-geometryies")
     production.light_field_geometry.run(
         work_dir=work_dir, pool=pool, logger=logger
     )
+    logger.info("Light-field-geometryies done")
 
+    logger.info("Make observations")
     ojobs = _observations_make_jobs(work_dir=work_dir)
     pool.map(_observations_run_job, ojobs)
+    logger.info("Observations done")
+
+    logger.info("Done")
 
 
 def _observations_make_jobs(work_dir):
