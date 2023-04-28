@@ -313,9 +313,16 @@ def make_image(
         cx_hits.append(cx_h)
         cy_hits.append(cy_h)
 
+    if cx_hits:
+        all_cx_hits = np.concatenate(cx_hits)
+        all_cy_hits = np.concatenate(cy_hits)
+    else:
+        all_cx_hits = []
+        all_cy_hits = []
+
     img = (1 / oversampling) * np.histogram2d(
-        np.concatenate(cx_hits),
-        np.concatenate(cy_hits),
+        all_cx_hits,
+        all_cy_hits,
         bins=(image_binning["cx"]["edges"], image_binning["cy"]["edges"]),
     )[0]
 
@@ -369,6 +376,11 @@ def estimate_depth_from_participating_beams(
 
     num_initial_estimates = 9
     depths_range_ratio = max_object_distance_m / min_object_distance_m
+
+    if r["num_photons"] < 2:
+        r["depth_m"].append(float("nan"))
+        r["spreads_pixel_per_photon"].append(float("nan"))
+        return r
 
     # rough
     # -----
