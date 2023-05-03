@@ -46,10 +46,9 @@ prng = np.random.Generator(
     np.random.generator.PCG64(sum_config["random_seed"])
 )
 
-pulsar_name = "J1231-1411"
+pulsar_name = "J0614-3329"
 pulsar = irf.analysis.pulsar_timing.ppog_init_from_profiles(
     energy_bin_edges=energy_fine_bin["edges"],
-    profiles_dir="/home/relleums/Downloads/profiles",
     pulsar_name=pulsar_name,
 )
 
@@ -391,6 +390,7 @@ for sk in SITES:
                     draw_bin_walls=False,
                 )
                 ax.set_ylim([rate_min, rate_max])
+                ax.set_xlim([0, 1])
                 ax.set_xlabel(r"phase / 2$\pi$")
                 ax.set_ylabel(r"rate / s$^{-1}$")
                 fig.savefig(
@@ -447,7 +447,8 @@ for sk in SITES:
                     linecolor="k",
                     draw_bin_walls=True,
                 )
-                ax.set_ylim([-0.5, 3.5])
+                ax.set_ylim([-0.1, 5.1])
+                ax.set_xlim([0, 1])
                 ax.set_xlabel(r"phase / 2$\pi$")
                 ax.set_ylabel("significance / 1\n(Li and Ma, 1983, Eq.17)")
                 fig.savefig(
