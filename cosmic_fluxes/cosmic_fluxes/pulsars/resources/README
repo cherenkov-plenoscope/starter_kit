@@ -1,0 +1,7 @@
+This folder contains the pulsar profiles for each pulsar from the Fermi LAT pubulicaitons: "Jname.txt/png" files
+
+TheSEDpulsars.dat contains the SED information form the 2nd Fermi LAT catalog, which contains 117pulsars. So this catalog is incomplete, some pulsar may not be able to find here
+The SED file heads are :|name           |ra        |dec      |period|pdot     |photon_index|cutoff (MeV) |plec1_pref (cm^-2/s/MeV)|plec1_scaling_energy(MeV)|plec1_cutoff(MeV) the same as cutoff|
+you can check this from Eq. 12 of the paper https://iopscience.iop.org/article/10.1088/0067-0049/208/2/17 
+and the website for the meaning and units
+https://heasarc.gsfc.nasa.gov/db-perl/W3Browse/w3table.pl?tablehead=name%3Dfermil2psr&Action=More+Options

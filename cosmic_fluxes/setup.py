@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name='cosmic_fluxes',
-    version='0.0.0',
+    version='0.0.1',
     description='Fluxes of cosmic gamma-rays and cosmic-rays relevant '
     'for the atmospheric Cherenkov-method',
     long_description=long_description,
@@ -16,7 +16,12 @@ setuptools.setup(
     url='https://github.com/cherenkov-plenoscope/',
     license='GPL v3',
     packages=['cosmic_fluxes'],
-    package_data={'cosmic_fluxes': [os.path.join('resources', '*')]},
+    package_data={
+        'cosmic_fluxes': [
+            os.path.join('resources', '*'),
+            os.path.join('pulsars', "resources", '*'),
+        ],
+    },
     python_requires='>=3',
     install_requires=[
         'numpy',

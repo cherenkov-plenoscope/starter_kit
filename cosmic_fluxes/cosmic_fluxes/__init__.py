@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pkg_resources
+from . import pulsars
 from astropy.io import fits as astropy_io_fits
 
 
