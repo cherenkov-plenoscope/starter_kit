@@ -25,8 +25,7 @@ def list_pulsar_names(resources_dir=None):
 
 def get_resources_dir():
     return pkg_resources.resource_filename(
-        'cosmic_fluxes',
-        os.path.join("pulsars", 'resources')
+        "cosmic_fluxes", os.path.join("pulsars", "resources")
     )
 
 
