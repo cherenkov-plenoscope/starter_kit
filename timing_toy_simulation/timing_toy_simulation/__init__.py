@@ -337,7 +337,10 @@ def run_job(job):
         read_block_by_block=False,
     ) as run:
         for shower in run:
-            evth, bunches_cgs = shower
+            evth, cherenkov_reader, particle_reader = shower
+
+            bunches_cgs = np.vstack([b for b in cherenkov_reader])
+            _ = [b for b in particle_reader]
 
             # unique id
             # ---------

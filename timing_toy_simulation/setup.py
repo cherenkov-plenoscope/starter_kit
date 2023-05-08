@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="timing_toy_simulation",
-    version="0.0.0",
+    version="0.1.0",
     description="Estimate the absolute timing accuracy of gamma-rays in the atmospheric Cherenkov-method",
     long_description=long_description,
     long_description_content_type="text/markdown",

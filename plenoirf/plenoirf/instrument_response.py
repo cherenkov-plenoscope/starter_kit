@@ -356,6 +356,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     # loop over air-showers
     # ---------------------
     cherenkov_pools_path = op.join(tmp_dir, "cherenkov_pools.tar")
+    particle_pools_path = op.join(tmp_dir, "particle_pools.tar")
     tmp_grid_histogram_path = op.join(tmp_dir, "grid.tar")
     tmp_grid_roi_histogram_path = op.join(tmp_dir, "grid_roi.tar")
 
@@ -365,7 +366,9 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         tmp_grid_histogram_path, "w"
     ) as imgtar, tarfile.open(
         tmp_grid_roi_histogram_path, "w"
-    ) as imgroitar:
+    ) as imgroitar, tarfile.open(
+        particle_pools_path, "w"
+    ) as particletar:
 
         corsika_run = cpw.CorsikaPrimary(
             corsika_path=job["corsika_primary_path"],
@@ -376,7 +379,10 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         evttar.write_runh(runh=corsika_run.runh)
 
         for event_idx, corsika_event in enumerate(corsika_run):
-            corsika_evth, cherenkov_bunches = corsika_event
+            corsika_evth, cherenkov_reader, particle_reader = corsika_event
+
+            cherenkov_bunches = np.vstack([b for b in cherenkov_reader])
+            particles = np.vstack([b for b in particle_reader])
 
             # assert match
             run_id = int(corsika_evth[cpw.I.EVTH.RUN_NUMBER])
@@ -596,6 +602,12 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                     ),
                 )
 
+                utils.tar_append(
+                    tarout=particletar,
+                    file_name=uid_str + ".float32",
+                    file_bytes=particles.tobytes(),
+                )
+
     nfs.copy(
         op.join(tmp_dir, "corsika.stdout"),
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stdout"),
@@ -604,7 +616,10 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         op.join(tmp_dir, "corsika.stderr"),
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
-
+    nfs.copy(
+        src=particle_pools_path,
+        dst=op.join(job["feature_dir"], _run_id_str(job) + "_particles.tar"),
+    )
     nfs.copy(
         src=op.join(tmp_dir, "grid.tar"),
         dst=op.join(job["feature_dir"], _run_id_str(job) + "_grid.tar"),
