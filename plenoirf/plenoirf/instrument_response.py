@@ -189,6 +189,9 @@ def make_job_dict(
         "past_trigger_dir": os.path.join(
             run_dir, production_key, site_key, particle_key, "past_trigger.map"
         ),
+        "particles_dir": os.path.join(
+            run_dir, production_key, site_key, particle_key, "particles.map"
+        ),
         "past_trigger_reconstructed_cherenkov_dir": os.path.join(
             run_dir,
             production_key,
@@ -356,257 +359,250 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     # loop over air-showers
     # ---------------------
     cherenkov_pools_path = op.join(tmp_dir, "cherenkov_pools.tar")
-    particle_pools_path = op.join(tmp_dir, "particle_pools.tar")
-    tmp_grid_histogram_path = op.join(tmp_dir, "grid.tar")
-    tmp_grid_roi_histogram_path = op.join(tmp_dir, "grid_roi.tar")
+    particle_pools_dat_path = op.join(tmp_dir, "particle_pools.dat")
+    particle_pools_tar_path = op.join(tmp_dir, "particle_pools.tar.gz")
+    grid_histogram_path = op.join(tmp_dir, "grid.tar")
+    grid_roi_histogram_path = op.join(tmp_dir, "grid_roi.tar")
 
-    with cpw.event_tape.EventTapeWriter(
+    with cpw.cherenkov.CherenkovEventTapeWriter(
         path=cherenkov_pools_path
     ) as evttar, tarfile.open(
-        tmp_grid_histogram_path, "w"
+        grid_histogram_path, "w"
     ) as imgtar, tarfile.open(
-        tmp_grid_roi_histogram_path, "w"
-    ) as imgroitar, tarfile.open(
-        particle_pools_path, "w"
-    ) as particletar:
+        grid_roi_histogram_path, "w"
+    ) as imgroitar:
 
-        corsika_run = cpw.CorsikaPrimary(
+        with cpw.CorsikaPrimary(
             corsika_path=job["corsika_primary_path"],
             steering_dict=corsika_primary_steering,
             stdout_path=op.join(tmp_dir, "corsika.stdout"),
             stderr_path=op.join(tmp_dir, "corsika.stderr"),
-        )
-        evttar.write_runh(runh=corsika_run.runh)
+            particle_output_path=particle_pools_dat_path,
+        ) as corsika_run:
+            evttar.write_runh(runh=corsika_run.runh)
 
-        for event_idx, corsika_event in enumerate(corsika_run):
-            corsika_evth, cherenkov_reader, particle_reader = corsika_event
+            for event_idx, corsika_event in enumerate(corsika_run):
+                corsika_evth, cherenkov_reader = corsika_event
 
-            cherenkov_bunches = np.vstack([b for b in cherenkov_reader])
-            particles = np.vstack([b for b in particle_reader])
+                cherenkov_bunches = np.vstack([b for b in cherenkov_reader])
 
-            # assert match
-            run_id = int(corsika_evth[cpw.I.EVTH.RUN_NUMBER])
-            assert run_id == corsika_primary_steering["run"]["run_id"]
-            event_id = event_idx + 1
-            assert event_id == corsika_evth[cpw.I.EVTH.EVENT_NUMBER]
-            uid = unique.make_uid(run_id=run_id, event_id=event_id)
-            uid_str = unique.make_uid_str(run_id=run_id, event_id=event_id)
+                # assert match
+                run_id = int(corsika_evth[cpw.I.EVTH.RUN_NUMBER])
+                assert run_id == corsika_primary_steering["run"]["run_id"]
+                event_id = event_idx + 1
+                assert event_id == corsika_evth[cpw.I.EVTH.EVENT_NUMBER]
+                uid = unique.make_uid(run_id=run_id, event_id=event_id)
+                uid_str = unique.make_uid_str(run_id=run_id, event_id=event_id)
 
-            ide = {spt.IDX: uid}
+                ide = {spt.IDX: uid}
 
-            primary = corsika_primary_steering["primaries"][event_idx]
+                primary = corsika_primary_steering["primaries"][event_idx]
 
-            # export primary table
-            # --------------------
-            prim = ide.copy()
-            prim["particle_id"] = primary["particle_id"]
-            prim["energy_GeV"] = primary["energy_GeV"]
-            prim["azimuth_rad"] = primary["azimuth_rad"]
-            prim["zenith_rad"] = primary["zenith_rad"]
-            prim["max_scatter_rad"] = primary["max_scatter_rad"]
-            prim["solid_angle_thrown_sr"] = utils.cone_solid_angle(
-                prim["max_scatter_rad"]
-            )
-            prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]
-            prim["momentum_x_GeV_per_c"] = corsika_evth[
-                cpw.I.EVTH.PX_MOMENTUM_GEV_PER_C
-            ]
-            prim["momentum_y_GeV_per_c"] = corsika_evth[
-                cpw.I.EVTH.PY_MOMENTUM_GEV_PER_C
-            ]
-            prim["momentum_z_GeV_per_c"] = (
-                -1.0 * corsika_evth[cpw.I.EVTH.PZ_MOMENTUM_GEV_PER_C]
-            )
-            prim["first_interaction_height_asl_m"] = (
-                -1.0
-                * cpw.CM2M
-                * corsika_evth[cpw.I.EVTH.Z_FIRST_INTERACTION_CM]
-            )
-            prim["starting_height_asl_m"] = (
-                cpw.CM2M * corsika_evth[cpw.I.EVTH.STARTING_HEIGHT_CM]
-            )
-            obs_lvl_intersection = utils.ray_plane_x_y_intersection(
-                support=[0, 0, prim["starting_height_asl_m"]],
-                direction=[
-                    prim["momentum_x_GeV_per_c"],
-                    prim["momentum_y_GeV_per_c"],
-                    prim["momentum_z_GeV_per_c"],
-                ],
-                plane_z=job["site"]["observation_level_asl_m"],
-            )
-            prim["starting_x_m"] = -1.0 * obs_lvl_intersection[0]
-            prim["starting_y_m"] = -1.0 * obs_lvl_intersection[1]
-            prim["magnet_azimuth_rad"] = primary["magnet_azimuth_rad"]
-            prim["magnet_zenith_rad"] = primary["magnet_zenith_rad"]
-            prim["magnet_cherenkov_pool_x_m"] = primary[
-                "magnet_cherenkov_pool_x_m"
-            ]
-            prim["magnet_cherenkov_pool_y_m"] = primary[
-                "magnet_cherenkov_pool_y_m"
-            ]
-            tabrec["primary"].append(prim)
-
-            # cherenkov size
-            # --------------
-            crsz = ide.copy()
-            crsz = _append_bunch_ssize(crsz, cherenkov_bunches)
-            tabrec["cherenkovsize"].append(crsz)
-
-            # assign grid
-            # -----------
-            grid_random_shift_x, grid_random_shift_y = prng.uniform(
-                low=-0.5 * grid_geometry["bin_width"],
-                high=0.5 * grid_geometry["bin_width"],
-                size=2,
-            )
-
-            grhi = ide.copy()
-            if job["artificial_core_limitation"]:
-                _max_core_scatter_radius = np.interp(
-                    x=primary["energy_GeV"],
-                    xp=job["artificial_core_limitation"]["energy_GeV"],
-                    fp=job["artificial_core_limitation"][
-                        "max_scatter_radius_m"
+                # export primary table
+                # --------------------
+                prim = ide.copy()
+                prim["particle_id"] = primary["particle_id"]
+                prim["energy_GeV"] = primary["energy_GeV"]
+                prim["azimuth_rad"] = primary["azimuth_rad"]
+                prim["zenith_rad"] = primary["zenith_rad"]
+                prim["max_scatter_rad"] = primary["max_scatter_rad"]
+                prim["solid_angle_thrown_sr"] = utils.cone_solid_angle(
+                    prim["max_scatter_rad"]
+                )
+                prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]
+                prim["momentum_x_GeV_per_c"] = corsika_evth[
+                    cpw.I.EVTH.PX_MOMENTUM_GEV_PER_C
+                ]
+                prim["momentum_y_GeV_per_c"] = corsika_evth[
+                    cpw.I.EVTH.PY_MOMENTUM_GEV_PER_C
+                ]
+                prim["momentum_z_GeV_per_c"] = (
+                    -1.0 * corsika_evth[cpw.I.EVTH.PZ_MOMENTUM_GEV_PER_C]
+                )
+                prim["first_interaction_height_asl_m"] = (
+                    -1.0
+                    * cpw.CM2M
+                    * corsika_evth[cpw.I.EVTH.Z_FIRST_INTERACTION_CM]
+                )
+                prim["starting_height_asl_m"] = (
+                    cpw.CM2M * corsika_evth[cpw.I.EVTH.STARTING_HEIGHT_CM]
+                )
+                obs_lvl_intersection = utils.ray_plane_x_y_intersection(
+                    support=[0, 0, prim["starting_height_asl_m"]],
+                    direction=[
+                        prim["momentum_x_GeV_per_c"],
+                        prim["momentum_y_GeV_per_c"],
+                        prim["momentum_z_GeV_per_c"],
                     ],
+                    plane_z=job["site"]["observation_level_asl_m"],
                 )
-                grid_bin_idxs_limitation = grid.where_grid_idxs_within_radius(
+                prim["starting_x_m"] = -1.0 * obs_lvl_intersection[0]
+                prim["starting_y_m"] = -1.0 * obs_lvl_intersection[1]
+                prim["magnet_azimuth_rad"] = primary["magnet_azimuth_rad"]
+                prim["magnet_zenith_rad"] = primary["magnet_zenith_rad"]
+                prim["magnet_cherenkov_pool_x_m"] = primary[
+                    "magnet_cherenkov_pool_x_m"
+                ]
+                prim["magnet_cherenkov_pool_y_m"] = primary[
+                    "magnet_cherenkov_pool_y_m"
+                ]
+                tabrec["primary"].append(prim)
+
+                # cherenkov size
+                # --------------
+                crsz = ide.copy()
+                crsz = _append_bunch_ssize(crsz, cherenkov_bunches)
+                tabrec["cherenkovsize"].append(crsz)
+
+                # assign grid
+                # -----------
+                grid_random_shift_x, grid_random_shift_y = prng.uniform(
+                    low=-0.5 * grid_geometry["bin_width"],
+                    high=0.5 * grid_geometry["bin_width"],
+                    size=2,
+                )
+
+                grhi = ide.copy()
+                if job["artificial_core_limitation"]:
+                    _max_core_scatter_radius = np.interp(
+                        x=primary["energy_GeV"],
+                        xp=job["artificial_core_limitation"]["energy_GeV"],
+                        fp=job["artificial_core_limitation"][
+                            "max_scatter_radius_m"
+                        ],
+                    )
+                    grid_bin_idxs_limitation = grid.where_grid_idxs_within_radius(
+                        grid_geometry=grid_geometry,
+                        radius=_max_core_scatter_radius,
+                        center_x=-1.0 * grid_random_shift_x,
+                        center_y=-1.0 * grid_random_shift_y,
+                    )
+                    grhi["artificial_core_limitation"] = 1
+                    grhi[
+                        "artificial_core_limitation_radius_m"
+                    ] = _max_core_scatter_radius
+                    grhi["num_bins_thrown"] = len(grid_bin_idxs_limitation[0])
+                    grhi["area_thrown_m2"] = (
+                        grhi["num_bins_thrown"] * grid_geometry["bin_area"]
+                    )
+                else:
+                    grid_bin_idxs_limitation = None
+                    grhi["artificial_core_limitation"] = 0
+                    grhi["artificial_core_limitation_radius_m"] = -1.0
+                    grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
+                    grhi["area_thrown_m2"] = grid_geometry["total_area"]
+
+                grhi["bin_width_m"] = grid_geometry["bin_width"]
+                grhi["field_of_view_radius_deg"] = grid_geometry[
+                    "field_of_view_radius_deg"
+                ]
+                grhi["pointing_direction_x"] = grid_geometry["pointing_direction"][
+                    0
+                ]
+                grhi["pointing_direction_y"] = grid_geometry["pointing_direction"][
+                    1
+                ]
+                grhi["pointing_direction_z"] = grid_geometry["pointing_direction"][
+                    2
+                ]
+                grhi["random_shift_x_m"] = grid_random_shift_x
+                grhi["random_shift_y_m"] = grid_random_shift_y
+                grhi["magnet_shift_x_m"] = (
+                    -1.0 * primary["magnet_cherenkov_pool_x_m"]
+                )
+                grhi["magnet_shift_y_m"] = (
+                    -1.0 * primary["magnet_cherenkov_pool_x_m"]
+                )
+                grhi["total_shift_x_m"] = (
+                    grhi["random_shift_x_m"] + grhi["magnet_shift_x_m"]
+                )
+                grhi["total_shift_y_m"] = (
+                    grhi["random_shift_y_m"] + grhi["magnet_shift_y_m"]
+                )
+
+                grid_result = grid.assign(
+                    cherenkov_bunches=cherenkov_bunches,
                     grid_geometry=grid_geometry,
-                    radius=_max_core_scatter_radius,
-                    center_x=-1.0 * grid_random_shift_x,
-                    center_y=-1.0 * grid_random_shift_y,
+                    shift_x=grhi["total_shift_x_m"],
+                    shift_y=grhi["total_shift_y_m"],
+                    threshold_num_photons=job["grid"]["threshold_num_photons"],
+                    prng=prng,
+                    bin_idxs_limitation=grid_bin_idxs_limitation,
                 )
-                grhi["artificial_core_limitation"] = 1
-                grhi[
-                    "artificial_core_limitation_radius_m"
-                ] = _max_core_scatter_radius
-                grhi["num_bins_thrown"] = len(grid_bin_idxs_limitation[0])
-                grhi["area_thrown_m2"] = (
-                    grhi["num_bins_thrown"] * grid_geometry["bin_area"]
-                )
-            else:
-                grid_bin_idxs_limitation = None
-                grhi["artificial_core_limitation"] = 0
-                grhi["artificial_core_limitation_radius_m"] = -1.0
-                grhi["num_bins_thrown"] = grid_geometry["total_num_bins"]
-                grhi["area_thrown_m2"] = grid_geometry["total_area"]
+                if event_idx % GRID_SKIP == 0:
+                    utils.tar_append(
+                        tarout=imgtar,
+                        file_name=uid_str + ".f4.gz",
+                        file_bytes=grid.histogram_to_bytes(
+                            grid_result["histogram"]
+                        ),
+                    )
 
-            grhi["bin_width_m"] = grid_geometry["bin_width"]
-            grhi["field_of_view_radius_deg"] = grid_geometry[
-                "field_of_view_radius_deg"
-            ]
-            grhi["pointing_direction_x"] = grid_geometry["pointing_direction"][
-                0
-            ]
-            grhi["pointing_direction_y"] = grid_geometry["pointing_direction"][
-                1
-            ]
-            grhi["pointing_direction_z"] = grid_geometry["pointing_direction"][
-                2
-            ]
-            grhi["random_shift_x_m"] = grid_random_shift_x
-            grhi["random_shift_y_m"] = grid_random_shift_y
-            grhi["magnet_shift_x_m"] = (
-                -1.0 * primary["magnet_cherenkov_pool_x_m"]
-            )
-            grhi["magnet_shift_y_m"] = (
-                -1.0 * primary["magnet_cherenkov_pool_x_m"]
-            )
-            grhi["total_shift_x_m"] = (
-                grhi["random_shift_x_m"] + grhi["magnet_shift_x_m"]
-            )
-            grhi["total_shift_y_m"] = (
-                grhi["random_shift_y_m"] + grhi["magnet_shift_y_m"]
-            )
+                # grid statistics
+                # ---------------
+                grhi["num_bins_above_threshold"] = grid_result[
+                    "num_bins_above_threshold"
+                ]
+                grhi["overflow_x"] = grid_result["overflow_x"]
+                grhi["underflow_x"] = grid_result["underflow_x"]
+                grhi["overflow_y"] = grid_result["overflow_y"]
+                grhi["underflow_y"] = grid_result["underflow_y"]
+                tabrec["grid"].append(grhi)
 
-            grid_result = grid.assign(
-                cherenkov_bunches=cherenkov_bunches,
-                grid_geometry=grid_geometry,
-                shift_x=grhi["total_shift_x_m"],
-                shift_y=grhi["total_shift_y_m"],
-                threshold_num_photons=job["grid"]["threshold_num_photons"],
-                prng=prng,
-                bin_idxs_limitation=grid_bin_idxs_limitation,
-            )
-            if event_idx % GRID_SKIP == 0:
-                utils.tar_append(
-                    tarout=imgtar,
-                    file_name=uid_str + ".f4.gz",
-                    file_bytes=grid.histogram_to_bytes(
-                        grid_result["histogram"]
-                    ),
-                )
+                # cherenkov statistics
+                # --------------------
+                if cherenkov_bunches.shape[0] > 0:
+                    fase = ide.copy()
+                    fase = _append_bunch_statistics(
+                        airshower_dict=fase, cherenkov_bunches=cherenkov_bunches
+                    )
+                    tabrec["cherenkovpool"].append(fase)
 
-            # grid statistics
-            # ---------------
-            grhi["num_bins_above_threshold"] = grid_result[
-                "num_bins_above_threshold"
-            ]
-            grhi["overflow_x"] = grid_result["overflow_x"]
-            grhi["underflow_x"] = grid_result["underflow_x"]
-            grhi["overflow_y"] = grid_result["overflow_y"]
-            grhi["underflow_y"] = grid_result["underflow_y"]
-            tabrec["grid"].append(grhi)
+                reuse_event = grid_result["random_choice"]
+                if reuse_event is not None:
+                    reuse_evth = corsika_evth.copy()
+                    reuse_evth[cpw.I.EVTH.NUM_REUSES_OF_CHERENKOV_EVENT] = 1.0
+                    reuse_evth[cpw.I.EVTH.X_CORE_CM(reuse=1)] = (
+                        cpw.M2CM * reuse_event["core_x_m"]
+                    )
+                    reuse_evth[cpw.I.EVTH.Y_CORE_CM(reuse=1)] = (
+                        cpw.M2CM * reuse_event["core_y_m"]
+                    )
 
-            # cherenkov statistics
-            # --------------------
-            if cherenkov_bunches.shape[0] > 0:
-                fase = ide.copy()
-                fase = _append_bunch_statistics(
-                    airshower_dict=fase, cherenkov_bunches=cherenkov_bunches
-                )
-                tabrec["cherenkovpool"].append(fase)
+                    evttar.write_evth(evth=reuse_evth)
+                    evttar.write_payload(payload=reuse_event["cherenkov_bunches"])
 
-            reuse_event = grid_result["random_choice"]
-            if reuse_event is not None:
-                reuse_evth = corsika_evth.copy()
-                reuse_evth[cpw.I.EVTH.NUM_REUSES_OF_CHERENKOV_EVENT] = 1.0
-                reuse_evth[cpw.I.EVTH.X_CORE_CM(reuse=1)] = (
-                    cpw.M2CM * reuse_event["core_x_m"]
-                )
-                reuse_evth[cpw.I.EVTH.Y_CORE_CM(reuse=1)] = (
-                    cpw.M2CM * reuse_event["core_y_m"]
-                )
+                    crszp = ide.copy()
+                    crszp = _append_bunch_ssize(
+                        crszp, reuse_event["cherenkov_bunches"]
+                    )
+                    tabrec["cherenkovsizepart"].append(crszp)
+                    rase = ide.copy()
+                    rase = _append_bunch_statistics(
+                        airshower_dict=rase,
+                        cherenkov_bunches=reuse_event["cherenkov_bunches"],
+                    )
+                    tabrec["cherenkovpoolpart"].append(rase)
+                    rcor = ide.copy()
+                    rcor["bin_idx_x"] = reuse_event["bin_idx_x"]
+                    rcor["bin_idx_y"] = reuse_event["bin_idx_y"]
+                    rcor["core_x_m"] = reuse_event["core_x_m"]
+                    rcor["core_y_m"] = reuse_event["core_y_m"]
+                    tabrec["core"].append(rcor)
 
-                evttar.write_evth(evth=reuse_evth)
-                evttar.write_bunches(bunches=reuse_event["cherenkov_bunches"])
-
-                crszp = ide.copy()
-                crszp = _append_bunch_ssize(
-                    crszp, reuse_event["cherenkov_bunches"]
-                )
-                tabrec["cherenkovsizepart"].append(crszp)
-                rase = ide.copy()
-                rase = _append_bunch_statistics(
-                    airshower_dict=rase,
-                    cherenkov_bunches=reuse_event["cherenkov_bunches"],
-                )
-                tabrec["cherenkovpoolpart"].append(rase)
-                rcor = ide.copy()
-                rcor["bin_idx_x"] = reuse_event["bin_idx_x"]
-                rcor["bin_idx_y"] = reuse_event["bin_idx_y"]
-                rcor["core_x_m"] = reuse_event["core_x_m"]
-                rcor["core_y_m"] = reuse_event["core_y_m"]
-                tabrec["core"].append(rcor)
-
-                utils.tar_append(
-                    tarout=imgroitar,
-                    file_name=uid_str + ".f4.gz",
-                    file_bytes=grid.histogram_to_bytes(
-                        utils.copy_square_selection_from_2D_array(
-                            img=grid_result["histogram"],
-                            ix=reuse_event["bin_idx_x"],
-                            iy=reuse_event["bin_idx_y"],
-                            r=outer_telescope_array.NUM_BINS_RADIUS,
-                            fill=np.nan,
-                        )
-                    ),
-                )
-
-                utils.tar_append(
-                    tarout=particletar,
-                    file_name=uid_str + ".float32",
-                    file_bytes=particles.tobytes(),
-                )
+                    utils.tar_append(
+                        tarout=imgroitar,
+                        file_name=uid_str + ".f4.gz",
+                        file_bytes=grid.histogram_to_bytes(
+                            utils.copy_square_selection_from_2D_array(
+                                img=grid_result["histogram"],
+                                ix=reuse_event["bin_idx_x"],
+                                iy=reuse_event["bin_idx_y"],
+                                r=outer_telescope_array.NUM_BINS_RADIUS,
+                                fill=np.nan,
+                            )
+                        ),
+                    )
 
     nfs.copy(
         op.join(tmp_dir, "corsika.stdout"),
@@ -616,9 +612,13 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         op.join(tmp_dir, "corsika.stderr"),
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
+    cpw.particles.dat_to_tape(
+        dat_path=particle_pools_dat_path,
+        tape_path=particle_pools_tar_path,
+    )
     nfs.copy(
-        src=particle_pools_path,
-        dst=op.join(job["feature_dir"], _run_id_str(job) + "_particles.tar"),
+        src=particle_pools_tar_path,
+        dst=op.join(job["particles_dir"], _run_id_str(job) + "_particles.tar.gz"),
     )
     nfs.copy(
         src=op.join(tmp_dir, "grid.tar"),
@@ -951,6 +951,7 @@ def _make_output_dirs(job):
     os.makedirs(job["past_trigger_dir"], exist_ok=True)
     os.makedirs(job["past_trigger_reconstructed_cherenkov_dir"], exist_ok=True)
     os.makedirs(job["feature_dir"], exist_ok=True)
+    os.makedirs(job["particles_dir"], exist_ok=True)
 
 
 def _export_event_table(job, tmp_dir, tabrec):

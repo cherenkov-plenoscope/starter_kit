@@ -334,13 +334,12 @@ def run_job(job):
         steering_dict=steering,
         stdout_path=corsika_o_path + ".incomplete",
         stderr_path=corsika_e_path + ".incomplete",
-        read_block_by_block=False,
+        particle_output_path=os.path.join(job_dir, "particles.dat"),
     ) as run:
         for shower in run:
-            evth, cherenkov_reader, particle_reader = shower
+            evth, cherenkov_reader = shower
 
             bunches_cgs = np.vstack([b for b in cherenkov_reader])
-            _ = [b for b in particle_reader]
 
             # unique id
             # ---------
