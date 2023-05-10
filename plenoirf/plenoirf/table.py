@@ -50,6 +50,12 @@ STRUCTURE["cherenkovsize"] = {
     "num_photons": {"dtype": "<f8", "comment": ""},
 }
 
+STRUCTURE["particlepool"] = {
+    "num_water_cherenkov": {"dtype": "<i8", "comment": "The number of particles which reach the observation-level and will emitt Cherenkov-light in water"},
+    "num_air_cherenkov": {"dtype": "<i8", "comment": "Same as 'num_water_cherenkov' but for the air at the instruments altitude."},
+    "num_unknown": {"dtype": "<i8", "comment": "Particles which are not (yet) in our corsika-particle-zoo."},
+}
+
 STRUCTURE["grid"] = {
     "num_bins_thrown": {
         "dtype": "<i8",
@@ -100,6 +106,13 @@ STRUCTURE["core"] = {
     "bin_idx_y": {"dtype": "<i8", "comment": ""},
     "core_x_m": {"dtype": "<f8", "comment": ""},
     "core_y_m": {"dtype": "<f8", "comment": ""},
+}
+
+STRUCTURE["particlepoolonaperture"] = {
+    "num_air_cherenkov_on_aperture": {
+        "dtype": "<i8",
+        "comment": "Same as 'num_air_cherenkov' but also run through the instrument's aperture for Cherenkov-light."
+    },
 }
 
 STRUCTURE["instrument"] = {

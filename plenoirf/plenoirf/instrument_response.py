@@ -3,6 +3,7 @@ from . import unique
 from . import grid
 from . import utils
 from . import production
+from . import analysis
 from . import reconstruction
 from . import outer_telescope_array
 
@@ -628,6 +629,79 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     return cherenkov_pools_path, tabrec
 
 
+def records_by_uid(records, uid):
+    for record in records:
+        assert spt.IDX in record
+        if record[spt.IDX] == uid:
+            return record
+
+
+def _populate_particlepool(job, tabrec):
+    media_refractive_indices = {
+        "water": 1.33,
+        "air": cpw.particles.identification.refractive_index_atmosphere(
+            altitude_asl_m=job["site"]["observation_level_asl_m"]
+        )
+    }
+    aperture_diameter_m = _init_grid_geometry_from_job(job=job)["bin_width"]
+    aperture_radius_m = 0.5 * aperture_diameter_m
+
+    zoo = cpw.particles.identification.Zoo(
+        media_refractive_indices=media_refractive_indices
+    )
+
+    particle_path = op.join(
+        job["particles_dir"],
+        _run_id_str(job) + "_particles.tar.gz"
+    )
+
+    with cpw.particles.ParticleEventTapeReader(path=particle_path) as run:
+        for event_idx, event in enumerate(run):
+            evth, parreader = event
+
+            # assert match
+            run_id = int(evth[cpw.I.EVTH.RUN_NUMBER])
+            assert run_id == job["run_id"]
+            event_id = event_idx + 1
+            assert event_id == evth[cpw.I.EVTH.EVENT_NUMBER]
+            uid = unique.make_uid(run_id=run_id, event_id=event_id)
+
+            core = records_by_uid(records=tabrec["core"], uid=uid)
+
+            ppp = {spt.IDX: uid}
+            ppp["num_water_cherenkov"] = 0
+            ppp["num_air_cherenkov"] = 0
+            ppp["num_unknown"] = 0
+
+            if core:
+                aaa = {spt.IDX: uid}
+                aaa["num_air_cherenkov_on_aperture"] = 0
+
+            for parblock in parreader:
+                cer = analysis.particles_on_ground.mask_cherenkov_emission(
+                    corsika_particles=parblock,
+                    corsika_particle_zoo=zoo,
+                )
+                ppp["num_water_cherenkov"] += np.sum(cer["media"]["water"])
+                ppp["num_air_cherenkov"] += np.sum(cer["media"]["air"])
+                ppp["num_unknown"] += np.sum(cer["unknown"])
+
+                if core:
+                    subparblock = parblock[cer["media"]["air"]]
+                    subparblock_r_m = analysis.particles_on_ground.distances_to_point_on_observation_level_m(
+                        corsika_particles=subparblock,
+                        x_m=core["core_x_m"],
+                        y_m=core["core_y_m"],
+                    )
+                    mask_on_aperture = subparblock_r_m <= aperture_radius_m
+                    aaa["num_air_cherenkov_on_aperture"] += np.sum(mask_on_aperture)
+
+            tabrec["particlepool"].append(ppp)
+            if core:
+                tabrec["particlepoolonaperture"].append(aaa)
+    return tabrec
+
+
 def _run_merlict(job, cherenkov_pools_path, tmp_dir):
     detector_responses_path = op.join(tmp_dir, "detector_responses")
     if not op.exists(detector_responses_path):
@@ -1052,6 +1126,10 @@ def run_job(job):
             corsika_primary_steering=corsika_primary_steering,
             tabrec=tabrec,
         )
+
+    with jlogging.TimeDelta(logger, "particlepool"):
+        tabrec = _populate_particlepool(job, tabrec)
+
     with jlogging.TimeDelta(logger, "merlict"):
         detector_responses_path = _run_merlict(
             job=job,
