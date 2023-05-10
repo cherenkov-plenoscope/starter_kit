@@ -21,11 +21,13 @@ def mask_cherenkov_emission(corsika_particles, corsika_particle_zoo):
         )
 
         if corsika_particle_zoo.has(corsika_id=corsika_particle_id):
-            momentum_GeV = np.array([
-                particle[cpw.I.PARTICLE.PX],
-                particle[cpw.I.PARTICLE.PY],
-                particle[cpw.I.PARTICLE.PZ],
-            ])
+            momentum_GeV = np.array(
+                [
+                    particle[cpw.I.PARTICLE.PX],
+                    particle[cpw.I.PARTICLE.PY],
+                    particle[cpw.I.PARTICLE.PZ],
+                ]
+            )
 
             for medium_key in media:
                 if corsika_particle_zoo.cherenkov_emission(

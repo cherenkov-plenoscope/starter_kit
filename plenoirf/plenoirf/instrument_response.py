@@ -497,15 +497,15 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 grhi["field_of_view_radius_deg"] = grid_geometry[
                     "field_of_view_radius_deg"
                 ]
-                grhi["pointing_direction_x"] = grid_geometry["pointing_direction"][
-                    0
-                ]
-                grhi["pointing_direction_y"] = grid_geometry["pointing_direction"][
-                    1
-                ]
-                grhi["pointing_direction_z"] = grid_geometry["pointing_direction"][
-                    2
-                ]
+                grhi["pointing_direction_x"] = grid_geometry[
+                    "pointing_direction"
+                ][0]
+                grhi["pointing_direction_y"] = grid_geometry[
+                    "pointing_direction"
+                ][1]
+                grhi["pointing_direction_z"] = grid_geometry[
+                    "pointing_direction"
+                ][2]
                 grhi["random_shift_x_m"] = grid_random_shift_x
                 grhi["random_shift_y_m"] = grid_random_shift_y
                 grhi["magnet_shift_x_m"] = (
@@ -555,7 +555,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 if cherenkov_bunches.shape[0] > 0:
                     fase = ide.copy()
                     fase = _append_bunch_statistics(
-                        airshower_dict=fase, cherenkov_bunches=cherenkov_bunches
+                        airshower_dict=fase,
+                        cherenkov_bunches=cherenkov_bunches,
                     )
                     tabrec["cherenkovpool"].append(fase)
 
@@ -571,7 +572,9 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                     )
 
                     evttar.write_evth(evth=reuse_evth)
-                    evttar.write_payload(payload=reuse_event["cherenkov_bunches"])
+                    evttar.write_payload(
+                        payload=reuse_event["cherenkov_bunches"]
+                    )
 
                     crszp = ide.copy()
                     crszp = _append_bunch_ssize(
@@ -614,12 +617,13 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
     cpw.particles.dat_to_tape(
-        dat_path=particle_pools_dat_path,
-        tape_path=particle_pools_tar_path,
+        dat_path=particle_pools_dat_path, tape_path=particle_pools_tar_path,
     )
     nfs.copy(
         src=particle_pools_tar_path,
-        dst=op.join(job["particles_dir"], _run_id_str(job) + "_particles.tar.gz"),
+        dst=op.join(
+            job["particles_dir"], _run_id_str(job) + "_particles.tar.gz"
+        ),
     )
     nfs.copy(
         src=op.join(tmp_dir, "grid.tar"),
@@ -641,7 +645,7 @@ def _populate_particlepool(job, tabrec):
         "water": 1.33,
         "air": cpw.particles.identification.refractive_index_atmosphere(
             altitude_asl_m=job["site"]["observation_level_asl_m"]
-        )
+        ),
     }
     aperture_diameter_m = _init_grid_geometry_from_job(job=job)["bin_width"]
     aperture_radius_m = 0.5 * aperture_diameter_m
@@ -651,8 +655,7 @@ def _populate_particlepool(job, tabrec):
     )
 
     particle_path = op.join(
-        job["particles_dir"],
-        _run_id_str(job) + "_particles.tar.gz"
+        job["particles_dir"], _run_id_str(job) + "_particles.tar.gz"
     )
 
     with cpw.particles.ParticleEventTapeReader(path=particle_path) as run:
@@ -679,8 +682,7 @@ def _populate_particlepool(job, tabrec):
 
             for parblock in parreader:
                 cer = analysis.particles_on_ground.mask_cherenkov_emission(
-                    corsika_particles=parblock,
-                    corsika_particle_zoo=zoo,
+                    corsika_particles=parblock, corsika_particle_zoo=zoo,
                 )
                 ppp["num_water_cherenkov"] += np.sum(cer["media"]["water"])
                 ppp["num_air_cherenkov"] += np.sum(cer["media"]["air"])
@@ -694,7 +696,9 @@ def _populate_particlepool(job, tabrec):
                         y_m=core["core_y_m"],
                     )
                     mask_on_aperture = subparblock_r_m <= aperture_radius_m
-                    aaa["num_air_cherenkov_on_aperture"] += np.sum(mask_on_aperture)
+                    aaa["num_air_cherenkov_on_aperture"] += np.sum(
+                        mask_on_aperture
+                    )
 
             tabrec["particlepool"].append(ppp)
             if core:

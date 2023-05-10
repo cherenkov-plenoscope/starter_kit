@@ -48,8 +48,7 @@ prng = np.random.Generator(
 
 pulsar_name = "J0614-3329"
 pulsar = irf.analysis.pulsar_timing.ppog_init_from_profiles(
-    energy_bin_edges=energy_fine_bin["edges"],
-    pulsar_name=pulsar_name,
+    energy_bin_edges=energy_fine_bin["edges"], pulsar_name=pulsar_name,
 )
 
 
