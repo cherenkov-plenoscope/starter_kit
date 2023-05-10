@@ -614,6 +614,7 @@ def run(
         logger=logger,
     )
 
+    """
     _estimate_resolution_of_depth(
         run_dir=run_dir,
         executables=executables,
@@ -627,5 +628,6 @@ def run(
         map_and_reduce_pool=map_and_reduce_pool,
         logger=logger,
     )
+    """
 
     logger.info("End run().")
