@@ -30,6 +30,12 @@ energy_bin = json_numpy.read(
 
 span_hist_1_1 = [0.2, 0.15, 0.75, 0.8]
 
+
+def guess_num_bins(num_events):
+    num_bins = int(0.2 * np.sqrt(num_events))
+    return np.max([num_bins, 3])
+
+
 CHCL = "cherenkovclassification"
 
 for sk in irf_config["config"]["sites"]:
@@ -57,8 +63,8 @@ for sk in irf_config["config"]["sites"]:
 
         # ---------------------------------------------------------------------
         key = "confusion"
-        num_bins_size_confusion_matrix = int(
-            0.2 * np.sqrt(mrg_chc_fts["features"].shape[0])
+        num_bins_size_confusion_matrix = guess_num_bins(
+            num_events=mrg_chc_fts["features"].shape[0]
         )
         size_bin_edges = np.geomspace(
             1e1, 1e5, num_bins_size_confusion_matrix + 1
