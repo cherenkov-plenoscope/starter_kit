@@ -5,6 +5,7 @@ import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
+import cosmic_fluxes
 import json_numpy
 import binning_utils
 import propagate_uncertainties
@@ -261,6 +262,39 @@ onregion_alpha = {
     "medium": 1 / 3,
     "large": 1 / 1,
 }
+
+PULSARS = cosmic_fluxes.pulsars.list_pulsar_names()
+
+pulsar_rates = {}
+for sk in SITES:
+    pulsar_rates[sk] = {}
+    for ok in ONREGION_TYPES:
+        pulsar_rates[sk][ok] = {}
+
+        A_gamma = onregion_acceptance[sk][ok]["gamma"]["point"]["mean"]
+        A_gamma_fine_m2 = np.interp(
+            x=energy_fine_bin["centers"], xp=energy_bin["centers"], fp=A_gamma,
+        )
+
+        for pk in PULSARS:
+            print(sk, ok, pk)
+            ppp = {}
+            _pulsar = irf.analysis.pulsar_timing.ppog_init_from_profiles(
+                energy_bin_edges=energy_fine_bin["edges"], pulsar_name=pulsar_name,
+            )
+            ppp["dKdE_per_m2_per_s_per_GeV"] = _pulsar["differential_flux_vs_energy"]
+            ppp["dRdE_per_s_per_GeV"] = np.zeros(energy_fine_bin["num_bins"])
+            for ebin in range(energy_fine_bin["num_bins"]):
+                ppp["dRdE_per_s_per_GeV"][ebin] = (
+                    A_gamma_fine_m2[ebin] * ppp["dKdE_per_m2_per_s_per_GeV"][ebin]
+                )
+
+            ppp["R_per_s"] = 0.0
+            for ebin in range(energy_fine_bin["num_bins"]):
+                ppp["R_per_s"] += (
+                    ppp["dRdE_per_s_per_GeV"][ebin] * energy_fine_bin["widths"][ebin]
+                )
+            pulsar_rates[sk][ok][pk] = ppp
 
 
 for sk in SITES:
