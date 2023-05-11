@@ -265,37 +265,6 @@ onregion_alpha = {
 
 PULSARS = cosmic_fluxes.pulsars.list_pulsar_names()
 
-pulsar_rates = {}
-for sk in SITES:
-    pulsar_rates[sk] = {}
-    for ok in ONREGION_TYPES:
-        pulsar_rates[sk][ok] = {}
-
-        A_gamma = onregion_acceptance[sk][ok]["gamma"]["point"]["mean"]
-        A_gamma_fine_m2 = np.interp(
-            x=energy_fine_bin["centers"], xp=energy_bin["centers"], fp=A_gamma,
-        )
-
-        for pk in PULSARS:
-            print(sk, ok, pk)
-            ppp = {}
-            _pulsar = irf.analysis.pulsar_timing.ppog_init_from_profiles(
-                energy_bin_edges=energy_fine_bin["edges"], pulsar_name=pulsar_name,
-            )
-            ppp["dKdE_per_m2_per_s_per_GeV"] = _pulsar["differential_flux_vs_energy"]
-            ppp["dRdE_per_s_per_GeV"] = np.zeros(energy_fine_bin["num_bins"])
-            for ebin in range(energy_fine_bin["num_bins"]):
-                ppp["dRdE_per_s_per_GeV"][ebin] = (
-                    A_gamma_fine_m2[ebin] * ppp["dKdE_per_m2_per_s_per_GeV"][ebin]
-                )
-
-            ppp["R_per_s"] = 0.0
-            for ebin in range(energy_fine_bin["num_bins"]):
-                ppp["R_per_s"] += (
-                    ppp["dRdE_per_s_per_GeV"][ebin] * energy_fine_bin["widths"][ebin]
-                )
-            pulsar_rates[sk][ok][pk] = ppp
-
 
 for sk in SITES:
     sk_dir = os.path.join(pa["out_dir"], sk)
@@ -305,27 +274,27 @@ for sk in SITES:
 
         # background
         # ----------
-        rate_cosmic_rays_per_s = []
-        rate_cosmic_rays_per_s_au = []
-        rate_of_cosmic_rays = {}
+        rates_cosmic_rays_per_s = []
+        rates_cosmic_rays_per_s_au = []
+        rates_of_cosmic_rays = {}
         for pk in COSMIC_RAYS:
             rate = onregion_rates[sk][ok][pk]["integral_rate"]["mean"]
             rate_au = onregion_rates[sk][ok][pk]["integral_rate"][
                 "absolute_uncertainty"
             ]
-            rate_of_cosmic_rays[pk] = rate
-        rate_cosmic_rays_per_s.append(rate)
-        rate_cosmic_rays_per_s_au.append(rate_au)
+            rates_of_cosmic_rays[pk] = rate
+            rates_cosmic_rays_per_s.append(rate)
+            rates_cosmic_rays_per_s_au.append(rate_au)
         (
             rate_cosmic_rays_per_s,
             rate_cosmic_rays_per_s_au,
         ) = propagate_uncertainties.sum(
-            x=rate_cosmic_rays_per_s, x_au=rate_cosmic_rays_per_s_au
+            x=rates_cosmic_rays_per_s, x_au=rates_cosmic_rays_per_s_au
         )
 
         json_numpy.write(
-            os.path.join(sk_ok_dir, "rate_of_cosmic_rays.json"),
-            rate_of_cosmic_rays,
+            os.path.join(sk_ok_dir, "rates_of_cosmic_rays.json"),
+            rates_of_cosmic_rays,
             indent=4,
         )
 
