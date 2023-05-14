@@ -166,6 +166,11 @@ def write_observations_config(cfg_dir, minimal):
         os.path.join(cfg_obsv_dir, "star.json"),
         {
             "num_stars": 20 if minimal else 200,
+            "guide_stars": [
+                {"cx_deg": 0.0, "cy_deg": 0.0},
+                {"cx_deg": 1.5, "cy_deg": 0.0},
+                {"cx_deg": 3.0, "cy_deg": 0.0},
+            ],
             "max_angle_off_optical_axis_deg": 4.0,
             "areal_photon_density_per_m2": 5 if minimal else 50,
         },
@@ -208,7 +213,7 @@ def write_observations_config(cfg_dir, minimal):
     obs_table = {}
     obs_table["diag9_perlin55mm_gentle"] = ["star", "phantom", "point"]
     obs_table["diag3_perlin55mm_gentle"] = ["star", "phantom", "point"]
-    obs_table["diag1_perlin55mm_gentle"] = ["star", "phantom", "point"]
+    obs_table["diag1_perlin55mm_gentle"] = ["star", "phantom"]
     obs_table["diag9_default_gentle"] = [
         "star",
     ]
