@@ -129,28 +129,45 @@ def write_photon_bunches(
                 prng=prng,
                 speed_of_light=299792458,
             )
-            run.write_bunches(bunches)
+            run.write_payload(bunches)
     os.rename(tmp_path, path)
 
 
 def make_source_config_from_job(job):
-    prng = np.random.Generator(np.random.PCG64(job["number"]))
 
     star_cfg = json_numpy.read(
         os.path.join(job["work_dir"], "config", "observations", "star.json")
     )
 
-    (cx_deg, cy_deg,) = corsika_primary.random.distributions.draw_x_y_in_disc(
-        prng=prng, radius=star_cfg["max_angle_off_optical_axis_deg"]
-    )
+    num_guide_stars = len(star_cfg["guide_stars"])
 
-    source_config = {
-        "type": "star",
-        "cx_deg": cx_deg,
-        "cy_deg": cy_deg,
-        "areal_photon_density_per_m2": star_cfg["areal_photon_density_per_m2"],
-        "seed": job["number"],
-    }
+    if job["number"] < num_guide_stars:
+        # guide star
+
+        source_config = {
+            "type": "star",
+            "cx_deg": star_cfg["guide_stars"][job["number"]]["cx_deg"],
+            "cy_deg": star_cfg["guide_stars"][job["number"]]["cy_deg"],
+            "areal_photon_density_per_m2": star_cfg["areal_photon_density_per_m2"],
+            "seed": job["number"],
+        }
+
+    else:
+        # random star
+        prng = np.random.Generator(np.random.PCG64(job["number"]))
+
+        (cx_deg, cy_deg,) = corsika_primary.random.distributions.draw_x_y_in_disc(
+            prng=prng, radius=star_cfg["max_angle_off_optical_axis_deg"]
+        )
+
+        source_config = {
+            "type": "star",
+            "cx_deg": cx_deg,
+            "cy_deg": cy_deg,
+            "areal_photon_density_per_m2": star_cfg["areal_photon_density_per_m2"],
+            "seed": job["number"],
+        }
+
     return source_config
 
 
