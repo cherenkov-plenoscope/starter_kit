@@ -211,34 +211,25 @@ def write_observations_config(cfg_dir, minimal):
     max_diagN = "diag3" if minimal else "diag9"
 
     obs_table = {}
-    obs_table["diag9_perlin55mm_gentle"] = ["star", "phantom", "point"]
+    if not minimal:
+        obs_table["diag9_perlin55mm_gentle"] = ["star", "phantom", "point"]
     obs_table["diag3_perlin55mm_gentle"] = ["star", "phantom", "point"]
     obs_table["diag1_perlin55mm_gentle"] = ["star", "phantom"]
-    obs_table["diag9_default_gentle"] = [
-        "star",
-    ]
-    obs_table["diag3_default_gentle"] = [
-        "star",
-    ]
-    obs_table["diag1_default_gentle"] = [
-        "star",
-    ]
-    obs_table["diag9_perlin55mm_default"] = [
-        "star",
-    ]
-    obs_table["diag3_perlin55mm_default"] = [
-        "star",
-    ]
-    obs_table["diag1_perlin55mm_default"] = [
-        "star",
-    ]
-    obs_table["diag9_default_default"] = ["star", "phantom", "point"]
-    obs_table["diag3_default_default"] = [
-        "star",
-    ]
-    obs_table["diag1_default_default"] = [
-        "star",
-    ]
+    obs_table["diag9_default_gentle"] = ["star"]
+    obs_table["diag3_default_gentle"] = ["star"]
+    obs_table["diag1_default_gentle"] = ["star"]
+    if not minimal:
+        obs_table["diag9_perlin55mm_default"] = ["star"]
+    obs_table["diag3_perlin55mm_default"] = ["star"]
+    obs_table["diag1_perlin55mm_default"] = ["star"]
+    if not minimal:
+        obs_table["diag9_default_default"] = ["star", "phantom", "point"]
+    obs_table["diag3_default_default"] = ["star"]
+    obs_table["diag1_default_default"] = ["star"]
+
+    instruments = json_numpy.read(os.path.join(cfg_dir, "instruments"))
+    for instrument_key in obs_table:
+        assert instrument_key in instruments
 
     json_numpy.write(
         os.path.join(cfg_obsv_dir, "instruments.json"), obs_table,
