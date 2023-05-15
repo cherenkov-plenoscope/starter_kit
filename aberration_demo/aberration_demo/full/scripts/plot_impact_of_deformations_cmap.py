@@ -21,151 +21,52 @@ argparser.add_argument(
     "work_dir", metavar="WORK_DIR", type=str,
 )
 
-argparser.add_argument(
-    "instrument_key", metavar="INSTRUMENT", type=str,
-)
-
-argparser.add_argument(
-    "guide_star_key", metavar="GUIDESTAR", type=str,
-)
-
 args = argparser.parse_args()
 work_dir = args.work_dir
-instrument_key = args.instrument_key
-guide_star_key = args.guide_star_key
-config = json_numpy.read_tree(os.path.join(work_dir, "config"))
-
-instrument_sensor_key = config["instruments"][instrument_key]["sensor"]
 
 plot_iod_dir = os.path.join(
     work_dir, "plots", "impact_of_deformations", "guide_stars"
 )
 
-_maximum_image_intensity_for_guide_stars = json_numpy.read(
+maximum_image_intensity_for_guide_stars = json_numpy.read(
     os.path.join(plot_iod_dir, "maximum_image_intensity_for_guide_stars.json")
 )
 CMAP_VMAX = np.max(
     [
-        _maximum_image_intensity_for_guide_stars[instrument_key]
-        for instrument_key in _maximum_image_intensity_for_guide_stars
+        maximum_image_intensity_for_guide_stars[instrument_key]
+        for instrument_key in maximum_image_intensity_for_guide_stars
     ]
 )
-
-GRID_ANGLE_DEG = 0.1
 CMAPS = abe.full.plots.utils.CMAPS
-
-_image_responses = json_numpy.read(
-    os.path.join(work_dir, "analysis", instrument_key, "star.json")
-)
-image_response = _image_responses[guide_star_key]
 
 for cmap_key in CMAPS:
 
-    fig_filename = "star_instrument_key_{:s}_guide_star_key_{:s}_cmap_key_{:s}.jpg".format(
-        instrument_key, guide_star_key, cmap_key,
-    )
-    fig_path = os.path.join(plot_iod_dir, fig_filename)
-
-    if os.path.exists(fig_path):
-        continue
-
-    fig_psf = sebplt.figure(style={"rows": 640, "cols": 640, "fontsize": 1.0})
-
-    (
-        bin_edges_cx,
-        bin_edges_cy,
-    ) = abe.offaxis.analysis.binning_image_bin_edges(
-        binning=image_response["image"]["binning"]
-    )
-    bin_edges_cx_deg = np.rad2deg(bin_edges_cx)
-    bin_edges_cy_deg = np.rad2deg(bin_edges_cy)
-    (
-        ticks_cx_deg,
-        ticks_cy_deg,
-    ) = abe.full.plots.utils.make_explicit_cx_cy_ticks(
-        image_response=image_response, tick_angle=GRID_ANGLE_DEG
-    )
-
-    ax_psf = sebplt.add_axes(fig=fig_psf, span=[0.15, 0.15, 0.85, 0.85],)
-    ax_psf.set_aspect("equal")
-
-    image_response_norm = abe.analysis.make_norm_image(
-        image_response=image_response
-    )
-
-    cmap_psf = ax_psf.pcolormesh(
-        bin_edges_cx_deg,
-        bin_edges_cy_deg,
-        np.transpose(image_response_norm) / CMAP_VMAX,
+    _fig = sebplt.figure(style={"rows": 100, "cols": 100, "fontsize": 1.0})
+    _ax = sebplt.add_axes(fig=_fig, span=[0.15, 0.15, 0.85, 0.85],)
+    cmap_psf = _ax.pcolormesh(
+        [0, 1],
+        [0, 1],
+        [[CMAP_VMAX]],
         cmap=cmap_key,
         norm=sebplt.plt_colors.PowerNorm(
             gamma=CMAPS[cmap_key]["gamma"], vmin=0.0, vmax=1.0,
         ),
     )
-    sebplt.ax_add_grid_with_explicit_ticks(
-        xticks=ticks_cx_deg,
-        yticks=ticks_cy_deg,
-        ax=ax_psf,
-        color=CMAPS[cmap_key]["linecolor"],
-        linestyle="-",
-        linewidth=0.33,
-        alpha=0.33,
-    )
-    sebplt.ax_add_circle(
-        ax=ax_psf,
-        x=image_response["image"]["binning"]["image"]["center"]["cx_deg"],
-        y=image_response["image"]["binning"]["image"]["center"]["cy_deg"],
-        r=np.rad2deg(image_response["image"]["angle80"]),
-        linewidth=1.0,
-        linestyle="--",
-        color=CMAPS[cmap_key]["linecolor"],
-        alpha=0.5,
-        num_steps=360,
-    )
-    sebplt.ax_add_circle(
-        ax=ax_psf,
-        x=0.0,
-        y=0.0,
-        r=0.5
-        * config["sensors"][instrument_sensor_key]["max_FoV_diameter_deg"],
-        linewidth=1.0,
-        linestyle="-",
-        color=CMAPS[cmap_key]["linecolor"],
-        alpha=0.5,
-        num_steps=360 * 5,
-    )
-    abe.full.plots.utils.ax_psf_set_ticks(
-        ax=ax_psf,
-        image_response=image_response,
-        grid_angle_deg=GRID_ANGLE_DEG,
-        x=True,
-        y=True,
-    )
-    abe.full.plots.utils.ax_psf_add_eye(
-        ax=ax_psf,
-        image_response=image_response,
-        bin_edges_cx_deg=bin_edges_cx_deg,
-        bin_edges_cy_deg=bin_edges_cy_deg,
-        linecolor=CMAPS[cmap_key]["linecolor"],
-        eye_FoV_flat2flat_deg=config["sensors"][instrument_sensor_key][
-            "hex_pixel_FoV_flat2flat_deg"
-        ],
-    )
-    ccx_deg = image_response["image"]["binning"]["image"]["center"]["cx_deg"]
-    ccy_deg = image_response["image"]["binning"]["image"]["center"]["cy_deg"]
-    ccxr_deg = 0.5 * (
-        image_response["image"]["binning"]["image"]["pixel_angle_deg"]
-        * image_response["image"]["binning"]["image"]["num_pixel_cx"]
-    )
-    ccyr_deg = 0.5 * (
-        image_response["image"]["binning"]["image"]["pixel_angle_deg"]
-        * image_response["image"]["binning"]["image"]["num_pixel_cy"]
-    )
-    ax_psf.set_xlim([ccx_deg - ccxr_deg, ccx_deg + ccxr_deg])
-    ax_psf.set_ylim([ccy_deg - ccyr_deg, ccy_deg + ccyr_deg])
+    sebplt.close(_fig)
 
-    fig_psf.savefig(fig_path)
-    sebplt.close(fig_psf)
+    # colormap
+    # --------
+    fig_psf_cmap = sebplt.figure(
+        style={"rows": 120, "cols": 1280, "fontsize": 1}
+    )
+    ax_cmap = sebplt.add_axes(fig_psf_cmap, [0.1, 0.8, 0.8, 0.15])
+    ax_cmap.text(0.5, -4.7, "intensity / 1")
+    sebplt.plt.colorbar(
+        cmap_psf, cax=ax_cmap, extend="max", orientation="horizontal"
+    )
+    fig_cmap_filename = "star_cmap_key_{:s}.jpg".format(cmap_key)
+    fig_psf_cmap.savefig(os.path.join(plot_iod_dir, fig_cmap_filename))
+    sebplt.close(fig_psf_cmap)
 
 
 """
