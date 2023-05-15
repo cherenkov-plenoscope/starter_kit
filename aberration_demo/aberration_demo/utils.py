@@ -1,6 +1,8 @@
 import os
 import json_numpy
 import plenopy
+import pkg_resources
+import subprocess
 
 
 ANGLE_FMT = "angle{:06d}"
@@ -56,3 +58,16 @@ def class_members_to_dict(c):
     for key in member_keys:
         out[key] = getattr(c, key)
     return out
+
+
+def run_script(script_path, argv):
+    if not script_path.endswith(".py"):
+        script_path += ".py"
+    explicit_script_path = pkg_resources.resource_filename(
+        "aberration_demo", script_path,
+    )
+    args = []
+    args.append("python")
+    args.append(explicit_script_path)
+    args += argv
+    return subprocess.call(args)

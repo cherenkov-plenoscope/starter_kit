@@ -36,15 +36,45 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     logger.info("Analysis done")
 
     logger.info("Make Plots")
-    pjobs = _plot_make_jobs(work_dir=work_dir)
+
+    logger.info("Mirror deformations")
+    pjobs = _plot_mirror_deformations_make_jobs(work_dir=work_dir)
     logger.info("{:d} jobs to do".format(len(pjobs)))
     pool.map(_plot_run_job, pjobs)
-    logger.info("Plots done")
 
+
+    logger.info("Impact of deformations")
+    _plot_run_job(
+        job={
+            "script": "plot_impact_of_deformations_cmap_vmax",
+            "argv": [work_dir],
+        }
+    )
+
+    _plot_run_job(
+        job={
+            "script": "plot_impact_of_deformations_cmap",
+            "argv": [work_dir],
+        }
+    )
+
+    cfg_dir = os.path.join(work_dir, "config")
+    config = json_numpy.read_tree(cfg_dir)
+
+    for instrument_key in instruments_:
+        for guide_star_key in guide_star_keys:
+            _plot_run_job(
+                job={
+                    "script": "plot_impact_of_deformations_cmap",
+                    "argv": [work_dir, instrument_key, guide_star_key],
+                }
+            )
+
+    logger.info("Plots done")
     logger.info("Done")
 
 
-def _plot_make_jobs(work_dir):
+def _plot_mirror_deformations_make_jobs(work_dir):
     cfg_dir = os.path.join(work_dir, "config")
     config = json_numpy.read_tree(cfg_dir)
 
