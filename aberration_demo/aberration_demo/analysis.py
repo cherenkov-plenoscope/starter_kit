@@ -372,3 +372,11 @@ def analyse_response_to_calibration_source(
     out["image"]["binning"] = thisbinning
     out["image"]["raw"] = imgraw
     return out
+
+
+def make_norm_image(image_response):
+    norm_image = (
+        image_response["image"]["raw"]
+        / image_response["statistics"]["photons"]["valid"]
+    )
+    return norm_image
