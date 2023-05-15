@@ -9,6 +9,7 @@ import subprocess
 
 from . import default_config
 from . import production
+from . import plots
 from .. import sources
 
 
@@ -33,8 +34,6 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     logger.info("Make Analysis")
     production.analysis.run(work_dir=work_dir, pool=pool, logger=logger)
     logger.info("Analysis done")
-
-
 
     logger.info("Make Plots")
     pjobs = _plot_make_jobs(work_dir=work_dir)
