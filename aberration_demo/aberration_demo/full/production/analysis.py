@@ -48,10 +48,7 @@ def _analysis_reduce_make_jobs(work_dir, task_key="analysis"):
             instrument_key
         ]:
             outpath = os.path.join(
-                work_dir,
-                task_key,
-                instrument_key,
-                observation_key + ".json",
+                work_dir, task_key, instrument_key, observation_key + ".json",
             )
             if not os.path.exists(outpath):
                 jobs.append(
@@ -66,7 +63,10 @@ def _analysis_reduce_make_jobs(work_dir, task_key="analysis"):
 
 def _analysis_reduce_run_job(job):
     mapdir = os.path.join(
-        job["work_dir"], "analysis", job["instrument_key"], job["observation_key"]
+        job["work_dir"],
+        "analysis",
+        job["instrument_key"],
+        job["observation_key"],
     )
     outpath = mapdir + ".json"
     return reduce_analysis_jobs(mapdir=mapdir, outpath=outpath)
