@@ -148,7 +148,9 @@ def make_source_config_from_job(job):
             "type": "star",
             "cx_deg": star_cfg["guide_stars"][job["number"]]["cx_deg"],
             "cy_deg": star_cfg["guide_stars"][job["number"]]["cy_deg"],
-            "areal_photon_density_per_m2": star_cfg["areal_photon_density_per_m2"],
+            "areal_photon_density_per_m2": star_cfg[
+                "areal_photon_density_per_m2"
+            ],
             "seed": job["number"],
         }
 
@@ -156,7 +158,10 @@ def make_source_config_from_job(job):
         # random star
         prng = np.random.Generator(np.random.PCG64(job["number"]))
 
-        (cx_deg, cy_deg,) = corsika_primary.random.distributions.draw_x_y_in_disc(
+        (
+            cx_deg,
+            cy_deg,
+        ) = corsika_primary.random.distributions.draw_x_y_in_disc(
             prng=prng, radius=star_cfg["max_angle_off_optical_axis_deg"]
         )
 
@@ -164,7 +169,9 @@ def make_source_config_from_job(job):
             "type": "star",
             "cx_deg": cx_deg,
             "cy_deg": cy_deg,
-            "areal_photon_density_per_m2": star_cfg["areal_photon_density_per_m2"],
+            "areal_photon_density_per_m2": star_cfg[
+                "areal_photon_density_per_m2"
+            ],
             "seed": job["number"],
         }
 
