@@ -3,6 +3,7 @@ import json_numpy
 import os
 from .... import analysis
 
+
 def list_instruments_observing_guide_stars(config):
     out = []
     for instrument_key in config["observations"]["instruments"]:
@@ -39,7 +40,13 @@ def table_vmax(work_dir):
         out[instrument_key] = {}
         for guide_star_key in list_guide_star_keys(config):
             image_response = json_numpy.read(
-                os.path.join(work_dir, "analysis", instrument_key, "star", guide_star_key + ".json")
+                os.path.join(
+                    work_dir,
+                    "analysis",
+                    instrument_key,
+                    "star",
+                    guide_star_key + ".json",
+                )
             )
             img = analysis.make_norm_image(image_response=image_response)
             out[instrument_key][guide_star_key] = np.max(img)
@@ -53,5 +60,3 @@ def table_vmax_max(table_vmax):
         for guide_star_key in table_vmax[instrument_key]:
             vmax = np.max([vmax, table_vmax[instrument_key][guide_star_key]])
     return vmax
-
-

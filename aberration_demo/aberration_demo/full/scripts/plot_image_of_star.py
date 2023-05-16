@@ -12,11 +12,11 @@ sebplt.matplotlib.rcParams.update(
 )
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument("work_dir", metavar="WORK_DIR", type=str)
-argparser.add_argument("out_dir", metavar="OUT_DIR", type=str)
-argparser.add_argument("instrument_key", metavar="INSTRUMENT_KEY", type=str)
-argparser.add_argument("star_key", metavar="STAR_KEY", type=str)
-argparser.add_argument("vmax", metavar="VMAX", type=float)
+argparser.add_argument("--work_dir", metavar="WORK_DIR", type=str)
+argparser.add_argument("--out_dir", metavar="OUT_DIR", type=str)
+argparser.add_argument("--instrument_key", metavar="INSTRUMENT_KEY", type=str)
+argparser.add_argument("--star_key", metavar="STAR_KEY", type=str)
+argparser.add_argument("--vmax", metavar="VMAX", type=float)
 
 args = argparser.parse_args()
 

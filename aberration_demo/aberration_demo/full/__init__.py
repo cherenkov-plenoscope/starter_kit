@@ -42,7 +42,6 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     logger.info("{:d} jobs to do".format(len(pjobs)))
     pool.map(_plot_run_job, pjobs)
 
-
     logger.info("Impact of deformations")
     _plot_run_job(
         job={
@@ -52,10 +51,7 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     )
 
     _plot_run_job(
-        job={
-            "script": "plot_impact_of_deformations_cmap",
-            "argv": [work_dir],
-        }
+        job={"script": "plot_impact_of_deformations_cmap", "argv": [work_dir],}
     )
 
     cfg_dir = os.path.join(work_dir, "config")
