@@ -2,6 +2,20 @@ import numpy as np
 import sebastians_matplotlib_addons as sebplt
 
 
+def init_cmap(vmin, vmax, key, gamma):
+    _fig = sebplt.figure(style={"rows": 100, "cols": 100, "fontsize": 1.0})
+    _ax = sebplt.add_axes(fig=_fig, span=[0.15, 0.15, 0.85, 0.85],)
+    cmap = _ax.pcolormesh(
+        [0, 1],
+        [0, 1],
+        [[0.5]],
+        cmap=key,
+        norm=sebplt.plt_colors.PowerNorm(gamma=gamma, vmin=vmin, vmax=vmax),
+    )
+    sebplt.close(_fig)
+    return cmap
+
+
 def make_grid_ticks(center, num_pixel, pixel_angel, tick_angle):
     extent = pixel_angel * num_pixel
     num_ticks = int(np.ceil(extent / tick_angle))
