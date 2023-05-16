@@ -1,14 +1,8 @@
-#!/usr/bin/python3
-import corsika_primary as cpw
+#!/usr/bin/python
 import os
 import plenoirf
 import numpy as np
-import plenopy
-import scipy
-from scipy import spatial
-from scipy import stats
 import aberration_demo as abe
-import json_numpy
 import sebastians_matplotlib_addons as sebplt
 import argparse
 
@@ -17,8 +11,8 @@ sebplt.matplotlib.rcParams.update(
 )
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument("--work_dir", metavar="WORK_DIR", type=str)
-argparser.add_argument("--out_dir", metavar="OUT_DIR", type=str)
+argparser.add_argument("--work_dir", type=str)
+argparser.add_argument("--out_dir", type=str)
 
 args = argparser.parse_args()
 
