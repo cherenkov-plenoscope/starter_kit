@@ -1,12 +1,7 @@
-#!/usr/bin/python3
-import corsika_primary as cpw
+#!/usr/bin/python
 import os
 import plenoirf
 import numpy as np
-import plenopy
-import scipy
-from scipy import spatial
-from scipy import stats
 import aberration_demo as abe
 import json_numpy
 import sebastians_matplotlib_addons as sebplt
@@ -17,54 +12,40 @@ sebplt.matplotlib.rcParams.update(
 )
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument(
-    "work_dir", metavar="WORK_DIR", type=str,
-)
-
-argparser.add_argument(
-    "instrument_key", metavar="INSTRUMENT", type=str,
-)
-
-argparser.add_argument(
-    "guide_star_key", metavar="GUIDESTAR", type=str,
-)
+argparser.add_argument("work_dir", metavar="WORK_DIR", type=str)
+argparser.add_argument("out_dir", metavar="OUT_DIR", type=str)
+argparser.add_argument("instrument_key", metavar="INSTRUMENT_KEY", type=str)
+argparser.add_argument("star_key", metavar="STAR_KEY", type=str)
+argparser.add_argument("vmax", metavar="VMAX", type=float)
 
 args = argparser.parse_args()
+
 work_dir = args.work_dir
+out_dir = args.out_dir
 instrument_key = args.instrument_key
-guide_star_key = args.guide_star_key
+star_key = args.star_key
+cmap_vmax = args.vmax
+
+os.makedirs(out_dir, exist_ok=True)
+
 config = json_numpy.read_tree(os.path.join(work_dir, "config"))
-
 instrument_sensor_key = config["instruments"][instrument_key]["sensor"]
-
-plot_iod_dir = os.path.join(
-    work_dir, "plots", "impact_of_deformations", "guide_stars"
-)
-
-_maximum_image_intensity_for_guide_stars = json_numpy.read(
-    os.path.join(plot_iod_dir, "maximum_image_intensity_for_guide_stars.json")
-)
-CMAP_VMAX = np.max(
-    [
-        _maximum_image_intensity_for_guide_stars[instrument_key]
-        for instrument_key in _maximum_image_intensity_for_guide_stars
-    ]
-)
 
 GRID_ANGLE_DEG = 0.1
 CMAPS = abe.full.plots.utils.CMAPS
 
-_image_responses = json_numpy.read(
-    os.path.join(work_dir, "analysis", instrument_key, "star.json")
+image_response = json_numpy.read(
+    os.path.join(
+        work_dir, "analysis", instrument_key, "star", star_key + ".json"
+    )
 )
-image_response = _image_responses[guide_star_key]
 
 for cmap_key in CMAPS:
 
-    fig_filename = "star_instrument_key_{:s}_guide_star_key_{:s}_cmap_key_{:s}.jpg".format(
-        instrument_key, guide_star_key, cmap_key,
+    fig_filename = "instrument_{:s}_star_{:s}_cmap_{:s}.jpg".format(
+        instrument_key, star_key, cmap_key,
     )
-    fig_path = os.path.join(plot_iod_dir, fig_filename)
+    fig_path = os.path.join(out_dir, fig_filename)
 
     if os.path.exists(fig_path):
         continue
@@ -96,7 +77,7 @@ for cmap_key in CMAPS:
     cmap_psf = ax_psf.pcolormesh(
         bin_edges_cx_deg,
         bin_edges_cy_deg,
-        np.transpose(image_response_norm) / CMAP_VMAX,
+        np.transpose(image_response_norm) / cmap_vmax,
         cmap=cmap_key,
         norm=sebplt.plt_colors.PowerNorm(
             gamma=CMAPS[cmap_key]["gamma"], vmin=0.0, vmax=1.0,
