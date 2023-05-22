@@ -37,34 +37,13 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
 
     logger.info("Make Plots")
 
-    logger.info("Mirror deformations")
+    logger.info("Plot mirror deformations")
     pjobs = _plot_mirror_deformations_make_jobs(work_dir=work_dir)
     logger.info("{:d} jobs to do".format(len(pjobs)))
-    pool.map(_plot_run_job, pjobs)
+    pool.map(_run_script_job, pjobs)
 
-    logger.info("Impact of deformations")
-    _plot_run_job(
-        job={
-            "script": "plot_impact_of_deformations_cmap_vmax",
-            "argv": [work_dir],
-        }
-    )
-
-    _plot_run_job(
-        job={"script": "plot_impact_of_deformations_cmap", "argv": [work_dir],}
-    )
-
-    cfg_dir = os.path.join(work_dir, "config")
-    config = json_numpy.read_tree(cfg_dir)
-
-    for instrument_key in instruments_:
-        for guide_star_key in guide_star_keys:
-            _plot_run_job(
-                job={
-                    "script": "plot_impact_of_deformations_cmap",
-                    "argv": [work_dir, instrument_key, guide_star_key],
-                }
-            )
+    logger.info("Plot guide stars")
+    plot_guide_stars(work_dir=work_dir, pool=pool, logger=logger)
 
     logger.info("Plots done")
     logger.info("Done")
@@ -109,7 +88,7 @@ def _plot_mirror_deformations_make_jobs(work_dir):
     return jobs
 
 
-def _plot_run_job(job):
+def _run_script_job(job):
     return _run_script(script=job["script"], argv=job["argv"])
 
 
@@ -125,3 +104,41 @@ def _run_script(script, argv):
     args.append(script_path)
     args += argv
     return subprocess.call(args)
+
+
+def plot_guide_stars(work_dir, pool, logger):
+    out_dir = os.path.join(
+        work_dir, "plots", "impact_of_deformations", "guide_stars"
+    )
+
+    _run_script(
+        script="plot_image_of_star_cmap",
+        argv=["--work_dir", work_dir, "--out_dir", out_dir],
+    )
+
+    table_vmax = plots.impact_of_deformations.guide_stars.table_vmax(
+        work_dir=work_dir
+    )
+    vmax = plots.impact_of_deformations.guide_stars.table_vmax_max(
+        table_vmax=table_vmax
+    )
+
+    jobs = []
+    for instrument_key in table_vmax:
+        for star_key in table_vmax[instrument_key]:
+            job = {"script": "plot_image_of_star"}
+            job["argv"] = [
+                "--work_dir",
+                work_dir,
+                "--out_dir",
+                out_dir,
+                "--instrument_key",
+                instrument_key,
+                "--star_key",
+                star_key,
+                "--vmax",
+                "{:e}".format(vmax),
+            ]
+            jobs.append(job)
+
+    pool.map(_run_script_job, jobs)

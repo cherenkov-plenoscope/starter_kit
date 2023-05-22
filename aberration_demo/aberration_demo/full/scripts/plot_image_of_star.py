@@ -41,11 +41,13 @@ image_response = json_numpy.read(
 )
 
 for cmap_key in CMAPS:
+    cmap_dir = os.path.join(out_dir, cmap_key)
+    os.makedirs(cmap_dir, exist_ok=True)
 
     fig_filename = "instrument_{:s}_star_{:s}_cmap_{:s}.jpg".format(
         instrument_key, star_key, cmap_key,
     )
-    fig_path = os.path.join(out_dir, fig_filename)
+    fig_path = os.path.join(cmap_dir, fig_filename)
 
     if os.path.exists(fig_path):
         continue

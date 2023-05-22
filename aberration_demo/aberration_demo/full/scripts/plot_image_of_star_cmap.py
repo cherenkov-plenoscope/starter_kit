@@ -23,6 +23,9 @@ os.makedirs(out_dir, exist_ok=True)
 CMAPS = abe.full.plots.utils.CMAPS
 
 for cmap_key in CMAPS:
+    cmap_dir = os.path.join(out_dir, cmap_key)
+    os.makedirs(cmap_dir, exist_ok=True)
+
     cmap = abe.full.plots.utils.init_cmap(
         vmin=0.0, vmax=1.0, key=cmap_key, gamma=CMAPS[cmap_key]["gamma"]
     )
@@ -32,5 +35,5 @@ for cmap_key in CMAPS:
     ax.text(0.5, -4.7, r"intensity$\,/\,$1")
     sebplt.plt.colorbar(cmap, cax=ax, extend="max", orientation="horizontal")
     fig_cmap_filename = "cmap_{:s}.jpg".format(cmap_key)
-    fig.savefig(os.path.join(out_dir, fig_cmap_filename))
+    fig.savefig(os.path.join(cmap_dir, fig_cmap_filename))
     sebplt.close(fig)
