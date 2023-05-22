@@ -28,12 +28,16 @@ instrument_key = args.instrument_key
 os.makedirs(out_dir, exist_ok=True)
 
 config = json_numpy.read_tree(os.path.join(work_dir, "config"))
-result = json_numpy.read(os.path.join(work_dir, "analysis", instrument_key, "point.json"))
+result = json_numpy.read(
+    os.path.join(work_dir, "analysis", instrument_key, "point.json")
+)
 
 # properties of plenoscope
 # ------------------------
 lfg = plenopy.LightFieldGeometry(
-    os.path.join(work_dir, "instruments", instrument_key, "light_field_geometry")
+    os.path.join(
+        work_dir, "instruments", instrument_key, "light_field_geometry"
+    )
 )
 
 plenoscope = {}
