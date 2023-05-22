@@ -38,7 +38,12 @@ pixel_pitch_deg = (
 )
 solid_angle_per_px_sr = np.deg2rad(pixel_pitch_deg) ** 2
 
+containment_fraction = config["analysis"]["point"][
+    "image_containment_percentile"
+]
+
 instrument_field_of_view_half_angle_deg = 3.25
+
 
 # rm points far out in the fov
 # ----------------------------
@@ -94,7 +99,10 @@ for point_key in sample_point_keys:
     }
 
 N = NUM_SAMPLES
-
+YLABEL = r"solid angle containing {:.0f}% $\,/\,\mu$sr".format(
+    containment_fraction
+)
+XLABEL = r"depth$\,/\,$m"
 ax_xlow = 0.175
 ax_ylow = 0.11
 ax_height = 0.75
@@ -108,7 +116,7 @@ axylabel = sebplt.add_axes(
     span=[0.07, ax_ylow, ax_height, ax_width],
     style={"spines": [], "axes": ["y"], "grid": False},
 )
-axylabel.set_ylabel(r"solid angle containign 95% $\,/\,\mu$sr")
+axylabel.set_ylabel(YLABEL)
 axylabel.set_yticks([])
 
 ymin = 1e1
@@ -155,7 +163,7 @@ for n, point_key in enumerate(ooo):
 
     axn.loglog()
     if n == 0:
-        axn.set_xlabel(r"depth$\,/\,$m")
+        axn.set_xlabel(XLABEL)
     else:
         axn.set_xticklabels([""] * len(axn.get_xticklabels()))
 
@@ -165,4 +173,36 @@ for n, point_key in enumerate(ooo):
 
 
 fig.savefig(os.path.join(out_dir, "refocus_spread_five_samples.jpg"))
+sebplt.close(fig)
+
+
+ymin = 3e1
+ymax = 3e2
+
+fig = sebplt.figure({"rows": 1280, "cols": 1280, "fontsize": 1.5})
+ax = sebplt.add_axes(fig=fig, span=[0.2, 0.15, 0.75, 0.8],)
+sebplt.ax_add_grid(ax=ax, add_minor=True)
+
+for n, point_key in enumerate(ooo):
+
+    uuu = ooo[point_key]
+    spread_lim_usr = [np.min(uuu["spread_usr"]), np.max(uuu["spread_usr"])]
+
+    ax.plot(
+        uuu["depth_m"], uuu["spread_usr"], "ko", alpha=0.33, markersize=1.5
+    )
+    ax.plot(uuu["depth_m"], uuu["spread_usr"], "k-", linewidth=1, alpha=0.33)
+    ax.plot(
+        [uuu["true_depth_m"], uuu["true_depth_m"]],
+        [ymin, spread_lim_usr[0]],
+        "k--",
+        linewidth=1,
+        alpha=0.5,
+    )
+
+ax.loglog()
+ax.set_ylim([ymin, ymax])
+ax.set_xlabel(XLABEL)
+ax.set_ylabel(YLABEL)
+fig.savefig(os.path.join(out_dir, "refocus_spread_five_samples_one_axis.jpg"))
 sebplt.close(fig)
