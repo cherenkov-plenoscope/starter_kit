@@ -266,7 +266,7 @@ def write_analysis_config(cfg_dir):
             * piont_obs_cfg["max_object_distance_m"],
             "min_object_distance_m": 0.75
             * piont_obs_cfg["min_object_distance_m"],
-            "image_containment_percentile": 95,
+            "image_containment_percentile": 80,
             "oversampling_beam_spread": 100,
         },
     )
