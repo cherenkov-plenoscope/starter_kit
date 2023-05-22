@@ -171,16 +171,25 @@ def find_closest_index_in_array_for_value(
     return idx
 
 
-def latex_scientific(real, format_template="{:e}", nan_template="nan"):
+def latex_scientific(
+    real,
+    format_template="{:e}",
+    nan_template="nan",
+    drop_mantisse_if_one=False,
+):
     if real != real:
         return nan_template
     assert format_template.endswith("e}")
     s = format_template.format(real)
+
     pos_e = s.find("e")
     assert pos_e >= 0
     mantisse = s[0:pos_e]
     exponent = str(int(s[pos_e + 1 :]))
-    out = mantisse + r"\times{}10^{" + exponent + r"}"
+    if drop_mantisse_if_one and float(mantisse) == 1.0:
+        out = r"10^{" + exponent + r"}"
+    else:
+        out = mantisse + r"\times{}10^{" + exponent + r"}"
     return out
 
 
