@@ -45,6 +45,13 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     logger.info("Plot guide stars")
     plot_guide_stars(work_dir=work_dir, pool=pool, logger=logger)
 
+    _run_script(script="plot_image_of_star_vs_offaxis", argv=[
+        "--work_dir",
+        work_dir,
+        "--out_dir",
+        os.path.join(work_dir, "plots", "guide_stars_vs_offaxis")
+    ])
+
     logger.info("Plots done")
     logger.info("Done")
 
