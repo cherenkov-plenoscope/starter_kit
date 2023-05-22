@@ -55,6 +55,16 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
         ],
     )
 
+    _run_script(
+        script="plot_depth",
+        argv=[
+            "--work_dir",
+            work_dir,
+            "--out_dir",
+            os.path.join(work_dir, "plots", "depth"),
+        ],
+    )
+
     logger.info("Plots done")
     logger.info("Done")
 
