@@ -133,33 +133,47 @@ for mirror_def_key in config["mirror_deformations"]:
         same_scenario_different_sensors[sstt_key] = []
 
         for instrument_key in INSTRUMENTS:
-            is_mirror_def = config["instruments"][instrument_key]["mirror_deformation"] == mirror_def_key
-            is_sensor_tra = config["instruments"][instrument_key]["sensor_transformation"] == sensor_tra_key
+            is_mirror_def = (
+                config["instruments"][instrument_key]["mirror_deformation"]
+                == mirror_def_key
+            )
+            is_sensor_tra = (
+                config["instruments"][instrument_key]["sensor_transformation"]
+                == sensor_tra_key
+            )
             if is_mirror_def and is_sensor_tra:
-                same_scenario_different_sensors[sstt_key].append(instrument_key)
+                same_scenario_different_sensors[sstt_key].append(
+                    instrument_key
+                )
 
 
 PLOTS = []
 for instrument_key in INSTRUMENTS:
-    PLOTS.append({
-        "instruments": [instrument_key],
-        "filename": "instrument_{:s}".format(instrument_key)
-    })
+    PLOTS.append(
+        {
+            "instruments": [instrument_key],
+            "filename": "instrument_{:s}".format(instrument_key),
+        }
+    )
 
 
 for scenario_key in same_scenario_different_sensors:
     if len(same_scenario_different_sensors[scenario_key]):
         mirror_def_key, sensor_tra_key = scenario_key
-        PLOTS.append({
-            "instruments": same_scenario_different_sensors[scenario_key],
-            "filename": "mirror_deformation_{:s}_sensor_transformation_{:s}".format(mirror_def_key, sensor_tra_key)
-        })
+        PLOTS.append(
+            {
+                "instruments": same_scenario_different_sensors[scenario_key],
+                "filename": "mirror_deformation_{:s}_sensor_transformation_{:s}".format(
+                    mirror_def_key, sensor_tra_key
+                ),
+            }
+        )
 
 
 for PLOT in PLOTS:
 
     fig = sebplt.figure(style={"rows": 720, "cols": 1280, "fontsize": 1})
-    ax_usr = sebplt.add_axes(fig, [0.15, 0.2, 0.725, 0.75])
+    ax_usr = sebplt.add_axes(fig, [0.12, 0.175, 0.77, 0.76])
     ax_deg2 = ax_usr.twinx()
     ax_deg2.spines["top"].set_visible(False)
 
@@ -181,6 +195,20 @@ for PLOT in PLOTS:
     ax_deg2.set_ylabel(r"(1$^{\circ}$)$^2$")
 
     for instrument_key in PLOT["instruments"]:
+
+        if "diag9" in instrument_key:
+            linestyle = "-"
+            label = "P61"
+        elif "diag3" in instrument_key:
+            linestyle = "--"
+            label = "P7"
+        elif "diag1" in instrument_key:
+            linestyle = ":"
+            label = "T1"
+        else:
+            linestyle = "-."
+            label = None
+
         oa_rad = psf_vs_oa[instrument_key]["mean"]
         oa_std_rad = psf_vs_oa[instrument_key]["std"]
 
@@ -198,23 +226,26 @@ for PLOT in PLOTS:
             ax=ax_usr,
             bin_edges=oa_bin_edges_deg ** 2,
             bincounts=sa_usr,
-            linestyle="-",
+            linestyle=linestyle,
             linecolor="k",
             linealpha=1.0,
             bincounts_upper=sa_upper_usr,
             bincounts_lower=sa_lower_usr,
             face_color="k",
             face_alpha=0.1,
-            label=None,
+            label=label,
             draw_bin_walls=True,
         )
 
+    legend = ax_usr.legend(loc="upper left")
     xt_deg2 = ax_usr.get_xticks()
     ax_usr.set_xticklabels(
         [r"{:.2f}".format(np.sqrt(xx)) + r"$^{2}$" for xx in xt_deg2]
     )
 
-    ax_usr.set_xlabel(r"(offaxis angle)$^{2}\,/\,(1^{\circ{}})^{2}$")
+    ax_usr.set_xlabel(
+        r"(angle off the mirror's optical axis)$^{2}\,/\,(1^{\circ{}})^{2}$"
+    )
     fig_filename = "{:s}.jpg".format(PLOT["filename"])
     fig.savefig(os.path.join(out_dir, fig_filename))
     sebplt.close(fig)
@@ -240,7 +271,7 @@ for instrument_key in INSTRUMENTS:
 
     out_average_angle80_rad[instrument_key] = {
         "half_angle": {"deg": np.rad2deg(ha_rad), "rad": ha_rad},
-        "solid_angle": {"sr": sa_sr, "deg2": sa_deg2}
+        "solid_angle": {"sr": sa_sr, "deg2": sa_deg2},
     }
 
 with open(os.path.join(out_dir, "average_containment80.txt"), "wt") as f:
