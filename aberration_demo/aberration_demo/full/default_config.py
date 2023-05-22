@@ -227,7 +227,7 @@ def write_observations_config(cfg_dir, minimal):
     obs_table["diag3_default_default"] = ["star"]
     obs_table["diag1_default_default"] = ["star"]
 
-    instruments = json_numpy.read(os.path.join(cfg_dir, "instruments"))
+    instruments = json_numpy.read_tree(os.path.join(cfg_dir, "instruments"))
     for instrument_key in obs_table:
         assert instrument_key in instruments
 
