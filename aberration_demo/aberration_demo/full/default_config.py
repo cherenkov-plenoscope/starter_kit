@@ -215,7 +215,8 @@ def write_observations_config(cfg_dir, minimal):
         obs_table["diag9_perlin55mm_gentle"] = ["star", "phantom", "point"]
     obs_table["diag3_perlin55mm_gentle"] = ["star", "phantom", "point"]
     obs_table["diag1_perlin55mm_gentle"] = ["star", "phantom"]
-    obs_table["diag9_default_gentle"] = ["star"]
+    if not minimal:
+        obs_table["diag9_default_gentle"] = ["star"]
     obs_table["diag3_default_gentle"] = ["star"]
     obs_table["diag1_default_gentle"] = ["star"]
     if not minimal:
