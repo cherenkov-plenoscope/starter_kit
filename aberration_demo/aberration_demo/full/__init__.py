@@ -153,7 +153,6 @@ def _plot_depth_make_jobs(work_dir):
     return jobs
 
 
-
 def _plot_phantom_source_make_jobs(work_dir):
     cfg_dir = os.path.join(work_dir, "config")
     config = json_numpy.read_tree(cfg_dir)
@@ -161,7 +160,9 @@ def _plot_phantom_source_make_jobs(work_dir):
     jobs = []
     for instrument_key in config["observations"]["instruments"]:
         if "phantom" in config["observations"]["instruments"][instrument_key]:
-            out_dir = os.path.join(work_dir, "plots", "phantom", instrument_key)
+            out_dir = os.path.join(
+                work_dir, "plots", "phantom", instrument_key
+            )
 
             if not os.path.exists(out_dir):
                 job = {
