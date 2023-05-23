@@ -225,8 +225,8 @@ def write_observations_config(cfg_dir, minimal):
     obs_table["diag1_perlin55mm_default"] = ["star"]
     if not minimal:
         obs_table["diag9_default_default"] = ["star", "phantom", "point"]
-    obs_table["diag3_default_default"] = ["star"]
-    obs_table["diag1_default_default"] = ["star"]
+    obs_table["diag3_default_default"] = ["star", "phantom", "point"]
+    obs_table["diag1_default_default"] = ["star", "phantom"]
 
     instruments = json_numpy.read_tree(os.path.join(cfg_dir, "instruments"))
     for instrument_key in obs_table:
