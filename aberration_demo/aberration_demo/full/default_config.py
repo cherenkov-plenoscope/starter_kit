@@ -120,7 +120,7 @@ def write_statistics_config(cfg_dir, minimal):
         os.path.join(cfg_stat_dir, "light_field_geometry.json"),
         {
             "num_blocks": 1 if minimal else 16,
-            "num_photons_per_block": 1000 * 500 if minimal else 1000,
+            "num_photons_per_block": 1000 * 500 if minimal else 1000 * 1000,
         },
     )
 
