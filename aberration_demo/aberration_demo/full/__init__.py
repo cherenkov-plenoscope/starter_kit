@@ -199,9 +199,7 @@ def _run_script(script, argv):
 
 
 def plot_guide_stars(work_dir, pool, logger):
-    out_dir = os.path.join(
-        work_dir, "plots", "impact_of_deformations", "guide_stars"
-    )
+    out_dir = os.path.join(work_dir, "plots", "guide_stars")
 
     _run_script(
         script="plot_image_of_star_cmap",

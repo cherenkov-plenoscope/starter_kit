@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import os
 import numpy as np
 import aberration_demo
 import plenopy

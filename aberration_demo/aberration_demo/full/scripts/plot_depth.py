@@ -262,7 +262,6 @@ _pcm_confusion = ax_c.pcolormesh(
 )
 sebplt.ax_add_grid(ax=ax_c, add_minor=True)
 sebplt.plt.colorbar(_pcm_confusion, cax=ax_cb, extend="max")
-ax_c.set_aspect("equal")
 ax_c.set_ylabel(r"(reconstructed depth) (true depth)$^{-1}$ $\,/\,$1")
 ax_c.set_xlabel(r"true depth$\,/\,$km")
 ax_c.semilogx()

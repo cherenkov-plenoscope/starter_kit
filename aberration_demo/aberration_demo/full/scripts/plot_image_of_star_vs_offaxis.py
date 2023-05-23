@@ -238,10 +238,15 @@ for PLOT in PLOTS:
         )
 
     legend = ax_usr.legend(loc="upper left")
-    xt_deg2 = ax_usr.get_xticks()
-    ax_usr.set_xticklabels(
-        [r"{:.2f}".format(np.sqrt(xx)) + r"$^{2}$" for xx in xt_deg2]
-    )
+    xt_deg2 = np.array(ax_usr.get_xticks())
+    xticklabels = []
+    for xx_deg2 in xt_deg2:
+        if xx_deg2 >= 0.0:
+            xtl = r"{:.2f}".format(np.sqrt(xx_deg2))
+        else:
+            xtl = r""
+        xticklabels.append(xtl)
+    ax_usr.set_xticklabels(xticklabels)
 
     ax_usr.set_xlabel(
         r"(angle off the mirror's optical axis)$^{2}\,/\,(1^{\circ{}})^{2}$"

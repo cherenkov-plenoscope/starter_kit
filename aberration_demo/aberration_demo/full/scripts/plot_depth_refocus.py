@@ -176,8 +176,8 @@ fig.savefig(os.path.join(out_dir, "refocus_spread_five_samples.jpg"))
 sebplt.close(fig)
 
 
-ymin = 3e1
-ymax = 3e2
+ymin = 1e1
+ymax = 1e2
 
 fig = sebplt.figure({"rows": 1280, "cols": 1280, "fontsize": 1.5})
 ax = sebplt.add_axes(fig=fig, span=[0.2, 0.15, 0.75, 0.8],)
