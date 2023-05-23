@@ -153,6 +153,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "network_file_system_sebastian-achim-mueller",
     },
     {"path": "aberration_demo", "name": "aberration_demo"},
+    {
+        "path": "airshower_template_generator",
+        "name": "airshower_template_generator",
+    },
 ]
 
 
