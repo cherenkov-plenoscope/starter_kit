@@ -98,12 +98,6 @@ for facet in facets:
         actual_surface_normal, targeted_surface_normal
     )
     aa_deg = np.rad2deg(aa_rad)
-    if np.isnan(aa_deg):
-        print("----------------------")
-        print("actual_surface_normal", actual_surface_normal)
-        print("targeted_surface_normal", targeted_surface_normal)
-        print(x, y, z, aa_deg)
-        aa_deg = 0.0
     facets_a_deg.append(aa_deg)
 
 facets_x_m = np.array(facets_x_m)

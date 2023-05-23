@@ -58,7 +58,10 @@ def mirror_surface_normal(x, y, focal_length, mirror_deformation_map, delta):
 
 
 def angle_between(a, b):
-    return np.arccos(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+    bb = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+    if bb > 1.0:
+        bb = 1.0
+    return np.arccos(bb)
 
 
 def make_rot_axis_and_angle(normal):
