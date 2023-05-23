@@ -55,15 +55,10 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
         ],
     )
 
-    _run_script(
-        script="plot_depth",
-        argv=[
-            "--work_dir",
-            work_dir,
-            "--out_dir",
-            os.path.join(work_dir, "plots", "depth"),
-        ],
-    )
+    logger.info("Plot depth")
+    pjobs = _plot_depth_make_jobs(work_dir=work_dir)
+    logger.info("{:d} jobs to do".format(len(pjobs)))
+    pool.map(_run_script_job, pjobs)
 
     logger.info("Plots done")
     logger.info("Done")
@@ -105,6 +100,28 @@ def _plot_mirror_deformations_make_jobs(work_dir):
                 }
                 jobs.append(job)
 
+    return jobs
+
+
+def _plot_depth_make_jobs(work_dir):
+    cfg_dir = os.path.join(work_dir, "config")
+    config = json_numpy.read_tree(cfg_dir)
+
+    jobs = []
+    for instrument_key in config["observations"]["instruments"]:
+        if "point" in config["observations"]["instruments"][instrument_key]:
+            job = {
+                "script": "plot_depth",
+                "argv": [
+                    "--work_dir",
+                    work_dir,
+                    "--out_dir",
+                    os.path.join(work_dir, "plots", "depth", instrument_key),
+                    "--instrument_key",
+                    instrument_key,
+                ],
+            }
+            jobs.append(job)
     return jobs
 
 
