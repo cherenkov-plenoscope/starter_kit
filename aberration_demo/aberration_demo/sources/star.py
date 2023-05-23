@@ -96,7 +96,7 @@ def write_photon_bunches(
 
     assert size >= 0
     tmp_path = path + ".tmp"
-    with corsika_primary.event_tape.EventTapeWriter(path=tmp_path) as run:
+    with corsika_primary.cherenkov.CherenkovEventTapeWriter(path=tmp_path) as run:
         runh = np.zeros(273, dtype=np.float32)
         runh[I.RUNH.MARKER] = I.RUNH.MARKER_FLOAT32
         runh[I.RUNH.RUN_NUMBER] = 1
