@@ -60,6 +60,11 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
     logger.info("{:d} jobs to do".format(len(pjobs)))
     pool.map(_run_script_job, pjobs)
 
+    logger.info("Plot phantom")
+    pjobs = _plot_phantom_source_make_jobs(work_dir=work_dir)
+    logger.info("{:d} jobs to do".format(len(pjobs)))
+    pool.map(_run_script_job, pjobs)
+
     logger.info("Plots done")
     logger.info("Done")
 
@@ -140,6 +145,32 @@ def _plot_depth_make_jobs(work_dir):
                         work_dir,
                         "--out_dir",
                         depth_refocus_out_dir,
+                        "--instrument_key",
+                        instrument_key,
+                    ],
+                }
+                jobs.append(job)
+    return jobs
+
+
+
+def _plot_phantom_source_make_jobs(work_dir):
+    cfg_dir = os.path.join(work_dir, "config")
+    config = json_numpy.read_tree(cfg_dir)
+
+    jobs = []
+    for instrument_key in config["observations"]["instruments"]:
+        if "phantom" in config["observations"]["instruments"][instrument_key]:
+            out_dir = os.path.join(work_dir, "plots", "phantom", instrument_key)
+
+            if not os.path.exists(out_dir):
+                job = {
+                    "script": "plot_phantom_source",
+                    "argv": [
+                        "--work_dir",
+                        work_dir,
+                        "--out_dir",
+                        out_dir,
                         "--instrument_key",
                         instrument_key,
                     ],
