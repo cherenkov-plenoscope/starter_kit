@@ -110,18 +110,41 @@ def _plot_depth_make_jobs(work_dir):
     jobs = []
     for instrument_key in config["observations"]["instruments"]:
         if "point" in config["observations"]["instruments"][instrument_key]:
-            job = {
-                "script": "plot_depth",
-                "argv": [
-                    "--work_dir",
-                    work_dir,
-                    "--out_dir",
-                    os.path.join(work_dir, "plots", "depth", instrument_key),
-                    "--instrument_key",
-                    instrument_key,
-                ],
-            }
-            jobs.append(job)
+            depth_out_dir = os.path.join(
+                work_dir, "plots", "depth", instrument_key
+            )
+            if not os.path.exists(depth_out_dir):
+                job = {
+                    "script": "plot_depth",
+                    "argv": [
+                        "--work_dir",
+                        work_dir,
+                        "--out_dir",
+                        os.path.join(
+                            work_dir, "plots", "depth", instrument_key
+                        ),
+                        "--instrument_key",
+                        instrument_key,
+                    ],
+                }
+                jobs.append(job)
+
+            depth_refocus_out_dir = os.path.join(
+                work_dir, "plots", "depth_refocus", instrument_key
+            )
+            if not os.path.exists(depth_refocus_out_dir):
+                job = {
+                    "script": "plot_depth_refocus",
+                    "argv": [
+                        "--work_dir",
+                        work_dir,
+                        "--out_dir",
+                        depth_refocus_out_dir,
+                        "--instrument_key",
+                        instrument_key,
+                    ],
+                }
+                jobs.append(job)
     return jobs
 
 
