@@ -125,6 +125,7 @@ def save_histogram(
     fig.savefig(path)
     sebplt.close(fig)
 
+
 NUM_BINS = int(100 * np.sqrt(lfg.number_lixel) / np.sqrt(8443 * 61))
 NUM_BINS = np.max([NUM_BINS, 3])
 NUM_BIN_EDGES = NUM_BINS + 1
@@ -185,9 +186,7 @@ for met in RANGES:
 
     for key in hists:
         save_histogram(
-            path=os.path.join(
-                out_dir, key + "_log_{:s}.jpg".format(met)
-            ),
+            path=os.path.join(out_dir, key + "_log_{:s}.jpg".format(met)),
             ylim=rrr[met]["ylim_log"],
             semilogy=True,
             v_bin_edges=hists[key][met]["v_bin_edges"],
@@ -199,9 +198,7 @@ for met in RANGES:
             ylabel=r"intensity$\,/\,$1",
         )
         save_histogram(
-            path=os.path.join(
-                out_dir, key + "_lin_{:s}.jpg".format(met)
-            ),
+            path=os.path.join(out_dir, key + "_lin_{:s}.jpg".format(met)),
             ylim=rrr[met]["ylim_lin"],
             semilogy=False,
             v_bin_edges=hists[key][met]["v_bin_edges"],

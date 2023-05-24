@@ -84,16 +84,16 @@ for obj_idx in range(len(reco_object_distances)):
     image_path = os.path.join(images_dir, "{:06d}.float32".format(obj_idx))
 
     if os.path.exists(image_path):
-        img = phantom_source.demonstration.read_image(path=image_path)
+        img = aberration_demo.image.read_image(path=image_path)
     else:
-        img = phantom_source.demonstration.compute_image(
+        img = aberration_demo.image.compute_image(
             light_field_geometry=light_field_geometry,
             light_field=phantom_source_light_field,
             object_distance=reco_object_distance,
             bins=image_bins,
             prng=prng,
         )
-        phantom_source.demonstration.write_image(path=image_path, image=img)
+        aberration_demo.image.write_image(path=image_path, image=img)
 
     img_vmax = np.max([img_vmax, np.max(img)])
 
@@ -105,7 +105,7 @@ for cmapkey in CMAPS:
 
     for obj_idx in range(len(object_distances)):
         image_path = os.path.join(images_dir, "{:06d}.float32".format(obj_idx))
-        img = phantom_source.demonstration.read_image(path=image_path)
+        img = aberration_demo.image.read_image(path=image_path)
 
         fig_filename = "{:06d}_{:s}.jpg".format(obj_idx, cmapkey)
         fig_path = os.path.join(cmap_dir, fig_filename)

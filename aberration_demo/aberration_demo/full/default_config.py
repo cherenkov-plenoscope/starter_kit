@@ -194,7 +194,7 @@ def write_observations_config(cfg_dir, minimal):
         mesch_scn,
         mesh_img,
         mesh_depth,
-    ) = phantom_source.demonstration._make_mesh_for_phantom_source(
+    ) = phantom_source.make_meshes_of_default_phantom_source(
         intensity=36 if minimal else 360
     )
     json_numpy.write(

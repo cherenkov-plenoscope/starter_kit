@@ -6,7 +6,7 @@ from . import sources
 from . import portal
 from . import analysis
 from . import utils
-
+from . import image
 import os
 
 
