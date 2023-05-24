@@ -97,7 +97,7 @@ for obj_idx in range(len(reco_object_distances)):
 
     img_vmax = np.max([img_vmax, np.max(img)])
 
-CMAPS = aberration_demo.full.plots.utils.CMAPS
+CMAPS = aberration_demo.plot.CMAPS
 
 for cmapkey in CMAPS:
     cmap_dir = os.path.join(out_dir, cmapkey)

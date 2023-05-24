@@ -32,7 +32,7 @@ config = json_numpy.read_tree(os.path.join(work_dir, "config"))
 instrument_sensor_key = config["instruments"][instrument_key]["sensor"]
 
 GRID_ANGLE_DEG = 0.1
-CMAPS = abe.full.plots.utils.CMAPS
+CMAPS = abe.plot.CMAPS
 
 point_source_report = json_numpy.read(
     os.path.join(
@@ -59,10 +59,7 @@ for cmap_key in CMAPS:
     )
     bin_edges_cx_deg = np.rad2deg(bin_edges_cx)
     bin_edges_cy_deg = np.rad2deg(bin_edges_cy)
-    (
-        ticks_cx_deg,
-        ticks_cy_deg,
-    ) = abe.full.plots.utils.make_explicit_cx_cy_ticks(
+    (ticks_cx_deg, ticks_cy_deg,) = abe.plot.make_explicit_cx_cy_ticks(
         image_response=point_source_report, tick_angle=GRID_ANGLE_DEG
     )
 
@@ -114,14 +111,14 @@ for cmap_key in CMAPS:
         alpha=0.5,
         num_steps=360 * 5,
     )
-    abe.full.plots.utils.ax_psf_set_ticks(
+    abe.plot.ax_psf_set_ticks(
         ax=ax_psf,
         image_response=point_source_report,
         grid_angle_deg=GRID_ANGLE_DEG,
         x=True,
         y=True,
     )
-    abe.full.plots.utils.ax_psf_add_eye(
+    abe.plot.ax_psf_add_eye(
         ax=ax_psf,
         image_response=point_source_report,
         bin_edges_cx_deg=bin_edges_cx_deg,

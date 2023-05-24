@@ -20,13 +20,13 @@ work_dir = args.work_dir
 out_dir = args.out_dir
 
 os.makedirs(out_dir, exist_ok=True)
-CMAPS = abe.full.plots.utils.CMAPS
+CMAPS = abe.plot.CMAPS
 
 for cmap_key in CMAPS:
     cmap_dir = os.path.join(out_dir, cmap_key)
     os.makedirs(cmap_dir, exist_ok=True)
 
-    cmap = abe.full.plots.utils.init_cmap(
+    cmap = abe.plot.init_cmap(
         vmin=0.0, vmax=1.0, key=cmap_key, gamma=CMAPS[cmap_key]["gamma"]
     )
 
