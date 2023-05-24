@@ -4,7 +4,7 @@ import plenoirf
 import plenopy
 import numpy as np
 import scipy
-import aberration_demo as abe
+import plenoptics as abe
 import json_numpy
 import sebastians_matplotlib_addons as sebplt
 import sys

@@ -2,7 +2,7 @@
 import os
 import plenoirf
 import numpy as np
-import aberration_demo as abe
+import plenoptics as abe
 import json_numpy
 import sebastians_matplotlib_addons as sebplt
 import argparse

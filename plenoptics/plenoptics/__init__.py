@@ -188,7 +188,7 @@ def _run_script(script, argv):
         script += ".py"
 
     script_path = pkg_resources.resource_filename(
-        "aberration_demo", os.path.join("full", "scripts", script),
+        "plenoptics", os.path.join("full", "scripts", script),
     )
     args = []
     args.append("python")

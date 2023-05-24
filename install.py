@@ -152,7 +152,7 @@ LOCAL_PYHTHON_PACKAGES = [
         "path": "network_file_system",
         "name": "network_file_system_sebastian-achim-mueller",
     },
-    {"path": "aberration_demo", "name": "aberration_demo"},
+    {"path": "plenoptics", "name": "plenoptics"},
     {
         "path": "airshower_template_generator",
         "name": "airshower_template_generator",
