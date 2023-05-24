@@ -39,7 +39,7 @@ def table_vmax(work_dir):
     for instrument_key in list_instruments_observing_guide_stars(config):
         out[instrument_key] = {}
         for guide_star_key in list_guide_star_keys(config):
-            point_source_report = json_numpy.read(
+            report = json_numpy.read(
                 os.path.join(
                     work_dir,
                     "analysis",
@@ -49,7 +49,7 @@ def table_vmax(work_dir):
                 )
             )
             img = point_source_report.make_norm_image(
-                point_source_report=point_source_report
+                point_source_report=report
             )
             out[instrument_key][guide_star_key] = np.max(img)
 

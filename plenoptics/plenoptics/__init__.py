@@ -2,6 +2,7 @@ from . import default_config
 from . import production
 from . import sources
 from . import analysis
+from . import plot
 
 import os
 import numpy as np
@@ -188,7 +189,7 @@ def _run_script(script, argv):
         script += ".py"
 
     script_path = pkg_resources.resource_filename(
-        "plenoptics", os.path.join("full", "scripts", script),
+        "plenoptics", os.path.join("scripts", script),
     )
     args = []
     args.append("python")
