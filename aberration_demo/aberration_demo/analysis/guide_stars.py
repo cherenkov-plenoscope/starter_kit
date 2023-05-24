@@ -1,7 +1,7 @@
 import numpy as np
 import json_numpy
 import os
-from .... import analysis
+from . import point_source_report
 
 
 def list_instruments_observing_guide_stars(config):
@@ -48,7 +48,7 @@ def table_vmax(work_dir):
                     guide_star_key + ".json",
                 )
             )
-            img = analysis.point_source_report.make_norm_image(
+            img = point_source_report.make_norm_image(
                 point_source_report=point_source_report
             )
             out[instrument_key][guide_star_key] = np.max(img)
