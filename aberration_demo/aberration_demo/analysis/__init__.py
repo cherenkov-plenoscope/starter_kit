@@ -1,21 +1,12 @@
 from . import image
 from . import statistical_estimators
+import binning_utils
 import corsika_primary as cpw
 import os
 import copy
 import plenoirf
 import numpy as np
 import plenopy
-
-
-def make_bin_edges_and_centers(bin_width, num_bins, first_bin_center):
-    bin_edges = np.linspace(
-        start=first_bin_center + bin_width * (-0.5),
-        stop=first_bin_center + bin_width * (num_bins + 0.5),
-        num=num_bins + 1,
-    )
-    bin_centers = 0.5 * (bin_edges[1:] + bin_edges[0:-1])
-    return bin_edges, bin_centers
 
 
 def calibrate_plenoscope_response(
@@ -25,11 +16,12 @@ def calibrate_plenoscope_response(
         light_field_geometry=light_field_geometry
     )
 
-    time_bin_edges, time_bin_centers = make_bin_edges_and_centers(
+    time_bin_edges = binning_utils.edges_from_width_and_num(
         bin_width=raw_sensor_response["time_slice_duration"],
         num_bins=raw_sensor_response["number_time_slices"],
         first_bin_center=0.0,
     )
+    time_bin_centers = binning_utils.centers(bin_edges=time_bin_edges)
 
     out = {}
     out["time"] = {}
