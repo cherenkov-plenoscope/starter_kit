@@ -26,12 +26,10 @@ os.makedirs(out_dir, exist_ok=True)
 
 config = json_numpy.read_tree(os.path.join(work_dir, "config"))
 
-INSTRUMENTS = abe.full.plots.impact_of_deformations.guide_stars.list_instruments_observing_guide_stars(
+INSTRUMENTS = abe.analysis.guide_stars.list_instruments_observing_guide_stars(
     config=config
 )
-GUIDE_STAR_KEYS = abe.full.plots.impact_of_deformations.guide_stars.list_guide_star_keys(
-    config=config
-)
+GUIDE_STAR_KEYS = abe.analysis.guide_stars.list_guide_star_keys(config=config)
 
 
 max_instrument_fov_half_angle_deg = 0.0

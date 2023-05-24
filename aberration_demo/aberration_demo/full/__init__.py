@@ -11,6 +11,7 @@ from . import default_config
 from . import production
 from . import plots
 from .. import sources
+from .. import analysis
 
 
 def init(work_dir, random_seed=42, minimal=False):
@@ -206,12 +207,8 @@ def plot_guide_stars(work_dir, pool, logger):
         argv=["--work_dir", work_dir, "--out_dir", out_dir],
     )
 
-    table_vmax = plots.impact_of_deformations.guide_stars.table_vmax(
-        work_dir=work_dir
-    )
-    vmax = plots.impact_of_deformations.guide_stars.table_vmax_max(
-        table_vmax=table_vmax
-    )
+    table_vmax = analysis.guide_stars.table_vmax(work_dir=work_dir)
+    vmax = analysis.guide_stars.table_vmax_max(table_vmax=table_vmax)
 
     jobs = []
     for instrument_key in table_vmax:
