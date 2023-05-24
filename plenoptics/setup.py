@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name="aberration_demo",
+    name="plenoptics",
     version="0.0.2",
     description="A simple simulation to show the power of plenoptic perception",
     long_description=long_description,
@@ -13,9 +13,9 @@ setuptools.setup(
     author="Sebastian Achim Mueller",
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
     license="MIT",
-    packages=["aberration_demo",],
+    packages=["plenoptics",],
     package_data={
-        "aberration_demo": [
+        "plenoptics": [
             os.path.join("deformations", "scripts", "*"),
             os.path.join("offaxis", "scripts", "*"),
         ],

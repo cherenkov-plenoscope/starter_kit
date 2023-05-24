@@ -9,7 +9,7 @@ argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
 
 script_path = pkg_resources.resource_filename(
-    "aberration_demo", os.path.join("scripts", "plot_beams_statistics.py"),
+    "plenoptics", os.path.join("scripts", "plot_beams_statistics.py"),
 )
 subprocess.call(
     [
