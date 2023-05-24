@@ -62,34 +62,6 @@ def calibrate_plenoscope_response(
     return out
 
 
-def binning_image_bin_edges(binning):
-    bb = binning
-    cx_image_angle = np.deg2rad(
-        bb["image"]["num_pixel_cx"] * bb["image"]["pixel_angle_deg"]
-    )
-    cy_image_angle = np.deg2rad(
-        bb["image"]["num_pixel_cy"] * bb["image"]["pixel_angle_deg"]
-    )
-
-    cx_cen = np.deg2rad(bb["image"]["center"]["cx_deg"])
-    cy_cen = np.deg2rad(bb["image"]["center"]["cy_deg"])
-
-    cx_start = cx_cen - cx_image_angle / 2
-    cx_stop = cx_cen + cx_image_angle / 2
-
-    cy_start = cy_cen - cy_image_angle / 2
-    cy_stop = cy_cen + cy_image_angle / 2
-
-    cx_bin_edges = np.linspace(
-        cx_start, cx_stop, bb["image"]["num_pixel_cx"] + 1
-    )
-    cy_bin_edges = np.linspace(
-        cy_start, cy_stop, bb["image"]["num_pixel_cy"] + 1
-    )
-
-    return cx_bin_edges, cy_bin_edges
-
-
 def analyse_response_to_calibration_source(
     image_center_cx_deg,
     image_center_cy_deg,
@@ -123,7 +95,7 @@ def analyse_response_to_calibration_source(
     thisbinning = copy.deepcopy(binning)
     thisbinning["image"]["center"]["cx_deg"] = image_center_cx_deg
     thisbinning["image"]["center"]["cy_deg"] = image_center_cy_deg
-    thisimg_bin_edges = binning_image_bin_edges(binning=thisbinning)
+    thisimg_bin_edges = image.binning_image_bin_edges(binning=thisbinning)
 
     # print("image histogram2d_std")
     imgraw = image.histogram2d_std(

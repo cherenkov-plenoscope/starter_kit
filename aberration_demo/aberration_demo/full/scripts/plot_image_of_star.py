@@ -54,7 +54,7 @@ for cmap_key in CMAPS:
 
     fig_psf = sebplt.figure(style={"rows": 640, "cols": 640, "fontsize": 1.0})
 
-    (bin_edges_cx, bin_edges_cy,) = abe.analysis.binning_image_bin_edges(
+    (bin_edges_cx, bin_edges_cy,) = abe.analysis.image.binning_image_bin_edges(
         binning=image_response["image"]["binning"]
     )
     bin_edges_cx_deg = np.rad2deg(bin_edges_cx)

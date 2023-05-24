@@ -10,6 +10,34 @@ BINNING["image"]["num_pixel_cy"] = 64
 BINNING["image"]["pixel_angle_deg"] = 0.0125
 
 
+def binning_image_bin_edges(binning):
+    bb = binning
+    cx_image_angle = np.deg2rad(
+        bb["image"]["num_pixel_cx"] * bb["image"]["pixel_angle_deg"]
+    )
+    cy_image_angle = np.deg2rad(
+        bb["image"]["num_pixel_cy"] * bb["image"]["pixel_angle_deg"]
+    )
+
+    cx_cen = np.deg2rad(bb["image"]["center"]["cx_deg"])
+    cy_cen = np.deg2rad(bb["image"]["center"]["cy_deg"])
+
+    cx_start = cx_cen - cx_image_angle / 2
+    cx_stop = cx_cen + cx_image_angle / 2
+
+    cy_start = cy_cen - cy_image_angle / 2
+    cy_stop = cy_cen + cy_image_angle / 2
+
+    cx_bin_edges = np.linspace(
+        cx_start, cx_stop, bb["image"]["num_pixel_cx"] + 1
+    )
+    cy_bin_edges = np.linspace(
+        cy_start, cy_stop, bb["image"]["num_pixel_cy"] + 1
+    )
+
+    return cx_bin_edges, cy_bin_edges
+
+
 def compute_image(
     light_field_geometry, light_field, object_distance, bins, prng
 ):
