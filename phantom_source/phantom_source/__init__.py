@@ -3,5 +3,4 @@ from . import merlict
 from . import plot
 from . import mesh
 from . import transform
-from . import depth
 from . import demonstration
