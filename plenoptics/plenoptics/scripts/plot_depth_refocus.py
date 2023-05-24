@@ -56,7 +56,7 @@ for point_key in _point_reports:
 
 # make samples
 # ------------
-NUM_SAMPLES = 5
+NUM_SAMPLES = 8
 samples_depth_m = np.geomspace(
     config["observations"]["point"]["min_object_distance_m"],
     config["observations"]["point"]["max_object_distance_m"],
@@ -176,8 +176,18 @@ fig.savefig(os.path.join(out_dir, "refocus_spread_five_samples.jpg"))
 sebplt.close(fig)
 
 
-ymin = 1e1
-ymax = 1e2
+ymin_usr = float("inf")
+ymax_usr = 0.0
+for point_key in ooo:
+    _ymin_usr = np.min(ooo[point_key]["spread_usr"])
+    ymin_usr = np.min([ymin_usr, _ymin_usr])
+    _ymax_usr = np.max(ooo[point_key]["spread_usr"])
+    ymax_usr = np.max([ymax_usr, _ymax_usr])
+ymin_usr *= 0.9
+ymax_usr *= 1.1
+
+ymin_usr = int(10 ** np.floor(np.log10(ymin_usr)))
+ymax_usr = int(10 ** np.ceil(np.log10(ymax_usr)))
 
 fig = sebplt.figure({"rows": 1280, "cols": 1280, "fontsize": 1.5})
 ax = sebplt.add_axes(fig=fig, span=[0.2, 0.15, 0.75, 0.8],)
@@ -194,14 +204,14 @@ for n, point_key in enumerate(ooo):
     ax.plot(uuu["depth_m"], uuu["spread_usr"], "k-", linewidth=1, alpha=0.33)
     ax.plot(
         [uuu["true_depth_m"], uuu["true_depth_m"]],
-        [ymin, spread_lim_usr[0]],
+        [ymin_usr, spread_lim_usr[0]],
         "k--",
         linewidth=1,
         alpha=0.5,
     )
 
 ax.loglog()
-ax.set_ylim([ymin, ymax])
+ax.set_ylim([ymin_usr, ymax_usr])
 ax.set_xlabel(XLABEL)
 ax.set_ylabel(YLABEL)
 fig.savefig(os.path.join(out_dir, "refocus_spread_five_samples_one_axis.jpg"))

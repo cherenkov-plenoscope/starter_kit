@@ -280,7 +280,7 @@ depth_coarse_bin = binning_utils.Binning(
     bin_edges=np.geomspace(
         0.95 * config["observations"]["point"]["min_object_distance_m"],
         1.05 * config["observations"]["point"]["max_object_distance_m"],
-        41,
+        num_depth_bins + 1,
     ),
 )
 
