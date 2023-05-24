@@ -199,11 +199,11 @@ def _run_script(script, argv):
 
 
 def plot_guide_stars(work_dir, pool, logger):
-    out_dir = os.path.join(work_dir, "plots", "guide_stars")
+    guide_stars_dir = os.path.join(work_dir, "plots", "guide_stars")
 
     _run_script(
         script="plot_image_of_star_cmap",
-        argv=["--work_dir", work_dir, "--out_dir", out_dir],
+        argv=["--work_dir", work_dir, "--out_dir", guide_stars_dir],
     )
 
     table_vmax = analysis.guide_stars.table_vmax(work_dir=work_dir)
@@ -211,20 +211,22 @@ def plot_guide_stars(work_dir, pool, logger):
 
     jobs = []
     for instrument_key in table_vmax:
-        for star_key in table_vmax[instrument_key]:
-            job = {"script": "plot_image_of_star"}
-            job["argv"] = [
-                "--work_dir",
-                work_dir,
-                "--out_dir",
-                out_dir,
-                "--instrument_key",
-                instrument_key,
-                "--star_key",
-                star_key,
-                "--vmax",
-                "{:e}".format(vmax),
-            ]
-            jobs.append(job)
+        out_dir = os.path.join(guide_stars_dir, instrument_key)
+        if not os.path.exists(out_dir):
+            for star_key in table_vmax[instrument_key]:
+                job = {"script": "plot_image_of_star"}
+                job["argv"] = [
+                    "--work_dir",
+                    work_dir,
+                    "--out_dir",
+                    out_dir,
+                    "--instrument_key",
+                    instrument_key,
+                    "--star_key",
+                    star_key,
+                    "--vmax",
+                    "{:e}".format(vmax),
+                ]
+                jobs.append(job)
 
     pool.map(_run_script_job, jobs)
