@@ -2,7 +2,7 @@
 import os
 import plenoirf
 import numpy as np
-import plenoptics as abe
+import plenoptics
 import json_numpy
 import sebastians_matplotlib_addons as sebplt
 import argparse
@@ -26,10 +26,12 @@ os.makedirs(out_dir, exist_ok=True)
 
 config = json_numpy.read_tree(os.path.join(work_dir, "config"))
 
-INSTRUMENTS = abe.analysis.guide_stars.list_instruments_observing_guide_stars(
+INSTRUMENTS = plenoptics.analysis.guide_stars.list_instruments_observing_guide_stars(
     config=config
 )
-GUIDE_STAR_KEYS = abe.analysis.guide_stars.list_guide_star_keys(config=config)
+GUIDE_STAR_KEYS = plenoptics.analysis.guide_stars.list_guide_star_keys(
+    config=config
+)
 
 
 max_instrument_fov_half_angle_deg = 0.0
@@ -95,21 +97,33 @@ for instrument_key in INSTRUMENTS:
         cc_deg = psf[instrument_key]["cc_deg"][oa]
         b = np.digitize(x=cc_deg, bins=oa_bin_edges_deg) - 1
         if b >= 0 and b < num_oa_bins:
-            st[b].append(psf[instrument_key]["angle80_rad"][oa])
+            _angle80_rad = psf[instrument_key]["angle80_rad"][oa]
+            if not np.isnan(_angle80_rad):
+                st[b].append(_angle80_rad)
 
     psf_vs_oa_stats[instrument_key] = st
 
     psf_vs_oa[instrument_key] = {
         "mean": np.zeros(num_oa_bins),
+        "median": np.zeros(num_oa_bins),
         "std": np.zeros(num_oa_bins),
+        "median_spread_68": np.zeros(num_oa_bins),
         "num": np.zeros(num_oa_bins),
     }
     for b in range(num_oa_bins):
         psf_vs_oa[instrument_key]["mean"][b] = np.mean(
             psf_vs_oa_stats[instrument_key][b]
         )
+        psf_vs_oa[instrument_key]["median"][b] = np.median(
+            psf_vs_oa_stats[instrument_key][b]
+        )
         psf_vs_oa[instrument_key]["std"][b] = np.std(
             psf_vs_oa_stats[instrument_key][b]
+        )
+        psf_vs_oa[instrument_key]["median_spread_68"][
+            b
+        ] = plenoptics.analysis.statistical_estimators.median_spread(
+            a=psf_vs_oa_stats[instrument_key][b], containment=0.68,
         )
         psf_vs_oa[instrument_key]["num"][b] = len(
             psf_vs_oa_stats[instrument_key][b]
@@ -207,8 +221,8 @@ for PLOT in PLOTS:
             linestyle = "-."
             label = None
 
-        oa_rad = psf_vs_oa[instrument_key]["mean"]
-        oa_std_rad = psf_vs_oa[instrument_key]["std"]
+        oa_rad = psf_vs_oa[instrument_key]["median"]
+        oa_std_rad = psf_vs_oa[instrument_key]["median_spread_68"]
 
         sa_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
             cone_radial_opening_angle_rad=oa_rad
@@ -235,12 +249,13 @@ for PLOT in PLOTS:
             draw_bin_walls=True,
         )
 
+    ax_usr.set_xlim([0.0, oa_bin_edges_deg[-1] ** 2])
     legend = ax_usr.legend(loc="upper left")
     xt_deg2 = np.array(ax_usr.get_xticks())
     xticklabels = []
     for xx_deg2 in xt_deg2:
         if xx_deg2 >= 0.0:
-            xtl = r"{:.2f}".format(np.sqrt(xx_deg2))
+            xtl = r"{:.2f}".format(np.sqrt(xx_deg2)) + r"$^{2}$"
         else:
             xtl = r""
         xticklabels.append(xtl)

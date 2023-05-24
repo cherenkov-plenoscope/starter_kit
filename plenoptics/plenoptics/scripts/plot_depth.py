@@ -5,6 +5,7 @@ import json_numpy
 import os
 import sebastians_matplotlib_addons as sebplt
 import binning_utils
+import plenoptics
 import confusion_matrix
 import plenopy
 import plenoirf
@@ -73,7 +74,10 @@ for point_key in result:
     afocus = np.argmin(estimate["spreads_pixel_per_photon"])
     e["reco_object_distance_m"] = estimate["depth_m"][afocus]
     e["spread_pixel_per_photon"] = estimate["spreads_pixel_per_photon"][afocus]
-    res.append(e)
+    if np.isnan(e["spread_pixel_per_photon"]):
+        continue
+    else:
+        res.append(e)
 
 res = pandas.DataFrame(res).to_records()
 
@@ -167,9 +171,9 @@ sebplt.close(fig)
 # --------
 
 linewidth = 1.0
-fig = sebplt.figure(style={"rows": 960, "cols": 1280, "fontsize": 1.0})
+fig = sebplt.figure(style={"rows": 1600, "cols": 1920, "fontsize": 2})
 ax_c = sebplt.add_axes(fig=fig, span=[0.05, 0.14, 0.85, 0.85])
-ax_cb = sebplt.add_axes(fig=fig, span=[0.85, 0.14, 0.02, 0.85])
+ax_cb = sebplt.add_axes(fig=fig, span=[0.9, 0.14, 0.02, 0.85])
 
 ax_c.plot(
     theory_depth_m * SCALE, theory_depth_m * SCALE, "k--", linewidth=linewidth
@@ -230,7 +234,7 @@ cm = confusion_matrix.init(
     default_low_exposure=0.0,
 )
 
-fig = sebplt.figure(plenoirf.summary.figure.FIGURE_STYLE)
+fig = sebplt.figure({"rows": 960, "cols": 1920, "fontsize": 1.5})
 ax_c = sebplt.add_axes(
     fig=fig, span=plenoirf.summary.figure.AX_SPAN_WITH_COLORBAR_PAYLOAD
 )
@@ -275,12 +279,14 @@ ax_c.set_xticklabels(xlabels)
 fig.savefig(os.path.join(out_dir, "relative_depth_reco_vs_true.jpg"))
 sebplt.close(fig)
 
+num_coarse_depth_bins = int(num_depth_bins / 3)
+num_coarse_depth_bins = np.max([num_coarse_depth_bins, 3])
 
 depth_coarse_bin = binning_utils.Binning(
     bin_edges=np.geomspace(
         0.95 * config["observations"]["point"]["min_object_distance_m"],
         1.05 * config["observations"]["point"]["max_object_distance_m"],
-        num_depth_bins + 1,
+        num_coarse_depth_bins + 1,
     ),
 )
 
@@ -294,7 +300,14 @@ for i in range(len(res["object_distance_m"])):
     b = np.digitize(depth, bins=depth_coarse_bin["edges"]) - 1
     deltas[b].append(delta_depth)
 
-deltas_std = np.array([np.std(ll) for ll in deltas])
+
+deltas_80 = np.zeros(depth_coarse_bin["num"])
+for i in range(depth_coarse_bin["num"]):
+    deltas_80[i] = plenoptics.analysis.statistical_estimators.median_spread(
+        a=deltas[i], containment=0.8
+    )
+
+deltas_std = deltas_80  # np.array([np.std(ll) for ll in deltas])
 deltas_std_ru = np.array([np.sqrt(len(ll)) / len(ll) for ll in deltas])
 deltas_std_au = deltas_std * deltas_std_ru
 

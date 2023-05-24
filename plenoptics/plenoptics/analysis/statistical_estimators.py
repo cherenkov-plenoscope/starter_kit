@@ -156,3 +156,13 @@ def is_flat_or_nan(f):
     if np.std(f) == 0.0:
         return True
     return False
+
+
+def median_spread(a, containment=0.8):
+    NTOT = len(a)
+    if NTOT < 1:
+        return float("nan")
+    b = a - np.median(a)
+    b = np.abs(b)
+    b = np.sort(b)
+    return b[int(NTOT * containment)]
