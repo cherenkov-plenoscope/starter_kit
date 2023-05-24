@@ -219,7 +219,7 @@ def analysis_run_job(job):
         os.path.join(job["work_dir"], "config", "analysis", "star.json")
     )
 
-    result = analysis.analyse_response_to_calibration_source(
+    result = analysis.point_source_report.make_point_source_report(
         image_center_cx_deg=truth["cx_deg"],
         image_center_cy_deg=truth["cy_deg"],
         raw_sensor_response=raw_sensor_response,
