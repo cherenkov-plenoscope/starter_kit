@@ -1,5 +1,4 @@
 import os
-from . import portal
 
 EXECUTABLES = {
     "merlict_plenoscope_propagation_path": os.path.abspath(

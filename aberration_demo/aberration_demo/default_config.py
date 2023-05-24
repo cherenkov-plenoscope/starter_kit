@@ -2,10 +2,8 @@ import os
 import json_numpy
 import copy
 import phantom_source
-from .. import deformations
-from .. import portal
-from .. import merlict
-from .. import analysis
+from . import instruments
+from . import analysis
 
 
 def write_default_config(cfg_dir, minimal):
