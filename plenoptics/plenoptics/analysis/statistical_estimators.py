@@ -72,13 +72,20 @@ def encirclement1d(x, f, percentile=80, oversample=137):
     assert oversample >= 1
     num_bins_fine = len(x) * oversample
 
+    if is_flat_or_nan(f):
+        return float("nan"), float("nan")
+
     start_fraction = 0.5 - 0.5 * (percentile / 100.0)
     stop_fraction = 0.5 + 0.5 * (percentile / 100.0)
 
     xfine = np.linspace(x[0], x[-1], num_bins_fine,)
     ffine = np.interp(x=xfine, xp=x, fp=f)
 
-    ffine = ffine / np.sum(ffine)
+    sum_ffine = np.sum(ffine)
+    if sum_ffine == 0:
+        return float("nan"), float("nan")
+
+    ffine = ffine / sum_ffine
     cumffine = np.cumsum(ffine)
 
     imax = np.argmax(ffine)
@@ -112,6 +119,9 @@ def full_width_half_maximum(x, f, oversample=137):
     assert oversample >= 1
     num_bins_fine = len(x) * oversample
 
+    if is_flat_or_nan(f):
+        return float("nan"), float("nan")
+
     xfine = np.linspace(x[0], x[-1], num_bins_fine,)
     # print("xfine", xfine[0], xfine[-1])
 
@@ -138,3 +148,11 @@ def full_width_half_maximum(x, f, oversample=137):
             istop += 1
 
     return xfine[istart], xfine[istop]
+
+
+def is_flat_or_nan(f):
+    if np.any(np.isnan(f)):
+        return True
+    if np.std(f) == 0.0:
+        return True
+    return False
