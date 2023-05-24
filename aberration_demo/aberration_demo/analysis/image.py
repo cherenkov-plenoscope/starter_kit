@@ -2,6 +2,14 @@ import plenopy
 import numpy as np
 
 
+BINNING = {}
+BINNING["image"] = {}
+BINNING["image"]["center"] = {"cx_deg": 0.0, "cy_deg": 0.0}
+BINNING["image"]["num_pixel_cx"] = 64
+BINNING["image"]["num_pixel_cy"] = 64
+BINNING["image"]["pixel_angle_deg"] = 0.0125
+
+
 def compute_image(
     light_field_geometry, light_field, object_distance, bins, prng
 ):

@@ -248,7 +248,7 @@ def write_analysis_config(cfg_dir):
         {
             "object_distance_m": 1e6,
             "containment_percentile": 80,
-            "binning": analysis.BINNING,
+            "binning": analysis.image.BINNING,
         },
     )
 
