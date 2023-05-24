@@ -65,7 +65,7 @@ with open(os.path.join(pa["out_dir"], "README.md"), "wt") as f:
 
 array_to_txt(
     arr=energy_fine_bin["edges"],
-    path=os.path.join(pa["out_dir"], "E_bin_edges_GeV.txt")
+    path=os.path.join(pa["out_dir"], "E_bin_edges_GeV.txt"),
 )
 
 for sk in SITES:
@@ -81,8 +81,7 @@ for sk in SITES:
             x=energy_fine_bin["centers"], xp=energy_bin["centers"], fp=A_gamma,
         )
         array_to_txt(
-            arr=A_gamma_fine_m2,
-            path=os.path.join(sk_ok_dir, "A_m2.txt")
+            arr=A_gamma_fine_m2, path=os.path.join(sk_ok_dir, "A_m2.txt")
         )
 
         # background
@@ -106,14 +105,13 @@ for sk in SITES:
         )
         array_to_txt(
             arr=[rate_cosmic_rays_per_s],
-            path=os.path.join(sk_ok_dir, "B_per_s.txt")
+            path=os.path.join(sk_ok_dir, "B_per_s.txt"),
         )
         for pk in COSMIC_RAYS:
             array_to_txt(
                 arr=[rates_of_cosmic_rays[pk]],
-                path=os.path.join(sk_ok_dir, "B_{:s}_per_s.txt".format(pk))
+                path=os.path.join(sk_ok_dir, "B_{:s}_per_s.txt".format(pk)),
             )
-
 
         for pk in PULSARS:
             sk_ok_pk_dir = os.path.join(sk_ok_dir, pk)
@@ -132,7 +130,9 @@ for sk in SITES:
 
             array_to_txt(
                 arr=dKdE_per_m2_per_s_per_GeV,
-                path=os.path.join(sk_ok_pk_dir, "dKdE_per_m2_per_s_per_GeV.txt")
+                path=os.path.join(
+                    sk_ok_pk_dir, "dKdE_per_m2_per_s_per_GeV.txt"
+                ),
             )
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
@@ -162,14 +162,12 @@ for sk in SITES:
 
             array_to_txt(
                 arr=dRdE_per_s_per_GeV,
-                path=os.path.join(sk_ok_pk_dir, "dRdE_per_s_per_GeV.txt")
+                path=os.path.join(sk_ok_pk_dir, "dRdE_per_s_per_GeV.txt"),
             )
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
             ax.plot(
-                energy_fine_bin["edges"][0:-1],
-                dRdE_per_s_per_GeV,
-                "k-",
+                energy_fine_bin["edges"][0:-1], dRdE_per_s_per_GeV, "k-",
             )
             ax.loglog()
             _ymax = np.max(dRdE_per_s_per_GeV)
@@ -179,9 +177,7 @@ for sk in SITES:
             ax.set_ylabel(
                 r"$\frac{\mathrm{d\,R}}{\mathrm{d\,E}}$ / s$^{-1}$ (GeV)$^{-1}$"
             )
-            fig.savefig(
-                os.path.join(sk_ok_pk_dir, "dRdE_per_s_per_GeV.jpg")
-            )
+            fig.savefig(os.path.join(sk_ok_pk_dir, "dRdE_per_s_per_GeV.jpg"))
             seb.close(fig)
 
             R_per_s = 0.0
@@ -190,6 +186,5 @@ for sk in SITES:
                     dRdE_per_s_per_GeV[ebin] * energy_fine_bin["widths"][ebin]
                 )
             array_to_txt(
-                arr=[R_per_s],
-                path=os.path.join(sk_ok_pk_dir, "R_per_s.txt")
+                arr=[R_per_s], path=os.path.join(sk_ok_pk_dir, "R_per_s.txt")
             )
