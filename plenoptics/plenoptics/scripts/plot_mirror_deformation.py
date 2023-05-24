@@ -42,18 +42,18 @@ CMAP_Z = "RdBu_r"
 CMAP_NORMAL = "Reds"
 PLOT_Z_SIGNS = False
 
-demfap_zeor = abe.deformations.deformation_map.init_from_mirror_and_deformation_configs(
+demfap_zeor = abe.instruments.mirror.deformation_map.init_from_mirror_and_deformation_configs(
     mirror_dimensions=mirror_dimensions,
     mirror_deformation=mirror_deformations,
     amplitude_scaleing=0.0,
 )
 
-demfap = abe.deformations.deformation_map.init_from_mirror_and_deformation_configs(
+demfap = abe.instruments.mirror.deformation_map.init_from_mirror_and_deformation_configs(
     mirror_dimensions=mirror_dimensions,
     mirror_deformation=mirror_deformations,
 )
 
-facets = abe.deformations.parabola_segmented.make_facets(
+facets = abe.instruments.mirror.make_facets(
     mirror_dimensions=mirror_dimensions, mirror_deformation_map=demfap,
 )
 
@@ -73,12 +73,12 @@ for facet in facets:
     y = facet["pos"][1]
     facets_x_m.append(x)
     facets_y_m.append(y)
-    z = abe.deformations.deformation_map.evaluate(
+    z = abe.instruments.mirror.deformation_map.evaluate(
         deformation_map=demfap, x_m=x, y_m=y,
     )
     facets_z_m.append(z)
 
-    actual_surface_normal = abe.deformations.parabola_segmented.mirror_surface_normal(
+    actual_surface_normal = abe.instruments.mirror.mirror_surface_normal(
         x=x,
         y=y,
         focal_length=mirror_dimensions["focal_length"],
@@ -86,7 +86,7 @@ for facet in facets:
         delta=0.5 * mirror_dimensions["facet_inner_hex_radius"],
     )
 
-    targeted_surface_normal = abe.deformations.parabola_segmented.mirror_surface_normal(
+    targeted_surface_normal = abe.instruments.mirror.mirror_surface_normal(
         x=x,
         y=y,
         focal_length=mirror_dimensions["focal_length"],
@@ -94,7 +94,7 @@ for facet in facets:
         delta=0.5 * mirror_dimensions["facet_inner_hex_radius"],
     )
 
-    aa_rad = abe.deformations.parabola_segmented.angle_between(
+    aa_rad = abe.instruments.mirror.angle_between(
         actual_surface_normal, targeted_surface_normal
     )
     aa_deg = np.rad2deg(aa_rad)
