@@ -14,12 +14,7 @@ setuptools.setup(
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
     license="MIT",
     packages=["plenoptics",],
-    package_data={
-        "plenoptics": [
-            os.path.join("deformations", "scripts", "*"),
-            os.path.join("offaxis", "scripts", "*"),
-        ],
-    },
+    package_data={"plenoptics": [os.path.join("scripts", "*"),],},
     install_requires=["perlin_noise"],
     classifiers=[
         "Programming Language :: Python :: 3",
