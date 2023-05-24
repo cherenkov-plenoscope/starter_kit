@@ -1,5 +1,3 @@
-import numpy as np
-
 
 MIRROR = {
     "focal_length": 106.5,
