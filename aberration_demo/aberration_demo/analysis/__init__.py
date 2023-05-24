@@ -1,3 +1,4 @@
+from . import image
 import corsika_primary as cpw
 import os
 import copy
