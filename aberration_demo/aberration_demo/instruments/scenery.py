@@ -1,6 +1,6 @@
 import numpy as np
-from .. import portal
-from . import parabola_segmented
+from . import portal
+from . import deformations
 
 
 def make_plenoscope_scenery_aligned_deformed(
@@ -35,7 +35,7 @@ def make_plenoscope_scenery_aligned_deformed(
         "name": "Mirror",
         "pos": [0, 0, 0],
         "rot": [0, 0, 0],
-        "children": parabola_segmented.make_facets(
+        "children": deformations.parabola_segmented.make_facets(
             mirror_dimensions=mirror_dimensions,
             mirror_deformation_map=mirror_deformation_map,
             reflection_vs_wavelength="mirror_reflectivity_vs_wavelength",

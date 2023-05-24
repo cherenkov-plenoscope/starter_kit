@@ -1,6 +1,6 @@
 from . import full
 from . import offaxis
-from . import deformations
+from . import instruments
 from . import merlict
 from . import sources
 from . import portal
