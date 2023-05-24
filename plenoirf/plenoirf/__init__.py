@@ -36,8 +36,6 @@ import magnetic_deflection as mdfl
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
 import network_file_system as nfs
-import phantom_source
-import aberration_demo
 
 
 MIN_PROTON_ENERGY_GEV = 5.0
@@ -488,70 +486,6 @@ def _populate_table_of_thrown_air_showers(
             )
 
 
-def _estimate_resolution_of_depth(
-    run_dir, executables, map_and_reduce_pool, logger
-):
-    benchmarks_dir = opj(run_dir, "benchmarks")
-    os.makedirs(benchmarks_dir, exist_ok=True)
-
-    depth_dir = opj(run_dir, "benchmarks", "resolution_of_depth")
-    depth_result_path = opj(depth_dir, "result.json")
-
-    if not os.path.exists(depth_dir):
-        logger.info("init benchmark 'resolution of depth'")
-        depth_config = phantom_source.depth.EXAMPLE_CONFIG.copy()
-        depth_config["light_field_geometry_path"] = opj(
-            run_dir, "light_field_geometry"
-        )
-        depth_config["merlict_propagate_photons_path"] = executables[
-            "merlict_plenoscope_raw_photon_propagation_path"
-        ]
-        depth_config["merlict_propagate_config_path"] = opj(
-            run_dir,
-            "input",
-            "merlict_plenoscope_propagator_without_night_sky_background_config.json",
-        )
-        phantom_source.depth.init(work_dir=depth_dir, config=depth_config)
-
-        logger.info("estimating benchmark 'resolution of depth'")
-        jobs = phantom_source.depth.make_jobs(work_dir=depth_dir)
-        map_and_reduce_pool.map(phantom_source.depth.run_job, jobs)
-
-    if not os.path.exists(depth_result_path):
-        logger.info("reducing benchmark 'resolution of depth'")
-        phantom_source.depth.reduce(work_dir=depth_dir)
-
-
-def _compensating_deformations(
-    run_dir, executables, map_and_reduce_pool, logger
-):
-    benchmarks_dir = opj(run_dir, "benchmarks")
-    os.makedirs(benchmarks_dir, exist_ok=True)
-
-    deform_dir = opj(run_dir, "benchmarks", "compensating_deformations")
-
-    if not os.path.exists(deform_dir):
-        logger.info("init benchmark 'compensating deformations'")
-
-        deform_config = aberration_demo.deformations.make_config_from_scenery(
-            scenery_path=opj(
-                run_dir,
-                "light_field_geometry",
-                "input",
-                "scenery",
-                "scenery.json",
-            ),
-        )
-
-        aberration_demo.deformations.init(
-            work_dir=deform_dir,
-            config=aberration_demo.deformations.CONFIG,
-            executables=executables,
-        )
-    else:
-        pass
-
-
 def run(
     run_dir,
     map_and_reduce_pool,
@@ -613,21 +547,5 @@ def run(
         LAZY_REDUCTION=LAZY_REDUCTION,
         logger=logger,
     )
-
-    """
-    _estimate_resolution_of_depth(
-        run_dir=run_dir,
-        executables=executables,
-        map_and_reduce_pool=map_and_reduce_pool,
-        logger=logger,
-    )
-
-    _compensating_deformations(
-        run_dir=run_dir,
-        executables=executables,
-        map_and_reduce_pool=map_and_reduce_pool,
-        logger=logger,
-    )
-    """
 
     logger.info("End run().")
