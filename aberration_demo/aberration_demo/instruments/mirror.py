@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 from . import deformation_map
-from .. import portal
+from . import portal
 
 
 def parabola_z(distance_to_z_axis, focal_length):
