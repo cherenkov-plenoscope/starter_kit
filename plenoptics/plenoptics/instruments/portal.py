@@ -1,4 +1,3 @@
-
 MIRROR = {
     "focal_length": 106.5,
     "max_outer_aperture_radius": 41.0,

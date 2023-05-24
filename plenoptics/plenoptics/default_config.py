@@ -127,7 +127,9 @@ def write_statistics_config(cfg_dir, minimal):
 def write_mirrors_config(cfg_dir):
     cfg_mirg_dir = os.path.join(cfg_dir, "mirrors")
     os.makedirs(cfg_mirg_dir, exist_ok=True)
-    json_numpy.write(os.path.join(cfg_mirg_dir, "71m.json"), instruments.portal.MIRROR)
+    json_numpy.write(
+        os.path.join(cfg_mirg_dir, "71m.json"), instruments.portal.MIRROR
+    )
 
 
 def write_sensors_config(cfg_dir):
