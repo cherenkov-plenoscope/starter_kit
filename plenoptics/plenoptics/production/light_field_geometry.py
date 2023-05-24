@@ -6,10 +6,10 @@ import json_line_logger
 import plenoirf
 import plenopy
 import shutil
-from ... import deformations
-from ... import portal
-from ... import merlict
-from ... import utils
+
+from .. import instruments
+from .. import merlict
+from .. import utils
 
 
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
@@ -73,12 +73,12 @@ def make_sceneries_run_job(job):
         "num_paxel_on_pixel_diagonal"
     ]
 
-    mirror_deformation_map = deformations.deformation_map.init_from_mirror_and_deformation_configs(
+    mirror_deformation_map = instruments.mirror.deformation_map.init_from_mirror_and_deformation_configs(
         mirror_dimensions=mirror_dimensions,
         mirror_deformation=mirror_deformation,
     )
 
-    merlict_scenery = deformations.scenery.make_plenoscope_scenery_aligned_deformed(
+    merlict_scenery = instruments.scenery.make_plenoscope_scenery_aligned_deformed(
         mirror_dimensions=mirror_dimensions,
         mirror_deformation_map=mirror_deformation_map,
         sensor_dimensions=sensor_dimensions,

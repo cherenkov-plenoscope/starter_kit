@@ -4,6 +4,7 @@ import copy
 import phantom_source
 from . import instruments
 from . import analysis
+from . import merlict
 
 
 def write_default_config(cfg_dir, minimal):
@@ -103,11 +104,11 @@ def write_mirror_deformations(cfg_dir):
     os.makedirs(cfg_mdef_dir, exist_ok=True)
     json_numpy.write(
         os.path.join(cfg_mdef_dir, "default.json"),
-        deformations.deformation_map.ZERO_MIRROR_DEFORMATION,
+        instruments.mirror.deformation_map.ZERO_MIRROR_DEFORMATION,
     )
     json_numpy.write(
         os.path.join(cfg_mdef_dir, "perlin55mm.json"),
-        deformations.deformation_map.EXAMPLE_MIRROR_DEFORMATION,
+        instruments.mirror.deformation_map.EXAMPLE_MIRROR_DEFORMATION,
     )
 
 
@@ -126,19 +127,19 @@ def write_statistics_config(cfg_dir, minimal):
 def write_mirrors_config(cfg_dir):
     cfg_mirg_dir = os.path.join(cfg_dir, "mirrors")
     os.makedirs(cfg_mirg_dir, exist_ok=True)
-    json_numpy.write(os.path.join(cfg_mirg_dir, "71m.json"), portal.MIRROR)
+    json_numpy.write(os.path.join(cfg_mirg_dir, "71m.json"), instruments.portal.MIRROR)
 
 
 def write_sensors_config(cfg_dir):
     cfg_lfsg_dir = os.path.join(cfg_dir, "sensors")
     os.makedirs(cfg_lfsg_dir, exist_ok=True)
-    _p61 = copy.deepcopy(portal.SENSOR)
+    _p61 = copy.deepcopy(instruments.portal.SENSOR)
     _p61["num_paxel_on_pixel_diagonal"] = 9
     json_numpy.write(os.path.join(cfg_lfsg_dir, "diag9.json"), _p61)
-    _p7 = copy.deepcopy(portal.SENSOR)
+    _p7 = copy.deepcopy(instruments.portal.SENSOR)
     _p7["num_paxel_on_pixel_diagonal"] = 3
     json_numpy.write(os.path.join(cfg_lfsg_dir, "diag3.json"), _p7)
-    _t1 = copy.deepcopy(portal.SENSOR)
+    _t1 = copy.deepcopy(instruments.portal.SENSOR)
     _t1["num_paxel_on_pixel_diagonal"] = 1
     json_numpy.write(os.path.join(cfg_lfsg_dir, "diag1.json"), _t1)
 
@@ -148,11 +149,11 @@ def write_sensors_transformations(cfg_dir):
     os.makedirs(cfg_stra_dir, exist_ok=True)
     json_numpy.write(
         os.path.join(cfg_stra_dir, "default.json"),
-        portal.SENSOR_TRANSFORMATION_DEFAULT,
+        instruments.portal.SENSOR_TRANSFORMATION_DEFAULT,
     )
     json_numpy.write(
         os.path.join(cfg_stra_dir, "gentle.json"),
-        portal.SENSOR_TRANSFORMATION_GENTLE,
+        instruments.portal.SENSOR_TRANSFORMATION_GENTLE,
     )
 
 

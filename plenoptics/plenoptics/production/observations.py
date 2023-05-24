@@ -2,7 +2,7 @@ import json_line_logger
 import os
 import json_numpy
 import plenopy
-from ... import sources
+from .. import sources
 
 
 def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
