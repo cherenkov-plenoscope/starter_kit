@@ -1,4 +1,3 @@
-from . import analysis
 import plenopy
 import numpy as np
 
@@ -22,7 +21,7 @@ def compute_image(
     for lixel_id in photon_lixel_ids:
         weights[lixel_id] += 1
 
-    img = analysis.histogram2d_std(
+    img = histogram2d_std(
         x=image_beams_cx,
         y=image_beams_cy,
         x_std=image_beams_cx_std,
@@ -53,3 +52,42 @@ def read_image(path):
         img = np.fromstring(f.read(), dtype=np.float32)
     img = np.reshape(img, (x, y), order="C")
     return img
+
+
+def histogram2d_std(
+    x, y, x_std, y_std, weights, bins, prng, num_sub_samples=10,
+):
+    num_samples = len(x)
+    assert len(y) == num_samples
+    assert len(x_std) == num_samples
+    assert len(y_std) == num_samples
+    assert len(weights) == num_samples
+    assert num_sub_samples > 0
+
+    bin_edges_x, bin_edges_y = bins
+    assert np.all(np.gradient(bin_edges_x) > 0)
+    assert np.all(np.gradient(bin_edges_y) > 0)
+
+    num_bins_x = len(bin_edges_x) - 1
+    num_bins_y = len(bin_edges_y) - 1
+    assert num_bins_x > 0
+    assert num_bins_y > 0
+
+    counts = np.zeros(shape=(num_bins_x, num_bins_y))
+
+    for i in range(num_samples):
+
+        if weights[i] == 0:
+            continue
+
+        for s in range(num_sub_samples):
+
+            rx = prng.normal(loc=x[i], scale=x_std[i])
+            ry = prng.normal(loc=y[i], scale=y_std[i])
+
+            ibx = np.digitize(x=rx, bins=bin_edges_x) - 1
+            iby = np.digitize(x=ry, bins=bin_edges_y) - 1
+
+            if 0 <= ibx < num_bins_x and 0 <= iby < num_bins_y:
+                counts[ibx, iby] += weights[i] / num_sub_samples
+    return counts, bins
