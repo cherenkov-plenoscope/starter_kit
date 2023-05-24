@@ -1,10 +1,7 @@
 from . import image
 from . import statistical_estimators
 import binning_utils
-import corsika_primary as cpw
-import os
 import copy
-import plenoirf
 import numpy as np
 import plenopy
 
@@ -81,7 +78,7 @@ def analyse_response_to_calibration_source(
     cres = calibrated_response
 
     # print("image encirclement2d")
-    psf_cx, psf_cy, psf_angle80 = encirclement2d(
+    psf_cx, psf_cy, psf_angle80 = statistical_estimators.encirclement2d(
         x=cres["image_beams"]["cx"],
         y=cres["image_beams"]["cy"],
         x_std=cres["image_beams"]["cx_std"],
@@ -110,13 +107,16 @@ def analyse_response_to_calibration_source(
     )[0]
 
     # print("time encirclement1d")
-    time_80_start, time_80_stop = encirclement1d(
+    time_80_start, time_80_stop = statistical_estimators.encirclement1d(
         x=cres["time"]["bin_centers"],
         f=cres["time"]["weights"],
         percentile=containment_percentile,
     )
     # print("time full_width_half_maximum")
-    (time_fwhm_start, time_fwhm_stop,) = full_width_half_maximum(
+    (
+        time_fwhm_start,
+        time_fwhm_stop,
+    ) = statistical_estimators.full_width_half_maximum(
         x=cres["time"]["bin_centers"], f=cres["time"]["weights"],
     )
 
