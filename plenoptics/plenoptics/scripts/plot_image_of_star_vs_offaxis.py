@@ -64,6 +64,8 @@ for instrument_key in INSTRUMENTS:
 
         rec = {}
         rec["angle80_rad"] = image_response["image"]["angle80"]
+        if np.isnan(rec["angle80_rad"]):
+            continue
         rec["cx_deg"] = image_response["image"]["binning"]["image"]["center"][
             "cx_deg"
         ]
@@ -71,9 +73,9 @@ for instrument_key in INSTRUMENTS:
             "cy_deg"
         ]
         rec["cc_deg"] = np.hypot(rec["cx_deg"], rec["cy_deg"])
-
-        if rec["cc_deg"] <= instrument_fov_half_angle_deg:
-            ll.append(rec)
+        if rec["cc_deg"] > instrument_fov_half_angle_deg:
+            continue
+        ll.append(rec)
         psf[instrument_key] = pandas.DataFrame(ll).to_records(index=False)
 
     min_num_valid_stars = np.min([min_num_valid_stars, num_valid_stars])
@@ -130,10 +132,6 @@ for instrument_key in INSTRUMENTS:
         )
 
 
-SOLID_ANGLE_80_SR_START = 0
-SOLID_ANGLE_80_SR_STOP = 20e-6
-SOLID_ANGLE_SCALE = 1e6
-
 ylabel_name = r"solid angle containing 80%"
 label_sep = r"$\,/\,$"
 
@@ -181,114 +179,98 @@ for scenario_key in same_scenario_different_sensors:
             }
         )
 
-low_ylim = SOLID_ANGLE_SCALE * np.array(
+SOLID_ANGLE_80_SR_START = 1e-6
+SOLID_ANGLE_80_SR_STOP = 100e-6
+SOLID_ANGLE_SCALE = 1e6
+
+ylim_usr = SOLID_ANGLE_SCALE * np.array(
     [SOLID_ANGLE_80_SR_START, SOLID_ANGLE_80_SR_STOP]
 )
-y_step_usr = 2.5
-HH = 3.5
-high_ylim = [low_ylim[0], low_ylim[1] * HH * 1.25]
-
-fig_sizes = {
-    "low": {
-        "figstyle": {"rows": 720, "cols": 1280, "fontsize": 1},
-        "axspan": [0.12, 0.175, 0.77, 0.76],
-        "ylim": low_ylim,
-        "yticks": np.arange(low_ylim[0], low_ylim[1] + y_step_usr, y_step_usr),
-    },
-    "high": {
-        "figstyle": {"rows": 720 * HH, "cols": 1280, "fontsize": 1},
-        "axspan": [0.12, 0.175 / HH, 0.77, 1 - (0.175 + 0.05) / HH],
-        "ylim": high_ylim,
-        "yticks": np.arange(
-            high_ylim[0], high_ylim[1] + y_step_usr, y_step_usr
-        ),
-    },
-}
-
 
 for PLOT in PLOTS:
-    for szkey in fig_sizes:
-        fig = sebplt.figure(style=fig_sizes[szkey]["figstyle"])
-        ax_usr = sebplt.add_axes(fig, fig_sizes[szkey]["axspan"])
-        ax_deg2 = ax_usr.twinx()
-        ax_deg2.spines["top"].set_visible(False)
+    fig = sebplt.figure(style={"rows": 720, "cols": 1280, "fontsize": 1})
+    ax_usr = sebplt.add_axes(fig, [0.12, 0.175, 0.77, 0.76])
+    sebplt.ax_add_grid(ax=ax_usr, add_minor=True)
+    ax_deg2 = ax_usr.twinx()
+    ax_deg2.spines["top"].set_visible(False)
 
-        ax_usr.set_ylim(fig_sizes[szkey]["ylim"])
-        ax_usr.set_ylabel(ylabel_name + label_sep + r"$\mu$sr")
+    ax_usr.set_ylim(ylim_usr)
+    ax_usr.set_ylabel(ylabel_name + label_sep + r"$\mu$sr")
 
-        SOLID_ANGLE_80_DEG2_START = plenoirf.utils.sr2squaredeg(
-            fig_sizes[szkey]["ylim"][0] / SOLID_ANGLE_SCALE
+    SOLID_ANGLE_80_DEG2_START = plenoirf.utils.sr2squaredeg(
+        ylim_usr[0] / SOLID_ANGLE_SCALE
+    )
+    SOLID_ANGLE_80_DEG2_STOP = plenoirf.utils.sr2squaredeg(
+        ylim_usr[1] / SOLID_ANGLE_SCALE
+    )
+    ax_deg2.set_ylim(
+        np.array([SOLID_ANGLE_80_DEG2_START, SOLID_ANGLE_80_DEG2_STOP])
+    )
+    ax_deg2.set_ylabel(r"(1$^{\circ}$)$^2$")
+
+    for instrument_key in PLOT["instruments"]:
+
+        if "diag9" in instrument_key:
+            linestyle = "-"
+            label = "P-61"
+        elif "diag3" in instrument_key:
+            linestyle = "--"
+            label = "P-7"
+        elif "diag1" in instrument_key:
+            linestyle = ":"
+            label = "T-1"
+        else:
+            linestyle = "-."
+            label = None
+
+        oa_rad = psf_vs_oa[instrument_key]["median"]
+        oa_std_rad = psf_vs_oa[instrument_key]["median_spread_68"]
+
+        sa_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
+            cone_radial_opening_angle_rad=oa_rad
         )
-        SOLID_ANGLE_80_DEG2_STOP = plenoirf.utils.sr2squaredeg(
-            fig_sizes[szkey]["ylim"][1] / SOLID_ANGLE_SCALE
+        sa_upper_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
+            cone_radial_opening_angle_rad=oa_rad + oa_std_rad
         )
-        ax_deg2.set_ylim(
-            np.array([SOLID_ANGLE_80_DEG2_START, SOLID_ANGLE_80_DEG2_STOP])
+        sa_lower_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
+            cone_radial_opening_angle_rad=oa_rad - oa_std_rad
         )
-        ax_deg2.set_ylabel(r"(1$^{\circ}$)$^2$")
 
-        for instrument_key in PLOT["instruments"]:
-
-            if "diag9" in instrument_key:
-                linestyle = "-"
-                label = "P-61"
-            elif "diag3" in instrument_key:
-                linestyle = "--"
-                label = "P-7"
-            elif "diag1" in instrument_key:
-                linestyle = ":"
-                label = "T-1"
-            else:
-                linestyle = "-."
-                label = None
-
-            oa_rad = psf_vs_oa[instrument_key]["median"]
-            oa_std_rad = psf_vs_oa[instrument_key]["median_spread_68"]
-
-            sa_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
-                cone_radial_opening_angle_rad=oa_rad
-            )
-            sa_upper_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
-                cone_radial_opening_angle_rad=oa_rad + oa_std_rad
-            )
-            sa_lower_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
-                cone_radial_opening_angle_rad=oa_rad - oa_std_rad
-            )
-
-            sebplt.ax_add_histogram(
-                ax=ax_usr,
-                bin_edges=oa_bin_edges_deg ** 2,
-                bincounts=sa_usr,
-                linestyle=linestyle,
-                linecolor="k",
-                linealpha=1.0,
-                bincounts_upper=sa_upper_usr,
-                bincounts_lower=sa_lower_usr,
-                face_color="k",
-                face_alpha=0.1,
-                label=label,
-                draw_bin_walls=True,
-            )
-
-        ax_usr.set_xlim([0.0, oa_bin_edges_deg[-1] ** 2])
-        legend = ax_usr.legend(loc="upper left")
-        xt_deg2 = np.array(ax_usr.get_xticks())
-        xticklabels = []
-        for xx_deg2 in xt_deg2:
-            if xx_deg2 >= 0.0:
-                xtl = r"{:.2f}".format(np.sqrt(xx_deg2)) + r"$^{2}$"
-            else:
-                xtl = r""
-            xticklabels.append(xtl)
-        ax_usr.set_xticklabels(xticklabels)
-
-        ax_usr.set_xlabel(
-            r"(angle off the mirror's optical axis)$^{2}\,/\,(1^{\circ{}})^{2}$"
+        sebplt.ax_add_histogram(
+            ax=ax_usr,
+            bin_edges=oa_bin_edges_deg ** 2,
+            bincounts=sa_usr,
+            linestyle=linestyle,
+            linecolor="k",
+            linealpha=1.0,
+            bincounts_upper=sa_upper_usr,
+            bincounts_lower=sa_lower_usr,
+            face_color="k",
+            face_alpha=0.1,
+            label=label,
+            draw_bin_walls=True,
         )
-        ax_usr.set_yticks(fig_sizes[szkey]["yticks"])
-        fig_filename = "{:s}_{:s}.jpg".format(PLOT["filename"], szkey)
-        fig.savefig(os.path.join(out_dir, fig_filename))
-        sebplt.close(fig)
+
+    ax_usr.set_xlim([0.0, oa_bin_edges_deg[-1] ** 2])
+    legend = ax_usr.legend(loc="upper left")
+    xt_deg2 = np.array(ax_usr.get_xticks())
+    xticklabels = []
+    for xx_deg2 in xt_deg2:
+        if xx_deg2 >= 0.0:
+            xtl = r"{:.2f}".format(np.sqrt(xx_deg2)) + r"$^{2}$"
+        else:
+            xtl = r""
+        xticklabels.append(xtl)
+    ax_usr.set_xticklabels(xticklabels)
+
+    ax_usr.set_xlabel(
+        r"(angle off the mirror's optical axis)$^{2}\,/\,(1^{\circ{}})^{2}$"
+    )
+    ax_usr.semilogy()
+    ax_deg2.semilogy()
+    fig_filename = "{:s}.jpg".format(PLOT["filename"])
+    fig.savefig(os.path.join(out_dir, fig_filename))
+    sebplt.close(fig)
 
 
 average_angle80_rad = {}
