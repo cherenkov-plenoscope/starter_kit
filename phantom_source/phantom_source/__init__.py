@@ -12,7 +12,7 @@ def make_meshes_of_default_phantom_source(
     RR = 1.0
     intensity = 1e4 * intensity
 
-    keys = ["triangle", "spiral", "sun", "smiley", "cross"]
+    keys = ["triangle", "spiral", "sun", "A", "cross"]
     _depths = np.geomspace(depth_start_m, depth_stop_m, len(keys))
     depths = {}
     for i, key in enumerate(keys):
@@ -45,11 +45,10 @@ def make_meshes_of_default_phantom_source(
         )
     )
     Mimg.append(
-        mesh.smiley(
-            pos=[-1.0, +1.3, depths["smiley"]],
-            radius=0.9,
-            density=intensity * (depths["smiley"] / 1e3 ** RR),
-            fn=50,
+        mesh.letter_A_fancy(
+            pos=[-1, +0.7, depths["A"]],
+            size=2.6,
+            density=intensity * (depths["A"] / 1e3 ** RR),
         )
     )
     Mimg.append(

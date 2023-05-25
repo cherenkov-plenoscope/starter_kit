@@ -254,3 +254,156 @@ def smiley(pos, radius, fn=50, density=1):
         "vertices": vertices,
         "edges": edges,
     }
+
+
+def letter_A(pos, size, density=1):
+    pos = np.array(pos)
+    vertices = {}
+    edges = []
+
+    vertices["0"] = [0, 0, 0]
+    vertices["1"] = [0.4, 1, 0]
+    edges.append(("0", "1", density))
+    vertices["2"] = [0.8, 0, 0]
+    edges.append(("1", "2", density))
+
+    vertices["m0"] = [0.4 * 0.4, 0.4, 0]
+    vertices["m1"] = [0.8 - 0.4 * 0.4, 0.4, 0]
+    edges.append(("m0", "m1", density))
+
+    for vkey in vertices:
+        vertices[vkey] = np.array(vertices[vkey])
+
+    for vkey in vertices:
+        vertices[vkey] *= size
+        vertices[vkey] += pos
+
+    return {
+        "vertices": vertices,
+        "edges": edges,
+    }
+
+
+def letter_A_fancy(pos, size, density=1):
+    pos = np.array(pos)
+    vertices = {}
+    edges = []
+
+    """
+    outer_vertices = np.array([
+        [89,326],
+        [89,313],
+        [107,308],
+        [129,287],
+        [217,59],
+        [235,59],
+        [323,287],
+        [334,301],
+        [349,310],
+        [360,312],
+        [360,324],
+        [251,325],
+        [251,313],
+        [273,309],
+        [285,301],
+        [283,293],
+        [260,233],
+        [169,233],
+        [151,287],
+        [153,301],
+        [167,308],
+        [187,311],
+        [188,325],
+    ])
+
+    inner_vertices = np.array([
+        [177,215],
+        [215,117],
+        [255,216],
+    ])
+
+    # flip
+    outer_vertices[:, 1] = -outer_vertices[:, 1]
+    inner_vertices[:, 1] = -inner_vertices[:, 1]
+
+    # mv y to zero
+    # ------------
+    ymin = np.min(outer_vertices[:, 1])
+    outer_vertices[:, 1] -= ymin
+    inner_vertices[:, 1] -= ymin
+
+    # mv x to zero
+    # ------------
+    xmin = np.min(outer_vertices[:, 0])
+    outer_vertices[:, 0] -= xmin
+    inner_vertices[:, 0] -= xmin
+
+    # scale height to 1
+    # -----------------
+    ymax = np.max(outer_vertices[:, 1])
+    outer_vertices = outer_vertices / ymax
+    inner_vertices = inner_vertices / ymax
+    """
+
+    outer_vertices = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 0.04868914],
+            [0.06741573, 0.06741573],
+            [0.14981273, 0.14606742],
+            [0.47940075, 1.0],
+            [0.54681648, 1.0],
+            [0.87640449, 0.14606742],
+            [0.917603, 0.09363296],
+            [0.97378277, 0.05992509],
+            [1.01498127, 0.05243446],
+            [1.01498127, 0.0],
+            [0.60674157, 0.0],
+            [0.60674157, 0.04868914],
+            [0.68913858, 0.06367041],
+            [0.7340824, 0.09363296],
+            [0.72659176, 0.12359551],
+            [0.64044944, 0.34831461],
+            [0.29962547, 0.34831461],
+            [0.23220974, 0.14606742],
+            [0.23970037, 0.09363296],
+            [0.29213483, 0.06741573],
+            [0.37078652, 0.05617978],
+            [0.37078652, 0.0],
+        ]
+    )
+
+    inner_vertices = np.array(
+        [
+            [0.32958801, 0.41573034],
+            [0.47191011, 0.78277154],
+            [0.62172285, 0.41198502],
+        ]
+    )
+
+    OF = "outer{:06d}"
+    IF = "inner{:06d}"
+
+    for i in range(outer_vertices.shape[0]):
+        vertices[OF.format(i)] = outer_vertices[i]
+
+    for i in range(inner_vertices.shape[0]):
+        vertices[IF.format(i)] = inner_vertices[i]
+
+    for i in range(outer_vertices.shape[0] - 1):
+        edges.append((OF.format(i), OF.format(i + 1), density))
+    edges.append((OF.format(i + 1), OF.format(0), density))
+
+    for i in range(inner_vertices.shape[0] - 1):
+        edges.append((IF.format(i), IF.format(i + 1), density))
+    edges.append((IF.format(i + 1), IF.format(0), density))
+
+    for vkey in vertices:
+        vertices[vkey] = np.array([vertices[vkey][0], vertices[vkey][1], 0.0])
+        vertices[vkey] *= size
+        vertices[vkey] += pos
+
+    return {
+        "vertices": vertices,
+        "edges": edges,
+    }

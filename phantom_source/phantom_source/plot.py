@@ -72,3 +72,16 @@ def save_3d_views_of_meshes(
         fig.savefig(paths[i])
 
     sebplt.close(fig)
+
+
+def write_2d_view_of_meshes_to_path(meshes, path, mesh_colors=None):
+    if mesh_colors == None:
+        mesh_colors = ["k" for i in range(len(meshes))]
+
+    fig = sebplt.figure(style={"rows": 1280, "cols": 1280, "fontsize": 1})
+    ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.85, 0.85])
+    for i in range(len(meshes)):
+        ax_add_mesh(ax, meshes[i], color=mesh_colors[i])
+    ax.set_aspect("equal")
+    fig.savefig(path)
+    sebplt.close(fig)
