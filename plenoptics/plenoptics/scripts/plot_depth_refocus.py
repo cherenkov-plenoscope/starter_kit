@@ -36,7 +36,8 @@ pixel_pitch_deg = (
     config["analysis"]["point"]["field_of_view_deg"]
     / config["analysis"]["point"]["num_pixel_on_edge"]
 )
-solid_angle_per_px_sr = np.deg2rad(pixel_pitch_deg) ** 2
+PX_SR_FACTOR = 0.6
+solid_angle_per_px_sr = PX_SR_FACTOR * np.deg2rad(pixel_pitch_deg) ** 2
 
 containment_fraction = config["analysis"]["point"][
     "image_containment_percentile"
