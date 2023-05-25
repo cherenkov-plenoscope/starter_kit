@@ -237,13 +237,22 @@ def mv_observation(work_dir, observation_key="phantom", postfix=".old"):
 
     # responses
     for instrument_key in config["observations"]["instruments"]:
-        if observation_key in config["observations"]["instruments"][instrument_key]:
-            response_path = os.path.join(work_dir, "responses", instrument_key, observation_key)
+        if (
+            observation_key
+            in config["observations"]["instruments"][instrument_key]
+        ):
+            response_path = os.path.join(
+                work_dir, "responses", instrument_key, observation_key
+            )
             if os.path.exists(response_path):
                 os.rename(response_path, response_path + postfix)
 
-            analysis_path = os.path.join(work_dir, "analysis", instrument_key, observation_key)
+            analysis_path = os.path.join(
+                work_dir, "analysis", instrument_key, observation_key
+            )
             if os.path.exists(analysis_path):
                 os.rename(analysis_path, analysis_path + postfix)
             if os.path.exists(analysis_path + ".json"):
-                os.rename(analysis_path + ".json", analysis_path + ".json" + postfix)
+                os.rename(
+                    analysis_path + ".json", analysis_path + ".json" + postfix
+                )

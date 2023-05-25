@@ -102,6 +102,8 @@ for obj_idx in range(len(reco_object_distances)):
 CMAPS = plenoptics.plot.CMAPS
 NPIX = 1280
 
+FIG_FILENAME_FORMAT = "instrument_{:s}_cmap_{:s}_{:06d}.jpg"
+
 for cmapkey in CMAPS:
     cmap_dir = os.path.join(out_dir, cmapkey)
     os.makedirs(cmap_dir, exist_ok=True)
@@ -110,7 +112,9 @@ for cmapkey in CMAPS:
         image_path = os.path.join(images_dir, "{:06d}.float32".format(obj_idx))
         img = plenoptics.analysis.image.read_image(path=image_path)
 
-        fig_filename = "{:06d}_{:s}.jpg".format(obj_idx, cmapkey)
+        fig_filename = FIG_FILENAME_FORMAT.format(
+            instrument_key, cmapkey, obj_idx
+        )
         fig_path = os.path.join(cmap_dir, fig_filename)
 
         fig = sebplt.figure(
@@ -167,10 +171,14 @@ for cmapkey in CMAPS:
     # ---------
     avg_img = np.zeros(shape=(NPIX, NPIX, 3), dtype=np.float32)
     for obj_idx in range(len(object_distances)):
-        fig_filename = "{:06d}_{:s}.jpg".format(obj_idx, cmapkey)
+        fig_filename = FIG_FILENAME_FORMAT.format(
+            instrument_key, cmapkey, obj_idx
+        )
         fig_path = os.path.join(cmap_dir, fig_filename)
         avg_img += skimage.io.imread(fig_path)
-    fig_filename = "average_{:s}.jpg".format(cmapkey)
+    fig_filename = "instrument_{:s}_cmap_{:s}_average.jpg".format(
+        instrument_key, cmapkey
+    )
     fig_path = os.path.join(cmap_dir, fig_filename)
     avg_img /= len(object_distances)
     avg_img = avg_img.astype(np.uint8)

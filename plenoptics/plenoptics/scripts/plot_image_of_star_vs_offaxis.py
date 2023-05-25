@@ -184,17 +184,24 @@ for scenario_key in same_scenario_different_sensors:
 low_ylim = SOLID_ANGLE_SCALE * np.array(
     [SOLID_ANGLE_80_SR_START, SOLID_ANGLE_80_SR_STOP]
 )
+y_step_usr = 2.5
 HH = 3.5
+high_ylim = [low_ylim[0], low_ylim[1] * HH * 1.25]
+
 fig_sizes = {
     "low": {
         "figstyle": {"rows": 720, "cols": 1280, "fontsize": 1},
         "axspan": [0.12, 0.175, 0.77, 0.76],
         "ylim": low_ylim,
+        "yticks": np.arange(low_ylim[0], low_ylim[1] + y_step_usr, y_step_usr),
     },
     "high": {
         "figstyle": {"rows": 720 * HH, "cols": 1280, "fontsize": 1},
         "axspan": [0.12, 0.175 / HH, 0.77, 1 - (0.175 + 0.05) / HH],
-        "ylim": [low_ylim[0], low_ylim[1] * HH * 1.25],
+        "ylim": high_ylim,
+        "yticks": np.arange(
+            high_ylim[0], high_ylim[1] + y_step_usr, y_step_usr
+        ),
     },
 }
 
@@ -210,10 +217,10 @@ for PLOT in PLOTS:
         ax_usr.set_ylabel(ylabel_name + label_sep + r"$\mu$sr")
 
         SOLID_ANGLE_80_DEG2_START = plenoirf.utils.sr2squaredeg(
-            SOLID_ANGLE_80_SR_START
+            fig_sizes[szkey]["ylim"][0] / SOLID_ANGLE_SCALE
         )
         SOLID_ANGLE_80_DEG2_STOP = plenoirf.utils.sr2squaredeg(
-            SOLID_ANGLE_80_SR_STOP
+            fig_sizes[szkey]["ylim"][1] / SOLID_ANGLE_SCALE
         )
         ax_deg2.set_ylim(
             np.array([SOLID_ANGLE_80_DEG2_START, SOLID_ANGLE_80_DEG2_STOP])
@@ -278,6 +285,7 @@ for PLOT in PLOTS:
         ax_usr.set_xlabel(
             r"(angle off the mirror's optical axis)$^{2}\,/\,(1^{\circ{}})^{2}$"
         )
+        ax_usr.set_yticks(fig_sizes[szkey]["yticks"])
         fig_filename = "{:s}_{:s}.jpg".format(PLOT["filename"], szkey)
         fig.savefig(os.path.join(out_dir, fig_filename))
         sebplt.close(fig)

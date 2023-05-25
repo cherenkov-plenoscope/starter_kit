@@ -40,6 +40,13 @@ point_source_report = json_numpy.read(
     )
 )
 
+if int(star_key) == 0:
+    hasy = True
+else:
+    hasy = False
+
+cols = 640 if hasy else int(640 * 0.75)
+
 for cmap_key in CMAPS:
     cmap_dir = os.path.join(out_dir, cmap_key)
     os.makedirs(cmap_dir, exist_ok=True)
@@ -52,7 +59,7 @@ for cmap_key in CMAPS:
     if os.path.exists(fig_path):
         continue
 
-    fig_psf = sebplt.figure(style={"rows": 640, "cols": 640, "fontsize": 1.0})
+    fig_psf = sebplt.figure(style={"rows": 640, "cols": cols, "fontsize": 1.5})
 
     (bin_edges_cx, bin_edges_cy,) = abe.analysis.image.binning_image_bin_edges(
         binning=point_source_report["image"]["binning"]
@@ -63,7 +70,9 @@ for cmap_key in CMAPS:
         image_response=point_source_report, tick_angle=GRID_ANGLE_DEG
     )
 
-    ax_psf = sebplt.add_axes(fig=fig_psf, span=[0.15, 0.15, 0.85, 0.85],)
+    ax_xlow = 0.25 if hasy else 0.0
+    ax_xwid = 0.75 if hasy else 1.0
+    ax_psf = sebplt.add_axes(fig=fig_psf, span=[ax_xlow, 0.15, ax_xwid, 0.85],)
     ax_psf.set_aspect("equal")
 
     image_response_norm = abe.analysis.point_source_report.make_norm_image(
