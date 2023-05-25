@@ -224,13 +224,13 @@ for PLOT in PLOTS:
 
             if "diag9" in instrument_key:
                 linestyle = "-"
-                label = "P61"
+                label = "P-61"
             elif "diag3" in instrument_key:
                 linestyle = "--"
-                label = "P7"
+                label = "P-7"
             elif "diag1" in instrument_key:
                 linestyle = ":"
-                label = "T1"
+                label = "T-1"
             else:
                 linestyle = "-."
                 label = None
