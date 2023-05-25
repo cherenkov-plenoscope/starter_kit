@@ -230,3 +230,20 @@ def plot_guide_stars(work_dir, pool, logger):
                 jobs.append(job)
 
     pool.map(_run_script_job, jobs)
+
+
+def mv_observation(work_dir, observation_key="phantom", postfix=".old"):
+    config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+
+    # responses
+    for instrument_key in config["observations"]["instruments"]:
+        if observation_key in config["observations"]["instruments"][instrument_key]:
+            response_path = os.path.join(work_dir, "responses", instrument_key, observation_key)
+            if os.path.exists(response_path):
+                os.rename(response_path, response_path + postfix)
+
+            analysis_path = os.path.join(work_dir, "analysis", instrument_key, observation_key)
+            if os.path.exists(analysis_path):
+                os.rename(analysis_path, analysis_path + postfix)
+            if os.path.exists(analysis_path + ".json"):
+                os.rename(analysis_path + ".json", analysis_path + ".json" + postfix)

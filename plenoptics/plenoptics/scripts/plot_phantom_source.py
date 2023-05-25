@@ -9,6 +9,8 @@ import json_numpy
 import binning_utils
 import sebastians_matplotlib_addons as sebplt
 import argparse
+import skimage
+from skimage import io
 
 sebplt.matplotlib.rcParams.update(
     plenoirf.summary.figure.MATPLOTLIB_RCPARAMS_LATEX
@@ -98,6 +100,7 @@ for obj_idx in range(len(reco_object_distances)):
     img_vmax = np.max([img_vmax, np.max(img)])
 
 CMAPS = plenoptics.plot.CMAPS
+NPIX = 1280
 
 for cmapkey in CMAPS:
     cmap_dir = os.path.join(out_dir, cmapkey)
@@ -111,7 +114,7 @@ for cmapkey in CMAPS:
         fig_path = os.path.join(cmap_dir, fig_filename)
 
         fig = sebplt.figure(
-            style={"rows": 1280, "cols": 1280, "fontsize": 1.0}
+            style={"rows": NPIX, "cols": NPIX, "fontsize": 1.0}
         )
         ax = sebplt.add_axes(fig=fig, span=[0.0, 0.0, 1, 1],)
         ax.set_aspect("equal")
@@ -159,6 +162,19 @@ for cmapkey in CMAPS:
     fig_cmap_filename = "cmap_{:s}.jpg".format(cmapkey)
     fig_cmap.savefig(os.path.join(cmap_dir, fig_cmap_filename))
     sebplt.close(fig_cmap)
+
+    # avg image
+    # ---------
+    avg_img = np.zeros(shape=(NPIX, NPIX, 3), dtype=np.float32)
+    for obj_idx in range(len(object_distances)):
+        fig_filename = "{:06d}_{:s}.jpg".format(obj_idx, cmapkey)
+        fig_path = os.path.join(cmap_dir, fig_filename)
+        avg_img += skimage.io.imread(fig_path)
+    fig_filename = "average_{:s}.jpg".format(cmapkey)
+    fig_path = os.path.join(cmap_dir, fig_filename)
+    avg_img /= len(object_distances)
+    avg_img = avg_img.astype(np.uint8)
+    skimage.io.imsave(fig_path, avg_img)
 
 
 fig_filename = "phantom_source_meshes.jpg"
