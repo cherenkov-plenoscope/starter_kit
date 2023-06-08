@@ -7,6 +7,39 @@ import homogeneous_transformation as htra
 import sebastians_matplotlib_addons as sebplt
 
 
+def sun_light_irradiation_vs_zenith(zenith_deg):
+    # https://en.wikipedia.org/wiki/Air_mass_(solar_energy)#math_I.1
+    #
+    #   One empirical approximation model for solar intensity
+    #   versus airmass is given by:[13][14]
+    #
+    #       I=1.1\times I_{\mathrm {o} }\times 0.7^{(AM^{0.678})}\,}
+    #
+    # [13]  PVCDROM retrieved 1 May 2011, Stuart Bowden and Christiana
+    #       Honsberg, Solar Power Labs, Arizona State University
+    # [14]  Meinel, A. B. and Meinel, M. P. (1976). Applied Solar Energy
+    #       Addison Wesley Publishing Co.
+    #
+    zd_airmass_irradiance = np.array(
+        [
+            [0, 1, 1040],
+            [23, 1.09, 1020],
+            [30, 1.15, 1010],
+            [45, 1.41, 950],
+            [48.2, 1.5, 930],
+            [60, 2, 840],
+            [70, 2.9, 710],
+            [75, 3.8, 620],
+            [80, 5.6, 470],
+            [85, 10, 270],
+            [90, 38, 20],
+        ]
+    )
+    zd_deg = zd_airmass_irradiance[:, 0]
+    irradiance_W_per_m2 = zd_airmass_irradiance[:, 2]
+    return np.interp(x=zenith_deg, xp=zd_deg, fp=irradiance_W_per_m2)
+
+
 def make_bin_edges(edge_width, bin_width):
     num_bins = np.ceil(edge_width / bin_width)
     width_to_put_bins = num_bins * bin_width
@@ -23,14 +56,34 @@ def draw_x_y_in_radius(prng, radius, size):
     return x, y
 
 
-def draw_photons_in_z_disk(prng, num, disk_radius):
+def draw_direction_in_z_cone(prng, cone_half_angle_deg, size):
+    # azimuth
+    az = prng.uniform(low=0.0, high=(2.0 * np.pi), size=size)
+
+    # zenith
+    zd_min = 0.0
+    zd_max = np.deg2rad(cone_half_angle_deg)
+
+    z_min = (np.cos(zd_min) + 1.0) / 2.0
+    z_range = (np.cos(zd_max) + 1.0) / 2.0 - z_min
+    z = z_range * prng.uniform(low=0.0, high=1.0, size=size) + z_min
+    zd = np.arccos(2.0 * z - 1.0)
+
+    # direction vector
+    sin_zd = np.sin(zd)
+    return np.array([sin_zd * np.cos(az), sin_zd * np.sin(az), np.cos(zd),]).T
+
+
+def draw_photons_in_z_disk(prng, num, disk_radius, cone_half_angle_deg):
     photons = init_photons(num=num)
 
     photons["wavelengths"] = 433e-9 * np.ones(num)
     x, y = draw_x_y_in_radius(prng=prng, radius=disk_radius, size=num)
     photons["supports"][:, 0] = x
     photons["supports"][:, 1] = y
-    photons["directions"][:, 2] = np.ones(num)
+    photons["directions"] = draw_direction_in_z_cone(
+        prng=prng, cone_half_angle_deg=cone_half_angle_deg, size=num
+    )
     return photons
 
 
@@ -224,10 +277,10 @@ portal_mirror_scenery = {
 
 
 distance_of_light_to_mirror = mirror_diameter * 5
-
+sun_light_cone_half_angle_deg = 0.25
 sun_light_disk_radius = 0.8 * mirror_diameter
 sun_light_disk_area = sun_light_disk_radius ** 2 * np.pi
-sun_light_photons_areal_density = 20
+sun_light_photons_areal_density = 100
 sun_light_num_photons = int(
     sun_light_disk_area * sun_light_photons_areal_density
 )
@@ -281,6 +334,7 @@ for izenith in range(num_zenith_distances):
             prng=prng,
             num=sun_light_num_photons,
             disk_radius=sun_light_disk_radius,
+            cone_half_angle_deg=sun_light_cone_half_angle_deg,
         )
 
         sun_light_photons = transform_photons(
@@ -371,43 +425,72 @@ for izenith in range(num_zenith_distances):
         vmax=res["concrete_tower_vmax"],
     )
 
+max_percentile = 99.5
 
 concrete_tower_hot = []
 space_truss_tower_hot = []
 for izenith in range(num_zenith_distances):
     concrete_tower_hot.append(
-        np.percentile(a=res["concrete_tower"][izenith], q=99)
+        np.percentile(a=res["concrete_tower"][izenith], q=max_percentile)
     )
     space_truss_tower_hot.append(
-        np.percentile(a=res["space_truss_tower"][izenith], q=99)
+        np.percentile(a=res["space_truss_tower"][izenith], q=max_percentile)
     )
 
+
+direct_sun_light_irradiance_kW_per_m2 = (
+    sun_light_irradiation_vs_zenith(zenith_distances_deg) * 1e-3
+)
+
+concrete_tower_irradiance_kW_per_m2 = (
+    concrete_tower_hot
+    * sun_light_irradiation_vs_zenith(zenith_distances_deg)
+    * 1e-3
+) + direct_sun_light_irradiance_kW_per_m2
+
+space_truss_tower_irradiance_kW_per_m2 = (
+    space_truss_tower_hot
+    * sun_light_irradiation_vs_zenith(zenith_distances_deg)
+    * 1e-3
+) + direct_sun_light_irradiance_kW_per_m2
 
 fig = sebplt.figure({"rows": 720, "cols": 1920, "fontsize": 1.5})
 ax = sebplt.add_axes(fig=fig, span=[0.12, 0.22, 0.85, 0.75])
 ax.plot(
     zenith_distances_deg,
-    concrete_tower_hot,
+    concrete_tower_irradiance_kW_per_m2,
     linestyle="-",
     color="gray",
     label=r"on mirror's towers",
 )
 ax.plot(
-    zenith_distances_deg, concrete_tower_hot, "o", color="gray", markersize=2
+    zenith_distances_deg,
+    concrete_tower_irradiance_kW_per_m2,
+    "o",
+    color="gray",
+    markersize=2,
 )
 ax.plot(
     zenith_distances_deg,
-    space_truss_tower_hot,
+    space_truss_tower_irradiance_kW_per_m2,
     linestyle="-",
     color="black",
     label=r"on camera's towers",
 )
 ax.plot(
     zenith_distances_deg,
-    space_truss_tower_hot,
+    space_truss_tower_irradiance_kW_per_m2,
     "o",
     color="black",
     markersize=2,
+)
+ax.plot(
+    zenith_distances_deg,
+    direct_sun_light_irradiance_kW_per_m2,
+    linestyle=":",
+    color="black",
+    alpha=0.2,
+    label=r"direct light from sun",
 )
 ax.set_xlabel(r"sun's distance to zenith$\,/\,1^{\circ{}}$")
 ax.set_ylabel(r"irradiance$\,/\,$kW$\,$m$^{-2}$")
