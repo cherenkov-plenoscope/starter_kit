@@ -102,6 +102,10 @@ def build_merlict_cpp(num_threads):
 
 LOCAL_PYHTHON_PACKAGES = [
     {
+        "path": "solid_angle_utils",
+        "name": "solid_angle_utils_sebastian-achim-mueller",
+    },
+    {
         "path": "json_line_logger",
         "name": "json_line_logger_sebastian-achim-mueller",
     },

@@ -61,3 +61,6 @@
 [submodule "atmospheric_cherenkov_response"]
 	path = atmospheric_cherenkov_response
 	url = git@github.com:cherenkov-plenoscope/atmospheric_cherenkov_response.git
+[submodule "solid_angle_utils"]
+	path = solid_angle_utils
+	url = git@github.com:cherenkov-plenoscope/solid_angle_utils.git
