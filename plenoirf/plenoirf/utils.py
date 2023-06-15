@@ -9,42 +9,6 @@ import json_numpy
 import warnings
 
 
-def cone_solid_angle(cone_radial_opening_angle_rad):
-    cap_hight = 1.0 - np.cos(cone_radial_opening_angle_rad)
-    return 2.0 * np.pi * cap_hight
-
-
-def cone_radial_opening_angle(solid_angle):
-    cap_hight = solid_angle / (2.0 * np.pi)
-    cone_radial_opening_angle_rad = np.arccos(-cap_hight + 1.0)
-    return cone_radial_opening_angle_rad
-
-
-def cone_opening_angle_space(stop_cone_radial_opening_angle_rad, num):
-    assert num >= 1
-    assert stop_cone_radial_opening_angle_rad > 0.0
-
-    cone_stop_sr = cone_solid_angle(
-        cone_radial_opening_angle_rad=stop_cone_radial_opening_angle_rad
-    )
-    cone_step_sr = cone_stop_sr / num
-
-    edges = [0]
-    for i in np.arange(1, num):
-        a = cone_radial_opening_angle(i * cone_step_sr)
-        edges.append(a)
-    edges.append(stop_cone_radial_opening_angle_rad)
-    return np.array(edges)
-
-
-def sr2squaredeg(solid_angle_sr):
-    return solid_angle_sr * (180.0 / np.pi) ** 2
-
-
-def squaredeg2sr(solid_angle_squaredeg):
-    return solid_angle_squaredeg * (np.pi / 180) ** 2
-
-
 def contains_same_bytes(path_a, path_b):
     with open(path_a, "rb") as fa, open(path_b, "rb") as fb:
         a_bytes = fa.read()

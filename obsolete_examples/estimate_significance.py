@@ -2,11 +2,8 @@ import numpy as np
 import os
 import json
 import acp_instrument_sensitivity_function as isf
+import solid_angle_utils
 
-
-def cone_solid_angle(cone_radial_opening_angle):
-    cap_hight = (1.0 - np.cos(cone_radial_opening_angle))
-    return 2.0*np.pi*cap_hight
 
 input_dir = "analysis_results"
 
@@ -31,7 +28,7 @@ energy_bin_edges = acceptance_electrons["energy_bin_edges"]
 energy_bin_start = energy_bin_edges[:-1]
 
 on_region_radial_angle = np.deg2rad(.6)
-on_region_solid_angle = cone_solid_angle(on_region_radial_angle)
+on_region_solid_angle = solid_angle_utils.cone.solid_angle(on_region_radial_angle)
 solid_angle_ratio_on_region = on_region_solid_angle/solid_angle_thrown
 on_region_gamma_containment = 0.68
 

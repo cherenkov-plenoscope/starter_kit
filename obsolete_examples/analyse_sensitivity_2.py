@@ -11,6 +11,7 @@ import acp_instrument_sensitivity_function as isf
 import pkg_resources
 import pickle
 import astropy
+import solid_angle_utils
 
 """
 thrown-table                        All events ever thrown
@@ -85,11 +86,6 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def cone_solid_angle(cone_radial_opening_angle):
-    cap_hight = (1.0 - np.cos(cone_radial_opening_angle))
-    return 2.0*np.pi*cap_hight
-
-
 def convert_ams02_cosmic_ray_fluxes(out_dir):
     path = pkg_resources.resource_filename(
         'acp_instrument_sensitivity_function',
@@ -151,7 +147,7 @@ def convert_20190831(
     particles = {"gamma": 1, "electron": 3, "proton": 14}
 
     cone_radial_opening_angle = np.deg2rad(cone_radial_opening_angle_deg)
-    solid_angle_thrown_sr = cone_solid_angle(cone_radial_opening_angle)
+    solid_angle_thrown_sr = solid_angle_utils.cone.solid_angle(cone_radial_opening_angle)
 
     print("features")
     #---------
@@ -1044,7 +1040,7 @@ for sg in source_geometries:
             fout.write(json.dumps(
                 {
                     "solid_angle_thrown": float(
-                        cone_solid_angle(max_scatter_angle)),
+                        solid_angle_utils.cone.solid_angle(max_scatter_angle)),
                     "energy_bin_edges": irf[sg][p]["past_trigger"][
                         "energy_bin_edges"].tolist(),
                     "area_past_trigger": irf[sg][p]["past_trigger"][
@@ -1282,11 +1278,11 @@ hr_e_diffuse_dFdE = np.interp(
     xp=electron_flux['energy'],
     fp=electron_flux['differential_flux'])
 
-onaxis_solid_angle = cone_solid_angle(
-    cone_radial_opening_angle=np.deg2rad(source_geometries["onaxis"]))
+onaxis_solid_angle = solid_angle_utils.cone.solid_angle(
+    half_angle_rad=np.deg2rad(source_geometries["onaxis"]))
 
-onregion_solid_angle = cone_solid_angle(
-    cone_radial_opening_angle=np.deg2rad(.6))
+onregion_solid_angle = solid_angle_utils.cone.solid_angle(
+    half_angle_rad=np.deg2rad(.6))
 
 solid_angle_ratio_onregion = onregion_solid_angle/onaxis_solid_angle
 

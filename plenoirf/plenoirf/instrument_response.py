@@ -25,6 +25,7 @@ import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
 import network_file_system as nfs
 import atmospheric_cherenkov_response
+import solid_angle_utils
 
 
 def make_job_dict(
@@ -296,8 +297,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 prim["azimuth_rad"] = primary["azimuth_rad"]
                 prim["zenith_rad"] = primary["zenith_rad"]
                 prim["max_scatter_rad"] = primary["max_scatter_rad"]
-                prim["solid_angle_thrown_sr"] = utils.cone_solid_angle(
-                    prim["max_scatter_rad"]
+                prim["solid_angle_thrown_sr"] = solid_angle_utils.cone.solid_angle(
+                    half_angle_rad=prim["max_scatter_rad"]
                 )
                 prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]
                 prim["momentum_x_GeV_per_c"] = corsika_evth[

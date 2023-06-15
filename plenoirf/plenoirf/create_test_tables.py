@@ -2,6 +2,7 @@ import numpy as np
 import sparse_numeric_table as spt
 import corsika_primary as cpw
 import pandas
+import solid_angle_utils
 
 from . import table
 from . import utils
@@ -141,8 +142,8 @@ def create_dummy_table(
     primary["azimuth_rad"] = _az
 
     primary["max_scatter_rad"] = config["max_scatter_rad"]
-    primary["solid_angle_thrown_sr"] = utils.cone_solid_angle(
-        primary["max_scatter_rad"]
+    primary["solid_angle_thrown_sr"] = solid_angle_utils.cone.solid_angle(
+        half_angle_rad=primary["max_scatter_rad"]
     )
 
     primary["depth_g_per_cm2"] = 0.0 * lvl["ones"]

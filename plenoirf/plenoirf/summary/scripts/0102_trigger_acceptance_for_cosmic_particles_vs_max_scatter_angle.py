@@ -7,6 +7,7 @@ import sparse_numeric_table as spt
 import os
 import json_numpy
 import magnetic_deflection as mdfl
+import solid_angle_utils
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -84,8 +85,8 @@ for sk in SITES:
         Q_au = []
         for ci in range(scatter_bin[pk]["num_bins"]):
             scatter_cone_solid_angle_sr = scatter_bin[pk]["edges"][ci + 1]
-            max_scatter_angle_rad = irf.utils.cone_radial_opening_angle(
-                scatter_cone_solid_angle_sr
+            max_scatter_angle_rad = solid_angle_utils.cone.half_angle(
+                solid_angle_sr=scatter_cone_solid_angle_sr
             )
             max_scatter_angle_deg = np.rad2deg(max_scatter_angle_rad)
 

@@ -2,6 +2,7 @@
 import os
 import plenoirf
 import numpy as np
+import solid_angle_utils
 import plenoptics
 import json_numpy
 import sebastians_matplotlib_addons as sebplt
@@ -197,10 +198,10 @@ for PLOT in PLOTS:
     ax_usr.set_ylim(ylim_usr)
     ax_usr.set_ylabel(ylabel_name + label_sep + r"$\mu$sr")
 
-    SOLID_ANGLE_80_DEG2_START = plenoirf.utils.sr2squaredeg(
+    SOLID_ANGLE_80_DEG2_START = solid_angle_utils.sr2squaredeg(
         ylim_usr[0] / SOLID_ANGLE_SCALE
     )
-    SOLID_ANGLE_80_DEG2_STOP = plenoirf.utils.sr2squaredeg(
+    SOLID_ANGLE_80_DEG2_STOP = solid_angle_utils.sr2squaredeg(
         ylim_usr[1] / SOLID_ANGLE_SCALE
     )
     ax_deg2.set_ylim(
@@ -226,14 +227,14 @@ for PLOT in PLOTS:
         oa_rad = psf_vs_oa[instrument_key]["median"]
         oa_std_rad = psf_vs_oa[instrument_key]["median_spread_68"]
 
-        sa_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
-            cone_radial_opening_angle_rad=oa_rad
+        sa_usr = SOLID_ANGLE_SCALE * solid_angle_utils.cone.solid_angle(
+            half_angle_rad=oa_rad
         )
-        sa_upper_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
-            cone_radial_opening_angle_rad=oa_rad + oa_std_rad
+        sa_upper_usr = SOLID_ANGLE_SCALE * solid_angle_utils.cone.solid_angle(
+            half_angle_rad=oa_rad + oa_std_rad
         )
-        sa_lower_usr = SOLID_ANGLE_SCALE * plenoirf.utils.cone_solid_angle(
-            cone_radial_opening_angle_rad=oa_rad - oa_std_rad
+        sa_lower_usr = SOLID_ANGLE_SCALE * solid_angle_utils.cone.solid_angle(
+            half_angle_rad=oa_rad - oa_std_rad
         )
 
         sebplt.ax_add_histogram(
@@ -288,8 +289,8 @@ out_average_angle80_rad = {}
 for instrument_key in INSTRUMENTS:
     ha_rad = average_angle80_rad[instrument_key]
 
-    sa_sr = plenoirf.utils.cone_solid_angle(ha_rad)
-    sa_deg2 = plenoirf.utils.sr2squaredeg(sa_sr)
+    sa_sr = solid_angle_utils.cone.solid_angle(half_angle_rad=ha_rad)
+    sa_deg2 = solid_angle_utils.sr2squaredeg(sa_sr)
 
     out_average_angle80_rad[instrument_key] = {
         "half_angle": {"deg": np.rad2deg(ha_rad), "rad": ha_rad},

@@ -5,6 +5,8 @@ import plenoirf as irf
 import os
 import json_numpy
 import binning_utils
+import solid_angle_utils
+
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -49,8 +51,8 @@ msa = {}
 for pk in PARTICLES:
     max_scatter_angle_deg = PARTICLES[pk]["max_scatter_angle_deg"]
     max_scatter_angle_rad = np.deg2rad(max_scatter_angle_deg)
-    max_scatter_solid_angle_sr = irf.utils.cone_solid_angle(
-        max_scatter_angle_rad
+    max_scatter_solid_angle_sr = solid_angle_utils.cone.solid_angle(
+        half_angle_rad=max_scatter_angle_rad
     )
     _sc = {}
     _sc["start"] = 0.0

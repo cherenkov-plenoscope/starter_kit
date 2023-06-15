@@ -7,6 +7,7 @@ import numpy as np
 import sebastians_matplotlib_addons as seb
 import json_numpy
 import binning_utils as bu
+import solid_angle_utils
 
 
 argv = plenoirf.summary.argv_since_py(sys.argv)
@@ -55,8 +56,8 @@ num_valid = idx_valid.shape[0]
 
 zd_num_bins = int(np.floor(num_valid ** 0.3))
 
-zd_bin_edges_rad = plenoirf.utils.cone_opening_angle_space(
-    stop_cone_radial_opening_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
+zd_bin_edges_rad = solid_angle_utils.cone.half_angle_space(
+    stop_half_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
     num=zd_num_bins,
 )
 
@@ -78,8 +79,8 @@ time_delta = time_reco - time_true
 # binning
 # -------
 zenith_bin = bu.Binning(
-    bin_edges=plenoirf.utils.cone_opening_angle_space(
-        stop_cone_radial_opening_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
+    bin_edges=solid_angle_utils.cone.half_angle_space(
+        stop_half_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
         num=zd_num_bins,
     )
 )
@@ -90,8 +91,8 @@ time_delta_bin = bu.Binning(
 # simple hist
 # -----------
 z_bin = bu.Binning(
-    bin_edges=plenoirf.utils.cone_opening_angle_space(
-        stop_cone_radial_opening_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
+    bin_edges=solid_angle_utils.cone.half_angle_space(
+        stop_half_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
         num=5,
     )
 )
