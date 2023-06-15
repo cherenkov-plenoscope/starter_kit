@@ -8,6 +8,7 @@ import copy
 import json_numpy
 import numpy as np
 import binning_utils
+import atmospheric_cherenkov_response
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -203,7 +204,7 @@ for sk in SITES:
         for ak in ARRAY_CONFIGS:
             out[sk][pk][ak] = []
 
-        grid_reader = irf.grid.GridReader(
+        grid_reader = atmospheric_cherenkov_response.grid.serialization.GridReader(
             path=os.path.join(
                 pa["run_dir"],
                 "event_table",

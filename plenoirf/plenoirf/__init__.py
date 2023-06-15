@@ -2,7 +2,6 @@ from . import summary
 from . import analysis
 from . import features
 from . import table
-from . import grid
 from . import instrument_response
 from . import provenance
 from . import create_test_tables

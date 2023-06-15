@@ -8,13 +8,13 @@ import subprocess
 import sparse_numeric_table as spt
 import glob
 import json_numpy
+import atmospheric_cherenkov_response
 from .. import features
 from .. import reconstruction
 from .. import analysis
 from .. import table
 from .. import provenance
 from .. import production
-from .. import grid
 from .. import outer_telescope_array
 from . import figure
 from .cosmic_flux import make_gamma_ray_reference_flux
@@ -71,7 +71,7 @@ def read_instrument_response_config(run_dir):
         opj(run_dir, "input", "scenery", "scenery.json")
     )
 
-    grid_geometry = grid.init_geometry(
+    grid_geometry = atmospheric_cherenkov_response.grid.init_geometry(
         instrument_aperture_outer_diameter=(
             2.0
             * light_field_sensor_geometry[

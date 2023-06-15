@@ -1,6 +1,5 @@
 from . import table
 from . import unique
-from . import grid
 from . import utils
 from . import production
 from . import analysis
@@ -25,6 +24,7 @@ import sparse_numeric_table as spt
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
 import network_file_system as nfs
+import atmospheric_cherenkov_response
 
 
 def make_job_dict(
@@ -142,7 +142,7 @@ def reduce(run_dir, production_key, site_key, particle_key, LAZY, logger=None):
             _grid_paths = glob.glob(
                 os.path.join(features_dir, "*_" + grid_key + ".tar")
             )
-            grid.reduce(list_of_grid_paths=_grid_paths, out_path=grid_path)
+            atmospheric_cherenkov_response.grid.serialization.reduce(list_of_grid_paths=_grid_paths, out_path=grid_path)
         logger.info(
             "Reduce {:s} {:s} {:s}.".format(site_key, particle_key, grid_key)
         )
@@ -224,7 +224,7 @@ def _init_grid_geometry_from_job(job):
         0.5 * _light_field_sensor_geometry["max_FoV_diameter_deg"]
     )
 
-    grid_geometry = grid.init_geometry(
+    grid_geometry = atmospheric_cherenkov_response.grid.init_geometry(
         instrument_aperture_outer_diameter=plenoscope_diameter,
         bin_width_overhead=job["grid"]["bin_width_overhead"],
         instrument_field_of_view_outer_radius_deg=(
@@ -359,7 +359,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                             "max_scatter_radius_m"
                         ],
                     )
-                    grid_bin_idxs_limitation = grid.where_grid_idxs_within_radius(
+                    grid_bin_idxs_limitation = atmospheric_cherenkov_response.grid.artificial_core_limitation.where_grid_idxs_within_radius(
                         grid_geometry=grid_geometry,
                         radius=_max_core_scatter_radius,
                         center_x=-1.0 * grid_random_shift_x,
@@ -408,7 +408,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                     grhi["random_shift_y_m"] + grhi["magnet_shift_y_m"]
                 )
 
-                grid_result = grid.assign(
+                grid_result = atmospheric_cherenkov_response.grid.assign(
                     cherenkov_bunches=cherenkov_bunches,
                     grid_geometry=grid_geometry,
                     shift_x=grhi["total_shift_x_m"],
@@ -421,7 +421,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                     utils.tar_append(
                         tarout=imgtar,
                         file_name=uid_str + ".f4.gz",
-                        file_bytes=grid.histogram_to_bytes(
+                        file_bytes=atmospheric_cherenkov_response.grid.histogram_to_bytes(
                             grid_result["histogram"]
                         ),
                     )
@@ -484,7 +484,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                     utils.tar_append(
                         tarout=imgroitar,
                         file_name=uid_str + ".f4.gz",
-                        file_bytes=grid.histogram_to_bytes(
+                        file_bytes=atmospheric_cherenkov_response.grid.serialization.histogram_to_bytes(
                             utils.copy_square_selection_from_2D_array(
                                 img=grid_result["histogram"],
                                 ix=reuse_event["bin_idx_x"],
