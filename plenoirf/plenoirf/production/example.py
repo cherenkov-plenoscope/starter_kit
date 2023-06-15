@@ -51,14 +51,6 @@ EXAMPLE_SITE_PARTICLE_DEFLECTION = {
     "cherenkov_y_m": [0.0, 0.0],
 }
 
-EXAMPLE_GRID = {
-    "num_bins_radius": 512,
-    "threshold_num_photons": 50,
-    "field_of_view_overhead": 1.1,
-    "bin_width_overhead": 1.1,
-    "output_after_num_events": 25,
-}
-
 EXAMPLE_SUM_TRIGGER = {
     "object_distances_m": [
         5000.0,

@@ -35,6 +35,7 @@ import magnetic_deflection as mdfl
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
 import network_file_system as nfs
+import atmospheric_cherenkov_response
 
 
 MIN_PROTON_ENERGY_GEV = 5.0
@@ -169,7 +170,7 @@ EXAMPLE_CONFIG = {
             "magnetic_deflection_max_off_axis_deg": 1.5,
         },
     },
-    "grid": production.example.EXAMPLE_GRID,
+    "grid": atmospheric_cherenkov_response.demonstration.GRID,
     "sum_trigger": {
         "object_distances_m": [
             5000.0,
