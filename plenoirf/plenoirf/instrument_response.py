@@ -142,7 +142,9 @@ def reduce(run_dir, production_key, site_key, particle_key, LAZY, logger=None):
             _grid_paths = glob.glob(
                 os.path.join(features_dir, "*_" + grid_key + ".tar")
             )
-            atmospheric_cherenkov_response.grid.serialization.reduce(list_of_grid_paths=_grid_paths, out_path=grid_path)
+            atmospheric_cherenkov_response.grid.serialization.reduce(
+                list_of_grid_paths=_grid_paths, out_path=grid_path
+            )
         logger.info(
             "Reduce {:s} {:s} {:s}.".format(site_key, particle_key, grid_key)
         )

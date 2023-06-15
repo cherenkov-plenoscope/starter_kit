@@ -27,16 +27,17 @@ passing_quality = json_numpy.read_tree(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
-zoo = corsika_primary.particles.identification.Zoo(media_refractive_indices={"water": 1.33})
-
+zoo = corsika_primary.particles.identification.Zoo(
+    media_refractive_indices={"water": 1.33}
+)
 
 
 radius_m = 1e4
 
 RRR = {}
-for sk in ["chile"]: #SITES:
+for sk in ["chile"]:  # SITES:
     RRR[sk] = {}
-    for pk in ["proton"]: #PARTICLES:
+    for pk in ["proton"]:  # PARTICLES:
 
         event_table = spt.read(
             path=os.path.join(
@@ -46,55 +47,95 @@ for sk in ["chile"]: #SITES:
 
         particlepool = spt.cut_level_on_indices(
             level=event_table["particlepool"],
-            indices=passing_trigger[sk][pk]["idx"]
+            indices=passing_trigger[sk][pk]["idx"],
         )
 
-        print("site: ", sk, "cosmic: ", pk, "median num. particles making water-Cherenkov shower^{-1}:", np.median(particlepool["num_water_cherenkov"]))
+        print(
+            "site: ",
+            sk,
+            "cosmic: ",
+            pk,
+            "median num. particles making water-Cherenkov shower^{-1}:",
+            np.median(particlepool["num_water_cherenkov"]),
+        )
 
         passing_trigger_set = set(passing_trigger[sk][pk]["idx"])
 
         RRR[sk][pk] = {}
-        path_template = os.path.join(pa["run_dir"], "event_table", sk, pk, "particles.map", "*.tar.gz")
+        path_template = os.path.join(
+            pa["run_dir"], "event_table", sk, pk, "particles.map", "*.tar.gz"
+        )
         for run_path in glob.glob(path_template):
-            with corsika_primary.particles.ParticleEventTapeReader(run_path) as run:
+            with corsika_primary.particles.ParticleEventTapeReader(
+                run_path
+            ) as run:
                 for event in run:
                     evth, parreader = event
 
                     uid = irf.unique.make_uid(
-                        run_id=int(run.runh[corsika_primary.I.RUNH.RUN_NUMBER]),
-                        event_id=int(evth[corsika_primary.I.EVTH.EVENT_NUMBER]),
+                        run_id=int(
+                            run.runh[corsika_primary.I.RUNH.RUN_NUMBER]
+                        ),
+                        event_id=int(
+                            evth[corsika_primary.I.EVTH.EVENT_NUMBER]
+                        ),
                     )
 
-                    RRR[sk][pk][uid] = {"num_water_cer": 0, "num_unknown": 0, "num_gamma": 0}
+                    RRR[sk][pk][uid] = {
+                        "num_water_cer": 0,
+                        "num_unknown": 0,
+                        "num_gamma": 0,
+                    }
                     for particle_block in parreader:
                         for particle_row in particle_block:
                             corsika_particle_id = corsika_primary.particles.decode_particle_id(
-                                code=particle_row[corsika_primary.I.PARTICLE.CODE]
+                                code=particle_row[
+                                    corsika_primary.I.PARTICLE.CODE
+                                ]
                             )
 
                             if zoo.has(corsika_particle_id):
                                 momentum_GeV = np.array(
                                     [
-                                        particle_row[corsika_primary.I.PARTICLE.PX],
-                                        particle_row[corsika_primary.I.PARTICLE.PY],
-                                        particle_row[corsika_primary.I.PARTICLE.PZ],
+                                        particle_row[
+                                            corsika_primary.I.PARTICLE.PX
+                                        ],
+                                        particle_row[
+                                            corsika_primary.I.PARTICLE.PY
+                                        ],
+                                        particle_row[
+                                            corsika_primary.I.PARTICLE.PZ
+                                        ],
                                     ]
                                 )
 
                                 pos_m = 1e-2 * np.array(
                                     [
-                                        particle_row[corsika_primary.I.PARTICLE.Y],
-                                        particle_row[corsika_primary.I.PARTICLE.X],
+                                        particle_row[
+                                            corsika_primary.I.PARTICLE.Y
+                                        ],
+                                        particle_row[
+                                            corsika_primary.I.PARTICLE.X
+                                        ],
                                     ]
                                 )
 
                                 if np.linalg.norm(pos_m) <= radius_m:
 
-                                    if corsika_particle_id == corsika_primary.particles.identification.PARTICLES["gamma"]:
+                                    if (
+                                        corsika_particle_id
+                                        == corsika_primary.particles.identification.PARTICLES[
+                                            "gamma"
+                                        ]
+                                    ):
                                         # gamma
-                                        E_gamma_GeV = np.linalg.norm(momentum_GeV)
+                                        E_gamma_GeV = np.linalg.norm(
+                                            momentum_GeV
+                                        )
                                         if E_gamma_GeV > 100e6 * 1e-9:
-                                            RRR[sk][pk][uid]["num_water_cer"] += 1
+                                            RRR[sk][pk][uid][
+                                                "num_water_cer"
+                                            ] += 1
                                             RRR[sk][pk][uid]["num_gamma"] += 1
                                     else:
                                         if zoo.cherenkov_emission(
@@ -102,7 +143,9 @@ for sk in ["chile"]: #SITES:
                                             momentum_GeV=momentum_GeV,
                                             medium_key="water",
                                         ):
-                                            RRR[sk][pk][uid]["num_water_cer"] += 1
+                                            RRR[sk][pk][uid][
+                                                "num_water_cer"
+                                            ] += 1
 
                             else:
                                 RRR[sk][pk][uid]["num_unknown"] += 1
