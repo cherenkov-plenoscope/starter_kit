@@ -106,6 +106,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "solid_angle_utils_sebastian-achim-mueller",
     },
     {
+        "path": "homogeneous_transformation",
+        "name": "homogeneous_transformation_sebastian-achim-mueller",
+    },
+    {
         "path": "json_line_logger",
         "name": "json_line_logger_sebastian-achim-mueller",
     },
