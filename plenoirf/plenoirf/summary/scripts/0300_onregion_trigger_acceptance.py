@@ -3,6 +3,7 @@ import sys
 import copy
 import numpy as np
 import plenoirf as irf
+import atmospheric_cherenkov_response
 import sparse_numeric_table as spt
 import os
 import json_numpy
@@ -158,7 +159,7 @@ for sk in SITES:
             (
                 Qeff,
                 Qeff_au,
-            ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
+            ) = atmospheric_cherenkov_response.analysis.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=point_thrown["primary"]["energy_GeV"],
                 mask_detected=mask_detected,
@@ -246,7 +247,7 @@ for sk in SITES:
             (
                 Qeff,
                 Qeff_au,
-            ) = irf.analysis.effective_quantity.effective_quantity_for_grid(
+            ) = atmospheric_cherenkov_response.analysis.effective_quantity_for_grid(
                 energy_bin_edges_GeV=energy_bin["edges"],
                 energy_GeV=diffuse_thrown["primary"]["energy_GeV"],
                 mask_detected=mask_probability_for_source_in_onregion,
