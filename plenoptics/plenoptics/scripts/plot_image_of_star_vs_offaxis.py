@@ -189,8 +189,8 @@ ylim_usr = SOLID_ANGLE_SCALE * np.array(
 )
 
 for PLOT in PLOTS:
-    fig = sebplt.figure(style={"rows": 720, "cols": 1280, "fontsize": 1})
-    ax_usr = sebplt.add_axes(fig, [0.12, 0.175, 0.77, 0.76])
+    fig = sebplt.figure(style={"rows": 1440, "cols": 1280, "fontsize": 1})
+    ax_usr = sebplt.add_axes(fig, [0.12, 0.08, 0.77, 0.9])
     sebplt.ax_add_grid(ax=ax_usr, add_minor=True)
     ax_deg2 = ax_usr.twinx()
     ax_deg2.spines["top"].set_visible(False)
@@ -219,7 +219,7 @@ for PLOT in PLOTS:
             label = "P-7"
         elif "diag1" in instrument_key:
             linestyle = ":"
-            label = "T-1"
+            label = "P-1"
         else:
             linestyle = "-."
             label = None

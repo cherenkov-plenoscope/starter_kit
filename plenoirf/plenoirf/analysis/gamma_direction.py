@@ -1,5 +1,4 @@
 import numpy as np
-from . import effective_quantity
 from .. import utils
 
 
