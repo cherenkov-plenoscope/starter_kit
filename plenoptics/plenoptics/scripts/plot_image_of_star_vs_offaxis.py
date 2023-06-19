@@ -27,9 +27,15 @@ os.makedirs(out_dir, exist_ok=True)
 
 config = json_numpy.read_tree(os.path.join(work_dir, "config"))
 
-INSTRUMENTS = plenoptics.analysis.guide_stars.list_instruments_observing_guide_stars(
+__INSTRUMENTS = plenoptics.analysis.guide_stars.list_instruments_observing_guide_stars(
     config=config
 )
+# sort low number to high
+_nn = [int(instrument_key[4]) for instrument_key in __INSTRUMENTS]
+_oo = np.argsort(_nn)
+INSTRUMENTS = [__INSTRUMENTS[oO] for oO in _oo]
+
+
 GUIDE_STAR_KEYS = plenoptics.analysis.guide_stars.list_guide_star_keys(
     config=config
 )
