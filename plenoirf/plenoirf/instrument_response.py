@@ -1090,32 +1090,3 @@ def run_job(job):
         shutil.rmtree(tmp_dir)
     logger.info("ending run")
     nfs.move(log_path + ".tmp", log_path)
-
-
-def run_jobs_in_bundles(bundle):
-    """
-    This is a wrapper to bundle jobs.
-
-    Parameters
-    ----------
-    bundle : list
-        A list of jobs.
-
-    Returns
-    -------
-    results : list
-        A list of returns from each job.
-    """
-    results = []
-    for j, job in enumerate(bundle):
-        msg = "\n#bundle {:d} of {:d}\n".format((j + 1), len(bundle))
-        print(msg)
-        try:
-            print('{{"run_id": {:d}"}}\n'.format(job["run_id"]))
-            result = run_job(job=job)
-        except Exception as exception_msg:
-            print(exception_msg)
-            print(exception_msg, file=sys.stderr)
-            result = 0
-        results.append(result)
-    return results
