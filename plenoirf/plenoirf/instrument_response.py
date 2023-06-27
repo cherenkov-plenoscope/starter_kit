@@ -997,7 +997,7 @@ def run_job(job):
     prng = np.random.Generator(np.random.MT19937(seed=job["run_id"]))
 
     with jlogging.TimeDelta(logger, "draw_primary"):
-        corsika_primary_steering = production.corsika_primary.draw_corsika_primary_steering(
+        corsika_primary_steering = atmospheric_cherenkov_response.particles.draw_corsika_primary_steering(
             run_id=job["run_id"],
             site=job["site"],
             particle=job["particle"],
@@ -1005,6 +1005,7 @@ def run_job(job):
             num_events=job["num_air_showers"],
             prng=prng,
         )
+
 
     if job["tmp_dir"] is None:
         tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
