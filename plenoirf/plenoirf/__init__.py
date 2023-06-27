@@ -83,7 +83,11 @@ def make_example_config():
         "num_photons_per_block": 4 * 1000 * 1000,
         "num_blocks": 360,
     }
-    cfg["plenoscope_pointing"] = {"azimuth_deg": 0.0, "zenith_deg": 0.0}
+    cfg[
+        "plenoscope_pointing"
+    ] = atmospheric_cherenkov_response.pointing.init_pointing(
+        azimuth_deg=0.0, zenith_deg=0.0
+    )
     cfg["sites"] = {}
     for pk in ["namibia", "chile"]:
         cfg["sites"][pk] = atmospheric_cherenkov_response.sites.init_site(pk)
