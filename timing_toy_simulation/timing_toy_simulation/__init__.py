@@ -194,13 +194,13 @@ def _bunches_calculate_arrival_time_wrt_origin(bunches_cgs):
     arrival_times = np.zeros(num_bunches)
 
     for i in range(num_bunches):
-        cx = bunches_cgs[i, cpw.I.BUNCH.CX]
-        cy = bunches_cgs[i, cpw.I.BUNCH.CY]
-        x = cpw.CM2M * bunches_cgs[i, cpw.I.BUNCH.X]
-        y = cpw.CM2M * bunches_cgs[i, cpw.I.BUNCH.Y]
+        cx = bunches_cgs[i, cpw.I.BUNCH.CX_RAD]
+        cy = bunches_cgs[i, cpw.I.BUNCH.CY_RAD]
+        x = cpw.CM2M * bunches_cgs[i, cpw.I.BUNCH.X_CM]
+        y = cpw.CM2M * bunches_cgs[i, cpw.I.BUNCH.Y_CM]
         hh = cx * x + cy * y
         ht = hh / SPEED_OF_LIGHT
-        arrival_times[i] = 1e-9 * bunches_cgs[i, cpw.I.BUNCH.TIME] - ht
+        arrival_times[i] = 1e-9 * bunches_cgs[i, cpw.I.BUNCH.TIME_NS] - ht
 
     return arrival_times
 
@@ -242,21 +242,21 @@ def _calculate_primary_ray_wrt_starting_position(evth):
 def _bunches_translate_into_instrument_frame(
     bunches_cgs, instrument_x_m, instrument_y_m
 ):
-    bunches_cgs[:, cpw.I.BUNCH.X] = (
-        bunches_cgs[:, cpw.I.BUNCH.X] - cpw.M2CM * instrument_x_m
+    bunches_cgs[:, cpw.I.BUNCH.X_CM] = (
+        bunches_cgs[:, cpw.I.BUNCH.X_CM] - cpw.M2CM * instrument_x_m
     )
-    bunches_cgs[:, cpw.I.BUNCH.Y] = (
-        bunches_cgs[:, cpw.I.BUNCH.Y] - cpw.M2CM * instrument_y_m
+    bunches_cgs[:, cpw.I.BUNCH.Y_CM] = (
+        bunches_cgs[:, cpw.I.BUNCH.Y_CM] - cpw.M2CM * instrument_y_m
     )
     return bunches_cgs
 
 
 def _bunches_calculate_distance_to_origin_m(bunches_cgs):
     return calculate_distance_to_origin(
-        cx=bunches_cgs[:, cpw.I.BUNCH.CX],
-        x_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.X],
-        cy=bunches_cgs[:, cpw.I.BUNCH.CY],
-        y_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.Y],
+        cx=bunches_cgs[:, cpw.I.BUNCH.CX_RAD],
+        x_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.X_CM],
+        cy=bunches_cgs[:, cpw.I.BUNCH.CY_RAD],
+        y_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.Y_CM],
     )
 
 
@@ -266,8 +266,8 @@ def _bunches_calculate_angle_between_rad(bunches_cgs, azimuth_rad, zenith_rad):
     )
 
     return calculate_angle_between_rad(
-        bunch_cx=bunches_cgs[:, cpw.I.BUNCH.CX],
-        bunch_cy=bunches_cgs[:, cpw.I.BUNCH.CY],
+        bunch_cx=bunches_cgs[:, cpw.I.BUNCH.CX_RAD],
+        bunch_cy=bunches_cgs[:, cpw.I.BUNCH.CY_RAD],
         ins_cx=cx,
         ins_cy=cy,
     )
@@ -347,7 +347,9 @@ def run_job(job):
 
             # everything that is known before Cherenkov emission
             # --------------------------------------------------
-            obs_level_m = cpw.CM2M * evth[cpw.I.EVTH.HEIGHT_OBSERVATION_LEVEL(1)]
+            obs_level_m = (
+                cpw.CM2M * evth[cpw.I.EVTH.HEIGHT_OBSERVATION_LEVEL(1)]
+            )
             base = uid.copy()
             base["primary_particle_id"] = evth[cpw.I.EVTH.PARTICLE_ID]
             base["primary_energy_GeV"] = evth[cpw.I.EVTH.TOTAL_ENERGY_GEV]
@@ -436,7 +438,9 @@ def run_job(job):
             # -------------------
             cers = uid.copy()
             cers["num_bunches"] = bunches_cgs.shape[0]
-            cers["num_photons"] = np.sum(bunches_cgs[:, cpw.I.BUNCH.BSIZE])
+            cers["num_photons"] = np.sum(
+                bunches_cgs[:, cpw.I.BUNCH.BUNCH_SIZE_1]
+            )
             tabrec["cherenkov_size"].append(cers)
 
             if cers["num_bunches"] == 0:
@@ -475,7 +479,7 @@ def run_job(job):
             cerps = uid.copy()
             cerps["num_bunches"] = bunches_visible_cgs.shape[0]
             cerps["num_photons"] = np.sum(
-                bunches_visible_cgs[:, cpw.I.BUNCH.BSIZE]
+                bunches_visible_cgs[:, cpw.I.BUNCH.BUNCH_SIZE_1]
             )
             tabrec["cherenkov_visible_size"].append(cerps)
 
@@ -493,12 +497,12 @@ def run_job(job):
             # detected Cherenkov-pool
             # -----------------------
             assert np.all(
-                bunches_visible_cgs[:, cpw.I.BUNCH.BSIZE] <= 1.0
+                bunches_visible_cgs[:, cpw.I.BUNCH.BUNCH_SIZE_1] <= 1.0
             ), "Expected bunch-size <= 1.0"
 
             mask_bunch_is_photon = (
                 prng.uniform(size=bunches_visible_cgs.shape[0])
-                < bunches_visible_cgs[:, cpw.I.BUNCH.BSIZE]
+                < bunches_visible_cgs[:, cpw.I.BUNCH.BUNCH_SIZE_1]
             )
 
             photons_cgs = bunches_visible_cgs[mask_bunch_is_photon]
@@ -513,7 +517,7 @@ def run_job(job):
             cerds = uid.copy()
             cerds["num_bunches"] = detected_photons_cgs.shape[0]
             cerds["num_photons"] = np.sum(
-                detected_photons_cgs[:, cpw.I.BUNCH.BSIZE]
+                detected_photons_cgs[:, cpw.I.BUNCH.BUNCH_SIZE_1]
             )
             tabrec["cherenkov_detected_size"].append(cerds)
 
@@ -552,7 +556,6 @@ def run_job(job):
                     "d {: 6.3f}km".format(base["primary_distance_to_closest_point_to_instrument_m"] * 1e-3)
                 )
             """
-
 
     _export_event_table(
         path=os.path.join(job_dir, "result.tar"), tabrec=tabrec,

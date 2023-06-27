@@ -177,7 +177,7 @@ def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = cherenkovsise_dict
     ase["num_bunches"] = cb.shape[0]
-    ase["num_photons"] = np.sum(cb[:, cpw.I.BUNCH.BSIZE])
+    ase["num_photons"] = np.sum(cb[:, cpw.I.BUNCH.BUNCH_SIZE_1])
     return ase
 
 
@@ -185,13 +185,13 @@ def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = airshower_dict
     assert cb.shape[0] > 0
-    ase["maximum_asl_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.ZEM])
-    ase["wavelength_median_nm"] = np.abs(np.median(cb[:, cpw.I.BUNCH.WVL]))
-    ase["cx_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CX])
-    ase["cy_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CY])
-    ase["x_median_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.X])
-    ase["y_median_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.Y])
-    ase["bunch_size_median"] = np.median(cb[:, cpw.I.BUNCH.BSIZE])
+    ase["maximum_asl_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.EMISSOION_ALTITUDE_ASL_CM])
+    ase["wavelength_median_nm"] = np.abs(np.median(cb[:, cpw.I.BUNCH.WAVELENGTH_NM]))
+    ase["cx_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CX_RAD])
+    ase["cy_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CY_RAD])
+    ase["x_median_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.X_CM])
+    ase["y_median_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.Y_CM])
+    ase["bunch_size_median"] = np.median(cb[:, cpw.I.BUNCH.BUNCH_SIZE_1])
     return ase
 
 

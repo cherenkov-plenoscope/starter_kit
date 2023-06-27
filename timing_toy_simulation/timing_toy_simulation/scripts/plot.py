@@ -17,7 +17,7 @@ plot_dir = os.path.join(work_dir, "plot")
 with open(os.path.join(work_dir, "config.json"), "rt") as f:
     config = json_numpy.loads(f.read())
 
-#seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
+# seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 prng = np.random.Generator(np.random.PCG64(64))
 os.makedirs(plot_dir, exist_ok=True)
 
@@ -43,7 +43,8 @@ idx_inst_x = result["base"]["idx"][mask_inst_x]
 
 
 mask_valid = (
-    result["cherenkov_detected_size"]["num_photons"] >= MIN_NUM_DETECTED_PHOTONS
+    result["cherenkov_detected_size"]["num_photons"]
+    >= MIN_NUM_DETECTED_PHOTONS
 )
 idx_valid = result["cherenkov_detected_size"]["idx"][mask_valid]
 
@@ -84,9 +85,7 @@ zenith_bin = bu.Binning(
         num=zd_num_bins,
     )
 )
-time_delta_bin = bu.Binning(
-    bin_edges=np.linspace(0.0, 100e-9, zd_num_bins)
-)
+time_delta_bin = bu.Binning(bin_edges=np.linspace(0.0, 100e-9, zd_num_bins))
 
 # simple hist
 # -----------
@@ -127,7 +126,9 @@ for zz in zz_range:
     z_stop = z_bin["edges"][zz + 1]
 
     ax_height = 0.85 / z_bin["num"]
-    ax = seb.add_axes(fig=fig, span=[0.2, 0.1 + zz * ax_height, 0.7, 0.8 * ax_height])
+    ax = seb.add_axes(
+        fig=fig, span=[0.2, 0.1 + zz * ax_height, 0.7, 0.8 * ax_height]
+    )
     seb.ax_add_histogram(
         ax=ax,
         bin_edges=(1e9 * time_delta_bin["edges"]),
@@ -152,21 +153,16 @@ for zz in zz_range:
     ttt += " - "
     ttt += "{:.1f}".format(np.rad2deg(z_stop))
     ttt += "$^{\circ}$"
-    ax.text(x=.3, y=.9, s=ttt, transform=ax.transAxes)
+    ax.text(x=0.3, y=0.9, s=ttt, transform=ax.transAxes)
 
     ttt = "std: {:.1f}ns".format(1e9 * time_delta_stddevs[zz])
-    ax.text(x=.5, y=.6, s=ttt, transform=ax.transAxes)
+    ax.text(x=0.5, y=0.6, s=ttt, transform=ax.transAxes)
 
 
 ax.set_ylabel("intensity / 1")
 ax.set_xlabel("time (reco - true) / ns")
-fig.savefig(
-    os.path.join(plot_dir, "time_reco_minus_true.jpg")
-)
+fig.savefig(os.path.join(plot_dir, "time_reco_minus_true.jpg"))
 seb.close(fig)
-
-
-
 
 
 # zenith
@@ -190,66 +186,42 @@ _pcm_xy = ax.pcolormesh(
 )
 seb.plt.colorbar(_pcm_xy, cax=axc, extend="max")
 ax.grid(color="w", linestyle="-", linewidth=0.66, alpha=0.1)
-#ax.set_aspect("equal")
+# ax.set_aspect("equal")
 ax.set_xlim(np.rad2deg(zenith_bin["limits"]))
 ax.set_ylim(1e9 * time_delta_bin["limits"])
 ax.set_xlabel("zenith / 1$^{\circ}$")
 ax.set_ylabel("time (reco - true) / ns")
-fig.savefig(
-    os.path.join(plot_dir, "zd_time.jpg")
-)
+fig.savefig(os.path.join(plot_dir, "zd_time.jpg"))
 seb.close(fig)
-
-
-
-
 
 
 fig = seb.figure(style=seb.FIGURE_1_1)
 ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
-ax.plot(
-    np.rad2deg(r["base/primary_azimuth_rad"]),
-    time_delta * 1e9,
-    "xk"
-)
+ax.plot(np.rad2deg(r["base/primary_azimuth_rad"]), time_delta * 1e9, "xk")
 ax.set_xlabel("azimuth / deg")
 ax.set_ylabel("time_delta / ns")
 
-fig.savefig(
-    os.path.join(plot_dir, "az_time.jpg")
-)
+fig.savefig(os.path.join(plot_dir, "az_time.jpg"))
 seb.close(fig)
 
 
 fig = seb.figure(style=seb.FIGURE_1_1)
 ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
-ax.plot(
-    r["base/instrument_x_m"],
-    time_delta * 1e9,
-    "xk"
-)
+ax.plot(r["base/instrument_x_m"], time_delta * 1e9, "xk")
 ax.set_xlabel("instrument_x / m")
 ax.set_ylabel("time_delta / ns")
 
-fig.savefig(
-    os.path.join(plot_dir, "ins_x_time.jpg")
-)
+fig.savefig(os.path.join(plot_dir, "ins_x_time.jpg"))
 seb.close(fig)
 
 
 fig = seb.figure(style=seb.FIGURE_1_1)
 ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
-ax.plot(
-    r["base/instrument_y_m"],
-    time_delta * 1e9,
-    "xk"
-)
+ax.plot(r["base/instrument_y_m"], time_delta * 1e9, "xk")
 ax.set_xlabel("instrument_y / m")
 ax.set_ylabel("time_delta / ns")
 
-fig.savefig(
-    os.path.join(plot_dir, "ins_y_time.jpg")
-)
+fig.savefig(os.path.join(plot_dir, "ins_y_time.jpg"))
 seb.close(fig)
 
 
@@ -263,9 +235,7 @@ xy_bin = bu.Binning(
     )
 )
 xy_hist = np.histogram2d(
-    r["base/instrument_x_m"],
-    r["base/instrument_y_m"],
-    bins=xy_bin["edges"],
+    r["base/instrument_x_m"], r["base/instrument_y_m"], bins=xy_bin["edges"],
 )[0]
 
 fig = seb.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
@@ -285,9 +255,7 @@ ax.set_xlim(xy_bin["limits"])
 ax.set_ylim(xy_bin["limits"])
 ax.set_xlabel("instrument $x$ / m")
 ax.set_ylabel("instrument $y$ / m")
-fig.savefig(
-    os.path.join(plot_dir, "ins_x_y.jpg")
-)
+fig.savefig(os.path.join(plot_dir, "ins_x_y.jpg"))
 seb.close(fig)
 
 # directions in sky
@@ -318,9 +286,7 @@ seb.hemisphere.ax_add_ticklabels(
 )
 ax.set_xlabel("sky x / m")
 ax.set_ylabel("sky y / m")
-ax.set_xlim([-1,1])
-ax.set_ylim([-1,1])
-fig.savefig(
-    os.path.join(plot_dir, "az_zd_hemisphere.jpg")
-)
+ax.set_xlim([-1, 1])
+ax.set_ylim([-1, 1])
+fig.savefig(os.path.join(plot_dir, "az_zd_hemisphere.jpg"))
 seb.close(fig)
