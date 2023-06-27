@@ -27,30 +27,6 @@ MERLICT_PLENOSCOPE_PROPAGATOR_PATH = absjoin(
     "build", "merlict", "merlict-plenoscope-propagation"
 )
 
-EXAMPLE_SITE = {
-    "observation_level_asl_m": 5000,
-    "earth_magnetic_field_x_muT": 20.815,
-    "earth_magnetic_field_z_muT": -11.366,
-    "atmosphere_id": 26,
-}
-
-EXAMPLE_PLENOSCOPE_POINTING = {"azimuth_deg": 0.0, "zenith_deg": 0.0}
-
-EXAMPLE_PARTICLE = {
-    "particle_id": 14,
-    "energy_bin_edges_GeV": [20, 200],
-    "max_scatter_angle_deg": 13,
-    "energy_power_law_slope": -1.0,
-}
-
-EXAMPLE_SITE_PARTICLE_DEFLECTION = {
-    "particle_energy_GeV": [5, 1000],
-    "particle_azimuth_deg": [0.0, 0.0],
-    "particle_zenith_deg": [0.0, 0.0],
-    "cherenkov_x_m": [0.0, 0.0],
-    "cherenkov_y_m": [0.0, 0.0],
-}
-
 EXAMPLE_SUM_TRIGGER = {
     "object_distances_m": [
         5000.0,
