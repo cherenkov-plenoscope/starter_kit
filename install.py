@@ -128,6 +128,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "sebastians_matplotlib_addons",
     },
     {
+        "path": "atmospheric_cherenkov_response",
+        "name": "atmospheric_cherenkov_response_sebastian-achim-mueller",
+    },
+    {
         "path": "sparse_numeric_table",
         "name": "sparse_numeric_table_sebastian-achim-mueller",
     },
