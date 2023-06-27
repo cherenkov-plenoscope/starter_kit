@@ -185,8 +185,12 @@ def _append_bunch_statistics(airshower_dict, cherenkov_bunches):
     cb = cherenkov_bunches
     ase = airshower_dict
     assert cb.shape[0] > 0
-    ase["maximum_asl_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.EMISSOION_ALTITUDE_ASL_CM])
-    ase["wavelength_median_nm"] = np.abs(np.median(cb[:, cpw.I.BUNCH.WAVELENGTH_NM]))
+    ase["maximum_asl_m"] = cpw.CM2M * np.median(
+        cb[:, cpw.I.BUNCH.EMISSOION_ALTITUDE_ASL_CM]
+    )
+    ase["wavelength_median_nm"] = np.abs(
+        np.median(cb[:, cpw.I.BUNCH.WAVELENGTH_NM])
+    )
     ase["cx_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CX_RAD])
     ase["cy_median_rad"] = np.median(cb[:, cpw.I.BUNCH.CY_RAD])
     ase["x_median_m"] = cpw.CM2M * np.median(cb[:, cpw.I.BUNCH.X_CM])
@@ -297,7 +301,9 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 prim["azimuth_rad"] = primary["azimuth_rad"]
                 prim["zenith_rad"] = primary["zenith_rad"]
                 prim["max_scatter_rad"] = primary["max_scatter_rad"]
-                prim["solid_angle_thrown_sr"] = solid_angle_utils.cone.solid_angle(
+                prim[
+                    "solid_angle_thrown_sr"
+                ] = solid_angle_utils.cone.solid_angle(
                     half_angle_rad=prim["max_scatter_rad"]
                 )
                 prim["depth_g_per_cm2"] = primary["depth_g_per_cm2"]

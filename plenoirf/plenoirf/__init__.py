@@ -38,140 +38,67 @@ import network_file_system as nfs
 import atmospheric_cherenkov_response
 
 
-MIN_PROTON_ENERGY_GEV = 5.0
-MIN_HELIUM_ENERGY_GEV = 10.0
+def make_example_executable_paths():
+    return {
+        "corsika_primary_path": opj(
+            "build",
+            "corsika",
+            "modified",
+            "corsika-75600",
+            "run",
+            "corsika75600Linux_QGSII_urqmd",
+        ),
+        "merlict_plenoscope_propagator_path": opj(
+            "build", "merlict", "merlict-plenoscope-propagation"
+        ),
+        "merlict_plenoscope_calibration_map_path": opj(
+            "build", "merlict", "merlict-plenoscope-calibration-map"
+        ),
+        "merlict_plenoscope_calibration_reduce_path": opj(
+            "build", "merlict", "merlict-plenoscope-calibration-reduce"
+        ),
+        "merlict_plenoscope_raw_photon_propagation_path": opj(
+            "build", "merlict", "merlict-plenoscope-raw-photon-propagation"
+        ),
+    }
 
-EXAMPLE_EXECUTABLE_PATHS = {
-    "corsika_primary_path": opj(
-        "build",
-        "corsika",
-        "modified",
-        "corsika-75600",
-        "run",
-        "corsika75600Linux_QGSII_urqmd",
-    ),
-    "merlict_plenoscope_propagator_path": opj(
-        "build", "merlict", "merlict-plenoscope-propagation"
-    ),
-    "merlict_plenoscope_calibration_map_path": opj(
-        "build", "merlict", "merlict-plenoscope-calibration-map"
-    ),
-    "merlict_plenoscope_calibration_reduce_path": opj(
-        "build", "merlict", "merlict-plenoscope-calibration-reduce"
-    ),
-    "merlict_plenoscope_raw_photon_propagation_path": opj(
-        "build", "merlict", "merlict-plenoscope-raw-photon-propagation"
-    ),
-}
 
-EXAMPLE_CONFIG_FILE_PATHS = {
-    "merlict_plenoscope_propagator_config_path": opj(
-        "resources", "acp", "merlict_propagation_config.json"
-    ),
-    "merlict_plenoscope_propagator_without_night_sky_background_config_path": opj(
-        "resources",
-        "acp",
-        "merlict_propagation_config_no_night_sky_background.json",
-    ),
-    "plenoscope_scenery_path": opj("resources", "acp", "71m", "scenery"),
-}
+def make_example_config_file_paths():
+    return {
+        "merlict_plenoscope_propagator_config_path": opj(
+            "resources", "acp", "merlict_propagation_config.json"
+        ),
+        "merlict_plenoscope_propagator_without_night_sky_background_config_path": opj(
+            "resources",
+            "acp",
+            "merlict_propagation_config_no_night_sky_background.json",
+        ),
+        "plenoscope_scenery_path": opj("resources", "acp", "71m", "scenery"),
+    }
 
-EXAMPLE_CONFIG = {
-    "light_field_geometry": {
+
+def make_example_config():
+    cfg = {}
+    cfg["light_field_geometry"] = {
         "num_photons_per_block": 4 * 1000 * 1000,
         "num_blocks": 360,
-    },
-    "plenoscope_pointing": {"azimuth_deg": 0.0, "zenith_deg": 0.0},
-    "sites": {
-        "namibia": {
-            "observation_level_asl_m": 2300,
-            "earth_magnetic_field_x_muT": 12.5,
-            "earth_magnetic_field_z_muT": -25.9,
-            "atmosphere_id": 10,
-            "geomagnetic_cutoff_rigidity_GV": 12.5,
-            "coordinates_wgs1984": [-23.3425, 16.225556],
-            "comment": "The Gamsberg-mesa in Khoma, Namibia, southern Africa.",
-        },
-        "chile": {
-            "observation_level_asl_m": 5000,
-            "earth_magnetic_field_x_muT": 20.815,
-            "earth_magnetic_field_z_muT": -11.366,
-            "atmosphere_id": 26,
-            "geomagnetic_cutoff_rigidity_GV": 10.0,
-            "coordinates_wgs1984": [-23.0193, -67.7532],
-            "comment": "Llano de Chajnantor in Chile, southern America.",
-        },
-    },
-    "particles": {
-        "gamma": {
-            "particle_id": 1,
-            "energy_bin_edges_GeV": [
-                binning_utils.power10.lower_bin_edge(
-                    decade=-1, bin=2, num_bins_per_decade=5
-                ),
-                binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=2, num_bins_per_decade=5
-                ),
-            ],
-            "max_scatter_angle_deg": 3.25,
-            "energy_power_law_slope": -1.5,
-            "electric_charge_qe": 0.0,
-            "magnetic_deflection_max_off_axis_deg": 0.25,
-        },
-        "electron": {
-            "particle_id": 3,
-            "energy_bin_edges_GeV": [
-                binning_utils.power10.lower_bin_edge(
-                    decade=-1, bin=3, num_bins_per_decade=5
-                ),
-                binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=2, num_bins_per_decade=5
-                ),
-            ],
-            "max_scatter_angle_deg": 6.5,
-            "energy_power_law_slope": -1.5,
-            "electric_charge_qe": -1.0,
-            "magnetic_deflection_max_off_axis_deg": 0.5,
-        },
-        "proton": {
-            "particle_id": 14,
-            "energy_bin_edges_GeV": [
-                max(
-                    MIN_PROTON_ENERGY_GEV,
-                    binning_utils.power10.lower_bin_edge(
-                        decade=0, bin=3, num_bins_per_decade=5
-                    ),
-                ),
-                binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=2, num_bins_per_decade=5
-                ),
-            ],
-            "max_scatter_angle_deg": 18.3,
-            "energy_power_law_slope": -1.5,
-            "electric_charge_qe": +1.0,
-            "magnetic_deflection_max_off_axis_deg": 1.5,
-        },
-        "helium": {
-            "particle_id": 402,
-            "energy_bin_edges_GeV": [
-                max(
-                    MIN_HELIUM_ENERGY_GEV,
-                    binning_utils.power10.lower_bin_edge(
-                        decade=1, bin=0, num_bins_per_decade=5
-                    ),
-                ),
-                binning_utils.power10.lower_bin_edge(
-                    decade=3, bin=2, num_bins_per_decade=5
-                ),
-            ],
-            "max_scatter_angle_deg": 18.3,
-            "energy_power_law_slope": -1.5,
-            "electric_charge_qe": +2.0,
-            "magnetic_deflection_max_off_axis_deg": 1.5,
-        },
-    },
-    "grid": atmospheric_cherenkov_response.demonstration.GRID,
-    "sum_trigger": {
+    }
+    cfg["plenoscope_pointing"] = {"azimuth_deg": 0.0, "zenith_deg": 0.0}
+    cfg["sites"] = {}
+    for pk in ["namibia", "chile"]:
+        cfg["sites"][pk] = atmospheric_cherenkov_response.sites.init_site(pk)
+
+    cfg["particles"] = {}
+    for pk in ["gamma", "electron", "proton", "helium"]:
+        cfg["particles"][
+            pk
+        ] = atmospheric_cherenkov_response.particles.init_particle(pk)
+
+    cfg["particles"][
+        "grid"
+    ] = atmospheric_cherenkov_response.demonstration.GRID
+
+    cfg["sum_trigger"] = {
         "object_distances_m": [
             5000.0,
             6164.0,
@@ -194,8 +121,9 @@ EXAMPLE_CONFIG = {
             "pixel_radius_deg": 0.146674,
             "max_number_nearest_lixel_in_pixel": 7,
         },
-    },
-    "cherenkov_classification": {
+    }
+
+    cfg["cherenkov_classification"] = {
         "region_of_interest": {
             "time_offset_start_s": -10e-9,
             "time_offset_stop_s": 10e-9,
@@ -205,36 +133,48 @@ EXAMPLE_CONFIG = {
         "min_num_photons": 17,
         "neighborhood_radius_deg": 0.075,
         "direction_to_time_mixing_deg_per_s": 0.375e9,
-    },
-    "reconstruction": {
+    }
+
+    cfg["reconstruction"] = {
         "trajectory": gamrec.trajectory.v2020dec04iron0b.config.make_example_config_for_71m_plenoscope(
             fov_radius_deg=3.25
         ),
-    },
-    "raw_sensor_response": {"skip_num_events": 50,},
-    "runs": {
+    }
+
+    cfg["raw_sensor_response"] = {
+        "skip_num_events": 50,
+    }
+
+    cfg["runs"] = {
         "gamma": {"num": 64, "first_run_id": 1},
         "electron": {"num": 64, "first_run_id": 1},
         "proton": {"num": 64, "first_run_id": 1},
         "helium": {"num": 64, "first_run_id": 1},
-    },
-    "magnetic_deflection": {"num_energy_supports": 512, "max_energy_GeV": 64},
-    "num_airshowers_per_run": 100,
-    "artificial_core_limitation": {
+    }
+    cfg["num_airshowers_per_run"] = 100
+
+    cfg["magnetic_deflection"] = {
+        "num_energy_supports": 512,
+        "max_energy_GeV": 64,
+    }
+
+    cfg["artificial_core_limitation"] = {
         "gamma": None,
         "electron": None,
         "proton": None,
         "helium": None,
-    },
-}
+    }
+
+    return cfg
 
 
-def init(
-    run_dir, config=EXAMPLE_CONFIG, config_file_paths=EXAMPLE_CONFIG_FILE_PATHS
-):
+def init(run_dir, config=None, config_file_paths=None):
     run_dir = op.abspath(run_dir)
     os.makedirs(run_dir)
     os.makedirs(opj(run_dir, "input"))
+
+    if config == None:
+        config = make_example_config()
 
     json_numpy.write(
         path=opj(run_dir, "input", "config.json" + "tmp"), out_dict=config,
@@ -243,6 +183,9 @@ def init(
         opj(run_dir, "input", "config.json" + "tmp"),
         opj(run_dir, "input", "config.json"),
     )
+
+    if config_file_paths == None:
+        config_file_paths = make_example_config_file_paths()
 
     nfs.copy(
         src=config_file_paths["plenoscope_scenery_path"],
@@ -489,7 +432,7 @@ def _populate_table_of_thrown_air_showers(
 def run(
     run_dir,
     map_and_reduce_pool,
-    executables=EXAMPLE_EXECUTABLE_PATHS,
+    executables=None,
     TMP_DIR_ON_WORKERNODE=True,
     KEEP_TMP=False,
     LAZY_REDUCTION=False,
@@ -503,6 +446,10 @@ def run(
     logger.info("Start run()")
 
     run_dir = op.abspath(run_dir)
+
+    if executables == None:
+        executables = make_example_executable_paths()
+
     for exe_path in executables:
         executables[exe_path] = op.abspath(executables[exe_path])
 

@@ -7,6 +7,7 @@ import plenoirf
 import network_file_system as nfs
 from magnetic_deflection import spherical_coordinates
 import sparse_numeric_table as spt
+from atmospheric_cherenkov_response import sites as acr_sites
 from . import table
 
 
@@ -16,23 +17,13 @@ PARTICLES_CORSIKA_ID = {
     "helium": 408,
 }
 
-SITES = {
-    "namibia": {
-        "observation_level_asl_m": 2300,
-        "earth_magnetic_field_x_muT": 12.5,
-        "earth_magnetic_field_z_muT": -25.9,
-        "atmosphere_id": 10,
-        "geomagnetic_cutoff_rigidity_GV": 12.5,
-    },
-}
-
 CONFIG = {
     "particle": {
         "type": "gamma",
         "energy_range": {"start_GeV": 0.5, "stop_GeV": 1.5, "power_slope": 0},
     },
     "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 60.0,},
-    "site": SITES["namibia"],
+    "site": {"namibia": acr_sites.init_site("namibia")},
     "scatter": {
         "direction": {"radial_angle_deg": 3.25,},
         "position": {"radius_m": 640.0,},

@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="timing_toy_simulation",
-    version="0.1.0",
+    version="0.1.1",
     description="Estimate the absolute timing accuracy of gamma-rays in the atmospheric Cherenkov-method",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -17,7 +17,10 @@ setuptools.setup(
     packages=["timing_toy_simulation"],
     package_data={},
     python_requires=">=3",
-    install_requires=["corsika_primary",],
+    install_requires=[
+        "corsika_primary",
+        "atmospheric_cherenkov_response_sebastian-achim-mueller",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
