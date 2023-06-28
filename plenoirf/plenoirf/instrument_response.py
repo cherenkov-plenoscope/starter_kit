@@ -1006,7 +1006,6 @@ def run_job(job):
             prng=prng,
         )
 
-
     if job["tmp_dir"] is None:
         tmp_dir = tempfile.mkdtemp(prefix="plenoscope_irf_")
     else:

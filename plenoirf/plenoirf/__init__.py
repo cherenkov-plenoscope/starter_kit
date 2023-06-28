@@ -83,20 +83,19 @@ def make_example_config():
         "num_photons_per_block": 4 * 1000 * 1000,
         "num_blocks": 360,
     }
-    cfg[
-        "plenoscope_pointing"
-    ] = atmospheric_cherenkov_response.pointing.init_pointing(
+    cfg["mount"] = "cable_robot_mount"
+    cfg["plenoscope_pointing"] = atmospheric_cherenkov_response.pointing.init(
         azimuth_deg=0.0, zenith_deg=0.0
     )
     cfg["sites"] = {}
     for pk in ["namibia", "chile"]:
-        cfg["sites"][pk] = atmospheric_cherenkov_response.sites.init_site(pk)
+        cfg["sites"][pk] = atmospheric_cherenkov_response.sites.init(pk)
 
     cfg["particles"] = {}
     for pk in ["gamma", "electron", "proton", "helium"]:
-        cfg["particles"][
+        cfg["particles"][pk] = atmospheric_cherenkov_response.particles.init(
             pk
-        ] = atmospheric_cherenkov_response.particles.init_particle(pk)
+        )
 
     cfg["particles"][
         "grid"

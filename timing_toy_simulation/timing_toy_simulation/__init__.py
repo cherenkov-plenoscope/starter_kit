@@ -23,7 +23,7 @@ CONFIG = {
         "energy_range": {"start_GeV": 0.5, "stop_GeV": 1.5, "power_slope": 0},
     },
     "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 60.0,},
-    "site": {"namibia": acr_sites.init_site("namibia")},
+    "site": {"namibia": acr_sites.init("namibia")},
     "scatter": {
         "direction": {"radial_angle_deg": 3.25,},
         "position": {"radius_m": 640.0,},
