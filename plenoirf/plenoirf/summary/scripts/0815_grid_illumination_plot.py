@@ -6,7 +6,7 @@ import numpy as np
 import sparse_numeric_table as spt
 import plenoirf as irf
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -20,11 +20,11 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["point_spread_function"]
 

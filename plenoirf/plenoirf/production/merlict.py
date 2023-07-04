@@ -1,5 +1,5 @@
 import subprocess
-import json_numpy
+import json_utils
 
 
 def plenoscope_propagator(
@@ -39,7 +39,7 @@ def plenoscope_propagator(
 
 def read_plenoscope_geometry(merlict_scenery_path):
     with open(merlict_scenery_path, "rt") as f:
-        _scenery = json_numpy.loads(f.read())
+        _scenery = json_utils.loads(f.read())
     children = _scenery["children"]
     for child in children:
         if child["type"] == "Frame" and child["name"] == "Portal":

@@ -5,7 +5,7 @@ import os
 import numpy as np
 from os.path import join as opj
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -16,7 +16,7 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-trigger_vs_size = json_numpy.read_tree(
+trigger_vs_size = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"],
         "0074_trigger_probability_vs_cherenkov_density_on_ground",

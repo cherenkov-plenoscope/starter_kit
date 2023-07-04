@@ -7,7 +7,7 @@ import pkg_resources
 import subprocess
 import sparse_numeric_table as spt
 import glob
-import json_numpy
+import json_utils
 import atmospheric_cherenkov_response
 from .. import features
 from .. import reconstruction
@@ -28,7 +28,7 @@ def init(run_dir):
     os.makedirs(summary_dir, exist_ok=True)
 
     with open(opj(summary_dir, "summary_config.json"), "wt") as fout:
-        fout.write(json_numpy.dumps(summary_config, indent=4))
+        fout.write(json_utils.dumps(summary_config, indent=4))
 
 
 def argv_since_py(sys_argv):
@@ -60,13 +60,13 @@ def production_name_from_run_dir(path):
 
 def read_summary_config(summary_dir):
     with open(opj(summary_dir, "summary_config.json"), "rt") as fin:
-        config = json_numpy.loads(fin.read())
+        config = json_utils.loads(fin.read())
     return config
 
 
 def read_instrument_response_config(run_dir):
     with open(opj(run_dir, "input", "config.json"), "rt") as f:
-        config = json_numpy.loads(f.read())
+        config = json_utils.loads(f.read())
     light_field_sensor_geometry = production.merlict.read_plenoscope_geometry(
         opj(run_dir, "input", "scenery", "scenery.json")
     )
@@ -88,10 +88,10 @@ def read_instrument_response_config(run_dir):
     )
 
     with open(opj(run_dir, "input", "scenery", "scenery.json"), "rt") as f:
-        plenoscope_scenery = json_numpy.loads(f.read())
+        plenoscope_scenery = json_utils.loads(f.read())
     _prop_cfg_path = opj(run_dir, "input", "merlict_propagation_config.json")
     with open(_prop_cfg_path, "rt") as f:
-        merlict_propagation_config = json_numpy.loads(f.read())
+        merlict_propagation_config = json_utils.loads(f.read())
     bundle = {
         "config": config,
         "light_field_sensor_geometry": light_field_sensor_geometry,
@@ -104,7 +104,7 @@ def read_instrument_response_config(run_dir):
 
 def run(run_dir):
 
-    json_numpy.write(
+    json_utils.write(
         path=opj(run_dir, "summary", "provenance.json"),
         out_dict=provenance.make_provenance(),
     )

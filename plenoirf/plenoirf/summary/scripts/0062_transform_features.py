@@ -6,7 +6,7 @@ import os
 import pandas
 import numpy as np
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -15,7 +15,7 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
-train_test = json_numpy.read_tree(
+train_test = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0030_splitting_train_and_test_sample",)
 )
 

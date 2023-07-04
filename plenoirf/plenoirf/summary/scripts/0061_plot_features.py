@@ -5,7 +5,7 @@ import sparse_numeric_table as spt
 import os
 import numpy as np
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -16,16 +16,16 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-weights_thrown2expected = json_numpy.read_tree(
+weights_thrown2expected = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"],
         "0040_weights_from_thrown_to_expected_energy_spectrum",
     )
 )
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 

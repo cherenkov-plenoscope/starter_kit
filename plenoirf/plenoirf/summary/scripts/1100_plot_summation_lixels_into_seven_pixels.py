@@ -4,7 +4,7 @@ import plenoirf as irf
 import plenopy as pl
 import os
 import numpy as np
-import json_numpy
+import json_utils
 import sebastians_matplotlib_addons as seb
 import matplotlib
 from matplotlib.collections import PolyCollection
@@ -96,9 +96,9 @@ for obj, object_distance in enumerate(object_distances):
             ],
         )
 
-        json_numpy.write(path=cpath, out_dict=lixel_to_pixel, indent=None)
+        json_utils.write(path=cpath, out_dict=lixel_to_pixel, indent=None)
     else:
-        lixel_to_pixel = json_numpy.read(path=cpath)
+        lixel_to_pixel = json_utils.read(path=cpath)
 
     colored_lixels = np.zeros(light_field_geometry.number_lixel, dtype=np.bool)
     for i, pixel_id in enumerate(central_seven_pixel_ids):

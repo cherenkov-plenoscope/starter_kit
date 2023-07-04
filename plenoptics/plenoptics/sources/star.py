@@ -1,6 +1,6 @@
 import corsika_primary
 import numpy as np
-import json_numpy
+import json_utils
 import plenoirf
 import plenopy
 import os
@@ -54,7 +54,7 @@ def make_response_to_star(
         merlict_plenoscope_propagator_config_path = os.path.join(
             tmp_dir, "merlict_propagation_config.json"
         )
-        json_numpy.write(
+        json_utils.write(
             merlict_plenoscope_propagator_config_path,
             merlict_config["merlict_propagation_config"],
         )
@@ -137,7 +137,7 @@ def write_photon_bunches(
 
 def make_source_config_from_job(job):
 
-    star_cfg = json_numpy.read(
+    star_cfg = json_utils.read(
         os.path.join(job["work_dir"], "config", "observations", "star.json")
     )
 
@@ -200,7 +200,7 @@ def analysis_run_job(job):
     os.makedirs(outdir, exist_ok=True)
 
     inpath = os.path.join(indir, nkey)
-    truth = json_numpy.read(inpath + ".json")
+    truth = json_utils.read(inpath + ".json")
     with open(inpath, "rb") as f:
         raw_sensor_response = plenopy.raw_light_field_sensor_response.read(f)
 
@@ -215,7 +215,7 @@ def analysis_run_job(job):
         )
     )
 
-    cfg_analysis = json_numpy.read(
+    cfg_analysis = json_utils.read(
         os.path.join(job["work_dir"], "config", "analysis", "star.json")
     )
 
@@ -231,5 +231,5 @@ def analysis_run_job(job):
     )
 
     outpath = os.path.join(outdir, nkey + ".json")
-    json_numpy.write(outpath + ".incomplete", result)
+    json_utils.write(outpath + ".incomplete", result)
     os.rename(outpath + ".incomplete", outpath)

@@ -4,7 +4,7 @@ import plenoirf as irf
 import plenopy as pl
 import scipy
 import os
-import json_numpy
+import json_utils
 import numpy as np
 import sebastians_matplotlib_addons as seb
 

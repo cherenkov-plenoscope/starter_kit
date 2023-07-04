@@ -2,7 +2,7 @@ import os
 import glob
 import numpy as np
 import corsika_primary as cpw
-import json_numpy
+import json_utils
 import plenoirf
 import network_file_system as nfs
 from magnetic_deflection import spherical_coordinates
@@ -56,7 +56,7 @@ def init(work_dir, config=None):
     os.makedirs(work_dir, exist_ok=True)
     if config == None:
         config = CONFIG
-    json_numpy.write(os.path.join(work_dir, "config.json"), CONFIG)
+    json_utils.write(os.path.join(work_dir, "config.json"), CONFIG)
 
 
 def make(work_dir, parallel_pool):
@@ -67,7 +67,7 @@ def make(work_dir, parallel_pool):
 
 def make_jobs(work_dir):
     work_dir = os.path.abspath(work_dir)
-    config = json_numpy.read(os.path.join(work_dir, "config.json"))
+    config = json_utils.read(os.path.join(work_dir, "config.json"))
     jobs = []
     for run_id in np.arange(1, 1 + config["statistics"]["num_runs"]):
         job = {}
@@ -299,7 +299,7 @@ def _export_event_table(path, tabrec):
 
 def run_job(job):
     prng = np.random.Generator(np.random.PCG64(job["job_id"]))
-    config = json_numpy.read(os.path.join(job["work_dir"], "config.json"))
+    config = json_utils.read(os.path.join(job["work_dir"], "config.json"))
 
     map_dir = os.path.join(job["work_dir"], "map")
     run_id_str = plenoirf.unique.RUN_ID_FORMAT_STR.format(job["job_id"])
@@ -310,7 +310,7 @@ def run_job(job):
 
     steering_path = os.path.join(job_dir, "steering.json")
     with open(steering_path + ".incomplete", "wt") as f:
-        f.write(json_numpy.dumps(steering))
+        f.write(json_utils.dumps(steering))
     nfs.move(steering_path + ".incomplete", steering_path)
 
     tabrec = table.init_records()

@@ -27,7 +27,7 @@ import tarfile
 import io
 import pkg_resources
 
-import json_numpy
+import json_utils
 import binning_utils
 import plenopy as pl
 import sparse_numeric_table as spt
@@ -179,7 +179,7 @@ def init(run_dir, config=None, config_file_paths=None):
     if config == None:
         config = make_example_config()
 
-    json_numpy.write(
+    json_utils.write(
         path=opj(run_dir, "input", "config.json" + "tmp"), out_dict=config,
     )
     nfs.move(
@@ -369,7 +369,7 @@ def _populate_table_of_thrown_air_showers(
     )
 
     logger.info("Write provenance.")
-    json_numpy.write(
+    json_utils.write(
         path=opj(table_absdir, "provenance.json"), out_dict=prov,
     )
 
@@ -465,7 +465,7 @@ def run(
         logger.info("Use tmp_dir in out_dir {:s}.".format(tmp_absdir))
 
     logger.info("Read config")
-    config = json_numpy.read(opj(run_dir, "input", "config.json"))
+    config = json_utils.read(opj(run_dir, "input", "config.json"))
 
     _estimate_magnetic_deflection_of_air_showers(
         config=config,

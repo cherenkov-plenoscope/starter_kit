@@ -4,7 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -15,11 +15,11 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-cosmic_rates = json_numpy.read_tree(
+cosmic_rates = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0105_trigger_rates_for_cosmic_particles")
 )
 
-fine_energy_bin = json_numpy.read(
+fine_energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["interpolation"]
 

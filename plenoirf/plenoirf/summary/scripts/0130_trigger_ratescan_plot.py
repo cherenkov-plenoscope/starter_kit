@@ -4,7 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -18,10 +18,10 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 TRIGGER = sum_config["trigger"]
-cosmic_rates = json_numpy.read_tree(
+cosmic_rates = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0105_trigger_rates_for_cosmic_particles")
 )
-nsb_rates = json_numpy.read_tree(
+nsb_rates = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"], "0120_trigger_rates_for_night_sky_background"
     )

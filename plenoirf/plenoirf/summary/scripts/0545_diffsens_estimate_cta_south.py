@@ -2,7 +2,7 @@
 import sys
 import flux_sensitivity
 import numpy as np
-import json_numpy
+import json_utils
 import plenoirf as irf
 import pkg_resources
 import binning_utils
@@ -17,7 +17,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-observation_times = json_numpy.read(
+observation_times = json_utils.read(
     os.path.join(
         pa["summary_dir"],
         "0539_diffsens_observation_times",
@@ -44,7 +44,7 @@ CTA_IRF_CONFIG["on_over_off_ratio"] = 0.2  # CTA-specific
 CTA_IRF_CONFIG["systematic_uncertainty_relative"] = 1e-2  # CTA-specific
 CTA_IRF_CONFIG["observation_times"] = observation_times
 
-json_numpy.write(
+json_utils.write(
     os.path.join(pa["out_dir"], "config.json"), CTA_IRF_CONFIG,
 )
 
@@ -122,7 +122,7 @@ blk["signal_area_m2"] = signal_area_m2
 blk["signal_area_m2_au"] = signal_area_m2_au
 blk["background_rate_onregion_per_s"] = background_rate_onregion_per_s
 blk["background_rate_onregion_per_s_au"] = background_rate_onregion_per_s_au
-json_numpy.write(
+json_utils.write(
     os.path.join(pa["out_dir"], "instrument_response_function.json"), blk
 )
 
@@ -166,7 +166,7 @@ for dk in flux_sensitivity.differential.SCENARIOS:
     scenario[
         "background_rate_onregion_in_scenario_per_s_au"
     ] = background_rate_onregion_in_scenario_per_s_au
-    json_numpy.write(os.path.join(scenario_dir, "scenario.json"), scenario)
+    json_utils.write(os.path.join(scenario_dir, "scenario.json"), scenario)
 
     critrate = np.zeros(shape=(num_energy_bins, num_observation_times))
     critrate_au = np.zeros(shape=(num_energy_bins, num_observation_times))
@@ -212,11 +212,11 @@ for dk in flux_sensitivity.differential.SCENARIOS:
     piy = {}
     piy["critical_signal_rate_in_scenario_per_s"] = dVdE
     piy["critical_signal_rate_in_scenario_per_s_au"] = dVdE_au
-    json_numpy.write(
+    json_utils.write(
         os.path.join(scenario_dir, "critical_signal_rate.json"), piy
     )
 
     out = {}
     out["dVdE_per_m2_per_GeV_per_s"] = dVdE
     out["dVdE_per_m2_per_GeV_per_s_au"] = dVdE_au
-    json_numpy.write(os.path.join(scenario_dir, "flux_sensitivity.json"), out)
+    json_utils.write(os.path.join(scenario_dir, "flux_sensitivity.json"), out)

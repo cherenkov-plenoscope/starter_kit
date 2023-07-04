@@ -5,7 +5,7 @@ import sparse_numeric_table as spt
 import os
 import numpy as np
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -16,7 +16,7 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance"]
@@ -35,13 +35,13 @@ airshower_rates["energy_bin_centers"] = fine_energy_bin["centers"]
 
 # cosmic-ray-flux
 # ----------------
-_airshower_differential_fluxes = json_numpy.read_tree(
+_airshower_differential_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
 # gamma-ray-flux of reference source
 # ----------------------------------
-gamma_reference_source = json_numpy.read(
+gamma_reference_source = json_utils.read(
     os.path.join(
         pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
     )
@@ -117,7 +117,7 @@ for sk in SITES:
             event_energies=w_energy,
         )
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(site_particle_dir, "weights_vs_energy.json"),
             {
                 "comment": (
@@ -133,7 +133,7 @@ for sk in SITES:
             },
         )
 
-weights = json_numpy.read_tree(pa["out_dir"])
+weights = json_utils.tree.read(pa["out_dir"])
 
 for sk in SITES:
     fig = seb.figure(seb.FIGURE_16_9)

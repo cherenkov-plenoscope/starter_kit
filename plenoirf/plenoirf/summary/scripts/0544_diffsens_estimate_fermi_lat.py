@@ -2,7 +2,7 @@
 import sys
 import flux_sensitivity
 import numpy as np
-import json_numpy
+import json_utils
 import plenoirf as irf
 import pkg_resources
 import binning_utils
@@ -17,7 +17,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-observation_times = json_numpy.read(
+observation_times = json_utils.read(
     os.path.join(
         pa["summary_dir"],
         "0539_diffsens_observation_times",
@@ -26,7 +26,7 @@ observation_times = json_numpy.read(
 )["observation_times"]
 num_observation_times = len(observation_times)
 
-fls = json_numpy.read(
+fls = json_utils.read(
     os.path.join("fermi_lat", "dnde_vs_observation_time_vs_energy.json")
 )
 
@@ -65,4 +65,4 @@ for ebin in range(num_energy_bins):
             right=float("nan"),
         )
 
-json_numpy.write(os.path.join(pa["out_dir"], "flux_sensitivity.json"), out)
+json_utils.write(os.path.join(pa["out_dir"], "flux_sensitivity.json"), out)

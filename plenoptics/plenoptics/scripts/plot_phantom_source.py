@@ -5,7 +5,7 @@ import plenoptics
 import plenopy
 import plenoirf
 import phantom_source
-import json_numpy
+import json_utils
 import binning_utils
 import sebastians_matplotlib_addons as sebplt
 import argparse
@@ -28,7 +28,7 @@ instrument_key = args.instrument_key
 
 os.makedirs(out_dir, exist_ok=True)
 
-config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+config = json_utils.tree.read(os.path.join(work_dir, "config"))
 
 prng = np.random.Generator(np.random.MT19937(seed=53))
 

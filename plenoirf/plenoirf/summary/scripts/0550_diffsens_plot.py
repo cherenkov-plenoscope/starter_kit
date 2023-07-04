@@ -8,7 +8,7 @@ from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -24,11 +24,11 @@ PARTICLES = irf_config["config"]["particles"]
 COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
-dS = json_numpy.read_tree(
+dS = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0540_diffsens_estimate")
 )
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
@@ -92,11 +92,11 @@ def com_add_diff_flux(
     return com
 
 
-cta_diffsens = json_numpy.read_tree(
+cta_diffsens = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0545_diffsens_estimate_cta_south")
 )
 
-fermi_diffsens = json_numpy.read_tree(
+fermi_diffsens = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0544_diffsens_estimate_fermi_lat")
 )["flux_sensitivity"]
 

@@ -5,7 +5,7 @@ import plenoirf as irf
 import sparse_numeric_table as spt
 import os
 import glob
-import json_numpy
+import json_utils
 import corsika_primary
 
 
@@ -20,10 +20,10 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 PARTICLES = irf_config["config"]["particles"]
 SITES = irf_config["config"]["sites"]
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 

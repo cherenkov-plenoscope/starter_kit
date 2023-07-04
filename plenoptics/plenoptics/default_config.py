@@ -1,5 +1,5 @@
 import os
-import json_numpy
+import json_utils
 import copy
 import phantom_source
 from . import instruments
@@ -39,7 +39,7 @@ def write_instruments_config(cfg_dir, minimal):
     tkey = "default"
     for dkey in ["default", "perlin55mm"]:
         for skey in paxel_configurations:
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(
                     cfg_inst_dir,
                     "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey),
@@ -57,7 +57,7 @@ def write_instruments_config(cfg_dir, minimal):
     dkey = "default"
     tkey = "gentle"
     for skey in paxel_configurations:
-        json_numpy.write(
+        json_utils.write(
             os.path.join(
                 cfg_inst_dir, "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey)
             ),
@@ -74,7 +74,7 @@ def write_instruments_config(cfg_dir, minimal):
     dkey = "perlin55mm"
     tkey = "gentle"
     for skey in paxel_configurations:
-        json_numpy.write(
+        json_utils.write(
             os.path.join(
                 cfg_inst_dir, "{:s}_{:s}_{:s}.json".format(skey, dkey, tkey)
             ),
@@ -90,10 +90,10 @@ def write_instruments_config(cfg_dir, minimal):
 def write_merlict_config(cfg_dir):
     cfg_merl_dir = os.path.join(cfg_dir, "merlict")
     os.makedirs(cfg_merl_dir, exist_ok=True)
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_merl_dir, "executables.json"), merlict.EXECUTABLES
     )
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_merl_dir, "merlict_propagation_config.json"),
         merlict.PROPAGATION_CONFIG,
     )
@@ -102,11 +102,11 @@ def write_merlict_config(cfg_dir):
 def write_mirror_deformations(cfg_dir):
     cfg_mdef_dir = os.path.join(cfg_dir, "mirror_deformations")
     os.makedirs(cfg_mdef_dir, exist_ok=True)
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_mdef_dir, "default.json"),
         instruments.mirror.deformation_map.ZERO_MIRROR_DEFORMATION,
     )
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_mdef_dir, "perlin55mm.json"),
         instruments.mirror.deformation_map.EXAMPLE_MIRROR_DEFORMATION,
     )
@@ -115,7 +115,7 @@ def write_mirror_deformations(cfg_dir):
 def write_statistics_config(cfg_dir, minimal):
     cfg_stat_dir = os.path.join(cfg_dir, "statistics")
     os.makedirs(cfg_stat_dir, exist_ok=True)
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_stat_dir, "light_field_geometry.json"),
         {
             "num_blocks": 1 if minimal else 16,
@@ -127,7 +127,7 @@ def write_statistics_config(cfg_dir, minimal):
 def write_mirrors_config(cfg_dir):
     cfg_mirg_dir = os.path.join(cfg_dir, "mirrors")
     os.makedirs(cfg_mirg_dir, exist_ok=True)
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_mirg_dir, "71m.json"), instruments.portal.MIRROR
     )
 
@@ -137,23 +137,23 @@ def write_sensors_config(cfg_dir):
     os.makedirs(cfg_lfsg_dir, exist_ok=True)
     _p61 = copy.deepcopy(instruments.portal.SENSOR)
     _p61["num_paxel_on_pixel_diagonal"] = 9
-    json_numpy.write(os.path.join(cfg_lfsg_dir, "diag9.json"), _p61)
+    json_utils.write(os.path.join(cfg_lfsg_dir, "diag9.json"), _p61)
     _p7 = copy.deepcopy(instruments.portal.SENSOR)
     _p7["num_paxel_on_pixel_diagonal"] = 3
-    json_numpy.write(os.path.join(cfg_lfsg_dir, "diag3.json"), _p7)
+    json_utils.write(os.path.join(cfg_lfsg_dir, "diag3.json"), _p7)
     _t1 = copy.deepcopy(instruments.portal.SENSOR)
     _t1["num_paxel_on_pixel_diagonal"] = 1
-    json_numpy.write(os.path.join(cfg_lfsg_dir, "diag1.json"), _t1)
+    json_utils.write(os.path.join(cfg_lfsg_dir, "diag1.json"), _t1)
 
 
 def write_sensors_transformations(cfg_dir):
     cfg_stra_dir = os.path.join(cfg_dir, "sensor_transformations")
     os.makedirs(cfg_stra_dir, exist_ok=True)
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_stra_dir, "default.json"),
         instruments.portal.SENSOR_TRANSFORMATION_DEFAULT,
     )
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_stra_dir, "gentle.json"),
         instruments.portal.SENSOR_TRANSFORMATION_GENTLE,
     )
@@ -163,7 +163,7 @@ def write_observations_config(cfg_dir, minimal):
     cfg_obsv_dir = os.path.join(cfg_dir, "observations")
     os.makedirs(cfg_obsv_dir, exist_ok=True)
 
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_obsv_dir, "star.json"),
         {
             "num_stars": 20 if minimal else 200,
@@ -177,7 +177,7 @@ def write_observations_config(cfg_dir, minimal):
         },
     )
 
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_obsv_dir, "point.json"),
         {
             "num_points": 40 if minimal else 4096,
@@ -198,13 +198,13 @@ def write_observations_config(cfg_dir, minimal):
     ) = phantom_source.make_meshes_of_default_phantom_source(
         intensity=36 if minimal else 360
     )
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_phan_dir, "phantom_source_meshes.json"), mesch_scn,
     )
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_phan_dir, "phantom_source_meshes_img.json"), mesh_img,
     )
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_phan_dir, "phantom_source_meshes_depth.json"),
         mesh_depth,
     )
@@ -229,11 +229,11 @@ def write_observations_config(cfg_dir, minimal):
     obs_table["diag3_default_default"] = ["star", "phantom", "point"]
     obs_table["diag1_default_default"] = ["star", "phantom"]
 
-    instruments = json_numpy.read_tree(os.path.join(cfg_dir, "instruments"))
+    instruments = json_utils.tree.read(os.path.join(cfg_dir, "instruments"))
     for instrument_key in obs_table:
         assert instrument_key in instruments
 
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_obsv_dir, "instruments.json"), obs_table,
     )
 
@@ -244,7 +244,7 @@ def write_analysis_config(cfg_dir):
 
     # star
     # ----
-    json_numpy.write(
+    json_utils.write(
         os.path.join(cfg_ana_dir, "star.json"),
         {
             "object_distance_m": 1e6,
@@ -253,13 +253,13 @@ def write_analysis_config(cfg_dir):
         },
     )
 
-    piont_obs_cfg = json_numpy.read(
+    piont_obs_cfg = json_utils.read(
         os.path.join(cfg_dir, "observations", "point.json")
     )
 
     # point
     # -----
-    json_numpy.write(
+    json_utils.write(
         os.path.join(os.path.join(cfg_ana_dir, "point.json")),
         {
             "field_of_view_deg": 6.5,

@@ -7,7 +7,7 @@ import os
 import plenopy as pl
 import gamma_ray_reconstruction as gamrec
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -16,10 +16,10 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
 
@@ -198,7 +198,7 @@ for sk in SITES:
             tabpath = os.path.join(
                 evt_dir, "{:s}_{:012d}_truth.json".format(pk, airshower_id)
             )
-            json_numpy.write(
+            json_utils.write(
                 path=tabpath, out_dict=table_to_dict(event_truth), indent=4,
             )
 

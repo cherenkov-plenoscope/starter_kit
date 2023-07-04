@@ -1,7 +1,7 @@
 import phantom_source
 import numpy as np
 import tempfile
-import json_numpy
+import json_utils
 import os
 from .. import utils
 
@@ -44,7 +44,7 @@ def make_response_to_mesh(
         merlict_plenoscope_propagator_config_path = os.path.join(
             tmp_dir, "merlict_propagation_config.json"
         )
-        json_numpy.write(
+        json_utils.write(
             merlict_plenoscope_propagator_config_path,
             merlict_config["merlict_propagation_config"],
         )
@@ -66,7 +66,7 @@ def make_response_to_mesh(
 
 
 def make_source_config_from_job(job):
-    phantom_cfg = json_numpy.read_tree(
+    phantom_cfg = json_utils.tree.read(
         os.path.join(job["work_dir"], "config", "observations", "phantom")
     )
     source_config = {

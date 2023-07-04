@@ -5,7 +5,7 @@ import plenoirf as irf
 import os
 import pylatex as ltx
 import warnings
-import json_numpy
+import json_utils
 import io
 
 
@@ -41,7 +41,7 @@ OUTER_ARRAY_KEY = "ring-mst"
 ok = ["small", "medium", "large"][0]
 dk = "bell_spectrum"
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["point_spread_function"]
 
@@ -77,7 +77,7 @@ analysis_provenance = irf.utils.read_json_but_forgive(
 
 for sk in SITES:
     total_trigger_rate_per_s = get_total_trigger_rate_at_analysis_threshold(
-        trigger_rates_by_origin=json_numpy.read_tree(
+        trigger_rates_by_origin=json_utils.tree.read(
             ppath(pa["summary_dir"], "0131_trigger_rates_total")
         )[sk]["trigger_rates_by_origin"]
     )

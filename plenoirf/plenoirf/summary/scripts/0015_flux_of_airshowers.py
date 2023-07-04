@@ -4,7 +4,7 @@ import copy
 import numpy as np
 import plenoirf as irf
 import os
-import json_numpy
+import json_utils
 import magnetic_deflection
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -15,11 +15,11 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-raw_cosmic_ray_fluxes = json_numpy.read_tree(
+raw_cosmic_ray_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0010_flux_of_cosmic_rays")
 )
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["interpolation"]
 
@@ -116,7 +116,7 @@ for sk in SITES:
     for pk in COSMIC_RAYS:
         sk_pk_dir = os.path.join(pa["out_dir"], sk, pk)
         os.makedirs(sk_pk_dir, exist_ok=True)
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_pk_dir, "differential_flux.json"),
             {
                 "comment": (

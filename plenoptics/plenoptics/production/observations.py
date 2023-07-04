@@ -1,6 +1,6 @@
 import json_line_logger
 import os
-import json_numpy
+import json_utils
 import plenopy
 from .. import sources
 
@@ -46,7 +46,7 @@ def _observations_make_jobs(work_dir):
 
 def _tasks_make_jobs(work_dir, task_key, suffix):
     cfg_dir = os.path.join(work_dir, "config")
-    config = json_numpy.read_tree(cfg_dir)
+    config = json_utils.tree.read(cfg_dir)
 
     jobs = []
 
@@ -136,7 +136,7 @@ def _observations_run_job(job):
         "light_field_geometry",
     )
 
-    merlict_config = json_numpy.read_tree(
+    merlict_config = json_utils.tree.read(
         os.path.join(job["work_dir"], "config", "merlict")
     )
 
@@ -158,7 +158,7 @@ def _observations_run_job(job):
     # export truth
     # ------------
     outtruthpath = outpath + ".json"
-    json_numpy.write(
+    json_utils.write(
         outtruthpath + ".incomplete", source_config,
     )
     os.rename(outtruthpath + ".incomplete", outtruthpath)

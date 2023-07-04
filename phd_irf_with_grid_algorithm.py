@@ -1,6 +1,6 @@
 import plenoirf
 import network_file_system as nfs
-import json_numpy
+import json_utils
 import numpy as np
 import os
 
@@ -393,7 +393,7 @@ merlict_cfg_files = {
         tmp_cfg_dir, "scenery"
     )
 }
-json_numpy.write(
+json_utils.write(
     merlict_cfg_files['merlict_plenoscope_propagator_config_path'],
     MERLICT_PROPAGATION_CONFIG
 )

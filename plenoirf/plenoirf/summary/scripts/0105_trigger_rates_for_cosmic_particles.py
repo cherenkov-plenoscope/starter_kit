@@ -6,7 +6,7 @@ import propagate_uncertainties as pru
 import sparse_numeric_table as spt
 import cosmic_fluxes
 import os
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -16,13 +16,13 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-acceptance = json_numpy.read_tree(
+acceptance = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles"
     )
 )
 
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance"]
@@ -30,13 +30,13 @@ fine_energy_bin = energy_binning["interpolation"]
 
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = json_numpy.read_tree(
+airshower_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
 # gamma-ray-flux of reference source
 # ----------------------------------
-gamma_source = json_numpy.read(
+gamma_source = json_utils.read(
     os.path.join(
         pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
     )
@@ -114,7 +114,7 @@ for sk in irf_config["config"]["sites"]:
             E_edges=fine_energy_bin["edges"],
         )
 
-    json_numpy.write(
+    json_utils.write(
         os.path.join(sk_gamma_dir, "differential_rate.json"),
         {
             "comment": comment_differential + ", " + gamma_source["name"],
@@ -123,7 +123,7 @@ for sk in irf_config["config"]["sites"]:
             "absolute_uncertainty": dRdE_au,
         },
     )
-    json_numpy.write(
+    json_utils.write(
         os.path.join(sk_gamma_dir, "integral_rate.json"),
         {
             "comment": comment_integral + ", " + gamma_source["name"],
@@ -176,7 +176,7 @@ for sk in irf_config["config"]["sites"]:
                 E_edges=fine_energy_bin["edges"],
             )
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_ck_dir, "differential_rate.json"),
             {
                 "comment": comment_differential,
@@ -185,7 +185,7 @@ for sk in irf_config["config"]["sites"]:
                 "absolute_uncertainty": dRdE_au,
             },
         )
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_ck_dir, "integral_rate.json"),
             {
                 "comment": comment_integral,

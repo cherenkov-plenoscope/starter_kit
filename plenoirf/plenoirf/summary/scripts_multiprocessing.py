@@ -3,7 +3,7 @@ import os
 import glob
 import subprocess
 import time
-import json_numpy
+import json_utils
 from .. import provenance
 
 
@@ -65,7 +65,7 @@ def find_script_names_not_yet_complete(run_dir, script_names):
 
 
 def run_parallel(run_dir, num_threads=6, polling_interval=1):
-    json_numpy.write(
+    json_utils.write(
         path=os.path.join(run_dir, "summary", "provenance.json"),
         out_dict=provenance.make_provenance(),
     )

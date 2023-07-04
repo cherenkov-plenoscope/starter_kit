@@ -9,7 +9,7 @@ import plenopy as pl
 import iminuit
 import scipy
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 """
 Objective
@@ -45,19 +45,19 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = json_numpy.read_tree(
+passing_trajectory_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
 # energy
 # ------
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["point_spread_function"]
 
@@ -332,7 +332,7 @@ for sk in irf_config["config"]["sites"]:
                         "theta_deg_relative_uncertainty": ene_rad_co[1],
                     }
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_square_histogram_vs_energy_vs_core_radius.json".format(
@@ -342,7 +342,7 @@ for sk in irf_config["config"]["sites"]:
                 h_ene_rad,
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_square_histogram_vs_energy.json".format(
@@ -352,7 +352,7 @@ for sk in irf_config["config"]["sites"]:
                 h_ene,
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_containment_vs_energy_vs_core_radius.json".format(
@@ -362,7 +362,7 @@ for sk in irf_config["config"]["sites"]:
                 c_ene_rad,
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(
                     site_particle_dir,
                     "{theta_key:s}_containment_vs_energy.json".format(

@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
-import json_numpy
+import json_utils
 import sebastians_matplotlib_addons as seb
 
 
@@ -16,11 +16,11 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
-airshower_fluxes = json_numpy.read_tree(
+airshower_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["interpolation"]
 

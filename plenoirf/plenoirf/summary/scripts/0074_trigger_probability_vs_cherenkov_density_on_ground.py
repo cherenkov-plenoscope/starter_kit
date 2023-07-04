@@ -6,7 +6,7 @@ import numpy as np
 import sparse_numeric_table as spt
 import plenoirf as irf
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -21,12 +21,12 @@ SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
 trigger_modi = {}
-trigger_modi["passing_trigger"] = json_numpy.read_tree(
+trigger_modi["passing_trigger"] = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 trigger_modi[
     "passing_trigger_if_only_accepting_not_rejecting"
-] = json_numpy.read_tree(
+] = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"],
         "0054_passing_trigger_if_only_accepting_not_rejecting",
@@ -81,7 +81,7 @@ for sk in SITES:
                 default=np.nan,
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(site_particle_dir, tm + ".json"),
                 {
                     "Cherenkov_density_bin_edges_per_m2": density_bin_edges_per_m2,

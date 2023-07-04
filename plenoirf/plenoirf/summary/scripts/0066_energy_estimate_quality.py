@@ -9,7 +9,7 @@ import pandas
 import numpy as np
 import sklearn
 import pickle
-import json_numpy
+import json_utils
 from sklearn import neural_network
 from sklearn import ensemble
 from sklearn import model_selection
@@ -28,21 +28,21 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = json_numpy.read_tree(
+passing_trajectory_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
-reconstructed_energy = json_numpy.read_tree(
+reconstructed_energy = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"], "0065_learning_airshower_maximum_and_energy"
     ),
 )
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
@@ -109,7 +109,7 @@ for sk in SITES:
         cm["reco_given_true"] = cm.pop("counts_normalized_on_ax0")
         cm["reco_given_true_abs_unc"] = cm.pop("counts_normalized_on_ax0_au")
 
-        json_numpy.write(os.path.join(pa["out_dir"], sk, pk + ".json"), cm)
+        json_utils.write(os.path.join(pa["out_dir"], sk, pk + ".json"), cm)
 
         # performace
         if pk == "gamma":

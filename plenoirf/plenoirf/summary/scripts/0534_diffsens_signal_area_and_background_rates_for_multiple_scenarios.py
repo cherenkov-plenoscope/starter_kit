@@ -5,7 +5,7 @@ import numpy as np
 import plenoirf as irf
 import flux_sensitivity
 import os
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -22,20 +22,20 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 # load
 # ----
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 
-Q = json_numpy.read_tree(
+Q = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-M = json_numpy.read_tree(
+M = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
 )
 
-R = json_numpy.read_tree(
+R = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0530_diffsens_background_diff_rates")
 )
 
@@ -64,7 +64,7 @@ for sk in SITES:
                 scenario_key=dk,
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(
                     pa["out_dir"], sk, ok, dk, "gamma", "scenario.json"
                 ),
@@ -83,7 +83,7 @@ for sk in SITES:
                 scenario_G_matrix_au=scenario["G_matrix_au"],
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(pa["out_dir"], sk, ok, dk, "gamma", "area.json"),
                 {
                     "energy_binning_key": energy_bin["key"],
@@ -107,7 +107,7 @@ for sk in SITES:
                     scenario_B_matrix_au=scenario["B_matrix_au"],
                 )
 
-                json_numpy.write(
+                json_utils.write(
                     os.path.join(pa["out_dir"], sk, ok, dk, ck, "rate.json"),
                     {
                         "energy_binning_key": energy_bin["key"],

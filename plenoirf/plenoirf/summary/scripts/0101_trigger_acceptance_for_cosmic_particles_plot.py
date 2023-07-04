@@ -4,7 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -18,13 +18,13 @@ os.makedirs(pa["out_dir"], exist_ok=True)
 SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 
-cr = json_numpy.read_tree(
+cr = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"], "0100_trigger_acceptance_for_cosmic_particles"
     )
 )
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance"]
 

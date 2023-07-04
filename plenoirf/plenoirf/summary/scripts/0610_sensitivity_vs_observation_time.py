@@ -8,7 +8,7 @@ from plenoirf.analysis import spectral_energy_distribution as sed_styles
 import cosmic_fluxes
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -25,7 +25,7 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 # load
 # ----
-dS = json_numpy.read_tree(
+dS = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0540_diffsens_estimate")
 )
 
@@ -43,7 +43,7 @@ num_systematic_uncertainties = len(systematic_uncertainties)
 
 for pe in pivot_energies:
 
-    fls = json_numpy.read(
+    fls = json_utils.read(
         os.path.join("fermi_lat", "dnde_vs_observation_time_vs_energy.json")
     )
     assert fls["dnde"]["unit"] == "cm-2 MeV-1 ph s-1"
@@ -63,7 +63,7 @@ for pe in pivot_energies:
         - 1
     )
 
-    energy_bin = json_numpy.read(
+    energy_bin = json_utils.read(
         os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
     )["trigger_acceptance_onregion"]
 

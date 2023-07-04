@@ -5,7 +5,7 @@ import propagate_uncertainties as pru
 import plenoirf as irf
 import cosmic_fluxes
 import os
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -19,11 +19,11 @@ SITES = irf_config["config"]["sites"]
 PARTICLES = irf_config["config"]["particles"]
 ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
-onregion_acceptance = json_numpy.read_tree(
+onregion_acceptance = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
@@ -31,13 +31,13 @@ fenergy_bin = energy_binning["interpolation"]
 
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = json_numpy.read_tree(
+airshower_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
 # gamma-ray-flux of reference source
 # ----------------------------------
-gamma_source = json_numpy.read(
+gamma_source = json_utils.read(
     os.path.join(
         pa["summary_dir"], "0009_flux_of_gamma_rays", "reference_source.json"
     )
@@ -92,7 +92,7 @@ for sk in SITES:
             dRdE=dRdE, dRdE_au=dRdE_au, E_edges=fenergy_bin["edges"],
         )
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(
                 pa["out_dir"], sk, ok, "gamma", "differential_rate.json"
             ),
@@ -106,7 +106,7 @@ for sk in SITES:
                 "absolute_uncertainty": dRdE_au,
             },
         )
-        json_numpy.write(
+        json_utils.write(
             os.path.join(pa["out_dir"], sk, ok, "gamma", "integral_rate.json"),
             {
                 "comment": comment_integral
@@ -149,7 +149,7 @@ for sk in SITES:
                 dRdE=dRdE, dRdE_au=dRdE_au, E_edges=fenergy_bin["edges"],
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(
                     pa["out_dir"], sk, ok, ck, "differential_rate.json"
                 ),
@@ -160,7 +160,7 @@ for sk in SITES:
                     "absolute_uncertainty": dRdE_au,
                 },
             )
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(pa["out_dir"], sk, ok, ck, "integral_rate.json"),
                 {
                     "comment": comment_integral + " VS onregion-radius",

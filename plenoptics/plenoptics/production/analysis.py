@@ -1,7 +1,7 @@
 import json_line_logger
 import os
 import glob
-import json_numpy
+import json_utils
 import plenopy
 from . import observations
 from .. import sources
@@ -39,7 +39,7 @@ def _analysys_run_job(job):
 
 def _analysis_reduce_make_jobs(work_dir, task_key="analysis"):
     cfg_dir = os.path.join(work_dir, "config")
-    config = json_numpy.read_tree(cfg_dir)
+    config = json_utils.tree.read(cfg_dir)
     jobs = []
     for instrument_key in config["observations"]["instruments"]:
         if instrument_key not in config["instruments"]:
@@ -80,7 +80,7 @@ def reduce_analysis_jobs(mapdir, outpath):
     for path in paths:
         basename = os.path.basename(path)
         number = str.split(basename, ".")[0]
-        out[number] = json_numpy.read(path)
+        out[number] = json_utils.read(path)
 
-    json_numpy.write(outpath + ".incomplete", out, indent=None)
+    json_utils.write(outpath + ".incomplete", out, indent=None)
     os.rename(outpath + ".incomplete", outpath)

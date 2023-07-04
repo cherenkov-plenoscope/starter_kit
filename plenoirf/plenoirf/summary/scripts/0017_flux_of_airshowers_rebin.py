@@ -4,7 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 """
 Rebin the diff. flux of cosmic-rays dFdE into the energy-binning used
@@ -26,11 +26,11 @@ COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 
 # load
 # ----
-airshower_fluxes = json_numpy.read_tree(
+airshower_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0015_flux_of_airshowers")
 )
 
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 
@@ -69,7 +69,7 @@ for sk in SITES:
         diff_flux[sk][pk] = dFdE
         diff_flux_au[sk][pk] = dFdE_au
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(pa["out_dir"], sk, pk + ".json"),
             {
                 "energy_binning_key": energy_bin["key"],

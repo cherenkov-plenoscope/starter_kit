@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import plenoirf
-import json_numpy
+import json_utils
 import subprocess
 import homogeneous_transformation as htra
 import sebastians_matplotlib_addons as sebplt
@@ -201,7 +201,7 @@ merlict_propagate["config"] = {
     "use_multithread_when_possible": True,
 }
 
-portal_scenery = json_numpy.read(
+portal_scenery = json_utils.read(
     os.path.join("resources", "acp", "71m", "scenery", "scenery.json")
 )
 
@@ -288,11 +288,11 @@ sun_light_num_photons = int(
 work_dir = "projection_of_sun"
 os.makedirs(work_dir, exist_ok=True)
 
-json_numpy.write(
+json_utils.write(
     os.path.join(work_dir, "scenery.json"), portal_mirror_scenery, indent=4,
 )
 
-json_numpy.write(
+json_utils.write(
     os.path.join(work_dir, "config.json"),
     merlict_propagate["config"],
     indent=4,

@@ -5,7 +5,7 @@ import sparse_numeric_table as spt
 import sebastians_matplotlib_addons as seb
 import os
 import copy
-import json_numpy
+import json_utils
 import numpy as np
 import pandas
 import propagate_uncertainties as pu
@@ -23,17 +23,17 @@ PLT = sum_config["plot"]
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["point_spread_function"]
 
-passing_array_trigger = json_numpy.read_tree(
+passing_array_trigger = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"],
         "0820_passing_trigger_of_outer_array_of_small_telescopes",
     )
 )
-passing_plenoscope_trigger = json_numpy.read_tree(
+passing_plenoscope_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 

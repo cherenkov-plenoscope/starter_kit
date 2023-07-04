@@ -4,7 +4,7 @@ import numpy as np
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -15,7 +15,7 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-psf = json_numpy.read_tree(
+psf = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0213_trajectory_benchmarking")
 )
 

@@ -1,6 +1,6 @@
 import phantom_source
 import numpy as np
-import json_numpy
+import json_utils
 import corsika_primary
 import os
 import plenopy
@@ -76,7 +76,7 @@ def make_response_to_point(
 def make_source_config_from_job(job):
     prng = np.random.Generator(np.random.PCG64(job["number"]))
 
-    point_cfg = json_numpy.read(
+    point_cfg = json_utils.read(
         os.path.join(job["work_dir"], "config", "observations", "point.json")
     )
     (cx_deg, cy_deg,) = corsika_primary.random.distributions.draw_x_y_in_disc(
@@ -123,7 +123,7 @@ def analysis_run_job(job):
     os.makedirs(outdir, exist_ok=True)
 
     inpath = os.path.join(indir, nkey)
-    truth = json_numpy.read(inpath + ".json")
+    truth = json_utils.read(inpath + ".json")
     with open(inpath, "rb") as f:
         raw_sensor_response = plenopy.raw_light_field_sensor_response.read(f)
 
@@ -149,7 +149,7 @@ def analysis_run_job(job):
         )
     )
 
-    cfg_analysis = json_numpy.read(
+    cfg_analysis = json_utils.read(
         os.path.join(job["work_dir"], "config", "analysis", "point.json")
     )
 
@@ -176,7 +176,7 @@ def analysis_run_job(job):
     report["object_distance_m"] = truth["object_distance_m"]
 
     outpath = os.path.join(outdir, nkey + ".json")
-    json_numpy.write(outpath + ".incomplete", report)
+    json_utils.write(outpath + ".incomplete", report)
     os.rename(outpath + ".incomplete", outpath)
 
     try:

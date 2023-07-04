@@ -4,7 +4,7 @@ import plenoirf
 import numpy as np
 import solid_angle_utils
 import plenoptics
-import json_numpy
+import json_utils
 import sebastians_matplotlib_addons as sebplt
 import argparse
 import pandas
@@ -25,7 +25,7 @@ out_dir = args.out_dir
 
 os.makedirs(out_dir, exist_ok=True)
 
-config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+config = json_utils.tree.read(os.path.join(work_dir, "config"))
 
 __INSTRUMENTS = plenoptics.analysis.guide_stars.list_instruments_observing_guide_stars(
     config=config
@@ -56,7 +56,7 @@ for instrument_key in INSTRUMENTS:
         [max_instrument_fov_half_angle_deg, instrument_fov_half_angle_deg]
     )
 
-    image_responses = json_numpy.read(
+    image_responses = json_utils.read(
         os.path.join(work_dir, "analysis", instrument_key, "star.json")
     )
 
@@ -304,4 +304,4 @@ for instrument_key in INSTRUMENTS:
     }
 
 with open(os.path.join(out_dir, "average_containment80.txt"), "wt") as f:
-    f.write(json_numpy.dumps(out_average_angle80_rad, indent=4))
+    f.write(json_utils.dumps(out_average_angle80_rad, indent=4))

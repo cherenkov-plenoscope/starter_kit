@@ -4,7 +4,7 @@ import numpy as np
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -39,7 +39,7 @@ for sk in irf_config["config"]["sites"]:
             quality_features=irf.reconstruction.trajectory_quality.QUALITY_FEATURES,
         )
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(site_particle_dir, "trajectory_quality.json"),
             {
                 "comment": (
@@ -57,7 +57,7 @@ for sk in irf_config["config"]["sites"]:
         mask = quality >= sum_config["quality"]["min_trajectory_quality"]
         idx_passed = event_frame[spt.IDX][mask]
 
-        json_numpy.write(
+        json_utils.write(
             path=os.path.join(site_particle_dir, "idx.json"),
             out_dict=idx_passed,
         )

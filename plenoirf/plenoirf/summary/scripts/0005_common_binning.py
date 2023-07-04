@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import plenoirf as irf
 import os
-import json_numpy
+import json_utils
 import binning_utils
 import solid_angle_utils
 
@@ -41,7 +41,7 @@ for scenario_key in sum_config["energy_binning"]["fine"]:
         "unit": "GeV",
     }
 
-json_numpy.write(os.path.join(pa["out_dir"], "energy.json"), energy)
+json_utils.write(os.path.join(pa["out_dir"], "energy.json"), energy)
 
 # max scatter angle
 # -----------------
@@ -69,4 +69,4 @@ for pk in PARTICLES:
     _sc["widths"] = binning_utils.widths(_sc["edges"])
     msa[pk] = _sc
 
-json_numpy.write(os.path.join(pa["out_dir"], "scatter.json"), msa)
+json_utils.write(os.path.join(pa["out_dir"], "scatter.json"), msa)

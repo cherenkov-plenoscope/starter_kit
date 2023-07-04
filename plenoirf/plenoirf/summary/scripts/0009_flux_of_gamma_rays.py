@@ -2,7 +2,7 @@
 import sys
 import plenoirf as irf
 import os
-import json_numpy
+import json_utils
 import cosmic_fluxes
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -13,7 +13,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["interpolation"]
 
@@ -23,7 +23,7 @@ fermi_3fgl = cosmic_fluxes.fermi_3fgl_catalog()
 
 # export catalog locally
 # ----------------------
-json_numpy.write(
+json_utils.write(
     os.path.join(pa["out_dir"], "fermi_3fgl_catalog.json"), fermi_3fgl
 )
 
@@ -38,7 +38,7 @@ json_numpy.write(
     energy_supports_GeV=energy_bin["centers"],
 )
 
-json_numpy.write(
+json_utils.write(
     os.path.join(os.path.join(pa["out_dir"], "reference_source.json")),
     {
         "name": name,

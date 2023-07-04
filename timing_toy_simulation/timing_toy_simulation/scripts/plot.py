@@ -5,7 +5,7 @@ import sparse_numeric_table as spt
 import os
 import numpy as np
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 import binning_utils as bu
 import solid_angle_utils
 
@@ -15,7 +15,7 @@ work_dir = argv[1]
 plot_dir = os.path.join(work_dir, "plot")
 
 with open(os.path.join(work_dir, "config.json"), "rt") as f:
-    config = json_numpy.loads(f.read())
+    config = json_utils.loads(f.read())
 
 # seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 prng = np.random.Generator(np.random.PCG64(64))

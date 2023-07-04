@@ -5,7 +5,7 @@ import plenopy
 import numpy as np
 import scipy
 import plenoptics as abe
-import json_numpy
+import json_utils
 import sebastians_matplotlib_addons as sebplt
 import sys
 import argparse
@@ -30,8 +30,8 @@ sebplt.matplotlib.rcParams.update(
 plot_dir = args.plot_dir
 os.makedirs(plot_dir, exist_ok=True)
 
-mirror_dimensions = json_numpy.read(args.dimensions_path)
-mirror_deformations = json_numpy.read(args.deformations_path)
+mirror_dimensions = json_utils.read(args.dimensions_path)
+mirror_deformations = json_utils.read(args.deformations_path)
 
 figstyle = {"rows": 960, "cols": 1280, "fontsize": 1.0}
 ax_span = [0.075, 0.125, 0.8, 0.8]

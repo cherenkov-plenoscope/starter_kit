@@ -5,7 +5,7 @@ import datetime
 import io
 import tarfile
 import scipy.interpolate
-import json_numpy
+import json_utils
 import warnings
 
 
@@ -239,7 +239,7 @@ def gradient_in_bin_edges(x, bin_edges):
 def read_json_but_forgive(path, default={}):
     try:
         with open(path, "rt") as f:
-            out = json_numpy.loads(f.read())
+            out = json_utils.loads(f.read())
     except Exception as e:
         print(e)
         warnings.warn("Failed to load '{:s}'".format(path))
@@ -248,7 +248,7 @@ def read_json_but_forgive(path, default={}):
 
 
 def dict_to_pretty_str(dictionary):
-    ss = json_numpy.dumps(dictionary, indent=2)
+    ss = json_utils.dumps(dictionary, indent=2)
     ss = ss.replace('"', "")
     ss = ss.replace("{", "")
     ss = ss.replace("}", "")

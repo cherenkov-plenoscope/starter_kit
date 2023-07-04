@@ -1,5 +1,5 @@
 import os
-import json_numpy
+import json_utils
 import copy
 import numpy as np
 import json_line_logger
@@ -36,7 +36,7 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
 
 
 def make_sceneries_make_jobs(work_dir):
-    config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+    config = json_utils.tree.read(os.path.join(work_dir, "config"))
     instruments_dir = os.path.join(work_dir, "instruments")
     jobs = []
     for instrument_key in config["instruments"]:
@@ -52,7 +52,7 @@ def make_sceneries_make_jobs(work_dir):
 
 
 def make_sceneries_run_job(job):
-    config = json_numpy.read_tree(os.path.join(job["work_dir"], "config"))
+    config = json_utils.tree.read(os.path.join(job["work_dir"], "config"))
     instrument_dir = os.path.join(
         job["work_dir"], "instruments", job["instrument_key"]
     )
@@ -88,13 +88,13 @@ def make_sceneries_run_job(job):
 
     scenery_dir = os.path.join(instrument_dir, "input", "scenery")
     os.makedirs(scenery_dir, exist_ok=True)
-    json_numpy.write(
+    json_utils.write(
         os.path.join(scenery_dir, "scenery.json"), merlict_scenery
     )
 
 
 def map_and_reduce_make_jobs(work_dir):
-    config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+    config = json_utils.tree.read(os.path.join(work_dir, "config"))
     instruments_dir = os.path.join(work_dir, "instruments")
 
     jobs = []
@@ -148,7 +148,7 @@ def map_and_reduce_make_jobs(work_dir):
 
 
 def reduce_run_job(job):
-    config = json_numpy.read_tree(os.path.join(job["work_dir"], "config"))
+    config = json_utils.tree.read(os.path.join(job["work_dir"], "config"))
 
     instrument_dir = os.path.join(
         job["work_dir"], "instruments", job["instrument_key"],
@@ -175,7 +175,7 @@ def reduce_run_job(job):
 
 
 def plot_make_jobs(work_dir):
-    config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+    config = json_utils.tree.read(os.path.join(work_dir, "config"))
     instruments_dir = os.path.join(work_dir, "instruments")
 
     jobs = []

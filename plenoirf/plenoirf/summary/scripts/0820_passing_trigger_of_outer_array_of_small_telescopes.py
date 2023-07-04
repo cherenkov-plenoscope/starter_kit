@@ -5,7 +5,7 @@ import sparse_numeric_table as spt
 import sebastians_matplotlib_addons as seb
 import os
 import copy
-import json_numpy
+import json_utils
 import numpy as np
 import binning_utils
 import atmospheric_cherenkov_response
@@ -23,7 +23,7 @@ PLT = sum_config["plot"]
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-plenoscope_trigger_vs_cherenkov_density = json_numpy.read_tree(
+plenoscope_trigger_vs_cherenkov_density = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"],
         "0074_trigger_probability_vs_cherenkov_density_on_ground",
@@ -253,7 +253,7 @@ for sk in SITES:
             sk_pk_ak_dir = os.path.join(pa["out_dir"], sk, pk, ak)
             os.makedirs(sk_pk_ak_dir, exist_ok=True)
 
-            json_numpy.write(
+            json_utils.write(
                 path=os.path.join(sk_pk_ak_dir, "idx.json"),
                 out_dict=out[sk][pk][ak],
             )

@@ -6,7 +6,7 @@ import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
 import cosmic_fluxes
-import json_numpy
+import json_utils
 import binning_utils
 import propagate_uncertainties
 import copy
@@ -27,16 +27,16 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 COSMIC_RAYS = copy.deepcopy(PARTICLES)
 COSMIC_RAYS.pop("gamma")
 
-onregion_rates = json_numpy.read_tree(
+onregion_rates = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"], "0320_onregion_trigger_rates_for_cosmic_rays"
     )
 )
-onregion_acceptance = json_numpy.read_tree(
+onregion_acceptance = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
@@ -292,7 +292,7 @@ for sk in SITES:
             x=rates_cosmic_rays_per_s, x_au=rates_cosmic_rays_per_s_au
         )
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_ok_dir, "rates_of_cosmic_rays.json"),
             rates_of_cosmic_rays,
             indent=4,
@@ -344,7 +344,7 @@ for sk in SITES:
                 dRdE_per_s_per_GeV[ebin] * energy_fine_bin["widths"][ebin]
             )
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_ok_dir, "rate_of_gamma_rays.json"),
             {"gamma": rate_gamma_rays_per_s},
             indent=4,

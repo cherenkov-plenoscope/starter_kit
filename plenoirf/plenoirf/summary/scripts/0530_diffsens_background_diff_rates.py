@@ -7,7 +7,7 @@ import flux_sensitivity
 import plenoirf as irf
 import os
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -26,20 +26,20 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 # load
 # ----
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]
 
-energy_migration = json_numpy.read_tree(
+energy_migration = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0066_energy_estimate_quality")
 )
 
-acceptance = json_numpy.read_tree(
+acceptance = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-airshower_fluxes = json_numpy.read_tree(
+airshower_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0017_flux_of_airshowers_rebin")
 )
 
@@ -143,7 +143,7 @@ for sk in SITES:
 for sk in SITES:
     for ok in ONREGION_TYPES:
         for pk in COSMIC_RAYS:
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(pa["out_dir"], sk, ok, pk, "reco" + ".json"),
                 {
                     "comment": "Rate after all cuts VS reco energy",
@@ -155,7 +155,7 @@ for sk in SITES:
                 },
             )
 
-            json_numpy.write(
+            json_utils.write(
                 os.path.join(pa["out_dir"], sk, ok, pk, "true" + ".json"),
                 {
                     "comment": "Rate after all cuts VS true energy",

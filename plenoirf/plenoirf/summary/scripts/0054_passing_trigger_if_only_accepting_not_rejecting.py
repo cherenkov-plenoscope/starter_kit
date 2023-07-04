@@ -3,7 +3,7 @@ import sys
 import plenoirf as irf
 import sparse_numeric_table as spt
 import os
-import json_numpy
+import json_utils
 import numpy as np
 import copy
 
@@ -47,6 +47,6 @@ for sk in irf_config["config"]["sites"]:
             modus=tm,
         )
 
-        json_numpy.write(
+        json_utils.write(
             path=os.path.join(sk_pk_dir, "idx.json"), out_dict=idx_pasttrigger,
         )

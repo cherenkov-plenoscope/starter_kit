@@ -2,7 +2,7 @@
 import sys
 import plenoirf as irf
 import os
-import json_numpy
+import json_utils
 import cosmic_fluxes
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -52,4 +52,4 @@ for ck in cosmic_rays:
     assert out["energy"]["values"][-1] >= STOP_ENERGY
 
     with open(os.path.join(pa["out_dir"], ck + ".json"), "wt") as fout:
-        fout.write(json_numpy.dumps(out, indent=4))
+        fout.write(json_utils.dumps(out, indent=4))

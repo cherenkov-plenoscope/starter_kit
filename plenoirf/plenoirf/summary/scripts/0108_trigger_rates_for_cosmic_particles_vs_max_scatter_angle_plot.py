@@ -6,7 +6,7 @@ import os
 import copy
 import propagate_uncertainties as pu
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -22,15 +22,15 @@ COSMIC_RAYS = irf.utils.filter_particles_with_electric_charge(PARTICLES)
 SITES = irf_config["config"]["sites"]
 PLT = sum_config["plot"]
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
-scatter_bin = json_numpy.read(
+scatter_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "scatter.json")
 )
 
-rates = json_numpy.read_tree(
+rates = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"],
         "0107_trigger_rates_for_cosmic_particles_vs_max_scatter_angle",

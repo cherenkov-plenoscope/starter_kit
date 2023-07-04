@@ -6,7 +6,7 @@ import plenoirf as irf
 import atmospheric_cherenkov_response
 import sparse_numeric_table as spt
 import os
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -22,13 +22,13 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 
 opj = os.path.join
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     opj(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     opj(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = json_numpy.read_tree(
+passing_trajectory_quality = json_utils.tree.read(
     opj(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
 
@@ -46,7 +46,7 @@ pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
 ]
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     opj(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
@@ -170,7 +170,7 @@ for sk in SITES:
                 total_num_grid_cells=point_thrown["grid"]["num_bins_thrown"],
             )
 
-            json_numpy.write(
+            json_utils.write(
                 opj(pa["out_dir"], sk, ok, pk, "point.json"),
                 {
                     "comment": (
@@ -261,7 +261,7 @@ for sk in SITES:
                 total_num_grid_cells=diffuse_thrown["grid"]["num_bins_thrown"],
             )
 
-            json_numpy.write(
+            json_utils.write(
                 opj(pa["out_dir"], sk, ok, pk, "diffuse.json"),
                 {
                     "comment": (

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import pandas
 import numpy as np
-import json_numpy
+import json_utils
 import os
 import sebastians_matplotlib_addons as sebplt
 import binning_utils
@@ -27,8 +27,8 @@ instrument_key = args.instrument_key
 
 os.makedirs(out_dir, exist_ok=True)
 
-config = json_numpy.read_tree(os.path.join(work_dir, "config"))
-_point_reports = json_numpy.read(
+config = json_utils.tree.read(os.path.join(work_dir, "config"))
+_point_reports = json_utils.read(
     os.path.join(work_dir, "analysis", instrument_key, "point.json")
 )
 

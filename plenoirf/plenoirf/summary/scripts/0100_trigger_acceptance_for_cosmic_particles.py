@@ -5,7 +5,7 @@ import plenoirf as irf
 import atmospheric_cherenkov_response
 import sparse_numeric_table as spt
 import os
-import json_numpy
+import json_utils
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -26,7 +26,7 @@ pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
 ]
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance"]
 
@@ -95,7 +95,7 @@ for sk in SITES:
             value.append(_q_eff)
             absolute_uncertainty.append(_q_eff_au)
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(site_particle_dir, "point.json"),
             {
                 "comment": (
@@ -152,7 +152,7 @@ for sk in SITES:
             value.append(_q_eff)
             absolute_uncertainty.append(_q_eff_au)
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(site_particle_dir, "diffuse.json"),
             {
                 "comment": (

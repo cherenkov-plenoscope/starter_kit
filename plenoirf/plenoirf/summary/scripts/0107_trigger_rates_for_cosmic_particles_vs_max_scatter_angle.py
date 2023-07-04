@@ -6,7 +6,7 @@ import propagate_uncertainties as pru
 import sparse_numeric_table as spt
 import cosmic_fluxes
 import os
-import json_numpy
+import json_utils
 
 argv = irf.summary.argv_since_py(sys.argv)
 pa = irf.summary.paths_from_argv(argv)
@@ -19,20 +19,20 @@ COSMIC_RAYS = irf_config["config"]["particles"]
 _ = COSMIC_RAYS.pop("gamma")
 SITES = irf_config["config"]["sites"]
 
-acceptance = json_numpy.read_tree(
+acceptance = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"],
         "0102_trigger_acceptance_for_cosmic_particles_vs_max_scatter_angle",
     )
 )
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
 # cosmic-ray-flux
 # ----------------
-airshower_fluxes = json_numpy.read_tree(
+airshower_fluxes = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0017_flux_of_airshowers_rebin")
 )
 
@@ -90,7 +90,7 @@ for sk in SITES:
                 E_edges=energy_bin["edges"],
             )
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_ck_dir, "differential.json"),
             {
                 "comment": "Differential rate VS max. scatter angle VS energy",
@@ -99,7 +99,7 @@ for sk in SITES:
                 "dRdE_au": dRdE_au,
             },
         )
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_ck_dir, "integral.json"),
             {
                 "comment": "Intrgral rate VS max. scatter angle.",

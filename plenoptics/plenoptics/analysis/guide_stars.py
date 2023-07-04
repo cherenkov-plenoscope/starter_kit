@@ -1,5 +1,5 @@
 import numpy as np
-import json_numpy
+import json_utils
 import os
 from . import point_source_report
 
@@ -34,12 +34,12 @@ def list_guide_star_keys(config):
 
 
 def table_vmax(work_dir):
-    config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+    config = json_utils.tree.read(os.path.join(work_dir, "config"))
     out = {}
     for instrument_key in list_instruments_observing_guide_stars(config):
         out[instrument_key] = {}
         for guide_star_key in list_guide_star_keys(config):
-            report = json_numpy.read(
+            report = json_utils.read(
                 os.path.join(
                     work_dir,
                     "analysis",

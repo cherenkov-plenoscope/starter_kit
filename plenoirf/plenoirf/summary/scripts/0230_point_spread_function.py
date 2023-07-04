@@ -6,7 +6,7 @@ import sparse_numeric_table as spt
 import os
 import plenopy as pl
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -18,16 +18,16 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = json_numpy.read_tree(
+passing_trajectory_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
-reconstructed_energy = json_numpy.read_tree(
+reconstructed_energy = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"], "0065_learning_airshower_maximum_and_energy"
     ),
@@ -35,7 +35,7 @@ reconstructed_energy = json_numpy.read_tree(
 
 # energy
 # ------
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
@@ -135,7 +135,7 @@ for sk in irf_config["config"]["sites"]:
             out[tkey + "_rad"][ebin] = np.deg2rad(t_deg)
             out[tkey + "_relunc"][ebin] = t_relunc
 
-    json_numpy.write(
+    json_utils.write(
         os.path.join(
             site_particle_dir,
             "angular_resolution.json".format(containment_percents[con]),

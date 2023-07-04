@@ -5,7 +5,7 @@ import plenopy as pl
 import scipy
 import os
 import numpy as np
-import json_numpy
+import json_utils
 import sparse_numeric_table as spt
 import sebastians_matplotlib_addons as seb
 import glob
@@ -334,10 +334,10 @@ for sk in ["namibia"]:
                     binning=binning,
                 )
                 with open(reconstruction_path, "wt") as f:
-                    f.write(json_numpy.dumps(reconstruction))
+                    f.write(json_utils.dumps(reconstruction))
 
             with open(reconstruction_path, "rt") as f:
-                reconstruction = json_numpy.loads(f.read())
+                reconstruction = json_utils.loads(f.read())
 
             num_missing_iterations = (
                 TOMO_NUM_ITERATIONS - reconstruction["iteration"]
@@ -362,4 +362,4 @@ for sk in ["namibia"]:
                             simulation_truth=simulation_truth,
                         )
                 with open(reconstruction_path, "wt") as f:
-                    f.write(json_numpy.dumps(reconstruction))
+                    f.write(json_utils.dumps(reconstruction))

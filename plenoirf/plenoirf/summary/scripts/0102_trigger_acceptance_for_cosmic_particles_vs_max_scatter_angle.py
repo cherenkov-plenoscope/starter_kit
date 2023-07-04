@@ -5,7 +5,7 @@ import plenoirf as irf
 import atmospheric_cherenkov_response
 import sparse_numeric_table as spt
 import os
-import json_numpy
+import json_utils
 import magnetic_deflection as mdfl
 import solid_angle_utils
 
@@ -28,15 +28,15 @@ pointing_azimuth_deg = irf_config["config"]["plenoscope_pointing"][
 ]
 pointing_zenith_deg = irf_config["config"]["plenoscope_pointing"]["zenith_deg"]
 
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["trigger_acceptance_onregion"]
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
 
-scatter_bin = json_numpy.read(
+scatter_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "scatter.json")
 )
 
@@ -145,7 +145,7 @@ for sk in SITES:
             Q.append(S_Q)
             Q_au.append(S_Q_au)
 
-        json_numpy.write(
+        json_utils.write(
             os.path.join(sk_pk_dir, "diffuse.json"),
             {
                 "comment": (

@@ -3,7 +3,7 @@ import os
 import plenoirf
 import numpy as np
 import plenoptics as abe
-import json_numpy
+import json_utils
 import sebastians_matplotlib_addons as sebplt
 import argparse
 
@@ -28,13 +28,13 @@ cmap_vmax = args.vmax
 
 os.makedirs(out_dir, exist_ok=True)
 
-config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+config = json_utils.tree.read(os.path.join(work_dir, "config"))
 instrument_sensor_key = config["instruments"][instrument_key]["sensor"]
 
 GRID_ANGLE_DEG = 0.1
 CMAPS = abe.plot.CMAPS
 
-point_source_report = json_numpy.read(
+point_source_report = json_utils.read(
     os.path.join(
         work_dir, "analysis", instrument_key, "star", star_key + ".json"
     )

@@ -9,7 +9,7 @@ import plenopy as pl
 import iminuit
 import scipy
 import sebastians_matplotlib_addons as seb
-import json_numpy
+import json_utils
 
 
 argv = irf.summary.argv_since_py(sys.argv)
@@ -21,16 +21,16 @@ seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 os.makedirs(pa["out_dir"], exist_ok=True)
 
-passing_trigger = json_numpy.read_tree(
+passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")
 )
-passing_quality = json_numpy.read_tree(
+passing_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0056_passing_basic_quality")
 )
-passing_trajectory_quality = json_numpy.read_tree(
+passing_trajectory_quality = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0059_passing_trajectory_quality")
 )
-energy_bin = json_numpy.read(
+energy_bin = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )["point_spread_function"]
 

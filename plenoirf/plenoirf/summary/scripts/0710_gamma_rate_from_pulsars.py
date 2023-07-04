@@ -6,7 +6,7 @@ import os
 import sebastians_matplotlib_addons as seb
 import lima1983analysis
 import cosmic_fluxes
-import json_numpy
+import json_utils
 import binning_utils
 import propagate_uncertainties
 import copy
@@ -27,16 +27,16 @@ ONREGION_TYPES = sum_config["on_off_measuremnent"]["onregion_types"]
 COSMIC_RAYS = copy.deepcopy(PARTICLES)
 COSMIC_RAYS.pop("gamma")
 
-onregion_rates = json_numpy.read_tree(
+onregion_rates = json_utils.tree.read(
     os.path.join(
         pa["summary_dir"], "0320_onregion_trigger_rates_for_cosmic_rays"
     )
 )
-onregion_acceptance = json_numpy.read_tree(
+onregion_acceptance = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0300_onregion_trigger_acceptance")
 )
 
-energy_binning = json_numpy.read(
+energy_binning = json_utils.read(
     os.path.join(pa["summary_dir"], "0005_common_binning", "energy.json")
 )
 energy_bin = energy_binning["trigger_acceptance_onregion"]

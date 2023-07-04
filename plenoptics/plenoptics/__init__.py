@@ -6,7 +6,7 @@ from . import plot
 
 import os
 import numpy as np
-import json_numpy
+import json_utils
 import json_line_logger
 import plenopy
 import pkg_resources
@@ -71,7 +71,7 @@ def run(work_dir, pool, logger=json_line_logger.LoggerStdout()):
 
 def _plot_mirror_deformations_make_jobs(work_dir):
     cfg_dir = os.path.join(work_dir, "config")
-    config = json_numpy.read_tree(cfg_dir)
+    config = json_utils.tree.read(cfg_dir)
 
     jobs = []
 
@@ -110,7 +110,7 @@ def _plot_mirror_deformations_make_jobs(work_dir):
 
 def _plot_depth_make_jobs(work_dir):
     cfg_dir = os.path.join(work_dir, "config")
-    config = json_numpy.read_tree(cfg_dir)
+    config = json_utils.tree.read(cfg_dir)
 
     jobs = []
     for instrument_key in config["observations"]["instruments"]:
@@ -155,7 +155,7 @@ def _plot_depth_make_jobs(work_dir):
 
 def _plot_phantom_source_make_jobs(work_dir):
     cfg_dir = os.path.join(work_dir, "config")
-    config = json_numpy.read_tree(cfg_dir)
+    config = json_utils.tree.read(cfg_dir)
 
     jobs = []
     for instrument_key in config["observations"]["instruments"]:
@@ -233,7 +233,7 @@ def plot_guide_stars(work_dir, pool, logger):
 
 
 def mv_observation(work_dir, observation_key="phantom", postfix=".old"):
-    config = json_numpy.read_tree(os.path.join(work_dir, "config"))
+    config = json_utils.tree.read(os.path.join(work_dir, "config"))
 
     # responses
     for instrument_key in config["observations"]["instruments"]:
