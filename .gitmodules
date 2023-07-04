@@ -67,3 +67,6 @@
 [submodule "homogeneous_transformation"]
 	path = homogeneous_transformation
 	url = git@github.com:cherenkov-plenoscope/homogeneous_transformation.git
+[submodule "json_utils"]
+	path = json_utils
+	url = git@github.com:cherenkov-plenoscope/json_utils.git

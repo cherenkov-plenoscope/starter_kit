@@ -114,6 +114,7 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "json_line_logger_sebastian-achim-mueller",
     },
     {"path": "json_numpy", "name": "json_numpy_sebastian-achim-mueller"},
+    {"path": "json_utils", "name": "json_utils_sebastian-achim-mueller"},
     {"path": "binning_utils", "name": "binning_utils_sebastian-achim-mueller"},
     {
         "path": "propagate_uncertainties",
