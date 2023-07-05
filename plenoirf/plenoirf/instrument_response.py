@@ -324,7 +324,7 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                 prim["starting_height_asl_m"] = (
                     cpw.CM2M * corsika_evth[cpw.I.EVTH.STARTING_HEIGHT_CM]
                 )
-                obs_lvl_intersection = utils.ray_plane_x_y_intersection(
+                obs_lvl_intersection = atmospheric_cherenkov_response.utils.ray_plane_x_y_intersection(
                     support=[0, 0, prim["starting_height_asl_m"]],
                     direction=[
                         prim["momentum_x_GeV_per_c"],

@@ -7,7 +7,7 @@ import plenoirf
 import network_file_system as nfs
 from magnetic_deflection import spherical_coordinates
 import sparse_numeric_table as spt
-from atmospheric_cherenkov_response import sites as acr_sites
+import atmospheric_cherenkov_response as acr
 from . import table
 
 
@@ -23,7 +23,7 @@ CONFIG = {
         "energy_range": {"start_GeV": 0.5, "stop_GeV": 1.5, "power_slope": 0},
     },
     "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 60.0,},
-    "site": {"namibia": acr_sites.init("namibia")},
+    "site": {"namibia": acr.sites.init("namibia")},
     "scatter": {
         "direction": {"radial_angle_deg": 3.25,},
         "position": {"radius_m": 640.0,},
@@ -215,7 +215,7 @@ def _calculate_primary_ray_wrt_starting_position(evth):
     assert 1 == evth[cpw.I.EVTH.NUM_OBSERVATION_LEVELS]
     primary_core_z_m = cpw.CM2M * evth[cpw.I.EVTH.HEIGHT_OBSERVATION_LEVEL(1)]
 
-    obs_lvl_intersection_m = plenoirf.utils.ray_plane_x_y_intersection(
+    obs_lvl_intersection_m = acr.utils.ray_plane_x_y_intersection(
         support=[0, 0, primary_starting_z_m],
         direction=primary_direction,
         plane_z=primary_core_z_m,
@@ -358,7 +358,7 @@ def run_job(job):
             base["primary_direction_z"] = p_d[2]
 
             # cross-check
-            core_position_xy_m = plenoirf.utils.ray_plane_x_y_intersection(
+            core_position_xy_m = acr.utils.ray_plane_x_y_intersection(
                 support=[
                     base["primary_start_x_m"],
                     base["primary_start_y_m"],
