@@ -1,11 +1,11 @@
 import numpy as np
-from atmospheric_cherenkov_response.demonstration import acr_table
+from atmospheric_cherenkov_response.production import table as acr_table
 
 # basics
 # ------
 
 STRUCTURE = {}
-for key in acr_table.STRUCTURE[key]:
+for key in acr_table.STRUCTURE:
     STRUCTURE[key] = acr_table.STRUCTURE[key].copy()
 
 
