@@ -103,7 +103,7 @@ def build_merlict_cpp(num_threads):
 LOCAL_PYHTHON_PACKAGES = [
     {
         "path": "solid_angle_utils",
-        "name": "solid_angle_utils_sebastian-achim-mueller",
+        "name": "solid_angle_utils",
     },
     {
         "path": "homogeneous_transformation",
