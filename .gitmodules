@@ -67,3 +67,6 @@
 [submodule "json_utils"]
 	path = json_utils
 	url = git@github.com:cherenkov-plenoscope/json_utils.git
+[submodule "rename_after_writing"]
+	path = rename_after_writing
+	url = https://github.com/cherenkov-plenoscope/rename_after_writing

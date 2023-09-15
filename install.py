@@ -162,8 +162,8 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "timing_toy_simulation", "name": "timing_toy_simulation"},
     {"path": "phantom_source", "name": "phantom_source"},
     {
-        "path": "network_file_system",
-        "name": "network_file_system_sebastian-achim-mueller",
+        "path": "rename_after_writing",
+        "name": "rename_after_writing",
     },
     {"path": "plenoptics", "name": "plenoptics"},
     {
