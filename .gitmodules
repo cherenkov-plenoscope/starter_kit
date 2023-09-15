@@ -55,9 +55,6 @@
 [submodule "json_line_logger"]
 	path = json_line_logger
 	url = git@github.com:cherenkov-plenoscope/json_line_logger.git
-[submodule "network_file_system"]
-	path = network_file_system
-	url = git@github.com:cherenkov-plenoscope/network_file_system.git
 [submodule "atmospheric_cherenkov_response"]
 	path = atmospheric_cherenkov_response
 	url = git@github.com:cherenkov-plenoscope/atmospheric_cherenkov_response.git
