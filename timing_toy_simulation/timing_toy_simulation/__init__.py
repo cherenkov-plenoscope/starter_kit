@@ -4,7 +4,7 @@ import numpy as np
 import corsika_primary as cpw
 import json_utils
 import plenoirf
-import network_file_system as nfs
+import rename_after_writing as rnw
 from magnetic_deflection import spherical_coordinates
 import sparse_numeric_table as spt
 import atmospheric_cherenkov_response as acr
@@ -294,7 +294,7 @@ def _export_event_table(path, tabrec):
     spt.write(
         path=tmp_path, table=event_table, structure=table.STRUCTURE,
     )
-    nfs.move(src=tmp_path, dst=path)
+    rnw.move(src=tmp_path, dst=path)
 
 
 def run_job(job):
@@ -311,7 +311,7 @@ def run_job(job):
     steering_path = os.path.join(job_dir, "steering.json")
     with open(steering_path + ".incomplete", "wt") as f:
         f.write(json_utils.dumps(steering))
-    nfs.move(steering_path + ".incomplete", steering_path)
+    rnw.move(steering_path + ".incomplete", steering_path)
 
     tabrec = table.init_records()
 
@@ -552,8 +552,8 @@ def run_job(job):
         path=os.path.join(job_dir, "result.tar"), tabrec=tabrec,
     )
 
-    nfs.move(corsika_o_path + ".incomplete", corsika_o_path)
-    nfs.move(corsika_e_path + ".incomplete", corsika_e_path)
+    rnw.move(corsika_o_path + ".incomplete", corsika_o_path)
+    rnw.move(corsika_e_path + ".incomplete", corsika_e_path)
 
 
 def reduce_jobs(work_dir):
@@ -575,4 +575,4 @@ def reduce_jobs(work_dir):
         table=result_table,
         structure=table.STRUCTURE,
     )
-    nfs.move(src=result_path + ".incomplete", dst=result_path)
+    rnw.move(src=result_path + ".incomplete", dst=result_path)

@@ -34,7 +34,7 @@ import sparse_numeric_table as spt
 import magnetic_deflection as mdfl
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
-import network_file_system as nfs
+import rename_after_writing as rnw
 import atmospheric_cherenkov_response
 
 
@@ -182,7 +182,7 @@ def init(run_dir, config=None, config_file_paths=None):
     json_utils.write(
         path=opj(run_dir, "input", "config.json" + "tmp"), out_dict=config,
     )
-    nfs.move(
+    rnw.move(
         opj(run_dir, "input", "config.json" + "tmp"),
         opj(run_dir, "input", "config.json"),
     )
@@ -190,15 +190,15 @@ def init(run_dir, config=None, config_file_paths=None):
     if config_file_paths == None:
         config_file_paths = make_example_config_file_paths()
 
-    nfs.copy(
+    rnw.copy(
         src=config_file_paths["plenoscope_scenery_path"],
         dst=opj(run_dir, "input", "scenery"),
     )
-    nfs.copy(
+    rnw.copy(
         src=config_file_paths["merlict_plenoscope_propagator_config_path"],
         dst=opj(run_dir, "input", "merlict_propagation_config.json"),
     )
-    nfs.copy(
+    rnw.copy(
         src=config_file_paths[
             "merlict_plenoscope_propagator_without_night_sky_background_config_path"
         ],

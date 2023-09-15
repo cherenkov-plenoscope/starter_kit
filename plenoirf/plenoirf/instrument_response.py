@@ -23,7 +23,7 @@ import plenopy as pl
 import sparse_numeric_table as spt
 import gamma_ray_reconstruction as gamrec
 import json_line_logger as jlogging
-import network_file_system as nfs
+import rename_after_writing as rnw
 import atmospheric_cherenkov_response
 import solid_angle_utils
 
@@ -170,7 +170,7 @@ def reduce(run_dir, production_key, site_key, particle_key, LAZY, logger=None):
         pl.photon_stream.loph.concatenate_tars(
             in_paths=_cer_run_paths, out_path=tmp_loph_abspath
         )
-        nfs.move(tmp_loph_abspath, loph_abspath)
+        rnw.move(tmp_loph_abspath, loph_abspath)
 
 
 def _append_bunch_ssize(cherenkovsise_dict, cherenkov_bunches):
@@ -504,24 +504,24 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
                         ),
                     )
 
-    nfs.copy(
+    rnw.copy(
         op.join(tmp_dir, "corsika.stdout"),
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stdout"),
     )
-    nfs.copy(
+    rnw.copy(
         op.join(tmp_dir, "corsika.stderr"),
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
     cpw.particles.dat_to_tape(
         dat_path=particle_pools_dat_path, tape_path=particle_pools_tar_path,
     )
-    nfs.copy(
+    rnw.copy(
         src=particle_pools_tar_path,
         dst=op.join(
             job["particles_dir"], _run_id_str(job) + "_particles.tar.gz"
         ),
     )
-    nfs.copy(
+    rnw.copy(
         src=op.join(tmp_dir, "grid.tar"),
         dst=op.join(job["feature_dir"], _run_id_str(job) + "_grid.tar"),
     )
@@ -620,11 +620,11 @@ def _run_merlict(job, cherenkov_pools_path, tmp_dir):
             stdout_path=op.join(tmp_dir, "merlict.stdout"),
             stderr_path=op.join(tmp_dir, "merlict.stderr"),
         )
-        nfs.copy(
+        rnw.copy(
             op.join(tmp_dir, "merlict.stdout"),
             op.join(job["log_dir"], _run_id_str(job) + "_merlict.stdout"),
         )
-        nfs.copy(
+        rnw.copy(
             op.join(tmp_dir, "merlict.stderr"),
             op.join(job["log_dir"], _run_id_str(job) + "_merlict.stderr"),
         )
@@ -727,7 +727,7 @@ def _run_loose_trigger(
                         tmp_past_trigger_dir, final_tarname
                     ),
                 )
-                nfs.copy(
+                rnw.copy(
                     src=op.join(tmp_past_trigger_dir, final_tarname),
                     dst=op.join(job["past_trigger_dir"], final_tarname),
                 )
@@ -805,7 +805,7 @@ def _classify_cherenkov_photons(
             )
             cer_phs_run.add(uid=ptp[spt.IDX], phs=cer_phs)
 
-    nfs.copy(
+    rnw.copy(
         src=op.join(tmp_dir, "reconstructed_cherenkov.tar"),
         dst=op.join(
             job["past_trigger_reconstructed_cherenkov_dir"],
@@ -937,7 +937,7 @@ def _export_event_table(job, tmp_dir, tabrec):
         table=event_table,
         structure=table.STRUCTURE,
     )
-    nfs.copy(
+    rnw.copy(
         src=op.join(tmp_dir, "event_table.tar"),
         dst=op.join(job["feature_dir"], _run_id_str(job) + "_event_table.tar"),
     )
@@ -962,7 +962,7 @@ def _export_grid_region_of_interest_if_passed_loose_trigger(
                 utils.tar_append(
                     tarout=otar, file_name=filename, file_bytes=bimg,
                 )
-    nfs.copy(
+    rnw.copy(
         src=opath,
         dst=op.join(
             job["feature_dir"], _run_id_str(job) + "_grid_roi_pasttrigger.tar"
@@ -981,7 +981,7 @@ def _export_job_to_log_dir(job):
     job_path = op.join(job["log_dir"], _run_id_str(job) + "_job.json")
     with open(job_path + ".tmp", "wt") as f:
         f.write(json_utils.dumps(job, indent=4))
-    nfs.move(job_path + ".tmp", job_path)
+    rnw.move(job_path + ".tmp", job_path)
 
 
 def run_job(job):
@@ -1095,4 +1095,4 @@ def run_job(job):
     if not job["keep_tmp"]:
         shutil.rmtree(tmp_dir)
     logger.info("ending run")
-    nfs.move(log_path + ".tmp", log_path)
+    rnw.move(log_path + ".tmp", log_path)

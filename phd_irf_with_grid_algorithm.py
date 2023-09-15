@@ -1,5 +1,5 @@
 import plenoirf
-import network_file_system as nfs
+import rename_after_writing as rnw
 import json_utils
 import numpy as np
 import os
@@ -398,7 +398,7 @@ json_utils.write(
     MERLICT_PROPAGATION_CONFIG
 )
 if not os.path.exists(merlict_cfg_files['plenoscope_scenery_path']):
-    nfs.copy(
+    rnw.copy(
         src=os.path.join(tmp_cfg_dir, "light_field_geometry", "input", "scenery"),
         dst=merlict_cfg_files['plenoscope_scenery_path']
     )
@@ -422,17 +422,17 @@ for scenario_key in scenarios:
         cfg_files=merlict_cfg_files
     )
 
-    nfs.copy(
+    rnw.copy(
         src=os.path.join(tmp_cfg_dir, "light_field_geometry"),
         dst=os.path.join(scenario_path, "light_field_geometry")
     )
 
-    nfs.copy(
+    rnw.copy(
         src=os.path.join(tmp_cfg_dir, "magnetic_deflection"),
         dst=os.path.join(scenario_path, "magnetic_deflection")
     )
 
-    nfs.copy(
+    rnw.copy(
         src=os.path.join(tmp_cfg_dir, "trigger_geometry"),
         dst=os.path.join(scenario_path, "trigger_geometry")
     )

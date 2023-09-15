@@ -26,6 +26,7 @@ setuptools.setup(
         "json_numpy_sebastian-achim-mueller",
         "confusion_matrix_sebastian-achim-mueller>=0.0.4",
         "flux_sensitivity_sebastian-achim-mueller>=0.0.1",
+        "rename_after_writing",
     ],
     package_data={"plenoirf": [os.path.join("summary", "scripts", "*")]},
     classifiers=[
