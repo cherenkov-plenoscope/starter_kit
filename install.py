@@ -107,11 +107,11 @@ LOCAL_PYHTHON_PACKAGES = [
     },
     {
         "path": "homogeneous_transformation",
-        "name": "homogeneous_transformation_sebastian-achim-mueller",
+        "name": "homogeneous_transformation",
     },
     {
         "path": "json_line_logger",
-        "name": "json_line_logger_sebastian-achim-mueller",
+        "name": "json_line_logger",
     },
     {"path": "json_numpy", "name": "json_numpy_sebastian-achim-mueller"},
     {"path": "json_utils", "name": "json_utils_sebastian-achim-mueller"},
@@ -130,7 +130,7 @@ LOCAL_PYHTHON_PACKAGES = [
     },
     {
         "path": "atmospheric_cherenkov_response",
-        "name": "atmospheric_cherenkov_response_sebastian-achim-mueller",
+        "name": "atmospheric_cherenkov_response_cherenkov-plenoscope-project",
     },
     {
         "path": "sparse_numeric_table",
