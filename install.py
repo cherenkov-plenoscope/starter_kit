@@ -4,6 +4,26 @@ import os
 import subprocess
 
 
+def pip_list():
+    po = subprocess.Popen(["pip", "list"], stdout=subprocess.PIPE)
+    po.wait()
+    bstdout = po.stdout.read()
+    stdout = bytes.decode(bstdout, encoding="utf-8")
+    lines = str.splitlines(stdout)
+    items = [line.split() for line in lines]
+    packages = {}
+    for item in items:
+        packages[item[0]] = {}
+        packages[item[0]]["version"] = item[1]
+        if len(item) >= 3:
+            packages[item[0]]["path"] = item[2]
+    return packages
+
+
+def pip_name(name):
+    return str.replace(name, "_", "-")
+
+
 def is_installed(path):
     rc = subprocess.Popen(["which", path], stdout=subprocess.PIPE).wait()
     return True if rc == 0 else False
@@ -92,7 +112,11 @@ def build_merlict_cpp(num_threads):
         [
             "touch",
             os.path.join(
-                ".", "..", "..", "merlict_development_kit", "CMakeLists.txt",
+                ".",
+                "..",
+                "..",
+                "merlict_development_kit",
+                "CMakeLists.txt",
             ),
         ],
         cwd=merlict_build_dir,
@@ -101,21 +125,17 @@ def build_merlict_cpp(num_threads):
 
 
 LOCAL_PYHTHON_PACKAGES = [
-    {
-        "path": "solid_angle_utils",
-        "name": "solid_angle_utils",
-    },
+    {"path": "rename_after_writing", "name": "rename_after_writing"},
+    {"path": "json_numpy", "name": "json_numpy_sebastian-achim-mueller"},
+    {"path": "json_utils", "name": "json_utils_sebastian-achim-mueller"},
+    {"path": "json_line_logger", "name": "json_line_logger"},
+    {"path": "binning_utils", "name": "binning_utils_sebastian-achim-mueller"},
+    {"path": "solid_angle_utils", "name": "solid_angle_utils"},
+    {"path": "ray_voxel_overlap", "name": "ray_voxel_overlap"},
     {
         "path": "homogeneous_transformation",
         "name": "homogeneous_transformation",
     },
-    {
-        "path": "json_line_logger",
-        "name": "json_line_logger",
-    },
-    {"path": "json_numpy", "name": "json_numpy_sebastian-achim-mueller"},
-    {"path": "json_utils", "name": "json_utils_sebastian-achim-mueller"},
-    {"path": "binning_utils", "name": "binning_utils_sebastian-achim-mueller"},
     {
         "path": "propagate_uncertainties",
         "name": "propagate_uncertainties_sebastian-achim-mueller",
@@ -125,6 +145,18 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "confusion_matrix_sebastian-achim-mueller",
     },
     {
+        "path": "lima1983analysis",
+        "name": "lima1983analysis_sebastian-achim-mueller",
+    },
+    {
+        "path": "sparse_numeric_table",
+        "name": "sparse_numeric_table_sebastian-achim-mueller",
+    },
+    {
+        "path": "spectral_energy_distribution_units",
+        "name": "spectral_energy_distribution_units_sebastian-achim-mueller",
+    },
+    {
         "path": "sebastians_matplotlib_addons",
         "name": "sebastians_matplotlib_addons",
     },
@@ -132,43 +164,27 @@ LOCAL_PYHTHON_PACKAGES = [
         "path": "atmospheric_cherenkov_response",
         "name": "atmospheric_cherenkov_response_cherenkov-plenoscope-project",
     },
-    {
-        "path": "sparse_numeric_table",
-        "name": "sparse_numeric_table_sebastian-achim-mueller",
-    },
     {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
     {"path": "gamma_ray_reconstruction", "name": "gamma_ray_reconstruction"},
     {"path": "magnetic_deflection", "name": "magnetic_deflection"},
     {
-        "path": "spectral_energy_distribution_units",
-        "name": "spectral_energy_distribution_units_sebastian-achim-mueller",
-    },
-    {
-        "path": "lima1983analysis",
-        "name": "lima1983analysis_sebastian-achim-mueller",
-    },
-    {
         "path": "flux_sensitivity",
         "name": "flux_sensitivity_sebastian-achim-mueller",
     },
-    {
-        "path": "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
-        "name": "merlict_camera_server",
-    },
     {"path": "corsika_install", "name": "corsika_primary"},
     {"path": "cable_robo_mount", "name": "cable_robo_mount"},
-    {"path": "plenopy", "name": "plenopy"},
-    {"path": "plenoirf", "name": "plenoirf"},
     {"path": "timing_toy_simulation", "name": "timing_toy_simulation"},
     {"path": "phantom_source", "name": "phantom_source"},
     {
-        "path": "rename_after_writing",
-        "name": "rename_after_writing",
-    },
-    {"path": "plenoptics", "name": "plenoptics"},
-    {
         "path": "airshower_template_generator",
         "name": "airshower_template_generator",
+    },
+    {"path": "plenopy", "name": "plenopy"},
+    {"path": "plenoptics", "name": "plenoptics"},
+    {"path": "plenoirf", "name": "plenoirf"},
+    {
+        "path": "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
+        "name": "merlict_camera_server",
     },
 ]
 
@@ -231,23 +247,44 @@ def main():
 
     if args.command == "install":
         os.makedirs("build", exist_ok=True)
-        build_corsika(
-            username=args.username,
-            password=args.password,
-            corsika_tar=args.corsika_tar,
-        )
-        build_merlict_cpp(num_threads=args.j)
+        if os.path.exists(os.path.join("build", "corsika")):
+            print(os.path.join("build", "corsika"), "Already done.")
+        else:
+            build_corsika(
+                username=args.username,
+                password=args.password,
+                corsika_tar=args.corsika_tar,
+            )
+        if os.path.exists(os.path.join("build", "merlict")):
+            print(os.path.join("build", "merlict"), "Already done.")
+        else:
+            build_merlict_cpp(num_threads=args.j)
 
         for pypackage in LOCAL_PYHTHON_PACKAGES:
-            subprocess.call(
-                ["pip", "install", "-e", os.path.join(".", pypackage["path"])]
-            )
+            installed_packages = pip_list()
+            if pip_name(pypackage["name"]) in installed_packages:
+                print(pypackage["name"], "Already installed.")
+            else:
+                rc = subprocess.call(
+                    [
+                        "pip",
+                        "install",
+                        "-e",
+                        os.path.join(".", pypackage["path"]),
+                    ]
+                )
+                if rc != 0:
+                    raise AssertionError(
+                        "Failed to install {:s}".format(pypackage["path"])
+                    )
 
     elif args.command == "uninstall":
         subprocess.call(["rm", "-rf", "build"])
 
         for pypackage in LOCAL_PYHTHON_PACKAGES:
-            subprocess.call(["pip", "uninstall", "--yes", pypackage["name"]])
+            subprocess.call(
+                ["pip", "uninstall", "--yes", pip_name(pypackage["name"])]
+            )
     else:
         parser.print_help()
 

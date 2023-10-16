@@ -19,7 +19,7 @@ setuptools.setup(
     python_requires=">=3",
     install_requires=[
         "corsika_primary",
-        "atmospheric_cherenkov_response_sebastian-achim-mueller",
+        "atmospheric_cherenkov_response_cherenkov-plenoscope-project",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
