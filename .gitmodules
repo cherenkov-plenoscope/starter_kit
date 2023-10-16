@@ -70,3 +70,9 @@
 [submodule "rename_after_writing"]
 	path = rename_after_writing
 	url = https://github.com/cherenkov-plenoscope/rename_after_writing
+[submodule "ray_voxel_overlap"]
+	path = ray_voxel_overlap
+	url = git@github.com:cherenkov-plenoscope/ray_voxel_overlap.git
+[submodule "black_pack"]
+	path = black_pack
+	url = git@github.com:cherenkov-plenoscope/black_pack.git
