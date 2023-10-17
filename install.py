@@ -132,6 +132,8 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "binning_utils", "name": "binning_utils_sebastian-achim-mueller"},
     {"path": "solid_angle_utils", "name": "solid_angle_utils"},
     {"path": "ray_voxel_overlap", "name": "ray_voxel_overlap"},
+    {"path": "thin_lens", "name": "thin_lens"},
+    {"path": "optic_object_wavefronts", "name": "optic_object_wavefronts"},
     {
         "path": "photon_spectra",
         "name": "photon_spectra_cherenkov-plenoscope-project",

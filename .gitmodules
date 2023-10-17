@@ -79,3 +79,6 @@
 [submodule "thin_lens"]
 	path = thin_lens
 	url = git@github.com:cherenkov-plenoscope/thin_lens.git
+[submodule "optic_object_wavefronts"]
+	path = optic_object_wavefronts
+	url = git@github.com:cherenkov-plenoscope/optic_object_wavefronts.git
