@@ -76,3 +76,6 @@
 [submodule "black_pack"]
 	path = black_pack
 	url = git@github.com:cherenkov-plenoscope/black_pack.git
+[submodule "thin_lens"]
+	path = thin_lens
+	url = git@github.com:cherenkov-plenoscope/thin_lens.git
