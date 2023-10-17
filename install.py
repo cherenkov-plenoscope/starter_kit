@@ -133,6 +133,10 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "solid_angle_utils", "name": "solid_angle_utils"},
     {"path": "ray_voxel_overlap", "name": "ray_voxel_overlap"},
     {
+        "path": "photon_spectra",
+        "name": "photon_spectra_cherenkov-plenoscope-project",
+    },
+    {
         "path": "homogeneous_transformation",
         "name": "homogeneous_transformation",
     },
