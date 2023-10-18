@@ -134,6 +134,7 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "ray_voxel_overlap", "name": "ray_voxel_overlap"},
     {"path": "thin_lens", "name": "thin_lens"},
     {"path": "optic_object_wavefronts", "name": "optic_object_wavefronts"},
+    {"path": "svgplot", "name": "svgplot_sebastian-achim-mueller"},
     {
         "path": "photon_spectra",
         "name": "photon_spectra_cherenkov-plenoscope-project",
