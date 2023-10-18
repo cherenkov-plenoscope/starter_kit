@@ -82,6 +82,3 @@
 [submodule "optic_object_wavefronts"]
 	path = optic_object_wavefronts
 	url = git@github.com:cherenkov-plenoscope/optic_object_wavefronts.git
-[submodule "svgplot"]
-	path = svgplot
-	url = git@github.com:cherenkov-plenoscope/svgplot.git
