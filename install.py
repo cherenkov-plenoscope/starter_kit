@@ -129,6 +129,7 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "json_numpy", "name": "json_numpy_sebastian-achim-mueller"},
     {"path": "json_utils", "name": "json_utils_sebastian-achim-mueller"},
     {"path": "json_line_logger", "name": "json_line_logger"},
+    {"path": "dynamicsizerecarray", "name": "dynamicsizerecarray"},
     {"path": "binning_utils", "name": "binning_utils_sebastian-achim-mueller"},
     {"path": "solid_angle_utils", "name": "solid_angle_utils"},
     {"path": "ray_voxel_overlap", "name": "ray_voxel_overlap"},

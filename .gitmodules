@@ -85,3 +85,6 @@
 [submodule "svg_cartesian_plot"]
 	path = svg_cartesian_plot
 	url = git@github.com:cherenkov-plenoscope/svg_cartesian_plot.git
+[submodule "dynamicsizerecarray"]
+	path = dynamicsizerecarray
+	url = git@github.com:cherenkov-plenoscope/dynamicsizerecarray.git
