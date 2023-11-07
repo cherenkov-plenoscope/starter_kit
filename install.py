@@ -268,11 +268,15 @@ def main():
         else:
             build_merlict_cpp(num_threads=args.j)
 
+        must_update_pip_list = True
         for pypackage in LOCAL_PYHTHON_PACKAGES:
-            installed_packages = pip_list()
+            if must_update_pip_list:
+                installed_packages = pip_list()
+                must_update_pip_list = False
             if pip_name(pypackage["name"]) in installed_packages:
                 print(pypackage["name"], "Already installed.")
             else:
+                must_update_pip_list = True
                 rc = subprocess.call(
                     [
                         "pip",
