@@ -18,7 +18,7 @@ setuptools.setup(
         "cosmic_fluxes",
         "corsika_primary",
         "atmospheric_cherenkov_response_cherenkov-plenoscope-project",
-        "json_line_logger_sebastian-achim-mueller>=0.0.3",
+        "json_line_logger>=0.0.3",
         "propagate_uncertainties_sebastian-achim-mueller>=0.2.3",
         "shapely",
         "binning_utils_sebastian-achim-mueller",
