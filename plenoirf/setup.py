@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="plenoirf",
-    version="0.2.1",
+    version="0.2.2",
     description="Explore magnetic deflection of cosmic-rays below 10GeV.",
     long_description=long_description,
     url="https://github.com/cherenkov-plenoscope",
@@ -17,10 +17,9 @@ setuptools.setup(
     install_requires=[
         "cosmic_fluxes",
         "corsika_primary",
-        "atmospheric_cherenkov_response_sebastian-achim-mueller",
+        "atmospheric_cherenkov_response_cherenkov-plenoscope-project",
         "json_line_logger_sebastian-achim-mueller>=0.0.3",
         "propagate_uncertainties_sebastian-achim-mueller>=0.2.3",
-        "iminuit==1.4.9",
         "shapely",
         "binning_utils_sebastian-achim-mueller",
         "json_numpy_sebastian-achim-mueller",
