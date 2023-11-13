@@ -88,3 +88,6 @@
 [submodule "dynamicsizerecarray"]
 	path = dynamicsizerecarray
 	url = git@github.com:cherenkov-plenoscope/dynamicsizerecarray.git
+[submodule "merlict"]
+	path = merlict
+	url = git@github.com:cherenkov-plenoscope/merlict.git

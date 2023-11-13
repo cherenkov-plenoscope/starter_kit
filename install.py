@@ -136,6 +136,7 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "thin_lens", "name": "thin_lens"},
     {"path": "optic_object_wavefronts", "name": "optic_object_wavefronts"},
     {"path": "svg_cartesian_plot", "name": "svg_cartesian_plot"},
+    {"path": "merlict", "name": "merlict"},
     {
         "path": "photon_spectra",
         "name": "photon_spectra_cherenkov-plenoscope-project",
