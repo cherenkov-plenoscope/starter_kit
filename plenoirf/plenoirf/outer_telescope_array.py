@@ -21,7 +21,7 @@ def init_telescope_positions_in_annulus(outer_radius, inner_radius):
 
 
 def init_mask_from_telescope_positions(positions):
-    mask = np.zeros(shape=(NUM_BINS_ON_EDGE, NUM_BINS_ON_EDGE), dtype=np.bool)
+    mask = np.zeros(shape=(NUM_BINS_ON_EDGE, NUM_BINS_ON_EDGE), dtype=bool)
     for pos in positions:
         mask[pos[0] + CENTER_BIN, pos[1] + CENTER_BIN] = True
     return mask
