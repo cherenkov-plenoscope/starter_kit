@@ -16,7 +16,7 @@ Large scale deployment of the plenoscope's simulation to estimate its response t
     :target: https://pypi.org/project/plenoirf
 
 .. |BlackPackStyle| image:: https://img.shields.io/badge/pack%20style-black-000000.svg
-    :target: https://github.com/cherenkov-plenoscope/plenoirf
+    :target: https://github.com/cherenkov-plenoscope/black_pack
 
 .. |MITLicenseBadge| image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
