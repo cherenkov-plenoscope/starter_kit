@@ -45,7 +45,8 @@ CTA_IRF_CONFIG["systematic_uncertainty_relative"] = 1e-2  # CTA-specific
 CTA_IRF_CONFIG["observation_times"] = observation_times
 
 json_utils.write(
-    os.path.join(pa["out_dir"], "config.json"), CTA_IRF_CONFIG,
+    os.path.join(pa["out_dir"], "config.json"),
+    CTA_IRF_CONFIG,
 )
 
 
@@ -58,17 +59,22 @@ cta_irf_path = pkg_resources.resource_filename(
     ),
 )
 
-cta_irf = flux_sensitivity.io.gamma_astro_data.read_instrument_response_function(
-    path=cta_irf_path
+cta_irf = (
+    flux_sensitivity.io.gamma_astro_data.read_instrument_response_function(
+        path=cta_irf_path
+    )
 )
 
 cta_irf = flux_sensitivity.io.gamma_astro_data.average_instrument_response_over_field_of_view(
-    irf=cta_irf, roi_opening_deg=CTA_IRF_CONFIG["roi_opening_deg"],
+    irf=cta_irf,
+    roi_opening_deg=CTA_IRF_CONFIG["roi_opening_deg"],
 )
 
-energy_bin_edges_GeV = flux_sensitivity.io.gamma_astro_data.find_common_energy_bin_edges(
-    components=cta_irf,
-    num_bins_per_decade=CTA_IRF_CONFIG["num_bins_per_decade"],
+energy_bin_edges_GeV = (
+    flux_sensitivity.io.gamma_astro_data.find_common_energy_bin_edges(
+        components=cta_irf,
+        num_bins_per_decade=CTA_IRF_CONFIG["num_bins_per_decade"],
+    )
 )
 num_energy_bins = len(energy_bin_edges_GeV) - 1
 
@@ -105,10 +111,12 @@ point_spread_function_sigma_deg = np.interp(
     fp=cta_irf["point_spread_function"]["sigma_deg"],
 )
 
-background_rate_onregion_per_s = flux_sensitivity.io.gamma_astro_data.integrate_background_rate_in_onregion(
-    background_per_s_per_sr_per_GeV=background_per_s_per_sr_per_GeV,
-    point_spread_function_sigma_deg=point_spread_function_sigma_deg,
-    energy_bin_edges_GeV=energy_bin_edges_GeV,
+background_rate_onregion_per_s = (
+    flux_sensitivity.io.gamma_astro_data.integrate_background_rate_in_onregion(
+        background_per_s_per_sr_per_GeV=background_per_s_per_sr_per_GeV,
+        point_spread_function_sigma_deg=point_spread_function_sigma_deg,
+        energy_bin_edges_GeV=energy_bin_edges_GeV,
+    )
 )
 background_rate_onregion_per_s_au = np.zeros(
     background_rate_onregion_per_s.shape

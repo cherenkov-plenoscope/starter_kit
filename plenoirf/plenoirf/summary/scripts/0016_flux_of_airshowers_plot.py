@@ -36,7 +36,10 @@ for sk in irf_config["config"]["sites"]:
         ]
 
         ax.plot(
-            energy_bin["centers"], dFdE, label=pk, color=particle_colors[pk],
+            energy_bin["centers"],
+            dFdE,
+            label=pk,
+            color=particle_colors[pk],
         )
         ax.fill_between(
             x=energy_bin["centers"],
@@ -57,7 +60,8 @@ for sk in irf_config["config"]["sites"]:
     ax.legend()
     fig.savefig(
         os.path.join(
-            pa["out_dir"], "{:s}_airshower_differential_flux.jpg".format(sk),
+            pa["out_dir"],
+            "{:s}_airshower_differential_flux.jpg".format(sk),
         )
     )
     seb.close(fig)

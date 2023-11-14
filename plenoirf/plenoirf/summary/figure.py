@@ -77,7 +77,9 @@ def add_rays_to_ax(ax, object_distance, N=4, **kwargs):
 
     for i in range(N):
         ax.plot(
-            [x_starts[i], x_ends[i]], [y_starts[i], y_ends[i]], **kwargs,
+            [x_starts[i], x_ends[i]],
+            [y_starts[i], y_ends[i]],
+            **kwargs,
         )
 
 

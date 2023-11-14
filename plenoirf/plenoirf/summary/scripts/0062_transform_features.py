@@ -16,7 +16,10 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 
 train_test = json_utils.tree.read(
-    os.path.join(pa["summary_dir"], "0030_splitting_train_and_test_sample",)
+    os.path.join(
+        pa["summary_dir"],
+        "0030_splitting_train_and_test_sample",
+    )
 )
 
 os.makedirs(pa["out_dir"], exist_ok=True)
@@ -33,10 +36,13 @@ ft_trafo = {}
 for sk in SITES:
     ft_trafo[sk] = {}
     for pk in ["gamma"]:
-
         _table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -67,14 +73,17 @@ for sk in SITES:
 
         features = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )["features"]
         transformed_features[sk][pk][spt.IDX] = np.array(features[spt.IDX])
 
         for fk in ALL_FEATURES:
-
             if fk in ORIGINAL_FEATURES:
                 f_raw = features[fk]
             else:
@@ -97,11 +106,9 @@ for sk in SITES:
 
 for sk in SITES:
     for fk in ALL_FEATURES:
-
         fig_path = os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, fk))
 
         if not os.path.exists(fig_path):
-
             fig = seb.figure(seb.FIGURE_16_9)
             ax = seb.add_axes(fig=fig, span=(0.1, 0.1, 0.8, 0.8))
 

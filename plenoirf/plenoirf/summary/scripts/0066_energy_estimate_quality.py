@@ -68,7 +68,11 @@ for sk in SITES:
     for pk in PARTICLES:
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -83,7 +87,8 @@ for sk in SITES:
         )
 
         valid_event_table = spt.cut_and_sort_table_on_indices(
-            table=event_table, common_indices=idx_valid,
+            table=event_table,
+            common_indices=idx_valid,
         )
 
         true_energy = valid_event_table["primary"]["energy_GeV"]
@@ -113,7 +118,6 @@ for sk in SITES:
 
         # performace
         if pk == "gamma":
-
             (
                 delta_energy,
                 delta_energy_relunc,
@@ -208,7 +212,6 @@ for sk in SITES:
         axstyle_stack = {"spines": ["bottom"], "axes": [], "grid": False}
         axstyle_bottom = {"spines": ["bottom"], "axes": ["x"], "grid": False}
         for ebin in range(numE):
-
             axe = seb.add_axes(
                 fig=fig,
                 span=[0.1, 0.1 + ax_step * ebin, 0.8, ax_step],

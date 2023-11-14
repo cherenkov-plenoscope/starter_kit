@@ -53,13 +53,11 @@ for sk in SITES:
 
     for ok in ONREGION_TYPES:
         for gk in irf.summary.figure.SOURCES:
-
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
             text_y = 0
             for pk in PARTICLES:
-
                 Q = G[sk][ok][pk][gk]["mean"]
                 Q_au = G[sk][ok][pk][gk]["absolute_uncertainty"]
 
@@ -99,7 +97,8 @@ for sk in SITES:
 
             fig.savefig(
                 os.path.join(
-                    pa["out_dir"], "{:s}_{:s}_{:s}.jpg".format(sk, ok, gk),
+                    pa["out_dir"],
+                    "{:s}_{:s}_{:s}.jpg".format(sk, ok, gk),
                 )
             )
             seb.close(fig)
@@ -108,7 +107,6 @@ for sk in SITES:
 for sk in irf_config["config"]["sites"]:
     for pk in irf_config["config"]["particles"]:
         for gk in irf.summary.figure.SOURCES:
-
             acc_trg = A[sk][pk][gk]["mean"][idx_trigger_threshold]
 
             acc_trg_au = A[sk][pk][gk]["absolute_uncertainty"][

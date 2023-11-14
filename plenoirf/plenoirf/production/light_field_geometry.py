@@ -90,5 +90,11 @@ def reduce(merlict_reduce_path, map_dir, out_dir):
         light-field-geometry.
     """
     return subprocess.call(
-        [merlict_reduce_path, "--input", map_dir, "--output", out_dir,]
+        [
+            merlict_reduce_path,
+            "--input",
+            map_dir,
+            "--output",
+            out_dir,
+        ]
     )

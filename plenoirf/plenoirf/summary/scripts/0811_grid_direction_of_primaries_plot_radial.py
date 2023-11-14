@@ -39,7 +39,9 @@ for pk in PARTICLES:
         "max_scatter_angle_deg"
     ]
     _c_bin_edges = np.linspace(
-        0, max_scatter_deg ** 2, NUM_POPULATED_SCATTER_BINS,
+        0,
+        max_scatter_deg**2,
+        NUM_POPULATED_SCATTER_BINS,
     )
     _c_bin_edges = np.sqrt(_c_bin_edges)
     _c_bin_edges = list(_c_bin_edges)
@@ -57,7 +59,11 @@ for sk in SITES:
 
         evttab = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -97,7 +103,8 @@ for sk in SITES:
             )[0]
 
             thrown = np.histogram(
-                scatter_deg[emask], bins=c_bin_edges_deg[pk],
+                scatter_deg[emask],
+                bins=c_bin_edges_deg[pk],
             )[0]
 
             o[sk][pk]["detected"].append(detected)
@@ -223,14 +230,19 @@ for sk in SITES:
 
             axr.set_title(
                 "energy {: 7.1f} - {: 7.1f} GeV".format(
-                    energy_bin["edges"][ex], energy_bin["edges"][ex + 1],
+                    energy_bin["edges"][ex],
+                    energy_bin["edges"][ex + 1],
                 ),
             )
 
             fig.savefig(
                 os.path.join(
                     sk_pk_dir,
-                    "{:s}_{:s}_energy{:06d}.jpg".format(sk, pk, ex,),
+                    "{:s}_{:s}_energy{:06d}.jpg".format(
+                        sk,
+                        pk,
+                        ex,
+                    ),
                 )
             )
             seb.close(fig)
@@ -319,6 +331,12 @@ for sk in SITES:
         )
 
         fig.savefig(
-            os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, pk,),)
+            os.path.join(
+                pa["out_dir"],
+                "{:s}_{:s}.jpg".format(
+                    sk,
+                    pk,
+                ),
+            )
         )
         seb.close(fig)

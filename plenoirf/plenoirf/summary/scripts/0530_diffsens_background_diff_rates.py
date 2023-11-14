@@ -174,7 +174,6 @@ for sk in SITES:
         fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
         ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
         for pk in COSMIC_RAYS:
-
             seb.ax_add_histogram(
                 ax=ax,
                 bin_edges=energy_bin["edges"],

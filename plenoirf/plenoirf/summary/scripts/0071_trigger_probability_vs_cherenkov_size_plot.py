@@ -25,7 +25,6 @@ trigger_vs_size = json_utils.tree.read(
 particle_colors = sum_config["plot"]["particle_colors"]
 
 for site_key in irf_config["config"]["sites"]:
-
     # all particles together
     # ----------------------
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
@@ -33,7 +32,6 @@ for site_key in irf_config["config"]["sites"]:
 
     text_y = 0
     for particle_key in irf_config["config"]["particles"]:
-
         size_bin_edges = np.array(
             trigger_vs_size[site_key][particle_key][
                 "trigger_probability_vs_cherenkov_size"

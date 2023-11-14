@@ -79,10 +79,14 @@ def read_simulation_truth_for_tomography(
         with tarfile.open(response_tar_path, "r") as tf:
             tf.extractall(response_path)
             event = pl.Event(
-                path=response_path, light_field_geometry=light_field_geometry,
+                path=response_path,
+                light_field_geometry=light_field_geometry,
             )
-            simulation_truth = pl.Tomography.Image_Domain.Simulation_Truth.init(
-                event=event, binning=tomography_binning,
+            simulation_truth = (
+                pl.Tomography.Image_Domain.Simulation_Truth.init(
+                    event=event,
+                    binning=tomography_binning,
+                )
             )
     return simulation_truth
 
@@ -112,7 +116,6 @@ def make_binning_from_ligh_field_geometry(light_field_geometry):
 
 
 def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
-
     # as cube
     # -------
     ivolrec = pl.Tomography.Image_Domain.Binning.volume_intensity_as_cube(
@@ -131,7 +134,8 @@ def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
     # --------
     if np.any(np.isnan(ivoltru)):
         print(
-            uid, "Failed to construct volume of true Cherenkov-emission.",
+            uid,
+            "Failed to construct volume of true Cherenkov-emission.",
         )
         return
 
@@ -152,7 +156,11 @@ def ax_add_tomography(ax, binning, reconstruction, simulation_truth):
             ]
         )
         intensity_rgb = np.zeros(
-            shape=(binning["number_cx_bins"], binning["number_cy_bins"], 4,),
+            shape=(
+                binning["number_cx_bins"],
+                binning["number_cy_bins"],
+                4,
+            ),
             dtype=np.float,
         )
         intensity_rgb[:, :, 0] = ivolrec[:, :, iz] / imax
@@ -227,7 +235,6 @@ system_matrix_path = os.path.join(
 pool = multiprocessing.Pool(NUM_THREADS)
 
 if not os.path.exists(system_matrix_path):
-
     jobs = pl.Tomography.System_Matrix.make_jobs(
         light_field_geometry=light_field_geometry,
         sen_x_bin_edges=binning["sen_x_bin_edges"],
@@ -261,7 +268,10 @@ for sk in ["namibia"]:
 
         print("- read event_table")
         event_table = spt.read(
-            path=os.path.join(sk_pk_dir, "event_table.tar",),
+            path=os.path.join(
+                sk_pk_dir,
+                "event_table.tar",
+            ),
             structure=irf.table.STRUCTURE,
         )
 
@@ -278,7 +288,6 @@ for sk in ["namibia"]:
 
         event_counter = 0
         while event_counter < NUM_EVENTS_PER_PARTICLE:
-
             try:
                 event = next(run)
             except StopIteration:
@@ -301,7 +310,8 @@ for sk in ["namibia"]:
                 level_keys=["core"],
             )["core"]
             event_core_distance = np.hypot(
-                event_core["core_x_m"][0], event_core["core_y_m"][0],
+                event_core["core_x_m"][0],
+                event_core["core_y_m"][0],
             )
 
             if event_core_distance > MAX_CORE_DISTANCE:
@@ -328,10 +338,12 @@ for sk in ["namibia"]:
             )
 
             if not os.path.exists(reconstruction_path):
-                reconstruction = pl.Tomography.Image_Domain.Reconstruction.init(
-                    light_field_geometry=light_field_geometry,
-                    photon_lixel_ids=loph_record["photons"]["channels"],
-                    binning=binning,
+                reconstruction = (
+                    pl.Tomography.Image_Domain.Reconstruction.init(
+                        light_field_geometry=light_field_geometry,
+                        photon_lixel_ids=loph_record["photons"]["channels"],
+                        binning=binning,
+                    )
                 )
                 with open(reconstruction_path, "wt") as f:
                     f.write(json_utils.dumps(reconstruction))
@@ -344,9 +356,11 @@ for sk in ["namibia"]:
             )
             if num_missing_iterations > 0:
                 for i in range(num_missing_iterations):
-                    reconstruction = pl.Tomography.Image_Domain.Reconstruction.iterate(
-                        reconstruction=reconstruction,
-                        point_spread_function=tomo_psf,
+                    reconstruction = (
+                        pl.Tomography.Image_Domain.Reconstruction.iterate(
+                            reconstruction=reconstruction,
+                            point_spread_function=tomo_psf,
+                        )
                     )
                     if reconstruction["iteration"] % 25 == 0:
                         stack_path = os.path.join(

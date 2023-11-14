@@ -42,7 +42,6 @@ systematic_uncertainties = sum_config["on_off_measuremnent"][
 num_systematic_uncertainties = len(systematic_uncertainties)
 
 for pe in pivot_energies:
-
     fls = json_utils.read(
         os.path.join("fermi_lat", "dnde_vs_observation_time_vs_energy.json")
     )
@@ -77,7 +76,9 @@ for pe in pivot_energies:
     internal_sed_style = sed_styles.PLENOIRF_SED_STYLE
 
     enidx = irf.utils.find_closest_index_in_array_for_value(
-        arr=energy_bin["edges"], val=pivot_energies[pe], max_rel_error=0.25,
+        arr=energy_bin["edges"],
+        val=pivot_energies[pe],
+        max_rel_error=0.25,
     )
 
     x_lim_s = np.array([1e0, 1e7])

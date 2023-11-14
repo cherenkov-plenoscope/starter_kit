@@ -52,7 +52,11 @@ for sk in SITES:
 
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -72,25 +76,31 @@ for sk in SITES:
             pleno_table = spt.cut_table_on_indices(
                 table=event_table,
                 common_indices=passing_plenoscope_trigger[sk][pk]["idx"],
-                level_keys=["primary",],
+                level_keys=[
+                    "primary",
+                ],
             )
 
             veto_table = spt.cut_table_on_indices(
                 table=event_table,
                 common_indices=passing_plenoscope_and_not_array,
-                level_keys=["primary",],
+                level_keys=[
+                    "primary",
+                ],
             )
 
             pv[sk][pk][ak] = {}
             pv[sk][pk][ak]["num_plenoscope"] = np.histogram(
-                pleno_table["primary"]["energy_GeV"], bins=energy_bin["edges"],
+                pleno_table["primary"]["energy_GeV"],
+                bins=energy_bin["edges"],
             )[0]
             pv[sk][pk][ak]["num_plenoscope_au"] = np.sqrt(
                 pv[sk][pk][ak]["num_plenoscope"]
             )
 
             pv[sk][pk][ak]["num_outer_array"] = np.histogram(
-                veto_table["primary"]["energy_GeV"], bins=energy_bin["edges"],
+                veto_table["primary"]["energy_GeV"],
+                bins=energy_bin["edges"],
             )[0]
             pv[sk][pk][ak]["num_outer_array_au"] = np.sqrt(
                 pv[sk][pk][ak]["num_outer_array"]
@@ -139,6 +149,9 @@ for sk in SITES:
             "trigger(plenoscope)\nAND NOT\nany(trigger(outer telescopes)) / 1"
         )
         fig.savefig(
-            os.path.join(pa["out_dir"], "{:s}_{:s}.jpg".format(sk, ak),)
+            os.path.join(
+                pa["out_dir"],
+                "{:s}_{:s}.jpg".format(sk, ak),
+            )
         )
         seb.close(fig)

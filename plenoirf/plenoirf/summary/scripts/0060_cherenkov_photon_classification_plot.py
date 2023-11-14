@@ -47,12 +47,21 @@ for sk in irf_config["config"]["sites"]:
         site_particle_prefix = "{:s}_{:s}".format(sk, pk)
 
         event_table = spt.read(
-            path=opj(pa["run_dir"], "event_table", sk, pk, "event_table.tar",),
+            path=opj(
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
+            ),
             structure=irf.table.STRUCTURE,
         )
 
         idx_common = spt.intersection(
-            [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"],]
+            [
+                passing_trigger[sk][pk]["idx"],
+                passing_quality[sk][pk]["idx"],
+            ]
         )
 
         mrg_chc_fts = spt.cut_and_sort_table_on_indices(

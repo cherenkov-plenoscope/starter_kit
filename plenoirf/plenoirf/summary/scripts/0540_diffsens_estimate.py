@@ -94,7 +94,8 @@ for sk in SITES:
                 )
 
             R_background_scenario, R_background_scenario_au = pru.sum_axis0(
-                x=R_background_components, x_au=R_background_components_au,
+                x=R_background_components,
+                x_au=R_background_components_au,
             )
 
             critical_dVdE = np.nan * np.ones(

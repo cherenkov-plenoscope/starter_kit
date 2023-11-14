@@ -120,7 +120,12 @@ for sk in SITES:
             ax.set_ylim([1e0, 1e6])
             ax.loglog()
             fig.savefig(
-                os.path.join(pa["out_dir"], sk, ok, dk + "_area_gamma.jpg",)
+                os.path.join(
+                    pa["out_dir"],
+                    sk,
+                    ok,
+                    dk + "_area_gamma.jpg",
+                )
             )
             seb.close(fig)
 
@@ -146,7 +151,12 @@ for sk in SITES:
             ax_c.loglog()
             ax_c.set_xlabel("energy / GeV")
             fig.savefig(
-                os.path.join(pa["out_dir"], sk, ok, dk + "_G_matrix.jpg",)
+                os.path.join(
+                    pa["out_dir"],
+                    sk,
+                    ok,
+                    dk + "_G_matrix.jpg",
+                )
             )
             seb.close(fig)
 
@@ -172,6 +182,11 @@ for sk in SITES:
             ax_c.loglog()
             ax_c.set_xlabel("energy / GeV")
             fig.savefig(
-                os.path.join(pa["out_dir"], sk, ok, dk + "_B_matrix.jpg",)
+                os.path.join(
+                    pa["out_dir"],
+                    sk,
+                    ok,
+                    dk + "_B_matrix.jpg",
+                )
             )
             seb.close(fig)

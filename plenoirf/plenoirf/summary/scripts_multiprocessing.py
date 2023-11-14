@@ -79,7 +79,8 @@ def run_parallel(run_dir, num_threads=6, polling_interval=1):
         run_dir=run_dir, script_names=script_names
     )
     job_dependencies = find_job_dependencies(
-        script_dir=script_dir, script_names=script_names,
+        script_dir=script_dir,
+        script_names=script_names,
     )
     job_statii = {}
     job_handles = {}

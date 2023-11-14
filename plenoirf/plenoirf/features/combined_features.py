@@ -55,7 +55,7 @@ def generate_image_infinity_std_density(features):
     std = np.hypot(
         features["image_infinity_cx_std"], features["image_infinity_cx_std"]
     )
-    return np.log10(features["num_photons"]) / std ** 2.0
+    return np.log10(features["num_photons"]) / std**2.0
 
 
 COMBINED_FEATURES["combi_image_infinity_std_density"] = {

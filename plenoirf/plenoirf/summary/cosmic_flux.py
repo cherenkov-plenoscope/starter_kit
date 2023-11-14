@@ -4,7 +4,9 @@ import os
 
 
 def make_gamma_ray_reference_flux(
-    fermi_3fgl, gamma_ray_reference_source, energy_supports_GeV,
+    fermi_3fgl,
+    gamma_ray_reference_source,
+    energy_supports_GeV,
 ):
     _grrs = gamma_ray_reference_source
     if _grrs["type"] == "3fgl":

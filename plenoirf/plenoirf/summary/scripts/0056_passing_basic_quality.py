@@ -18,7 +18,6 @@ min_reconstructed_photons = sum_config["quality"]["min_reconstructed_photons"]
 
 for site_key in irf_config["config"]["sites"]:
     for particle_key in irf_config["config"]["particles"]:
-
         site_particle_dir = os.path.join(pa["out_dir"], site_key, particle_key)
         os.makedirs(site_particle_dir, exist_ok=True)
 

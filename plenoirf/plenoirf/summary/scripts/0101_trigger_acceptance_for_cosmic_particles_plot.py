@@ -38,13 +38,11 @@ for sk in SITES:
 
     for source_key in irf.summary.figure.SOURCES:
         for tt in range(len(trigger_thresholds)):
-
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
             text_y = 0
             for pk in PARTICLES:
-
                 Q = np.array(cr[sk][pk][source_key]["mean"][tt])
                 Q_au = np.array(
                     cr[sk][pk][source_key]["absolute_uncertainty"][tt]
@@ -89,7 +87,11 @@ for sk in SITES:
             if trigger_thresholds[tt] == analysis_trigger_threshold:
                 fig.savefig(
                     os.path.join(
-                        pa["out_dir"], "{:s}_{:s}.jpg".format(sk, source_key,),
+                        pa["out_dir"],
+                        "{:s}_{:s}.jpg".format(
+                            sk,
+                            source_key,
+                        ),
                     )
                 )
             ax.set_title(
@@ -98,7 +100,11 @@ for sk in SITES:
             fig.savefig(
                 os.path.join(
                     pa["out_dir"],
-                    "{:s}_{:s}_{:06d}.jpg".format(sk, source_key, tt,),
+                    "{:s}_{:s}_{:06d}.jpg".format(
+                        sk,
+                        source_key,
+                        tt,
+                    ),
                 )
             )
             seb.close(fig)

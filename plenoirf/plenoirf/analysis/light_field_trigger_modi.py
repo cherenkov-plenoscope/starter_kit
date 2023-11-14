@@ -3,7 +3,9 @@ import sparse_numeric_table as spt
 
 
 def make_mask(
-    trigger_table, threshold, modus,
+    trigger_table,
+    threshold,
+    modus,
 ):
     """
     The plenoscope's trigger has written its response into the trigger-table.
@@ -41,9 +43,15 @@ def make_mask(
 
 
 def make_indices(
-    trigger_table, threshold, modus,
+    trigger_table,
+    threshold,
+    modus,
 ):
-    mask = make_mask(trigger_table, threshold, modus,)
+    mask = make_mask(
+        trigger_table,
+        threshold,
+        modus,
+    )
     return trigger_table[spt.IDX][mask]
 
 

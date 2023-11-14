@@ -64,7 +64,10 @@ for pixel in pixels:
     xs = light_field_geometry.lixel_positions_x[pixel["photo_sensor_ids"]]
     ys = light_field_geometry.lixel_positions_y[pixel["photo_sensor_ids"]]
     pixel["mean_position_of_photo_sensors_on_sensor_plane"] = np.array(
-        [np.mean(xs), np.mean(ys),]
+        [
+            np.mean(xs),
+            np.mean(ys),
+        ]
     )
 
 

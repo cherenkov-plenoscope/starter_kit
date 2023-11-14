@@ -36,7 +36,7 @@ MAX_SOURCE_ANGLE_DEG = sum_config["gamma_ray_source_direction"][
     "max_angle_relative_to_pointing_deg"
 ]
 MAX_SOURCE_ANGLE = np.deg2rad(MAX_SOURCE_ANGLE_DEG)
-SOLID_ANGLE_TO_CONTAIN_SOURCE = np.pi * MAX_SOURCE_ANGLE ** 2.0
+SOLID_ANGLE_TO_CONTAIN_SOURCE = np.pi * MAX_SOURCE_ANGLE**2.0
 
 POSSIBLE_ONREGION_POLYGON = irf.reconstruction.onregion.make_circular_polygon(
     radius=MAX_SOURCE_ANGLE, num_steps=37
@@ -55,7 +55,10 @@ cosmic_ray_keys.remove("gamma")
 
 
 def cut_candidates_for_detection(
-    event_table, idx_trajectory_quality, idx_trigger, idx_quality,
+    event_table,
+    idx_trajectory_quality,
+    idx_trigger,
+    idx_quality,
 ):
     idx_self = event_table["primary"][spt.IDX]
 
@@ -64,7 +67,9 @@ def cut_candidates_for_detection(
     )
 
     return spt.cut_and_sort_table_on_indices(
-        table=event_table, common_indices=idx_candidates, level_keys=None,
+        table=event_table,
+        common_indices=idx_candidates,
+        level_keys=None,
     )
 
 
@@ -93,15 +98,23 @@ for sk in SITES:
         # point source
         # -------------
         diffuse_thrown = spt.read(
-            path=opj(pa["run_dir"], "event_table", sk, pk, "event_table.tar",),
+            path=opj(
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
+            ),
             structure=irf.table.STRUCTURE,
         )
 
-        idx_source_in_possible_onregion = irf.analysis.cuts.cut_primary_direction_within_angle(
-            primary_table=diffuse_thrown["primary"],
-            radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
-            azimuth_deg=pointing_azimuth_deg,
-            zenith_deg=pointing_zenith_deg,
+        idx_source_in_possible_onregion = (
+            irf.analysis.cuts.cut_primary_direction_within_angle(
+                primary_table=diffuse_thrown["primary"],
+                radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
+                azimuth_deg=pointing_azimuth_deg,
+                zenith_deg=pointing_zenith_deg,
+            )
         )
 
         # thrown
@@ -119,16 +132,19 @@ for sk in SITES:
             idx_quality=passing_quality[sk][pk]["idx"],
         )
 
-        poicanarr = irf.reconstruction.trajectory_quality.make_rectangular_table(
-            event_table=point_candidate,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+        poicanarr = (
+            irf.reconstruction.trajectory_quality.make_rectangular_table(
+                event_table=point_candidate,
+                plenoscope_pointing=irf_config["config"][
+                    "plenoscope_pointing"
+                ],
+            )
         )
 
         for ok in ONREGION_TYPES:
             onregion_config = copy.deepcopy(ONREGION_TYPES[ok])
             idx_dict_source_in_onregion = {}
             for ii in range(poicanarr[spt.IDX].shape[0]):
-
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
                     reco_cx=poicanarr["reconstructed_trajectory/cx_rad"][ii],
                     reco_cy=poicanarr["reconstructed_trajectory/cy_rad"][ii],
@@ -198,9 +214,13 @@ for sk in SITES:
             idx_quality=passing_quality[sk][pk]["idx"],
         )
 
-        difcanarr = irf.reconstruction.trajectory_quality.make_rectangular_table(
-            event_table=diffuse_candidate,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+        difcanarr = (
+            irf.reconstruction.trajectory_quality.make_rectangular_table(
+                event_table=diffuse_candidate,
+                plenoscope_pointing=irf_config["config"][
+                    "plenoscope_pointing"
+                ],
+            )
         )
 
         for ok in ONREGION_TYPES:
@@ -208,7 +228,6 @@ for sk in SITES:
 
             idx_dict_probability_for_source_in_onregion = {}
             for ii in range(difcanarr[spt.IDX].shape[0]):
-
                 _onregion = irf.reconstruction.onregion.estimate_onregion(
                     reco_cx=difcanarr["reconstructed_trajectory/cx_rad"][ii],
                     reco_cy=difcanarr["reconstructed_trajectory/cy_rad"][ii],
@@ -227,8 +246,10 @@ for sk in SITES:
                     onregion=_onregion, num_steps=37
                 )
 
-                overlap_srad = irf.reconstruction.onregion.intersecting_area_of_polygons(
-                    a=onregion_polygon, b=POSSIBLE_ONREGION_POLYGON
+                overlap_srad = (
+                    irf.reconstruction.onregion.intersecting_area_of_polygons(
+                        a=onregion_polygon, b=POSSIBLE_ONREGION_POLYGON
+                    )
                 )
 
                 probability_to_contain_random_source = (

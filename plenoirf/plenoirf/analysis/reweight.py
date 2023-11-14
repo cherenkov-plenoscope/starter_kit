@@ -15,10 +15,14 @@ def reweight(
     relative_target_rate = target_rates / np.sum(target_rates)
     relative_initial_rate = initial_rates / np.sum(initial_rates)
     relative_initial_aban = np.interp(
-        x=event_energies, xp=initial_energies, fp=relative_initial_rate,
+        x=event_energies,
+        xp=initial_energies,
+        fp=relative_initial_rate,
     )
     relative_target_aban = np.interp(
-        x=event_energies, xp=target_energies, fp=relative_target_rate,
+        x=event_energies,
+        xp=target_energies,
+        fp=relative_target_rate,
     )
     weights = utils._divide_silent(
         numerator=relative_target_aban,

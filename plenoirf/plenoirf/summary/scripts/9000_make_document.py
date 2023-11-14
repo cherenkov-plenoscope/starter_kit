@@ -104,7 +104,10 @@ for sk in SITES:
     doc.preamble.append(ltx.Package("verbatim"))
 
     doc.preamble.append(
-        ltx.Command("title", noesc(r"Simulating the Cherenkov-Plenoscope"),)
+        ltx.Command(
+            "title",
+            noesc(r"Simulating the Cherenkov-Plenoscope"),
+        )
     )
     doc.preamble.append(
         ltx.Command("author", "Sebastian A. Mueller and Werner Hofmann")
@@ -115,7 +118,6 @@ for sk in SITES:
     doc.append(noesc(r"\begin{multicols}{2}"))
 
     with doc.create(ltx.Section("Version", numbering=False)):
-
         _basic_version_str = irf.provenance.make_basic_version_str(
             production_dirname=production_dirname,
             production_provenance=production_provenance,
@@ -141,7 +143,6 @@ for sk in SITES:
             )
 
     with doc.create(ltx.Section("Performance", numbering=False)):
-
         with doc.create(ltx.Figure(position="H")) as fig:
             fig.add_image(
                 ppath(

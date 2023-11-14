@@ -119,12 +119,18 @@ def sensitivity_vs_observation_time(energy_GeV=25.0, instrument="cta_south"):
     assert energy[0] == PIVOT_ENERGY_GEV
 
     return {
-        "pivot_energy": {"values": PIVOT_ENERGY_GEV, "unit": "GeV",},
+        "pivot_energy": {
+            "values": PIVOT_ENERGY_GEV,
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": dfdE,
             "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
         },
-        "observation_time": {"values": obstime_s, "unit": "s",},
+        "observation_time": {
+            "values": obstime_s,
+            "unit": "s",
+        },
         "reference": {
             "key": "funk2013comparison",
             "title": "Comparison of Fermi-LAT and CTA in the region between 10--100 GeV",

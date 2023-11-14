@@ -95,12 +95,10 @@ def write_theta_square_figure(
 
 for site_key in psf:
     for particle_key in ["gamma"]:
-
         # theta-square vs energy vs core-radius
         # -------------------------------------
 
         for theta_key in ["theta", "theta_para", "theta_perp"]:
-
             scenario_dir = os.path.join(
                 pa["out_dir"], site_key, particle_key, theta_key
             )
@@ -122,7 +120,6 @@ for site_key in psf:
             num_energy_bins = len(t2["energy_bin_edges_GeV"]) - 1
 
             for ene in range(num_energy_bins):
-
                 ene_start = t2["energy_bin_edges_GeV"][ene]
                 ene_stop = t2["energy_bin_edges_GeV"][ene + 1]
 
@@ -131,7 +128,6 @@ for site_key in psf:
                 )
 
                 for rad in range(num_radius_bins):
-
                     t2_ene_rad = t2["histogram"][ene][rad]
 
                     rad_start = np.sqrt(
@@ -161,7 +157,11 @@ for site_key in psf:
                             particle_key,
                             theta_key,
                             "{:s}_{:s}_{:s}_rad{:06d}_ene{:06d}.jpg".format(
-                                site_key, particle_key, theta_key, rad, ene,
+                                site_key,
+                                particle_key,
+                                theta_key,
+                                rad,
+                                ene,
                             ),
                         ),
                         theta_square_bin_edges_deg2=np.array(

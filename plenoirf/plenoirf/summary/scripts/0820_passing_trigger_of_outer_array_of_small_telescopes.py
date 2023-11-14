@@ -118,7 +118,10 @@ for ak in ARRAY_CONFIGS:
         "y / {:.1f}m".format(irf_config["grid_geometry"]["bin_width"])
     )
     fig.savefig(
-        os.path.join(pa["out_dir"], "array_configuration_" + ak + ".jpg",)
+        os.path.join(
+            pa["out_dir"],
+            "array_configuration_" + ak + ".jpg",
+        )
     )
     seb.close(fig)
 
@@ -141,7 +144,6 @@ for sk in SITES:
         pleno_den = binning_utils.centers(bin_edges=pleno_den_bin_edges)
 
         for ak in ARRAY_CONFIGS:
-
             assert (
                 ARRAY_CONFIGS[ak]["mirror_diameter_m"]
                 < irf_config["grid_geometry"]["bin_width"]
@@ -204,13 +206,15 @@ for sk in SITES:
         for ak in ARRAY_CONFIGS:
             out[sk][pk][ak] = []
 
-        grid_reader = atmospheric_cherenkov_response.grid.serialization.GridReader(
-            path=os.path.join(
-                pa["run_dir"],
-                "event_table",
-                sk,
-                pk,
-                "grid_roi_pasttrigger.tar",
+        grid_reader = (
+            atmospheric_cherenkov_response.grid.serialization.GridReader(
+                path=os.path.join(
+                    pa["run_dir"],
+                    "event_table",
+                    sk,
+                    pk,
+                    "grid_roi_pasttrigger.tar",
+                )
             )
         )
 

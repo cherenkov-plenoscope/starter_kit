@@ -79,7 +79,10 @@ for sk in SITES:
 
         ax.set_xlim(energy_bin["limits"])
         ax.set_ylim(
-            [0, 1e3 * MAX_SCATTER_SOLID_ANGLE_SR,]
+            [
+                0,
+                1e3 * MAX_SCATTER_SOLID_ANGLE_SR,
+            ]
         )
         ax.semilogx()
 
@@ -87,7 +90,10 @@ for sk in SITES:
         ax.set_ylabel("scatter solid angle / msr")
 
         fig.text(
-            x=0.8, y=0.05, s=r"1msr = 3.3(1$^\circ)^2$", color="grey",
+            x=0.8,
+            y=0.05,
+            s=r"1msr = 3.3(1$^\circ)^2$",
+            color="grey",
         )
         pcm_ratio = ax.pcolormesh(
             energy_bin["edges"],
@@ -114,7 +120,8 @@ for sk in SITES:
             os.path.join(
                 pa["out_dir"],
                 "{:s}_{:s}_acceptance_vs_scatter_vs_energy.jpg".format(
-                    sk, pk,
+                    sk,
+                    pk,
                 ),
             )
         )

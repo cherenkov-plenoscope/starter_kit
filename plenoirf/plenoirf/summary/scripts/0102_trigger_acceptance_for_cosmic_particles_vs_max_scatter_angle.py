@@ -48,7 +48,11 @@ for sk in SITES:
 
         shower_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -74,11 +78,13 @@ for sk in SITES:
         _mag_az_deg = np.rad2deg(shower_table["primary"]["magnet_azimuth_rad"])
         _mag_zd_deg = np.rad2deg(shower_table["primary"]["magnet_zenith_rad"])
 
-        shower_table_scatter_angle_deg = mdfl.spherical_coordinates._angle_between_az_zd_deg(
-            az1_deg=_az_deg,
-            zd1_deg=_zd_deg,
-            az2_deg=_mag_az_deg,
-            zd2_deg=_mag_zd_deg,
+        shower_table_scatter_angle_deg = (
+            mdfl.spherical_coordinates._angle_between_az_zd_deg(
+                az1_deg=_az_deg,
+                zd1_deg=_zd_deg,
+                az2_deg=_mag_az_deg,
+                zd2_deg=_mag_zd_deg,
+            )
         )
 
         Q = []

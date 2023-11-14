@@ -47,13 +47,20 @@ for sk in SITES:
     for pk in PARTICLES:
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
 
         idx_common = spt.intersection(
-            [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"],]
+            [
+                passing_trigger[sk][pk]["idx"],
+                passing_quality[sk][pk]["idx"],
+            ]
         )
 
         table = spt.cut_and_sort_table_on_indices(

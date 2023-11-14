@@ -179,7 +179,8 @@ for sk in SITES:
                 continue
 
             event_truth = spt.cut_and_sort_table_on_indices(
-                events_truth, common_indices=np.array([airshower_id]),
+                events_truth,
+                common_indices=np.array([airshower_id]),
             )
 
             core_m = np.hypot(
@@ -199,7 +200,9 @@ for sk in SITES:
                 evt_dir, "{:s}_{:012d}_truth.json".format(pk, airshower_id)
             )
             json_utils.write(
-                path=tabpath, out_dict=table_to_dict(event_truth), indent=4,
+                path=tabpath,
+                out_dict=table_to_dict(event_truth),
+                indent=4,
             )
 
             # prepare image intensities
@@ -270,7 +273,10 @@ for sk in SITES:
 
                 ax.set_ylabel(r"$c_y\,/\,1^{\circ}$")
                 fig.text(
-                    x=0.47, y=0.15, s=r"$c_x\,/\,1^{\circ}$", color="grey",
+                    x=0.47,
+                    y=0.15,
+                    s=r"$c_x\,/\,1^{\circ}$",
+                    color="grey",
                 )
 
                 pl.plot.ruler.add2ax_object_distance_ruler(

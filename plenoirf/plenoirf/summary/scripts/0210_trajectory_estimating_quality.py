@@ -204,9 +204,13 @@ for sk in SITES:
             ],
         )
 
-        event_frame = irf.reconstruction.trajectory_quality.make_rectangular_table(
-            event_table=event_table,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+        event_frame = (
+            irf.reconstruction.trajectory_quality.make_rectangular_table(
+                event_table=event_table,
+                plenoscope_pointing=irf_config["config"][
+                    "plenoscope_pointing"
+                ],
+            )
         )
 
         quality = align_values_with_event_frame(
@@ -254,7 +258,6 @@ for sk in SITES:
 
         if pk == "gamma":
             for fk in feature_correlations:
-
                 write_correlation_figure(
                     path=os.path.join(
                         pa["out_dir"],

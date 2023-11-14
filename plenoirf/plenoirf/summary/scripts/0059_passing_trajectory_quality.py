@@ -26,9 +26,13 @@ for sk in irf_config["config"]["sites"]:
             structure=irf.table.STRUCTURE,
         )
 
-        event_frame = irf.reconstruction.trajectory_quality.make_rectangular_table(
-            event_table=event_table,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+        event_frame = (
+            irf.reconstruction.trajectory_quality.make_rectangular_table(
+                event_table=event_table,
+                plenoscope_pointing=irf_config["config"][
+                    "plenoscope_pointing"
+                ],
+            )
         )
 
         # estimate_quality

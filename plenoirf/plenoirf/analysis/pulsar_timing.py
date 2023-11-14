@@ -32,10 +32,13 @@ def gaussian(x, mu, sigma):
 
 
 def ppog_init_from_profiles(
-    pulsar_name, energy_bin_edges, resources_dir=None,
+    pulsar_name,
+    energy_bin_edges,
+    resources_dir=None,
 ):
     pulsar = cosmic_fluxes.pulsars.init(
-        pulsar_name=pulsar_name, resources_dir=resources_dir,
+        pulsar_name=pulsar_name,
+        resources_dir=resources_dir,
     )
 
     pulsar_phase_bin_edges = np.array(
@@ -79,7 +82,8 @@ def ppog_init_from_phaseogram(
         E_stop = ppog["energy_bin_edges"][e + 1]
         E = np.mean([E_start, E_stop])
         dKdE = cosmic_fluxes.flux_of_fermi_source(
-            fermi_source=pulsar_spectrum, energy=E,
+            fermi_source=pulsar_spectrum,
+            energy=E,
         )
         ppog["differential_flux_vs_energy"][e] = dKdE
 

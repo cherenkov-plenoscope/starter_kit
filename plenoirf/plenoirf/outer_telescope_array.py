@@ -30,7 +30,8 @@ def init_mask_from_telescope_positions(positions):
 EXAMPLE_CONFIGURATION = {
     "mirror_diameter_m": 11.5,
     "positions": init_telescope_positions_in_annulus(
-        outer_radius=2.5, inner_radius=0.5,
+        outer_radius=2.5,
+        inner_radius=0.5,
     ),
 }
 EXAMPLE_CONFIGURATION["mask"] = init_mask_from_telescope_positions(

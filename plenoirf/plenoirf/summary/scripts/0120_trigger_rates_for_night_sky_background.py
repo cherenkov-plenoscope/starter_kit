@@ -44,7 +44,11 @@ for sk in SITES:
     for pk in PARTICLES:
         airshower_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -56,7 +60,8 @@ for sk in SITES:
             <= MAX_CHERENKOV_IN_NSB_PE
         ]
         nsb_table = spt.cut_level_on_indices(
-            level=airshower_table["trigger"], indices=idx_nsb,
+            level=airshower_table["trigger"],
+            indices=idx_nsb,
         )
 
         for tt, threshold in enumerate(trigger_thresholds):

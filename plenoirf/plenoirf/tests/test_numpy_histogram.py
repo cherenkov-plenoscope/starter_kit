@@ -2,7 +2,6 @@ import numpy as np
 
 
 def test_what_is_np_histogram2d_doing():
-
     num_bins_radius = 3
     num_bins_diameter = num_bins_radius * 2
     xy_bin_edges = np.linspace(-30, 30, 2 * num_bins_radius + 1)

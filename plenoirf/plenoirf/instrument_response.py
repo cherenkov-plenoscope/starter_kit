@@ -126,7 +126,8 @@ def reduce(run_dir, production_key, site_key, particle_key, LAZY, logger=None):
             os.path.join(features_dir, "*_event_table.tar")
         )
         event_table = spt.concatenate_files(
-            list_of_table_paths=_features_paths, structure=table.STRUCTURE,
+            list_of_table_paths=_features_paths,
+            structure=table.STRUCTURE,
         )
         spt.write(
             path=event_table_path,
@@ -245,7 +246,11 @@ def _init_grid_geometry_from_job(job):
 
 
 def _run_corsika_and_grid_and_output_to_tmp_dir(
-    job, prng, tmp_dir, corsika_primary_steering, tabrec,
+    job,
+    prng,
+    tmp_dir,
+    corsika_primary_steering,
+    tabrec,
 ):
     grid_geometry = _init_grid_geometry_from_job(job=job)
     GRID_SKIP = int(job["grid"]["output_after_num_events"])
@@ -266,7 +271,6 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
     ) as imgtar, tarfile.open(
         grid_roi_histogram_path, "w"
     ) as imgroitar:
-
         with cpw.CorsikaPrimary(
             corsika_path=job["corsika_primary_path"],
             steering_dict=corsika_primary_steering,
@@ -513,7 +517,8 @@ def _run_corsika_and_grid_and_output_to_tmp_dir(
         op.join(job["log_dir"], _run_id_str(job) + "_corsika.stderr"),
     )
     cpw.particles.dat_to_tape(
-        dat_path=particle_pools_dat_path, tape_path=particle_pools_tar_path,
+        dat_path=particle_pools_dat_path,
+        tape_path=particle_pools_tar_path,
     )
     rnw.copy(
         src=particle_pools_tar_path,
@@ -578,7 +583,8 @@ def _populate_particlepool(job, tabrec):
 
             for parblock in parreader:
                 cer = analysis.particles_on_ground.mask_cherenkov_emission(
-                    corsika_particles=parblock, corsika_particle_zoo=zoo,
+                    corsika_particles=parblock,
+                    corsika_particle_zoo=zoo,
                 )
                 ppp["num_water_cherenkov"] += np.sum(cer["media"]["water"])
                 ppp["num_air_cherenkov"] += np.sum(cer["media"]["air"])
@@ -816,7 +822,10 @@ def _classify_cherenkov_photons(
 
 
 def _extract_features(
-    tabrec, light_field_geometry, table_past_trigger, prng,
+    tabrec,
+    light_field_geometry,
+    table_past_trigger,
+    prng,
 ):
     light_field_geometry_addon = pl.features.make_light_field_geometry_addon(
         light_field_geometry=light_field_geometry
@@ -842,12 +851,15 @@ def _extract_features(
 
 
 def _estimate_primary_trajectory(job, tmp_dir, light_field_geometry, tabrec):
-
-    FUZZY_CONFIG = gamrec.trajectory.v2020nov12fuzzy0.config.compile_user_config(
-        user_config=job["reconstruction"]["trajectory"]["fuzzy_method"]
+    FUZZY_CONFIG = (
+        gamrec.trajectory.v2020nov12fuzzy0.config.compile_user_config(
+            user_config=job["reconstruction"]["trajectory"]["fuzzy_method"]
+        )
     )
-    MODEL_FIT_CONFIG = gamrec.trajectory.v2020dec04iron0b.config.compile_user_config(
-        user_config=job["reconstruction"]["trajectory"]["core_axis_fit"]
+    MODEL_FIT_CONFIG = (
+        gamrec.trajectory.v2020dec04iron0b.config.compile_user_config(
+            user_config=job["reconstruction"]["trajectory"]["core_axis_fit"]
+        )
     )
 
     _feature_table = spt.table_of_records_to_sparse_numeric_table(
@@ -960,7 +972,9 @@ def _export_grid_region_of_interest_if_passed_loose_trigger(
                 bimg = itar.extractfile(tarinfo).read()
                 filename = unique.UID_FOTMAT_STR.format(idx) + ".f4.gz"
                 utils.tar_append(
-                    tarout=otar, file_name=filename, file_bytes=bimg,
+                    tarout=otar,
+                    file_name=filename,
+                    file_bytes=bimg,
                 )
     rnw.copy(
         src=opath,
@@ -1060,7 +1074,9 @@ def run_job(job):
 
     with jlogging.TimeDelta(logger, "export grid region-of-interest"):
         _export_grid_region_of_interest_if_passed_loose_trigger(
-            job=job, tabrec=tabrec, tmp_dir=tmp_dir,
+            job=job,
+            tabrec=tabrec,
+            tmp_dir=tmp_dir,
         )
 
     with jlogging.TimeDelta(logger, "classify_cherenkov"):

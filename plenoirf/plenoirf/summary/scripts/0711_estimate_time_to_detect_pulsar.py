@@ -49,7 +49,8 @@ prng = np.random.Generator(
 
 pulsar_name = "J0614-3329"
 pulsar = irf.analysis.pulsar_timing.ppog_init_from_profiles(
-    energy_bin_edges=energy_fine_bin["edges"], pulsar_name=pulsar_name,
+    energy_bin_edges=energy_fine_bin["edges"],
+    pulsar_name=pulsar_name,
 )
 
 
@@ -122,7 +123,8 @@ if TEST_DRAW_RANDOM_PHASE:
     )
 
     arrival_phases_counts = np.histogram(
-        arrival_phases, bins=pulsar["phase_bin_edges"],
+        arrival_phases,
+        bins=pulsar["phase_bin_edges"],
     )[0]
     arrival_phases_counts = arrival_phases_counts / np.sum(
         arrival_phases_counts
@@ -162,13 +164,17 @@ run_observation_time_s = 3600
 
 
 def expose_to_background(
-    observation_time_s, background_rate_per_s, prng,
+    observation_time_s,
+    background_rate_per_s,
+    prng,
 ):
     background_intensity = observation_time_s * background_rate_per_s
     background_intensity = int(np.round(background_intensity))
     assert background_intensity > 1e3, "intensity is low -> rounding error."
     background_arrival_phases = prng.uniform(
-        low=0.0, high=(2 * np.pi), size=background_intensity,
+        low=0.0,
+        high=(2 * np.pi),
+        size=background_intensity,
     )
     return background_arrival_phases
 
@@ -178,7 +184,10 @@ def draw_time_to_detect_next_gamma_ray(gamma_rate_per_s, prng, num):
 
 
 def expose_to_pulsar(
-    observation_time_s, gamma_rate_per_s, pulsar, prng,
+    observation_time_s,
+    gamma_rate_per_s,
+    pulsar,
+    prng,
 ):
     tt = 0.0
     intensity = 0
@@ -189,7 +198,9 @@ def expose_to_pulsar(
         intensity += 1
 
     gamma_ray_phases = irf.analysis.pulsar_timing.ppog_draw_phase(
-        ppog=pulsar, prng=prng, num=intensity,
+        ppog=pulsar,
+        prng=prng,
+        num=intensity,
     )
 
     return gamma_ray_phases
@@ -302,7 +313,9 @@ for sk in SITES:
         # ------
         A_gamma = onregion_acceptance[sk][ok]["gamma"]["point"]["mean"]
         A_gamma_fine_m2 = np.interp(
-            x=energy_fine_bin["centers"], xp=energy_bin["centers"], fp=A_gamma,
+            x=energy_fine_bin["centers"],
+            xp=energy_bin["centers"],
+            fp=A_gamma,
         )
 
         dKdE_per_m2_per_s_per_GeV = pulsar["differential_flux_vs_energy"]

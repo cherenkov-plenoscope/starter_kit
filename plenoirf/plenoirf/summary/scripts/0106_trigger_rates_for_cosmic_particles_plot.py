@@ -29,7 +29,6 @@ mean_key = "mean"
 unc_key = "absolute_uncertainty"
 
 for sk in irf_config["config"]["sites"]:
-
     trigger_thresholds = np.array(
         sum_config["trigger"][sk]["ratescan_thresholds_pe"]
     )
@@ -90,7 +89,8 @@ for sk in irf_config["config"]["sites"]:
     ax.set_ylim([1e-3, 1e5])
     fig.savefig(
         os.path.join(
-            pa["out_dir"], "{:s}_differential_trigger_rate.jpg".format(sk),
+            pa["out_dir"],
+            "{:s}_differential_trigger_rate.jpg".format(sk),
         )
     )
     seb.close(fig)

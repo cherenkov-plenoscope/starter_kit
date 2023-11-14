@@ -75,17 +75,26 @@ QUALITY_FEATURES = {
     },
     "features/num_photons": {
         "scale": "log10",
-        "trace": [[1, 0.0], [4, 1.0],],
+        "trace": [
+            [1, 0.0],
+            [4, 1.0],
+        ],
         "weight": 0.0,
     },
     "features/image_half_depth_shift_c": {
         "scale": "linear",
-        "trace": [[0.0, 0.0], [1.5e-3, 1.0],],
+        "trace": [
+            [0.0, 0.0],
+            [1.5e-3, 1.0],
+        ],
         "weight": 0.0,
     },
     "features/image_smallest_ellipse_solid_angle": {
         "scale": "log10",
-        "trace": [[-7, 0.0], [-5, 1.0],],
+        "trace": [
+            [-7, 0.0],
+            [-5, 1.0],
+        ],
         "weight": 0.0,
     },
 }

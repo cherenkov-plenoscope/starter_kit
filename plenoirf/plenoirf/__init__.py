@@ -131,7 +131,12 @@ def make_example_config():
             "time_offset_start_s": -10e-9,
             "time_offset_stop_s": 10e-9,
             "direction_radius_deg": 2.0,
-            "object_distance_offsets_m": [4000.0, 2000.0, 0.0, -2000.0,],
+            "object_distance_offsets_m": [
+                4000.0,
+                2000.0,
+                0.0,
+                -2000.0,
+            ],
         },
         "min_num_photons": 17,
         "neighborhood_radius_deg": 0.075,
@@ -180,7 +185,8 @@ def init(run_dir, config=None, config_file_paths=None):
         config = make_example_config()
 
     json_utils.write(
-        path=opj(run_dir, "input", "config.json" + "tmp"), out_dict=config,
+        path=opj(run_dir, "input", "config.json" + "tmp"),
+        out_dict=config,
     )
     rnw.move(
         opj(run_dir, "input", "config.json" + "tmp"),
@@ -251,7 +257,12 @@ def _estimate_magnetic_deflection_of_air_showers(
 
 
 def _estimate_light_field_geometry_of_plenoscope(
-    config, run_dir, map_and_reduce_pool, executables, logger, make_plots=True,
+    config,
+    run_dir,
+    map_and_reduce_pool,
+    executables,
+    logger,
+    make_plots=True,
 ):
     logger.info("Estimating light-field-geometry.")
 
@@ -304,7 +315,9 @@ def _estimate_light_field_geometry_of_plenoscope(
 
 
 def _estimate_trigger_geometry_of_plenoscope(
-    config, run_dir, logger,
+    config,
+    run_dir,
+    logger,
 ):
     logger.info("Estimating trigger-geometry.")
     if not op.exists(opj(run_dir, "trigger_geometry")):
@@ -312,13 +325,17 @@ def _estimate_trigger_geometry_of_plenoscope(
             path=opj(run_dir, "light_field_geometry")
         )
         img = config["sum_trigger"]["image"]
-        trigger_image_geometry = pl.trigger.geometry.init_trigger_image_geometry(
-            image_outer_radius_rad=np.deg2rad(img["image_outer_radius_deg"]),
-            pixel_spacing_rad=np.deg2rad(img["pixel_spacing_deg"]),
-            pixel_radius_rad=np.deg2rad(img["pixel_radius_deg"]),
-            max_number_nearest_lixel_in_pixel=img[
-                "max_number_nearest_lixel_in_pixel"
-            ],
+        trigger_image_geometry = (
+            pl.trigger.geometry.init_trigger_image_geometry(
+                image_outer_radius_rad=np.deg2rad(
+                    img["image_outer_radius_deg"]
+                ),
+                pixel_spacing_rad=np.deg2rad(img["pixel_spacing_deg"]),
+                pixel_radius_rad=np.deg2rad(img["pixel_radius_deg"]),
+                max_number_nearest_lixel_in_pixel=img[
+                    "max_number_nearest_lixel_in_pixel"
+                ],
+            )
         )
         trigger_geometry = pl.trigger.geometry.init_trigger_geometry(
             light_field_geometry=light_field_geometry,
@@ -370,11 +387,13 @@ def _populate_table_of_thrown_air_showers(
 
     logger.info("Write provenance.")
     json_utils.write(
-        path=opj(table_absdir, "provenance.json"), out_dict=prov,
+        path=opj(table_absdir, "provenance.json"),
+        out_dict=prov,
     )
 
     deflection = mdfl.read_deflection(
-        work_dir=opj(run_dir, "magnetic_deflection"), style="dict",
+        work_dir=opj(run_dir, "magnetic_deflection"),
+        style="dict",
     )
 
     irf_jobs = []
@@ -442,7 +461,8 @@ def run(
     logger=jlogging.LoggerStdout(),
 ):
     map_and_reduce_pool = jlogging.MapAndReducePoolWithLogger(
-        pool=map_and_reduce_pool, logger=logger,
+        pool=map_and_reduce_pool,
+        logger=logger,
     )
 
     date_dict = provenance.get_time_dict_now()
@@ -483,7 +503,9 @@ def run(
     )
 
     _estimate_trigger_geometry_of_plenoscope(
-        config=config, run_dir=run_dir, logger=logger,
+        config=config,
+        run_dir=run_dir,
+        logger=logger,
     )
 
     _populate_table_of_thrown_air_showers(

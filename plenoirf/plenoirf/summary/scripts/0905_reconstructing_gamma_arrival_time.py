@@ -55,7 +55,11 @@ for sk in SITES:
         tds[sk][pk] = {}
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
@@ -91,7 +95,6 @@ for sk in SITES:
         tds[sk][pk]["energy_GeV"] = []
 
         for i in range(len(et)):
-
             """
             true_core_r_m = np.hypot(et["core/core_x_m"][i], et["core/core_y_m"][i])
             if true_core_r_m > 100:
@@ -128,10 +131,12 @@ for sk in SITES:
                 ]
             )
 
-            distance_to_collection_plane = irf.utils.ray_parameter_for_closest_distance_to_point(
-                ray_support=particle_starting_position,
-                ray_direction=particle_starting_direction,
-                point=instrument_position,
+            distance_to_collection_plane = (
+                irf.utils.ray_parameter_for_closest_distance_to_point(
+                    ray_support=particle_starting_position,
+                    ray_direction=particle_starting_direction,
+                    point=instrument_position,
+                )
             )
 
             _gamma_core = irf.utils.ray_at(

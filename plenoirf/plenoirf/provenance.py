@@ -20,7 +20,10 @@ IMPORTANT_PROGRAMS = {
 
 def _get_ascii_stdout_stderr(command, cwd="."):
     pp = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd,
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=cwd,
     )
     so, se = pp.communicate()
     return so.decode("ascii"), se.decode("ascii")
@@ -36,7 +39,10 @@ def get_ascii_stdout_stderr(command, cwd="."):
 
 
 def _git_last_commit_hash(path):
-    o, _ = get_ascii_stdout_stderr(command=["git", "log", "-1"], cwd=path,)
+    o, _ = get_ascii_stdout_stderr(
+        command=["git", "log", "-1"],
+        cwd=path,
+    )
     lines = o.splitlines()
     firstline = lines[0]
     commit_hash = firstline.split(" ")[1]

@@ -105,7 +105,10 @@ for sk in irf_config["config"]["sites"]:
         )
 
         dRdE[tt, :], dRdE_au[tt, :] = pru.multiply(
-            x=gamma_dKdE, x_au=gamma_dKdE_au, y=A, y_au=A_au,
+            x=gamma_dKdE,
+            x_au=gamma_dKdE_au,
+            y=A,
+            y_au=A_au,
         )
 
         R[tt], R_au[tt] = irf.utils.integrate_rate_where_known(
@@ -167,7 +170,10 @@ for sk in irf_config["config"]["sites"]:
             )
 
             dRdE[tt, :], dRdE_au[tt, :] = pru.multiply(
-                x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=Q, y_au=Q_au,
+                x=cosmic_dFdE,
+                x_au=cosmic_dFdE_au,
+                y=Q,
+                y_au=Q_au,
             )
 
             R[tt], R_au[tt] = irf.utils.integrate_rate_where_known(

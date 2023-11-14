@@ -78,7 +78,9 @@ for sk in SITES:
 
         A_gamma = onregion_acceptance[sk][ok]["gamma"]["point"]["mean"]
         A_gamma_fine_m2 = np.interp(
-            x=energy_fine_bin["centers"], xp=energy_bin["centers"], fp=A_gamma,
+            x=energy_fine_bin["centers"],
+            xp=energy_bin["centers"],
+            fp=A_gamma,
         )
         array_to_txt(
             arr=A_gamma_fine_m2, path=os.path.join(sk_ok_dir, "A_m2.txt")
@@ -120,7 +122,8 @@ for sk in SITES:
 
             try:
                 pulsar = irf.analysis.pulsar_timing.ppog_init_from_profiles(
-                    energy_bin_edges=energy_fine_bin["edges"], pulsar_name=pk,
+                    energy_bin_edges=energy_fine_bin["edges"],
+                    pulsar_name=pk,
                 )
             except KeyError:
                 continue
@@ -167,7 +170,9 @@ for sk in SITES:
             fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
             ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
             ax.plot(
-                energy_fine_bin["edges"][0:-1], dRdE_per_s_per_GeV, "k-",
+                energy_fine_bin["edges"][0:-1],
+                dRdE_per_s_per_GeV,
+                "k-",
             )
             ax.loglog()
             _ymax = np.max(dRdE_per_s_per_GeV)

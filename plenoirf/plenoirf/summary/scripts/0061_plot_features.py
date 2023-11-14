@@ -41,16 +41,22 @@ tables = {}
 for sk in SITES:
     tables[sk] = {}
     for pk in PARTICLES:
-
         _table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
 
         idx_common = spt.intersection(
-            [passing_trigger[sk][pk]["idx"], passing_quality[sk][pk]["idx"],]
+            [
+                passing_trigger[sk][pk]["idx"],
+                passing_quality[sk][pk]["idx"],
+            ]
         )
 
         tables[sk][pk] = spt.cut_and_sort_table_on_indices(
@@ -110,12 +116,10 @@ for fk in Sfeatures:
 
 for fk in Sfeatures:
     for sk in SITES:
-
         fig = seb.figure(style=seb.FIGURE_1_1)
         ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
 
         for pk in PARTICLES:
-
             reweight_spectrum = np.interp(
                 x=tables[sk][pk]["primary"]["energy_GeV"],
                 xp=weights_thrown2expected[sk][pk]["weights_vs_energy"][

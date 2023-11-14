@@ -33,7 +33,6 @@ key = "trigger_probability_vs_cherenkov_size_in_grid_bin"
 
 for sk in irf_config["config"]["sites"]:
     for tm in trigger_modi:
-
         # all particles together
         # ----------------------
         fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
@@ -41,7 +40,6 @@ for sk in irf_config["config"]["sites"]:
 
         text_y = 0
         for pk in irf_config["config"]["particles"]:
-
             density_bin_edges = trigger_vs_size[sk][pk][tm][
                 "Cherenkov_density_bin_edges_per_m2"
             ]
@@ -74,5 +72,10 @@ for sk in irf_config["config"]["sites"]:
         ax.set_ylim([1e-6, 1.5e-0])
         ax.set_xlabel("density of Cherenkov-photons at plenoscope / m$^{-2}$")
         ax.set_ylabel("{:s} / 1".format(trigger_modi[tm]))
-        fig.savefig(opj(pa["out_dir"], sk + "_" + tm + ".jpg",))
+        fig.savefig(
+            opj(
+                pa["out_dir"],
+                sk + "_" + tm + ".jpg",
+            )
+        )
         seb.close(fig)

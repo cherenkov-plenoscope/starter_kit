@@ -57,7 +57,12 @@ EXAMPLE_CHERENKOV_CLASSIFICATION = {
         "time_offset_start_s": -10e-9,
         "time_offset_stop_s": 10e-9,
         "direction_radius_deg": 2.0,
-        "object_distance_offsets_m": [4000.0, 2000.0, 0.0, -2000.0,],
+        "object_distance_offsets_m": [
+            4000.0,
+            2000.0,
+            0.0,
+            -2000.0,
+        ],
     },
     "min_num_photons": 17,
     "neighborhood_radius_deg": 0.075,
@@ -93,7 +98,8 @@ def make_example_job(
     run_id=1,
 ):
     deflection_table = magnetic_deflection.read_deflection(
-        work_dir=op.join(run_dir, "magnetic_deflection"), style="dict",
+        work_dir=op.join(run_dir, "magnetic_deflection"),
+        style="dict",
     )
     with open(op.join(run_dir, "input", "config.json"), "rt") as fin:
         config = json_utils.loads(fin.read())
@@ -146,7 +152,10 @@ def make_helium_demo_for_tomography(
 
     job["particle"] = {
         "particle_id": 402,
-        "energy_bin_edges_GeV": [energy_start, energy_stop,],
+        "energy_bin_edges_GeV": [
+            energy_start,
+            energy_stop,
+        ],
         "max_scatter_angle_deg": max_scatter_angle_deg,
         "energy_power_law_slope": -1.5,
         "electric_charge_qe": +2.0,
@@ -155,7 +164,10 @@ def make_helium_demo_for_tomography(
 
     job["artificial_core_limitation"] = {
         "energy_GeV": [energy_start, energy_stop],
-        "max_scatter_radius_m": [max_scatter_radius_m, max_scatter_radius_m,],
+        "max_scatter_radius_m": [
+            max_scatter_radius_m,
+            max_scatter_radius_m,
+        ],
     }
 
     job["raw_sensor_response"] = {"skip_num_events": 1}

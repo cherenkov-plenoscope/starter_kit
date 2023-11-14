@@ -150,7 +150,6 @@ NUM_EVENTS_PER_PARTICLE = 10
 
 for sk in irf_config["config"]["sites"]:
     for pk in irf_config["config"]["particles"]:
-
         reco_obj = read_shower_maximum_object_distance(
             site_key=sk, particle_key=pk
         )
@@ -217,15 +216,18 @@ for sk in irf_config["config"]["sites"]:
                     pa["out_dir"],
                     sk,
                     pk,
-                    "{:09d}_ring.jpg".format(airshower_id,),
+                    "{:09d}_ring.jpg".format(
+                        airshower_id,
+                    ),
                 )
                 fig.savefig(path)
                 seb.close(fig)
 
             if PLOT_OVERVIEW:
-
-                split_light_field = pl.split_light_field.make_split_light_field(
-                    loph_record=loph_record, light_field_geometry=lfg
+                split_light_field = (
+                    pl.split_light_field.make_split_light_field(
+                        loph_record=loph_record, light_field_geometry=lfg
+                    )
                 )
 
                 fit_cx_deg = np.rad2deg(fit["primary_particle_cx"])
@@ -282,7 +284,6 @@ for sk in irf_config["config"]["sites"]:
                 ax.plot(np.rad2deg(truth["cx"]), np.rad2deg(truth["cy"]), "xk")
 
                 if PLOT_ONREGION:
-
                     onregion = irf.reconstruction.onregion.estimate_onregion(
                         reco_cx=fit["primary_particle_cx"],
                         reco_cy=fit["primary_particle_cy"],
@@ -311,7 +312,9 @@ for sk in irf_config["config"]["sites"]:
                         look = ":c"
 
                     ax.plot(
-                        np.rad2deg(ellxy[:, 0]), np.rad2deg(ellxy[:, 1]), look,
+                        np.rad2deg(ellxy[:, 0]),
+                        np.rad2deg(ellxy[:, 1]),
+                        look,
                     )
 
                 info_str = ""
@@ -320,7 +323,8 @@ for sk in irf_config["config"]["sites"]:
                     loph_record["photons"]["channels"].shape[0]
                 )
                 info_str += "response of shower-model: {:.4f} ({:.4f})".format(
-                    fit["shower_model_response"], true_response,
+                    fit["shower_model_response"],
+                    true_response,
                 )
 
                 ax.set_title(info_str)
@@ -343,7 +347,12 @@ for sk in irf_config["config"]["sites"]:
                 ax_core.set_xlabel("x / m")
                 ax_core.set_ylabel("y / m")
                 path = os.path.join(
-                    pa["out_dir"], sk, pk, "{:09d}.jpg".format(airshower_id,),
+                    pa["out_dir"],
+                    sk,
+                    pk,
+                    "{:09d}.jpg".format(
+                        airshower_id,
+                    ),
                 )
 
                 fig.savefig(path)

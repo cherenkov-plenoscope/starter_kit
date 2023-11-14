@@ -4,7 +4,10 @@ import numpy as np
 
 
 def cut_primary_direction_within_angle(
-    primary_table, radial_angle_deg, azimuth_deg, zenith_deg,
+    primary_table,
+    radial_angle_deg,
+    azimuth_deg,
+    zenith_deg,
 ):
     delta_deg = mdfl.spherical_coordinates._angle_between_az_zd_deg(
         az1_deg=np.rad2deg(primary_table["azimuth_rad"]),
@@ -18,7 +21,9 @@ def cut_primary_direction_within_angle(
 
 
 def cut_quality(
-    feature_table, max_relative_leakage, min_reconstructed_photons,
+    feature_table,
+    max_relative_leakage,
+    min_reconstructed_photons,
 ):
     ft = feature_table
     # size

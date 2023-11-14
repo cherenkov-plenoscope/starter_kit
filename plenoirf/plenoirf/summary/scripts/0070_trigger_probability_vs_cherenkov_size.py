@@ -16,7 +16,7 @@ sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 os.makedirs(pa["out_dir"], exist_ok=True)
 
 num_size_bins = 12
-size_bin_edges = np.geomspace(1, 2 ** num_size_bins, (3 * num_size_bins) + 1)
+size_bin_edges = np.geomspace(1, 2**num_size_bins, (3 * num_size_bins) + 1)
 
 passing_trigger = json_utils.tree.read(
     os.path.join(pa["summary_dir"], "0055_passing_trigger")

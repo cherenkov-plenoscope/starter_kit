@@ -47,7 +47,6 @@ for sk in SITES:
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for pk in COSMIC_RAYS:
-
         R = rates[sk][pk]["integral"]["R"]
         R_au = rates[sk][pk]["integral"]["R_au"]
 
@@ -62,7 +61,10 @@ for sk in SITES:
             face_alpha=0.2,
         )
     fig.text(
-        x=0.8, y=0.05, s=r"1msr = 3.3(1$^\circ)^2$", color="grey",
+        x=0.8,
+        y=0.05,
+        s=r"1msr = 3.3(1$^\circ)^2$",
+        color="grey",
     )
     ax.set_ylabel("trigger-rate / 1k s$^{-1}$")
     ax.set_xlabel("scatter solid angle / msr")
@@ -78,7 +80,6 @@ for sk in SITES:
     fig = seb.figure(irf.summary.figure.FIGURE_STYLE)
     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
     for pk in COSMIC_RAYS:
-
         R = rates[sk][pk]["integral"]["R"]
         R_au = rates[sk][pk]["integral"]["R_au"]
 
@@ -86,18 +87,30 @@ for sk in SITES:
         dRdS_au = np.zeros(dRdS.shape)
         for sc in range(scatter_bin[pk]["num_bins"] - 1):
             dR, dR_au = pu.add(
-                x=R[sc + 1], x_au=R_au[sc + 1], y=-R[sc], y_au=R_au[sc],
+                x=R[sc + 1],
+                x_au=R_au[sc + 1],
+                y=-R[sc],
+                y_au=R_au[sc],
             )
             _Rmean, _Rmean_au = pu.add(
-                x=R[sc + 1], x_au=R_au[sc + 1], y=R[sc], y_au=R_au[sc],
+                x=R[sc + 1],
+                x_au=R_au[sc + 1],
+                y=R[sc],
+                y_au=R_au[sc],
             )
             Rmean, Rmean_au = pu.multiply(
-                x=0.5, x_au=0.0, y=_Rmean, y_au=_Rmean_au,
+                x=0.5,
+                x_au=0.0,
+                y=_Rmean,
+                y_au=_Rmean_au,
             )
             dS = 1e3 * scatter_bin[pk]["widths"][sc]
             _dRdS, _dRdS_au = pu.divide(x=dR, x_au=dR_au, y=dS, y_au=0.0)
             dRdS[sc], dRdS_au[sc] = pu.divide(
-                x=_dRdS, x_au=_dRdS_au, y=Rmean, y_au=Rmean_au,
+                x=_dRdS,
+                x_au=_dRdS_au,
+                y=Rmean,
+                y_au=Rmean_au,
             )
 
         seb.ax_add_histogram(
@@ -112,7 +125,10 @@ for sk in SITES:
         )
 
     fig.text(
-        x=0.8, y=0.05, s=r"1msr = 3.3(1$^\circ)^2$", color="grey",
+        x=0.8,
+        y=0.05,
+        s=r"1msr = 3.3(1$^\circ)^2$",
+        color="grey",
     )
     ax.set_ylabel(
         (
@@ -178,7 +194,10 @@ for sk in SITES:
         ax.set_ylabel("scatter solid angle / msr")
 
         fig.text(
-            x=0.8, y=0.05, s=r"1msr = 3.3(1$^\circ)^2$", color="grey",
+            x=0.8,
+            y=0.05,
+            s=r"1msr = 3.3(1$^\circ)^2$",
+            color="grey",
         )
         pcm_ratio = ax.pcolormesh(
             energy_bin["edges"],
@@ -205,7 +224,8 @@ for sk in SITES:
             os.path.join(
                 pa["out_dir"],
                 "{:s}_{:s}_diff-trigger-rate_vs_scatter_vs_energy.jpg".format(
-                    sk, pk,
+                    sk,
+                    pk,
                 ),
             )
         )

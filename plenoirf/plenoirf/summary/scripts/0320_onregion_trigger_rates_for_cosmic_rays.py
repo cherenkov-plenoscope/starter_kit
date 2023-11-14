@@ -85,11 +85,16 @@ for sk in SITES:
         )
 
         dRdE, dRdE_au = pru.multiply(
-            x=gamma_dKdE, x_au=gamma_dKdE_au, y=A, y_au=A_au,
+            x=gamma_dKdE,
+            x_au=gamma_dKdE_au,
+            y=A,
+            y_au=A_au,
         )
 
         R, R_au = irf.utils.integrate_rate_where_known(
-            dRdE=dRdE, dRdE_au=dRdE_au, E_edges=fenergy_bin["edges"],
+            dRdE=dRdE,
+            dRdE_au=dRdE_au,
+            E_edges=fenergy_bin["edges"],
         )
 
         json_utils.write(
@@ -135,18 +140,27 @@ for sk in SITES:
             ]
 
             Q = np.interp(
-                x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q,
+                x=fenergy_bin["centers"],
+                xp=energy_bin["centers"],
+                fp=_Q,
             )
             Q_au = np.interp(
-                x=fenergy_bin["centers"], xp=energy_bin["centers"], fp=_Q_au,
+                x=fenergy_bin["centers"],
+                xp=energy_bin["centers"],
+                fp=_Q_au,
             )
 
             dRdE, dRdE_au = pru.multiply(
-                x=cosmic_dFdE, x_au=cosmic_dFdE_au, y=Q, y_au=Q_au,
+                x=cosmic_dFdE,
+                x_au=cosmic_dFdE_au,
+                y=Q,
+                y_au=Q_au,
             )
 
             R, R_au = irf.utils.integrate_rate_where_known(
-                dRdE=dRdE, dRdE_au=dRdE_au, E_edges=fenergy_bin["edges"],
+                dRdE=dRdE,
+                dRdE_au=dRdE_au,
+                E_edges=fenergy_bin["edges"],
             )
 
             json_utils.write(

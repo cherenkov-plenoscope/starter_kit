@@ -44,13 +44,16 @@ for sk in SITES:
 
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
 
         for tm in trigger_modi:
-
             mask_pasttrigger = spt.make_mask_of_right_in_left(
                 left_indices=event_table["trigger"][spt.IDX],
                 right_indices=trigger_modi[tm][sk][pk]["idx"],

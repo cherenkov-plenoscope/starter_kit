@@ -38,10 +38,13 @@ RRR = {}
 for sk in ["chile"]:  # SITES:
     RRR[sk] = {}
     for pk in ["proton"]:  # PARTICLES:
-
         event_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
         )
 
@@ -88,10 +91,12 @@ for sk in ["chile"]:  # SITES:
                     }
                     for particle_block in parreader:
                         for particle_row in particle_block:
-                            corsika_particle_id = corsika_primary.particles.decode_particle_id(
-                                code=particle_row[
-                                    corsika_primary.I.PARTICLE.CODE
-                                ]
+                            corsika_particle_id = (
+                                corsika_primary.particles.decode_particle_id(
+                                    code=particle_row[
+                                        corsika_primary.I.PARTICLE.CODE
+                                    ]
+                                )
                             )
 
                             if zoo.has(corsika_particle_id):
@@ -121,7 +126,6 @@ for sk in ["chile"]:  # SITES:
                                 )
 
                                 if np.linalg.norm(pos_m) <= radius_m:
-
                                     if (
                                         corsika_particle_id
                                         == corsika_primary.particles.identification.PARTICLES[

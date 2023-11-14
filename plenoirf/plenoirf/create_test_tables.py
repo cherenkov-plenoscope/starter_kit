@@ -10,7 +10,11 @@ from . import utils
 
 cfg = {
     "particle_id": 14,
-    "energy": {"lower": 0.25, "upper": 1e3, "power_slope": -2.0,},
+    "energy": {
+        "lower": 0.25,
+        "upper": 1e3,
+        "power_slope": -2.0,
+    },
     "num_airshower": 1000 * 1000,
     "propagation_probability": {
         "one_grid_cell_over_threshold_to_trigger": 0.025,
@@ -69,7 +73,10 @@ cherenkovpool
 
 
 def create_dummy_table(
-    prng, config=cfg, num_primary=1000, structrue=table.STRUCTURE,
+    prng,
+    config=cfg,
+    num_primary=1000,
+    structrue=table.STRUCTURE,
 ):
     ones = np.ones(num_primary)
     t = {}

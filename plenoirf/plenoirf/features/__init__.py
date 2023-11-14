@@ -57,7 +57,8 @@ def find_transformation(feature_raw, transformation_instruction):
 
     # find quantile
     start, stop = find_values_quantile_range(
-        values=f_trans, quantile_range=ti["quantile_range"],
+        values=f_trans,
+        quantile_range=ti["quantile_range"],
     )
     transformation["quantile_range"] = ti["quantile_range"]
     transformation["range"] = [start, stop]

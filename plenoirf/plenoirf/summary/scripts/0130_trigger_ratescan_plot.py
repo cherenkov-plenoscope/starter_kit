@@ -66,7 +66,10 @@ for sk in SITES:
 
     for ck in COSMIC_RAYS:
         ax.plot(
-            trigger_thresholds, tr[ck], color=particle_colors[ck], label=ck,
+            trigger_thresholds,
+            tr[ck],
+            color=particle_colors[ck],
+            label=ck,
         )
 
     ax.semilogy()

@@ -143,7 +143,11 @@ def differential_sensitivity(observation_time=1800):
     )
 
     return {
-        "energy": {"values": energy, "unit": "GeV", "unit": "GeV",},
+        "energy": {
+            "values": energy,
+            "unit": "GeV",
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": dfdE,
             "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",

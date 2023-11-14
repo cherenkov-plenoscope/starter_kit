@@ -85,15 +85,17 @@ for obj, object_distance in enumerate(object_distances):
 
     # compute a list of pixels where a lixel contributes to.
     if not os.path.exists(cpath):
-        lixel_to_pixel = pl.trigger.geometry.estimate_projection_of_light_field_to_image(
-            light_field_geometry=light_field_geometry,
-            object_distance=object_distance,
-            image_pixel_cx_rad=image_geometry["pixel_cx_rad"],
-            image_pixel_cy_rad=image_geometry["pixel_cy_rad"],
-            image_pixel_radius_rad=image_geometry["pixel_radius_rad"],
-            max_number_nearest_lixel_in_pixel=image_geometry[
-                "max_number_nearest_lixel_in_pixel"
-            ],
+        lixel_to_pixel = (
+            pl.trigger.geometry.estimate_projection_of_light_field_to_image(
+                light_field_geometry=light_field_geometry,
+                object_distance=object_distance,
+                image_pixel_cx_rad=image_geometry["pixel_cx_rad"],
+                image_pixel_cy_rad=image_geometry["pixel_cy_rad"],
+                image_pixel_radius_rad=image_geometry["pixel_radius_rad"],
+                max_number_nearest_lixel_in_pixel=image_geometry[
+                    "max_number_nearest_lixel_in_pixel"
+                ],
+            )
         )
 
         json_utils.write(path=cpath, out_dict=lixel_to_pixel, indent=None)
@@ -102,7 +104,6 @@ for obj, object_distance in enumerate(object_distances):
 
     colored_lixels = np.zeros(light_field_geometry.number_lixel, dtype=np.bool)
     for i, pixel_id in enumerate(central_seven_pixel_ids):
-
         valid_polygons = []
         additional_colored_lixels = np.zeros(
             light_field_geometry.number_lixel, dtype=np.bool
@@ -126,7 +127,6 @@ for obj, object_distance in enumerate(object_distances):
     not_colored_polygons = []
     for j, poly in enumerate(light_field_geometry.lixel_polygons):
         if not_colored[j]:
-
             if lixel_in_region_of_interest(
                 light_field_geometry=light_field_geometry,
                 lixel_id=j,
@@ -175,8 +175,25 @@ for obj, object_distance in enumerate(object_distances):
         color=irf.summary.figure.COLOR_BEAM_RGBA,
         alpha=0.2,
     )
-    ax2.plot([-1, 1,], [-0.1, -0.1], color="white", linewidth=10, alpha=1.0)
-    ax2.plot([-1.0, 1.0,], [0, 0], color="k", linewidth=0.5 * linewidths)
+    ax2.plot(
+        [
+            -1,
+            1,
+        ],
+        [-0.1, -0.1],
+        color="white",
+        linewidth=10,
+        alpha=1.0,
+    )
+    ax2.plot(
+        [
+            -1.0,
+            1.0,
+        ],
+        [0, 0],
+        color="k",
+        linewidth=0.5 * linewidths,
+    )
 
     ax2.text(
         x=-0.6,

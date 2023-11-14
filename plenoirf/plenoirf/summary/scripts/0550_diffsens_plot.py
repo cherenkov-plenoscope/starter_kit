@@ -70,11 +70,17 @@ def com_add_diff_flux(
 
     for ebin in range(num_energy_bins):
         com["energy"].append(
-            [energy_bin_edges[ebin], energy_bin_edges[ebin + 1],]
+            [
+                energy_bin_edges[ebin],
+                energy_bin_edges[ebin + 1],
+            ]
         )
         if sysuncix is not None:
             com["differential_flux"].append(
-                [dVdE[ebin, obstidx, sysuncix], dVdE[ebin, obstidx, sysuncix],]
+                [
+                    dVdE[ebin, obstidx, sysuncix],
+                    dVdE[ebin, obstidx, sysuncix],
+                ]
             )
             com["differential_flux_au"].append(
                 [
@@ -84,10 +90,16 @@ def com_add_diff_flux(
             )
         else:
             com["differential_flux"].append(
-                [dVdE[ebin, obstidx], dVdE[ebin, obstidx],]
+                [
+                    dVdE[ebin, obstidx],
+                    dVdE[ebin, obstidx],
+                ]
             )
             com["differential_flux_au"].append(
-                [dVdE_au[ebin, obstidx], dVdE_au[ebin, obstidx],]
+                [
+                    dVdE_au[ebin, obstidx],
+                    dVdE_au[ebin, obstidx],
+                ]
             )
     return com
 
@@ -244,7 +256,6 @@ for obsk in observation_times:
                     ax = seb.add_axes(fig=fig, span=irf.summary.figure.AX_SPAN)
 
                     for com in components:
-
                         for ii in range(len(com["energy"])):
                             _energy, _dFdE = sed.convert_units_with_style(
                                 x=com["energy"][ii],

@@ -42,22 +42,29 @@ for sk in SITES:
 
         diffuse_particle_table = spt.read(
             path=os.path.join(
-                pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                pa["run_dir"],
+                "event_table",
+                sk,
+                pk,
+                "event_table.tar",
             ),
             structure=irf.table.STRUCTURE,
         )
 
         # point source
         # ------------
-        idx_possible_onregion = irf.analysis.cuts.cut_primary_direction_within_angle(
-            primary_table=diffuse_particle_table["primary"],
-            radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
-            azimuth_deg=pointing_azimuth_deg,
-            zenith_deg=pointing_zenith_deg,
+        idx_possible_onregion = (
+            irf.analysis.cuts.cut_primary_direction_within_angle(
+                primary_table=diffuse_particle_table["primary"],
+                radial_angle_deg=MAX_SOURCE_ANGLE_DEG,
+                azimuth_deg=pointing_azimuth_deg,
+                zenith_deg=pointing_zenith_deg,
+            )
         )
 
         point_particle_table = spt.cut_table_on_indices(
-            table=diffuse_particle_table, common_indices=idx_possible_onregion,
+            table=diffuse_particle_table,
+            common_indices=idx_possible_onregion,
         )
 
         energy_GeV = point_particle_table["primary"]["energy_GeV"]

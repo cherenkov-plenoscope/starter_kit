@@ -103,7 +103,6 @@ def read_instrument_response_config(run_dir):
 
 
 def run(run_dir):
-
     json_utils.write(
         path=opj(run_dir, "summary", "provenance.json"),
         out_dict=provenance.make_provenance(),
@@ -163,7 +162,7 @@ def _estimate_num_events_past_trigger(run_dir, irf_config):
 
 def _guess_num_direction_bins(num_events):
     num_bins = int(0.5 * np.sqrt(num_events))
-    num_bins = np.max([np.min([num_bins, 2 ** 7]), 2 ** 4])
+    num_bins = np.max([np.min([num_bins, 2**7]), 2**4])
     return num_bins
 
 
@@ -180,7 +179,11 @@ def make_ratescan_trigger_thresholds(
     assert lower_threshold <= analysis_trigger_threshold
     assert upper_threshold >= analysis_trigger_threshold
 
-    tt = np.geomspace(lower_threshold, upper_threshold, num_thresholds,)
+    tt = np.geomspace(
+        lower_threshold,
+        upper_threshold,
+        num_thresholds,
+    )
     tt = np.round(tt)
     tt = tt.tolist()
     tt = tt + [collection_trigger_threshold]
@@ -261,7 +264,7 @@ def guess_num_offregions(
     )
     num = int(
         np.round(
-            (valid_fov_radius_deg ** 2 / onregion_radius_deg ** 2)
+            (valid_fov_radius_deg**2 / onregion_radius_deg**2)
             * fraction_of_fov_being_useful
         )
     )
@@ -315,7 +318,9 @@ def _guess_summary_config(run_dir):
                 num_events_past_collection_trigger
             ),
         },
-        "night_sky_background": {"max_num_true_cherenkov_photons": 0,},
+        "night_sky_background": {
+            "max_num_true_cherenkov_photons": 0,
+        },
         "airshower_flux": {
             "fraction_of_flux_below_geomagnetic_cutoff": 0.05,
             "relative_uncertainty_below_geomagnetic_cutoff": 0.5,
@@ -332,7 +337,10 @@ def _guess_summary_config(run_dir):
             "min_trajectory_quality": 0.3,
         },
         "point_spread_function": {
-            "theta_square": {"max_angle_deg": 3.25, "num_bins": 256,},
+            "theta_square": {
+                "max_angle_deg": 3.25,
+                "num_bins": 256,
+            },
             "core_radius": {"max_radius_m": 640, "num_bins": 4},
             "containment_factor": 0.68,
             "pivot_energy_GeV": 2.0,
@@ -378,18 +386,25 @@ def _guess_summary_config(run_dir):
             "ring-mst": {
                 "mirror_diameter_m": 11.5,
                 "positions": outer_telescope_array.init_telescope_positions_in_annulus(
-                    outer_radius=2.5, inner_radius=0.5,
+                    outer_radius=2.5,
+                    inner_radius=0.5,
                 ),
             },
             "many-sst": {
                 "mirror_diameter_m": 4.3,
                 "positions": outer_telescope_array.init_telescope_positions_in_annulus(
-                    outer_radius=5.5, inner_radius=0.5,
+                    outer_radius=5.5,
+                    inner_radius=0.5,
                 ),
             },
             "few-magics": {
                 "mirror_diameter_m": 17.0,
-                "positions": [[1, 1], [-1, 1], [-1, -1], [1, -1],],
+                "positions": [
+                    [1, 1],
+                    [-1, 1],
+                    [-1, -1],
+                    [1, -1],
+                ],
             },
         },
     }
@@ -428,13 +443,22 @@ def read_train_test_frame(
     pk = particle_key
 
     airshower_table = spt.read(
-        path=os.path.join(run_dir, "event_table", sk, pk, "event_table.tar",),
+        path=os.path.join(
+            run_dir,
+            "event_table",
+            sk,
+            pk,
+            "event_table.tar",
+        ),
         structure=table.STRUCTURE,
     )
 
     airshower_table["transformed_features"] = spt.read(
         path=os.path.join(
-            transformed_features_dir, sk, pk, "transformed_features.tar",
+            transformed_features_dir,
+            sk,
+            pk,
+            "transformed_features.tar",
         ),
         structure=features.TRANSFORMED_FEATURE_STRUCTURE,
     )["transformed_features"]
@@ -458,7 +482,11 @@ def read_train_test_frame(
     out = {}
     for kk in ["test", "train"]:
         idxs_valid_kk = spt.intersection(
-            [idxs_triggered, idxs_quality, train_test[sk][pk][kk],]
+            [
+                idxs_triggered,
+                idxs_quality,
+                train_test[sk][pk][kk],
+            ]
         )
         table_kk = spt.cut_and_sort_table_on_indices(
             table=airshower_table,

@@ -14,7 +14,6 @@ def sensitivity_vs_observation_time(energy_GeV=25.0):
 
 
 def differential_sensitivity(l=0, b=0):
-
     if l == 0 and b == 0:
         raw = np.array(
             [
@@ -83,7 +82,10 @@ def differential_sensitivity(l=0, b=0):
     )
 
     return {
-        "energy": {"values": energy, "unit": "GeV",},
+        "energy": {
+            "values": energy,
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": dfdE,
             "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
@@ -255,7 +257,10 @@ def integral_sensitivity():
     )
 
     return {
-        "energy": {"values": energy, "unit": "GeV",},
+        "energy": {
+            "values": energy,
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": dfdE,
             "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
@@ -327,7 +332,6 @@ def energy_resolution():
 
 
 def angular_resolution(containment_percent=68):
-
     if containment_percent == 68:
         raw = np.array(
             [

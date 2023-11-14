@@ -13,7 +13,9 @@ setuptools.setup(
     author="Sebastian Achim Mueller",
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
     license="GPL v3",
-    packages=["plenoirf",],
+    packages=[
+        "plenoirf",
+    ],
     install_requires=[
         "cosmic_fluxes",
         "corsika_primary",

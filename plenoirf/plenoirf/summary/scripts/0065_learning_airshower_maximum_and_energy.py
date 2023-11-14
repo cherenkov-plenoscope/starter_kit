@@ -22,7 +22,10 @@ irf_config = irf.summary.read_instrument_response_config(run_dir=pa["run_dir"])
 sum_config = irf.summary.read_summary_config(summary_dir=pa["summary_dir"])
 
 train_test = json_utils.tree.read(
-    os.path.join(pa["summary_dir"], "0030_splitting_train_and_test_sample",)
+    os.path.join(
+        pa["summary_dir"],
+        "0030_splitting_train_and_test_sample",
+    )
 )
 transformed_features_dir = os.path.join(
     pa["summary_dir"], "0062_transform_features"
@@ -87,13 +90,22 @@ def read_event_frame(
     pk = particle_key
 
     airshower_table = spt.read(
-        path=os.path.join(run_dir, "event_table", sk, pk, "event_table.tar",),
+        path=os.path.join(
+            run_dir,
+            "event_table",
+            sk,
+            pk,
+            "event_table.tar",
+        ),
         structure=irf.table.STRUCTURE,
     )
 
     airshower_table["transformed_features"] = spt.read(
         path=os.path.join(
-            transformed_features_dir, sk, pk, "transformed_features.tar",
+            transformed_features_dir,
+            sk,
+            pk,
+            "transformed_features.tar",
         ),
         structure=irf.features.TRANSFORMED_FEATURE_STRUCTURE,
     )["transformed_features"]
@@ -127,7 +139,8 @@ def make_x_y_arrays(event_frame):
     f = event_frame
 
     reco_radius_core_m = np.hypot(
-        f["reconstructed_trajectory/x_m"], f["reconstructed_trajectory/y_m"],
+        f["reconstructed_trajectory/x_m"],
+        f["reconstructed_trajectory/y_m"],
     )
 
     norm_reco_radius_core_m = reco_radius_core_m / 640.0
@@ -229,7 +242,8 @@ for sk in SITES:
         learning_rate_init=0.1,
     )
     models["RandomForest"] = sklearn.ensemble.RandomForestRegressor(
-        random_state=random_seed, n_estimators=10,
+        random_state=random_seed,
+        n_estimators=10,
     )
 
     _X_shuffle, _y_shuffle = sklearn.utils.shuffle(
@@ -246,7 +260,6 @@ for sk in SITES:
             fout.write(pickle.dumps(models[mk]))
 
         for pk in PARTICLES:
-
             _y_score = models[mk].predict(MA[pk]["test"]["x"])
 
             for tk in targets:

@@ -183,12 +183,22 @@ for sk in SITES:
         else:
             event_table = spt.read(
                 path=os.path.join(
-                    pa["run_dir"], "event_table", sk, pk, "event_table.tar",
+                    pa["run_dir"],
+                    "event_table",
+                    sk,
+                    pk,
+                    "event_table.tar",
                 ),
                 structure=irf.table.STRUCTURE,
             )
             runtime_table = read_csv_records(
-                opj(pa["run_dir"], "event_table", sk, pk, "runtime.csv",)
+                opj(
+                    pa["run_dir"],
+                    "event_table",
+                    sk,
+                    pk,
+                    "runtime.csv",
+                )
             )
             extended_runtime_table = merge_event_table(
                 runtime_table=runtime_table, event_table=event_table

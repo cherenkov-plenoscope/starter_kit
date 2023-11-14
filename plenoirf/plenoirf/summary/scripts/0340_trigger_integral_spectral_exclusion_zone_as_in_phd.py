@@ -79,7 +79,7 @@ output_sed_styles = {
 FOV_RADIUS_DEG = (
     0.5 * irf_config["light_field_sensor_geometry"]["max_FoV_diameter_deg"]
 )
-onregion_over_all_fov_ratio = PHD_PSF_RADIUS_DEG ** 2 / FOV_RADIUS_DEG ** 2
+onregion_over_all_fov_ratio = PHD_PSF_RADIUS_DEG**2 / FOV_RADIUS_DEG**2
 
 cosmic_ray_rate_onregion = {}
 electron_rate_onregion = {}
@@ -110,7 +110,6 @@ x_lim_GeV = np.array([1e-1, 1e4])
 y_lim_per_m2_per_s_per_GeV = np.array([1e-0, 1e-16])
 
 for sk in SITES:
-
     components = []
 
     # Crab reference fluxes
@@ -210,7 +209,6 @@ for sk in SITES:
         )
 
         for com in components:
-
             for ii in range(len(com["energy"])):
                 _energy, _dFdE = sed.convert_units_with_style(
                     x=com["energy"][ii],

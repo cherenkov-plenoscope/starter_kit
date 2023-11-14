@@ -42,7 +42,9 @@ def test_trigger_modus():
     }
 
     mask = plenoirf.analysis.light_field_trigger_modi.make_mask(
-        trigger_table=tt, threshold=threshold, modus=modus,
+        trigger_table=tt,
+        threshold=threshold,
+        modus=modus,
     )
 
     assert mask[0]

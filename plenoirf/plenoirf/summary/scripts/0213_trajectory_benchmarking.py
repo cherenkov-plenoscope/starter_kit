@@ -110,7 +110,8 @@ def empty_dim2(dim0, dim1):
 
 
 def estimate_containments_theta_deg(
-    containment_fractions, theta_deg,
+    containment_fractions,
+    theta_deg,
 ):
     conta_deg = np.nan * np.ones(containment_fractions.shape[0])
     conta_deg_relunc = np.nan * np.ones(containment_fractions.shape[0])
@@ -125,7 +126,10 @@ def estimate_containments_theta_deg(
 
 
 def guess_theta_square_bin_edges_deg(
-    theta_square_max_deg, theta_deg, num_min=10, num_max=2048,
+    theta_square_max_deg,
+    theta_deg,
+    num_min=10,
+    num_max=2048,
 ):
     num_t2_bins = int(np.sqrt(theta_deg.shape[0]))
     num_t2_bins = np.max([num_min, num_t2_bins])
@@ -137,7 +141,9 @@ def guess_theta_square_bin_edges_deg(
             break
 
         theta_square_bin_edges_deg2 = np.linspace(
-            start=0.0, stop=theta_square_max_deg, num=num_t2_bins + 1,
+            start=0.0,
+            stop=theta_square_max_deg,
+            num=num_t2_bins + 1,
         )
 
         bc = irf.analysis.gamma_direction.histogram_theta_square(
@@ -165,7 +171,9 @@ def guess_theta_square_bin_edges_deg(
         # print("it2", it, "bc", bc[0:num_min])
 
         theta_square_bin_edges_deg2 = np.linspace(
-            start=0.0, stop=theta_square_max_deg, num=num_t2_bins + 1,
+            start=0.0,
+            stop=theta_square_max_deg,
+            num=num_t2_bins + 1,
         )
 
         bc = irf.analysis.gamma_direction.histogram_theta_square(
@@ -203,12 +211,17 @@ for sk in irf_config["config"]["sites"]:
             ]
         )
         _event_table = spt.cut_and_sort_table_on_indices(
-            table=_event_table, common_indices=idx_common,
+            table=_event_table,
+            common_indices=idx_common,
         )
 
-        reconstructed_event_table = irf.reconstruction.trajectory_quality.make_rectangular_table(
-            event_table=_event_table,
-            plenoscope_pointing=irf_config["config"]["plenoscope_pointing"],
+        reconstructed_event_table = (
+            irf.reconstruction.trajectory_quality.make_rectangular_table(
+                event_table=_event_table,
+                plenoscope_pointing=irf_config["config"][
+                    "plenoscope_pointing"
+                ],
+            )
         )
 
         rectab = reconstructed_event_table
@@ -244,7 +257,6 @@ for sk in irf_config["config"]["sites"]:
         }
 
         for the in ["theta", "theta_para", "theta_perp"]:
-
             h_ene_rad = dict(hist_ene_rad)
             h_ene = dict(hist_ene)
 
@@ -252,7 +264,6 @@ for sk in irf_config["config"]["sites"]:
             c_ene = dict(cont_ene)
 
             for ene in range(energy_bin["num_bins"]):
-
                 energy_start = energy_bin["edges"][ene]
                 energy_stop = energy_bin["edges"][ene + 1]
                 ene_mask = np.logical_and(
@@ -264,11 +275,13 @@ for sk in irf_config["config"]["sites"]:
                 ene_theta_deg = np.rad2deg(rectab[the_key][ene_mask])
                 ene_theta_deg = np.abs(ene_theta_deg)
 
-                ene_theta_square_bin_edges_deg2 = guess_theta_square_bin_edges_deg(
-                    theta_square_max_deg=theta_square_max_deg,
-                    theta_deg=ene_theta_deg,
-                    num_min=10,
-                    num_max=2 ** 12,
+                ene_theta_square_bin_edges_deg2 = (
+                    guess_theta_square_bin_edges_deg(
+                        theta_square_max_deg=theta_square_max_deg,
+                        theta_deg=ene_theta_deg,
+                        num_min=10,
+                        num_max=2**12,
+                    )
                 )
 
                 ene_hi = irf.analysis.gamma_direction.histogram_theta_square(
@@ -291,7 +304,6 @@ for sk in irf_config["config"]["sites"]:
                 }
 
                 for rad in range(num_core_radius_bins):
-
                     radius_sq_start = core_radius_square_bin_edges_m2[rad]
                     radius_sq_stop = core_radius_square_bin_edges_m2[rad + 1]
 
@@ -306,11 +318,13 @@ for sk in irf_config["config"]["sites"]:
                     )
                     ene_rad_theta_deg = np.abs(ene_rad_theta_deg)
 
-                    ene_rad_theta_square_bin_edges_deg2 = guess_theta_square_bin_edges_deg(
-                        theta_square_max_deg=theta_square_max_deg,
-                        theta_deg=ene_rad_theta_deg,
-                        num_min=10,
-                        num_max=2 ** 12,
+                    ene_rad_theta_square_bin_edges_deg2 = (
+                        guess_theta_square_bin_edges_deg(
+                            theta_square_max_deg=theta_square_max_deg,
+                            theta_deg=ene_rad_theta_deg,
+                            num_min=10,
+                            num_max=2**12,
+                        )
                     )
 
                     ene_rad_hi = irf.analysis.gamma_direction.histogram_theta_square(
@@ -400,7 +414,9 @@ for sk in irf_config["config"]["sites"]:
         fov_shrink = 0.7
         fov_radius_shrink_deg = fov_radius_deg * fov_shrink
         c_bin_edges_shrink_deg = np.linspace(
-            -fov_radius_shrink_deg, fov_radius_shrink_deg, num_c_bins,
+            -fov_radius_shrink_deg,
+            fov_radius_shrink_deg,
+            num_c_bins,
         )
 
         for ene in range(num_panels):
@@ -418,9 +434,21 @@ for sk in irf_config["config"]["sites"]:
 
             if ene == energy_bin["num_bins"]:
                 fig.text(
-                    s="1$^{\circ}$", x=_xx + 0.5 * _colw, y=_yy + 0.5 * _colh,
+                    s="1$^{\circ}$",
+                    x=_xx + 0.5 * _colw,
+                    y=_yy + 0.5 * _colh,
                 )
-                ax1.plot([0, 1,], [0, 0,], "k-")
+                ax1.plot(
+                    [
+                        0,
+                        1,
+                    ],
+                    [
+                        0,
+                        0,
+                    ],
+                    "k-",
+                )
             else:
                 ene_start = energy_bin["edges"][ene]
                 ene_stop = energy_bin["edges"][ene + 1]
@@ -469,7 +497,8 @@ for sk in irf_config["config"]["sites"]:
 
         fig.savefig(
             os.path.join(
-                pa["out_dir"], "{:s}_{:s}_psf_image_all.jpg".format(sk, pk),
+                pa["out_dir"],
+                "{:s}_{:s}_psf_image_all.jpg".format(sk, pk),
             )
         )
         seb.close(fig)

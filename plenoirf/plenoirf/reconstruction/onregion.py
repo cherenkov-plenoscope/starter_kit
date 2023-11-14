@@ -130,6 +130,6 @@ def _is_point_inside_centered_ellipse_with_mayor_axis_on_x(
     ellipse_minor_along_y_radius,
 ):
     return (
-        (point_x ** 2) / (ellipse_mayor_along_x_radius ** 2)
-        + (point_y ** 2) / (ellipse_minor_along_y_radius ** 2)
+        (point_x**2) / (ellipse_mayor_along_x_radius**2)
+        + (point_y**2) / (ellipse_minor_along_y_radius**2)
     ) <= 1.0

@@ -32,8 +32,10 @@ for sk in SITES:
     analysis_trigger_threshold = TRIGGER[sk]["threshold_pe"]
 
     assert analysis_trigger_threshold in trigger_thresholds
-    analysis_trigger_threshold_idx = irf.utils.find_closest_index_in_array_for_value(
-        arr=trigger_thresholds, val=analysis_trigger_threshold
+    analysis_trigger_threshold_idx = (
+        irf.utils.find_closest_index_in_array_for_value(
+            arr=trigger_thresholds, val=analysis_trigger_threshold
+        )
     )
 
     os.makedirs(os.path.join(pa["out_dir"], sk), exist_ok=True)
