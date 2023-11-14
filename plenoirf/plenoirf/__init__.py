@@ -1,3 +1,4 @@
+from .version import __version__
 from . import summary
 from . import analysis
 from . import features

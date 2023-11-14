@@ -1,12 +1,20 @@
 import setuptools
 import os
 
-with open("README.md", "r") as f:
+with open("README.rst", "r", encoding="utf-8") as f:
     long_description = f.read()
+
+
+with open(os.path.join("plenoirf", "version.py")) as f:
+    txt = f.read()
+    last_line = txt.splitlines()[-1]
+    version_string = last_line.split()[-1]
+    version = version_string.strip("\"'")
+
 
 setuptools.setup(
     name="plenoirf",
-    version="0.2.2",
+    version=version,
     description="Explore magnetic deflection of cosmic-rays below 10GeV.",
     long_description=long_description,
     url="https://github.com/cherenkov-plenoscope",
