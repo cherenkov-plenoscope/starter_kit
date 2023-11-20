@@ -23,8 +23,8 @@ os.makedirs(out_dir, exist_ok=True)
 
 lfg = plenopy.LightFieldGeometry(light_field_geometry_path)
 
-FIGSTY = {"rows": 720, "cols": 1920, "fontsize": 1.5}
-AXSPAN = [0.1, 0.25, 0.85, 0.7]
+FIGSTY = {"rows": 960, "cols": 1920, "fontsize": 2.0}
+AXSPAN = [0.12, 0.23, 0.87, 0.74]
 
 YLIM = np.array([1, 1e6])
 YLABEL = r"intensity$\,/\,$1"
@@ -165,10 +165,12 @@ for key in hists:
     hists[key]["v_median"] = np.median(hists[key]["v"])
     for met in RANGES:
         hists[key][met]["v_bin_counts"] = make_histogram(
-            v=hists[key]["v"], v_bin_edges=hists[key][met]["v_bin_edges"],
+            v=hists[key]["v"],
+            v_bin_edges=hists[key][met]["v_bin_edges"],
         )
         hists[key][met]["percentile_mask"] = make_percentile_mask(
-            v=hists[key]["v"], v_bin_edges=hists[key][met]["v_bin_edges"],
+            v=hists[key]["v"],
+            v_bin_edges=hists[key][met]["v_bin_edges"],
         )
 
 
