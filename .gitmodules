@@ -91,3 +91,6 @@
 [submodule "merlict"]
 	path = merlict
 	url = git@github.com:cherenkov-plenoscope/merlict.git
+[submodule "triangle_mesh_io"]
+	path = triangle_mesh_io
+	url = git@github.com:cherenkov-plenoscope/triangle_mesh_io.git
