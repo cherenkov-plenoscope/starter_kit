@@ -37,7 +37,7 @@ MATPLOTLIB_RCPARAMS_LATEX = {
     "font.family": "STIXGeneral",
 }
 
-COLOR_PHOTO_SENSOR_RGBA = np.array([192, 0, 0]) / 255
+COLOR_photosensor_RGBA = np.array([192, 0, 0]) / 255
 COLOR_BEAM_RGBA = np.array([0, 128, 255]) / 255
 COLOR_EYE_WALLS_RGBA = np.array([0, 192, 0]) / 255
 

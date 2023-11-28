@@ -53,17 +53,17 @@ for pixel in pixels:
     for j, angle_between_pixel_and_lixel in enumerate(proto_mask[0]):
         if angle_between_pixel_and_lixel <= pixel["opening_angle"]:
             mask.append(proto_mask[1][j])
-    pixel["photo_sensor_ids"] = np.array(mask)
+    pixel["photosensor_ids"] = np.array(mask)
 
-    pixel["photo_sensor_mask"] = np.zeros(
+    pixel["photosensor_mask"] = np.zeros(
         light_field_geometry.number_lixel, dtype=np.bool
     )
-    pixel["photo_sensor_mask"][pixel["photo_sensor_ids"]] = True
+    pixel["photosensor_mask"][pixel["photosensor_ids"]] = True
 
 for pixel in pixels:
-    xs = light_field_geometry.lixel_positions_x[pixel["photo_sensor_ids"]]
-    ys = light_field_geometry.lixel_positions_y[pixel["photo_sensor_ids"]]
-    pixel["mean_position_of_photo_sensors_on_sensor_plane"] = np.array(
+    xs = light_field_geometry.lixel_positions_x[pixel["photosensor_ids"]]
+    ys = light_field_geometry.lixel_positions_y[pixel["photosensor_ids"]]
+    pixel["mean_position_of_photosensors_on_sensor_plane"] = np.array(
         [
             np.mean(xs),
             np.mean(ys),
@@ -90,7 +90,7 @@ for pixel in pixels:
     fig = seb.figure(style={"rows": 360, "cols": 360, "fontsize": 0.7})
     ax = seb.add_axes(fig=fig, span=[0.0, 0.0, 1, 1], style=AXES_STYLE)
 
-    _x, _y = pixel["mean_position_of_photo_sensors_on_sensor_plane"]
+    _x, _y = pixel["mean_position_of_photosensors_on_sensor_plane"]
     xlim = [_x - ROI_RADIUS, _x + ROI_RADIUS]
     ylim = [_y - ROI_RADIUS, _y + ROI_RADIUS]
 
@@ -102,7 +102,7 @@ for pixel in pixels:
 
     pl.plot.light_field_geometry.ax_add_polygons_with_colormap(
         polygons=light_field_geometry.lixel_polygons,
-        I=pixel["photo_sensor_mask"],
+        I=pixel["photosensor_mask"],
         ax=ax,
         cmap="binary",
         edgecolors="grey",
@@ -151,15 +151,15 @@ for pixel in pixels:
 fig = fig = seb.figure(style={"rows": 720, "cols": 720, "fontsize": 0.7})
 ax = seb.add_axes(fig=fig, span=[0.16, 0.16, 0.82, 0.82])
 
-overview_photo_sensor_mask = np.zeros(
+overview_photosensor_mask = np.zeros(
     light_field_geometry.number_lixel, dtype=np.bool
 )
 for pixel in pixels:
-    overview_photo_sensor_mask[pixel["photo_sensor_ids"]] = True
+    overview_photosensor_mask[pixel["photosensor_ids"]] = True
 
 pl.plot.light_field_geometry.ax_add_polygons_with_colormap(
     polygons=light_field_geometry.lixel_polygons,
-    I=overview_photo_sensor_mask,
+    I=overview_photosensor_mask,
     ax=ax,
     cmap="binary",
     edgecolors="grey",
@@ -188,7 +188,7 @@ for peye in poseye:
 
 
 for pixel in pixels:
-    _x, _y = pixel["mean_position_of_photo_sensors_on_sensor_plane"]
+    _x, _y = pixel["mean_position_of_photosensors_on_sensor_plane"]
 
     Ax = _x - ROI_RADIUS
     Ay = _y - ROI_RADIUS
@@ -226,7 +226,7 @@ with open(
     os.path.join(pa["out_dir"], "aberration_overview.txt"), "wt"
 ) as fout:
     for pixel in pixels:
-        _x, _y = pixel["mean_position_of_photo_sensors_on_sensor_plane"]
+        _x, _y = pixel["mean_position_of_photosensors_on_sensor_plane"]
         fout.write(
             "{:s} & {:d} & {:.2f} & {:.2f}\\\\\n".format(
                 pixel["name_in_figure"],
