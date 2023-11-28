@@ -136,8 +136,13 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "thin_lens", "name": "thin_lens"},
     {"path": "triangle_mesh_io", "name": "triangle_mesh_io"},
     {"path": "optic_object_wavefronts", "name": "optic_object_wavefronts"},
-    {"path": "svg_cartesian_plot", "name": "svg_cartesian_plot"},
     {"path": "merlict", "name": "merlict"},
+    {
+        "path": "computer_aided_design_for_optical_instruments",
+        "name": "computer_aided_design_for_optical_instruments",
+    },
+    {"path": "svg_cartesian_plot", "name": "svg_cartesian_plot"},
+
     {
         "path": "photon_spectra",
         "name": "photon_spectra_cherenkov-plenoscope-project",

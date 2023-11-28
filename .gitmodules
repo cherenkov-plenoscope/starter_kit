@@ -94,3 +94,6 @@
 [submodule "triangle_mesh_io"]
 	path = triangle_mesh_io
 	url = git@github.com:cherenkov-plenoscope/triangle_mesh_io.git
+[submodule "computer_aided_design_for_optical_instruments"]
+	path = computer_aided_design_for_optical_instruments
+	url = git@github.com:cherenkov-plenoscope/computer_aided_design_for_optical_instruments.git
