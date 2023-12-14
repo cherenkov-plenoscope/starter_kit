@@ -4,6 +4,7 @@ import os
 from os.path import join as opj
 import numpy as np
 import magnetic_deflection as mdfl
+import spherical_coordinates
 import sparse_numeric_table as spt
 import plenoirf as irf
 import sebastians_matplotlib_addons as seb
@@ -57,7 +58,7 @@ for site_key in irf_config["config"]["sites"]:
             left_indices=event_table["primary"][spt.IDX],
             right_indices=passing_trigger[site_key][particle_key]["idx"],
         )
-        (primary_cx, primary_cy) = mdfl.spherical_coordinates._az_zd_to_cx_cy(
+        (primary_cx, primary_cy) = spherical_coordinates.az_zd_to_cx_cy(
             azimuth_deg=np.rad2deg(event_table["primary"]["azimuth_rad"]),
             zenith_deg=np.rad2deg(event_table["primary"]["zenith_rad"]),
         )

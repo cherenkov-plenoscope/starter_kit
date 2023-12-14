@@ -7,6 +7,7 @@ import sparse_numeric_table as spt
 import os
 import json_utils
 import magnetic_deflection as mdfl
+import spherical_coordinates
 import solid_angle_utils
 
 
@@ -72,18 +73,12 @@ for sk in SITES:
         )
         """
 
-        _az_deg = np.rad2deg(shower_table["primary"]["azimuth_rad"])
-        _zd_deg = np.rad2deg(shower_table["primary"]["zenith_rad"])
-
-        _mag_az_deg = np.rad2deg(shower_table["primary"]["magnet_azimuth_rad"])
-        _mag_zd_deg = np.rad2deg(shower_table["primary"]["magnet_zenith_rad"])
-
-        shower_table_scatter_angle_deg = (
-            mdfl.spherical_coordinates._angle_between_az_zd_deg(
-                az1_deg=_az_deg,
-                zd1_deg=_zd_deg,
-                az2_deg=_mag_az_deg,
-                zd2_deg=_mag_zd_deg,
+        shower_table_scatter_angle_deg = np.rad2deg(
+            spherical_coordinates.angle_between_az_zd(
+                azimuth1_rad=shower_table["primary"]["azimuth_rad"],
+                zenith1_rad=shower_table["primary"]["zenith_rad"],
+                azimuth2_rad=shower_table["primary"]["magnet_azimuth_rad"],
+                zenith2_rad=shower_table["primary"]["magnet_zenith_rad"],
             )
         )
 

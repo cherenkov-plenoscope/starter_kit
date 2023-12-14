@@ -4,6 +4,7 @@ import os
 import propagate_uncertainties
 import numpy as np
 import magnetic_deflection as mdfl
+import spherical_coordinates
 import sparse_numeric_table as spt
 import plenoirf as irf
 import copy
@@ -73,18 +74,13 @@ for sk in SITES:
             right_indices=passing_trigger[sk][pk]["idx"],
         )
 
-        prm_az_deg = np.rad2deg(evttab["primary"]["azimuth_rad"])
-        prm_zd_deg = np.rad2deg(evttab["primary"]["zenith_rad"])
-
-        prm_mag_az_deg = np.rad2deg(evttab["primary"]["magnet_azimuth_rad"])
-        prm_mag_zd_deg = np.rad2deg(evttab["primary"]["magnet_zenith_rad"])
-
-        scatter_deg = mdfl.spherical_coordinates._angle_between_az_zd_deg(
-            az1_deg=prm_az_deg,
-            zd1_deg=prm_zd_deg,
-            az2_deg=prm_mag_az_deg,
-            zd2_deg=prm_mag_zd_deg,
+        _scatter_rad = spherical_coordinates.angle_between_az_zd(
+            azimuth1_rad=evttab["primary"]["azimuth_rad"],
+            zenith1_rad=evttab["primary"]["zenith_rad"],
+            azimuth2_rad=evttab["primary"]["magnet_azimuth_rad"],
+            zenith2_rad=evttab["primary"]["magnet_zenith_rad"],
         )
+        scatter_deg = np.rad2deg(_scatter_rad)
 
         o[sk][pk]["thrown"] = []
         o[sk][pk]["detected"] = []
