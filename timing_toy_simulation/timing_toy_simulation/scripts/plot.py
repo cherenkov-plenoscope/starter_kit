@@ -55,7 +55,7 @@ idx_valid = spt.intersection([idx_valid, idx_az, idx_inst_x])
 num_valid = idx_valid.shape[0]
 
 
-zd_num_bins = int(np.floor(num_valid ** 0.3))
+zd_num_bins = int(np.floor(num_valid**0.3))
 
 zd_bin_edges_rad = solid_angle_utils.cone.half_angle_space(
     stop_half_angle_rad=np.deg2rad(config["flux"]["radial_angle_deg"]),
@@ -235,7 +235,9 @@ xy_bin = bu.Binning(
     )
 )
 xy_hist = np.histogram2d(
-    r["base/instrument_x_m"], r["base/instrument_y_m"], bins=xy_bin["edges"],
+    r["base/instrument_x_m"],
+    r["base/instrument_y_m"],
+    bins=xy_bin["edges"],
 )[0]
 
 fig = seb.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
@@ -261,29 +263,18 @@ seb.close(fig)
 # directions in sky
 # -----------------
 az_lines_deg = np.linspace(0, 360, 6, endpoint=False)
-num_points = int(1e3) if r.shape[0] > int(1e3) else r.shape[0]
+num_points = min([int(1e3), r.shape[0]])
 fig = seb.figure(style=seb.FIGURE_1_1)
 ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8], style=seb.AXES_BLANK)
-seb.hemisphere.ax_add_points(
+seb.hemisphere.ax_add_projected_points_with_colors(
     ax=ax,
-    azimuths_deg=np.rad2deg(r["base/primary_azimuth_rad"][0:num_points]),
-    zeniths_deg=np.rad2deg(r["base/primary_zenith_rad"][0:num_points]),
+    azimuths_rad=r["base/primary_azimuth_rad"][0:num_points],
+    zeniths_rad=r["base/primary_zenith_rad"][0:num_points],
     color="k",
-    point_diameter_deg=2.0,
+    half_angle_rad=np.deg2rad(2.0),
     alpha=0.3,
 )
-seb.hemisphere.ax_add_grid(
-    ax=ax,
-    azimuths_deg=az_lines_deg,
-    zeniths_deg=np.linspace(0, 90, 10),
-    linewidth=0.2,
-    color="black",
-    alpha=0.5,
-    draw_lower_horizontal_edge_deg=90,
-)
-seb.hemisphere.ax_add_ticklabels(
-    ax=ax, azimuths_deg=az_lines_deg, rfov=1.0, fmt=r"{:1.0f}$^\circ$",
-)
+seb.hemisphere.ax_add_grid_stellarium_style(ax=ax)
 ax.set_xlabel("sky x / m")
 ax.set_ylabel("sky y / m")
 ax.set_xlim([-1, 1])

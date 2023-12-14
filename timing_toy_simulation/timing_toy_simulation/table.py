@@ -13,8 +13,14 @@ STRUCTURE = {}
 STRUCTURE["base"] = {
     "primary_particle_id": {"dtype": "<i8", "comment": ""},
     "primary_energy_GeV": {"dtype": "<f8", "comment": ""},
-    "primary_azimuth_rad": {"dtype": "<f8", "comment": "",},
-    "primary_zenith_rad": {"dtype": "<f8", "comment": "",},
+    "primary_azimuth_rad": {
+        "dtype": "<f8",
+        "comment": "",
+    },
+    "primary_zenith_rad": {
+        "dtype": "<f8",
+        "comment": "",
+    },
     #
     "primary_start_x_m": {"dtype": "<f8", "comment": ""},
     "primary_start_y_m": {"dtype": "<f8", "comment": ""},

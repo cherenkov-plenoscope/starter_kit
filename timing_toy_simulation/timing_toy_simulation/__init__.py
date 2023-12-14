@@ -5,7 +5,7 @@ import corsika_primary as cpw
 import json_utils
 import plenoirf
 import rename_after_writing as rnw
-from magnetic_deflection import spherical_coordinates
+import spherical_coordinates
 import sparse_numeric_table as spt
 import atmospheric_cherenkov_response as acr
 from . import table
@@ -22,13 +22,24 @@ CONFIG = {
         "type": "gamma",
         "energy_range": {"start_GeV": 0.5, "stop_GeV": 1.5, "power_slope": 0},
     },
-    "flux": {"azimuth_deg": 0.0, "zenith_deg": 0.0, "radial_angle_deg": 60.0,},
+    "flux": {
+        "azimuth_deg": 0.0,
+        "zenith_deg": 0.0,
+        "radial_angle_deg": 60.0,
+    },
     "site": {"namibia": acr.sites.init("namibia")},
     "scatter": {
-        "direction": {"radial_angle_deg": 3.25,},
-        "position": {"radius_m": 640.0,},
+        "direction": {
+            "radial_angle_deg": 3.25,
+        },
+        "position": {
+            "radius_m": 640.0,
+        },
     },
-    "statistics": {"num_showers_per_run": 1280, "num_runs": 1280,},
+    "statistics": {
+        "num_showers_per_run": 1280,
+        "num_runs": 1280,
+    },
     "instrument": {
         "radius_m": 35.0,
         "field_of_view_deg": 6.5,
@@ -147,7 +158,7 @@ def _make_corsika_steering(job, config, prng):
 
 
 def make_cz(cx, cy):
-    return np.sqrt(1.0 - cx ** 2 - cy ** 2)
+    return np.sqrt(1.0 - cx**2 - cy**2)
 
 
 def make_instrument_pointing_direction_vector(ins_cx, ins_cy):
@@ -170,11 +181,13 @@ def calculate_distance_to_origin(cx, x_m, cy, y_m):
 
 def calculate_angle_between_rad(bunch_cx, bunch_cy, ins_cx, ins_cy):
     ins_vec = make_instrument_pointing_direction_vector(
-        ins_cx=ins_cx, ins_cy=ins_cy,
+        ins_cx=ins_cx,
+        ins_cy=ins_cy,
     )
     bunch_vecs = plenoirf.grid._make_bunch_direction(cx=bunch_cx, cy=bunch_cy)
     angle = plenoirf.grid._make_angle_between(
-        directions=bunch_vecs, direction=ins_vec,
+        directions=bunch_vecs,
+        direction=ins_vec,
     )
     return angle
 
@@ -252,8 +265,9 @@ def _bunches_calculate_distance_to_origin_m(bunches_cgs):
 
 
 def _bunches_calculate_angle_between_rad(bunches_cgs, azimuth_rad, zenith_rad):
-    cx, cy = spherical_coordinates._az_zd_to_cx_cy(
-        azimuth_deg=r2d(azimuth_rad), zenith_deg=r2d(zenith_rad),
+    cx, cy = spherical_coordinates.az_zd_to_cx_cy(
+        azimuth_rad=azimuth_rad,
+        zenith_rad=zenith_rad,
     )
 
     return calculate_angle_between_rad(
@@ -292,7 +306,9 @@ def _export_event_table(path, tabrec):
     )
     tmp_path = path + ".incomplete"
     spt.write(
-        path=tmp_path, table=event_table, structure=table.STRUCTURE,
+        path=tmp_path,
+        table=event_table,
+        structure=table.STRUCTURE,
     )
     rnw.move(src=tmp_path, dst=path)
 
@@ -380,7 +396,8 @@ def run_job(job):
                 base["instrument_x_m"],
                 base["instrument_y_m"],
             ) = cpw.random.distributions.draw_x_y_in_disc(
-                prng=prng, radius=config["scatter"]["position"]["radius_m"],
+                prng=prng,
+                radius=config["scatter"]["position"]["radius_m"],
             )
             base["instrument_z_m"] = obs_level_m
             (
@@ -441,16 +458,19 @@ def run_job(job):
             # -------------------------
             cerp = uid.copy()
             plenoirf.instrument_response._append_bunch_statistics(
-                airshower_dict=cerp, cherenkov_bunches=bunches_cgs,
+                airshower_dict=cerp,
+                cherenkov_bunches=bunches_cgs,
             )
             tabrec["cherenkov_pool"].append(cerp)
 
             # translate bunches into instrument's frame
             # ------------------------------------------
-            bunches_wrt_intrument_cgs = _bunches_translate_into_instrument_frame(
-                bunches_cgs=bunches_cgs,
-                instrument_x_m=base["instrument_x_m"],
-                instrument_y_m=base["instrument_y_m"],
+            bunches_wrt_intrument_cgs = (
+                _bunches_translate_into_instrument_frame(
+                    bunches_cgs=bunches_cgs,
+                    instrument_x_m=base["instrument_x_m"],
+                    instrument_y_m=base["instrument_y_m"],
+                )
             )
 
             mask_visible = _bunches_mask_inside_instruments_etendue(
@@ -481,7 +501,8 @@ def run_job(job):
             # ---------------------------------
             cerpp = uid.copy()
             plenoirf.instrument_response._append_bunch_statistics(
-                airshower_dict=cerpp, cherenkov_bunches=bunches_visible_cgs,
+                airshower_dict=cerpp,
+                cherenkov_bunches=bunches_visible_cgs,
             )
             tabrec["cherenkov_visible_pool"].append(cerpp)
 
@@ -517,7 +538,8 @@ def run_job(job):
 
             cerdp = uid.copy()
             plenoirf.instrument_response._append_bunch_statistics(
-                airshower_dict=cerdp, cherenkov_bunches=detected_photons_cgs,
+                airshower_dict=cerdp,
+                cherenkov_bunches=detected_photons_cgs,
             )
             tabrec["cherenkov_detected_pool"].append(cerdp)
 
@@ -549,7 +571,8 @@ def run_job(job):
             """
 
     _export_event_table(
-        path=os.path.join(job_dir, "result.tar"), tabrec=tabrec,
+        path=os.path.join(job_dir, "result.tar"),
+        tabrec=tabrec,
     )
 
     rnw.move(corsika_o_path + ".incomplete", corsika_o_path)
