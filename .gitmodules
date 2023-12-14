@@ -97,3 +97,6 @@
 [submodule "computer_aided_design_for_optical_instruments"]
 	path = computer_aided_design_for_optical_instruments
 	url = git@github.com:cherenkov-plenoscope/computer_aided_design_for_optical_instruments.git
+[submodule "spherical_coordinates"]
+	path = spherical_coordinates
+	url = git@github.com:cherenkov-plenoscope/spherical_coordinates.git
