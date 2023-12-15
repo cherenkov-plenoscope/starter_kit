@@ -100,3 +100,6 @@
 [submodule "spherical_coordinates"]
 	path = spherical_coordinates
 	url = git@github.com:cherenkov-plenoscope/spherical_coordinates.git
+[submodule "plenoptics"]
+	path = plenoptics
+	url = git@github.com:cherenkov-plenoscope/plenoptics.git

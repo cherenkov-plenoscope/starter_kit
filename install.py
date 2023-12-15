@@ -196,7 +196,7 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "airshower_template_generator",
     },
     {"path": "plenopy", "name": "plenopy"},
-    {"path": "plenoptics", "name": "plenoptics"},
+    {"path": "plenoptics", "name": "plenoptics_cherenkov-plenoscope-project"},
     {"path": "plenoirf", "name": "plenoirf"},
     {
         "path": "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
