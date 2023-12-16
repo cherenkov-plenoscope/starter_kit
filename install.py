@@ -83,7 +83,7 @@ def build_corsika(username, password, corsika_tar):
         )
 
 
-def build_merlict_cpp(num_threads):
+def build_merlict_development_kit(num_threads):
     if not is_installed("cmake"):
         print("Merlict uses cmake, but it's not in your path.")
         print("I suggest to install build-essentials.")
@@ -278,7 +278,7 @@ def main():
         if os.path.exists(os.path.join("build", "merlict")):
             print(os.path.join("build", "merlict"), "Already done.")
         else:
-            build_merlict_cpp(num_threads=args.j)
+            build_merlict_development_kit(num_threads=args.j)
 
         must_update_pip_list = True
         for pypackage in LOCAL_PYHTHON_PACKAGES:
