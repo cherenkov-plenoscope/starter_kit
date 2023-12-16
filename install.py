@@ -201,7 +201,7 @@ LOCAL_PYHTHON_PACKAGES = [
     },
     {"path": "plenopy", "name": "plenopy"},
     {"path": "plenoptics", "name": "plenoptics_cherenkov-plenoscope-project"},
-    {"path": "plenoirf", "name": "plenoirf"},
+    {"path": "plenoirf", "name": "plenoirf_cherenkov-plenoscope-project"},
     {
         "path": "merlict_development_kit/merlict_visual/apps/merlict_camera_server",
         "name": "merlict_camera_server",

@@ -106,3 +106,6 @@
 [submodule "merlict_development_kit_python"]
 	path = merlict_development_kit_python
 	url = git@github.com:cherenkov-plenoscope/merlict_development_kit_python.git
+[submodule "plenoirf"]
+	path = plenoirf
+	url = git@github.com:cherenkov-plenoscope/plenoirf.git
