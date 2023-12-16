@@ -103,3 +103,6 @@
 [submodule "plenoptics"]
 	path = plenoptics
 	url = git@github.com:cherenkov-plenoscope/plenoptics.git
+[submodule "merlict_development_kit_python"]
+	path = merlict_development_kit_python
+	url = git@github.com:cherenkov-plenoscope/merlict_development_kit_python.git

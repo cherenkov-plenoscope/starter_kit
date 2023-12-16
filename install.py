@@ -149,6 +149,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "photon_spectra_cherenkov-plenoscope-project",
     },
     {
+        "path": "merlict_development_kit_python",
+        "name": "merlict_development_kit_python_cherenkov-plenoscope-project",
+    },
+    {
         "path": "homogeneous_transformation",
         "name": "homogeneous_transformation",
     },
