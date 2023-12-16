@@ -9,6 +9,7 @@ import sparse_numeric_table as spt
 import glob
 import json_utils
 import atmospheric_cherenkov_response
+import plenoptics
 from .. import features
 from .. import reconstruction
 from .. import analysis
@@ -67,7 +68,7 @@ def read_summary_config(summary_dir):
 def read_instrument_response_config(run_dir):
     with open(opj(run_dir, "input", "config.json"), "rt") as f:
         config = json_utils.loads(f.read())
-    light_field_sensor_geometry = production.merlict.read_plenoscope_geometry(
+    light_field_sensor_geometry = plenoptics.production.merlict_cpp.read_plenoscope_geometry(
         opj(run_dir, "input", "scenery", "scenery.json")
     )
 
