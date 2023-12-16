@@ -26,6 +26,7 @@ import json_line_logger as jlogging
 import rename_after_writing as rnw
 import atmospheric_cherenkov_response
 import solid_angle_utils
+import merlict_development_kit_python
 
 
 def make_job_dict(
@@ -218,7 +219,7 @@ def _init_grid_geometry_from_job(job):
     plenoscope_pointing_direction = np.array([0, 0, 1])  # For now this is fix.
 
     _scenery_path = op.join(job["plenoscope_scenery_path"], "scenery.json")
-    _light_field_sensor_geometry = plenoptics.production.merlict_cpp.read_plenoscope_geometry(
+    _light_field_sensor_geometry = merlict_development_kit_python.plenoscope_propagator.read_plenoscope_geometry(
         merlict_scenery_path=_scenery_path
     )
     plenoscope_diameter = (
@@ -611,7 +612,7 @@ def _populate_particlepool(job, tabrec):
 def _run_merlict(job, cherenkov_pools_path, tmp_dir):
     detector_responses_path = op.join(tmp_dir, "detector_responses")
     if not op.exists(detector_responses_path):
-        merlict_rc = plenoptics.production.merlict_cpp.plenoscope_propagator(
+        merlict_rc = merlict_development_kit_python.plenoscope_propagator.plenoscope_propagator(
             corsika_run_path=cherenkov_pools_path,
             output_path=detector_responses_path,
             light_field_geometry_path=job["light_field_geometry_path"],
