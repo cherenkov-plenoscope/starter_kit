@@ -1,12 +1,15 @@
 import os
 import numpy as np
-import pkg_resources
 from . import pulsars
+from . import utils
 from astropy.io import fits as astropy_io_fits
 
 
 def extrapolate_with_power_law(
-    original, stop_energy_GeV, spectral_index, num_points=10,
+    original,
+    stop_energy_GeV,
+    spectral_index,
+    num_points=10,
 ):
     assert original["energy"]["unit"] == "GeV"
     E_start = original["energy"]["values"][-1]
@@ -27,22 +30,25 @@ def extrapolate_with_power_law(
     original["differential_flux"]["values"] = np.hstack(
         (original["differential_flux"]["values"], extra_dFdE)
     )
-    info = "EXTRAPOLATED(FROM:{:e}GEV, TO:{:e}GEV, SPECTRAL_INDEX:{:e}), ".format(
-        E_start, stop_energy_GeV, spectral_index
+    info = (
+        "EXTRAPOLATED(FROM:{:e}GEV, TO:{:e}GEV, SPECTRAL_INDEX:{:e}), ".format(
+            E_start, stop_energy_GeV, spectral_index
+        )
     )
     original["title"] = info + original["title"]
     return original
 
 
 def proton_aguilar2015precision():
-    path = pkg_resources.resource_filename(
-        "cosmic_fluxes", os.path.join("resources", "proton_flux_ams02.csv")
-    )
+    path = os.path.join(utils.get_resources_dir(), "proton_flux_ams02.csv")
     proton_flux = np.genfromtxt(path)
     proton_flux[:, 0] *= 1  # in GeV
     proton_flux[:, 1] /= proton_flux[:, 0] ** 2.7
     return {
-        "energy": {"values": proton_flux[:, 0].tolist(), "unit": "GeV",},
+        "energy": {
+            "values": proton_flux[:, 0].tolist(),
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": proton_flux[:, 1].tolist(),
             "unit": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
@@ -55,15 +61,17 @@ def proton_aguilar2015precision():
 
 
 def electron_positron_aguilar2014precision():
-    res_path = pkg_resources.resource_filename(
-        "cosmic_fluxes",
-        os.path.join("resources", "electron_positron_flux_ams02.csv"),
+    res_path = os.path.join(
+        utils.get_resources_dir(), "electron_positron_flux_ams02.csv"
     )
     electron_flux = np.genfromtxt(res_path)
     electron_flux[:, 0] *= 1  # in GeV
     electron_flux[:, 1] /= electron_flux[:, 0] ** 3.0
     return {
-        "energy": {"values": electron_flux[:, 0].tolist(), "unit": "GeV",},
+        "energy": {
+            "values": electron_flux[:, 0].tolist(),
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": electron_flux[:, 1].tolist(),
             "unit": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
@@ -76,12 +84,13 @@ def electron_positron_aguilar2014precision():
 
 
 def helium_patrignani2017helium():
-    res_path = pkg_resources.resource_filename(
-        "cosmic_fluxes", os.path.join("resources", "helium_flux.csv")
-    )
+    res_path = os.path.join(utils.get_resources_dir(), "helium_flux.csv")
     helium_flux = np.genfromtxt(res_path, delimiter=",")
     return {
-        "energy": {"values": helium_flux[:, 0].tolist(), "unit": "GeV",},
+        "energy": {
+            "values": helium_flux[:, 0].tolist(),
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": helium_flux[:, 1].tolist(),
             "unit": "m$^{-2}$ s$^{-1}$ sr$^{-1}$ GeV$^{-1}$",
@@ -94,14 +103,11 @@ def helium_patrignani2017helium():
 
 
 def read_crab_nebula_flux_from_resources():
-    res_path = pkg_resources.resource_filename(
-        "cosmic_fluxes",
-        os.path.join(
-            "resources",
-            "crab_nebula_spectral_energy_distribution_"
-            "fermi_lat_and_magic_ct.csv",
-        ),
+    res_path = os.path.join(
+        utils.get_resources_dir(),
+        "crab_nebula_spectral_energy_distribution_fermi_lat_and_magic_ct.csv",
     )
+
     # # E / GeV
     # E^2*dF/DE / TeV cm^-2 s^-1
     _raw = np.genfromtxt(res_path, delimiter=" ")
@@ -116,7 +122,7 @@ def read_crab_nebula_flux_from_resources():
     )
 
     _differential_flux_per_TeV_per_m2_per_s = (
-        _differential_flux_TeV_per_m2_per_s / _energy_TeV ** 2
+        _differential_flux_TeV_per_m2_per_s / _energy_TeV**2
     )
 
     _differential_flux_per_GeV_per_m2_per_s = 1e-3 * (
@@ -124,7 +130,10 @@ def read_crab_nebula_flux_from_resources():
     )
 
     return {
-        "energy": {"values": _energy_GeV.tolist(), "unit": "GeV",},
+        "energy": {
+            "values": _energy_GeV.tolist(),
+            "unit": "GeV",
+        },
         "differential_flux": {
             "values": _differential_flux_per_GeV_per_m2_per_s.tolist(),
             "unit": "m$^{-2}$ s$^{-1}$ GeV$^{-1}$",
@@ -170,9 +179,8 @@ GAMMA_SOURCES_DTYPES = {
 
 
 def fermi_3fgl_catalog():
-    fermi_3fgl_path = pkg_resources.resource_filename(
-        "cosmic_fluxes",
-        os.path.join("resources", "fermi_lat_3fgl_gll_psc_v16.fits"),
+    fermi_3fgl_path = os.path.join(
+        utils.get_resources_dir(), "fermi_lat_3fgl_gll_psc_v16.fits"
     )
     gamma_sources_raw = []
     fermi_keys = [

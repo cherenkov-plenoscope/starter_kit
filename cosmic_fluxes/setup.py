@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="cosmic_fluxes",
-    version="0.0.1",
+    version="0.0.2",
     description="Fluxes of cosmic gamma-rays and cosmic-rays relevant "
     "for the atmospheric Cherenkov-method",
     long_description=long_description,
@@ -23,7 +23,11 @@ setuptools.setup(
         ],
     },
     python_requires=">=3",
-    install_requires=["numpy", "scipy", "astropy",],
+    install_requires=[
+        "numpy",
+        "scipy",
+        "astropy",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
