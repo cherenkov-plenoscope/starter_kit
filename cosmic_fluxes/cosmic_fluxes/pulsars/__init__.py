@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import glob
-from . import utils
+from .. import utils
 
 
 def init(pulsar_name, resources_dir=None):
