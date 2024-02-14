@@ -125,6 +125,7 @@ def build_merlict_development_kit(num_threads):
 
 
 LOCAL_PYHTHON_PACKAGES = [
+    {"path": "black_pack", "name": "black_pack"},
     {"path": "rename_after_writing", "name": "rename_after_writing"},
     {"path": "json_numpy", "name": "json_numpy_sebastian-achim-mueller"},
     {"path": "json_utils", "name": "json_utils_sebastian-achim-mueller"},
@@ -196,7 +197,7 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "phantom_source", "name": "phantom_source"},
     {
         "path": "airshower_template_generator",
-        "name": "airshower_template_generator",
+        "name": "airshower-template-generator-cherenkov-plenoscope",
     },
     {"path": "plenopy", "name": "plenopy"},
     {"path": "plenoptics", "name": "plenoptics_cherenkov-plenoscope-project"},
