@@ -1,111 +1,111 @@
 [submodule "merlict_development_kit"]
-	path = merlict_development_kit
+	path = packages/merlict_development_kit
 	url = git@github.com:cherenkov-plenoscope/merlict_development_kit.git
 [submodule "plenopy"]
-	path = plenopy
+	path = packages/plenopy
 	url = git@github.com:cherenkov-plenoscope/plenopy.git
 [submodule "corsika_install"]
-	path = corsika_install
+	path = packages/corsika_install
 	url = git@github.com:cherenkov-plenoscope/corsika_install.git
 [submodule "robo_mount"]
-	path = cable_robo_mount
+	path = packages/cable_robo_mount
 	url = git@github.com:cherenkov-plenoscope/cable_robo_mount.git
 [submodule "photon_spectra"]
-	path = photon_spectra
+	path = packages/photon_spectra
 	url = git@github.com:cherenkov-plenoscope/photon_spectra.git
 [submodule "spectral_energy_distribution_units"]
-	path = spectral_energy_distribution_units
+	path = packages/spectral_energy_distribution_units
 	url = git@github.com:cherenkov-plenoscope/spectral_energy_distribution_units.git
 [submodule "sparse_numeric_table"]
-	path = sparse_numeric_table
+	path = packages/sparse_numeric_table
 	url = git@github.com:cherenkov-plenoscope/sparse_numeric_table.git
 [submodule "magnetic_deflection"]
-	path = magnetic_deflection
+	path = packages/magnetic_deflection
 	url = git@github.com:cherenkov-plenoscope/magnetic_deflection.git
 [submodule "airshower_template_generator"]
-	path = airshower_template_generator
+	path = packages/airshower_template_generator
 	url = git@github.com:cherenkov-plenoscope/airshower_template_generator.git
 [submodule "sebastians_matplotlib_addons"]
-	path = sebastians_matplotlib_addons
+	path = packages/sebastians_matplotlib_addons
 	url = git@github.com:cherenkov-plenoscope/sebastians_matplotlib_addons.git
 [submodule "lima1983analysis"]
-	path = lima1983analysis
+	path = packages/lima1983analysis
 	url = git@github.com:cherenkov-plenoscope/lima1983analysis.git
 [submodule "json_numpy"]
-	path = json_numpy
+	path = packages/json_numpy
 	url = git@github.com:cherenkov-plenoscope/json_numpy.git
 [submodule "gamma_ray_reconstruction"]
-	path = gamma_ray_reconstruction
+	path = packages/gamma_ray_reconstruction
 	url = git@github.com:cherenkov-plenoscope/gamma_ray_reconstruction.git
 [submodule "portal-corporate-identity"]
-	path = portal-corporate-identity
+	path = packages/portal-corporate-identity
 	url = git@github.com:cherenkov-plenoscope/portal-corporate-identity.git
 [submodule "propagate_uncertainties"]
-	path = propagate_uncertainties
+	path = packages/propagate_uncertainties
 	url = git@github.com:cherenkov-plenoscope/propagate_uncertainties.git
 [submodule "binning_utils"]
-	path = binning_utils
+	path = packages/binning_utils
 	url = git@github.com:cherenkov-plenoscope/binning_utils.git
 [submodule "flux_sensitivity"]
-	path = flux_sensitivity
+	path = packages/flux_sensitivity
 	url = git@github.com:cherenkov-plenoscope/flux_sensitivity.git
 [submodule "confusion_matrix"]
-	path = confusion_matrix
+	path = packages/confusion_matrix
 	url = git@github.com:cherenkov-plenoscope/confusion_matrix.git
 [submodule "json_line_logger"]
-	path = json_line_logger
+	path = packages/json_line_logger
 	url = git@github.com:cherenkov-plenoscope/json_line_logger.git
 [submodule "atmospheric_cherenkov_response"]
-	path = atmospheric_cherenkov_response
+	path = packages/atmospheric_cherenkov_response
 	url = git@github.com:cherenkov-plenoscope/atmospheric_cherenkov_response.git
 [submodule "solid_angle_utils"]
-	path = solid_angle_utils
+	path = packages/solid_angle_utils
 	url = git@github.com:cherenkov-plenoscope/solid_angle_utils.git
 [submodule "homogeneous_transformation"]
-	path = homogeneous_transformation
+	path = packages/homogeneous_transformation
 	url = git@github.com:cherenkov-plenoscope/homogeneous_transformation.git
 [submodule "json_utils"]
-	path = json_utils
+	path = packages/json_utils
 	url = git@github.com:cherenkov-plenoscope/json_utils.git
 [submodule "rename_after_writing"]
-	path = rename_after_writing
+	path = packages/rename_after_writing
 	url = https://github.com/cherenkov-plenoscope/rename_after_writing
 [submodule "ray_voxel_overlap"]
-	path = ray_voxel_overlap
+	path = packages/ray_voxel_overlap
 	url = git@github.com:cherenkov-plenoscope/ray_voxel_overlap.git
 [submodule "black_pack"]
-	path = black_pack
+	path = packages/black_pack
 	url = git@github.com:cherenkov-plenoscope/black_pack.git
 [submodule "thin_lens"]
-	path = thin_lens
+	path = packages/thin_lens
 	url = git@github.com:cherenkov-plenoscope/thin_lens.git
 [submodule "optic_object_wavefronts"]
-	path = optic_object_wavefronts
+	path = packages/optic_object_wavefronts
 	url = git@github.com:cherenkov-plenoscope/optic_object_wavefronts.git
 [submodule "svg_cartesian_plot"]
-	path = svg_cartesian_plot
+	path = packages/svg_cartesian_plot
 	url = git@github.com:cherenkov-plenoscope/svg_cartesian_plot.git
 [submodule "dynamicsizerecarray"]
-	path = dynamicsizerecarray
+	path = packages/dynamicsizerecarray
 	url = git@github.com:cherenkov-plenoscope/dynamicsizerecarray.git
 [submodule "merlict"]
-	path = merlict
+	path = packages/merlict
 	url = git@github.com:cherenkov-plenoscope/merlict.git
 [submodule "triangle_mesh_io"]
-	path = triangle_mesh_io
+	path = packages/triangle_mesh_io
 	url = git@github.com:cherenkov-plenoscope/triangle_mesh_io.git
 [submodule "computer_aided_design_for_optical_instruments"]
-	path = computer_aided_design_for_optical_instruments
+	path = packages/computer_aided_design_for_optical_instruments
 	url = git@github.com:cherenkov-plenoscope/computer_aided_design_for_optical_instruments.git
 [submodule "spherical_coordinates"]
-	path = spherical_coordinates
+	path = packages/spherical_coordinates
 	url = git@github.com:cherenkov-plenoscope/spherical_coordinates.git
 [submodule "plenoptics"]
-	path = plenoptics
+	path = packages/plenoptics
 	url = git@github.com:cherenkov-plenoscope/plenoptics.git
 [submodule "merlict_development_kit_python"]
-	path = merlict_development_kit_python
+	path = packages/merlict_development_kit_python
 	url = git@github.com:cherenkov-plenoscope/merlict_development_kit_python.git
 [submodule "plenoirf"]
-	path = plenoirf
+	path = packages/plenoirf
 	url = git@github.com:cherenkov-plenoscope/plenoirf.git
