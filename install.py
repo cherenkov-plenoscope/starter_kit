@@ -143,7 +143,6 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "computer_aided_design_for_optical_instruments",
     },
     {"path": "svg_cartesian_plot", "name": "svg_cartesian_plot"},
-
     {
         "path": "photon_spectra",
         "name": "photon_spectra_cherenkov-plenoscope-project",
@@ -267,18 +266,6 @@ def main():
 
     if args.command == "install":
         os.makedirs("build", exist_ok=True)
-        if os.path.exists(os.path.join("build", "corsika")):
-            print(os.path.join("build", "corsika"), "Already done.")
-        else:
-            build_corsika(
-                username=args.username,
-                password=args.password,
-                corsika_tar=args.corsika_tar,
-            )
-        if os.path.exists(os.path.join("build", "merlict")):
-            print(os.path.join("build", "merlict"), "Already done.")
-        else:
-            build_merlict_development_kit(num_threads=args.j)
 
         must_update_pip_list = True
         for pypackage in LOCAL_PYHTHON_PACKAGES:
@@ -301,6 +288,19 @@ def main():
                     raise AssertionError(
                         "Failed to install {:s}".format(pypackage["path"])
                     )
+
+        if os.path.exists(os.path.join("build", "corsika")):
+            print(os.path.join("build", "corsika"), "Already done.")
+        else:
+            build_corsika(
+                username=args.username,
+                password=args.password,
+                corsika_tar=args.corsika_tar,
+            )
+        if os.path.exists(os.path.join("build", "merlict")):
+            print(os.path.join("build", "merlict"), "Already done.")
+        else:
+            build_merlict_development_kit(num_threads=args.j)
 
     elif args.command == "uninstall":
         subprocess.call(["rm", "-rf", "build"])
