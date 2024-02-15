@@ -4,7 +4,7 @@ import os
 import subprocess
 
 
-def pip_list():
+def _pip_list():
     po = subprocess.Popen(["pip", "list"], stdout=subprocess.PIPE)
     po.wait()
     bstdout = po.stdout.read()
@@ -20,8 +20,16 @@ def pip_list():
     return packages
 
 
-def pip_name(name):
+def normalize_pip_name(name):
     return str.replace(name, "_", "-")
+
+
+def pip_list():
+    out = {}
+    pip = _pip_list()
+    for name in pip:
+        out[normalize_pip_name(name)] = pip[name]
+    return out
 
 
 def is_installed(path):
@@ -30,11 +38,10 @@ def is_installed(path):
 
 
 def build_corsika(username, password, corsika_tar):
-    assert os.path.isdir(os.path.join(".", "corsika_install"))
-
-    subprocess.call(
-        ["pip", "install", "-e", os.path.join(".", "corsika_install")]
-    )
+    assert os.path.isdir(os.path.join(".", "packages", "corsika_install"))
+    assert (
+        normalize_pip_name("corsika_primary") in pip_list()
+    ), "corsika_primary must be pip-installed before building corsika."
 
     if not is_installed("f77"):
         print("CORSIKA uses f77, but it's not in your path.")
@@ -46,17 +53,18 @@ def build_corsika(username, password, corsika_tar):
             [
                 os.path.join(
                     ".",
+                    "packages",
                     "corsika_install",
                     "corsika_primary",
                     "scripts",
                     "install.py",
                 ),
                 "--install_path",
-                os.path.join(".", "build", "corsika"),
+                os.path.join(".", "packages", "build", "corsika"),
                 "--corsika_tar",
                 corsika_tar,
                 "--resource_path",
-                os.path.join(".", "corsika_install", "resources"),
+                os.path.join(".", "packages", "corsika_install", "resources"),
             ]
         )
     else:
@@ -66,19 +74,20 @@ def build_corsika(username, password, corsika_tar):
             [
                 os.path.join(
                     ".",
+                    "packages",
                     "corsika_install",
                     "corsika_primary",
                     "scripts",
                     "install.py",
                 ),
                 "--install_path",
-                os.path.join(".", "build", "corsika"),
+                os.path.join(".", "packages", "build", "corsika"),
                 "--username",
                 username,
                 "--password",
                 password,
                 "--resource_path",
-                os.path.join(".", "corsika_install", "resources"),
+                os.path.join(".", "packages", "corsika_install", "resources"),
             ]
         )
 
@@ -94,9 +103,13 @@ def build_merlict_development_kit(num_threads):
 
     num_threads_str = "{:d}".format(num_threads)
 
-    assert os.path.isdir(os.path.join(".", "merlict_development_kit"))
+    assert os.path.isdir(
+        os.path.join(".", "packages", "merlict_development_kit")
+    )
 
-    merlict_build_dir = os.path.join(".", "build", "merlict")
+    build_dir = os.path.join(".", "packages", "build")
+    merlict_build_dir = os.path.join(build_dir, "merlict")
+
     os.makedirs(merlict_build_dir, exist_ok=True)
     subprocess.call(
         [
@@ -186,12 +199,15 @@ LOCAL_PYHTHON_PACKAGES = [
     },
     {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
     {"path": "gamma_ray_reconstruction", "name": "gamma_ray_reconstruction"},
-    {"path": "magnetic_deflection", "name": "magnetic_deflection"},
+    {"path": "corsika_install", "name": "corsika_primary"},
+    {
+        "path": "magnetic_deflection",
+        "name": "magnetic_deflection_cherenkov-plenoscope-project",
+    },
     {
         "path": "flux_sensitivity",
         "name": "flux_sensitivity_sebastian-achim-mueller",
     },
-    {"path": "corsika_install", "name": "corsika_primary"},
     {"path": "cable_robo_mount", "name": "cable_robo_mount"},
     {"path": "timing_toy_simulation", "name": "timing_toy_simulation"},
     {"path": "phantom_source", "name": "phantom_source"},
@@ -264,16 +280,18 @@ def main():
     )
 
     args = parser.parse_args()
+    build_dir = os.path.join(".", "packages", "build")
 
     if args.command == "install":
-        os.makedirs("build", exist_ok=True)
+        os.makedirs(build_dir, exist_ok=True)
 
+        # python packages
         must_update_pip_list = True
         for pypackage in LOCAL_PYHTHON_PACKAGES:
             if must_update_pip_list:
                 installed_packages = pip_list()
                 must_update_pip_list = False
-            if pip_name(pypackage["name"]) in installed_packages:
+            if normalize_pip_name(pypackage["name"]) in installed_packages:
                 print(pypackage["name"], "Already installed.")
             else:
                 must_update_pip_list = True
@@ -282,7 +300,7 @@ def main():
                         "pip",
                         "install",
                         "-e",
-                        os.path.join(".", pypackage["path"]),
+                        os.path.join(".", "packages", pypackage["path"]),
                     ]
                 )
                 if rc != 0:
@@ -290,25 +308,33 @@ def main():
                         "Failed to install {:s}".format(pypackage["path"])
                     )
 
-        if os.path.exists(os.path.join("build", "corsika")):
-            print(os.path.join("build", "corsika"), "Already done.")
+        # corsika
+        if os.path.exists(os.path.join(build_dir, "corsika")):
+            print(os.path.join(build_dir, "corsika"), "Already done.")
         else:
             build_corsika(
                 username=args.username,
                 password=args.password,
                 corsika_tar=args.corsika_tar,
             )
-        if os.path.exists(os.path.join("build", "merlict")):
-            print(os.path.join("build", "merlict"), "Already done.")
+
+        # merlict
+        if os.path.exists(os.path.join(build_dir, "merlict")):
+            print(os.path.join(build_dir, "merlict"), "Already done.")
         else:
             build_merlict_development_kit(num_threads=args.j)
 
     elif args.command == "uninstall":
-        subprocess.call(["rm", "-rf", "build"])
+        subprocess.call(["rm", "-rf", build_dir])
 
         for pypackage in LOCAL_PYHTHON_PACKAGES:
             subprocess.call(
-                ["pip", "uninstall", "--yes", pip_name(pypackage["name"])]
+                [
+                    "pip",
+                    "uninstall",
+                    "--yes",
+                    normalize_pip_name(pypackage["name"]),
+                ]
             )
     else:
         parser.print_help()
