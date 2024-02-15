@@ -1,6 +1,6 @@
 2024-02-14 v1.9.1
 Overhaul 'install.py' Prepare to store executable paths in config files
-inside the user's home.
+inside the user's home. Change license to CC-BY-4.0.
 
 2024-02-14 v1.9.0
 Restructure 'starter_kit'. Put packes into seperate directory.

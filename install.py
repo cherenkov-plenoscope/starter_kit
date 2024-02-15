@@ -369,8 +369,6 @@ def main():
             )
         )
 
-
-
     elif args.command == "uninstall":
         subprocess.call(["rm", "-rf", build_dir])
 
