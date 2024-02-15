@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import argparse
 import os
+import shutil
 import subprocess
 
 
@@ -135,6 +136,22 @@ def build_merlict_development_kit(num_threads):
         cwd=merlict_build_dir,
     )
     subprocess.call(["make", "-j", num_threads_str], cwd=merlict_build_dir)
+
+
+def build_merlict_c89():
+    merlict_c89_dir = os.path.join(
+        "packages", "merlict", "merlict", "c89", "merlict_c89"
+    )
+    subprocess.call(["make"], cwd=merlict_c89_dir)
+
+    merlict_c89_build_dir = os.path.join(
+        "packages", "build", "merlict_c89"
+    )
+    os.makedirs(merlict_c89_build_dir, exist_ok=True)
+    shutil.copy(
+        src=os.path.join(merlict_c89_dir, "build", "bin", "ground_grid"),
+        dst=os.path.join(merlict_c89_build_dir, "ground_grid")
+    )
 
 
 LOCAL_PYHTHON_PACKAGES = [
@@ -318,11 +335,41 @@ def main():
                 corsika_tar=args.corsika_tar,
             )
 
+        import corsika_primary
+        corsika_primary.configfile.write(
+            config=corsika_primary.configfile.default(
+                build_dir=os.path.join(build_dir, "corsika")
+            )
+        )
+
         # merlict
         if os.path.exists(os.path.join(build_dir, "merlict")):
             print(os.path.join(build_dir, "merlict"), "Already done.")
         else:
             build_merlict_development_kit(num_threads=args.j)
+
+        import merlict_development_kit_python as mdkpy
+        mdkpy.configfile.write(
+            config=mdkpy.configfile.default(
+                build_dir=os.path.join(build_dir, "merlict")
+            )
+        )
+
+        # merlict_c89
+        if os.path.exists(os.path.join(build_dir, "merlict_c89")):
+            print(os.path.join(build_dir, "merlict_c89"), "Already done.")
+        else:
+            build_merlict_c89()
+        import plenoirf
+        plenoirf.configfile.write(
+            config=plenoirf.configfile.default(
+                merlict_c89_ground_grid_path=os.path.join(
+                    build_dir, "merlict_c89", "ground_grid"
+                )
+            )
+        )
+
+
 
     elif args.command == "uninstall":
         subprocess.call(["rm", "-rf", build_dir])
