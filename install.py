@@ -39,7 +39,7 @@ def is_installed(path):
 
 
 def build_corsika(username, password, corsika_tar):
-    assert os.path.isdir(os.path.join(".", "packages", "corsika_install"))
+    assert os.path.isdir(os.path.join(".", "packages", "corsika_primary"))
     assert (
         normalize_pip_name("corsika_primary") in pip_list()
     ), "corsika_primary must be pip-installed before building corsika."
@@ -55,7 +55,7 @@ def build_corsika(username, password, corsika_tar):
                 os.path.join(
                     ".",
                     "packages",
-                    "corsika_install",
+                    "corsika_primary",
                     "corsika_primary",
                     "scripts",
                     "install.py",
@@ -65,7 +65,7 @@ def build_corsika(username, password, corsika_tar):
                 "--corsika_tar",
                 corsika_tar,
                 "--resource_path",
-                os.path.join(".", "packages", "corsika_install", "resources"),
+                os.path.join(".", "packages", "corsika_primary", "resources"),
             ]
         )
     else:
@@ -76,7 +76,7 @@ def build_corsika(username, password, corsika_tar):
                 os.path.join(
                     ".",
                     "packages",
-                    "corsika_install",
+                    "corsika_primary",
                     "corsika_primary",
                     "scripts",
                     "install.py",
@@ -88,7 +88,7 @@ def build_corsika(username, password, corsika_tar):
                 "--password",
                 password,
                 "--resource_path",
-                os.path.join(".", "packages", "corsika_install", "resources"),
+                os.path.join(".", "packages", "corsika_primary", "resources"),
             ]
         )
 
@@ -216,7 +216,7 @@ LOCAL_PYHTHON_PACKAGES = [
     },
     {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
     {"path": "gamma_ray_reconstruction", "name": "gamma_ray_reconstruction"},
-    {"path": "corsika_install", "name": "corsika_primary"},
+    {"path": "corsika_primary", "name": "corsika_primary"},
     {
         "path": "magnetic_deflection",
         "name": "magnetic_deflection_cherenkov-plenoscope-project",

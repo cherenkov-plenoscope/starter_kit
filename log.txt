@@ -1,3 +1,7 @@
+2004-02-17 v1.9.2
+Rename corsika_install to coriska_primary to be more consistent with the
+python package name.
+
 2024-02-14 v1.9.1
 Overhaul 'install.py' Prepare to store executable paths in config files
 inside the user's home. Change license to CC-BY-4.0.
