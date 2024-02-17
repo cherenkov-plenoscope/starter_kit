@@ -115,7 +115,9 @@ def build_merlict_development_kit(num_threads):
     subprocess.call(
         [
             "cmake",
-            "../../merlict_development_kit",
+            "..",
+            "..",
+            "merlict_development_kit",
             "-DCMAKE_C_COMPILER=gcc",
             "-DCMAKE_CXX_COMPILER=g++",
         ],
@@ -144,13 +146,11 @@ def build_merlict_c89():
     )
     subprocess.call(["make"], cwd=merlict_c89_dir)
 
-    merlict_c89_build_dir = os.path.join(
-        "packages", "build", "merlict_c89"
-    )
+    merlict_c89_build_dir = os.path.join("packages", "build", "merlict_c89")
     os.makedirs(merlict_c89_build_dir, exist_ok=True)
     shutil.copy(
         src=os.path.join(merlict_c89_dir, "build", "bin", "ground_grid"),
-        dst=os.path.join(merlict_c89_build_dir, "ground_grid")
+        dst=os.path.join(merlict_c89_build_dir, "ground_grid"),
     )
 
 
@@ -336,6 +336,7 @@ def main():
             )
 
         import corsika_primary
+
         corsika_primary.configfile.write(
             config=corsika_primary.configfile.default(
                 build_dir=os.path.join(build_dir, "corsika")
@@ -349,6 +350,7 @@ def main():
             build_merlict_development_kit(num_threads=args.j)
 
         import merlict_development_kit_python as mdkpy
+
         mdkpy.configfile.write(
             config=mdkpy.configfile.default(
                 build_dir=os.path.join(build_dir, "merlict")
@@ -361,6 +363,7 @@ def main():
         else:
             build_merlict_c89()
         import plenoirf
+
         plenoirf.configfile.write(
             config=plenoirf.configfile.default(
                 merlict_c89_ground_grid_path=os.path.join(
