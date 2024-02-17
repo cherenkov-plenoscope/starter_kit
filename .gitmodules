@@ -5,7 +5,7 @@
 	path = packages/plenopy
 	url = git@github.com:cherenkov-plenoscope/plenopy.git
 [submodule "corsika_install"]
-	path = packages/corsika_install
+	path = packages/corsika_primary
 	url = git@github.com:cherenkov-plenoscope/corsika_install.git
 [submodule "robo_mount"]
 	path = packages/cable_robo_mount
