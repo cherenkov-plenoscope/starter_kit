@@ -230,7 +230,10 @@ LOCAL_PYHTHON_PACKAGES = [
     },
     {"path": "cable_robo_mount", "name": "cable_robo_mount"},
     {"path": "timing_toy_simulation", "name": "timing_toy_simulation"},
-    {"path": "phantom_source", "name": "phantom_source"},
+    {
+        "path": "phantom_source",
+        "name": "phantom_source_cherenkov-plenoscope-project",
+    },
     {
         "path": "airshower_template_generator",
         "name": "airshower-template-generator-cherenkov-plenoscope",
