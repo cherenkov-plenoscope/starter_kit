@@ -3,6 +3,11 @@ import argparse
 import os
 import shutil
 import subprocess
+import importlib
+
+
+def make_importlib_find_the_newly_installed_packages():
+    importlib.invalidate_caches()
 
 
 def _pip_list():
@@ -109,15 +114,13 @@ def build_merlict_development_kit(num_threads):
     )
 
     build_dir = os.path.join(".", "packages", "build")
-    merlict_build_dir = os.path.join(build_dir, "merlict")
+    merlict_build_dir = os.path.join(build_dir, "merlict_development_kit")
 
     os.makedirs(merlict_build_dir, exist_ok=True)
     subprocess.call(
         [
             "cmake",
-            "..",
-            "..",
-            "merlict_development_kit",
+            os.path.join("..", "..", "merlict_development_kit"),
             "-DCMAKE_C_COMPILER=gcc",
             "-DCMAKE_CXX_COMPILER=g++",
         ],
@@ -325,6 +328,8 @@ def main():
                         "Failed to install {:s}".format(pypackage["path"])
                     )
 
+        make_importlib_find_the_newly_installed_packages()
+
         # corsika
         if os.path.exists(os.path.join(build_dir, "corsika")):
             print(os.path.join(build_dir, "corsika"), "Already done.")
@@ -343,9 +348,12 @@ def main():
             )
         )
 
-        # merlict
-        if os.path.exists(os.path.join(build_dir, "merlict")):
-            print(os.path.join(build_dir, "merlict"), "Already done.")
+        # merlict_development_kit
+        if os.path.exists(os.path.join(build_dir, "merlict_development_kit")):
+            print(
+                os.path.join(build_dir, "merlict_development_kit"),
+                "Already done.",
+            )
         else:
             build_merlict_development_kit(num_threads=args.j)
 
@@ -353,7 +361,7 @@ def main():
 
         mdkpy.configfile.write(
             config=mdkpy.configfile.default(
-                build_dir=os.path.join(build_dir, "merlict")
+                build_dir=os.path.join(build_dir, "merlict_development_kit")
             )
         )
 
