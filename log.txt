@@ -1,6 +1,8 @@
 2024-02-19
 Prepare storing paths to executables in user's configfiles. Fix bugs in
-install.py.
+install.py. Include the phantom_source as a submodule. For some reason
+this was never done despite the phantom_source having its own
+repository.
 
 2004-02-17 v1.9.2
 Rename corsika_install to coriska_primary to be more consistent with the
