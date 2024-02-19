@@ -109,3 +109,6 @@
 [submodule "plenoirf"]
 	path = packages/plenoirf
 	url = git@github.com:cherenkov-plenoscope/plenoirf.git
+[submodule "packages/phantom_source"]
+	path = packages/phantom_source
+	url = git@github.com:cherenkov-plenoscope/phantom_source.git
