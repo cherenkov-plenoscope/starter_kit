@@ -49,21 +49,27 @@ def make_light_field_from_line(
 
 
 def estimate_fraction_of_solid_angle_covered_by_aperture(
-    distance_to_aperture, aperture_radius,
+    distance_to_aperture,
+    aperture_radius,
 ):
     area_of_sphere_in_distance_of_aperture = (
-        4.0 * np.pi * distance_to_aperture ** 2
+        4.0 * np.pi * distance_to_aperture**2
     )
-    area_of_aperture = np.pi * aperture_radius ** 2
+    area_of_aperture = np.pi * aperture_radius**2
     return area_of_aperture / area_of_sphere_in_distance_of_aperture
 
 
 def get_number_photons_from_edge_density(
-    edge_density, edge_length, distance_to_aperture, aperture_radius,
+    edge_density,
+    edge_length,
+    distance_to_aperture,
+    aperture_radius,
 ):
-    fraction_of_solid_angle_covered_by_aperture = estimate_fraction_of_solid_angle_covered_by_aperture(
-        distance_to_aperture=distance_to_aperture,
-        aperture_radius=aperture_radius,
+    fraction_of_solid_angle_covered_by_aperture = (
+        estimate_fraction_of_solid_angle_covered_by_aperture(
+            distance_to_aperture=distance_to_aperture,
+            aperture_radius=aperture_radius,
+        )
     )
 
     photon_density = edge_density * fraction_of_solid_angle_covered_by_aperture
@@ -72,11 +78,16 @@ def get_number_photons_from_edge_density(
 
 
 def get_edge_density_from_number_photons(
-    number_photons, edge_length, distance_to_aperture, aperture_radius,
+    number_photons,
+    edge_length,
+    distance_to_aperture,
+    aperture_radius,
 ):
-    fraction_of_solid_angle_covered_by_aperture = estimate_fraction_of_solid_angle_covered_by_aperture(
-        distance_to_aperture=distance_to_aperture,
-        aperture_radius=aperture_radius,
+    fraction_of_solid_angle_covered_by_aperture = (
+        estimate_fraction_of_solid_angle_covered_by_aperture(
+            distance_to_aperture=distance_to_aperture,
+            aperture_radius=aperture_radius,
+        )
     )
     return (
         number_photons
@@ -86,13 +97,14 @@ def get_edge_density_from_number_photons(
 
 
 def make_light_field_from_mesh(
-    prng, mesh, aperture_radius,
+    prng,
+    mesh,
+    aperture_radius,
 ):
     sups = []
     dirs = []
     aperture_pos = np.array([0, 0, 0])
     for edge in mesh["edges"]:
-
         start_pos = np.array(mesh["vertices"][edge[0]])
         stop_pos = np.array(mesh["vertices"][edge[1]])
         edge_length = np.linalg.norm(start_pos - stop_pos)
@@ -148,7 +160,10 @@ def make_supports_with_equal_distance_to_aperture(
 
 
 def make_light_fields_from_meshes(
-    meshes, aperture_radius, emission_distance_to_aperture, prng,
+    meshes,
+    aperture_radius,
+    emission_distance_to_aperture,
+    prng,
 ):
     """
     meshes : list
@@ -161,21 +176,24 @@ def make_light_fields_from_meshes(
     """
     light_fields = []
     for m in meshes:
-
         mm = mesh.split_long_edges_into_shorter_ones(
             mesh=m, max_length_of_edge=aperture_radius
         )
 
         lf = make_light_field_from_mesh(
-            prng=prng, mesh=m, aperture_radius=aperture_radius,
+            prng=prng,
+            mesh=m,
+            aperture_radius=aperture_radius,
         )
         photon_supports_on_aperture = lf[0]
         photon_directions = lf[1]
 
-        photon_supports_at_emission = make_supports_with_equal_distance_to_aperture(
-            supports=photon_supports_on_aperture,
-            directions=photon_directions,
-            distance=emission_distance_to_aperture,
+        photon_supports_at_emission = (
+            make_supports_with_equal_distance_to_aperture(
+                supports=photon_supports_on_aperture,
+                directions=photon_directions,
+                distance=emission_distance_to_aperture,
+            )
         )
 
         light_fields.append((photon_supports_at_emission, photon_directions))

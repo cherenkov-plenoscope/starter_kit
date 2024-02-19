@@ -20,7 +20,9 @@ def ax_add_mesh(ax, mesh, color="b"):
         start = mesh["vertices"][e[0]]
         stop = mesh["vertices"][e[1]]
         ax.plot(
-            [start[0], stop[0]], [start[1], stop[1]], color=color,
+            [start[0], stop[0]],
+            [start[1], stop[1]],
+            color=color,
         )
 
 

@@ -6,14 +6,16 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="phantom_source",
-    version="0.1.0",
+    version="0.1.1",
     description="Create light-fields of phantom-sources.",
     long_description=long_description,
     url="https://github.com/cherenkov-plenoscope",
     author="Sebastian Achim Mueller",
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
     license="MIT",
-    packages=["phantom_source",],
+    packages=[
+        "phantom_source",
+    ],
     install_requires=[""],
     classifiers=[
         "Programming Language :: Python :: 3",
