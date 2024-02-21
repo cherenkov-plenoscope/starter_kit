@@ -1,3 +1,10 @@
+2024-02-21
+Debugging and getting the plenoirf simualtion chain up and running again.
+It seems something is wrong with the timing of the cherenkov-bunches
+which are given to the merlict-ray-tracer. The signals are too spread
+out in the light-field camera and thus no trigger occurs. Adding more
+unittests to verify the transformation of Cherenkov bunches.
+
 2024-02-19
 Prepare storing paths to executables in user's configfiles. Fix bugs in
 install.py. Include the phantom_source as a submodule. For some reason
