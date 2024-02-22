@@ -197,9 +197,10 @@ def _bunches_calculate_arrival_time_wrt_origin(bunches_cgs):
 
     arrival_times = np.zeros(num_bunches)
 
+    MOMENTUM_TO_INCIDENT = (-1.0)
     for i in range(num_bunches):
-        cx = bunches_cgs[i, cpw.I.BUNCH.CX_RAD]
-        cy = bunches_cgs[i, cpw.I.BUNCH.CY_RAD]
+        cx = MOMENTUM_TO_INCIDENT * bunches_cgs[i, cpw.I.BUNCH.UX_1]
+        cy = MOMENTUM_TO_INCIDENT * bunches_cgs[i, cpw.I.BUNCH.VY_1]
         x = cpw.CM2M * bunches_cgs[i, cpw.I.BUNCH.X_CM]
         y = cpw.CM2M * bunches_cgs[i, cpw.I.BUNCH.Y_CM]
         hh = cx * x + cy * y
@@ -256,10 +257,11 @@ def _bunches_translate_into_instrument_frame(
 
 
 def _bunches_calculate_distance_to_origin_m(bunches_cgs):
+    MOMENTUM_TO_INCIDENT = (-1.0)
     return calculate_distance_to_origin(
-        cx=bunches_cgs[:, cpw.I.BUNCH.CX_RAD],
+        cx=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.UX_1],
         x_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.X_CM],
-        cy=bunches_cgs[:, cpw.I.BUNCH.CY_RAD],
+        cy=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.VY_1],
         y_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.Y_CM],
     )
 
@@ -270,9 +272,10 @@ def _bunches_calculate_angle_between_rad(bunches_cgs, azimuth_rad, zenith_rad):
         zenith_rad=zenith_rad,
     )
 
+    MOMENTUM_TO_INCIDENT = (-1.0)
     return calculate_angle_between_rad(
-        bunch_cx=bunches_cgs[:, cpw.I.BUNCH.CX_RAD],
-        bunch_cy=bunches_cgs[:, cpw.I.BUNCH.CY_RAD],
+        bunch_cx=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.UX_1],
+        bunch_cy=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.VY_1],
         ins_cx=cx,
         ins_cy=cy,
     )
