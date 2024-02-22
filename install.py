@@ -169,6 +169,7 @@ LOCAL_PYHTHON_PACKAGES = [
     {"path": "solid_angle_utils", "name": "solid_angle_utils"},
     {"path": "ray_voxel_overlap", "name": "ray_voxel_overlap"},
     {"path": "thin_lens", "name": "thin_lens"},
+    {"path": "un_bound_histogram", "name": "un_bound_histogram"},
     {"path": "triangle_mesh_io", "name": "triangle_mesh_io"},
     {"path": "optic_object_wavefronts", "name": "optic_object_wavefronts"},
     {"path": "merlict", "name": "merlict"},
