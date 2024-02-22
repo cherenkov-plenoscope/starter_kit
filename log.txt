@@ -1,3 +1,23 @@
+
+2024-02-22
+It seems we found the cause of the timing issue with the cherenkov light.
+Both the corika_primary package and the merlict_development_kit
+interpret the cherenkov bunches directions to be the momentum. U and V.
+And this makes sense as it is also defined as such in the CORSIKA 7.56
+manual in table 11 and figure 1 on page 108. This is why the simualtion
+so far worked out fine.
+BUTT, in between I forgot about this definition and interpreted the
+cherenkov bunches direction as the incident direction. This mirrors the
+direction. Based on this mistake, I created test and calibration sources
+and implemented the transformation of cherenkov bunches which is crucial
+to the pointing of the plenoscope. Since my mistake was implemented in
+calibration sources and inside the tests, it looked that all
+transformations run as expected when in reality it was different from
+CORSIKA's definition. Anyhow, now I try to tidy up this mess by removing
+the corsika_primary.I.BUNCH.CX_RAD and CY_RAD. This is plain wrong.
+Actually it is CORSIKA's U and V defined in the manual in Table 11.
+This effects vast parts of the code.
+
 2024-02-21
 Debugging and getting the plenoirf simualtion chain up and running again.
 It seems something is wrong with the timing of the cherenkov-bunches
