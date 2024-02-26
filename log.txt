@@ -3,6 +3,7 @@ Definging the instrument's spherical coordiantes and CORSIKA's
 spherical coordinates within the package spherical_coordiantes.
 Adopting changes in CORSIKA. Preparing starter_kit to run the next
 production with fixed cx/ux cy/vy pointing/direction fixes.
+-Fixing import bugs in plenoptics.
 
 2024-02-22
 It seems we found the cause of the timing issue with the cherenkov light.
