@@ -179,19 +179,6 @@ def calculate_distance_to_origin(cx, x_m, cy, y_m):
     return np.linalg.norm(cp_m, axis=0)
 
 
-def calculate_angle_between_rad(bunch_cx, bunch_cy, ins_cx, ins_cy):
-    ins_vec = make_instrument_pointing_direction_vector(
-        ins_cx=ins_cx,
-        ins_cy=ins_cy,
-    )
-    bunch_vecs = plenoirf.grid._make_bunch_direction(cx=bunch_cx, cy=bunch_cy)
-    angle = plenoirf.grid._make_angle_between(
-        directions=bunch_vecs,
-        direction=ins_vec,
-    )
-    return angle
-
-
 def _bunches_calculate_arrival_time_wrt_origin(bunches_cgs):
     num_bunches = bunches_cgs.shape[0]
 
@@ -217,12 +204,7 @@ def _make_uid(evth):
 
 
 def _calculate_primary_ray_wrt_starting_position(evth):
-    _dx = evth[cpw.I.EVTH.PX_MOMENTUM_GEV_PER_C]
-    _dy = evth[cpw.I.EVTH.PY_MOMENTUM_GEV_PER_C]
-    _dz = -1.0 * evth[cpw.I.EVTH.PZ_MOMENTUM_GEV_PER_C]
-
-    primary_direction = [_dx, _dy, _dz]
-    primary_direction = primary_direction / np.linalg.norm(primary_direction)
+    primary_direction_uxvywz = cpw.I.EVTH.get_direction_uxvywz(evth=evth)
 
     primary_starting_z_m = cpw.CM2M * evth[cpw.I.EVTH.STARTING_HEIGHT_CM]
 
@@ -231,7 +213,7 @@ def _calculate_primary_ray_wrt_starting_position(evth):
 
     obs_lvl_intersection_m = acr.utils.ray_plane_x_y_intersection(
         support=[0, 0, primary_starting_z_m],
-        direction=primary_direction,
+        direction=primary_direction_uxvywz,
         plane_z=primary_core_z_m,
     )
 
@@ -241,7 +223,7 @@ def _calculate_primary_ray_wrt_starting_position(evth):
         primary_starting_z_m,
     ]
 
-    return primary_starting_position, primary_direction
+    return primary_starting_position, primary_direction_uxvywz
 
 
 def _bunches_translate_into_instrument_frame(
@@ -257,27 +239,29 @@ def _bunches_translate_into_instrument_frame(
 
 
 def _bunches_calculate_distance_to_origin_m(bunches_cgs):
-    MOMENTUM_TO_INCIDENT = -1.0
+    sphcor = spherical_coordinates
+
     return calculate_distance_to_origin(
-        cx=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.UX_1],
+        cx=sphcor.corsika.ux_to_cx(ux=bunches_cgs[:, cpw.I.BUNCH.UX_1]),
         x_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.X_CM],
-        cy=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.VY_1],
+        cy=sphcor.corsika.vy_to_cy(vy=bunches_cgs[:, cpw.I.BUNCH.VY_1]),
         y_m=cpw.CM2M * bunches_cgs[:, cpw.I.BUNCH.Y_CM],
     )
 
 
 def _bunches_calculate_angle_between_rad(bunches_cgs, azimuth_rad, zenith_rad):
-    cx, cy = spherical_coordinates.az_zd_to_cx_cy(
+    sphcor = spherical_coordinates
+
+    ins_cx, ins_cy = sphcor.az_zd_to_cx_cy(
         azimuth_rad=azimuth_rad,
         zenith_rad=zenith_rad,
     )
 
-    MOMENTUM_TO_INCIDENT = -1.0
-    return calculate_angle_between_rad(
-        bunch_cx=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.UX_1],
-        bunch_cy=MOMENTUM_TO_INCIDENT * bunches_cgs[:, cpw.I.BUNCH.VY_1],
-        ins_cx=cx,
-        ins_cy=cy,
+    return spherical_coordinates.angle_between_cx_cy(
+        cx1=sphcor.corsika.ux_to_cx(ux=bunches_cgs[:, cpw.I.BUNCH.UX_1]),
+        cy1=sphcor.corsika.vy_to_cy(vy=bunches_cgs[:, cpw.I.BUNCH.VY_1]),
+        cx2=ins_cx,
+        cy2=ins_cy,
     )
 
 
@@ -363,8 +347,11 @@ def run_job(job):
             base = uid.copy()
             base["primary_particle_id"] = evth[cpw.I.EVTH.PARTICLE_ID]
             base["primary_energy_GeV"] = evth[cpw.I.EVTH.TOTAL_ENERGY_GEV]
-            base["primary_azimuth_rad"] = evth[cpw.I.EVTH.AZIMUTH_RAD]
-            base["primary_zenith_rad"] = evth[cpw.I.EVTH.ZENITH_RAD]
+
+            prm_az, prm_zd = cpw.I.EVTH.get_pointing_az_zd(evth=evth)
+
+            base["primary_azimuth_rad"] = prm_az
+            base["primary_zenith_rad"] = prm_zd
 
             p_s, p_d = _calculate_primary_ray_wrt_starting_position(evth=evth)
 
