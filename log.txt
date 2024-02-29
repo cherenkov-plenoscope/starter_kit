@@ -1,3 +1,11 @@
+2024-02-29
+I found a way to histogram directions very fast and efficient.
+It might be possible to histogram the directions of every Cherenkov
+photon in a shower to make the ``magnetic_deflection`` package no
+longer depend on the median of the light's direction, but its
+actual histogrammed distribution. To do this, I add a new package
+``spherical_histogram``.
+
 2024-02-26 v1.10.0
 Definging the instrument's spherical coordiantes and CORSIKA's
 spherical coordinates within the package spherical_coordiantes.

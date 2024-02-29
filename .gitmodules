@@ -115,3 +115,6 @@
 [submodule "packages/un_bound_histogram"]
 	path = packages/un_bound_histogram
 	url = git@github.com:cherenkov-plenoscope/un_bound_histogram.git
+[submodule "packages/spherical_histogram"]
+	path = packages/spherical_histogram
+	url = git@github.com:cherenkov-plenoscope/spherical_histogram.git

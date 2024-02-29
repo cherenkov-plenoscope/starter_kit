@@ -186,6 +186,7 @@ LOCAL_PYHTHON_PACKAGES = [
         "path": "merlict_development_kit_python",
         "name": "merlict_development_kit_python_cherenkov-plenoscope-project",
     },
+    {"path": "spherical_histogram", "name": "spherical_histogram"},
     {
         "path": "homogeneous_transformation",
         "name": "homogeneous_transformation",
