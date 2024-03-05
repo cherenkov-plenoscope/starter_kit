@@ -1,3 +1,10 @@
+2024-03-05
+Massive progress with magnetic deflection. It seems that a magnetic
+deflection mapping (cherenkov direction <-> primary direction) is
+feasible with taking the full Cherenkov pool into account without
+approximating the pool with its median direction. This will make
+the scatter angles for primaries obsolete.
+
 2024-02-29
 I found a way to histogram directions very fast and efficient.
 It might be possible to histogram the directions of every Cherenkov
