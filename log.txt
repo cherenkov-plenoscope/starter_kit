@@ -1,3 +1,7 @@
+2024-03-12
+Fine tuning magnetic deflection. Ready to populate primary to
+Cherenkov mappings for all sites and paricles.
+
 2024-03-05
 Massive progress with magnetic deflection. It seems that a magnetic
 deflection mapping (cherenkov direction <-> primary direction) is
