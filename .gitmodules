@@ -118,3 +118,6 @@
 [submodule "packages/spherical_histogram"]
 	path = packages/spherical_histogram
 	url = git@github.com:cherenkov-plenoscope/spherical_histogram.git
+[submodule "packages/sequential_tar"]
+	path = packages/sequential_tar
+	url = git@github.com:cherenkov-plenoscope/sequential_tar.git
