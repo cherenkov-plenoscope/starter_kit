@@ -1,3 +1,8 @@
+2024-04-16
+Making plenoptics (the package which creates all the plots for
+the optics paper) write less files. Reduction is about two orders
+of magnitude. From now on, the files are collected in zipfiles.
+
 2024-03-12
 Fine tuning magnetic deflection. Ready to populate primary to
 Cherenkov mappings for all sites and paricles.
