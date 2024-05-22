@@ -1,3 +1,6 @@
+2024-05-22
+Prepare trajectory reconstruction. Explicit package names.
+
 2024-05-13
 The complexity in plenoirf.production is getting out of hands.
 Repeatability of sections in the production turns out to be

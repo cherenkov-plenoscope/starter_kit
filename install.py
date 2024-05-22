@@ -221,7 +221,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "name": "atmospheric_cherenkov_response_cherenkov-plenoscope-project",
     },
     {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
-    {"path": "gamma_ray_reconstruction", "name": "gamma_ray_reconstruction"},
+    {
+        "path": "gamma_ray_reconstruction",
+        "name": "gamma_ray_reconstruction_cherenkov-plenoscope-project",
+    },
     {"path": "corsika_primary", "name": "corsika_primary"},
     {
         "path": "magnetic_deflection",
