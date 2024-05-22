@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import plenoirf
-import sparse_numeric_table as spt
+import sparse_numeric_table as snt
 import os
 import numpy as np
 import sebastians_matplotlib_addons as seb
@@ -21,7 +21,7 @@ with open(os.path.join(work_dir, "config.json"), "rt") as f:
 prng = np.random.Generator(np.random.PCG64(64))
 os.makedirs(plot_dir, exist_ok=True)
 
-result = spt.read(os.path.join(work_dir, "result.tar"))
+result = snt.read(os.path.join(work_dir, "result.tar"))
 
 assert config["flux"]["azimuth_deg"] == 0.0
 assert config["flux"]["zenith_deg"] == 0.0
@@ -49,7 +49,7 @@ mask_valid = (
 idx_valid = result["cherenkov_detected_size"]["idx"][mask_valid]
 
 
-idx_valid = spt.intersection([idx_valid, idx_az, idx_inst_x])
+idx_valid = snt.intersection([idx_valid, idx_az, idx_inst_x])
 
 
 num_valid = idx_valid.shape[0]
@@ -64,13 +64,13 @@ zd_bin_edges_rad = solid_angle_utils.cone.half_angle_space(
 
 zd_bin_edges_deg = np.rad2deg(zd_bin_edges_rad)
 
-res = spt.cut_and_sort_table_on_indices(
+res = snt.cut_and_sort_table_on_indices(
     table=result,
     common_indices=idx_valid,
     level_keys=["base", "reconstruction"],
 )
 
-r = spt.make_rectangular_DataFrame(res).to_records()
+r = snt.make_rectangular_DataFrame(res).to_records()
 
 time_true = r["base/primary_time_to_closest_point_to_instrument_s"]
 time_reco = r["reconstruction/arrival_time_median_s"]

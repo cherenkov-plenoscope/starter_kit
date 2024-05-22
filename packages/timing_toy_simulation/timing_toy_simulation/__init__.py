@@ -6,7 +6,7 @@ import json_utils
 import plenoirf
 import rename_after_writing as rnw
 import spherical_coordinates
-import sparse_numeric_table as spt
+import sparse_numeric_table as snt
 import atmospheric_cherenkov_response as acr
 from . import table
 
@@ -288,11 +288,11 @@ def _bunches_mask_inside_instruments_etendue(
 
 
 def _export_event_table(path, tabrec):
-    event_table = spt.table_of_records_to_sparse_numeric_table(
+    event_table = snt.table_of_records_to_sparse_numeric_table(
         table_records=tabrec, structure=table.STRUCTURE
     )
     tmp_path = path + ".incomplete"
-    spt.write(
+    snt.write(
         path=tmp_path,
         table=event_table,
         structure=table.STRUCTURE,
@@ -337,7 +337,7 @@ def run_job(job):
 
             # unique id
             # ---------
-            uid = {spt.IDX: _make_uid(evth=evth)}
+            uid = {snt.IDX: _make_uid(evth=evth)}
 
             # everything that is known before Cherenkov emission
             # --------------------------------------------------
@@ -577,13 +577,13 @@ def reduce_jobs(work_dir):
         if os.path.exists(result_path):
             result_paths.append(result_path)
 
-    result_table = spt.concatenate_files(
+    result_table = snt.concatenate_files(
         list_of_table_paths=result_paths, structure=table.STRUCTURE
     )
 
     result_path = os.path.join(work_dir, "result.tar")
 
-    spt.write(
+    snt.write(
         path=result_path + ".incomplete",
         table=result_table,
         structure=table.STRUCTURE,
