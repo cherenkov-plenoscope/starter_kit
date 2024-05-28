@@ -1,3 +1,14 @@
+2024-05-18
+Finally! Full production of instrument response passed
+first tests (several 10k) showers on local machine. Ready to
+deploy on compute cluster. Lots of bookkeeping was added.
+Massive performance optimization in ground grid to histogram
+Cherenkov light into 3D grid on observation level.
+All memory usage that scales with the number of photons in a
+Cherenkov light pool have been removed and replaced with
+block-by-block approaches. This makes the memory usage much
+more predictable, and smaller.
+
 2024-05-22
 Prepare trajectory reconstruction. Explicit package names.
 
