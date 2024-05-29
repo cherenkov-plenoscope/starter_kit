@@ -49,10 +49,10 @@ def build_corsika(username, password, corsika_tar):
         normalize_pip_name("corsika_primary") in pip_list()
     ), "corsika_primary must be pip-installed before building corsika."
 
-    if not is_installed("f77"):
-        print("CORSIKA uses f77, but it's not in your path.")
+    if not is_installed("gfortran"):
+        print("CORSIKA uses gfortran, but it's not in your path.")
         print("Install gfortran (GNU compiler collection) if you have not.")
-        print("Make a f77-link pointing to your gfortran.")
+        print("Maybe also make a f77 link pointing to your gfortran.")
 
     if corsika_tar:
         subprocess.call(
