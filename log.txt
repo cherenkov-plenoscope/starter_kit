@@ -1,3 +1,6 @@
+2024-06-03
+Adding benchmarks to investigate compute infrastructure.
+
 2024-05-18
 Finally! Full production of instrument response passed
 first tests (several 10k) showers on local machine. Ready to
