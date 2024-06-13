@@ -1,3 +1,6 @@
+2024-06-13
+Updating PyPi repositories.
+
 2024-06-07
 Reducing the memory usage. So far 2/3 of the memory used by
 plenopy.LightFieldGeometry was the 'lixel_polygon' which is
