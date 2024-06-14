@@ -12,7 +12,7 @@ def get_highest_package_version_tag_on_pypi(package_name):
     url = f"https://pypi.org/pypi/{package_name}/json"
     data = requests.get(url).json()
     versions = list(data["releases"].keys())
-    versions.sort(reverse=True)
+    versions.sort(key=Version ,reverse=True)
     return versions[0]
 
 
