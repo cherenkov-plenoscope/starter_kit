@@ -4,6 +4,16 @@ import os
 import shutil
 import subprocess
 import importlib
+import requests
+from packaging.version import Version
+
+
+def get_highest_package_version_tag_on_pypi(package_name):
+    url = f"https://pypi.org/pypi/{package_name}/json"
+    data = requests.get(url).json()
+    versions = list(data["releases"].keys())
+    versions.sort(reverse=True)
+    return versions[0]
 
 
 def make_importlib_find_the_newly_installed_packages():
@@ -282,6 +292,16 @@ def main():
         ),
     )
 
+    pypi_parser = commands.add_parser(
+        "pypi",
+        help="Compares the local packages to what is hosted on PyPi.",
+        description=(
+            "This is meant to get an overview about what packages need to "
+            "be updated on PyPi again. And about what packages are not on "
+            "PyPi at all."
+        ),
+    )
+
     in_parser.add_argument(
         "--corsika_tar",
         metavar="PATH",
@@ -401,6 +421,44 @@ def main():
                     normalize_pip_name(pypackage["name"]),
                 ]
             )
+
+    elif args.command == "pypi":
+        local_packages = pip_list()
+
+        for pypackage in LOCAL_PYHTHON_PACKAGES:
+            normalized_name = normalize_pip_name(pypackage["name"])
+
+            if normalized_name in local_packages:
+                local_version = local_packages[normalized_name]["version"]
+            else:
+                local_version = None
+
+            try:
+                pypi_version = get_highest_package_version_tag_on_pypi(
+                    package_name=normalized_name
+                )
+            except KeyError as err:
+                pypi_version = None
+
+            ppp = "{:<60s}   ".format(normalized_name)
+            if local_version:
+                ppp += "{:<16s}".format(local_version)
+            else:
+                ppp += "{:<16s}".format("not installed")
+
+            ppp += "   "
+            if pypi_version:
+                ppp += "{:<16s}".format(pypi_version)
+            else:
+                ppp += "{:<16s}".format("not on PyPi")
+
+            ppp += "   "
+            if pypi_version and local_version:
+                if Version(pypi_version) < Version(local_version):
+                    ppp += "{:<16s}".format("Update PyPi!")
+
+            print(ppp)
+
     else:
         parser.print_help()
 
