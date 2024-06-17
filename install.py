@@ -12,7 +12,7 @@ def get_highest_package_version_tag_on_pypi(package_name):
     url = f"https://pypi.org/pypi/{package_name}/json"
     data = requests.get(url).json()
     versions = list(data["releases"].keys())
-    versions.sort(key=Version ,reverse=True)
+    versions.sort(key=Version, reverse=True)
     return versions[0]
 
 
@@ -425,6 +425,16 @@ def main():
     elif args.command == "pypi":
         local_packages = pip_list()
 
+        header = ""
+        header += "{:<60s}   ".format("[package name]")
+        header += "{:<16s}".format("[local pip]")
+        header += "   "
+        header += "{:<16s}".format("[remote pypi]")
+        header += "   "
+        header += "{:<16s}".format("[suggestion]")
+        print(header)
+        print("=" * len(header))
+
         for pypackage in LOCAL_PYHTHON_PACKAGES:
             normalized_name = normalize_pip_name(pypackage["name"])
 
@@ -444,13 +454,13 @@ def main():
             if local_version:
                 ppp += "{:<16s}".format(local_version)
             else:
-                ppp += "{:<16s}".format("not installed")
+                ppp += "{:<16s}".format("-")
 
             ppp += "   "
             if pypi_version:
                 ppp += "{:<16s}".format(pypi_version)
             else:
-                ppp += "{:<16s}".format("not on PyPi")
+                ppp += "{:<16s}".format("-")
 
             ppp += "   "
             if pypi_version and local_version:

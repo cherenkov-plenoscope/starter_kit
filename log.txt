@@ -1,3 +1,9 @@
+2024-06-17
+Finalizing updating PyPi repositories.
+New feature in ./install.py. Command ``pypi`` lists the local
+and remote package versions and this indicates which PyPi
+repos need an update.
+
 2024-06-13
 Updating PyPi repositories.
 
