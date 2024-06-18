@@ -1,3 +1,7 @@
+2024-06-18
+Mass production is running on comupe clusters. First attempts
+made to reduce the results into event_tables.tar.
+
 2024-06-17
 Finalizing updating PyPi repositories.
 New feature in ./install.py. Command ``pypi`` lists the local
