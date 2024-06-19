@@ -6,7 +6,7 @@ from .. import utils
 
 def init(pulsar_name, resources_dir=None):
     if resources_dir is None:
-        resources_dir = utils.get_resources_dir()
+        resources_dir = utils.get_resources_dir("pulsars")
     with open(os.path.join(resources_dir, "SEDpulsars.dat"), "rt") as f:
         seds = loads_spectral_energy_distribution(dat_str=f.read())
     with open(os.path.join(resources_dir, pulsar_name + ".txt")) as f:
@@ -16,7 +16,7 @@ def init(pulsar_name, resources_dir=None):
 
 def list_pulsar_names(resources_dir=None):
     if resources_dir is None:
-        resources_dir = utils.get_resources_dir()
+        resources_dir = utils.get_resources_dir("pulsars")
     paths = glob.glob(os.path.join(resources_dir, "J*.txt"))
     basenames = [os.path.basename(p) for p in paths]
     pulsar_names = [str.split(p, ".")[0] for p in basenames]
