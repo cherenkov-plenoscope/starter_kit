@@ -22,7 +22,7 @@ setuptools.setup(
     long_description_content_type="text/x-rst",
     author="Sebastian Achim Mueller",
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
-    url="https://github.com/cherenkov-plenoscope/",
+    url="https://github.com/cherenkov-plenoscope/cosmic_fluxes",
     packages=[
         "cosmic_fluxes",
         "cosmic_fluxes.pulsars",
