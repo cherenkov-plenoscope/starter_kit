@@ -1,21 +1,32 @@
 import setuptools
 import os
 
-with open("README.md", "r") as f:
+
+with open("README.rst", "r", encoding="utf-8") as f:
     long_description = f.read()
 
+
+with open(os.path.join("cosmic_fluxes", "version.py")) as f:
+    txt = f.read()
+    last_line = txt.splitlines()[-1]
+    version_string = last_line.split()[-1]
+    version = version_string.strip("\"'")
+
+
 setuptools.setup(
-    name="cosmic_fluxes",
-    version="0.0.2",
+    name="cosmic_fluxes_cherenkov-plenoscope-project",
+    version=version,
     description="Fluxes of cosmic gamma-rays and cosmic-rays relevant "
     "for the atmospheric Cherenkov-method",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     author="Sebastian Achim Mueller",
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
     url="https://github.com/cherenkov-plenoscope/",
-    license="GPL v3",
-    packages=["cosmic_fluxes"],
+    packages=[
+        "cosmic_fluxes",
+        "cosmic_fluxes.pulsars",
+    ],
     package_data={
         "cosmic_fluxes": [
             os.path.join("resources", "*"),

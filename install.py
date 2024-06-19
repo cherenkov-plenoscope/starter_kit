@@ -230,7 +230,10 @@ LOCAL_PYHTHON_PACKAGES = [
         "path": "atmospheric_cherenkov_response",
         "name": "atmospheric_cherenkov_response_cherenkov-plenoscope-project",
     },
-    {"path": "cosmic_fluxes", "name": "cosmic_fluxes"},
+    {
+        "path": "cosmic_fluxes",
+        "name": "cosmic_fluxes_cherenkov-plenoscope-project",
+    },
     {
         "path": "gamma_ray_reconstruction",
         "name": "gamma_ray_reconstruction_cherenkov-plenoscope-project",
