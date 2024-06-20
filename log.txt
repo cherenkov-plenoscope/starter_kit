@@ -1,3 +1,12 @@
+2024-06-20
+Mass production is further running. About 1 permill of the
+runs suffers from an exception in merlic_development_kit.
+Beside this, there is stderr related to calling iminuit
+with uncertainty estimates <= 0.0. For now, keep on producing.
+The summary/analysis in plenoirf is coming up again.
+The analysis scripts up to 0061 have been reworked to adopt
+the full pointing capabilities of the new simulations.
+
 2024-06-18
 Mass production is running on comupe clusters. First attempts
 made to reduce the results into event_tables.tar.
