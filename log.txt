@@ -1,3 +1,9 @@
+2024-06-25
+Getting the summary/analysis scripts up and running again.
+No more looping over sites inside an analysis script.
+Need to define pointing ranges to visualize zenith
+dependencies.
+
 2024-06-20
 Mass production is further running. About 1 permill of the
 runs suffers from an exception in merlic_development_kit.
