@@ -1,3 +1,12 @@
+2024-06-16
+A new fileformat for the sparse-numeric-table (SNT).
+The SNT with its numpy based recarrays has proven to be
+very fast and efficient. Now that statistics gets bigger,
+we might benefit from a fileformat which allows selective
+reading to not always read the entire table (several GB).
+This will fix the current bottleneck of the summary/analysis
+scripts and allow for quicker debugging iterations.
+
 2024-06-25
 Getting the summary/analysis scripts up and running again.
 No more looping over sites inside an analysis script.
