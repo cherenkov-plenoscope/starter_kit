@@ -1,4 +1,20 @@
-2024-06-16
+upcomming changes for next production run
+-----------------------------------------
+- Reduce float precision in event table where possible.
+  Especially the cherenkovsize and cherenkovpool tables
+  use float64 all over the place while float32 would be
+  sufficient. This will reduce sizes of the event_tables
+  significantly (approx 25%).
+
+log
+---
+2024-06-27
+Deploying the snt.archive for selective reads inside the
+event tabeles. Also make more use of rename_after_writing
+to ensure that files only have their final names when they
+are complete and thus valid.
+
+2024-06-26
 A new fileformat for the sparse-numeric-table (SNT).
 The SNT with its numpy based recarrays has proven to be
 very fast and efficient. Now that statistics gets bigger,
