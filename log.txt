@@ -6,8 +6,20 @@ upcomming changes for next production run
   sufficient. This will reduce sizes of the event_tables
   significantly (approx 25%).
 
+- Compress the event_table (snt.archive). Seems to reduce
+  the size down to 50%. As the compression is block wise,
+  selective reads are still possible.
+
+- 'groundgrid_result/num_bins_above_threshold' must always be
+  populated in event-table if there is a 'groundgrid' entry.
+
+
 log
 ---
+2024-06-29
+Adding summary/analysis plots to show what was actually
+thrown. Add plots which show statistics of the 'groundgrid'.
+
 2024-06-27
 Deploying the snt.archive for selective reads inside the
 event tabeles. Also make more use of rename_after_writing
