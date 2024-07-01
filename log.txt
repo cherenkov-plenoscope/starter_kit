@@ -13,9 +13,17 @@ upcomming changes for next production run
 - 'groundgrid_result/num_bins_above_threshold' must always be
   populated in event-table if there is a 'groundgrid' entry.
 
+- In the run's output zipfiles, the file:
+  'RRRRRR/plenoirf.production.draw_event_uids_for_debugging.json'
+  is actually compressed with gzip but misses the '.gz' extension.
+
 
 log
 ---
+2024-07-01
+Reduce more items from the simulation runs.
+Benchmarks, ground grid intensity, and event uids for debugging.
+
 2024-06-29
 Adding summary/analysis plots to show what was actually
 thrown. Add plots which show statistics of the 'groundgrid'.
