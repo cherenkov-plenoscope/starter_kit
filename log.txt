@@ -17,9 +17,16 @@ upcomming changes for next production run
   'RRRRRR/plenoirf.production.draw_event_uids_for_debugging.json'
   is actually compressed with gzip but misses the '.gz' extension.
 
+- Rename the index_key in the event-tables to 'uid' because 'uid' is also used
+  in plenoirf.bookkeeping. Currently it is 'idx'.
+
 
 log
 ---
+2024-08-22
+After holiday brake: Adopt mayor changes in Sparse Numeric Table
+which allow for faster selective reads from the large files.
+
 2024-07-01
 Reduce more items from the simulation runs.
 Benchmarks, ground grid intensity, and event uids for debugging.
