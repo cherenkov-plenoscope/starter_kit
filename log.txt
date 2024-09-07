@@ -23,6 +23,10 @@ upcomming changes for next production run
 
 log
 ---
+2024-09-07
+Improve corporate-identity, make darkmode figures for the
+Gamma 2024 in Milano.
+
 2024-08-22
 After holiday brake: Adopt mayor changes in Sparse Numeric Table
 which allow for faster selective reads from the large files.
