@@ -23,6 +23,13 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-04
+Massive push of merlic-c89 and merlict/pyton to adopt
+descriptions of surfaces and materials. Massive refactoring
+of the C-code base to be more in line with the pitch fork
+layout. Generating vertex-normals for STL and OFF files
+from regular CAD tools in triangle_mesh_io.
+
 2024-09-07
 Improve corporate-identity, make darkmode figures for the
 Gamma 2024 in Milano.
