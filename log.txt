@@ -24,8 +24,9 @@ upcomming changes for next production run
 log
 ---
 2025-03-06
-Fixing numpy deprication warnings and adopting numpy API change
+-Fixing numpy deprication warnings and adopting numpy API change
 for recarray.
+- Fixing magnetic.deflectin.skymap.testin.SkyMapDummy.
 
 2025-03-04
 - Massive push of merlic-c89 and merlict/pyton to adopt
