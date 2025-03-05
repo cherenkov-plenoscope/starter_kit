@@ -23,6 +23,10 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-06
+Fixing numpy deprication warnings and adopting numpy API change
+for recarray.
+
 2025-03-04
 - Massive push of merlic-c89 and merlict/pyton to adopt
   descriptions of surfaces and materials. Massive refactoring
