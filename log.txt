@@ -23,6 +23,10 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-10
+- Fixing depricated scipy.interpolate.interp2d.
+- Fixing plenoirf.utils.SerialPool.
+
 2025-03-06
 -Fixing numpy deprication warnings and adopting numpy API change
 for recarray.
