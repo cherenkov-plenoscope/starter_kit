@@ -1,11 +1,5 @@
 upcomming changes for next production run
 -----------------------------------------
-- Reduce float precision in event table where possible.
-  Especially the cherenkovsize and cherenkovpool tables
-  use float64 all over the place while float32 would be
-  sufficient. This will reduce sizes of the event_tables
-  significantly (approx 25%).
-
 - Compress the event_table (snt.archive). Seems to reduce
   the size down to 50%. As the compression is block wise,
   selective reads are still possible.
@@ -23,6 +17,9 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-11
+- Reducing float/int precision in the event table where possible.
+
 2025-03-10
 - Fixing depricated scipy.interpolate.interp2d.
 - Fixing plenoirf.utils.SerialPool.
