@@ -1,22 +1,18 @@
 upcomming changes for next production run
 -----------------------------------------
-- Compress the event_table (snt.archive). Seems to reduce
-  the size down to 50%. As the compression is block wise,
-  selective reads are still possible.
-
 - 'groundgrid_result/num_bins_above_threshold' must always be
   populated in event-table if there is a 'groundgrid' entry.
-
-- In the run's output zipfiles, the file:
-  'RRRRRR/plenoirf.production.draw_event_uids_for_debugging.json'
-  is actually compressed with gzip but misses the '.gz' extension.
-
 
 log
 ---
 2025-03-12
 - Replacing snt.IDX with "uid" for the key of the event unique id field in the
   event tables.
+- In the run's output zipfiles, the file:
+  'RRRRRR/plenoirf.production.draw_event_uids_for_debugging.json' is actually
+  compressed with gzip but misses the '.gz' extension.
+- Compress the event_table (snt.archive). Seems to reduce the size down to 50%.
+  As the compression is block wise, selective reads are still possible.
 
 2025-03-11
 - Reducing float/int precision in the event table where possible.
