@@ -33,20 +33,20 @@ mask_az = np.logical_and(
     result["base"]["primary_azimuth_rad"] >= -np.deg2rad(360),
     result["base"]["primary_azimuth_rad"] < np.deg2rad(360),
 )
-idx_az = result["base"]["idx"][mask_az]
+idx_az = result["base"]["uid"][mask_az]
 
 mask_inst_x = np.logical_and(
     result["base"]["instrument_x_m"] >= -650,
     result["base"]["instrument_x_m"] < 650,
 )
-idx_inst_x = result["base"]["idx"][mask_inst_x]
+idx_inst_x = result["base"]["uid"][mask_inst_x]
 
 
 mask_valid = (
     result["cherenkov_detected_size"]["num_photons"]
     >= MIN_NUM_DETECTED_PHOTONS
 )
-idx_valid = result["cherenkov_detected_size"]["idx"][mask_valid]
+idx_valid = result["cherenkov_detected_size"]["uid"][mask_valid]
 
 
 idx_valid = snt.intersection([idx_valid, idx_az, idx_inst_x])

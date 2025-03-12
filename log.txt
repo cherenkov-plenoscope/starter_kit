@@ -11,12 +11,13 @@ upcomming changes for next production run
   'RRRRRR/plenoirf.production.draw_event_uids_for_debugging.json'
   is actually compressed with gzip but misses the '.gz' extension.
 
-- Rename the index_key in the event-tables to 'uid' because 'uid' is also used
-  in plenoirf.bookkeeping. Currently it is 'idx'.
-
 
 log
 ---
+2025-03-12
+- Replacing snt.IDX with "uid" for the key of the event unique id field in the
+  event tables.
+
 2025-03-11
 - Reducing float/int precision in the event table where possible.
 

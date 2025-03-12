@@ -337,7 +337,7 @@ def run_job(job):
 
             # unique id
             # ---------
-            uid = {snt.IDX: _make_uid(evth=evth)}
+            uid = {"uid": _make_uid(evth=evth)}
 
             # everything that is known before Cherenkov emission
             # --------------------------------------------------
@@ -405,24 +405,24 @@ def run_job(job):
 
             # true arrival time
             # -----------------
-            base[
-                "primary_distance_to_closest_point_to_instrument_m"
-            ] = plenoirf.utils.ray_parameter_for_closest_distance_to_point(
-                ray_direction=[
-                    base["primary_direction_x"],
-                    base["primary_direction_y"],
-                    base["primary_direction_z"],
-                ],
-                ray_support=[
-                    base["primary_start_x_m"],
-                    base["primary_start_y_m"],
-                    base["primary_start_z_m"],
-                ],
-                point=[
-                    base["instrument_x_m"],
-                    base["instrument_y_m"],
-                    base["instrument_z_m"],
-                ],
+            base["primary_distance_to_closest_point_to_instrument_m"] = (
+                plenoirf.utils.ray_parameter_for_closest_distance_to_point(
+                    ray_direction=[
+                        base["primary_direction_x"],
+                        base["primary_direction_y"],
+                        base["primary_direction_z"],
+                    ],
+                    ray_support=[
+                        base["primary_start_x_m"],
+                        base["primary_start_y_m"],
+                        base["primary_start_z_m"],
+                    ],
+                    point=[
+                        base["instrument_x_m"],
+                        base["instrument_y_m"],
+                        base["instrument_z_m"],
+                    ],
+                )
             )
 
             base["primary_time_to_closest_point_to_instrument_s"] = (
