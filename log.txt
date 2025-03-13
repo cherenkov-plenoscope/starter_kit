@@ -5,6 +5,11 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-13
+- SparseNumericTable needs a little bit more love. Removed unused bits
+  and moved features from plenoirf into SNT. Also snt is now aware of
+  its 'index_key' just like the pandas.DataFrame.
+
 2025-03-12
 - Replacing snt.IDX with "uid" for the key of the event unique id field in the
   event tables.
