@@ -4,7 +4,7 @@ import plenoirf
 import sparse_numeric_table as snt
 import os
 import numpy as np
-import sebastians_matplotlib_addons as seb
+import sebastians_matplotlib_addons as sebplt
 import json_utils
 import binning_utils as bu
 import solid_angle_utils
@@ -17,7 +17,7 @@ plot_dir = os.path.join(work_dir, "plot")
 with open(os.path.join(work_dir, "config.json"), "rt") as f:
     config = json_utils.loads(f.read())
 
-# seb.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
+# sebplt.matplotlib.rcParams.update(sum_config["plot"]["matplotlib"])
 prng = np.random.Generator(np.random.PCG64(64))
 os.makedirs(plot_dir, exist_ok=True)
 
@@ -112,7 +112,7 @@ for zz in zz_range:
 intensity_max = np.max(time_delta_hists)
 
 
-fig = seb.figure(style={"rows": 1920, "cols": 1080, "fontsize": 1.5})
+fig = sebplt.figure(style={"rows": 1920, "cols": 1080, "fontsize": 1.5})
 fig.text(
     x=0.1,
     y=0.97,
@@ -126,10 +126,10 @@ for zz in zz_range:
     z_stop = z_bin["edges"][zz + 1]
 
     ax_height = 0.85 / z_bin["num"]
-    ax = seb.add_axes(
+    ax = sebplt.add_axes(
         fig=fig, span=[0.2, 0.1 + zz * ax_height, 0.7, 0.8 * ax_height]
     )
-    seb.ax_add_histogram(
+    sebplt.ax_add_histogram(
         ax=ax,
         bin_edges=(1e9 * time_delta_bin["edges"]),
         bincounts=time_delta_hists[zz],
@@ -162,7 +162,7 @@ for zz in zz_range:
 ax.set_ylabel("intensity / 1")
 ax.set_xlabel("time (reco - true) / ns")
 fig.savefig(os.path.join(plot_dir, "time_reco_minus_true.jpg"))
-seb.close(fig)
+sebplt.close(fig)
 
 
 # zenith
@@ -174,17 +174,17 @@ time_delta_zenith_hist = np.histogram2d(
     bins=(zenith_bin["edges"], time_delta_bin["edges"]),
 )[0]
 
-fig = seb.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
-ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.5, 0.8])
-axc = seb.add_axes(fig=fig, span=[0.7, 0.15, 0.05, 0.8])
+fig = sebplt.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
+ax = sebplt.add_axes(fig=fig, span=[0.15, 0.15, 0.5, 0.8])
+axc = sebplt.add_axes(fig=fig, span=[0.7, 0.15, 0.05, 0.8])
 _pcm_xy = ax.pcolormesh(
     np.rad2deg(zenith_bin["edges"]),
     1e9 * time_delta_bin["edges"],
     np.transpose(time_delta_zenith_hist),
     cmap="inferno",
-    norm=seb.plt_colors.PowerNorm(gamma=0.5),
+    norm=sebplt.plt_colors.PowerNorm(gamma=0.5),
 )
-seb.plt.colorbar(_pcm_xy, cax=axc, extend="max")
+sebplt.plt.colorbar(_pcm_xy, cax=axc, extend="max")
 ax.grid(color="w", linestyle="-", linewidth=0.66, alpha=0.1)
 # ax.set_aspect("equal")
 ax.set_xlim(np.rad2deg(zenith_bin["limits"]))
@@ -192,37 +192,37 @@ ax.set_ylim(1e9 * time_delta_bin["limits"])
 ax.set_xlabel("zenith / 1$^{\circ}$")
 ax.set_ylabel("time (reco - true) / ns")
 fig.savefig(os.path.join(plot_dir, "zd_time.jpg"))
-seb.close(fig)
+sebplt.close(fig)
 
 
-fig = seb.figure(style=seb.FIGURE_1_1)
-ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
+fig = sebplt.figure(style=sebplt.FIGURE_1_1)
+ax = sebplt.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
 ax.plot(np.rad2deg(r["base/primary_azimuth_rad"]), time_delta * 1e9, "xk")
 ax.set_xlabel("azimuth / deg")
 ax.set_ylabel("time_delta / ns")
 
 fig.savefig(os.path.join(plot_dir, "az_time.jpg"))
-seb.close(fig)
+sebplt.close(fig)
 
 
-fig = seb.figure(style=seb.FIGURE_1_1)
-ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
+fig = sebplt.figure(style=sebplt.FIGURE_1_1)
+ax = sebplt.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
 ax.plot(r["base/instrument_x_m"], time_delta * 1e9, "xk")
 ax.set_xlabel("instrument_x / m")
 ax.set_ylabel("time_delta / ns")
 
 fig.savefig(os.path.join(plot_dir, "ins_x_time.jpg"))
-seb.close(fig)
+sebplt.close(fig)
 
 
-fig = seb.figure(style=seb.FIGURE_1_1)
-ax = seb.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
+fig = sebplt.figure(style=sebplt.FIGURE_1_1)
+ax = sebplt.add_axes(fig=fig, span=[0.175, 0.15, 0.75, 0.8])
 ax.plot(r["base/instrument_y_m"], time_delta * 1e9, "xk")
 ax.set_xlabel("instrument_y / m")
 ax.set_ylabel("time_delta / ns")
 
 fig.savefig(os.path.join(plot_dir, "ins_y_time.jpg"))
-seb.close(fig)
+sebplt.close(fig)
 
 
 # x, y
@@ -240,17 +240,17 @@ xy_hist = np.histogram2d(
     bins=xy_bin["edges"],
 )[0]
 
-fig = seb.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
-ax = seb.add_axes(fig=fig, span=[0.15, 0.15, 0.8, 0.8])
-axc = seb.add_axes(fig=fig, span=[0.85, 0.15, 0.05, 0.8])
+fig = sebplt.figure(style={"rows": 1080, "cols": 1920, "fontsize": 1.5})
+ax = sebplt.add_axes(fig=fig, span=[0.15, 0.15, 0.8, 0.8])
+axc = sebplt.add_axes(fig=fig, span=[0.85, 0.15, 0.05, 0.8])
 _pcm_xy = ax.pcolormesh(
     xy_bin["edges"],
     xy_bin["edges"],
     np.transpose(xy_hist),
     cmap="inferno",
-    norm=seb.plt_colors.PowerNorm(gamma=0.5),
+    norm=sebplt.plt_colors.PowerNorm(gamma=0.5),
 )
-seb.plt.colorbar(_pcm_xy, cax=axc, extend="max")
+sebplt.plt.colorbar(_pcm_xy, cax=axc, extend="max")
 ax.grid(color="w", linestyle="-", linewidth=0.66, alpha=0.1)
 ax.set_aspect("equal")
 ax.set_xlim(xy_bin["limits"])
@@ -258,15 +258,17 @@ ax.set_ylim(xy_bin["limits"])
 ax.set_xlabel("instrument $x$ / m")
 ax.set_ylabel("instrument $y$ / m")
 fig.savefig(os.path.join(plot_dir, "ins_x_y.jpg"))
-seb.close(fig)
+sebplt.close(fig)
 
 # directions in sky
 # -----------------
 az_lines_deg = np.linspace(0, 360, 6, endpoint=False)
 num_points = min([int(1e3), r.shape[0]])
-fig = seb.figure(style=seb.FIGURE_1_1)
-ax = seb.add_axes(fig=fig, span=[0.1, 0.1, 0.8, 0.8], style=seb.AXES_BLANK)
-seb.hemisphere.ax_add_projected_points_with_colors(
+fig = sebplt.figure(style=sebplt.FIGURE_1_1)
+ax = sebplt.add_axes(
+    fig=fig, span=[0.1, 0.1, 0.8, 0.8], style=sebplt.AXES_BLANK
+)
+sebplt.hemisphere.ax_add_projected_points_with_colors(
     ax=ax,
     azimuths_rad=r["base/primary_azimuth_rad"][0:num_points],
     zeniths_rad=r["base/primary_zenith_rad"][0:num_points],
@@ -274,10 +276,10 @@ seb.hemisphere.ax_add_projected_points_with_colors(
     half_angle_rad=np.deg2rad(2.0),
     alpha=0.3,
 )
-seb.hemisphere.ax_add_grid_stellarium_style(ax=ax)
+sebplt.hemisphere.ax_add_grid_stellarium_style(ax=ax)
 ax.set_xlabel("sky x / m")
 ax.set_ylabel("sky y / m")
 ax.set_xlim([-1, 1])
 ax.set_ylim([-1, 1])
 fig.savefig(os.path.join(plot_dir, "az_zd_hemisphere.jpg"))
-seb.close(fig)
+sebplt.close(fig)
