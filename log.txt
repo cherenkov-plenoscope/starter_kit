@@ -4,6 +4,12 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-24
+- Fixing 32bit integer overflow bug in computation of acceptance. This was caused
+  by reducing bit width in the event table without explicitly using increased bit
+  width in the computation.
+- More plots with zenith dependency.
+
 2025-03-20
 - Plotting the particle containment vs. solid angle in the magnetic deflection
   look-up-tables (SkyMap).
