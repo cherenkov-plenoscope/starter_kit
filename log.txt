@@ -4,6 +4,12 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-25
+- The simulation's trigger efficiency is too low. Hadrons are below 1e-4.
+  To increase this, I made a production run '2025-03-21' which increases
+  the grid's lose threshold from 10 to 25 Cherenkov photons per bin, and
+  which reduced the hadron's scatter solid angle from 0.3sr to approc 0.2sr.
+
 2025-03-24
 - Fixing 32bit integer overflow bug in computation of acceptance. This was caused
   by reducing bit width in the event table without explicitly using increased bit
