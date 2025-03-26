@@ -4,6 +4,9 @@ upcomming changes for next production run
 
 log
 ---
+2025-03-26
+- Explore zenith dependency of the trigger and its refocused images.
+
 2025-03-25
 - The simulation's trigger efficiency is too low. Hadrons are below 1e-4.
   To increase this, I made a production run '2025-03-21' which increases
