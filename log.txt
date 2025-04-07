@@ -4,6 +4,14 @@ upcomming changes for next production run
 
 log
 ---
+2025-04-01
+- Allow the reduction step in the plenoirf production to write files to the
+  local '/tmp' drive before copying them to their final destination.
+  This was done as the final destination is often very inefficient to write
+  files with many small write operations. For this, the package
+  'rename_after_writing' was modified to allow to use the local /tmp instead
+  of a temporary file in the directory of the final destination.
+
 2025-03-26
 - Explore zenith dependency of the trigger and its refocused images.
 
