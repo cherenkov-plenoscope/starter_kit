@@ -267,6 +267,17 @@ LOCAL_PYHTHON_PACKAGES = [
 ]
 
 
+def read_version_file_local_python_package(path):
+    package_name = os.path.basename(path)
+    version_file_path = os.path.join(path, package_name, "version.py")
+    with open(version_file_path) as f:
+        txt = f.read()
+        last_line = txt.splitlines()[-1]
+        version_string = last_line.split()[-1]
+        version = version_string.strip("\"'")
+    return version
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="install",
@@ -432,6 +443,8 @@ def main():
         header += "{:<60s}   ".format("[package name]")
         header += "{:<16s}".format("[local pip]")
         header += "   "
+        header += "{:<16s}".format("[local file]")
+        header += "   "
         header += "{:<16s}".format("[remote pypi]")
         header += "   "
         header += "{:<16s}".format("[suggestion]")
@@ -442,9 +455,16 @@ def main():
             normalized_name = normalize_pip_name(pypackage["name"])
 
             if normalized_name in local_packages:
-                local_version = local_packages[normalized_name]["version"]
+                pip_version = local_packages[normalized_name]["version"]
             else:
-                local_version = None
+                pip_version = None
+
+            try:
+                file_version = read_version_file_local_python_package(
+                    path=os.path.join("packages", pypackage["path"])
+                )
+            except Exception as err:
+                file_version = None
 
             try:
                 pypi_version = get_highest_package_version_tag_on_pypi(
@@ -454,8 +474,13 @@ def main():
                 pypi_version = None
 
             ppp = "{:<60s}   ".format(normalized_name)
-            if local_version:
-                ppp += "{:<16s}".format(local_version)
+            if pip_version:
+                ppp += "{:<16s}".format(pip_version)
+            else:
+                ppp += "{:<16s}".format("-")
+
+            if file_version:
+                ppp += "{:<16s}".format(file_version)
             else:
                 ppp += "{:<16s}".format("-")
 
@@ -466,9 +491,13 @@ def main():
                 ppp += "{:<16s}".format("-")
 
             ppp += "   "
-            if pypi_version and local_version:
-                if Version(pypi_version) < Version(local_version):
-                    ppp += "{:<16s}".format("Update PyPi!")
+            if pypi_version and file_version:
+                if Version(pypi_version) < Version(file_version):
+                    ppp += "{:<16s}".format("Update PyPi,")
+
+            if file_version and pip_version:
+                if Version(pip_version) < Version(file_version):
+                    ppp += "{:<16s}".format("Re install with pip,")
 
             print(ppp)
 
