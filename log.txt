@@ -4,6 +4,10 @@ upcomming changes for next production run
 
 log
 ---
+2025-06-11
+- Update Merlict ray tracer. Add executable to propagate photons from event
+  tape input.
+
 2025-04-01
 - Allow the reduction step in the plenoirf production to write files to the
   local '/tmp' drive before copying them to their final destination.
