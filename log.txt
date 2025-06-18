@@ -4,6 +4,21 @@ upcomming changes for next production run
 
 log
 ---
+2025-06-18
+- Split main production of simulated plenoscope events into three parts
+  with three checkpoints.
+  Part 1) is 'prm2cer'. Starting with the primary particle and running
+  until the air-shower's Cherenkov photons which are falling into the
+  instrument's grid cell. This stores the Cherenkov light for every event
+  thus events can be reproduced from here on.
+  Part 2) is 'cer2cls' Starting with the Cherenkov light, simulating the
+  optics (ray tracing), simulating the nigh-sky background light, the
+  photon-sensors, the readout, applying the loose trigger, and
+  classifying the Cherenkov photons in the recordings. This stores the
+  reconstructed Cherenkov light seen by the instrument.
+  Part 3) is 'cls2rec'. Starting with the reconstructed Cherenkov light,
+  extracting features, and estimating the primary's trajectory.
+
 2025-06-11
 - Update Merlict ray tracer. Add executable to propagate photons from event
   tape input.
