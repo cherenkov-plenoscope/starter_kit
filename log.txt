@@ -4,6 +4,11 @@ upcomming changes for next production run
 
 log
 ---
+2025-06-23
+- Allow to limit the range of run-ids for a specific compute site using
+  a configfile in the user's home. This way, multiple compute clusters
+  can produce in parallel without reproducing existing events.
+
 2025-06-18
 - Split main production of simulated plenoscope events into three parts
   with three checkpoints.

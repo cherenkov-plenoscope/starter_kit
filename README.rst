@@ -63,7 +63,26 @@ The ``install.py`` can also uninstall all packages and remove the builds.
 
 .. code-block:: bash
 
-    python ./install uninstall 
+    python ./install uninstall
+
+
+Configfiles
+-----------
+The cherenkov plenoscope simulation uses configfiles in the user's home.
+
+* ``.corsika_primary.json`` is used by ``packages/corsika_primary`` to link the
+  CORSIKA executables.
+
+* ``.merlict_develompment_kit_python.json`` is used by
+  ``packages/merlict_develompment_kit_python`` to link the
+  ``merlict_develompment_kit`` executables.
+
+* ``.plenoirf.json`` is used by ``packages/plenoirf`` to link the executable
+  for the ``ground_grid``.
+
+* ``.plenoirf.json`` is used by ``packages/plenoirf`` to link the executable
+  for the ``ground_grid``.
+
 
 
 
@@ -74,6 +93,16 @@ Updating
 
     git pull
     git submodule update
+
+
+Development
+-----------
+List the version strings of local and remote packages on ``PyPi``.
+
+.. code-block:: bash
+
+    python ./install pypi
+
 
 
 .. |CcByLicenseBadge| image:: https://img.shields.io/badge/license-CC--BY--4.0-lightgrey.svg
