@@ -4,6 +4,10 @@ upcomming changes for next production run
 
 log
 ---
+2025-06-29
+- Register run_ids to not submuitt run_ids twice when submitted jobs
+  have not yet finished.
+
 2025-06-24
 - Fixing bugs in the plenoirf production with checkpoints.
 
