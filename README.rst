@@ -30,12 +30,16 @@ We develop on:
 Requirements
 ------------
 
-- Credentials to download CORSIKA from KIT
+- Credentials to download CORSIKA_ from KIT_
 
-- Fortran77-compiler from the gnu compiler collection (gcc)
+.. _KIT: https://www.kit.edu/index.php
+.. _CORSIKA: https://www.iap.kit.edu/corsika/index.php
 
-- The gcc package build-essentials
+- GNU Compiler Collection (build-essentials)
 
+- Fortran77 compiler from the GNU compiler collection
+
+- git
 
 Install
 -------
@@ -46,7 +50,7 @@ First the starter_kit needs to be cloned recursively with all its submodules.
     git clone --recursive git@github.com:cherenkov-plenoscope/starter_kit.git
 
 
-For development, the python packages are all installed editable right in place.
+For development, the python packages are all installed ``--editable`` right in place.
 Also some some executables need to build from sources such as CORSIKA and merlict.
 To do this, there is the ``install.py`` script.
 When you got access to the CORSIKA sources, it is easiest when you download the
@@ -54,7 +58,7 @@ sources for CORSIKA and provide them directly.
 
 .. code-block:: bash
 
-    python ./install install --corsika_tar path/to/my/corsika-75600.tar.gz
+    python ./install.py install --corsika_tar path/to/my/corsika-75600.tar.gz
 
 
 Uninstall
@@ -63,7 +67,7 @@ The ``install.py`` can also uninstall all packages and remove the builds.
 
 .. code-block:: bash
 
-    python ./install uninstall
+    python ./install.py uninstall
 
 
 Configfiles
@@ -101,7 +105,7 @@ List the version strings of local and remote packages on ``PyPi``.
 
 .. code-block:: bash
 
-    python ./install pypi
+    python ./install.py pypi
 
 
 
