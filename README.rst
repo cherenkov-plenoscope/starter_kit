@@ -84,7 +84,7 @@ The cherenkov plenoscope simulation uses configfiles in the user's home.
 * ``.plenoirf.json`` is used by ``packages/plenoirf`` to link the executable
   for the ``ground_grid``.
 
-* ``.plenoirf.production-run-id-range.json`` is used by ``packages/plenoirf`` to define ranges for ``run_id``s (which serve as random seeds) for the production of the instrument response function.
+* ``.plenoirf.production-run-id-range.json`` is used by ``packages/plenoirf`` to define ranges for ``run_ids`` (which serve as random seeds) for the production of the instrument response function.
 
 
 
