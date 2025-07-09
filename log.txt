@@ -4,6 +4,13 @@ upcomming changes for next production run
 
 log
 ---
+2025-07-08
+- To improve performance in the plenoirf reduction step, it is
+  possible now to minimize disk io requests by reading files fully
+  into the memory. On bulk network file systems this seems to be
+  beneficial as seekink is expensive but a bulk read is not.
+ -Make trigger threshold dependent on instrument's zenith pointing.
+
 2025-06-29
 - Register run_ids to not submuitt run_ids twice when submitted jobs
   have not yet finished.
