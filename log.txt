@@ -4,6 +4,9 @@ upcomming changes for next production run
 
 log
 ---
+2025-08-08
+- Update all remaining plenoirf/summary/scripts.
+
 2025-07-08
 - To improve performance in the plenoirf reduction step, it is
   possible now to minimize disk io requests by reading files fully
