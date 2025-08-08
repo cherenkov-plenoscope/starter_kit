@@ -26,21 +26,19 @@ num_bins = 5
 spectral_index_thrown = -2.0
 spectral_index_nature = -2.8
 
-num_thrown = 1*1000*1000
+num_thrown = 1 * 1000 * 1000
 
 over_sampling = 2
 bin_edges = np.geomspace(E_start, E_stop, num_bins + 1)
 fbin_edges = np.geomspace(E_start, E_stop, (over_sampling * num_bins) + 1)
 
 over_sampling_weights = np.linspace(1, 0.5, over_sampling)
-#over_sampling_weights = np.ones(over_sampling)
+# over_sampling_weights = np.ones(over_sampling)
 over_sampling_weights /= np.sum(over_sampling_weights)
 
 
 def geombincenters(bin_edges):
-    return np.exp(
-        0.5*(np.log(bin_edges[0:-1]) + np.log(bin_edges[1:]))
-    )
+    return np.exp(0.5 * (np.log(bin_edges[0:-1]) + np.log(bin_edges[1:])))
 
 
 def trigger_decision(energy, energy_threshold, std):
@@ -51,18 +49,20 @@ def trigger_decision(energy, energy_threshold, std):
 
 def estimate_effective_area(energies, trigger_mask, bin_edges):
     count_thrown = np.histogram(energies, bins=bin_edges)[0]
-    count_detected = np.histogram(energies, bins=bin_edges, weights=trigger_mask)[0]
-    area = count_detected/count_thrown
-    area_unc = np.sqrt(count_detected)/count_detected
+    count_detected = np.histogram(
+        energies, bins=bin_edges, weights=trigger_mask
+    )[0]
+    area = count_detected / count_thrown
+    area_unc = np.sqrt(count_detected) / count_detected
     return area, area_unc
 
 
 def downsample_histogram(fine_conts, over_sampling, over_sampling_weights):
     num_fine_bins = len(fine_conts)
-    num_bins = num_fine_bins//over_sampling
+    num_bins = num_fine_bins // over_sampling
     counts = np.zeros(num_bins)
     for b in range(num_bins):
-        fb = over_sampling*b
+        fb = over_sampling * b
         for o in range(over_sampling):
             counts[b] += over_sampling_weights[o] * fine_conts[fb + o]
     return counts
@@ -70,15 +70,16 @@ def downsample_histogram(fine_conts, over_sampling, over_sampling_weights):
 
 def downsample_histogram_center_log(fine_conts, over_sampling):
     num_fine_bins = len(fine_conts)
-    num_bins = num_fine_bins//over_sampling
+    num_bins = num_fine_bins // over_sampling
     counts = np.zeros(num_bins)
     for b in range(num_bins):
-        fb = over_sampling*b
+        fb = over_sampling * b
         for o in range(over_sampling):
             counts[b] += np.log10(fine_conts[fb + o])
         counts[b] /= over_sampling
         counts[b] = 10 ** counts[b]
     return counts
+
 
 bin_centers = geombincenters(bin_edges)
 fbin_centers = geombincenters(fbin_edges)
@@ -88,7 +89,7 @@ E_thrown = corsika_primary_wrapper.random_distributions.draw_power_law(
     lower_limit=E_start,
     upper_limit=E_stop,
     power_slope=spectral_index_thrown,
-    num_samples=num_thrown
+    num_samples=num_thrown,
 )
 
 E_nature = corsika_primary_wrapper.random_distributions.draw_power_law(
@@ -96,29 +97,21 @@ E_nature = corsika_primary_wrapper.random_distributions.draw_power_law(
     lower_limit=E_start,
     upper_limit=E_stop,
     power_slope=spectral_index_nature,
-    num_samples=num_thrown
+    num_samples=num_thrown,
 )
 
 mask_thrown = trigger_decision(
-    energy=E_thrown,
-    energy_threshold=E_thresohd,
-    std=E_thresohd_rel_std
+    energy=E_thrown, energy_threshold=E_thresohd, std=E_thresohd_rel_std
 )
 A_thrown, A_thrown_unc = estimate_effective_area(
-    energies=E_thrown,
-    bin_edges=bin_edges,
-    trigger_mask=mask_thrown
+    energies=E_thrown, bin_edges=bin_edges, trigger_mask=mask_thrown
 )
 fA_thrown, fA_thrown_unc = estimate_effective_area(
-    energies=E_thrown,
-    bin_edges=fbin_edges,
-    trigger_mask=mask_thrown
+    energies=E_thrown, bin_edges=fbin_edges, trigger_mask=mask_thrown
 )
 
 mask_nature = trigger_decision(
-    energy=E_nature,
-    energy_threshold=E_thresohd,
-    std=E_thresohd_rel_std
+    energy=E_nature, energy_threshold=E_thresohd, std=E_thresohd_rel_std
 )
 A_nature, A_nature_unc = estimate_effective_area(
     energies=E_nature,
@@ -186,7 +179,7 @@ seb.ax_add_histogram(
     linecolor="orange",
 )
 ax.plot(bin_centers, rA_thrown, color="orange", linestyle="-")
-ax.set_xlim([0.9*bin_edges[0], 1.1*bin_edges[-1]])
+ax.set_xlim([0.9 * bin_edges[0], 1.1 * bin_edges[-1]])
 ax.set_ylim([1e-4, 2])
 ax.loglog()
 fig.savefig("Aeff.jpg")

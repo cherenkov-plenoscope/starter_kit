@@ -71,7 +71,13 @@ def draw_direction_in_z_cone(prng, cone_half_angle_deg, size):
 
     # direction vector
     sin_zd = np.sin(zd)
-    return np.array([sin_zd * np.cos(az), sin_zd * np.sin(az), np.cos(zd),]).T
+    return np.array(
+        [
+            sin_zd * np.cos(az),
+            sin_zd * np.sin(az),
+            np.cos(zd),
+        ]
+    ).T
 
 
 def draw_photons_in_z_disk(prng, num, disk_radius, cone_half_angle_deg):
@@ -227,7 +233,9 @@ portal_mirror_scenery = {
             "name": "Portal",
             "pos": [0, 0, 0],
             "rot": [0, 0, 0],
-            "children": [portal_mirror_frame,],
+            "children": [
+                portal_mirror_frame,
+            ],
         },
         {
             "type": "Plane",
@@ -238,7 +246,10 @@ portal_mirror_scenery = {
             "rot": np.deg2rad([0.0, 90.0, 0.0]),
             "x_width": space_truss_tower["height"],
             "y_width": space_truss_tower["width"],
-            "surface": {"outer_color": "orange", "inner_color": "gray",},
+            "surface": {
+                "outer_color": "orange",
+                "inner_color": "gray",
+            },
             "children": [],
         },
         {
@@ -250,7 +261,10 @@ portal_mirror_scenery = {
             "rot": np.deg2rad([0.0, 90.0, 0.0]),
             "x_width": concrete_tower["height"],
             "y_width": concrete_tower["width"],
-            "surface": {"outer_color": "green", "inner_color": "gray",},
+            "surface": {
+                "outer_color": "green",
+                "inner_color": "gray",
+            },
             "children": [],
         },
         {
@@ -260,7 +274,10 @@ portal_mirror_scenery = {
             "pos": [0, 0, 106.5],
             "rot": [0, 0, 0],
             "radius": 6.5,
-            "surface": {"outer_color": "gray", "inner_color": "orange",},
+            "surface": {
+                "outer_color": "gray",
+                "inner_color": "orange",
+            },
             "children": [],
         },
         {
@@ -269,7 +286,10 @@ portal_mirror_scenery = {
             "pos": [0, 0, 106.6],
             "rot": [0, 0, 0],
             "radius": 6.7,
-            "surface": {"outer_color": "gray", "inner_color": "gray",},
+            "surface": {
+                "outer_color": "gray",
+                "inner_color": "gray",
+            },
             "children": [],
         },
     ],
@@ -279,7 +299,7 @@ portal_mirror_scenery = {
 distance_of_light_to_mirror = mirror_diameter * 5
 sun_light_cone_half_angle_deg = 0.25
 sun_light_disk_radius = 0.8 * mirror_diameter
-sun_light_disk_area = sun_light_disk_radius ** 2 * np.pi
+sun_light_disk_area = sun_light_disk_radius**2 * np.pi
 sun_light_photons_areal_density = 100
 sun_light_num_photons = int(
     sun_light_disk_area * sun_light_photons_areal_density
@@ -289,7 +309,9 @@ work_dir = "projection_of_sun"
 os.makedirs(work_dir, exist_ok=True)
 
 json_utils.write(
-    os.path.join(work_dir, "scenery.json"), portal_mirror_scenery, indent=4,
+    os.path.join(work_dir, "scenery.json"),
+    portal_mirror_scenery,
+    indent=4,
 )
 
 json_utils.write(

@@ -1,6 +1,7 @@
 """
 I must be called in a fermipy environment!
 """
+
 import os
 import subprocess
 import astropy.io.fits
@@ -136,12 +137,21 @@ for i in range(len(observation_times)):
 # export
 # ======
 out = {
-    "energy_bin_edges": {"value": energy_bin_edges, "unit": units["e_min"],},
-    "observation_times": {"value": observation_times.tolist(), "unit": "s",},
+    "energy_bin_edges": {
+        "value": energy_bin_edges,
+        "unit": units["e_min"],
+    },
+    "observation_times": {
+        "value": observation_times.tolist(),
+        "unit": "s",
+    },
     "dnde": {
         "value": dnde_vs_observation_time_vs_energy,
         "unit": units["dnde"],
-        "axes": ["observation_time", "energy",],
+        "axes": [
+            "observation_time",
+            "energy",
+        ],
     },
     "provenance": {
         "creation_time": creation_time,

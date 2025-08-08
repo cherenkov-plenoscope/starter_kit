@@ -5,28 +5,31 @@ import argparse
 import rename_after_writing as rnw
 
 parser = argparse.ArgumentParser(
-    description=
-        "Explore the need for high resolution arrival-time reconstruction of"
-        "Cherenkov-photons in the read-out-electronics."
+    description="Explore the need for high resolution arrival-time reconstruction of"
+    "Cherenkov-photons in the read-out-electronics."
 )
-parser.add_argument('--out_dir', metavar='PATH', type=str)
+parser.add_argument("--out_dir", metavar="PATH", type=str)
 args = parser.parse_args()
 out_dir = args.out_dir
 
 
 study_config = {
     "arrival_times_resolution_s": [
-        0.4e-9, 0.8e-9, 1.6e-9, 3.2e-9, 6.4e-9,
+        0.4e-9,
+        0.8e-9,
+        1.6e-9,
+        3.2e-9,
+        6.4e-9,
     ]
 }
-NUM_EVENTS = 1000*1000
+NUM_EVENTS = 1000 * 1000
 MULTIPROCESSING_POOL = ["sun_grid_engine", "local"][0]
 
 
 os.makedirs(out_dir, exist_ok=True)
 json_utils.write(
     path=os.path.join(out_dir, "arrival_time_study_config.json"),
-    out_dict=study_config
+    out_dict=study_config,
 )
 
 # init
@@ -48,25 +51,26 @@ for ii in range(len(study_config["arrival_times_resolution_s"])):
         plenoirf.EXAMPLE_CONFIG["sites"]["namibia"]
     )
 
-    config["runs"] = {"gamma": {"num": NUM_EVENTS//250, "first_run_id": 1}}
+    config["runs"] = {"gamma": {"num": NUM_EVENTS // 250, "first_run_id": 1}}
     config["num_airshowers_per_run"] = 250
 
     run_dir = os.path.join(out_dir, "{:06d}_run".format(ii))
     if not os.path.exists(run_dir):
-        plenoirf.init(
-            out_dir=run_dir,
-            config=config
-        )
+        plenoirf.init(out_dir=run_dir, config=config)
 
         prop_conf = json_utils.read(
-            path=os.path.join(run_dir, "input", "merlict_propagation_config.json")
+            path=os.path.join(
+                run_dir, "input", "merlict_propagation_config.json"
+            )
         )
-        prop_conf["photon_stream"][
-            "single_photon_arrival_time_resolution"] = study_config[
-            "arrival_times_resolution_s"][ii]
+        prop_conf["photon_stream"]["single_photon_arrival_time_resolution"] = (
+            study_config["arrival_times_resolution_s"][ii]
+        )
         json_utils.write(
-            path=os.path.join(run_dir, "input", "merlict_propagation_config.json"),
-            out_dict=prop_conf
+            path=os.path.join(
+                run_dir, "input", "merlict_propagation_config.json"
+            ),
+            out_dict=prop_conf,
         )
 
 # run
@@ -86,11 +90,8 @@ for ii in range(len(study_config["arrival_times_resolution_s"])):
             if not os.path.exists(os.path.join(run_dir, common_resource)):
                 rnw.copy(
                     src=os.path.join(run0_dir, common_resource),
-                    dst=os.path.join(run_dir, common_resource)
+                    dst=os.path.join(run_dir, common_resource),
                 )
 
     if not os.path.exists(os.path.join(run_dir, "event_table")):
-        plenoirf.run(
-            path=run_dir,
-            MULTIPROCESSING_POOL=MULTIPROCESSING_POOL
-        )
+        plenoirf.run(path=run_dir, MULTIPROCESSING_POOL=MULTIPROCESSING_POOL)
