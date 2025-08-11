@@ -4,7 +4,15 @@ upcomming changes for next production run
 
 log
 ---
+2025-08-11
+- Update dynamicsizerecarray to handle types on 'append()'
+  internally on its own.
+
 2025-08-08
+- PROBLEM: The groundgrid histogram has multiple entries for the
+  same x,y bin. This is not expected and must be investigated.
+- Preparations to hotfix the groundgrid_roi bug in order to save
+  significant storage space (approx. 1/3) in the prm2cer step.
 - Update all remaining plenoirf/summary/scripts.
 
 2025-07-08
