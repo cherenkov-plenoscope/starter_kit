@@ -4,6 +4,9 @@ upcomming changes for next production run
 
 log
 ---
+2025-08-13
+- Ready to apply groundgrid ROI hotfix in plenoirf production.
+
 2025-08-11
 - Update dynamicsizerecarray to handle types on 'append()'
   internally on its own.
