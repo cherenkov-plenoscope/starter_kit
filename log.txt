@@ -4,6 +4,14 @@ upcomming changes for next production run
 
 log
 ---
+2025-09-04
+- Reworking the rejection mechanism in the light-field-trigger.
+  It turnes out that fine tuning and better figures were needed
+  to adjust the trigger for non zero zenith distances.
+  No the trigger rate is stable across the pointing range and
+  supresses hadrons rather strongly. Pretty happy with the trigger
+  now.
+
 2025-08-13
 - Ready to apply groundgrid ROI hotfix in plenoirf production.
 
