@@ -4,6 +4,15 @@ upcomming changes for next production run
 
 log
 ---
+2025-09-11
+- Reducing memory footprint of analysis. Making sparse-numeric-table
+  more lazy and more efficient by only reading into memory what is
+  really needed. Currently about 40M proton events simulated.
+- Found bug in estimate for accidental (nsb) trigger rate. The
+  accounting did not assign the zenith range correctly.
+  As a consequence the threshold needed to be increased for larger
+  zenith angles in order to keep accidental rate below ~100s^{-1}.
+
 2025-09-04
 - Reworking the rejection mechanism in the light-field-trigger.
   It turnes out that fine tuning and better figures were needed
