@@ -4,6 +4,11 @@ upcomming changes for next production run
 
 log
 ---
+2025-09-19
+- GitHub: Enabling manuall triggering of unit test (actions) on
+  GitHub. Fixing spectra 1D function representation in merlict.
+  Deploying updated packages to PyPi.
+
 2025-09-11
 - Reducing memory footprint of analysis. Making sparse-numeric-table
   more lazy and more efficient by only reading into memory what is
