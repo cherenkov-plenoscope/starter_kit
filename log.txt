@@ -4,6 +4,13 @@ upcomming changes for next production run
 
 log
 ---
+2025-09-25
+- Improving energy reconstruction with better features and with
+  sample_weights to counteract the population statistics bias.
+- Improving performance figures. Introducing an instrument color
+  palette to not confuse particles (red, blue, orange, black) with
+  instruments (gold, turquios, violett).
+
 2025-09-19
 - GitHub: Enabling manuall triggering of unit test (actions) on
   GitHub. Fixing spectra 1D function representation in merlict.
