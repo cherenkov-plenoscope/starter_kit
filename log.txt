@@ -4,6 +4,10 @@ upcomming changes for next production run
 
 log
 ---
+2025-11-12
+- Improving plots for instrument response. Documenting deployment
+  to PyPi.
+
 2025-09-25
 - Improving energy reconstruction with better features and with
   sample_weights to counteract the population statistics bias.

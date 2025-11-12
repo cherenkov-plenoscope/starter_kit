@@ -107,6 +107,23 @@ List the version strings of local and remote packages on ``PyPi``.
     python ./install.py pypi
 
 
+Deploying packages to the Python Package Index (PyPi)
+-----------------------------------------------------
+To update package ``<xyz>`` we remove old distribution builds, update the tools
+``build`` and ``twine`` and then build and upload.
+For packages compiling ``C`` code (``cython``) one has to build and upload an
+?``sdist``?.
+
+
+.. code-block:: bash
+
+    cd ./packages/<xyz>
+    rm -r ./dist
+    python3 -m pip install --upgrade build
+    python3 -m build
+    python3 -m pip install --upgrade twine
+    python3 -m twine upload --repository pypi dist/*
+
 
 .. |CcByLicenseBadge| image:: https://img.shields.io/badge/license-CC--BY--4.0-lightgrey.svg
     :target: https://creativecommons.org/licenses/by/4.0/deed.en
