@@ -4,6 +4,11 @@ upcomming changes for next production run
 
 log
 ---
+2025-11-18
+- Facing bottleneck reducing the instrument response function in
+  package 'plenoirf'. Now the reduction sheme was altered to allow
+  more parallelization and to reduce filesystem io.
+
 2025-11-12
 - Improving plots for instrument response. Documenting deployment
   to PyPi.
